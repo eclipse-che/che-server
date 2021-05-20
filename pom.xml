@@ -47,6 +47,9 @@
         <url>https://github.com/eclipse/che</url>
     </scm>
     <properties>
+        <currentYear>2021</currentYear>
+        <license_years>${project.inceptionYear}-${currentYear}</license_years>
+        <license_contributor2 />
         <aopalliance.version>1.0</aopalliance.version>
         <ch.qos.logback.version>1.2.1</ch.qos.logback.version>
         <com.auth0.jwks-rsa.version>0.3.0</com.auth0.jwks-rsa.version>

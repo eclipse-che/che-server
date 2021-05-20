@@ -1550,7 +1550,7 @@
                         <dependency>
                             <groupId>org.eclipse.che.dev</groupId>
                             <artifactId>che-eclipse-license-resource-bundle</artifactId>
-                            <version>20</version>
+                            <version>19</version>
                         </dependency>
                     </dependencies>
                     <configuration>

@@ -89,7 +89,6 @@ public class KeycloakProviderConfigFactoryTest {
   @Mock private KeycloakSettings keycloakSettings;
   @Mock private Provider<WorkspaceRuntimes> workspaceRuntimeProvider;
   @Mock private WorkspaceRuntimes workspaceRuntimes;
-  @Mock private OpenshiftProviderConfigFactory openshiftProviderConfigFactory;
   @Mock private Subject subject;
   @Mock private RuntimeIdentity runtimeIdentity;
 
@@ -130,7 +129,6 @@ public class KeycloakProviderConfigFactoryTest {
             keycloakServiceClient,
             keycloakSettings,
             workspaceRuntimeProvider,
-            openshiftProviderConfigFactory,
             PROVIDER,
             API_ENDPOINT);
     defaultConfig = new io.fabric8.kubernetes.client.ConfigBuilder().build();
@@ -141,12 +139,7 @@ public class KeycloakProviderConfigFactoryTest {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     configBuilder =
         new KeycloakProviderConfigFactory(
-            keycloakServiceClient,
-            keycloakSettings,
-            workspaceRuntimeProvider,
-            openshiftProviderConfigFactory,
-            null,
-            API_ENDPOINT);
+            keycloakServiceClient, keycloakSettings, workspaceRuntimeProvider, null, API_ENDPOINT);
     assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }
 

@@ -38,7 +38,7 @@ import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.multiuser.keycloak.server.KeycloakServiceClient;
 import org.eclipse.che.multiuser.keycloak.server.KeycloakSettings;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * @author David Festal
  */
 @Singleton
-public class KeycloakProviderConfigFactory extends OpenShiftClientConfigFactory {
+public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(KeycloakProviderConfigFactory.class);
 
@@ -66,20 +66,17 @@ public class KeycloakProviderConfigFactory extends OpenShiftClientConfigFactory 
   private final KeycloakServiceClient keycloakServiceClient;
   private final Provider<WorkspaceRuntimes> workspaceRuntimeProvider;
   private final String messageToLinkAccount;
-  private final OpenshiftProviderConfigFactory openshiftProviderConfigFactory;
 
   @Inject
   public KeycloakProviderConfigFactory(
       KeycloakServiceClient keycloakServiceClient,
       KeycloakSettings keycloakSettings,
       Provider<WorkspaceRuntimes> workspaceRuntimeProvider,
-      OpenshiftProviderConfigFactory openshiftProviderConfigFactory,
       @Nullable @Named("che.infra.openshift.oauth_identity_provider") String oauthIdentityProvider,
       @Named("che.api") String apiEndpoint) {
     this.keycloakServiceClient = keycloakServiceClient;
     this.workspaceRuntimeProvider = workspaceRuntimeProvider;
     this.oauthIdentityProvider = oauthIdentityProvider;
-    this.openshiftProviderConfigFactory = openshiftProviderConfigFactory;
 
     messageToLinkAccount =
         "You should link your account with the <strong>"

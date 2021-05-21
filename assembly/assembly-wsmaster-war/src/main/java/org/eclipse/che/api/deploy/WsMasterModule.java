@@ -97,9 +97,11 @@ import org.eclipse.che.security.PasswordEncryptor;
 import org.eclipse.che.security.oauth.EmbeddedOAuthAPI;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth.OpenShiftOAuthModule;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfraModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructure;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.KubernetesOidcProviderConfigFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.PassThroughProxySecureServerExposer;
@@ -109,12 +111,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtprox
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.factory.PassThroughProxyProvisionerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.factory.PassThroughProxySecureServerExposerFactory;
 import org.eclipse.che.workspace.infrastructure.metrics.InfrastructureMetricsModule;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfraModule;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructure;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
-import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.OpenshiftProviderConfigFactory;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.flywaydb.core.internal.util.PlaceholderReplacer;
 
@@ -365,9 +365,9 @@ public class WsMasterModule extends AbstractModule {
 
     if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
       if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-        bind(OpenShiftClientConfigFactory.class).to(OpenshiftProviderConfigFactory.class);
+        bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
       } else {
-        bind(OpenShiftClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
+        bind(KubernetesClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
       }
     }
 

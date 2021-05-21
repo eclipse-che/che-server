@@ -72,7 +72,7 @@ public class OpenshiftTokenInitializationFilterTest {
 
   @Test
   public void getUserIdGetsCurrentUserWithAuthenticatedOCClient() {
-    when(openShiftClientFactory.createAuthenticatedOC(TOKEN)).thenReturn(openShiftClient);
+    when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);
     when(openShiftClient.currentUser()).thenReturn(openshiftUser);
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
     when(openshiftUserMeta.getUid()).thenReturn(USER_UID);
@@ -80,14 +80,14 @@ public class OpenshiftTokenInitializationFilterTest {
     String userId = openshiftTokenInitializationFilter.getUserId(TOKEN);
 
     assertEquals(userId, USER_UID);
-    verify(openShiftClientFactory).createAuthenticatedOC(TOKEN);
+    verify(openShiftClientFactory).createAuthenticatedClient(TOKEN);
     verify(openShiftClient).currentUser();
   }
 
   @Test
   public void extractSubjectCreatesSubjectWithCurretlyAuthenticatedUser()
       throws InfrastructureException, ServerException, ConflictException {
-    when(openShiftClientFactory.createAuthenticatedOC(TOKEN)).thenReturn(openShiftClient);
+    when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);
     when(openShiftClient.currentUser()).thenReturn(openshiftUser);
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
     when(openshiftUserMeta.getUid()).thenReturn(USER_UID);

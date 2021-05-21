@@ -9,25 +9,25 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
+package org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth;
 
 import io.fabric8.kubernetes.client.Config;
-import io.fabric8.openshift.client.OpenShiftConfig;
-import io.fabric8.openshift.client.OpenShiftConfigBuilder;
+import io.fabric8.kubernetes.client.ConfigBuilder;
 import javax.inject.Singleton;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class creates {@link OpenShiftConfig} from given OpenShift token. It does not guarantee that
+ * This class creates {@link Config} from given Kubernetes OIDC token. It does not guarantee that
  * token is valid.
  */
 @Singleton
-public class OpenshiftProviderConfigFactory extends OpenShiftClientConfigFactory {
-  private static final Logger LOG = LoggerFactory.getLogger(OpenshiftProviderConfigFactory.class);
+public class KubernetesOidcProviderConfigFactory extends KubernetesClientConfigFactory {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(KubernetesOidcProviderConfigFactory.class);
 
   @Override
   public boolean isPersonalized() {
@@ -47,9 +47,7 @@ public class OpenshiftProviderConfigFactory extends OpenShiftClientConfigFactory
       if (token.toLowerCase().startsWith("bearer")) {
         token = token.substring("Bearer ".length());
       }
-      return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
-          .withOauthToken(token)
-          .build();
+      return new ConfigBuilder(defaultConfig).withOauthToken(token).build();
     } else {
       LOG.debug("NO TOKEN PASSED. Getting default client config.");
       return defaultConfig;

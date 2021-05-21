@@ -15,6 +15,7 @@ import static org.testng.Assert.assertEquals;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.KubernetesOidcProviderConfigFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -23,8 +24,8 @@ public class OpenshiftProviderConfigFactoryTest {
 
   private Config defaultConfig;
 
-  private OpenshiftProviderConfigFactory openshiftProviderConfigFactory =
-      new OpenshiftProviderConfigFactory();
+  private KubernetesOidcProviderConfigFactory openshiftProviderConfigFactory =
+      new KubernetesOidcProviderConfigFactory();
 
   @BeforeMethod
   public void setUp() {

@@ -99,7 +99,7 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
 
   private io.fabric8.openshift.api.model.User getCurrentUser(String token)
       throws InfrastructureException {
-    OpenShiftClient client = clientFactory.createAuthenticatedOC(token);
+    OpenShiftClient client = clientFactory.createAuthenticatedClient(token);
     return client.currentUser();
   }
 

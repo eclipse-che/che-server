@@ -19,7 +19,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertSame;
@@ -148,14 +147,14 @@ public class KeycloakProviderConfigFactoryTest {
             openshiftProviderConfigFactory,
             null,
             API_ENDPOINT);
-    assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null));
+    assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }
 
   @Test
   public void testFallbackToDefaultConfigWhenSubjectIsAnonymous() throws Exception {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     doReturn(Subject.ANONYMOUS).when(context).getSubject();
-    assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null));
+    assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }
 
   @Test
@@ -163,7 +162,7 @@ public class KeycloakProviderConfigFactoryTest {
       throws Exception {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     when(runtimeIdentity.getOwnerId()).thenReturn(ANOTHER_USER_ID);
-    assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null));
+    assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }
 
   @SuppressWarnings("rawtypes")
@@ -172,21 +171,21 @@ public class KeycloakProviderConfigFactoryTest {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     when(workspaceRuntimes.getRuntimeContext(anyString())).thenReturn(Optional.empty());
 
-    Config resultConfig = configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null);
+    Config resultConfig = configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID);
     assertEquals(resultConfig.getOauthToken(), ACCESS_TOKEN);
   }
 
   @Test
   public void testCreateUserConfigWhenWorkspaceIdIsNull() throws Exception {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
-    Config resultConfig = configBuilder.buildConfig(defaultConfig, null, null);
+    Config resultConfig = configBuilder.buildConfig(defaultConfig, null);
     assertEquals(resultConfig.getOauthToken(), ACCESS_TOKEN);
   }
 
   @Test
   public void testCreateUserConfig() throws Exception {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
-    Config resultConfig = configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null);
+    Config resultConfig = configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID);
     assertEquals(resultConfig.getOauthToken(), ACCESS_TOKEN);
   }
 
@@ -194,7 +193,7 @@ public class KeycloakProviderConfigFactoryTest {
   public void testThrowOnBadScope() throws Exception {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     when(tokenResponse.getScope()).thenReturn("bad:scope");
-    Config resultConfig = configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null);
+    Config resultConfig = configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID);
     assertEquals(resultConfig.getOauthToken(), ACCESS_TOKEN);
   }
 
@@ -206,7 +205,7 @@ public class KeycloakProviderConfigFactoryTest {
         .when(keycloakServiceClient)
         .getIdentityProviderToken(anyString());
     try {
-      configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null);
+      configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID);
     } catch (InfrastructureException e) {
       assertEquals(e.getMessage(), SHOULD_LINK_ERROR_MESSAGE, "The exception message is wrong");
       return;
@@ -222,7 +221,7 @@ public class KeycloakProviderConfigFactoryTest {
                 DtoFactory.newDto(ServiceError.class).withMessage("Any other message")))
         .when(keycloakServiceClient)
         .getIdentityProviderToken(anyString());
-    configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null);
+    configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID);
   }
 
   @Test
@@ -233,7 +232,7 @@ public class KeycloakProviderConfigFactoryTest {
         .when(keycloakServiceClient)
         .getIdentityProviderToken(anyString());
     try {
-      configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null);
+      configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID);
     } catch (InfrastructureException e) {
       assertEquals(e.getMessage(), SESSION_EXPIRED_MESSAGE, "The exception message is wrong");
       return;
@@ -245,12 +244,6 @@ public class KeycloakProviderConfigFactoryTest {
   public void testRethrowOnAnyException() throws Exception {
     when(keycloakServiceClient.getIdentityProviderToken(anyString()))
         .thenThrow(org.eclipse.che.api.core.NotFoundException.class);
-    configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID, null);
-  }
-
-  @Test
-  public void testCreationWithTokenDelegatedToOpenshiftImpl() throws InfrastructureException {
-    configBuilder.buildConfig(defaultConfig, null, "touken");
-    verify(openshiftProviderConfigFactory).buildConfig(defaultConfig, null, "touken");
+    configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID);
   }
 }

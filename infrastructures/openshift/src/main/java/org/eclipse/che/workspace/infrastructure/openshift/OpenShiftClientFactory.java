@@ -96,7 +96,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public OpenShiftClient createOC(String workspaceId) throws InfrastructureException {
-    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId, null);
+    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId);
     return createOC(configForWorkspace);
   }
 
@@ -115,11 +115,13 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public OpenShiftClient createOC() throws InfrastructureException {
-    return createOC(buildConfig(getDefaultConfig(), null, null));
+    return createOC(buildConfig(getDefaultConfig(), null));
   }
 
-  public OpenShiftClient createAuthenticatedOC(String token) throws InfrastructureException {
-    return createOC(buildConfig(getDefaultConfig(), null, token));
+  public OpenShiftClient createAuthenticatedOC(String token) {
+    Config config = getDefaultConfig();
+    config.setOauthToken(token);
+    return createOC(config);
   }
 
   @Override
@@ -129,8 +131,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
       throw new InfrastructureException(
           "Not able to construct impersonating openshift API client.");
     }
-    return clientForConfig(
-        buildConfig(getDefaultConfig(), null, headers.getHeaderString(HttpHeaders.AUTHORIZATION)));
+    return clientForConfig(buildConfig(getDefaultConfig(), null));
   }
 
   @Override
@@ -155,9 +156,9 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * extension level by delegating to an {@link OpenShiftClientConfigFactory}
    */
   @Override
-  protected Config buildConfig(Config config, @Nullable String workspaceId, @Nullable String token)
+  protected Config buildConfig(Config config, @Nullable String workspaceId)
       throws InfrastructureException {
-    return configBuilder.buildConfig(config, workspaceId, token);
+    return configBuilder.buildConfig(config, workspaceId);
   }
 
   @Override

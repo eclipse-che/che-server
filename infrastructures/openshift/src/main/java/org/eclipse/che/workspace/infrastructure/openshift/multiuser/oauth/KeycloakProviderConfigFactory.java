@@ -123,15 +123,9 @@ public class KeycloakProviderConfigFactory extends OpenShiftClientConfigFactory 
    * Builds the OpenShift {@link Config} object based on a default {@link Config} object and an
    * optional workspace Id.
    */
-  public Config buildConfig(
-      Config defaultConfig, @Nullable String workspaceId, @Nullable String token)
+  public Config buildConfig(Config defaultConfig, @Nullable String workspaceId)
       throws InfrastructureException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
-
-    if (token != null) {
-      LOG.debug("Delegating creation of client config to OpenShift specific implementation.");
-      return openshiftProviderConfigFactory.buildConfig(defaultConfig, workspaceId, token);
-    }
 
     if (oauthIdentityProvider == null) {
       LOG.debug("OAuth Provider is not configured, default config is used.");

@@ -29,8 +29,7 @@ public class OpenShiftClientConfigFactory {
    * Builds the Openshift {@link Config} object based on a default {@link Config} object and an
    * optional workspace Id.
    */
-  public Config buildConfig(
-      Config defaultConfig, @Nullable String workspaceId, @Nullable String token)
+  public Config buildConfig(Config defaultConfig, @Nullable String workspaceId)
       throws InfrastructureException {
     return defaultConfig;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,6 +16,7 @@ import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 import javax.inject.Singleton;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +40,8 @@ public class OpenshiftProviderConfigFactory extends OpenShiftClientConfigFactory
    *
    * <p>'token' can be passed in plain format or with 'Bearer ' prefix, when used from http headers.
    */
-  public Config buildConfig(
-      Config defaultConfig, @Nullable String workspaceId, @Nullable String token) {
+  public Config buildConfig(Config defaultConfig, @Nullable String workspaceId) {
+    String token = EnvironmentContext.getCurrent().getSubject().getToken();
     if (token != null) {
       LOG.debug("Creating token authenticated client");
       if (token.toLowerCase().startsWith("bearer")) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -71,7 +71,7 @@ public class OpenshiftTokenInitializationFilterTest {
   }
 
   @Test
-  public void getUserIdGetsCurrentUserWithAuthenticatedOCClient() throws InfrastructureException {
+  public void getUserIdGetsCurrentUserWithAuthenticatedOCClient() {
     when(openShiftClientFactory.createAuthenticatedOC(TOKEN)).thenReturn(openShiftClient);
     when(openShiftClient.currentUser()).thenReturn(openshiftUser);
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);

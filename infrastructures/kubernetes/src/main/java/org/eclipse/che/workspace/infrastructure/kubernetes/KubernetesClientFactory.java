@@ -92,7 +92,7 @@ public class KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public KubernetesClient create(String workspaceId) throws InfrastructureException {
-    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId, null);
+    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId);
 
     return create(configForWorkspace);
   }
@@ -106,7 +106,7 @@ public class KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public KubernetesClient create() throws InfrastructureException {
-    return create(buildConfig(getDefaultConfig(), null, null));
+    return create(buildConfig(getDefaultConfig(), null));
   }
 
   /**
@@ -182,7 +182,7 @@ public class KubernetesClientFactory {
    * Builds the Kubernetes {@link Config} object based on a provided {@link Config} object and an
    * optional workspace ID.
    */
-  protected Config buildConfig(Config config, @Nullable String workspaceId, @Nullable String token)
+  protected Config buildConfig(Config config, @Nullable String workspaceId)
       throws InfrastructureException {
     return config;
   }

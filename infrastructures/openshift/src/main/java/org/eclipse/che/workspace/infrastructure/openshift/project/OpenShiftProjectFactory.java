@@ -41,6 +41,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.Kube
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
+import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.Constants;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
@@ -59,6 +60,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
 
   private final OpenShiftClientFactory clientFactory;
   private final CheServerKubernetesClientFactory cheClientFactory;
+  private final CheServerOpenshiftClientFactory cheOpenShiftClientFactory;
   private final OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner;
 
   private final String oAuthIdentityProvider;
@@ -75,6 +77,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       OpenShiftClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
       OpenShiftClientConfigFactory clientConfigFactory,
+      CheServerOpenshiftClientFactory cheOpenShiftClientFactory,
       OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner,
       UserManager userManager,
       PreferenceManager preferenceManager,
@@ -96,6 +99,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         sharedPool);
     this.clientFactory = clientFactory;
     this.cheClientFactory = cheClientFactory;
+    this.cheOpenShiftClientFactory = cheOpenShiftClientFactory;
     this.stopWorkspaceRoleProvisioner = stopWorkspaceRoleProvisioner;
     this.oAuthIdentityProvider = oAuthIdentityProvider;
   }
@@ -154,7 +158,12 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   @VisibleForTesting
   OpenShiftProject doCreateProjectAccess(String workspaceId, String name) {
     return new OpenShiftProject(
-        clientFactory, cheClientFactory, sharedPool.getExecutor(), name, workspaceId);
+        clientFactory,
+        cheOpenShiftClientFactory,
+        cheOpenShiftClientFactory,
+        sharedPool.getExecutor(),
+        name,
+        workspaceId);
   }
 
   @VisibleForTesting

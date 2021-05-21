@@ -33,6 +33,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPersistentVolumeClaims;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesSecrets;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesServices;
+import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +49,14 @@ public class OpenShiftProject extends KubernetesNamespace {
 
   private final OpenShiftRoutes routes;
   private final OpenShiftClientFactory clientFactory;
+  private final KubernetesClientFactory cheClientFactory;
+  private final CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
 
   @VisibleForTesting
   OpenShiftProject(
       OpenShiftClientFactory clientFactory,
       KubernetesClientFactory cheClientFactory,
+      CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory,
       String workspaceId,
       String name,
       KubernetesDeployments deployments,
@@ -73,19 +77,24 @@ public class OpenShiftProject extends KubernetesNamespace {
         ingresses,
         secrets,
         configMaps);
+    this.cheClientFactory = cheClientFactory;
     this.clientFactory = clientFactory;
     this.routes = routes;
+    this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
   }
 
   public OpenShiftProject(
       OpenShiftClientFactory clientFactory,
       KubernetesClientFactory cheClientFactory,
+      CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory,
       Executor executor,
       String name,
       String workspaceId) {
     super(clientFactory, cheClientFactory, executor, name, workspaceId);
     this.clientFactory = clientFactory;
+    this.cheClientFactory = cheClientFactory;
     this.routes = new OpenShiftRoutes(name, workspaceId, clientFactory);
+    this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
   }
 
   /**
@@ -115,8 +124,8 @@ public class OpenShiftProject extends KubernetesNamespace {
                 projectName));
       }
 
-      create(projectName, osClient);
-      waitDefaultServiceAccount(projectName, kubeClient);
+      create(projectName, cheServerOpenshiftClientFactory.createOC());
+      waitDefaultServiceAccount(projectName, cheServerOpenshiftClientFactory.createOC());
     }
     label(osClient.namespaces().withName(projectName).get(), labels);
   }

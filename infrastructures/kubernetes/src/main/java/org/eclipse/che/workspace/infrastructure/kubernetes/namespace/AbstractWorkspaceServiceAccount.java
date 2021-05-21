@@ -50,13 +50,13 @@ public abstract class AbstractWorkspaceServiceAccount<
 
   protected final String namespace;
   protected final String serviceAccountName;
-  private final ClientFactory<Client> clientFactory;
-  private final String workspaceId;
-  private final Set<String> clusterRoleNames;
-  private final Function<
+  protected final ClientFactory<Client> clientFactory;
+  protected final String workspaceId;
+  protected final Set<String> clusterRoleNames;
+  protected final Function<
           Client, MixedOperation<R, ? extends KubernetesResourceList<R>, ? extends Resource<R>>>
       roles;
-  private final Function<
+  protected final Function<
           Client, MixedOperation<B, ? extends KubernetesResourceList<B>, ? extends Resource<B>>>
       roleBindings;
 

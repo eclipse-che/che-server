@@ -21,6 +21,8 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.impl.DefaultJwtParser;
 import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -42,8 +44,10 @@ import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.system.server.SystemModule;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.jpa.JpaPreferenceDao;
+import org.eclipse.che.api.user.server.jpa.JpaProfileDao;
 import org.eclipse.che.api.user.server.jpa.JpaUserDao;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
+import org.eclipse.che.api.user.server.spi.ProfileDao;
 import org.eclipse.che.api.user.server.spi.UserDao;
 import org.eclipse.che.api.workspace.server.WorkspaceEntityProvider;
 import org.eclipse.che.api.workspace.server.WorkspaceLockService;
@@ -72,8 +76,10 @@ import org.eclipse.che.commons.observability.deploy.ExecutorWrapperModule;
 import org.eclipse.che.core.db.DBTermination;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.tracing.metrics.TracingMetricsModule;
+import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.inject.DynaModule;
 import org.eclipse.che.multiuser.api.authentication.commons.token.ChainedTokenExtractor;
+import org.eclipse.che.multiuser.api.authentication.commons.token.HeaderRequestTokenExtractor;
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.eclipse.che.multiuser.api.permission.server.AdminPermissionInitializer;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
@@ -107,7 +113,8 @@ import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigF
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfraModule;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructure;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
-import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.IdentityProviderConfigFactory;
+import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
+import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.OpenshiftProviderConfigFactory;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.flywaydb.core.internal.util.PlaceholderReplacer;
 
@@ -260,7 +267,7 @@ public class WsMasterModule extends AbstractModule {
     installDefaultSecureServerExposer(infrastructure);
     install(new org.eclipse.che.security.oauth1.BitbucketModule());
 
-    if (Boolean.valueOf(System.getenv("CHE_MULTIUSER"))) {
+    if (Boolean.parseBoolean(System.getenv("CHE_MULTIUSER"))) {
       configureMultiUserMode(persistenceProperties, infrastructure);
     } else {
       configureSingleUserMode(persistenceProperties, infrastructure);
@@ -357,7 +364,17 @@ public class WsMasterModule extends AbstractModule {
     }
 
     if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
-      bind(OpenShiftClientConfigFactory.class).to(IdentityProviderConfigFactory.class);
+      if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+        bind(OpenShiftClientConfigFactory.class).to(OpenshiftProviderConfigFactory.class);
+      } else {
+        bind(OpenShiftClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
+      }
+    }
+
+    if (KubernetesInfrastructure.NAME.equals(infrastructure)
+        && Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+      throw new ConfigurationException(
+          "Native user mode is not supported on Kubernetes. It is supported only on OpenShift.");
     }
 
     persistenceProperties.put(
@@ -393,7 +410,10 @@ public class WsMasterModule extends AbstractModule {
     bind(org.eclipse.che.multiuser.permission.logger.LoggerServicePermissionsFilter.class);
 
     bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
-    bind(AdminPermissionInitializer.class).asEagerSingleton();
+
+    if (!Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+      bind(AdminPermissionInitializer.class).asEagerSingleton();
+    }
     bind(
         org.eclipse.che.multiuser.permission.resource.filters.ResourceServicePermissionsFilter
             .class);
@@ -405,11 +425,19 @@ public class WsMasterModule extends AbstractModule {
     install(new OrganizationApiModule());
     install(new OrganizationJpaModule());
 
-    install(new KeycloakModule());
-    install(new KeycloakUserRemoverModule());
+    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+      bind(TokenValidator.class).to(org.eclipse.che.api.local.DummyTokenValidator.class);
+      bind(JwtParser.class).to(DefaultJwtParser.class);
+      bind(ProfileDao.class).to(JpaProfileDao.class);
+      bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class);
+      bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
+    } else {
+      install(new KeycloakModule());
+      install(new KeycloakUserRemoverModule());
+      bind(RequestTokenExtractor.class).to(ChainedTokenExtractor.class);
+    }
 
     install(new MachineAuthModule());
-    bind(RequestTokenExtractor.class).to(ChainedTokenExtractor.class);
 
     // User and profile - use profile from keycloak and other stuff is JPA
     bind(PasswordEncryptor.class).to(PBKDF2PasswordEncryptor.class);

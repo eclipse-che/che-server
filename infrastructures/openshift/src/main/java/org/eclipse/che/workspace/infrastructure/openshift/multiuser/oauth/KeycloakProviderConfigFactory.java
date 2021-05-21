@@ -57,26 +57,29 @@ import org.slf4j.LoggerFactory;
  * @author David Festal
  */
 @Singleton
-public class IdentityProviderConfigFactory extends OpenShiftClientConfigFactory {
+public class KeycloakProviderConfigFactory extends OpenShiftClientConfigFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(IdentityProviderConfigFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KeycloakProviderConfigFactory.class);
 
   private final String oauthIdentityProvider;
 
   private final KeycloakServiceClient keycloakServiceClient;
   private final Provider<WorkspaceRuntimes> workspaceRuntimeProvider;
   private final String messageToLinkAccount;
+  private final OpenshiftProviderConfigFactory openshiftProviderConfigFactory;
 
   @Inject
-  public IdentityProviderConfigFactory(
+  public KeycloakProviderConfigFactory(
       KeycloakServiceClient keycloakServiceClient,
       KeycloakSettings keycloakSettings,
       Provider<WorkspaceRuntimes> workspaceRuntimeProvider,
+      OpenshiftProviderConfigFactory openshiftProviderConfigFactory,
       @Nullable @Named("che.infra.openshift.oauth_identity_provider") String oauthIdentityProvider,
       @Named("che.api") String apiEndpoint) {
     this.keycloakServiceClient = keycloakServiceClient;
     this.workspaceRuntimeProvider = workspaceRuntimeProvider;
     this.oauthIdentityProvider = oauthIdentityProvider;
+    this.openshiftProviderConfigFactory = openshiftProviderConfigFactory;
 
     messageToLinkAccount =
         "You should link your account with the <strong>"
@@ -120,9 +123,15 @@ public class IdentityProviderConfigFactory extends OpenShiftClientConfigFactory 
    * Builds the OpenShift {@link Config} object based on a default {@link Config} object and an
    * optional workspace Id.
    */
-  public Config buildConfig(Config defaultConfig, @Nullable String workspaceId)
+  public Config buildConfig(
+      Config defaultConfig, @Nullable String workspaceId, @Nullable String token)
       throws InfrastructureException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
+
+    if (token != null) {
+      LOG.debug("Delegating creation of client config to OpenShift specific implementation.");
+      return openshiftProviderConfigFactory.buildConfig(defaultConfig, workspaceId, token);
+    }
 
     if (oauthIdentityProvider == null) {
       LOG.debug("OAuth Provider is not configured, default config is used.");

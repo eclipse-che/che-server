@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.openshift;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.fabric8.kubernetes.client.utils.Utils.isNotNullOrEmpty;
+import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -30,6 +31,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.core.HttpHeaders;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.EventListener;
@@ -94,7 +96,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public OpenShiftClient createOC(String workspaceId) throws InfrastructureException {
-    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId);
+    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId, null);
     return createOC(configForWorkspace);
   }
 
@@ -113,16 +115,22 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public OpenShiftClient createOC() throws InfrastructureException {
-    return createOC(buildConfig(getDefaultConfig(), null));
+    return createOC(buildConfig(getDefaultConfig(), null, null));
+  }
+
+  public OpenShiftClient createAuthenticatedOC(String token) throws InfrastructureException {
+    return createOC(buildConfig(getDefaultConfig(), null, token));
   }
 
   @Override
-  public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
+  public OkHttpClient getAuthenticatedHttpClient(@Nullable HttpHeaders headers)
+      throws InfrastructureException {
     if (!configBuilder.isPersonalized()) {
       throw new InfrastructureException(
           "Not able to construct impersonating openshift API client.");
     }
-    return clientForConfig(buildConfig(getDefaultConfig(), null));
+    return clientForConfig(
+        buildConfig(getDefaultConfig(), null, headers.getHeaderString(HttpHeaders.AUTHORIZATION)));
   }
 
   @Override
@@ -147,9 +155,9 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * extension level by delegating to an {@link OpenShiftClientConfigFactory}
    */
   @Override
-  protected Config buildConfig(Config config, @Nullable String workspaceId)
+  protected Config buildConfig(Config config, @Nullable String workspaceId, @Nullable String token)
       throws InfrastructureException {
-    return configBuilder.buildConfig(config, workspaceId);
+    return configBuilder.buildConfig(config, workspaceId, token);
   }
 
   @Override

@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.core.HttpHeaders;
 import okhttp3.Authenticator;
 import okhttp3.ConnectionPool;
 import okhttp3.Credentials;
@@ -91,7 +92,7 @@ public class KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public KubernetesClient create(String workspaceId) throws InfrastructureException {
-    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId);
+    Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId, null);
 
     return create(configForWorkspace);
   }
@@ -105,7 +106,7 @@ public class KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public KubernetesClient create() throws InfrastructureException {
-    return create(buildConfig(getDefaultConfig(), null));
+    return create(buildConfig(getDefaultConfig(), null, null));
   }
 
   /**
@@ -146,7 +147,8 @@ public class KubernetesClientFactory {
    * @throws InfrastructureException if it is not possible to build the client with authentication
    *     infromation
    */
-  public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
+  public OkHttpClient getAuthenticatedHttpClient(@Nullable HttpHeaders headers)
+      throws InfrastructureException {
     throw new InfrastructureException(
         "Impersonating the current user is not supported in the Kubernetes Client.");
   }
@@ -180,7 +182,7 @@ public class KubernetesClientFactory {
    * Builds the Kubernetes {@link Config} object based on a provided {@link Config} object and an
    * optional workspace ID.
    */
-  protected Config buildConfig(Config config, @Nullable String workspaceId)
+  protected Config buildConfig(Config config, @Nullable String workspaceId, @Nullable String token)
       throws InfrastructureException {
     return config;
   }

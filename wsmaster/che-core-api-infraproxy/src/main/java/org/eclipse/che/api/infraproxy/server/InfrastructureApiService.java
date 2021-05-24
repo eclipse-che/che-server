@@ -67,7 +67,7 @@ public class InfrastructureApiService extends Service {
   @Inject
   public InfrastructureApiService(
       @Nullable @Named("che.infra.openshift.oauth_identity_provider") String identityProvider,
-      @Named("che.infra.kubernetes.enable_unsupported_api") boolean allowedForKubernetes,
+      @Named("che.infra.kubernetes.enable_unsupported_k8s") boolean allowedForKubernetes,
       RuntimeInfrastructure runtimeInfrastructure) {
     this(
         System.getenv("CHE_INFRASTRUCTURE_ACTIVE"),

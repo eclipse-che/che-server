@@ -18,6 +18,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.ProjectRequestBuilder;
+import io.fabric8.openshift.api.model.RoleBindingBuilder;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.util.Map;
@@ -107,13 +108,12 @@ public class OpenShiftProject extends KubernetesNamespace {
    * @throws InfrastructureException if any exception occurs during project preparation or if the
    *     project doesn't exist and {@code canCreate} is {@code false}.
    */
-  void prepare(boolean canCreate, Map<String, String> labels) throws InfrastructureException {
+  void prepare(boolean canCreate, boolean initWithCheServerSa, Map<String, String> labels)
+      throws InfrastructureException {
     String workspaceId = getWorkspaceId();
     String projectName = getName();
-
     KubernetesClient kubeClient = clientFactory.create(workspaceId);
     OpenShiftClient osClient = clientFactory.createOC(workspaceId);
-
     Project project = get(projectName, osClient);
 
     if (project == null) {
@@ -124,8 +124,29 @@ public class OpenShiftProject extends KubernetesNamespace {
                 projectName));
       }
 
-      create(projectName, cheServerOpenshiftClientFactory.createOC());
-      waitDefaultServiceAccount(projectName, cheServerOpenshiftClientFactory.createOC());
+      if (initWithCheServerSa) {
+        OpenShiftClient openshiftClient = cheServerOpenshiftClientFactory.createOC();
+        create(projectName, openshiftClient);
+        waitDefaultServiceAccount(projectName, openshiftClient);
+        openshiftClient
+            .roleBindings()
+            .inNamespace(projectName)
+            .createOrReplace(
+                new RoleBindingBuilder()
+                    .withNewMetadata()
+                    .withName("admin")
+                    .endMetadata()
+                    .addToUserNames(osClient.currentUser().getMetadata().getName())
+                    .withNewRoleRef()
+                    .withApiVersion("rbac.authorization.k8s.io")
+                    .withKind("RoleBinding")
+                    .withName("admin")
+                    .endRoleRef()
+                    .build());
+      } else {
+        create(projectName, osClient);
+        waitDefaultServiceAccount(projectName, osClient);
+      }
     }
     label(osClient.namespaces().withName(projectName).get(), labels);
   }

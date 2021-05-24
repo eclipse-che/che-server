@@ -139,7 +139,7 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     // when
-    project.prepare(true, Map.of());
+    project.prepare(true, true, Map.of());
 
     // then
     verify(metadataNested, never()).withName(PROJECT_NAME);
@@ -162,7 +162,7 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     // when
-    openShiftProject.prepare(true, Map.of());
+    openShiftProject.prepare(true, true, Map.of());
 
     // then
     ArgumentCaptor<ProjectRequest> captor = ArgumentCaptor.forClass(ProjectRequest.class);
@@ -185,7 +185,7 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     // when
-    project.prepare(false, Map.of());
+    project.prepare(false, true, Map.of());
 
     // then
     // exception is thrown
@@ -317,7 +317,7 @@ public class OpenShiftProjectTest {
     Map<String, String> labels = Map.of("label.with.this", "yes", "and.this", "of courese");
 
     // when
-    openShiftProject.prepare(true, labels);
+    openShiftProject.prepare(true, true, labels);
 
     // then
     Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
@@ -354,7 +354,7 @@ public class OpenShiftProjectTest {
         .createOrReplace(any(Namespace.class));
 
     // when
-    openShiftProject.prepare(true, labels);
+    openShiftProject.prepare(true, true, labels);
 
     // then
     assertTrue(namespace.getMetadata().getLabels().entrySet().containsAll(labels.entrySet()));
@@ -390,7 +390,7 @@ public class OpenShiftProjectTest {
         .createOrReplace(namespaceArgumentCaptor.capture());
 
     // when
-    openShiftProject.prepare(true, labels);
+    openShiftProject.prepare(true, true, labels);
 
     // then
     Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
@@ -427,7 +427,7 @@ public class OpenShiftProjectTest {
         .createOrReplace(any(Namespace.class));
 
     // when
-    openShiftProject.prepare(true, labels);
+    openShiftProject.prepare(true, true, labels);
 
     // then
     verify(nonNamespaceOperation).createOrReplace(namespace);

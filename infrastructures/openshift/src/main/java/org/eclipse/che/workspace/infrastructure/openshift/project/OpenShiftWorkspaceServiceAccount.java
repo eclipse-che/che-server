@@ -12,7 +12,6 @@
 package org.eclipse.che.workspace.infrastructure.openshift.project;
 
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
-import io.fabric8.kubernetes.client.Client;
 import io.fabric8.openshift.api.model.PolicyRuleBuilder;
 import io.fabric8.openshift.api.model.Role;
 import io.fabric8.openshift.api.model.RoleBinding;
@@ -22,7 +21,6 @@ import io.fabric8.openshift.api.model.RoleBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.util.List;
 import java.util.Set;
-import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 
@@ -69,23 +67,6 @@ class OpenShiftWorkspaceServiceAccount
                 .withVerbs(verbs)
                 .build())
         .build();
-  }
-
-  @Override
-  public void prepare() throws InfrastructureException {
-    super.prepare();
-    try {
-      Client k8sClient = clientFactory.create(workspaceId);
-      //noinspection unchecked
-      System.out.println("=========befores=======");
-      roleBindings
-          .apply((OpenShiftClient) k8sClient)
-          .inNamespace(namespace)
-          .createOrReplace(createRoleBinding("admin", "admin", false));
-      System.out.println("=========ok=======");
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 
   @Override

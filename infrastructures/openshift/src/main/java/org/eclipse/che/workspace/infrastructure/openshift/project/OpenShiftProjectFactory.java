@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(OpenShiftProjectFactory.class);
 
+  private final boolean initWithCheServerSa;
   private final OpenShiftClientFactory clientFactory;
   private final CheServerKubernetesClientFactory cheClientFactory;
   private final CheServerOpenshiftClientFactory cheOpenShiftClientFactory;
@@ -74,6 +75,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       @Named("che.infra.kubernetes.namespace.label") boolean labelProjects,
       @Named("che.infra.kubernetes.namespace.labels") String projectLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String projectAnnotations,
+      @Named("che.infra.openshift.project.init_with_server_sa") boolean initWithCheServerSa,
       OpenShiftClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
       OpenShiftClientConfigFactory clientConfigFactory,
@@ -97,6 +99,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         userManager,
         preferenceManager,
         sharedPool);
+    this.initWithCheServerSa = initWithCheServerSa;
     this.clientFactory = clientFactory;
     this.cheClientFactory = cheClientFactory;
     this.cheOpenShiftClientFactory = cheOpenShiftClientFactory;
@@ -107,7 +110,10 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   public OpenShiftProject getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     OpenShiftProject osProject = get(identity);
 
-    osProject.prepare(canCreateNamespace(identity), labelNamespaces ? namespaceLabels : emptyMap());
+    osProject.prepare(
+        canCreateNamespace(identity),
+        initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
+        labelNamespaces ? namespaceLabels : emptyMap());
 
     if (!isNullOrEmpty(getServiceAccountName())) {
       OpenShiftWorkspaceServiceAccount osWorkspaceServiceAccount =

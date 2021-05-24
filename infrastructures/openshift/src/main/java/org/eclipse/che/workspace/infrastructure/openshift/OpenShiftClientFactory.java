@@ -30,7 +30,6 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.core.HttpHeaders;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.EventListener;
@@ -125,8 +124,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
   }
 
   @Override
-  public OkHttpClient getAuthenticatedHttpClient(@Nullable HttpHeaders headers)
-      throws InfrastructureException {
+  public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
     if (!configBuilder.isPersonalized()) {
       throw new InfrastructureException(
           "Not able to construct impersonating openshift API client.");

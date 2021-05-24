@@ -56,24 +56,35 @@ public class InfrastructureApiService extends Service {
 
   @Context private MediaType mediaType;
 
-  private static boolean determineAllowed(String infra, String identityProvider) {
-    return "openshift".equals(infra)
-        && identityProvider != null
-        && identityProvider.startsWith("openshift");
+  private static boolean determineAllowed(
+      String infra, String identityProvider, boolean allowedForKubernetes) {
+    return ("openshift".equals(infra)
+            && identityProvider != null
+            && identityProvider.startsWith("openshift"))
+        || allowedForKubernetes;
   }
 
   @Inject
   public InfrastructureApiService(
       @Nullable @Named("che.infra.openshift.oauth_identity_provider") String identityProvider,
+      @Named("che.infra.kubernetes.enable_unsupported_api") boolean allowedForKubernetes,
       RuntimeInfrastructure runtimeInfrastructure) {
-    this(System.getenv("CHE_INFRASTRUCTURE_ACTIVE"), identityProvider, runtimeInfrastructure);
+    this(
+        System.getenv("CHE_INFRASTRUCTURE_ACTIVE"),
+        allowedForKubernetes,
+        identityProvider,
+        runtimeInfrastructure);
   }
 
   @VisibleForTesting
-  InfrastructureApiService(String infraName, String identityProvider, RuntimeInfrastructure infra) {
+  InfrastructureApiService(
+      String infraName,
+      boolean allowedForKubernetes,
+      String identityProvider,
+      RuntimeInfrastructure infra) {
     this.runtimeInfrastructure = infra;
     this.mapper = new ObjectMapper();
-    this.allowed = determineAllowed(infraName, identityProvider);
+    this.allowed = determineAllowed(infraName, identityProvider, allowedForKubernetes);
   }
 
   @GET

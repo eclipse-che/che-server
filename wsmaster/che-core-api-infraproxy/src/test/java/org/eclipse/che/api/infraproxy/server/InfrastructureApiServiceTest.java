@@ -37,13 +37,15 @@ public class InfrastructureApiServiceTest {
 
   @BeforeMethod
   public void setup() throws Exception {
-    apiService = new InfrastructureApiService("openshift", "openshift-identityProvider", infra);
+    apiService =
+        new InfrastructureApiService("openshift", false, "openshift-identityProvider", infra);
   }
 
   @Test
   public void testFailsAuthWhenNotOnOpenShift() throws Exception {
     // given
-    apiService = new InfrastructureApiService("not-openshift", "openshift-identityProvider", infra);
+    apiService =
+        new InfrastructureApiService("not-openshift", false, "openshift-identityProvider", infra);
 
     // when
     Response response =
@@ -59,7 +61,8 @@ public class InfrastructureApiServiceTest {
   @Test
   public void testFailsAuthWhenNotUsingOpenShiftIdentityProvider() throws Exception {
     // given
-    apiService = new InfrastructureApiService("openshift", "not-openshift-identityProvider", infra);
+    apiService =
+        new InfrastructureApiService("openshift", false, "not-openshift-identityProvider", infra);
 
     // when
     Response response =
@@ -70,6 +73,53 @@ public class InfrastructureApiServiceTest {
 
     // then
     assertEquals(response.getStatusCode(), 403);
+  }
+
+  @Test
+  public void testResolvesCallWhenAllowedForKubernetesWithNonOpenshift() throws Exception {
+    // given
+    apiService =
+        new InfrastructureApiService("not-openshift", true, "openshift-identityProvider", infra);
+    when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
+        .thenReturn(
+            javax.ws.rs.core.Response.ok()
+                .header("Content-Type", "application/json; charset=utf-8")
+                .build());
+
+    // when
+    Response response =
+        given()
+            .contentType("application/json; charset=utf-8")
+            .when()
+            .get("/unsupported/k8s/nazdar/");
+
+    // then
+    assertEquals(response.getStatusCode(), 200);
+    assertEquals(response.getContentType(), "application/json;charset=utf-8");
+  }
+
+  @Test
+  public void testResolvesCallWhenAllowedForKubernetesWithNonOpenshiftIdentityProvider()
+      throws Exception {
+    // given
+    apiService =
+        new InfrastructureApiService("openshift", true, "not-openshift-identityProvider", infra);
+    when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
+        .thenReturn(
+            javax.ws.rs.core.Response.ok()
+                .header("Content-Type", "application/json; charset=utf-8")
+                .build());
+
+    // when
+    Response response =
+        given()
+            .contentType("application/json; charset=utf-8")
+            .when()
+            .get("/unsupported/k8s/nazdar/");
+
+    // then
+    assertEquals(response.getStatusCode(), 200);
+    assertEquals(response.getContentType(), "application/json;charset=utf-8");
   }
 
   @Test

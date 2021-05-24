@@ -24,7 +24,7 @@ import org.eclipse.che.commons.annotation.Nullable;
 public class KubernetesClientConfigFactory {
 
   /**
-   * Builds the Openshift {@link Config} object based on a default {@link Config} object and an
+   * Builds the Kubernetes {@link Config} object based on a default {@link Config} object and an
    * optional workspace Id.
    */
   public Config buildConfig(Config defaultConfig, @Nullable String workspaceId)

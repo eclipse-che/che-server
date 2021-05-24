@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
+import java.util.Optional;
 import javax.inject.Singleton;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -31,7 +32,7 @@ public class KubernetesOidcProviderConfigFactory extends KubernetesClientConfigF
 
   @Override
   public boolean isPersonalized() {
-    return true;
+    return getToken().isPresent();
   }
 
   /**
@@ -41,16 +42,23 @@ public class KubernetesOidcProviderConfigFactory extends KubernetesClientConfigF
    * <p>'token' can be passed in plain format or with 'Bearer ' prefix, when used from http headers.
    */
   public Config buildConfig(Config defaultConfig, @Nullable String workspaceId) {
-    String token = EnvironmentContext.getCurrent().getSubject().getToken();
-    if (token != null) {
-      LOG.debug("Creating token authenticated client");
-      if (token.toLowerCase().startsWith("bearer")) {
-        token = token.substring("Bearer ".length());
-      }
-      return new ConfigBuilder(defaultConfig).withOauthToken(token).build();
-    } else {
-      LOG.debug("NO TOKEN PASSED. Getting default client config.");
-      return defaultConfig;
-    }
+    return getToken()
+        .map(
+            (token) -> {
+              LOG.debug("Creating token authenticated client");
+              if (token.toLowerCase().startsWith("bearer")) {
+                token = token.substring("Bearer ".length());
+              }
+              return new ConfigBuilder(defaultConfig).withOauthToken(token).build();
+            })
+        .orElseGet(
+            () -> {
+              LOG.debug("NO TOKEN PASSED. Getting default client config.");
+              return defaultConfig;
+            });
+  }
+
+  private Optional<String> getToken() {
+    return Optional.ofNullable(EnvironmentContext.getCurrent().getSubject().getToken());
   }
 }

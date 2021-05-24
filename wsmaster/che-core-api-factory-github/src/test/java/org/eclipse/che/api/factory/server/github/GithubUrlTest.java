@@ -72,6 +72,6 @@ public class GithubUrlTest {
   /** Check the original repository */
   @Test
   public void checkRepositoryLocation() {
-    assertEquals(githubUrl.repositoryLocation(), "https://github.com/eclipse/che");
+    assertEquals(githubUrl.repositoryLocation(), "https://github.com/eclipse/che.git");
   }
 }

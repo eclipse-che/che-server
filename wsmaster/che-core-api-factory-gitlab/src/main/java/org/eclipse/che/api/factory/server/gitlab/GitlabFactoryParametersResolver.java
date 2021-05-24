@@ -25,9 +25,11 @@ import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
+import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
+import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
@@ -104,6 +106,18 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
 
     private GitlabFactoryVisitor(GitlabUrl gitlabUrl) {
       this.gitlabUrl = gitlabUrl;
+    }
+
+    @Override
+    public FactoryDevfileV2Dto visit(FactoryDevfileV2Dto factoryDto) {
+      ScmInfoDto scmInfo =
+          newDto(ScmInfoDto.class)
+              .withScmProviderName(gitlabUrl.getProviderName())
+              .withRepositoryUrl(gitlabUrl.repositoryLocation());
+      if (gitlabUrl.getBranch() != null) {
+        scmInfo.withBranch(gitlabUrl.getBranch());
+      }
+      return factoryDto.withScmInfo(scmInfo);
     }
 
     @Override

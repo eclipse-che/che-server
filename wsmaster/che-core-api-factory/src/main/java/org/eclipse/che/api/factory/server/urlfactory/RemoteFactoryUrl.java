@@ -20,6 +20,9 @@ import java.util.Optional;
  */
 public interface RemoteFactoryUrl {
 
+  /** Provider name for given URL. */
+  String getProviderName();
+
   /**
    * List of possible filenames and raw locations of devfile.
    *
@@ -32,6 +35,9 @@ public interface RemoteFactoryUrl {
 
   /** Remote hostname */
   String getHostName();
+
+  /** Remote branch */
+  String getBranch();
 
   /** Describes devfile location, including filename if any. */
   interface DevfileLocation {

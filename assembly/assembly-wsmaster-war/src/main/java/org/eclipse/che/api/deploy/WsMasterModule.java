@@ -411,9 +411,6 @@ public class WsMasterModule extends AbstractModule {
 
     bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
 
-    if (!Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      bind(AdminPermissionInitializer.class).asEagerSingleton();
-    }
     bind(
         org.eclipse.che.multiuser.permission.resource.filters.ResourceServicePermissionsFilter
             .class);
@@ -434,6 +431,7 @@ public class WsMasterModule extends AbstractModule {
     } else {
       install(new KeycloakModule());
       install(new KeycloakUserRemoverModule());
+      bind(AdminPermissionInitializer.class).asEagerSingleton();
       bind(RequestTokenExtractor.class).to(ChainedTokenExtractor.class);
     }
 

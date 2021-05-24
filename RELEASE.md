@@ -10,3 +10,4 @@ VERSION_CHE_PARENT - if RELEASE_CHE_PARENT is `true`, here the version of Che Pa
 REBUILD_FROM_EXISTING_TAGS - if `true`, release will not create new tag, but instead checkout to existing one. Use this to rerun failed attempts, without having to recreate the tag.
 BUILD_AND_PUSH_IMAGES - if `true`, will build all asociated images in [dockerfiles](https://github.com/eclipse/che/tree/master/dockerfiles) directory. Set `false`, if this step needs to be skipped.
 BUMP_NEXT_VERSION - if `true`, will increase the development versions in main and bugfix branches. Set false, if this step needs to be skipped
+ 

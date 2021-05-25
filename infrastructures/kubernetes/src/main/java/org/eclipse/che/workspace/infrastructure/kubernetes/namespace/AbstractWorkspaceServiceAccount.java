@@ -50,13 +50,13 @@ public abstract class AbstractWorkspaceServiceAccount<
 
   protected final String namespace;
   protected final String serviceAccountName;
-  protected final ClientFactory<Client> clientFactory;
-  protected final String workspaceId;
-  protected final Set<String> clusterRoleNames;
-  protected final Function<
+  private final ClientFactory<Client> clientFactory;
+  private final String workspaceId;
+  private final Set<String> clusterRoleNames;
+  private final Function<
           Client, MixedOperation<R, ? extends KubernetesResourceList<R>, ? extends Resource<R>>>
       roles;
-  protected final Function<
+  private final Function<
           Client, MixedOperation<B, ? extends KubernetesResourceList<B>, ? extends Resource<B>>>
       roleBindings;
 
@@ -154,9 +154,9 @@ public abstract class AbstractWorkspaceServiceAccount<
    * Creates workspace ServiceAccount ClusterRoleBindings that are defined in
    * 'che.infra.kubernetes.workspace_sa_cluster_roles' property.
    *
-   * @see KubernetesNamespaceFactory#KubernetesNamespaceFactory(String, String, String, String,
-   *     boolean, boolean, boolean, String, String, KubernetesClientFactory,
-   *     CheServerKubernetesClientFactory, UserManager, PreferenceManager, KubernetesSharedPool)
+   * @see KubernetesNamespaceFactory#KubernetesNamespaceFactory(String, String, String, boolean,
+   *     boolean, String, String, KubernetesClientFactory, CheServerKubernetesClientFactory,
+   *     UserManager, PreferenceManager, KubernetesSharedPool)
    */
   private void createExplicitClusterRoleBindings(Client k8sClient) {
     // If the user specified an additional cluster roles for the workspace,

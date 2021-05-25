@@ -19,6 +19,15 @@ import okhttp3.EventListener;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
 
+/**
+ * This {@link OpenShiftClientFactory} ensures that we use `che` ServiceAccount and not related to
+ * any workspace. It always provides client with default {@link Config}. It's useful for operations
+ * that needs permissions of `che` SA, such as operations inside `che` namespace (like projects) or
+ * some cluster-wide actions (like labeling the namespaces).
+ *
+ * <p>See also {@link
+ * org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory}
+ */
 public class CheServerOpenshiftClientFactory extends OpenShiftClientFactory {
   @Inject
   public CheServerOpenshiftClientFactory(

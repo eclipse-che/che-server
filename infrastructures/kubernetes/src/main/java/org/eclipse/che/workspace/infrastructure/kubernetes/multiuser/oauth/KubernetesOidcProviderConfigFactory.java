@@ -22,8 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class creates {@link Config} from given Kubernetes OIDC token. It does not guarantee that
- * token is valid.
+ * This class creates {@link Config} from Kubernetes OIDC token. It does not guarantee that token is
+ * valid.
  */
 @Singleton
 public class KubernetesOidcProviderConfigFactory extends KubernetesClientConfigFactory {
@@ -36,24 +36,15 @@ public class KubernetesOidcProviderConfigFactory extends KubernetesClientConfigF
   }
 
   /**
-   * Builds the OpenShift {@link Config} object based on a default {@link Config} object and given
-   * 'token'. It ignores 'workspaceId'.
-   *
-   * <p>'token' can be passed in plain format or with 'Bearer ' prefix, when used from http headers.
+   * Builds the OpenShift {@link Config} object based on a default {@link Config} object and token
+   * stored in {@link EnvironmentContext}. It ignores 'workspaceId'.
    */
   public Config buildConfig(Config defaultConfig, @Nullable String workspaceId) {
     return getToken()
-        .map(
-            (token) -> {
-              LOG.debug("Creating token authenticated client");
-              if (token.toLowerCase().startsWith("bearer")) {
-                token = token.substring("Bearer ".length());
-              }
-              return new ConfigBuilder(defaultConfig).withOauthToken(token).build();
-            })
+        .map((token) -> new ConfigBuilder(defaultConfig).withOauthToken(token).build())
         .orElseGet(
             () -> {
-              LOG.debug("NO TOKEN PASSED. Getting default client config.");
+              LOG.debug("NO TOKEN FOUND. Getting default client config.");
               return defaultConfig;
             });
   }

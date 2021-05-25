@@ -41,6 +41,13 @@ import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This filter uses given token directly. It's used for native OpenShift user authentication.
+ * Requests without token or with invalid token are rejected.
+ *
+ * <p>{@link OpenshiftTokenInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS} is list of
+ * unauthenticated paths, that are allowed without token.
+ */
 @Singleton
 public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInitializationFilter {
 
@@ -109,6 +116,10 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
     return userMeta.getName() + "@che";
   }
 
+  /**
+   * If request path is in {@link OpenshiftTokenInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS},
+   * the request is allowed. All other requests are rejected with error code 401.
+   */
   @Override
   protected void handleMissingToken(
       ServletRequest request, ServletResponse response, FilterChain chain)

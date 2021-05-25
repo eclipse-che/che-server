@@ -267,7 +267,7 @@ public class WsMasterModule extends AbstractModule {
     installDefaultSecureServerExposer(infrastructure);
     install(new org.eclipse.che.security.oauth1.BitbucketModule());
 
-    if (Boolean.parseBoolean(System.getenv("CHE_MULTIUSER"))) {
+    if (Boolean.valueOf(System.getenv("CHE_MULTIUSER"))) {
       configureMultiUserMode(persistenceProperties, infrastructure);
     } else {
       configureSingleUserMode(persistenceProperties, infrastructure);

@@ -9,22 +9,26 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
+package org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth;
 
 import static org.testng.Assert.assertEquals;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
-import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.KubernetesOidcProviderConfigFactory;
+import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.subject.SubjectImpl;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-public class OpenshiftProviderConfigFactoryTest {
+@Listeners(MockitoTestNGListener.class)
+public class KubernetesOidcProviderConfigFactoryTest {
   private static final String TEST_TOKEN = "touken";
 
   private Config defaultConfig;
 
-  private KubernetesOidcProviderConfigFactory openshiftProviderConfigFactory =
+  private KubernetesOidcProviderConfigFactory kubernetesOidcProviderConfigFactory =
       new KubernetesOidcProviderConfigFactory();
 
   @BeforeMethod
@@ -34,10 +38,18 @@ public class OpenshiftProviderConfigFactoryTest {
 
   @Test
   public void getDefaultConfigWhenNoTokenSet() {
-    Config resultConfig = openshiftProviderConfigFactory.buildConfig(defaultConfig, null);
+    Config resultConfig = kubernetesOidcProviderConfigFactory.buildConfig(defaultConfig, null);
 
     assertEquals(resultConfig, defaultConfig);
   }
 
-  // TODO: test set token in EnvironmentContext
+  @Test
+  public void test() {
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("test_name", "test_id", TEST_TOKEN, false));
+
+    Config resultConfig = kubernetesOidcProviderConfigFactory.buildConfig(defaultConfig, null);
+
+    assertEquals(resultConfig.getOauthToken(), TEST_TOKEN);
+  }
 }

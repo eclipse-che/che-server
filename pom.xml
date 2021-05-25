@@ -1483,6 +1483,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven.compiler.plugin.version}</version>
                     <configuration>
+                        <release>${java.target.version}</release>
                         <showDeprecation>true</showDeprecation>
                         <showWarnings>true</showWarnings>
                     </configuration>
@@ -1837,6 +1838,7 @@
                 </plugins>
             </build>
             <properties>
+                <sonar.branch.name>main</sonar.branch.name>
                 <sonar.host.url>https://sonarcloud.io</sonar.host.url>
                 <sonar.organization>eclipse</sonar.organization>
             </properties>

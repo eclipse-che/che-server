@@ -32,6 +32,8 @@ import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
  */
 public class GitlabUrl implements RemoteFactoryUrl {
 
+  private final String NAME = "gitlab";
+
   /** Hostname of the gitlab URL */
   private String hostName;
 
@@ -58,6 +60,11 @@ public class GitlabUrl implements RemoteFactoryUrl {
    * directly
    */
   protected GitlabUrl() {}
+
+  @Override
+  public String getProviderName() {
+    return NAME;
+  }
 
   /**
    * Gets hostname of this gitlab url

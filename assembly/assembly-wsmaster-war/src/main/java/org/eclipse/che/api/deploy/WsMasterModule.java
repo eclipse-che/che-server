@@ -419,9 +419,7 @@ public class WsMasterModule extends AbstractModule {
 
     bindConstant().annotatedWith(Names.named("che.agents.auth_enabled")).to(true);
 
-    if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
-      install(new InfraProxyModule());
-    }
+    install(new InfraProxyModule());
   }
 
   private void configureJwtProxySecureProvisioner(String infrastructure) {

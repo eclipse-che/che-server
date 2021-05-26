@@ -147,8 +147,11 @@ public class KubernetesClientFactory {
    *     infromation
    */
   public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
-    throw new InfrastructureException(
-        "Impersonating the current user is not supported in the Kubernetes Client.");
+    /*
+    Workaround to allow direct k8s API access on Kubernetes infrastructure,
+     since impersonating the current user is not supported in the Kubernetes Client.;.
+    */
+    return httpClient;
   }
 
   /**

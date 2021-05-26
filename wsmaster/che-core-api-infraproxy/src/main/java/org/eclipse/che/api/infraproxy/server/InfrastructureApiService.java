@@ -58,10 +58,10 @@ public class InfrastructureApiService extends Service {
 
   private static boolean determineAllowed(
       String infra, String identityProvider, boolean allowedForKubernetes) {
-    return ("openshift".equals(infra)
-            && identityProvider != null
-            && identityProvider.startsWith("openshift"))
-        || allowedForKubernetes;
+    if ("openshift".equals(infra)) {
+      return identityProvider != null && identityProvider.startsWith("openshift");
+    }
+    return allowedForKubernetes;
   }
 
   @Inject

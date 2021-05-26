@@ -99,11 +99,28 @@ public class InfrastructureApiServiceTest {
   }
 
   @Test
-  public void testResolvesCallWhenAllowedForKubernetesWithNonOpenshiftIdentityProvider()
+  public void testFailsAuthWhenAllowedForKubernetesOnOpenshiftWithNonOpenshiftIdentityProvider()
       throws Exception {
     // given
     apiService =
         new InfrastructureApiService("openshift", true, "not-openshift-identityProvider", infra);
+
+    // when
+    Response response =
+        given()
+            .contentType("application/json; charset=utf-8")
+            .when()
+            .get("/unsupported/k8s/nazdar/");
+
+    // then
+    assertEquals(response.getStatusCode(), 403);
+  }
+
+  @Test
+  public void testResolvesCallWhenAllowedForKubernetesOnKubernetes() throws Exception {
+    // given
+    apiService =
+        new InfrastructureApiService("kubernetes", true, "not-openshift-identityProvider", infra);
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
             javax.ws.rs.core.Response.ok()
@@ -120,6 +137,23 @@ public class InfrastructureApiServiceTest {
     // then
     assertEquals(response.getStatusCode(), 200);
     assertEquals(response.getContentType(), "application/json;charset=utf-8");
+  }
+
+  @Test
+  public void testFailsAuthWhenNotAllowedForKubernetesOnKubernetes() throws Exception {
+    // given
+    apiService =
+        new InfrastructureApiService("kubernetes", false, "not-openshift-identityProvider", infra);
+
+    // when
+    Response response =
+        given()
+            .contentType("application/json; charset=utf-8")
+            .when()
+            .get("/unsupported/k8s/nazdar/");
+
+    // then
+    assertEquals(response.getStatusCode(), 403);
   }
 
   @Test

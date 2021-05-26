@@ -145,7 +145,7 @@ public class OpenShiftProjectTest {
     verify(metadataNested, never()).withName(PROJECT_NAME);
   }
 
-  @Test(enabled = false)
+  @Test
   public void testOpenShiftProjectPreparingWhenProjectDoesNotExist() throws Exception {
     // given
     prepareNamespaceGet(PROJECT_NAME);
@@ -162,7 +162,7 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     // when
-    openShiftProject.prepare(true, true, Map.of());
+    openShiftProject.prepare(true, false, Map.of());
 
     // then
     ArgumentCaptor<ProjectRequest> captor = ArgumentCaptor.forClass(ProjectRequest.class);

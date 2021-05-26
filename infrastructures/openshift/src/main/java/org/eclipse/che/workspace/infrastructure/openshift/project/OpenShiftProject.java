@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.openshift.project;
 import static java.lang.String.format;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.ProjectRequestBuilder;
@@ -113,7 +114,10 @@ public class OpenShiftProject extends KubernetesNamespace {
       throws InfrastructureException {
     String workspaceId = getWorkspaceId();
     String projectName = getName();
+
+    KubernetesClient kubeClient = clientFactory.create(workspaceId);
     OpenShiftClient osClient = clientFactory.createOC(workspaceId);
+
     Project project = get(projectName, osClient);
 
     if (project == null) {
@@ -145,7 +149,7 @@ public class OpenShiftProject extends KubernetesNamespace {
                     .build());
       } else {
         create(projectName, osClient);
-        waitDefaultServiceAccount(projectName, osClient);
+        waitDefaultServiceAccount(projectName, kubeClient);
       }
     }
     label(osClient.namespaces().withName(projectName).get(), labels);

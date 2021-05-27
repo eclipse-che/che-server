@@ -27,6 +27,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableList;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
@@ -40,10 +41,8 @@ import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.ProjectBuilder;
 import io.fabric8.openshift.api.model.ProjectRequest;
 import io.fabric8.openshift.api.model.ProjectRequestFluent.MetadataNested;
-import io.fabric8.openshift.api.model.Role;
 import io.fabric8.openshift.api.model.RoleBinding;
 import io.fabric8.openshift.api.model.RoleBindingList;
-import io.fabric8.openshift.api.model.RoleList;
 import io.fabric8.openshift.api.model.UserBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.dsl.ProjectOperation;
@@ -96,13 +95,14 @@ public class OpenShiftProjectTest {
   @Mock private Resource<ServiceAccount> serviceAccountResource;
   @Mock private ProjectRequestOperation projectRequestOperation;
   @Mock private MetadataNested metadataNested;
+
   @Mock
   private MixedOperation<RoleBinding, RoleBindingList, Resource<RoleBinding>>
-          mixedRoleBindingOperation;
+      mixedRoleBindingOperation;
+
   @Mock
   private NonNamespaceOperation<RoleBinding, RoleBindingList, Resource<RoleBinding>>
-          nonNamespaceRoleBindingOperation;
-
+      nonNamespaceRoleBindingOperation;
 
   private OpenShiftProject openShiftProject;
 
@@ -111,7 +111,6 @@ public class OpenShiftProjectTest {
     lenient().when(clientFactory.create(anyString())).thenReturn(kubernetesClient);
     lenient().when(clientFactory.createOC()).thenReturn(openShiftClient);
     lenient().when(clientFactory.createOC(anyString())).thenReturn(openShiftClient);
-
 
     lenient().when(cheServerOpenshiftClientFactory.createOC()).thenReturn(openShiftCheServerClient);
 
@@ -190,7 +189,8 @@ public class OpenShiftProjectTest {
   }
 
   @Test
-  public void testOpenShiftProjectPreparingWhenProjectDoesNotExistWithCheServerSA() throws Exception {
+  public void testOpenShiftProjectPreparingWhenProjectDoesNotExistWithCheServerSA()
+      throws Exception {
     // given
     prepareNamespaceGet(PROJECT_NAME);
 
@@ -203,12 +203,13 @@ public class OpenShiftProjectTest {
     when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
     when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
     doReturn(projectRequestOperation).when(openShiftCheServerClient).projectrequests();
-    //doReturn(metadataNested).when(metadataNested).withName(anyString());
+    // doReturn(metadataNested).when(metadataNested).withName(anyString());
     when(openShiftCheServerClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
     lenient()
-            .when(mixedRoleBindingOperation.inNamespace(anyString()))
-            .thenReturn(nonNamespaceRoleBindingOperation);
-    when(openShiftClient.currentUser()).thenReturn(new UserBuilder().withNewMetadata().withName("user").endMetadata().build());
+        .when(mixedRoleBindingOperation.inNamespace(anyString()))
+        .thenReturn(nonNamespaceRoleBindingOperation);
+    when(openShiftClient.currentUser())
+        .thenReturn(new UserBuilder().withNewMetadata().withName("user").endMetadata().build());
     // when
     openShiftProject.prepare(true, true, Map.of());
 
@@ -218,6 +219,46 @@ public class OpenShiftProjectTest {
     Assert.assertEquals(captor.getValue().getMetadata().getName(), PROJECT_NAME);
     verifyNoMoreInteractions(openShiftCheServerClient);
     verifyZeroInteractions(kubernetesClient);
+    ArgumentCaptor<RoleBinding> roleBindingArgumentCaptor =
+        ArgumentCaptor.forClass(RoleBinding.class);
+    verify(nonNamespaceRoleBindingOperation).createOrReplace(roleBindingArgumentCaptor.capture());
+    assertNotNull(roleBindingArgumentCaptor.getValue());
+  }
+
+  @Test(dependsOnMethods = "testOpenShiftProjectPreparingWhenProjectDoesNotExistWithCheServerSA")
+  public void testOpenShiftProjectPreparingRoleBindingWhenProjectDoesNotExistWithCheServerSA()
+      throws Exception {
+    // given
+    prepareNamespaceGet(PROJECT_NAME);
+
+    Resource resource = prepareProjectResource(PROJECT_NAME);
+    doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
+    final MixedOperation mixedOperation = mock(MixedOperation.class);
+    final NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
+    doReturn(mixedOperation).when(openShiftCheServerClient).serviceAccounts();
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
+    when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
+    doReturn(projectRequestOperation).when(openShiftCheServerClient).projectrequests();
+    // doReturn(metadataNested).when(metadataNested).withName(anyString());
+    when(openShiftCheServerClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
+    lenient()
+        .when(mixedRoleBindingOperation.inNamespace(anyString()))
+        .thenReturn(nonNamespaceRoleBindingOperation);
+    when(openShiftClient.currentUser())
+        .thenReturn(new UserBuilder().withNewMetadata().withName("jdoe").endMetadata().build());
+    // when
+    openShiftProject.prepare(true, true, Map.of());
+
+    // then
+    ArgumentCaptor<RoleBinding> roleBindingArgumentCaptor =
+        ArgumentCaptor.forClass(RoleBinding.class);
+    verify(nonNamespaceRoleBindingOperation).createOrReplace(roleBindingArgumentCaptor.capture());
+    RoleBinding roleBinding = roleBindingArgumentCaptor.getValue();
+    assertNotNull(roleBinding);
+    assertEquals(roleBinding.getMetadata().getName(), "admin");
+    assertEquals(roleBinding.getRoleRef().getName(), "admin");
+    assertEquals(roleBinding.getUserNames(), ImmutableList.of("jdoe"));
   }
 
   @Test(expectedExceptions = InfrastructureException.class)

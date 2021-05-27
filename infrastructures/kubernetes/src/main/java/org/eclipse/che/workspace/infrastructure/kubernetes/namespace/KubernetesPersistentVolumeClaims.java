@@ -172,7 +172,7 @@ public class KubernetesPersistentVolumeClaims {
           .persistentVolumeClaims()
           .inNamespace(namespace)
           .withName(name)
-          .withPropagationPolicy("Background")
+          .withPropagationPolicy(BACKGROUND)
           .delete();
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);

@@ -20,6 +20,8 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -38,6 +40,11 @@ import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.ProjectBuilder;
 import io.fabric8.openshift.api.model.ProjectRequest;
 import io.fabric8.openshift.api.model.ProjectRequestFluent.MetadataNested;
+import io.fabric8.openshift.api.model.Role;
+import io.fabric8.openshift.api.model.RoleBinding;
+import io.fabric8.openshift.api.model.RoleBindingList;
+import io.fabric8.openshift.api.model.RoleList;
+import io.fabric8.openshift.api.model.UserBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.dsl.ProjectOperation;
 import io.fabric8.openshift.client.dsl.ProjectRequestOperation;
@@ -84,10 +91,18 @@ public class OpenShiftProjectTest {
   @Mock private CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
   @Mock private Executor executor;
   @Mock private OpenShiftClient openShiftClient;
+  @Mock private OpenShiftClient openShiftCheServerClient;
   @Mock private KubernetesClient kubernetesClient;
   @Mock private Resource<ServiceAccount> serviceAccountResource;
   @Mock private ProjectRequestOperation projectRequestOperation;
   @Mock private MetadataNested metadataNested;
+  @Mock
+  private MixedOperation<RoleBinding, RoleBindingList, Resource<RoleBinding>>
+          mixedRoleBindingOperation;
+  @Mock
+  private NonNamespaceOperation<RoleBinding, RoleBindingList, Resource<RoleBinding>>
+          nonNamespaceRoleBindingOperation;
+
 
   private OpenShiftProject openShiftProject;
 
@@ -96,6 +111,10 @@ public class OpenShiftProjectTest {
     lenient().when(clientFactory.create(anyString())).thenReturn(kubernetesClient);
     lenient().when(clientFactory.createOC()).thenReturn(openShiftClient);
     lenient().when(clientFactory.createOC(anyString())).thenReturn(openShiftClient);
+
+
+    lenient().when(cheServerOpenshiftClientFactory.createOC()).thenReturn(openShiftCheServerClient);
+
     lenient().when(openShiftClient.adapt(OpenShiftClient.class)).thenReturn(openShiftClient);
 
     final MixedOperation mixedOperation = mock(MixedOperation.class);
@@ -168,6 +187,37 @@ public class OpenShiftProjectTest {
     ArgumentCaptor<ProjectRequest> captor = ArgumentCaptor.forClass(ProjectRequest.class);
     verify(projectRequestOperation).create(captor.capture());
     Assert.assertEquals(captor.getValue().getMetadata().getName(), PROJECT_NAME);
+  }
+
+  @Test
+  public void testOpenShiftProjectPreparingWhenProjectDoesNotExistWithCheServerSA() throws Exception {
+    // given
+    prepareNamespaceGet(PROJECT_NAME);
+
+    Resource resource = prepareProjectResource(PROJECT_NAME);
+    doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
+    final MixedOperation mixedOperation = mock(MixedOperation.class);
+    final NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
+    doReturn(mixedOperation).when(openShiftCheServerClient).serviceAccounts();
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
+    when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
+    doReturn(projectRequestOperation).when(openShiftCheServerClient).projectrequests();
+    //doReturn(metadataNested).when(metadataNested).withName(anyString());
+    when(openShiftCheServerClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
+    lenient()
+            .when(mixedRoleBindingOperation.inNamespace(anyString()))
+            .thenReturn(nonNamespaceRoleBindingOperation);
+    when(openShiftClient.currentUser()).thenReturn(new UserBuilder().withNewMetadata().withName("user").endMetadata().build());
+    // when
+    openShiftProject.prepare(true, true, Map.of());
+
+    // then
+    ArgumentCaptor<ProjectRequest> captor = ArgumentCaptor.forClass(ProjectRequest.class);
+    verify(projectRequestOperation).create(captor.capture());
+    Assert.assertEquals(captor.getValue().getMetadata().getName(), PROJECT_NAME);
+    verifyNoMoreInteractions(openShiftCheServerClient);
+    verifyZeroInteractions(kubernetesClient);
   }
 
   @Test(expectedExceptions = InfrastructureException.class)

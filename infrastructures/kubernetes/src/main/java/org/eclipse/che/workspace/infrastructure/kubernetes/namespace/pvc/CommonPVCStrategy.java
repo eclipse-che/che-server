@@ -319,6 +319,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   /**
    * @return true, if a given user has no workspaces, false otherwise (or if the subject is
    *     anonymous)
+   * @throws RuntimeException
    */
   private boolean userHasNoWorkspaces() {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
@@ -331,11 +332,8 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
           return true;
         }
       } catch (ServerException e) {
-        log.error(
-            "Unable to get the number of workspaces for user '{}'. Cause: {}",
-            userId,
-            e.getMessage(),
-            e);
+        // should never happen
+        throw new RuntimeException(e.getLocalizedMessage(), e);
       }
     }
     return false;

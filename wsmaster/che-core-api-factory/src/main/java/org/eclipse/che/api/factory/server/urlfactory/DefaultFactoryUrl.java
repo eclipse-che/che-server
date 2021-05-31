@@ -26,6 +26,11 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
   private String devfileFileLocation;
 
   @Override
+  public String getProviderName() {
+    return "default";
+  }
+
+  @Override
   public List<DevfileLocation> devfileFileLocations() {
     return singletonList(
         new DevfileLocation() {
@@ -49,6 +54,11 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
   @Override
   public String getHostName() {
     return URI.create(devfileFileLocation).getHost();
+  }
+
+  @Override
+  public String getBranch() {
+    return null;
   }
 
   public DefaultFactoryUrl withDevfileFileLocation(String devfileFileLocation) {

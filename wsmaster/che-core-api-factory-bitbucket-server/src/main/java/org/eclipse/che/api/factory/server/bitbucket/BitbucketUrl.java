@@ -22,6 +22,8 @@ import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 /** Representation of a bitbucket URL, allowing to get details from it. */
 public class BitbucketUrl implements RemoteFactoryUrl {
 
+  private final String NAME = "bitbucket";
+
   /** Hostname of bitbucket URL */
   private String hostName;
 
@@ -42,6 +44,11 @@ public class BitbucketUrl implements RemoteFactoryUrl {
    * directly
    */
   protected BitbucketUrl() {}
+
+  @Override
+  public String getProviderName() {
+    return NAME;
+  }
 
   /**
    * Gets hostname of this bitbucket url

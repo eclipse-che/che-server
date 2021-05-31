@@ -176,6 +176,11 @@ public class URLFactoryBuilderTest {
     RemoteFactoryUrl githubLikeRemoteUrl =
         new RemoteFactoryUrl() {
           @Override
+          public String getProviderName() {
+            return null;
+          }
+
+          @Override
           public List<DevfileLocation> devfileFileLocations() {
             return Collections.singletonList(
                 new DevfileLocation() {
@@ -198,6 +203,11 @@ public class URLFactoryBuilderTest {
 
           @Override
           public String getHostName() {
+            return null;
+          }
+
+          @Override
+          public String getBranch() {
             return null;
           }
         };

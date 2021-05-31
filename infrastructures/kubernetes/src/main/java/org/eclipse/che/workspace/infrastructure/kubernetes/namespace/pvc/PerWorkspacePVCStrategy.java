@@ -22,7 +22,6 @@ import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
 /**
@@ -59,7 +58,7 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
       @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
-      @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
+      @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
       EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter,

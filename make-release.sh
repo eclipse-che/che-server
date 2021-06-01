@@ -13,7 +13,6 @@ DOCKER_FILES_LOCATIONS=(
     che/dockerfiles/postgres
     che/dockerfiles/dev
     che/dockerfiles/che
-    che/dockerfiles/e2e
 )
 
 IMAGES_LIST=(
@@ -22,7 +21,6 @@ IMAGES_LIST=(
     quay.io/eclipse/che-postgres
     quay.io/eclipse/che-dev
     quay.io/eclipse/che-server
-    quay.io/eclipse/che-e2e
 )
 
 loadMvnSettingsGpgKey() {
@@ -68,7 +66,7 @@ evaluateCheVariables() {
     echo "Branch: ${BRANCH}"
 
     if [[ ${CHE_VERSION} == *".0" ]]; then
-        BASEBRANCH="master"
+        BASEBRANCH="main"
     else
         BASEBRANCH="${BRANCH}"
     fi
@@ -81,7 +79,7 @@ checkoutProjects() {
     if [[ ${RELEASE_CHE_PARENT} = "true" ]]; then
         checkoutProject git@github.com:eclipse/che-parent
     fi
-    checkoutProject git@github.com:eclipse/che
+    checkoutProject git@github.com:eclipse-che/che-server
 }
 
 checkoutProject() {
@@ -156,7 +154,7 @@ commitChangeOrCreatePR() {
     PUSH_TRY="$(git push origin "${aBRANCH}")"
     # shellcheck disable=SC2181
     if [[ $? -gt 0 ]] || [[ $PUSH_TRY == *"protected branch hook declined"* ]]; then
-        # create pull request for master branch, as branch is restricted
+        # create pull request for main branch, as branch is restricted
         git branch "${PR_BRANCH}"
         git checkout "${PR_BRANCH}"
         git pull origin "${PR_BRANCH}"

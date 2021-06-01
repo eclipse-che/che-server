@@ -33,8 +33,9 @@ public class BitbucketServerScmFileResolver implements ScmFileResolver {
 
   @Inject
   public BitbucketServerScmFileResolver(
-      URLFetcher urlFetcher,
       BitbucketURLParser bitbucketURLParser,
+      URLFetcher urlFetcher,
+
       GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     this.urlFetcher = urlFetcher;

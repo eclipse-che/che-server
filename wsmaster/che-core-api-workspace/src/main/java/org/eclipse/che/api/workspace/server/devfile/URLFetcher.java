@@ -51,11 +51,11 @@ public class URLFetcher {
   /** The Compiled REGEX PATTERN that can be used for http|https git urls */
   final Pattern GIT_HTTP_URL_PATTERN = Pattern.compile("(?<sanitized>^http[s]?://.*)\\.git$");
 
-  /** Maximum size of allowed data.*/
+  /** Maximum size of allowed data. */
   protected long maximumReadBytes;
 
   @Inject
-  public  URLFetcher(@Named("che.factory.scm_file_fetcher_limit_bytes") long maxFetchBytes) {
+  public URLFetcher(@Named("che.factory.scm_file_fetcher_limit_bytes") long maxFetchBytes) {
     this.maximumReadBytes = maxFetchBytes;
   }
 

@@ -284,18 +284,16 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
    */
   private boolean userHasNoWorkspaces() {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
-    if (!subject.isAnonymous()) {
-      String userId = subject.getUserId();
-      try {
-        Page<WorkspaceImpl> workspaces = workspaceManager.getWorkspaces(userId, false, 1, 0);
-        if (workspaces.isEmpty()) {
-          log.debug("User '{}' has no more workspaces left", userId);
-          return true;
-        }
-      } catch (ServerException e) {
-        // should never happen
-        throw new RuntimeException(e.getLocalizedMessage(), e);
+    String userId = subject.getUserId();
+    try {
+      Page<WorkspaceImpl> workspaces = workspaceManager.getWorkspaces(userId, false, 1, 0);
+      if (workspaces.isEmpty()) {
+        log.debug("User '{}' has no more workspaces left", userId);
+        return true;
       }
+    } catch (ServerException e) {
+      // should never happen
+      throw new RuntimeException(e.getLocalizedMessage(), e);
     }
     return false;
   }

@@ -423,44 +423,6 @@ public class CommonPVCStrategyTest {
   }
 
   @Test
-  public void shouldNotDeleteCommonPVCIfSubjectIsAnonymous() throws Exception {
-    // given
-    Workspace workspace = mock(Workspace.class);
-    Page workspaces = mock(Page.class);
-    KubernetesPersistentVolumeClaims persistentVolumeClaims =
-        mock(KubernetesPersistentVolumeClaims.class);
-
-    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
-        .thenReturn((workspaces));
-    when(workspaces.isEmpty()).thenReturn(true);
-    when(workspace.getId()).thenReturn(WORKSPACE_ID);
-
-    WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    when(workspace.getConfig()).thenReturn(workspaceConfig);
-
-    Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
-    workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
-
-    KubernetesNamespace ns = mock(KubernetesNamespace.class);
-    when(factory.get(eq(workspace))).thenReturn(ns);
-    when(ns.getName()).thenReturn("ns");
-
-    EnvironmentContext context = new EnvironmentContext();
-    context.setSubject(Subject.ANONYMOUS);
-    EnvironmentContext.setCurrent(context);
-
-    // when
-    commonPVCStrategy.cleanup(workspace);
-
-    // then
-    verify(workspaceManager, never()).getWorkspaces(anyString(), eq(false), anyInt(), anyLong());
-    verify(ns, never()).persistentVolumeClaims();
-    verify(persistentVolumeClaims, never()).delete(PVC_NAME);
-    verify(pvcSubPathHelper).removeDirsAsync(WORKSPACE_ID, "ns", PVC_NAME, WORKSPACE_ID);
-  }
-
-  @Test
   public void shouldNotCheckTotalNumberOfWorkspacesIfDefaultNamespaceContainsPlaceholder()
       throws Exception {
     // given

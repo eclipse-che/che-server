@@ -278,11 +278,11 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   }
 
   /**
-   * @return true, if a given user has no workspaces, false otherwise (or if the subject is
-   *     anonymous)
-   * @throws RuntimeException
+   * @return true, if a given user has no workspaces, false otherwise
+   *
+   * @throws InfrastructureException
    */
-  private boolean userHasNoWorkspaces() {
+  private boolean userHasNoWorkspaces() throws InfrastructureException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
     String userId = subject.getUserId();
     try {
@@ -293,7 +293,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
       }
     } catch (ServerException e) {
       // should never happen
-      throw new RuntimeException(e.getLocalizedMessage(), e);
+      throw new InfrastructureException(e.getLocalizedMessage(), e);
     }
     return false;
   }

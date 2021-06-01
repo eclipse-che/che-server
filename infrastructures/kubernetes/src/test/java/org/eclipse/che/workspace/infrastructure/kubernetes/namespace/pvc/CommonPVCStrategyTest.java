@@ -295,18 +295,17 @@ public class CommonPVCStrategyTest {
     Workspace workspace = mock(Workspace.class);
     Page workspaces = mock(Page.class);
 
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    when(workspace.getId()).thenReturn(WORKSPACE_ID);
 
-    lenient()
-        .when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
         .thenReturn((workspaces));
-    lenient().when(workspaces.isEmpty()).thenReturn(false);
+    when(workspaces.isEmpty()).thenReturn(false);
 
     WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);
     when(factory.get(eq(workspace))).thenReturn(ns);
@@ -326,17 +325,16 @@ public class CommonPVCStrategyTest {
     Workspace workspace = mock(Workspace.class);
     Page workspaces = mock(Page.class);
 
-    lenient()
-        .when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
         .thenReturn((workspaces));
-    lenient().when(workspaces.isEmpty()).thenReturn(false);
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    when(workspaces.isEmpty()).thenReturn(false);
+    when(workspace.getId()).thenReturn(WORKSPACE_ID);
 
     WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
     workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);
@@ -358,17 +356,15 @@ public class CommonPVCStrategyTest {
     KubernetesPersistentVolumeClaims persistentVolumeClaims =
         mock(KubernetesPersistentVolumeClaims.class);
 
-    lenient()
-        .when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
         .thenReturn((workspaces));
-    lenient().when(workspaces.isEmpty()).thenReturn(true);
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    when(workspaces.isEmpty()).thenReturn(true);
 
     WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
     workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);
@@ -396,17 +392,17 @@ public class CommonPVCStrategyTest {
     KubernetesPersistentVolumeClaims persistentVolumeClaims =
         mock(KubernetesPersistentVolumeClaims.class);
 
-    lenient()
-        .when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
         .thenReturn((workspaces));
-    lenient().when(workspaces.isEmpty()).thenReturn(false);
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    when(workspaces.isEmpty()).thenReturn(false);
+    when(workspace.getId()).thenReturn(WORKSPACE_ID);
 
     WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
     workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);
@@ -434,17 +430,16 @@ public class CommonPVCStrategyTest {
     KubernetesPersistentVolumeClaims persistentVolumeClaims =
         mock(KubernetesPersistentVolumeClaims.class);
 
-    lenient()
-        .when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
         .thenReturn((workspaces));
-    lenient().when(workspaces.isEmpty()).thenReturn(true);
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    when(workspaces.isEmpty()).thenReturn(true);
+    when(workspace.getId()).thenReturn(WORKSPACE_ID);
 
     WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
     workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);

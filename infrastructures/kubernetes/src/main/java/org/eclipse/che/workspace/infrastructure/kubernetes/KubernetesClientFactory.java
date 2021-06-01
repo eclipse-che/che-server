@@ -151,7 +151,7 @@ public class KubernetesClientFactory {
    *     infromation
    */
   public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
-    return httpClient;
+    return createOkHttpClient(defaultConfig);
   }
 
   /**
@@ -220,6 +220,10 @@ public class KubernetesClientFactory {
    * config} parameter.
    */
   private KubernetesClient create(Config config) {
+    return new UnclosableKubernetesClient(createOkHttpClient(config), config);
+  }
+
+  private OkHttpClient createOkHttpClient(Config config) {
     OkHttpClient clientHttpClient =
         httpClient.newBuilder().authenticator(Authenticator.NONE).build();
     OkHttpClient.Builder builder = clientHttpClient.newBuilder();
@@ -233,7 +237,7 @@ public class KubernetesClientFactory {
 
     clientHttpClient = builder.build();
 
-    return new UnclosableKubernetesClient(clientHttpClient, config);
+    return clientHttpClient;
   }
 
   protected void initializeRequestTracing(OkHttpClient.Builder builder) {

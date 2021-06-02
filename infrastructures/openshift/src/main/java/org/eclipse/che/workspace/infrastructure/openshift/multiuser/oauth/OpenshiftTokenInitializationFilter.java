@@ -106,6 +106,9 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
 
   private io.fabric8.openshift.api.model.User getCurrentUser(String token)
       throws InfrastructureException {
+    // We're effectively creating new client for each request. It might be a good idea to somehow
+    // cache the client or user object. However, it may require non-trivial refactoring which may
+    // be unnecessary. Keeping it as is for now to avoid premature optimization.
     OpenShiftClient client = clientFactory.createAuthenticatedClient(token);
     return client.currentUser();
   }

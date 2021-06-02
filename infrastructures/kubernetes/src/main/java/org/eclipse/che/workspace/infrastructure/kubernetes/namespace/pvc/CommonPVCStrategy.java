@@ -279,7 +279,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
 
   /**
    * @return true, if a given user has no workspaces, false otherwise
-   *
    * @throws InfrastructureException
    */
   private boolean userHasNoWorkspaces() throws InfrastructureException {

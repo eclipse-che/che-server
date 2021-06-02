@@ -50,7 +50,6 @@ import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
@@ -392,7 +391,6 @@ public class CommonPVCStrategyTest {
     KubernetesPersistentVolumeClaims persistentVolumeClaims =
         mock(KubernetesPersistentVolumeClaims.class);
 
-
     when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
         .thenReturn((workspaces));
     when(workspaces.isEmpty()).thenReturn(false);
@@ -420,53 +418,6 @@ public class CommonPVCStrategyTest {
     verify(ns, never()).persistentVolumeClaims();
     verify(persistentVolumeClaims, never()).delete(PVC_NAME);
     verify(pvcSubPathHelper).removeDirsAsync(WORKSPACE_ID, "ns", PVC_NAME, WORKSPACE_ID);
-  }
-
-  @Test
-  public void shouldNotCheckTotalNumberOfWorkspacesIfDefaultNamespaceContainsPlaceholder()
-      throws Exception {
-    // given
-    commonPVCStrategy =
-        new CommonPVCStrategy(
-            PVC_NAME,
-            PVC_QUANTITY,
-            PVC_ACCESS_MODE,
-            true,
-            PVC_STORAGE_CLASS_NAME,
-            false, // wait bound PVCs
-            DEFAULT_NAMESPACE_WITH_PLACEHOLDER,
-            pvcSubPathHelper,
-            factory,
-            ephemeralWorkspaceAdapter,
-            volumeConverter,
-            podsVolumes,
-            subpathPrefixes,
-            workspaceManager);
-    Workspace workspace = mock(Workspace.class);
-    Page workspaces = mock(Page.class);
-    KubernetesPersistentVolumeClaims persistentVolumeClaims =
-        mock(KubernetesPersistentVolumeClaims.class);
-
-    lenient()
-        .when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
-        .thenReturn((workspaces));
-    lenient().when(workspaces.isEmpty()).thenReturn(false);
-
-    WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
-
-    Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
-    workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
-
-    KubernetesNamespace ns = mock(KubernetesNamespace.class);
-    when(factory.get(eq(workspace))).thenReturn(ns);
-
-    // when
-    commonPVCStrategy.cleanup(workspace);
-
-    // then
-    verify(workspaceManager, never()).getWorkspacesTotalCount();
   }
 
   @Test

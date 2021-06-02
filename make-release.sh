@@ -8,11 +8,11 @@ ORGANIZATION="eclipse"
 
  # KEEP RIGHT ORDER!!!
 DOCKER_FILES_LOCATIONS=(
-    che/dockerfiles/endpoint-watcher
-    che/dockerfiles/keycloak
-    che/dockerfiles/postgres
-    che/dockerfiles/dev
-    che/dockerfiles/che
+    che-server/dockerfiles/endpoint-watcher
+    che-server/dockerfiles/keycloak
+    che-server/dockerfiles/postgres
+    che-server/dockerfiles/dev
+    che-server/dockerfiles/che
 )
 
 IMAGES_LIST=(
@@ -169,7 +169,7 @@ createTags() {
     if [[ $RELEASE_CHE_PARENT = "true" ]]; then
         tagAndCommit che-parent
     fi
-    tagAndCommit che
+    tagAndCommit che-server
 }
 
 tagAndCommit() {

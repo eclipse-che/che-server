@@ -128,7 +128,7 @@ jobs:
           set -e
           # determine which OS we're using: rhel or ubuntu
           cat /etc/os-release || true
-          ./che/make-release.sh
+          ./che-server/make-release.sh
       - name: Create GH Release
         id: create_release
         uses: ncipollo/release-action@v1.8.0

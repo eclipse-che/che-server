@@ -113,7 +113,7 @@ checkoutTags() {
         git checkout ${CHE_VERSION}
         cd ..
     fi
-    cd che
+    cd che-server
     git checkout ${CHE_VERSION}
     cd ..
 }
@@ -203,7 +203,7 @@ prepareRelease() {
         echo "[INFO] Che Parent version has been updated to ${VERSION_CHE_PARENT}"
     fi
 
-    pushd che >/dev/null
+    pushd che-server >/dev/null
         if [[ $RELEASE_CHE_PARENT = "true" ]]; then
             mvn versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=false -DparentVersion=[${VERSION_CHE_PARENT}]
         fi
@@ -256,7 +256,7 @@ releaseCheServer() {
         popd >/dev/null
     fi
 
-    pushd che >/dev/null
+    pushd che-server >/dev/null
     rm -f $tmpmvnlog || true
     set +e
     mvn clean install -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
@@ -366,7 +366,7 @@ bumpVersion() {
         popd >/dev/null
     fi
 
-    pushd che >/dev/null
+    pushd che-server >/dev/null
         git checkout $2
         if [[ $RELEASE_CHE_PARENT = "true" ]]; then
             mvn versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=true -DparentVersion=[${VERSION_CHE_PARENT}]
@@ -384,7 +384,7 @@ bumpVersion() {
 }
 
 updateImageTagsInCheServer() {
-    cd che
+    cd che-server
     git checkout ${BRANCH}
     cd .ci
     ./set_tag_version_images.sh ${CHE_VERSION}

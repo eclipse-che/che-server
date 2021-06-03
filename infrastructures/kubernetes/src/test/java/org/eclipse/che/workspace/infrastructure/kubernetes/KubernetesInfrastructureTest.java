@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 import io.fabric8.kubernetes.client.Config;
 import java.net.URI;
 import java.util.Collections;
-import javax.ws.rs.core.HttpHeaders;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
@@ -52,8 +51,7 @@ public class KubernetesInfrastructureTest {
   public void testUsesAuthenticatedKubernetesClient() throws Exception {
     // when
     try {
-      infra.sendDirectInfrastructureRequest(
-          "GET", URI.create("somewhere/over/the/rainbow"), mock(HttpHeaders.class), null);
+      infra.sendDirectInfrastructureRequest("GET", URI.create("somewhere/over/the/rainbow"), null);
     } catch (Exception e) {
       // we don't care that this fails, because it fails during the execution of the HTTP request
       // that we intentionally don't set up fully.

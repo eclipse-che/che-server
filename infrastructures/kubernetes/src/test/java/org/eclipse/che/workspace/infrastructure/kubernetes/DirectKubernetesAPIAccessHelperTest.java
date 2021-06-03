@@ -55,13 +55,13 @@ public class DirectKubernetesAPIAccessHelperTest {
   @Test(expectedExceptions = InfrastructureException.class)
   public void testFailsOnAbsoluteUrlSuppliedAsRelative() throws Exception {
     DirectKubernetesAPIAccessHelper.call(
-        "https://master/", client, "GET", URI.create("https://not-this-way"), headers, null);
+        "https://master/", client, "GET", URI.create("https://not-this-way"), null);
   }
 
   @Test(expectedExceptions = InfrastructureException.class)
   public void testFailsOnOpaqueUrlSuppliedAsRelative() throws Exception {
     DirectKubernetesAPIAccessHelper.call(
-        "https://master/", client, "GET", URI.create("opaque:not-this-way"), headers, null);
+        "https://master/", client, "GET", URI.create("opaque:not-this-way"), null);
   }
 
   @Test
@@ -75,7 +75,6 @@ public class DirectKubernetesAPIAccessHelperTest {
         client,
         "POST",
         URI.create("somewhere/over/the/rainbow"),
-        headers,
         new ByteArrayInputStream(
             "Žluťoučký kůň úpěl ďábelské ódy.".getBytes(StandardCharsets.UTF_8)));
 
@@ -110,7 +109,6 @@ public class DirectKubernetesAPIAccessHelperTest {
             client,
             "POST",
             URI.create("somewhere/over/the/rainbow"),
-            headers,
             new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8)));
 
     // then
@@ -136,7 +134,6 @@ public class DirectKubernetesAPIAccessHelperTest {
             client,
             "POST",
             URI.create("somewhere/over/the/rainbow"),
-            headers,
             new ByteArrayInputStream(
                 "Žluťoučký kůň úpěl ďábelské ódy.".getBytes(StandardCharsets.UTF_16BE)));
 
@@ -168,7 +165,6 @@ public class DirectKubernetesAPIAccessHelperTest {
         client,
         "POST",
         URI.create("somewhere/over/the/rainbow"),
-        headers,
         new ByteArrayInputStream(
             "Žluťoučký kůň úpěl ďábelské ódy.".getBytes(StandardCharsets.UTF_16BE)));
 
@@ -199,7 +195,6 @@ public class DirectKubernetesAPIAccessHelperTest {
             client,
             "POST",
             URI.create("somewhere/over/the/rainbow"),
-            headers,
             new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8)));
 
     // then
@@ -221,7 +216,6 @@ public class DirectKubernetesAPIAccessHelperTest {
             client,
             "POST",
             URI.create("somewhere/over/the/rainbow"),
-            headers,
             new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8)));
 
     // then
@@ -238,7 +232,7 @@ public class DirectKubernetesAPIAccessHelperTest {
     // when
     javax.ws.rs.core.Response response =
         DirectKubernetesAPIAccessHelper.call(
-            "https://master/", client, "GET", URI.create("somewhere/over/the/rainbow"), null, null);
+            "https://master/", client, "GET", URI.create("somewhere/over/the/rainbow"), null);
 
     // then
     assertEquals(200, response.getStatus());

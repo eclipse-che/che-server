@@ -16,6 +16,7 @@ import static java.util.Collections.emptyList;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.Toleration;
 import java.util.List;
 import javax.inject.Inject;
@@ -52,6 +53,12 @@ public class TolerationsProvisioner implements ConfigurationProvisioner {
       throws InfrastructureException {
     if (!tolerations.isEmpty()) {
       k8sEnv.getPodsData().values().forEach(d -> d.getSpec().setTolerations(tolerations));
+    }
+  }
+
+  public void provision(PodSpec podSpec) {
+    if (!tolerations.isEmpty()) {
+      podSpec.setTolerations(tolerations);
     }
   }
 }

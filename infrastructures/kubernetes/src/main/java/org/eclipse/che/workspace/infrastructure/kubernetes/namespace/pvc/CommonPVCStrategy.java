@@ -237,11 +237,15 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   public void cleanup(Workspace workspace) throws InfrastructureException {
     if (EphemeralWorkspaceUtility.isEphemeral(workspace)) {
       return;
-    } else if (userHasNoWorkspaces(((WorkspaceImpl) workspace).getAccount())) {
+    }
+
+    AccountImpl account = ((WorkspaceImpl) workspace).getAccount();
+    if (isPersonalAccount(account) && accountHasNoWorkspaces(account)) {
       log.debug("Deleting the common PVC: '{}',", configuredPVCName);
       deleteCommonPVC(workspace);
       return;
     }
+
     String workspaceId = workspace.getId();
     PersistentVolumeClaim pvc = createCommonPVC(workspaceId);
     pvcSubPathHelper.removeDirsAsync(
@@ -276,18 +280,24 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   }
 
   /**
-   * @return true, if a given user has no workspaces, false otherwise
+   * @param account the account of interest
+   * @return true, if the given account is a personal account, false otherwise
+   */
+  private boolean isPersonalAccount(AccountImpl account) {
+    return PERSONAL_ACCOUNT.equals(account.getType());
+  }
+
+  /**
+   * @param account the account of interest
+   * @return true, if the given account has no workspaces, false otherwise
    * @throws InfrastructureException
    */
-  private boolean userHasNoWorkspaces(AccountImpl account) throws InfrastructureException {
+  private boolean accountHasNoWorkspaces(AccountImpl account) throws InfrastructureException {
     try {
-      if (PERSONAL_ACCOUNT.equals(account.getType())) {
-        Page<WorkspaceImpl> workspaces =
-            workspaceManager.getWorkspaces(account.getId(), false, 1, 0);
-        if (workspaces.isEmpty()) {
-          log.debug("User '{}' has no more workspaces left", account.getId());
-          return true;
-        }
+      Page<WorkspaceImpl> workspaces = workspaceManager.getWorkspaces(account.getId(), false, 1, 0);
+      if (workspaces.isEmpty()) {
+        log.debug("User '{}' has no more workspaces left", account.getId());
+        return true;
       }
     } catch (ServerException e) {
       // should never happen

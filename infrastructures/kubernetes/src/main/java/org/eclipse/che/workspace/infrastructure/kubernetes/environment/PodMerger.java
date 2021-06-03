@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.PodSecurityContext;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.PodTemplateSpec;
+import io.fabric8.kubernetes.api.model.Toleration;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
@@ -154,8 +155,13 @@ public class PodMerger {
 
       // if there are entries with such keys then values will be overridden
       baseSpec.getAdditionalProperties().putAll(podData.getSpec().getAdditionalProperties());
+
       // add tolerations to baseSpec if any
-      baseSpec.getTolerations().addAll(podData.getSpec().getTolerations());
+      for (Toleration toleration : podData.getSpec().getTolerations()) {
+        if (!baseSpec.getTolerations().contains(toleration)) {
+          baseSpec.getTolerations().add(toleration);
+        }
+      }
     }
 
     Map<String, String> matchLabels = new HashMap<>();

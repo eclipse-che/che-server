@@ -33,6 +33,7 @@ import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -131,7 +132,9 @@ public class PodMergerTest {
             .withVolumes(new VolumeBuilder().withName("v2").build())
             .withNodeSelector(Map.of("foo2", "bar2"))
             .withImagePullSecrets(new LocalObjectReferenceBuilder().withName("secret2").build())
-            .withTolerations(new Toleration("Effect", "key", "operator", 0L, "value2"))
+            .withTolerations(
+                new Toleration("Effect", "key", "operator", 0L, "value1"),
+                new Toleration("Effect", "key", "operator", 0L, "value2"))
             .build();
     podSpec2.setAdditionalProperty("add2", 2L);
     PodData podData2 = new PodData(podSpec2, new ObjectMetaBuilder().build());
@@ -452,5 +455,6 @@ public class PodMergerTest {
             .entrySet()
             .containsAll(toCheck.getAdditionalProperties().entrySet()));
     assertTrue(source.getTolerations().containsAll(toCheck.getTolerations()));
+    assertEquals(toCheck.getTolerations().size(), new HashSet<>(toCheck.getTolerations()).size());
   }
 }

@@ -57,7 +57,6 @@ public class PerWorkspacePVCStrategyTest {
   private static final String WORKSPACE_ID = "workspace123";
   private static final String INFRA_NAMESPACE = "infraNamespace";
   private static final String PVC_NAME_PREFIX = "che-claim";
-  private static final String DEFAULT_NAMESPACE_WITH_PLACEHOLDER = "<username>-che";
 
   private static final String PVC_QUANTITY = "10Gi";
   private static final String PVC_ACCESS_MODE = "RWO";
@@ -89,7 +88,6 @@ public class PerWorkspacePVCStrategyTest {
             true,
             PVC_STORAGE_CLASS_NAME,
             true,
-            DEFAULT_NAMESPACE_WITH_PLACEHOLDER,
             pvcSubPathHelper,
             factory,
             ephemeralWorkspaceAdapter,
@@ -137,7 +135,6 @@ public class PerWorkspacePVCStrategyTest {
             true,
             PVC_STORAGE_CLASS_NAME,
             false,
-            DEFAULT_NAMESPACE_WITH_PLACEHOLDER,
             pvcSubPathHelper,
             factory,
             ephemeralWorkspaceAdapter,
@@ -189,7 +186,6 @@ public class PerWorkspacePVCStrategyTest {
               true,
               storageClassName,
               true,
-              DEFAULT_NAMESPACE_WITH_PLACEHOLDER,
               pvcSubPathHelper,
               factory,
               ephemeralWorkspaceAdapter,

@@ -15,6 +15,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
+import static org.eclipse.che.api.user.server.UserManager.PERSONAL_ACCOUNT;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newPVC;
 
 import com.google.inject.Inject;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Named;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
@@ -31,10 +33,7 @@ import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.annotation.Traced;
-import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.tracing.TracingTags;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
@@ -112,7 +111,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
       @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
-      @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
       EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter,
@@ -239,7 +237,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   public void cleanup(Workspace workspace) throws InfrastructureException {
     if (EphemeralWorkspaceUtility.isEphemeral(workspace)) {
       return;
-    } else if (userHasNoWorkspaces()) {
+    } else if (userHasNoWorkspaces(((WorkspaceImpl) workspace).getAccount())) {
       log.debug("Deleting the common PVC: '{}',", configuredPVCName);
       deleteCommonPVC(workspace);
       return;
@@ -281,14 +279,15 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
    * @return true, if a given user has no workspaces, false otherwise
    * @throws InfrastructureException
    */
-  private boolean userHasNoWorkspaces() throws InfrastructureException {
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
-    String userId = subject.getUserId();
+  private boolean userHasNoWorkspaces(AccountImpl account) throws InfrastructureException {
     try {
-      Page<WorkspaceImpl> workspaces = workspaceManager.getWorkspaces(userId, false, 1, 0);
-      if (workspaces.isEmpty()) {
-        log.debug("User '{}' has no more workspaces left", userId);
-        return true;
+      if (PERSONAL_ACCOUNT.equals(account.getType())) {
+        Page<WorkspaceImpl> workspaces =
+            workspaceManager.getWorkspaces(account.getId(), false, 1, 0);
+        if (workspaces.isEmpty()) {
+          log.debug("User '{}' has no more workspaces left", account.getId());
+          return true;
+        }
       }
     } catch (ServerException e) {
       // should never happen

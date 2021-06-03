@@ -25,7 +25,9 @@ import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
+import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
+import org.eclipse.che.commons.lang.Pair;
 
 /**
  * Helper class for creation links.
@@ -43,7 +45,11 @@ public class FactoryLinksHelper {
    * @return list of factory links
    */
   public static List<Link> createLinks(
-      FactoryMetaDto factory, ServiceContext serviceContext, String userName) {
+      FactoryMetaDto factory,
+      ServiceContext serviceContext,
+      AdditionalFilenamesProvider additionalFilenamesProvider,
+      String userName,
+      String repositoryUrl) {
     final List<Link> links = new LinkedList<>();
     final UriBuilder uriBuilder = serviceContext.getServiceUriBuilder();
     final String factoryId = factory.getId();
@@ -87,6 +93,24 @@ public class FactoryLinksHelper {
               TEXT_HTML,
               NAMED_FACTORY_ACCEPTANCE_REL_ATT);
       links.add(createWorkspaceFromNamedFactory);
+    }
+
+    if (factory instanceof FactoryDevfileV2Dto) {
+      for (String additionalFile : additionalFilenamesProvider.get()) {
+        links.add(
+            createLink(
+                HttpMethod.GET,
+                uriBuilder
+                    .clone()
+                    .replacePath("api")
+                    .path(ScmFileResolverService.class)
+                    .path(ScmFileResolverService.class, "resolveFile")
+                    .queryParam("repository", repositoryUrl)
+                    .queryParam("file", additionalFile)
+                    .build(factoryId)
+                    .toString(),
+                "additional resource"));
+      }
     }
     return links;
   }

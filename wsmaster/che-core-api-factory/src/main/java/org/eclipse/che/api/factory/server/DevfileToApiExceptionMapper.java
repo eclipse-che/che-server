@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2012-2021 Red Hat, Inc.
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Red Hat, Inc. - initial API and implementation
+ */
 package org.eclipse.che.api.factory.server;
 
 import java.util.Map;
@@ -15,21 +26,24 @@ public class DevfileToApiExceptionMapper {
 
   public static ApiException toApiException(DevfileException devfileException) {
     ApiException cause = getApiException(devfileException);
-    return (cause != null) ? cause :
-        new BadRequestException(
+    return (cause != null)
+        ? cause
+        : new BadRequestException(
             "Error occurred during file content retrieval."
                 + "Cause: "
                 + devfileException.getMessage());
   }
 
-  public static ApiException toApiException(DevfileException devfileException, DevfileLocation location) {
+  public static ApiException toApiException(
+      DevfileException devfileException, DevfileLocation location) {
     ApiException cause = getApiException(devfileException);
-    return (cause != null) ? cause :
-     new BadRequestException(
-        "Error occurred during creation a workspace from devfile located at `"
-            + location.location()
-            + "`. Cause: "
-            + devfileException.getMessage());
+    return (cause != null)
+        ? cause
+        : new BadRequestException(
+            "Error occurred during creation a workspace from devfile located at `"
+                + location.location()
+                + "`. Cause: "
+                + devfileException.getMessage());
   }
 
   private static ApiException getApiException(DevfileException devfileException) {
@@ -54,6 +68,4 @@ public class DevfileToApiExceptionMapper {
     }
     return null;
   }
-
-
 }

@@ -23,13 +23,11 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
+/** GitLab specific SCM file resolver. */
 public class GitlabScmFileResolver implements ScmFileResolver {
 
-  /** Parser which will allow to check validity of URLs and create objects. */
-  private GitlabUrlParser gitlabUrlParser;
-
-  private URLFetcher urlFetcher;
-
+  private final GitlabUrlParser gitlabUrlParser;
+  private final URLFetcher urlFetcher;
   private final GitCredentialManager gitCredentialManager;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
@@ -56,7 +54,8 @@ public class GitlabScmFileResolver implements ScmFileResolver {
 
     try {
       return new GitlabAuthorizingFileContentProvider(
-          gitlabUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager).fetchContent(filePath);
+              gitlabUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
+          .fetchContent(filePath);
     } catch (IOException e) {
       throw new NotFoundException("Unable to retrieve file from given location.");
     } catch (DevfileException devfileException) {

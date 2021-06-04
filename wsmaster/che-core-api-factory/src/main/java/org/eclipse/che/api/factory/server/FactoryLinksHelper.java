@@ -27,7 +27,6 @@ import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
-import org.eclipse.che.commons.lang.Pair;
 
 /**
  * Helper class for creation links.

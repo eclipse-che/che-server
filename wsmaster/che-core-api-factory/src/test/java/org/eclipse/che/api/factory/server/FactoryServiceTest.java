@@ -57,7 +57,6 @@ import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
@@ -130,8 +129,12 @@ public class FactoryServiceTest {
     lenient()
         .when(preferenceManager.find(USER_ID))
         .thenReturn(ImmutableMap.of("preference", "value"));
-    service = new FactoryService(userManager, acceptValidator, factoryParametersResolverHolder,
-        additionalFilenamesProvider);
+    service =
+        new FactoryService(
+            userManager,
+            acceptValidator,
+            factoryParametersResolverHolder,
+            additionalFilenamesProvider);
   }
 
   @Filter
@@ -168,8 +171,8 @@ public class FactoryServiceTest {
         .when(dummyHolder)
         .getFactoryParametersResolver(anyMap());
     // service instance with dummy holder
-    service = new FactoryService(userManager, acceptValidator, dummyHolder,
-        additionalFilenamesProvider);
+    service =
+        new FactoryService(userManager, acceptValidator, dummyHolder, additionalFilenamesProvider);
 
     // invalid factory
     final String invalidFactoryMessage = "invalid factory";

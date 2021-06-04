@@ -25,7 +25,8 @@ public class AdditionalFilenamesProvider {
   private final List<String> filenames;
 
   @Inject
-  public AdditionalFilenamesProvider(@Named("che.factory.additional_files_list") String additionalFilenamesString) {
+  public AdditionalFilenamesProvider(
+      @Named("che.factory.additional_files_list") String additionalFilenamesString) {
     this.filenames = Splitter.on(",").splitToList(additionalFilenamesString);
   }
 

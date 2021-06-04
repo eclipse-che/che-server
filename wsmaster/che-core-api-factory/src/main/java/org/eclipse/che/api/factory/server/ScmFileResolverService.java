@@ -12,6 +12,10 @@
 package org.eclipse.che.api.factory.server;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import java.util.Set;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -27,10 +31,17 @@ public class ScmFileResolverService extends Service {
 
   @GET
   @Path("/resolve")
+  @ApiOperation(value = "Get file content by specific repository and filename.")
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Factory successfully built from parameters"),
+      @ApiResponse(code = 400, message = "Missed required parameters."),
+      @ApiResponse(code = 404, message = "Requested file not found."),
+      @ApiResponse(code = 500, message = "Internal server error")
+  })
   public Response resolveFile(
-      @QueryParam("repository") String repository, @QueryParam("file") String filePath)
+      @ApiParam(value = "Repository URL") @QueryParam("repository") String repository,
+      @ApiParam(value = "File name or path") @QueryParam("file") String filePath)
       throws ApiException {
-
     requireNonNull(repository, "Repository");
     requireNonNull(repository, "File");
     String content = getScmFileResolver(repository).fileContent(repository, filePath);

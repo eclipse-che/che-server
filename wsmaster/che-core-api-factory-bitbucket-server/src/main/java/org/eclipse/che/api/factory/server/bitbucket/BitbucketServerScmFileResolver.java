@@ -23,19 +23,18 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
+/** Bitbucket specific SCM file resolver. */
 public class BitbucketServerScmFileResolver implements ScmFileResolver {
 
-  private URLFetcher urlFetcher;
-
-  private BitbucketURLParser bitbucketURLParser;
-  private GitCredentialManager gitCredentialManager;
-  private PersonalAccessTokenManager personalAccessTokenManager;
+  private final URLFetcher urlFetcher;
+  private final BitbucketURLParser bitbucketURLParser;
+  private final GitCredentialManager gitCredentialManager;
+  private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
   public BitbucketServerScmFileResolver(
       BitbucketURLParser bitbucketURLParser,
       URLFetcher urlFetcher,
-
       GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     this.urlFetcher = urlFetcher;
@@ -56,7 +55,8 @@ public class BitbucketServerScmFileResolver implements ScmFileResolver {
 
     try {
       return new BitbucketServerAuthorizingFileContentProvider(
-          bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager).fetchContent(filePath);
+              bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
+          .fetchContent(filePath);
     } catch (IOException e) {
       throw new NotFoundException("Unable to retrieve file from given location.");
     } catch (DevfileException devfileException) {

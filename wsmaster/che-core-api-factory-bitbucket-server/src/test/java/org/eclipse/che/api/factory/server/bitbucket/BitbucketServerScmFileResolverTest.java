@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2012-2021 Red Hat, Inc.
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Red Hat, Inc. - initial API and implementation
+ */
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -19,20 +30,17 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-
 @Listeners(MockitoTestNGListener.class)
 public class BitbucketServerScmFileResolverTest {
 
   public static final String SCM_URL = "https://foo.bar";
   BitbucketURLParser bitbucketURLParser;
 
-  @Mock
-  private URLFetcher urlFetcher;
+  @Mock private URLFetcher urlFetcher;
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
-  @Mock
-  private GitCredentialManager gitCredentialManager;
+  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   private BitbucketServerScmFileResolver serverScmFileResolver;
@@ -43,10 +51,7 @@ public class BitbucketServerScmFileResolverTest {
     assertNotNull(this.bitbucketURLParser);
     serverScmFileResolver =
         new BitbucketServerScmFileResolver(
-            bitbucketURLParser,
-            urlFetcher,
-            gitCredentialManager,
-            personalAccessTokenManager);
+            bitbucketURLParser, urlFetcher, gitCredentialManager, personalAccessTokenManager);
     assertNotNull(this.serverScmFileResolver);
   }
 
@@ -73,10 +78,9 @@ public class BitbucketServerScmFileResolverTest {
 
     when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
 
-    String content = serverScmFileResolver
-        .fileContent("httpsf://foo.bar/scm/test/repo.git", filename);
+    String content =
+        serverScmFileResolver.fileContent("https://foo.bar/scm/test/repo.git", filename);
 
     assertEquals(content, rawContent);
-
   }
 }

@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
-
 import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toApiException;
 
 import java.io.IOException;
@@ -23,12 +22,11 @@ import org.eclipse.che.api.factory.server.ScmFileResolver;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
+/** Github specific SCM file resolver. */
 public class GithubScmFileResolver implements ScmFileResolver {
 
-  /** Parser which will allow to check validity of URLs and create objects. */
-  private GithubURLParser githubUrlParser;
-
-  private URLFetcher urlFetcher;
+  private final GithubURLParser githubUrlParser;
+  private final URLFetcher urlFetcher;
 
   @Inject
   public GithubScmFileResolver(GithubURLParser githubUrlParser, URLFetcher urlFetcher) {

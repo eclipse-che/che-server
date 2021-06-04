@@ -17,6 +17,7 @@ import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -49,7 +50,7 @@ import org.testng.annotations.Test;
 
 /** @author David Festal */
 @Listeners(MockitoTestNGListener.class)
-public class IdentityProviderConfigFactoryTest {
+public class KeycloakProviderConfigFactoryTest {
   private static final String PROVIDER = "openshift-v3";
   private static final String THE_USER_ID = "a_user_id";
   private static final String ANOTHER_USER_ID = "another_user_id";
@@ -98,7 +99,7 @@ public class IdentityProviderConfigFactoryTest {
   @Mock private KeycloakTokenResponse tokenResponse;
 
   private EnvironmentContext context;
-  private IdentityProviderConfigFactory configBuilder;
+  private KeycloakProviderConfigFactory configBuilder;
   private Config defaultConfig;
 
   static {
@@ -113,17 +114,18 @@ public class IdentityProviderConfigFactoryTest {
     context = spy(EnvironmentContext.getCurrent());
     EnvironmentContext.setCurrent(context);
     doReturn(subject).when(context).getSubject();
-    when(workspaceRuntimeProvider.get()).thenReturn(workspaceRuntimes);
-    when(workspaceRuntimes.getRuntimeContext(anyString()))
+    lenient().when(workspaceRuntimeProvider.get()).thenReturn(workspaceRuntimes);
+    lenient()
+        .when(workspaceRuntimes.getRuntimeContext(anyString()))
         .thenReturn(Optional.<RuntimeContext>ofNullable(runtimeContext));
-    when(runtimeContext.getIdentity()).thenReturn(runtimeIdentity);
-    when(runtimeIdentity.getOwnerId()).thenReturn(THE_USER_ID);
-    when(subject.getUserId()).thenReturn(THE_USER_ID);
-    when(tokenResponse.getScope()).thenReturn(FULL_SCOPE);
-    when(tokenResponse.getAccessToken()).thenReturn(ACCESS_TOKEN);
+    lenient().when(runtimeContext.getIdentity()).thenReturn(runtimeIdentity);
+    lenient().when(runtimeIdentity.getOwnerId()).thenReturn(THE_USER_ID);
+    lenient().when(subject.getUserId()).thenReturn(THE_USER_ID);
+    lenient().when(tokenResponse.getScope()).thenReturn(FULL_SCOPE);
+    lenient().when(tokenResponse.getAccessToken()).thenReturn(ACCESS_TOKEN);
 
     configBuilder =
-        new IdentityProviderConfigFactory(
+        new KeycloakProviderConfigFactory(
             keycloakServiceClient,
             keycloakSettings,
             workspaceRuntimeProvider,
@@ -136,7 +138,7 @@ public class IdentityProviderConfigFactoryTest {
   public void testFallbackToDefaultConfigWhenProvideIsNull() throws Exception {
     when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     configBuilder =
-        new IdentityProviderConfigFactory(
+        new KeycloakProviderConfigFactory(
             keycloakServiceClient, keycloakSettings, workspaceRuntimeProvider, null, API_ENDPOINT);
     assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }

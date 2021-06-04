@@ -62,9 +62,9 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
 import org.mockito.Mock;
@@ -91,7 +91,7 @@ public class OpenShiftProjectFactoryTest {
   private static final String NAMESPACE_ANNOTATION_NAME = "owner";
   private static final String NAMESPACE_ANNOTATIONS = NAMESPACE_ANNOTATION_NAME + "=<username>";
 
-  @Mock private OpenShiftClientConfigFactory configFactory;
+  @Mock private KubernetesClientConfigFactory configFactory;
   @Mock private OpenShiftClientFactory clientFactory;
   @Mock private CheServerKubernetesClientFactory cheClientFactory;
   @Mock private OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner;

@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.core.notification.EventService;
@@ -84,13 +85,14 @@ public class KubernetesInfrastructure extends RuntimeInfrastructure {
 
   @Override
   public Response sendDirectInfrastructureRequest(
-      String httpMethod, URI relativeUri, @Nullable InputStream body)
+      String httpMethod, URI relativeUri, @Nullable HttpHeaders headers, @Nullable InputStream body)
       throws InfrastructureException {
     return DirectKubernetesAPIAccessHelper.call(
         kubernetesClientFactory.getDefaultConfig().getMasterUrl(),
         kubernetesClientFactory.getAuthenticatedHttpClient(),
         httpMethod,
         relativeUri,
+        null,
         body);
   }
 

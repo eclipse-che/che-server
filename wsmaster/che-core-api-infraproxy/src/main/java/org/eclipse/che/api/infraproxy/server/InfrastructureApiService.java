@@ -89,48 +89,51 @@ public class InfrastructureApiService extends Service {
 
   @GET
   @Path("{path:.+}")
-  public Response get() throws InfrastructureException, ApiException, IOException {
-    return request("GET", null);
+  public Response get(@Context HttpHeaders headers)
+      throws InfrastructureException, ApiException, IOException {
+    return request("GET", headers, null);
   }
 
   @HEAD
   @Path("{path:.+}")
-  public Response head() throws InfrastructureException, ApiException, IOException {
-    return request("HEAD", null);
+  public Response head(@Context HttpHeaders headers)
+      throws InfrastructureException, ApiException, IOException {
+    return request("HEAD", headers, null);
   }
 
   @POST
   @Path("{path:.+}")
   public Response post(@Context HttpHeaders headers, InputStream body)
       throws InfrastructureException, IOException, ApiException {
-    return request("POST", body);
+    return request("POST", headers, body);
   }
 
   @DELETE
   @Path("{path:.+}")
   public Response delete(@Context HttpHeaders headers, InputStream body)
       throws InfrastructureException, IOException, ApiException {
-    return request("DELETE", body);
+    return request("DELETE", headers, body);
   }
 
   @PUT
   @Path("{path:.+}")
   public Response put(@Context HttpHeaders headers, InputStream body)
       throws InfrastructureException, IOException, ApiException {
-    return request("PUT", body);
+    return request("PUT", headers, body);
   }
 
   @OPTIONS
   @Path("{path:.+}")
-  public Response options() throws InfrastructureException, ApiException, IOException {
-    return request("OPTIONS", null);
+  public Response options(@Context HttpHeaders headers)
+      throws InfrastructureException, ApiException, IOException {
+    return request("OPTIONS", headers, null);
   }
 
   @PATCH
   @Path("{path:.+}")
   public Response patch(@Context HttpHeaders headers, InputStream body)
       throws InfrastructureException, IOException, ApiException {
-    return request("PATCH", body);
+    return request("PATCH", headers, body);
   }
 
   private void auth() throws ApiException {
@@ -140,11 +143,11 @@ public class InfrastructureApiService extends Service {
     }
   }
 
-  private Response request(String method, @Nullable InputStream body)
+  private Response request(String method, HttpHeaders headers, @Nullable InputStream body)
       throws ApiException, IOException, InfrastructureException {
     auth();
     return runtimeInfrastructure.sendDirectInfrastructureRequest(
-        method, relativizeRequestAndStripPrefix(), body);
+        method, relativizeRequestAndStripPrefix(), headers, body);
   }
 
   /**

@@ -122,8 +122,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
       throw new InfrastructureException(
           "Not able to construct impersonating openshift API client.");
     }
-    // Ensure to get OkHttpClient with all necessary interceptors.
-    return createOC(buildConfig(getDefaultConfig(), null)).getHttpClient();
+    return clientForConfig(buildConfig(getDefaultConfig(), null));
   }
 
   @Override
@@ -216,7 +215,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
     };
   }
 
-  private DefaultOpenShiftClient createOC(Config config) {
+  private OpenShiftClient createOC(Config config) {
     return new UnclosableOpenShiftClient(
         clientForConfig(config), config, this::initializeRequestTracing);
   }

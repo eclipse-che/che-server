@@ -19,8 +19,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import okhttp3.Call;
+import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -58,6 +62,7 @@ public class DirectKubernetesAPIAccessHelper {
       OkHttpClient httpClient,
       String httpMethod,
       URI relativeUri,
+      @Nullable HttpHeaders headers,
       @Nullable InputStream body)
       throws InfrastructureException {
     if (relativeUri.isAbsolute() || relativeUri.isOpaque()) {
@@ -67,7 +72,7 @@ public class DirectKubernetesAPIAccessHelper {
 
     try {
       URL fullUrl = new URI(masterUrl).resolve(relativeUri).toURL();
-      okhttp3.Response response = callApi(httpClient, fullUrl, httpMethod, body);
+      okhttp3.Response response = callApi(httpClient, fullUrl, httpMethod, headers, body);
       return convertResponse(response);
     } catch (URISyntaxException | MalformedURLException e) {
       throw new InfrastructureException("Could not compose the direct URI.", e);
@@ -77,9 +82,13 @@ public class DirectKubernetesAPIAccessHelper {
   }
 
   private static okhttp3.Response callApi(
-      OkHttpClient httpClient, URL url, String httpMethod, @Nullable InputStream body)
+      OkHttpClient httpClient,
+      URL url,
+      String httpMethod,
+      @Nullable HttpHeaders headers,
+      @Nullable InputStream body)
       throws IOException {
-    String mediaType = DEFAULT_MEDIA_TYPE;
+    String mediaType = inputMediaType(headers);
 
     // ByteStreams is stable in the newer versions of Guava
     @SuppressWarnings("UnstableApiUsage")
@@ -90,13 +99,15 @@ public class DirectKubernetesAPIAccessHelper {
                 MediaType.parse(mediaType),
                 ByteStreams.toByteArray(ByteStreams.limit(body, MAX_BODY_SIZE)));
 
-    Call httpCall = httpClient.newCall(prepareRequest(url, httpMethod, requestBody));
+    Call httpCall =
+        httpClient.newCall(prepareRequest(url, httpMethod, requestBody, toOkHttpHeaders(headers)));
 
     return httpCall.execute();
   }
 
-  private static Request prepareRequest(URL url, String httpMethod, RequestBody requestBody) {
-    return new Request.Builder().url(url).method(httpMethod, requestBody).build();
+  private static Request prepareRequest(
+      URL url, String httpMethod, RequestBody requestBody, Headers headers) {
+    return new Request.Builder().url(url).method(httpMethod, requestBody).headers(headers).build();
   }
 
   private static Response convertResponse(okhttp3.Response response) {
@@ -127,5 +138,26 @@ public class DirectKubernetesAPIAccessHelper {
         responseBuilder.type(contentType.toString());
       }
     }
+  }
+
+  private static String inputMediaType(@Nullable HttpHeaders headers) {
+    javax.ws.rs.core.MediaType mediaTypeHeader = headers == null ? null : headers.getMediaType();
+    return mediaTypeHeader == null ? DEFAULT_MEDIA_TYPE : mediaTypeHeader.toString();
+  }
+
+  private static Headers toOkHttpHeaders(HttpHeaders headers) {
+    Headers.Builder headersBuilder = new Headers.Builder();
+
+    if (headers != null) {
+      for (Map.Entry<String, List<String>> e : headers.getRequestHeaders().entrySet()) {
+        String name = e.getKey();
+        List<String> values = e.getValue();
+        for (String value : values) {
+          headersBuilder.add(name, value);
+        }
+      }
+    }
+
+    return headersBuilder.build();
   }
 }

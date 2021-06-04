@@ -271,6 +271,7 @@ public class SshKeysProvisioner implements ConfigurationProvisioner<KubernetesEn
           VolumeMount volumeMount =
               new VolumeMountBuilder()
                   .withName(secretName)
+                  .withNewReadOnly(true)
                   .withReadOnly(true)
                   .withMountPath(SSH_PRIVATE_KEYS_PATH)
                   .build();
@@ -327,6 +328,7 @@ public class SshKeysProvisioner implements ConfigurationProvisioner<KubernetesEn
                   .withMountPath(SSH_CONFIG_PATH)
                   .withSubPath(SSH_CONFIG)
                   .withReadOnly(true)
+                  .withNewReadOnly(true)
                   .build();
           container.getVolumeMounts().add(volumeMount);
         });

@@ -250,6 +250,7 @@ public class GitConfigProvisioner implements ConfigurationProvisioner<Kubernetes
                   .withMountPath(GIT_CONFIG_PATH)
                   .withSubPath(GIT_CONFIG)
                   .withReadOnly(false)
+                  .withNewReadOnly(false)
                   .build();
           container.getVolumeMounts().add(volumeMount);
         });

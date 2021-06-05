@@ -113,7 +113,7 @@ public class CertificateProvisioner implements ConfigurationProvisioner<Kubernet
   private VolumeMount buildCertVolumeMount() {
     return new VolumeMountBuilder()
         .withName(CHE_SELF_SIGNED_CERT_VOLUME)
-        .withReadOnly(true)
+        .withNewReadOnly(true)
         .withMountPath(CERT_MOUNT_PATH)
         .build();
   }

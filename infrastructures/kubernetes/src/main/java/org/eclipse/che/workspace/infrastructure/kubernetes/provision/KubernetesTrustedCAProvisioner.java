@@ -160,7 +160,7 @@ public class KubernetesTrustedCAProvisioner implements TrustedCAProvisioner {
           .add(
               new VolumeMountBuilder()
                   .withName(CHE_TRUST_STORE_VOLUME)
-                  .withReadOnly(true)
+                  .withNewReadOnly(true)
                   .withMountPath(certificateMountPath)
                   .build());
     }

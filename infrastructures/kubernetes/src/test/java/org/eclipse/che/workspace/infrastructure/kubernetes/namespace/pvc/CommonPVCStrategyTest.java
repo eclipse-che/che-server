@@ -14,9 +14,11 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static org.eclipse.che.api.user.server.UserManager.PERSONAL_ACCOUNT;
 import static org.eclipse.che.api.workspace.shared.Constants.PERSIST_VOLUMES_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy.SUBPATHS_PROPERTY_FMT;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,10 +43,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
+import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
+import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
@@ -91,6 +96,7 @@ public class CommonPVCStrategyTest {
   @Mock private PVCProvisioner volumeConverter;
   @Mock private PodsVolumes podsVolumes;
   @Mock private SubPathPrefixes subpathPrefixes;
+  @Mock private WorkspaceManager workspaceManager;
 
   private InOrder provisionOrder;
 
@@ -111,7 +117,8 @@ public class CommonPVCStrategyTest {
             ephemeralWorkspaceAdapter,
             volumeConverter,
             podsVolumes,
-            subpathPrefixes);
+            subpathPrefixes,
+            workspaceManager);
 
     k8sEnv = KubernetesEnvironment.builder().build();
 
@@ -177,7 +184,8 @@ public class CommonPVCStrategyTest {
             ephemeralWorkspaceAdapter,
             volumeConverter,
             podsVolumes,
-            subpathPrefixes);
+            subpathPrefixes,
+            workspaceManager);
 
     commonPVCStrategy.provision(k8sEnv, IDENTITY);
 
@@ -225,7 +233,8 @@ public class CommonPVCStrategyTest {
             ephemeralWorkspaceAdapter,
             volumeConverter,
             podsVolumes,
-            subpathPrefixes);
+            subpathPrefixes,
+            workspaceManager);
     final PersistentVolumeClaim pvc = newPVC(PVC_NAME);
     pvc.getAdditionalProperties()
         .put(format(SUBPATHS_PROPERTY_FMT, WORKSPACE_ID), WORKSPACE_SUBPATHS);
@@ -278,14 +287,25 @@ public class CommonPVCStrategyTest {
   public void shouldDeletePVCsIfThereIsNoPersistAttributeInWorkspaceConfigWhenCleanupCalled()
       throws Exception {
     // given
-    Workspace workspace = mock(Workspace.class);
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    WorkspaceImpl workspace = mock(WorkspaceImpl.class);
+    Page workspaces = mock(Page.class);
 
-    WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+    when(workspace.getId()).thenReturn(WORKSPACE_ID);
+
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+        .thenReturn((workspaces));
+    when(workspaces.isEmpty()).thenReturn(false);
+
+    WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
+
+    AccountImpl account = mock(AccountImpl.class);
+    when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
+    when(account.getId()).thenReturn("id123");
+    when(workspace.getAccount()).thenReturn(account);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);
     when(factory.get(eq(workspace))).thenReturn(ns);
@@ -302,15 +322,24 @@ public class CommonPVCStrategyTest {
   public void shouldDeletePVCsIfPersistAttributeIsSetToTrueInWorkspaceConfigWhenCleanupCalled()
       throws Exception {
     // given
-    Workspace workspace = mock(Workspace.class);
+    WorkspaceImpl workspace = mock(WorkspaceImpl.class);
+    Page workspaces = mock(Page.class);
 
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+        .thenReturn((workspaces));
+    when(workspaces.isEmpty()).thenReturn(false);
+    when(workspace.getId()).thenReturn(WORKSPACE_ID);
 
-    WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+    WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
+
+    AccountImpl account = mock(AccountImpl.class);
+    when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
+    when(account.getId()).thenReturn("id123");
+    when(workspace.getAccount()).thenReturn(account);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
     workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);
@@ -325,14 +354,94 @@ public class CommonPVCStrategyTest {
   }
 
   @Test
+  public void shouldDeleteCommonPVCIfUserHasNoWorkspaces() throws Exception {
+    // given
+    WorkspaceImpl workspace = mock(WorkspaceImpl.class);
+    Page workspaces = mock(Page.class);
+    KubernetesPersistentVolumeClaims persistentVolumeClaims =
+        mock(KubernetesPersistentVolumeClaims.class);
+
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+        .thenReturn((workspaces));
+    when(workspaces.isEmpty()).thenReturn(true);
+
+    WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
+
+    AccountImpl account = mock(AccountImpl.class);
+    when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
+    when(account.getId()).thenReturn("id123");
+    when(workspace.getAccount()).thenReturn(account);
+
+    Map<String, String> workspaceConfigAttributes = new HashMap<>();
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
+
+    KubernetesNamespace ns = mock(KubernetesNamespace.class);
+    when(factory.get(eq(workspace))).thenReturn(ns);
+    when(ns.persistentVolumeClaims()).thenReturn(persistentVolumeClaims);
+
+    // when
+    commonPVCStrategy.cleanup(workspace);
+
+    // then
+    verify(ns).persistentVolumeClaims();
+    verify(persistentVolumeClaims).delete(PVC_NAME);
+    verify(pvcSubPathHelper, never()).removeDirsAsync(WORKSPACE_ID, "ns", PVC_NAME, WORKSPACE_ID);
+  }
+
+  @Test
+  public void shouldNotDeleteCommonPVCIfUserHasWorkspaces() throws Exception {
+    // given
+    WorkspaceImpl workspace = mock(WorkspaceImpl.class);
+    Page workspaces = mock(Page.class);
+    KubernetesPersistentVolumeClaims persistentVolumeClaims =
+        mock(KubernetesPersistentVolumeClaims.class);
+
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+        .thenReturn((workspaces));
+    when(workspaces.isEmpty()).thenReturn(false);
+    when(workspace.getId()).thenReturn(WORKSPACE_ID);
+
+    WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
+
+    AccountImpl account = mock(AccountImpl.class);
+    when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
+    when(account.getId()).thenReturn("id123");
+    when(workspace.getAccount()).thenReturn(account);
+
+    Map<String, String> workspaceConfigAttributes = new HashMap<>();
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
+
+    KubernetesNamespace ns = mock(KubernetesNamespace.class);
+    when(factory.get(eq(workspace))).thenReturn(ns);
+    when(ns.getName()).thenReturn("ns");
+
+    // when
+    commonPVCStrategy.cleanup(workspace);
+
+    // then
+    verify(ns, never()).persistentVolumeClaims();
+    verify(persistentVolumeClaims, never()).delete(PVC_NAME);
+    verify(pvcSubPathHelper).removeDirsAsync(WORKSPACE_ID, "ns", PVC_NAME, WORKSPACE_ID);
+  }
+
+  @Test
   public void shouldDoNothingIfPersistAttributeIsSetToFalseInWorkspaceConfigWhenCleanupCalled()
       throws Exception {
     // given
-    Workspace workspace = mock(Workspace.class);
+    WorkspaceImpl workspace = mock(WorkspaceImpl.class);
     lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
 
-    WorkspaceConfig workspaceConfig = mock(WorkspaceConfig.class);
+    WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
     lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
+
+    AccountImpl account = mock(AccountImpl.class);
+    when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
+    when(account.getId()).thenReturn("id123");
+    when(workspace.getAccount()).thenReturn(account);
 
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
     lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);

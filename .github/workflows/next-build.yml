@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright (c) 2021 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -7,12 +7,13 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-name: build-nightly
+name: build-next
 
 on:
   workflow_dispatch:
-  schedule:
-  - cron: "0 0 * * *"
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -52,35 +53,35 @@ jobs:
       run:
           SHORT_SHA1=$(git rev-parse --short HEAD)
           echo ::set-output name=short_sha1::${SHORT_SHA1}
-          ./dockerfiles/build.sh --tag:nightly --sha-tag
+          ./dockerfiles/build.sh --tag:next --sha-tag
     - name: Push docker images
       run: |
-        docker push quay.io/eclipse/che-endpoint-watcher:nightly
+        docker push quay.io/eclipse/che-endpoint-watcher:next
         docker push quay.io/eclipse/che-endpoint-watcher:${{ steps.build.outputs.short_sha1 }}
 
-        docker push quay.io/eclipse/che-keycloak:nightly
+        docker push quay.io/eclipse/che-keycloak:next
         docker push quay.io/eclipse/che-keycloak:${{ steps.build.outputs.short_sha1 }}
 
-        docker push quay.io/eclipse/che-postgres:nightly
+        docker push quay.io/eclipse/che-postgres:next
         docker push quay.io/eclipse/che-postgres:${{ steps.build.outputs.short_sha1 }}
 
-        docker push quay.io/eclipse/che-dev:nightly
+        docker push quay.io/eclipse/che-dev:next
         docker push quay.io/eclipse/che-dev:${{ steps.build.outputs.short_sha1 }}
 
-        docker push quay.io/eclipse/che-server:nightly
+        docker push quay.io/eclipse/che-server:next
         docker push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
     - name: Build ubi8 Che Server image
       run: 
-        ./dockerfiles/che/build.sh --dockerfile:"rhel.Dockerfile" --tag:"rhel-nightly"
-        docker tag quay.io/eclipse/che-server:rhel-nightly quay.io/eclipse/che-server:rhel-${{ steps.build.outputs.short_sha1 }}
+        ./dockerfiles/che/build.sh --dockerfile:"rhel.Dockerfile" --tag:"rhel-next"
+        docker tag quay.io/eclipse/che-server:rhel-next quay.io/eclipse/che-server:rhel-${{ steps.build.outputs.short_sha1 }}
     - name: Push ubi8 Che Server image
       run: 
-        docker push quay.io/eclipse/che-server:rhel-nightly
+        docker push quay.io/eclipse/che-server:rhel-next
         docker push quay.io/eclipse/che-server:rhel-${{ steps.build.outputs.short_sha1 }}
     - name: Create failure MM message
       if: ${{ failure() }}
       run: |
-        echo "{\"text\":\":no_entry_sign: Nightly Che Server build has failed: https://github.com/eclipse-che/che-server/actions/workflows/nightly-build.yml\"}" > mattermost.json
+        echo "{\"text\":\":no_entry_sign: Next Che Server build has failed: https://github.com/eclipse-che/che-server/actions/workflows/next-build.yml\"}" > mattermost.json
     - name: Send MM message
       if: ${{ failure() }}
       uses: mattermost/action-mattermost-notify@1.0.2

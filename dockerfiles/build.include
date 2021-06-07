@@ -41,7 +41,7 @@ init() {
 
   ORGANIZATION="quay.io/eclipse"
   PREFIX="che"
-  TAG="nightly"
+  TAG="next"
   SKIP_TESTS=false
   NAME="che"
   ARGS=""
@@ -74,6 +74,9 @@ init() {
         shift ;;
       --skip-tests)
         SKIP_TESTS=true
+        shift ;;
+      --sha-tag)
+        SHA_TAG=$(git rev-parse --short HEAD)
         shift ;;
       --dockerfile:*)
         DOCKERFILE="${1#*:}"
@@ -142,6 +145,9 @@ build_image() {
       for TMP_IMAGE_NAME in ${IMAGE_ALIASES}
       do
         docker tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${TAG}
+        if [ -n "${SHA_TAG}" ]; then
+          docker tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${SHA_TAG}
+        fi
         DOCKER_TAG_STATUS=$?
         if [ $DOCKER_TAG_STATUS -eq 0 ]; then
           printf "  /alias ${BLUE}${TMP_IMAGE_NAME}:${TAG}${NC} ${GREEN}[OK]${NC}\n"

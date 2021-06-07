@@ -136,6 +136,7 @@ dashboard:
   memoryLimit: 256Mi
   cpuRequest: 50m
   cpuLimit: 500m
+  ingressPath: /dashboard
 
 cheDevfileRegistry:
   deploy: true

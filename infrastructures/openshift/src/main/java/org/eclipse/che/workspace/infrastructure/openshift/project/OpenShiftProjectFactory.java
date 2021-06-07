@@ -43,7 +43,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.Constants;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
 import org.slf4j.Logger;
@@ -60,7 +59,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
 
   private final boolean initWithCheServerSa;
   private final OpenShiftClientFactory clientFactory;
-  private final CheServerKubernetesClientFactory cheClientFactory;
   private final CheServerOpenshiftClientFactory cheOpenShiftClientFactory;
   private final OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner;
 
@@ -78,7 +76,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       @Named("che.infra.openshift.project.init_with_server_sa") boolean initWithCheServerSa,
       OpenShiftClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
-      OpenShiftClientConfigFactory clientConfigFactory,
       CheServerOpenshiftClientFactory cheOpenShiftClientFactory,
       OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner,
       UserManager userManager,
@@ -101,7 +98,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         sharedPool);
     this.initWithCheServerSa = initWithCheServerSa;
     this.clientFactory = clientFactory;
-    this.cheClientFactory = cheClientFactory;
     this.cheOpenShiftClientFactory = cheOpenShiftClientFactory;
     this.stopWorkspaceRoleProvisioner = stopWorkspaceRoleProvisioner;
     this.oAuthIdentityProvider = oAuthIdentityProvider;

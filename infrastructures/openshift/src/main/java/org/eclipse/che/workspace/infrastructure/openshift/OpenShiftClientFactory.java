@@ -39,6 +39,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 
 /**
@@ -56,11 +57,11 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
   private static final String BEFORE_TOKEN = "access_token=";
   private static final String AFTER_TOKEN = "&expires";
 
-  private final OpenShiftClientConfigFactory configBuilder;
+  private final KubernetesClientConfigFactory configBuilder;
 
   @Inject
   public OpenShiftClientFactory(
-      OpenShiftClientConfigFactory configBuilder,
+      KubernetesClientConfigFactory configBuilder,
       @Nullable @Named("che.infra.kubernetes.master_url") String masterUrl,
       @Nullable @Named("che.infra.kubernetes.trust_certs") Boolean doTrustCerts,
       @Named("che.infra.kubernetes.client.http.async_requests.max") int maxConcurrentRequests,
@@ -116,6 +117,12 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
     return createOC(buildConfig(getDefaultConfig(), null));
   }
 
+  public OpenShiftClient createAuthenticatedClient(String token) {
+    Config config = getDefaultConfig();
+    config.setOauthToken(token);
+    return createOC(config);
+  }
+
   @Override
   public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
     if (!configBuilder.isPersonalized()) {
@@ -144,7 +151,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * optional workspace ID.
    *
    * <p>This method overrides the one in the Kubernetes infrastructure to introduce an additional
-   * extension level by delegating to an {@link OpenShiftClientConfigFactory}
+   * extension level by delegating to an {@link KubernetesClientConfigFactory}
    */
   @Override
   protected Config buildConfig(Config config, @Nullable String workspaceId)

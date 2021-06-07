@@ -65,7 +65,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
 import org.mockito.Mock;
@@ -92,7 +91,7 @@ public class OpenShiftProjectFactoryTest {
   private static final String NAMESPACE_ANNOTATION_NAME = "owner";
   private static final String NAMESPACE_ANNOTATIONS = NAMESPACE_ANNOTATION_NAME + "=<username>";
 
-  @Mock private OpenShiftClientConfigFactory configFactory;
+  //  @Mock private OpenShiftClientConfigFactory configFactory;
   @Mock private OpenShiftClientFactory clientFactory;
   @Mock private CheServerKubernetesClientFactory cheClientFactory;
   @Mock private CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
@@ -158,7 +157,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -191,7 +189,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -224,7 +221,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -262,7 +258,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -301,7 +296,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -336,7 +330,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -381,7 +374,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -420,7 +412,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -459,7 +450,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -488,7 +478,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -522,7 +511,6 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
                 cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
@@ -560,7 +548,6 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
                 cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
@@ -600,7 +587,6 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
                 cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
@@ -642,7 +628,6 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
                 cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
@@ -696,7 +681,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
@@ -731,7 +715,6 @@ public class OpenShiftProjectFactoryTest {
             true,
             clientFactory,
             cheClientFactory,
-            configFactory,
             cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,

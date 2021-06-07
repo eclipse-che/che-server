@@ -18,6 +18,7 @@ import javax.inject.Named;
 import okhttp3.EventListener;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 
 /**
  * This {@link OpenShiftClientFactory} ensures that we use `che` ServiceAccount and not related to
@@ -31,7 +32,7 @@ import org.eclipse.che.commons.annotation.Nullable;
 public class CheServerOpenshiftClientFactory extends OpenShiftClientFactory {
   @Inject
   public CheServerOpenshiftClientFactory(
-      OpenShiftClientConfigFactory configBuilder,
+      KubernetesClientConfigFactory configBuilder,
       @Nullable @Named("che.infra.kubernetes.master_url") String masterUrl,
       @Nullable @Named("che.infra.kubernetes.trust_certs") Boolean doTrustCerts,
       @Named("che.infra.kubernetes.client.http.async_requests.max") int maxConcurrentRequests,

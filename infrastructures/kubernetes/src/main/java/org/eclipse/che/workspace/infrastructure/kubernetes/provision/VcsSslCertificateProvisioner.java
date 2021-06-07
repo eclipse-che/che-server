@@ -133,7 +133,7 @@ public class VcsSslCertificateProvisioner
   private VolumeMount buildCertVolumeMount() {
     return new VolumeMountBuilder()
         .withName(CHE_GIT_SELF_SIGNED_VOLUME)
-        .withReadOnly(true)
+        .withNewReadOnly(true)
         .withMountPath(CERT_MOUNT_PATH)
         .build();
   }

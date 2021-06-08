@@ -124,6 +124,7 @@ public class OpenShiftInfraModule extends AbstractModule {
 
     bind(KubernetesNamespaceFactory.class).to(OpenShiftProjectFactory.class);
     bind(KubernetesClientFactory.class).to(OpenShiftClientFactory.class);
+    bind(CheServerOpenshiftClientFactory.class);
 
     install(new FactoryModuleBuilder().build(OpenShiftRuntimeContextFactory.class));
     install(new FactoryModuleBuilder().build(OpenShiftRuntimeFactory.class));

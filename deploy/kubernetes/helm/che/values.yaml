@@ -21,7 +21,7 @@ cheWorkspaceNoProxy: ""
 #    operator: "Equal"
 #    value: "aValue"
 #    effect: "NoExecute"
-cheImage: quay.io/eclipse/che-server:nightly
+cheImage: quay.io/eclipse/che-server:next
 cheImagePullPolicy: Always
 cheKeycloakRealm: "che"
 cheKeycloakClientId: "che-public"
@@ -51,7 +51,7 @@ global:
   cheHost: ""
   # Image used by endpoint watchers
   endpointWatcher:
-    image: quay.io/eclipse/che-endpoint-watcher:nightly
+    image: quay.io/eclipse/che-endpoint-watcher:next
   # Use internal cluster svc names to communicate between components
   useInternalClusterSVCNames: true
 
@@ -136,6 +136,7 @@ dashboard:
   memoryLimit: 256Mi
   cpuRequest: 50m
   cpuLimit: 500m
+  ingressPath: /dashboard
 
 cheDevfileRegistry:
   deploy: true

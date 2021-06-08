@@ -38,7 +38,7 @@ import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.multiuser.keycloak.server.KeycloakServiceClient;
 import org.eclipse.che.multiuser.keycloak.server.KeycloakSettings;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,9 +57,9 @@ import org.slf4j.LoggerFactory;
  * @author David Festal
  */
 @Singleton
-public class IdentityProviderConfigFactory extends OpenShiftClientConfigFactory {
+public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(IdentityProviderConfigFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KeycloakProviderConfigFactory.class);
 
   private final String oauthIdentityProvider;
 
@@ -68,7 +68,7 @@ public class IdentityProviderConfigFactory extends OpenShiftClientConfigFactory 
   private final String messageToLinkAccount;
 
   @Inject
-  public IdentityProviderConfigFactory(
+  public KeycloakProviderConfigFactory(
       KeycloakServiceClient keycloakServiceClient,
       KeycloakSettings keycloakSettings,
       Provider<WorkspaceRuntimes> workspaceRuntimeProvider,

@@ -64,7 +64,7 @@ import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
+import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
 import org.mockito.Mock;
@@ -91,9 +91,10 @@ public class OpenShiftProjectFactoryTest {
   private static final String NAMESPACE_ANNOTATION_NAME = "owner";
   private static final String NAMESPACE_ANNOTATIONS = NAMESPACE_ANNOTATION_NAME + "=<username>";
 
-  @Mock private OpenShiftClientConfigFactory configFactory;
+  //  @Mock private OpenShiftClientConfigFactory configFactory;
   @Mock private OpenShiftClientFactory clientFactory;
   @Mock private CheServerKubernetesClientFactory cheClientFactory;
+  @Mock private CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
   @Mock private OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner;
   @Mock private WorkspaceManager workspaceManager;
   @Mock private UserManager userManager;
@@ -153,9 +154,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -184,9 +186,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -215,9 +218,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -251,9 +255,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -288,9 +293,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -321,9 +327,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -364,9 +371,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -401,9 +409,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -438,9 +447,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -465,9 +475,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -497,9 +508,10 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
+                cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
                 preferenceManager,
@@ -516,7 +528,7 @@ public class OpenShiftProjectFactoryTest {
     // then
     assertEquals(toReturnProject, project);
     verify(projectFactory, never()).doCreateServiceAccount(any(), any());
-    verify(toReturnProject).prepare(eq(false), any());
+    verify(toReturnProject).prepare(eq(false), eq(false), any());
   }
 
   @Test
@@ -533,9 +545,10 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
+                cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
                 preferenceManager,
@@ -571,9 +584,10 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
+                cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
                 preferenceManager,
@@ -611,9 +625,10 @@ public class OpenShiftProjectFactoryTest {
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                true,
                 clientFactory,
                 cheClientFactory,
-                configFactory,
+                cheServerOpenshiftClientFactory,
                 stopWorkspaceRoleProvisioner,
                 userManager,
                 preferenceManager,
@@ -663,9 +678,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,
@@ -696,9 +712,10 @@ public class OpenShiftProjectFactoryTest {
             true,
             "try_placeholder_here=<username>",
             NAMESPACE_ANNOTATIONS,
+            true,
             clientFactory,
             cheClientFactory,
-            configFactory,
+            cheServerOpenshiftClientFactory,
             stopWorkspaceRoleProvisioner,
             userManager,
             preferenceManager,

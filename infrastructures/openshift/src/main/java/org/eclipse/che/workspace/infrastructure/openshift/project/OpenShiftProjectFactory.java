@@ -41,8 +41,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.Kube
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
+import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.Constants;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
 import org.slf4j.Logger;
@@ -57,8 +57,9 @@ import org.slf4j.LoggerFactory;
 public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(OpenShiftProjectFactory.class);
 
+  private final boolean initWithCheServerSa;
   private final OpenShiftClientFactory clientFactory;
-  private final CheServerKubernetesClientFactory cheClientFactory;
+  private final CheServerOpenshiftClientFactory cheOpenShiftClientFactory;
   private final OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner;
 
   private final String oAuthIdentityProvider;
@@ -72,9 +73,10 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       @Named("che.infra.kubernetes.namespace.label") boolean labelProjects,
       @Named("che.infra.kubernetes.namespace.labels") String projectLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String projectAnnotations,
+      @Named("che.infra.openshift.project.init_with_server_sa") boolean initWithCheServerSa,
       OpenShiftClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
-      OpenShiftClientConfigFactory clientConfigFactory,
+      CheServerOpenshiftClientFactory cheOpenShiftClientFactory,
       OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner,
       UserManager userManager,
       PreferenceManager preferenceManager,
@@ -94,8 +96,9 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         userManager,
         preferenceManager,
         sharedPool);
+    this.initWithCheServerSa = initWithCheServerSa;
     this.clientFactory = clientFactory;
-    this.cheClientFactory = cheClientFactory;
+    this.cheOpenShiftClientFactory = cheOpenShiftClientFactory;
     this.stopWorkspaceRoleProvisioner = stopWorkspaceRoleProvisioner;
     this.oAuthIdentityProvider = oAuthIdentityProvider;
   }
@@ -103,7 +106,10 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   public OpenShiftProject getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     OpenShiftProject osProject = get(identity);
 
-    osProject.prepare(canCreateNamespace(identity), labelNamespaces ? namespaceLabels : emptyMap());
+    osProject.prepare(
+        canCreateNamespace(identity),
+        initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
+        labelNamespaces ? namespaceLabels : emptyMap());
 
     if (!isNullOrEmpty(getServiceAccountName())) {
       OpenShiftWorkspaceServiceAccount osWorkspaceServiceAccount =
@@ -154,7 +160,12 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   @VisibleForTesting
   OpenShiftProject doCreateProjectAccess(String workspaceId, String name) {
     return new OpenShiftProject(
-        clientFactory, cheClientFactory, sharedPool.getExecutor(), name, workspaceId);
+        clientFactory,
+        cheOpenShiftClientFactory,
+        cheOpenShiftClientFactory,
+        sharedPool.getExecutor(),
+        name,
+        workspaceId);
   }
 
   @VisibleForTesting

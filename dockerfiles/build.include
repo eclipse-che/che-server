@@ -13,6 +13,7 @@ set -u
 IMAGE_ALIASES=${IMAGE_ALIASES:-}
 ERROR=${ERROR:-}
 DIR=${DIR:-}
+SHA_TAG=${SHA_TAG:-}
 
 skip_tests() {
   if [ $SKIP_TESTS = "true" ]; then
@@ -141,13 +142,21 @@ build_image() {
   rm ${DIR}/.Dockerfile
   if [ $DOCKER_BUILD_STATUS -eq 0 ]; then
     printf "Build of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+    if [ ! -z "${SHA_TAG}" ]; then
+      SHA_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:${SHA_TAG}
+      docker tag ${IMAGE_NAME} ${SHA_IMAGE_NAME}
+      DOCKER_TAG_STATUS=$?
+      if [ $DOCKER_TAG_STATUS -eq 0 ]; then
+        printf "Re-tagging with SHA based tag ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+      else
+        printf "${RED}Failure when tagging docker image ${SHA_IMAGE_NAME}${NC}\n"
+        exit 1
+      fi      
+    fi
     if [ ! -z "${IMAGE_ALIASES}" ]; then
       for TMP_IMAGE_NAME in ${IMAGE_ALIASES}
       do
         docker tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${TAG}
-        if [ -n "${SHA_TAG}" ]; then
-          docker tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${SHA_TAG}
-        fi
         DOCKER_TAG_STATUS=$?
         if [ $DOCKER_TAG_STATUS -eq 0 ]; then
           printf "  /alias ${BLUE}${TMP_IMAGE_NAME}:${TAG}${NC} ${GREEN}[OK]${NC}\n"

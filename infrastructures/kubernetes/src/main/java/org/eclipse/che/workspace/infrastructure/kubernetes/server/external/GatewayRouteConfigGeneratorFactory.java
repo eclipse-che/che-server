@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.server.external;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import org.eclipse.che.commons.annotation.Nullable;
 
 /**
  * This Factory provides {@link GatewayRouteConfigGenerator} instances, so implementation using
@@ -26,7 +27,7 @@ public class GatewayRouteConfigGeneratorFactory {
 
   @Inject
   public GatewayRouteConfigGeneratorFactory(
-      @Named("che.infra.kubernetes.cluster_domain") String clusterDomain) {
+      @Nullable @Named("che.infra.kubernetes.cluster_domain") String clusterDomain) {
     this.clusterDomain = clusterDomain;
   }
 

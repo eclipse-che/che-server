@@ -34,7 +34,7 @@ public class TraefikGatewayRouteConfigGeneratorTest {
 
   @BeforeMethod
   public void setUp() {
-    gatewayConfigGenerator = new TraefikGatewayRouteConfigGenerator("cluster.local");
+    gatewayConfigGenerator = new TraefikGatewayRouteConfigGenerator(null);
     gatewayConfigGeneratorNonDefaultDomain =
         new TraefikGatewayRouteConfigGenerator("myorg.internal");
   }
@@ -54,7 +54,7 @@ public class TraefikGatewayRouteConfigGeneratorTest {
             + "    external-server-1:\n"
             + "      loadBalancer:\n"
             + "        servers:\n"
-            + "        - url: \"http://service-url.che-namespace.svc.cluster.local:1234\"\n"
+            + "        - url: \"http://service-url.che-namespace.svc:1234\"\n"
             + "  middlewares:\n"
             + "    external-server-1:\n"
             + "      stripPrefix:\n"

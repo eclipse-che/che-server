@@ -154,9 +154,9 @@ public abstract class AbstractWorkspaceServiceAccount<
    * Creates workspace ServiceAccount ClusterRoleBindings that are defined in
    * 'che.infra.kubernetes.workspace_sa_cluster_roles' property.
    *
-   * @see KubernetesNamespaceFactory#KubernetesNamespaceFactory(String, String, String, String,
-   *     boolean, boolean, boolean, String, String, KubernetesClientFactory,
-   *     CheServerKubernetesClientFactory, UserManager, PreferenceManager, KubernetesSharedPool)
+   * @see KubernetesNamespaceFactory#KubernetesNamespaceFactory(String, String, String, boolean,
+   *     boolean, String, String, KubernetesClientFactory, CheServerKubernetesClientFactory,
+   *     UserManager, PreferenceManager, KubernetesSharedPool)
    */
   private void createExplicitClusterRoleBindings(Client k8sClient) {
     // If the user specified an additional cluster roles for the workspace,

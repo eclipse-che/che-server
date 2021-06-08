@@ -18,6 +18,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.ProjectRequestBuilder;
+import io.fabric8.openshift.api.model.RoleBindingBuilder;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesPersistentVolumeClaims;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesSecrets;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesServices;
+import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +50,14 @@ public class OpenShiftProject extends KubernetesNamespace {
 
   private final OpenShiftRoutes routes;
   private final OpenShiftClientFactory clientFactory;
+  private final KubernetesClientFactory cheClientFactory;
+  private final CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
 
   @VisibleForTesting
   OpenShiftProject(
       OpenShiftClientFactory clientFactory,
       KubernetesClientFactory cheClientFactory,
+      CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory,
       String workspaceId,
       String name,
       KubernetesDeployments deployments,
@@ -73,19 +78,24 @@ public class OpenShiftProject extends KubernetesNamespace {
         ingresses,
         secrets,
         configMaps);
+    this.cheClientFactory = cheClientFactory;
     this.clientFactory = clientFactory;
     this.routes = routes;
+    this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
   }
 
   public OpenShiftProject(
       OpenShiftClientFactory clientFactory,
       KubernetesClientFactory cheClientFactory,
+      CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory,
       Executor executor,
       String name,
       String workspaceId) {
     super(clientFactory, cheClientFactory, executor, name, workspaceId);
     this.clientFactory = clientFactory;
+    this.cheClientFactory = cheClientFactory;
     this.routes = new OpenShiftRoutes(name, workspaceId, clientFactory);
+    this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
   }
 
   /**
@@ -95,10 +105,13 @@ public class OpenShiftProject extends KubernetesNamespace {
    *
    * @param canCreate defines what to do when the project is not found. The project is created when
    *     {@code true}, otherwise an exception is thrown.
+   * @param initWithCheServerSa defines condition whether the project should be created with Che
+   *     Server SA.
    * @throws InfrastructureException if any exception occurs during project preparation or if the
    *     project doesn't exist and {@code canCreate} is {@code false}.
    */
-  void prepare(boolean canCreate, Map<String, String> labels) throws InfrastructureException {
+  void prepare(boolean canCreate, boolean initWithCheServerSa, Map<String, String> labels)
+      throws InfrastructureException {
     String workspaceId = getWorkspaceId();
     String projectName = getName();
 
@@ -115,8 +128,29 @@ public class OpenShiftProject extends KubernetesNamespace {
                 projectName));
       }
 
-      create(projectName, osClient);
-      waitDefaultServiceAccount(projectName, kubeClient);
+      if (initWithCheServerSa) {
+        OpenShiftClient openshiftClient = cheServerOpenshiftClientFactory.createOC();
+        create(projectName, openshiftClient);
+        waitDefaultServiceAccount(projectName, openshiftClient);
+        openshiftClient
+            .roleBindings()
+            .inNamespace(projectName)
+            .createOrReplace(
+                new RoleBindingBuilder()
+                    .withNewMetadata()
+                    .withName("admin")
+                    .endMetadata()
+                    .addToUserNames(osClient.currentUser().getMetadata().getName())
+                    .withNewRoleRef()
+                    .withApiVersion("rbac.authorization.k8s.io")
+                    .withKind("RoleBinding")
+                    .withName("admin")
+                    .endRoleRef()
+                    .build());
+      } else {
+        create(projectName, osClient);
+        waitDefaultServiceAccount(projectName, kubeClient);
+      }
     }
     label(osClient.namespaces().withName(projectName).get(), labels);
   }

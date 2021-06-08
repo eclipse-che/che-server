@@ -50,7 +50,7 @@ jobs:
       run: mvn -B clean install -U -Pintegration
     - name: Build docker images
       id: build
-      run:
+      run: |
           SHORT_SHA1=$(git rev-parse --short HEAD)
           echo ::set-output name=short_sha1::${SHORT_SHA1}
           ./dockerfiles/build.sh --tag:next --sha-tag
@@ -71,11 +71,11 @@ jobs:
         docker push quay.io/eclipse/che-server:next
         docker push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
     - name: Build ubi8 Che Server image
-      run: 
+      run: |
         ./dockerfiles/che/build.sh --dockerfile:"rhel.Dockerfile" --tag:"rhel-next"
         docker tag quay.io/eclipse/che-server:rhel-next quay.io/eclipse/che-server:rhel-${{ steps.build.outputs.short_sha1 }}
     - name: Push ubi8 Che Server image
-      run: 
+      run: |
         docker push quay.io/eclipse/che-server:rhel-next
         docker push quay.io/eclipse/che-server:rhel-${{ steps.build.outputs.short_sha1 }}
     - name: Create failure MM message

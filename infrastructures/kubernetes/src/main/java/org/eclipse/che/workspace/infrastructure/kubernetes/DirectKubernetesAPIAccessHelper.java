@@ -151,9 +151,11 @@ public class DirectKubernetesAPIAccessHelper {
     if (headers != null) {
       for (Map.Entry<String, List<String>> e : headers.getRequestHeaders().entrySet()) {
         String name = e.getKey();
-        List<String> values = e.getValue();
-        for (String value : values) {
-          headersBuilder.add(name, value);
+        if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(name)) {
+          List<String> values = e.getValue();
+          for (String value : values) {
+            headersBuilder.add(name, value);
+          }
         }
       }
     }

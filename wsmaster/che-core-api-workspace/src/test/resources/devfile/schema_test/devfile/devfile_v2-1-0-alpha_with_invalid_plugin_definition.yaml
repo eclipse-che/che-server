@@ -10,7 +10,7 @@
 #   Red Hat, Inc. - initial API and implementation
 #
 
-schemaVersion: 2.1.0-alpha
+schemaVersion: 2.1.0
 metadata:
   name: test-project
   attributes:

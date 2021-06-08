@@ -263,15 +263,15 @@ public class DevfileSchemaValidatorTest {
       },
       {
         "devfile/devfile_v2_invalid_schemaVersion.yaml",
-        "Version 'a.b.c' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0-alpha]'."
+        "Version 'a.b.c' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0-alpha]'."
       },
       {
         "devfile/devfile_v2_unsupported_schemaVersion.yaml",
-        "Version '22.33.44' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0-alpha]'."
+        "Version '22.33.44' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0-alpha]'."
       },
       {
         "devfile/devfile_v2-1-0-alpha_unsupported_schemaVersion.yaml",
-        "Version '2.1.0-beta' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0-alpha]'."
+        "Version '2.1.0-beta' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0-alpha]'."
       },
       {
         "devfile/devfile_v2-1-0-alpha_with_invalid_plugin_definition.yaml",

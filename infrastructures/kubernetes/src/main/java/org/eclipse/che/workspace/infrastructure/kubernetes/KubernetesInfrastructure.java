@@ -92,7 +92,7 @@ public class KubernetesInfrastructure extends RuntimeInfrastructure {
         kubernetesClientFactory.getAuthenticatedHttpClient(),
         httpMethod,
         relativeUri,
-        null,
+        headers,
         body);
   }
 

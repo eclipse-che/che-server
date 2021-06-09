@@ -10,17 +10,19 @@
 #   Red Hat, Inc. - initial API and implementation
 #
 
-schemaVersion: 2.1.0-alpha
+schemaVersion: 2.2.0-alpha
 metadata:
-  name: test-project
-  attributes:
-    type: workspace
-projects:
-  - name: test-project
-    git:
-      remotes:
-        origin: https://github.com/Test/Project
+  name: spring-petclinic
+attributes:
+  example: foo
 components:
-  - plugin:
-      name: java language server
-      id: redhat/java11/0.57.0
+  - name: maven
+    container:
+      image: quay.io/eclipse/che-java8-maven:nightly
+      volumeMounts:
+        - name: mavenrepo
+          path: /root/.m2
+      env:
+        - name: ENV_VAR
+          value: value
+      memoryLimit: 1536M

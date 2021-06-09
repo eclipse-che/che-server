@@ -30,10 +30,13 @@ import org.testng.annotations.Test;
 public class TraefikGatewayRouteConfigGeneratorTest {
 
   private GatewayRouteConfigGenerator gatewayConfigGenerator;
+  private GatewayRouteConfigGenerator gatewayConfigGeneratorNonDefaultDomain;
 
   @BeforeMethod
   public void setUp() {
-    gatewayConfigGenerator = new TraefikGatewayRouteConfigGenerator();
+    gatewayConfigGenerator = new TraefikGatewayRouteConfigGenerator(null);
+    gatewayConfigGeneratorNonDefaultDomain =
+        new TraefikGatewayRouteConfigGenerator("myorg.internal");
   }
 
   @Test
@@ -51,7 +54,7 @@ public class TraefikGatewayRouteConfigGeneratorTest {
             + "    external-server-1:\n"
             + "      loadBalancer:\n"
             + "        servers:\n"
-            + "        - url: \"http://service-url.che-namespace.svc.cluster.local:1234\"\n"
+            + "        - url: \"http://service-url.che-namespace.svc:1234\"\n"
             + "  middlewares:\n"
             + "    external-server-1:\n"
             + "      stripPrefix:\n"
@@ -82,6 +85,58 @@ public class TraefikGatewayRouteConfigGeneratorTest {
 
     gatewayConfigGenerator.addRouteConfig("external-server-1", routeConfig);
     Map<String, String> generatedConfig = gatewayConfigGenerator.generate("che-namespace");
+
+    assertTrue(generatedConfig.containsKey("external-server-1.yml"));
+    assertEquals(generatedConfig.get("external-server-1.yml"), expectedConfig);
+  }
+
+  @Test
+  public void testGenerateGatewayConfigWithNonDefaultDomain() throws InfrastructureException {
+    String expectedConfig =
+        "http:\n"
+            + "  routers:\n"
+            + "    external-server-1:\n"
+            + "      rule: \"PathPrefix(`/blabol-cesta`)\"\n"
+            + "      service: \"external-server-1\"\n"
+            + "      middlewares:\n"
+            + "      - \"external-server-1\"\n"
+            + "      priority: 100\n"
+            + "  services:\n"
+            + "    external-server-1:\n"
+            + "      loadBalancer:\n"
+            + "        servers:\n"
+            + "        - url: \"http://service-url.che-namespace.svc.myorg.internal:1234\"\n"
+            + "  middlewares:\n"
+            + "    external-server-1:\n"
+            + "      stripPrefix:\n"
+            + "        prefixes:\n"
+            + "        - \"/blabol-cesta\"";
+
+    ServerConfigImpl serverConfig =
+        new ServerConfigImpl(
+            "123",
+            "https",
+            "/",
+            ImmutableMap.of(
+                SERVICE_NAME_ATTRIBUTE,
+                "service-url",
+                SERVICE_PORT_ATTRIBUTE,
+                "1234",
+                ServerConfig.ENDPOINT_ORIGIN,
+                "/blabol-cesta"));
+    Map<String, String> annotations =
+        new Annotations.Serializer().server("s1", serverConfig).annotations();
+    ConfigMap routeConfig =
+        new ConfigMapBuilder()
+            .withNewMetadata()
+            .withName("route")
+            .withAnnotations(annotations)
+            .endMetadata()
+            .build();
+
+    gatewayConfigGenerator.addRouteConfig("external-server-1", routeConfig);
+    Map<String, String> generatedConfig =
+        gatewayConfigGeneratorNonDefaultDomain.generate("che-namespace");
 
     assertTrue(generatedConfig.containsKey("external-server-1.yml"));
     assertEquals(generatedConfig.get("external-server-1.yml"), expectedConfig);

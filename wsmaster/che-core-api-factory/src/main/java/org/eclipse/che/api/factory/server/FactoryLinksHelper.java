@@ -108,7 +108,7 @@ public class FactoryLinksHelper {
                     .queryParam("file", additionalFile)
                     .build(factoryId)
                     .toString(),
-                "additional resource"));
+                additionalFile + " content"));
       }
     }
     return links;

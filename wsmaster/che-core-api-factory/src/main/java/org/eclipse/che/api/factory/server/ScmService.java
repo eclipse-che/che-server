@@ -27,7 +27,7 @@ import org.eclipse.che.api.core.rest.Service;
 
 @Api(value = "/scm")
 @Path("/scm")
-public class ScmFileResolverService extends Service {
+public class ScmService extends Service {
 
   @GET
   @Path("/resolve")

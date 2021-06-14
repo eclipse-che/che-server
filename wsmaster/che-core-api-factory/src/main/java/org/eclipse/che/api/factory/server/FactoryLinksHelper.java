@@ -102,8 +102,8 @@ public class FactoryLinksHelper {
                 uriBuilder
                     .clone()
                     .replacePath("api")
-                    .path(ScmFileResolverService.class)
-                    .path(ScmFileResolverService.class, "resolveFile")
+                    .path(ScmService.class)
+                    .path(ScmService.class, "resolveFile")
                     .queryParam("repository", repositoryUrl)
                     .queryParam("file", additionalFile)
                     .build(factoryId)

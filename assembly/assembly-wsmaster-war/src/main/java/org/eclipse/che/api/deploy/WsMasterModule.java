@@ -34,6 +34,7 @@ import org.eclipse.che.api.factory.server.FactoryCreateValidator;
 import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
+import org.eclipse.che.api.factory.server.ScmService;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerAuthorizingFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerScmFileResolver;
 import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver;
@@ -149,7 +150,7 @@ public class WsMasterModule extends AbstractModule {
     bind(FactoryEditValidator.class)
         .to(org.eclipse.che.api.factory.server.impl.FactoryEditValidatorImpl.class);
     bind(org.eclipse.che.api.factory.server.FactoryService.class);
-    bind(org.eclipse.che.api.factory.server.ScmFileResolverService.class);
+    bind(ScmService.class);
     install(new org.eclipse.che.api.factory.server.jpa.FactoryJpaModule());
 
     // Service-specific factory resolvers.

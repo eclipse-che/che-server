@@ -86,7 +86,7 @@ public class DevfileSchemaValidatorTest {
       {"devfile/devfile_v2_spring-boot-http-booster-devfile.yaml"},
       {"devfile/devfile_v2-1-0_just_schemaVersion.yaml"},
       {"devfile/devfile_v2-1-0_simple-devfile.yaml"},
-      {"devfile/devfile_v2-2-0-alpha_simple-devfile.yaml"},
+      {"devfile/devfile_v2-2-0-simple-devfile.yaml"},
     };
   }
 
@@ -264,15 +264,15 @@ public class DevfileSchemaValidatorTest {
       },
       {
         "devfile/devfile_v2_invalid_schemaVersion.yaml",
-        "Version 'a.b.c' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0-alpha]'."
+        "Version 'a.b.c' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0]'."
       },
       {
         "devfile/devfile_v2_unsupported_schemaVersion.yaml",
-        "Version '22.33.44' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0-alpha]'."
+        "Version '22.33.44' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0]'."
       },
       {
         "devfile/devfile_v2-1-0_unsupported_schemaVersion.yaml",
-        "Version '2.1.0-beta' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0-alpha]'."
+        "Version '2.1.0-beta' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0]'."
       },
       {
         "devfile/devfile_v2-1-0_with_invalid_plugin_definition.yaml",

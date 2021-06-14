@@ -10,7 +10,7 @@
 #   Red Hat, Inc. - initial API and implementation
 #
 
-schemaVersion: 2.2.0-alpha
+schemaVersion: 2.2.0
 metadata:
   name: spring-petclinic
 attributes:

@@ -1557,7 +1557,7 @@
     "schemaVersion": {
       "description": "Devfile schema version",
       "type": "string",
-      "pattern": "^2\\.2\\.0-alpha$"
+      "pattern": "^2\\.2\\.0$"
     },
     "starterProjects": {
       "description": "StarterProjects is a project that can be used as a starting point when bootstrapping new projects",

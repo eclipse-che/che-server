@@ -68,7 +68,8 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
               EnvironmentContext.getCurrent().getSubject(), remoteFactoryUrl.getHostName());
       if (token.isPresent()) {
         PersonalAccessToken personalAccessToken = token.get();
-        String content = urlFetcher.fetch(requestURL, "Bearer " + personalAccessToken.getToken());
+        String content =
+            urlFetcher.fetch(requestURL, formatAuthorization(personalAccessToken.getToken()));
         gitCredentialManager.createOrReplace(personalAccessToken);
         return content;
       } else {
@@ -81,7 +82,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
                 personalAccessTokenManager.fetchAndSave(
                     EnvironmentContext.getCurrent().getSubject(), remoteFactoryUrl.getHostName());
             String content =
-                urlFetcher.fetch(requestURL, "Bearer " + personalAccessToken.getToken());
+                urlFetcher.fetch(requestURL, formatAuthorization(personalAccessToken.getToken()));
             gitCredentialManager.createOrReplace(personalAccessToken);
             return content;
           } catch (ScmUnauthorizedException
@@ -108,5 +109,9 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         | ScmCommunicationException e) {
       throw new DevfileException(e.getMessage(), e);
     }
+  }
+
+  protected String formatAuthorization(String token) {
+    return "Bearer " + token;
   }
 }

@@ -14,18 +14,30 @@ package org.eclipse.che.api.factory.server.github;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-public class GithubFileContentProviderTest {
+@Listeners(MockitoTestNGListener.class)
+public class GithubAuthorizingFileContentProviderTest {
+
+  @Mock private GitCredentialManager gitCredentialManager;
+
+  @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   @Test
   public void shouldExpandRelativePaths() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
-    FileContentProvider fileContentProvider = new GithubFileContentProvider(githubUrl, urlFetcher);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(
+            githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
     fileContentProvider.fetchContent("devfile.yaml");
     verify(urlFetcher).fetch(eq("https://raw.githubusercontent.com/eclipse/che/HEAD/devfile.yaml"));
   }
@@ -34,7 +46,9 @@ public class GithubFileContentProviderTest {
   public void shouldPreserveAbsolutePaths() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
-    FileContentProvider fileContentProvider = new GithubFileContentProvider(githubUrl, urlFetcher);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(
+            githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
     String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
     fileContentProvider.fetchContent(url);
     verify(urlFetcher).fetch(eq(url));

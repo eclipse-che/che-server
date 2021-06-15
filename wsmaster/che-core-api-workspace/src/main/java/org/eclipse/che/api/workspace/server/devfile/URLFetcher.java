@@ -26,6 +26,8 @@ import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.HttpHeaders;
@@ -43,14 +45,19 @@ public class URLFetcher {
   /** Logger. */
   private static final Logger LOG = LoggerFactory.getLogger(URLFetcher.class);
 
-  /** Maximum size of allowed data. (80KB) */
-  protected static final long MAXIMUM_READ_BYTES = 80 * 1024;
-
   /** timeout when reading */
   @VisibleForTesting static final int CONNECTION_READ_TIMEOUT = 10 * 1000; // 10s
 
   /** The Compiled REGEX PATTERN that can be used for http|https git urls */
   final Pattern GIT_HTTP_URL_PATTERN = Pattern.compile("(?<sanitized>^http[s]?://.*)\\.git$");
+
+  /** Maximum size of allowed data. */
+  protected long maximumReadBytes;
+
+  @Inject
+  public URLFetcher(@Named("che.factory.scm_file_fetcher_limit_bytes") long maxFetchBytes) {
+    this.maximumReadBytes = maxFetchBytes;
+  }
 
   /**
    * Fetches the url provided and return its content. To prevent DOS attack, limit the amount of the
@@ -155,7 +162,7 @@ public class URLFetcher {
    * @return maximum size.
    */
   protected long getLimit() {
-    return MAXIMUM_READ_BYTES;
+    return maximumReadBytes;
   }
 
   /**

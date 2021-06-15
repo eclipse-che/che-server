@@ -35,9 +35,14 @@ import org.eclipse.che.api.factory.server.FactoryAcceptValidator;
 import org.eclipse.che.api.factory.server.FactoryCreateValidator;
 import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.ScmFileResolver;
+import org.eclipse.che.api.factory.server.ScmService;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerAuthorizingFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerScmFileResolver;
 import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.github.GithubScmFileResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.gitlab.GitlabScmFileResolver;
 import org.eclipse.che.api.infraproxy.server.InfraProxyModule;
 import org.eclipse.che.api.metrics.WsMasterMetricsModule;
 import org.eclipse.che.api.system.server.ServiceTermination;
@@ -152,6 +157,7 @@ public class WsMasterModule extends AbstractModule {
     bind(FactoryEditValidator.class)
         .to(org.eclipse.che.api.factory.server.impl.FactoryEditValidatorImpl.class);
     bind(org.eclipse.che.api.factory.server.FactoryService.class);
+    bind(ScmService.class);
     install(new org.eclipse.che.api.factory.server.jpa.FactoryJpaModule());
 
     // Service-specific factory resolvers.
@@ -162,6 +168,12 @@ public class WsMasterModule extends AbstractModule {
         .addBinding()
         .to(BitbucketServerAuthorizingFactoryParametersResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(GitlabFactoryParametersResolver.class);
+
+    Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =
+        Multibinder.newSetBinder(binder(), ScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(GithubScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(GitlabScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(BitbucketServerScmFileResolver.class);
 
     install(new org.eclipse.che.api.factory.server.scm.KubernetesScmModule());
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketServerModule());

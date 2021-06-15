@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.eclipse.che.api.core.util.LinksHelper.createLink;
@@ -18,13 +19,13 @@ import static org.eclipse.che.api.factory.shared.Constants.FACTORY_ACCEPTANCE_RE
 import static org.eclipse.che.api.factory.shared.Constants.NAMED_FACTORY_ACCEPTANCE_REL_ATT;
 import static org.eclipse.che.api.factory.shared.Constants.RETRIEVE_FACTORY_REL_ATT;
 
-import com.google.common.base.Strings;
 import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
+import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 
 /**
@@ -43,7 +44,11 @@ public class FactoryLinksHelper {
    * @return list of factory links
    */
   public static List<Link> createLinks(
-      FactoryMetaDto factory, ServiceContext serviceContext, String userName) {
+      FactoryMetaDto factory,
+      ServiceContext serviceContext,
+      AdditionalFilenamesProvider additionalFilenamesProvider,
+      String userName,
+      String repositoryUrl) {
     final List<Link> links = new LinkedList<>();
     final UriBuilder uriBuilder = serviceContext.getServiceUriBuilder();
     final String factoryId = factory.getId();
@@ -71,7 +76,7 @@ public class FactoryLinksHelper {
       links.add(createWorkspace);
     }
 
-    if (!Strings.isNullOrEmpty(factory.getName()) && !Strings.isNullOrEmpty(userName)) {
+    if (!isNullOrEmpty(factory.getName()) && !isNullOrEmpty(userName)) {
       // creation of accept factory link by name and creator
       final Link createWorkspaceFromNamedFactory =
           createLink(
@@ -87,6 +92,42 @@ public class FactoryLinksHelper {
               TEXT_HTML,
               NAMED_FACTORY_ACCEPTANCE_REL_ATT);
       links.add(createWorkspaceFromNamedFactory);
+    }
+
+    if (factory instanceof FactoryDevfileV2Dto) {
+      // link to devfile source
+      if (!isNullOrEmpty(factory.getSource())) {
+        links.add(
+            createLink(
+                HttpMethod.GET,
+                uriBuilder
+                    .clone()
+                    .replacePath("api")
+                    .path(ScmService.class)
+                    .path(ScmService.class, "resolveFile")
+                    .queryParam("repository", repositoryUrl)
+                    .queryParam("file", factory.getSource())
+                    .build(factoryId)
+                    .toString(),
+                factory.getSource() + " content"));
+      }
+
+      // additional files links
+      for (String additionalFile : additionalFilenamesProvider.get()) {
+        links.add(
+            createLink(
+                HttpMethod.GET,
+                uriBuilder
+                    .clone()
+                    .replacePath("api")
+                    .path(ScmService.class)
+                    .path(ScmService.class, "resolveFile")
+                    .queryParam("repository", repositoryUrl)
+                    .queryParam("file", additionalFile)
+                    .build(factoryId)
+                    .toString(),
+                additionalFile + " content"));
+      }
     }
     return links;
   }

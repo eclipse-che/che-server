@@ -13,7 +13,6 @@ package org.eclipse.che.api.workspace.server.devfile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.che.api.workspace.server.devfile.URLFetcher.CONNECTION_READ_TIMEOUT;
-import static org.eclipse.che.api.workspace.server.devfile.URLFetcher.MAXIMUM_READ_BYTES;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
@@ -26,7 +25,6 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.function.Consumer;
-import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
@@ -42,7 +40,7 @@ import org.testng.annotations.Test;
 public class URLFetcherTest {
 
   /** Instance to test. */
-  @InjectMocks private URLFetcher urlFetcher;
+  private URLFetcher urlFetcher = new URLFetcher(1024);
 
   /** Check that when url is null, NPE is thrown */
   @Test(expectedExceptions = NullPointerException.class)
@@ -123,7 +121,7 @@ public class URLFetcherTest {
     URL urlJson = getClass().getClassLoader().getResource("devfile/url_fetcher_test_resource.json");
     Assert.assertNotNull(urlJson);
 
-    String content = new OneByteURLFetcher().fetchSafely(urlJson.toString());
+    String content = new OneByteURLFetcher(1).fetchSafely(urlJson.toString());
     assertEquals(content, "Hello".substring(0, 1));
   }
 
@@ -131,7 +129,7 @@ public class URLFetcherTest {
   @Test
   public void checkDefaultPartialContent() throws IOException {
     URLConnection urlConnection = Mockito.mock(URLConnection.class);
-    String originalContent = Strings.padEnd("", (int) MAXIMUM_READ_BYTES, 'a');
+    String originalContent = Strings.padEnd("", 1024, 'a');
     String extraContent = originalContent + "----";
     when(urlConnection.getInputStream())
         .thenReturn(new ByteArrayInputStream(extraContent.getBytes(UTF_8)));
@@ -159,7 +157,7 @@ public class URLFetcherTest {
 
   @Test(expectedExceptions = IOException.class)
   public void testExceptionIsThrownOnTimeout() throws IOException {
-    URLFetcher fetcher = new URLFetcher();
+    URLFetcher fetcher = new URLFetcher(1024);
     URLConnection connection =
         new URLConnection(new URL("http://eclipse.org/che")) {
           @Override
@@ -178,6 +176,11 @@ public class URLFetcherTest {
 
   /** Limit to only one Byte. */
   static class OneByteURLFetcher extends URLFetcher {
+
+    public OneByteURLFetcher(long maxFetchBytes) {
+      super(maxFetchBytes);
+    }
+
     /** Override the limit */
     @Override
     protected long getLimit() {
@@ -189,6 +192,7 @@ public class URLFetcherTest {
     private final Consumer<Integer> assertion;
 
     public TimeoutCheckURLFetcher(Consumer<Integer> assertion) {
+      super(500);
       this.assertion = assertion;
     }
 

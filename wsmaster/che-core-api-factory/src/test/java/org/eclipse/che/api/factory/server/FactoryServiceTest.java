@@ -57,7 +57,6 @@ import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
@@ -100,13 +99,10 @@ public class FactoryServiceTest {
 
   private static final DtoFactory DTO = DtoFactory.getInstance();
 
-  @Mock private FactoryManager factoryManager;
-  @Mock private FactoryCreateValidator createValidator;
   @Mock private FactoryAcceptValidator acceptValidator;
   @Mock private PreferenceManager preferenceManager;
   @Mock private UserManager userManager;
-  @Mock private FactoryEditValidator editValidator;
-  @Mock private WorkspaceManager workspaceManager;
+  @Mock private AdditionalFilenamesProvider additionalFilenamesProvider;
   @Mock private DefaultFactoryParameterResolver defaultFactoryParameterResolver;
 
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
@@ -133,7 +129,12 @@ public class FactoryServiceTest {
     lenient()
         .when(preferenceManager.find(USER_ID))
         .thenReturn(ImmutableMap.of("preference", "value"));
-    service = new FactoryService(userManager, acceptValidator, factoryParametersResolverHolder);
+    service =
+        new FactoryService(
+            userManager,
+            acceptValidator,
+            factoryParametersResolverHolder,
+            additionalFilenamesProvider);
   }
 
   @Filter
@@ -147,6 +148,14 @@ public class FactoryServiceTest {
 
   @Test
   public void shouldThrowBadRequestWhenNoURLParameterGiven() throws Exception {
+    final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
+    doReturn(defaultFactoryParameterResolver)
+        .when(dummyHolder)
+        .getFactoryParametersResolver(anyMap());
+    // service instance with dummy holder
+    service =
+        new FactoryService(userManager, acceptValidator, dummyHolder, additionalFilenamesProvider);
+
     // when
     final Map<String, String> map = new HashMap<>();
     final Response response =
@@ -170,7 +179,8 @@ public class FactoryServiceTest {
         .when(dummyHolder)
         .getFactoryParametersResolver(anyMap());
     // service instance with dummy holder
-    service = new FactoryService(userManager, acceptValidator, dummyHolder);
+    service =
+        new FactoryService(userManager, acceptValidator, dummyHolder, additionalFilenamesProvider);
 
     // invalid factory
     final String invalidFactoryMessage = "invalid factory";

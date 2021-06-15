@@ -83,7 +83,7 @@ public class GitlabFactoryParametersResolverTest {
     assertNotNull(this.gitlabFactoryParametersResolver);
   }
 
-  /** Check url which is not a bitbucket url can't be accepted by this resolver */
+  /** Check url which is not a Gitlab url can't be accepted by this resolver */
   @Test
   public void checkInvalidAcceptUrl() {
     Map<String, String> parameters = singletonMap(URL_PARAMETER_NAME, "http://github.com");
@@ -91,7 +91,7 @@ public class GitlabFactoryParametersResolverTest {
     assertFalse(gitlabFactoryParametersResolver.accept(parameters));
   }
 
-  /** Check bitbucket url will be be accepted by this resolver */
+  /** Check Gitlab url will be be accepted by this resolver */
   @Test
   public void checkValidAcceptUrl() {
     Map<String, String> parameters =

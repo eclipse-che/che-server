@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.factory.server.FactoryLinksHelper.createLinks;
+import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -54,15 +55,18 @@ public class FactoryService extends Service {
   private final UserManager userManager;
   private final FactoryAcceptValidator acceptValidator;
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
+  private final AdditionalFilenamesProvider additionalFilenamesProvider;
 
   @Inject
   public FactoryService(
       UserManager userManager,
       FactoryAcceptValidator acceptValidator,
-      FactoryParametersResolverHolder factoryParametersResolverHolder) {
+      FactoryParametersResolverHolder factoryParametersResolverHolder,
+      AdditionalFilenamesProvider additionalFilenamesProvider) {
     this.userManager = userManager;
     this.acceptValidator = acceptValidator;
     this.factoryParametersResolverHolder = factoryParametersResolverHolder;
+    this.additionalFilenamesProvider = additionalFilenamesProvider;
   }
 
   @POST
@@ -103,13 +107,13 @@ public class FactoryService extends Service {
       acceptValidator.validateOnAccept(resolvedFactory);
     }
 
-    resolvedFactory = injectLinks(resolvedFactory);
+    resolvedFactory = injectLinks(resolvedFactory, parameters);
 
     return resolvedFactory;
   }
 
   /** Injects factory links. If factory is named then accept named link will be injected. */
-  private FactoryMetaDto injectLinks(FactoryMetaDto factory) {
+  private FactoryMetaDto injectLinks(FactoryMetaDto factory, Map<String, String> parameters) {
     String username = null;
     if (factory.getCreator() != null && factory.getCreator().getUserId() != null) {
       try {
@@ -118,14 +122,19 @@ public class FactoryService extends Service {
         // when impossible to get username then named factory link won't be injected
       }
     }
-    return factory.withLinks(createLinks(factory, getServiceContext(), username));
+    return factory.withLinks(
+        createLinks(
+            factory,
+            getServiceContext(),
+            additionalFilenamesProvider,
+            username,
+            parameters.get(URL_PARAMETER_NAME)));
   }
 
   /** Usage of a dedicated class to manage the optional service-specific resolvers */
   protected static class FactoryParametersResolverHolder {
 
-    /** Optional inject for the resolvers. */
-    @com.google.inject.Inject(optional = true)
+    @Inject
     @SuppressWarnings("unused")
     private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
@@ -139,12 +148,10 @@ public class FactoryService extends Service {
      */
     public FactoryParametersResolver getFactoryParametersResolver(Map<String, String> parameters)
         throws BadRequestException {
-      if (specificFactoryParametersResolvers != null) {
-        for (FactoryParametersResolver factoryParametersResolver :
-            specificFactoryParametersResolvers) {
-          if (factoryParametersResolver.accept(parameters)) {
-            return factoryParametersResolver;
-          }
+      for (FactoryParametersResolver factoryParametersResolver :
+          specificFactoryParametersResolvers) {
+        if (factoryParametersResolver.accept(parameters)) {
+          return factoryParametersResolver;
         }
       }
       if (defaultFactoryResolver.accept(parameters)) {
@@ -165,18 +172,6 @@ public class FactoryService extends Service {
   private static void requiredNotNull(Object object, String subject) throws BadRequestException {
     if (object == null) {
       throw new BadRequestException(subject + " required");
-    }
-  }
-
-  /**
-   * Checks that expression is true, throws {@link BadRequestException} otherwise.
-   *
-   * <p>Exception uses error message built from error message template and error message parameters.
-   */
-  private static void checkArgument(boolean expression, String errorMessage)
-      throws BadRequestException {
-    if (!expression) {
-      throw new BadRequestException(errorMessage);
     }
   }
 }

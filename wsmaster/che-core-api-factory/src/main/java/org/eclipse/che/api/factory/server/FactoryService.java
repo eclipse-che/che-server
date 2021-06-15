@@ -134,8 +134,7 @@ public class FactoryService extends Service {
   /** Usage of a dedicated class to manage the optional service-specific resolvers */
   protected static class FactoryParametersResolverHolder {
 
-    /** Optional inject for the resolvers. */
-    @com.google.inject.Inject(optional = true)
+    @Inject
     @SuppressWarnings("unused")
     private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
@@ -149,12 +148,10 @@ public class FactoryService extends Service {
      */
     public FactoryParametersResolver getFactoryParametersResolver(Map<String, String> parameters)
         throws BadRequestException {
-      if (specificFactoryParametersResolvers != null) {
-        for (FactoryParametersResolver factoryParametersResolver :
-            specificFactoryParametersResolvers) {
-          if (factoryParametersResolver.accept(parameters)) {
-            return factoryParametersResolver;
-          }
+      for (FactoryParametersResolver factoryParametersResolver :
+          specificFactoryParametersResolvers) {
+        if (factoryParametersResolver.accept(parameters)) {
+          return factoryParametersResolver;
         }
       }
       if (defaultFactoryResolver.accept(parameters)) {

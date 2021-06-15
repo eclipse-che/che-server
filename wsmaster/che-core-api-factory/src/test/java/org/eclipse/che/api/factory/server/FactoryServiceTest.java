@@ -148,6 +148,14 @@ public class FactoryServiceTest {
 
   @Test
   public void shouldThrowBadRequestWhenNoURLParameterGiven() throws Exception {
+    final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
+    doReturn(defaultFactoryParameterResolver)
+        .when(dummyHolder)
+        .getFactoryParametersResolver(anyMap());
+    // service instance with dummy holder
+    service =
+        new FactoryService(userManager, acceptValidator, dummyHolder, additionalFilenamesProvider);
+
     // when
     final Map<String, String> map = new HashMap<>();
     final Response response =

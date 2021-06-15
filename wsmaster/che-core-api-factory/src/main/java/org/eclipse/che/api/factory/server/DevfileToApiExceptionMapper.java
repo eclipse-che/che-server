@@ -22,6 +22,10 @@ import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderExcept
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLocation;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
+/**
+ * Helps to convert {@link DevfileException}s with some specific causes into REST-friendly {@link
+ * ApiException}
+ */
 public class DevfileToApiExceptionMapper {
 
   public static ApiException toApiException(DevfileException devfileException) {

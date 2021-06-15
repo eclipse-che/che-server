@@ -17,6 +17,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.Set;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -61,8 +62,7 @@ public class ScmService extends Service {
     }
   }
 
-  /** Optional inject for the resolvers. */
-  @com.google.inject.Inject(optional = true)
+  @Inject
   @SuppressWarnings("unused")
   private Set<ScmFileResolver> specificScmFileResolvers;
 
@@ -73,11 +73,9 @@ public class ScmService extends Service {
    * @return suitable service-specific resolver or default one
    */
   public ScmFileResolver getScmFileResolver(String repository) throws BadRequestException {
-    if (specificScmFileResolvers != null) {
-      for (ScmFileResolver scmFileResolver : specificScmFileResolvers) {
-        if (scmFileResolver.accept(repository)) {
-          return scmFileResolver;
-        }
+    for (ScmFileResolver scmFileResolver : specificScmFileResolvers) {
+      if (scmFileResolver.accept(repository)) {
+        return scmFileResolver;
       }
     }
     throw new BadRequestException("Cannot find suitable file resolver for the provided URL.");

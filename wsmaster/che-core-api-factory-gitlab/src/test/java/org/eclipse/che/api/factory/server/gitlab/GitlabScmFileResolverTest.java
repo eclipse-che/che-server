@@ -76,7 +76,7 @@ public class GitlabScmFileResolverTest {
     when(personalAccessTokenManager.get(any(Subject.class), anyString()))
         .thenReturn(Optional.of(new PersonalAccessToken(SCM_URL, "root", "token123")));
 
-    when(urlFetcher.fetch(eq(filename), eq("Bearer token123"))).thenReturn(rawContent);
+    when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
 
     String content =
         gitlabScmFileResolver.fileContent("http://gitlab.2mcl.com/test/proj/repo.git", filename);

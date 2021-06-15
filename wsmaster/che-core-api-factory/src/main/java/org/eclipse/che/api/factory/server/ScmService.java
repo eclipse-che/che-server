@@ -30,6 +30,13 @@ import org.eclipse.che.api.core.rest.Service;
 @Path("/scm")
 public class ScmService extends Service {
 
+  private final Set<ScmFileResolver> specificScmFileResolvers;
+
+  @Inject
+  public ScmService(Set<ScmFileResolver> specificScmFileResolvers) {
+    this.specificScmFileResolvers = specificScmFileResolvers;
+  }
+
   @GET
   @Path("/resolve")
   @ApiOperation(value = "Get file content by specific repository and filename.")
@@ -61,10 +68,6 @@ public class ScmService extends Service {
       throw new BadRequestException(subject + " parameter is required");
     }
   }
-
-  @Inject
-  @SuppressWarnings("unused")
-  private Set<ScmFileResolver> specificScmFileResolvers;
 
   /**
    * Provides a suitable file resolver for the given parameters. If there is no at least one

@@ -95,6 +95,22 @@ public class FactoryLinksHelper {
     }
 
     if (factory instanceof FactoryDevfileV2Dto) {
+      // link to devfile source
+      links.add(
+          createLink(
+              HttpMethod.GET,
+              uriBuilder
+                  .clone()
+                  .replacePath("api")
+                  .path(ScmService.class)
+                  .path(ScmService.class, "resolveFile")
+                  .queryParam("repository", repositoryUrl)
+                  .queryParam("file", factory.getSource())
+                  .build(factoryId)
+                  .toString(),
+              factory.getSource() + " content"));
+
+      // additional files links
       for (String additionalFile : additionalFilenamesProvider.get()) {
         links.add(
             createLink(

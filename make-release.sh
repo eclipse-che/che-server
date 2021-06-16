@@ -282,7 +282,7 @@ releaseCheServer() {
 }
 
 releaseTypescriptDto() {
-    pushd che/typescript-dto >/dev/null
+    pushd che-server/typescript-dto >/dev/null
     ./build.sh
     popd >/dev/null
 }

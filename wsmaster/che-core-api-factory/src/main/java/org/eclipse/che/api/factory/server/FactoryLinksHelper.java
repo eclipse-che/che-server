@@ -111,22 +111,23 @@ public class FactoryLinksHelper {
                     .toString(),
                 factory.getSource() + " content"));
       }
-
-      // additional files links
-      for (String additionalFile : additionalFilenamesProvider.get()) {
-        links.add(
-            createLink(
-                HttpMethod.GET,
-                uriBuilder
-                    .clone()
-                    .replacePath("api")
-                    .path(ScmService.class)
-                    .path(ScmService.class, "resolveFile")
-                    .queryParam("repository", repositoryUrl)
-                    .queryParam("file", additionalFile)
-                    .build(factoryId)
-                    .toString(),
-                additionalFile + " content"));
+      if (((FactoryDevfileV2Dto) factory).getScmInfo() != null) {
+        // additional files links
+        for (String additionalFile : additionalFilenamesProvider.get()) {
+          links.add(
+              createLink(
+                  HttpMethod.GET,
+                  uriBuilder
+                      .clone()
+                      .replacePath("api")
+                      .path(ScmService.class)
+                      .path(ScmService.class, "resolveFile")
+                      .queryParam("repository", repositoryUrl)
+                      .queryParam("file", additionalFile)
+                      .build(factoryId)
+                      .toString(),
+                  additionalFile + " content"));
+        }
       }
     }
     return links;

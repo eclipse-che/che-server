@@ -45,7 +45,7 @@ public class GitlabAuthorizingFileContentProviderTest {
     verify(urlFetcher)
         .fetch(
             eq(
-                "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=master"));
+                "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw"));
   }
 
   @Test
@@ -57,7 +57,7 @@ public class GitlabAuthorizingFileContentProviderTest {
         new GitlabAuthorizingFileContentProvider(
             gitlabUrl, urlFetcher, gitCredentialsManager, personalAccessTokenManager);
     String url =
-        "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=master";
+        "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw";
     fileContentProvider.fetchContent(url);
     verify(urlFetcher).fetch(eq(url));
   }

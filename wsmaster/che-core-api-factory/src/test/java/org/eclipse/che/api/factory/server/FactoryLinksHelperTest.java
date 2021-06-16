@@ -11,11 +11,11 @@
  */
 package org.eclipse.che.api.factory.server;
 
-import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.UriBuilder;
@@ -36,6 +36,7 @@ public class FactoryLinksHelperTest {
 
   private static final String USER_ID = "user123";
   private static final String URI_BASE = "http://localhost:8080";
+  public static final String TEST_REPO = "https://test.repo.com";
 
   @Mock ServiceContext serviceContext;
   @Mock AdditionalFilenamesProvider additionalFilenamesProvider;
@@ -48,7 +49,7 @@ public class FactoryLinksHelperTest {
   }
 
   @Test
-  public void shouldContainDevfileLinkIfSourceIsPresent() throws Exception {
+  public void shouldContainDevfileLinkIfSourceIsPresent() {
     final String testRepo = "https://test.repo.com";
     List<Link> links =
         FactoryLinksHelper.createLinks(
@@ -73,16 +74,15 @@ public class FactoryLinksHelperTest {
   }
 
   @Test
-  public void shouldContainFilesLinksIfScmInfoIsPresent() throws Exception {
-    final String testRepo = "https://test.repo.com";
-    when(additionalFilenamesProvider.get()).thenReturn(asList("myfile.ext"));
+  public void shouldContainFilesLinksIfScmInfoIsPresent() {
+    when(additionalFilenamesProvider.get()).thenReturn(Collections.singletonList("myfile.ext"));
     List<Link> links =
         FactoryLinksHelper.createLinks(
-            createV2FactoryWithScmInfo("factory1", testRepo),
+            createV2FactoryWithScmInfo("factory1", TEST_REPO),
             serviceContext,
             additionalFilenamesProvider,
             "user1",
-            testRepo);
+            TEST_REPO);
     assertTrue(
         links
             .stream()
@@ -94,12 +94,12 @@ public class FactoryLinksHelperTest {
                             .equals(
                                 URI_BASE
                                     + "/api/scm/resolve?repository="
-                                    + testRepo
+                                    + TEST_REPO
                                     + "&file=myfile.ext")));
   }
 
   @Test
-  public void shouldNotContainFilesLinksIfNoScmInfoIsPresent() throws Exception {
+  public void shouldNotContainFilesLinksIfNoScmInfoIsPresent() {
     final String testRepo = "https://test.repo.com";
     List<Link> links =
         FactoryLinksHelper.createLinks(

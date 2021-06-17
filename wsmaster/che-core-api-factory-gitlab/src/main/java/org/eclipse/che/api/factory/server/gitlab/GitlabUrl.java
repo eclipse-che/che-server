@@ -206,8 +206,6 @@ public class GitlabUrl implements RemoteFactoryUrl {
             .toString();
     if (branch != null) {
       resultUrl = resultUrl + "?ref=" + branch;
-    } else {
-      resultUrl = resultUrl + "?ref=master";
     }
     return resultUrl;
   }

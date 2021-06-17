@@ -67,11 +67,11 @@ public class GitlabUrlTest {
     return new Object[][] {
       {
         "https://gitlab.net/eclipse/che.git",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw?ref=master"
+        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw"
       },
       {
         "https://gitlab.net/eclipse/fooproj/che.git",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj/repository/files/%s/raw?ref=master"
+        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj/repository/files/%s/raw"
       },
       {
         "https://gitlab.net/eclipse/fooproj/-/tree/master/",

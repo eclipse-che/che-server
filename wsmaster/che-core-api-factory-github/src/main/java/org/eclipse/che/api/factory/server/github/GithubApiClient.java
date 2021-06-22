@@ -13,6 +13,8 @@ package org.eclipse.che.api.factory.server.github;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.Duration.ofSeconds;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,10 +45,16 @@ import org.slf4j.LoggerFactory;
 public class GithubApiClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(GithubApiClient.class);
-  private static final String GITHUB_API_SERVER = "https://api.github.com";
-  // Trailing '/' is important since https://github.com is different from https://github.com/ and
-  // the latter is what's being used.
-  static final String GITHUB_SERVER = "https://github.com/";
+
+  /** GitHub API endpoint URL. */
+  public static final String GITHUB_API_SERVER = "https://api.github.com";
+
+  /** GitHub endpoint URL. */
+  public static final String GITHUB_SERVER = "https://github.com";
+
+  /** GitHub HTTP header containing OAuth scopes. */
+  public static final String GITHUB_OAUTH_SCOPES_HEADER = "X-OAuth-Scopes";
+
   private final HttpClient httpClient;
   private final URI apiServerUrl;
   private final URI scmServerUrl;
@@ -54,8 +62,18 @@ public class GithubApiClient {
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+  /** Default constructor, binds http client to https://api.github.com */
   public GithubApiClient() {
-    this.apiServerUrl = URI.create(GITHUB_API_SERVER);
+    this(GITHUB_API_SERVER);
+  }
+
+  /**
+   * Used for URL injection in testing.
+   *
+   * @param apiServerUrl the GitHub API url
+   */
+  GithubApiClient(final String apiServerUrl) {
+    this.apiServerUrl = URI.create(apiServerUrl);
     this.scmServerUrl = URI.create(GITHUB_SERVER);
     this.httpClient =
         HttpClient.newBuilder()
@@ -100,9 +118,11 @@ public class GithubApiClient {
   /**
    * Returns the scopes of the OAuth token.
    *
-   * @see https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps
+   * <p>See GitHub documentation at
+   * https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps
+   *
    * @param authenticationToken The OAuth token to inspect.
-   * @return Array of scopes from the supplied token.
+   * @return Array of scopes from the supplied token, empty array if no scope.
    * @throws ScmItemNotFoundException
    * @throws ScmCommunicationException
    * @throws ScmBadRequestException
@@ -116,9 +136,10 @@ public class GithubApiClient {
         httpClient,
         request,
         response -> {
-          Optional<String> scopes = response.headers().firstValue("X-OAuth-Scopes");
+          Optional<String> scopes = response.headers().firstValue(GITHUB_OAUTH_SCOPES_HEADER);
           return Splitter.on(',')
               .trimResults()
+              .omitEmptyStrings()
               .splitToList(scopes.orElse(""))
               .toArray(String[]::new);
         });
@@ -144,9 +165,9 @@ public class GithubApiClient {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
       LOG.trace("executeRequest={} response {}", request, response.statusCode());
-      if (response.statusCode() == 200) {
+      if (response.statusCode() == HTTP_OK) {
         return responseConverter.apply(response);
-      } else if (response.statusCode() == 204) {
+      } else if (response.statusCode() == HTTP_NO_CONTENT) {
         return null;
       } else {
         String body = CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
@@ -165,6 +186,12 @@ public class GithubApiClient {
     }
   }
 
+  /**
+   * Checks if the provided url belongs to this client (GitHub)
+   *
+   * @param scmServerUrl the SCM url to verify
+   * @return If the provided url is recognized by the current client
+   */
   public boolean isConnected(String scmServerUrl) {
     return this.scmServerUrl.equals(URI.create(scmServerUrl));
   }

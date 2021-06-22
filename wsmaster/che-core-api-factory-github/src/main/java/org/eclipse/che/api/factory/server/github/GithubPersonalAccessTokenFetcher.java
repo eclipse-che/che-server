@@ -38,18 +38,26 @@ import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Github OAuth token retriever. */
+/** GitHub OAuth token retriever. */
 public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetcher {
 
   private static final Logger LOG = LoggerFactory.getLogger(GithubPersonalAccessTokenFetcher.class);
   private final String apiEndpoint;
   private final OAuthAPI oAuthAPI;
+
+  /** GitHub API client. */
   private final GithubApiClient githubApiClient;
+
+  /** Name of this OAuth provider as found in OAuthAPI. */
   private static final String OAUTH_PROVIDER_NAME = "github";
+
+  /** Collection of OAuth scopes required to make integration with GitHub work. */
   public static final Set<String> DEFAULT_TOKEN_SCOPES = ImmutableSet.of("repo");
 
   /**
-   * See
+   * Map of OAuth GitHub scopes where each key is a scope and its value is the parent scope. The
+   * parent scope includes all of its children scopes. This map is used when determining if a token
+   * has the required scopes. See
    * https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
    */
   private static final Map<String, String> SCOPE_MAP =
@@ -107,9 +115,21 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
 
   @Inject
   public GithubPersonalAccessTokenFetcher(@Named("che.api") String apiEndpoint, OAuthAPI oAuthAPI) {
+    this(apiEndpoint, oAuthAPI, new GithubApiClient());
+  }
+
+  /**
+   * Constructor used for testing only.
+   *
+   * @param apiEndpoint
+   * @param oAuthAPI
+   * @param githubApiClient
+   */
+  GithubPersonalAccessTokenFetcher(
+      String apiEndpoint, OAuthAPI oAuthAPI, GithubApiClient githubApiClient) {
     this.apiEndpoint = apiEndpoint;
     this.oAuthAPI = oAuthAPI;
-    this.githubApiClient = new GithubApiClient();
+    this.githubApiClient = githubApiClient;
   }
 
   @Override
@@ -118,6 +138,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
     OAuthToken oAuthToken;
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
+      // Find the user associated to the OAuth token by querying the GitHub API.
       GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
       PersonalAccessToken token =
           new PersonalAccessToken(
@@ -131,8 +152,11 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
       Optional<Boolean> valid = isValid(token);
       if (valid.isEmpty()) {
         throw new ScmCommunicationException(
-            "Unable to verify if current token is a valid GitHub token.  Token's scm-url needs to be "
-                + GithubApiClient.GITHUB_SERVER);
+            "Unable to verify if current token is a valid GitHub token.  Token's scm-url needs to be '"
+                + GithubApiClient.GITHUB_SERVER
+                + "' and was '"
+                + token.getScmProviderUrl()
+                + "'");
       } else if (!valid.get()) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: "
@@ -170,14 +194,21 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
 
     try {
       String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken());
-      return Optional.of(Boolean.valueOf(containsScopes(DEFAULT_TOKEN_SCOPES, scopes)));
+      return Optional.of(Boolean.valueOf(containsScopes(scopes, DEFAULT_TOKEN_SCOPES)));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       LOG.error(e.getMessage(), e);
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }
 
-  boolean containsScopes(Set<String> requiredScopes, String[] tokenScopes) {
+  /**
+   * Checks if the tokenScopes array contains the requiredScopes.
+   *
+   * @param tokenScopes Scopes from token
+   * @param requiredScopes Mandatory scopes
+   * @return If all mandatory scopes are contained in the token's scopes
+   */
+  boolean containsScopes(String[] tokenScopes, Set<String> requiredScopes) {
     Arrays.sort(tokenScopes);
     // We need check that the token has the required minimal scopes.  The scopes can be normalized
     // by GitHub, so we need to be careful for sub-scopes being included in parent scopes.
@@ -196,7 +227,6 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
   }
 
   private String getLocalAuthenticateUrl() {
-    // TODO: do we need this?  Not even sure that the returned string is valid
     return apiEndpoint
         + "/oauth/authenticate?oauth_provider="
         + OAUTH_PROVIDER_NAME

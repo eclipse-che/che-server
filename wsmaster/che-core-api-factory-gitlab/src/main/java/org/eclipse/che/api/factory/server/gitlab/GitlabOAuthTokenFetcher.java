@@ -97,8 +97,8 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     if (oAuthAPI == null) {
       throw new ScmCommunicationException(
           format(
-              "OAuth is not configured for SCM provider [%s]. Make sure "
-                  + "you have read the doc about SCM providers configuration.",
+              "OAuth 2 is not configured for SCM provider [%s]. For details, refer "
+                  + "the documentation in section of SCM providers configuration.",
               OAUTH_PROVIDER_NAME));
     }
     OAuthToken oAuthToken;

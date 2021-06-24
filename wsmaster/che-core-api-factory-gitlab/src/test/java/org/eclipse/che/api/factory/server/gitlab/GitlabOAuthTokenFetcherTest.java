@@ -147,7 +147,8 @@ public class GitlabOAuthTokenFetcherTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "OAuth is not configured for SCM provider \\[gitlab\\]. Make sure you have read the doc about SCM providers configuration.")
+          "OAuth 2 is not configured for SCM provider \\[gitlab\\]. For details, refer "
+              + "the documentation in section of SCM providers configuration.")
   public void shouldThrowScmCommunicationExceptionWhenNoOauthIsConfigured() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     GitlabOAuthTokenFetcher localFetcher =

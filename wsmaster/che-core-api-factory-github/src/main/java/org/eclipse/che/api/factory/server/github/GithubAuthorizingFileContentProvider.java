@@ -28,7 +28,7 @@ class GithubAuthorizingFileContentProvider extends AuthorizingFileContentProvide
   }
 
   /**
-   * Formating OAuth token as HTTP Authorization header.
+   * Formatting OAuth token as HTTP Authorization header.
    *
    * <p>GitHub Authorization HTTP header format is described here:
    * https://docs.github.com/en/rest/overview/resources-in-the-rest-api#oauth2-token-sent-in-a-header

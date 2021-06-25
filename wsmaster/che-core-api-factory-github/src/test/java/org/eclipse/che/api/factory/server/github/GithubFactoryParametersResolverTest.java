@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.core.model.factory.ScmInfo;
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
@@ -79,6 +81,11 @@ public class GithubFactoryParametersResolverTest {
   /** Parser which will allow to check validity of URLs and create objects. */
   @Mock private URLFactoryBuilder urlFactoryBuilder;
 
+  // TODO: Verify if we should add test cases involving credential manager and patManager
+  @Mock private GitCredentialManager gitCredentialManager;
+
+  @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+
   /**
    * Capturing the location parameter when calling {@link
    * URLFactoryBuilder#createFactoryFromDevfile(RemoteFactoryUrl, FileContentProvider, Map)}
@@ -98,7 +105,9 @@ public class GithubFactoryParametersResolverTest {
             urlFetcher,
             githubSourceStorageBuilder,
             urlFactoryBuilder,
-            projectConfigDtoMerger);
+            projectConfigDtoMerger,
+            gitCredentialManager,
+            personalAccessTokenManager);
     assertNotNull(this.githubFactoryParametersResolver);
   }
 

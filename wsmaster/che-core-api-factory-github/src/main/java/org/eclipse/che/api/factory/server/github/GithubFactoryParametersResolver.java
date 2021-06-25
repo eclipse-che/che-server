@@ -22,6 +22,8 @@ import javax.validation.constraints.NotNull;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
@@ -42,13 +44,19 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 public class GithubFactoryParametersResolver extends DefaultFactoryParameterResolver {
 
   /** Parser which will allow to check validity of URLs and create objects. */
-  private GithubURLParser githubUrlParser;
+  private final GithubURLParser githubUrlParser;
 
   /** Builder allowing to build objects from github URL. */
-  private GithubSourceStorageBuilder githubSourceStorageBuilder;
+  private final GithubSourceStorageBuilder githubSourceStorageBuilder;
 
   /** ProjectDtoMerger */
-  private ProjectConfigDtoMerger projectConfigDtoMerger;
+  private final ProjectConfigDtoMerger projectConfigDtoMerger;
+
+  /** Git credential manager. */
+  private final GitCredentialManager gitCredentialManager;
+
+  /** Personal Access Token manager used when fetching protected content. */
+  private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
   public GithubFactoryParametersResolver(
@@ -56,11 +64,15 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
       URLFetcher urlFetcher,
       GithubSourceStorageBuilder githubSourceStorageBuilder,
       URLFactoryBuilder urlFactoryBuilder,
-      ProjectConfigDtoMerger projectConfigDtoMerger) {
+      ProjectConfigDtoMerger projectConfigDtoMerger,
+      GitCredentialManager gitCredentialManager,
+      PersonalAccessTokenManager personalAccessTokenManager) {
     super(urlFactoryBuilder, urlFetcher);
     this.githubUrlParser = githubUrlParser;
     this.githubSourceStorageBuilder = githubSourceStorageBuilder;
     this.projectConfigDtoMerger = projectConfigDtoMerger;
+    this.gitCredentialManager = gitCredentialManager;
+    this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
   /**
@@ -93,7 +105,8 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
     return urlFactoryBuilder
         .createFactoryFromDevfile(
             githubUrl,
-            new GithubFileContentProvider(githubUrl, urlFetcher),
+            new GithubAuthorizingFileContentProvider(
+                githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager),
             extractOverrideParams(factoryParameters))
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new GithubFactoryVisitor(githubUrl));

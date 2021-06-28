@@ -11,9 +11,14 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -35,6 +40,7 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,22 +54,34 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
       ImmutableSet.of("api", "write_repository", "openid");
   public static final String OAUTH_2_PREFIX = "oauth2-";
 
+  private final List<String> registeredGitlabEndpoints;
   private final OAuthAPI oAuthAPI;
   private final String apiEndpoint;
-  private final GitlabApiClient gitlabApiClient;
 
   @Inject
   public GitlabOAuthTokenFetcher(
       @Nullable @Named("che.integration.gitlab.server_endpoints") String gitlabEndpoints,
+      @Nullable @Named("che.integration.gitlab.oauth_endpoint") String oauthEndpoint,
       @Named("che.api") String apiEndpoint,
       OAuthAPI oAuthAPI) {
     this.apiEndpoint = apiEndpoint;
-    this.oAuthAPI = oAuthAPI;
     if (gitlabEndpoints != null) {
-      final String oAuthEndpoint = Splitter.on(",").splitToList(gitlabEndpoints).get(0);
-      this.gitlabApiClient = new GitlabApiClient(StringUtils.trimEnd(oAuthEndpoint, '/'));
+      this.registeredGitlabEndpoints =
+          Splitter.on(",")
+              .splitToStream(gitlabEndpoints)
+              .map(e -> StringUtils.trimEnd(e, '/'))
+              .collect(toList());
     } else {
-      this.gitlabApiClient = null;
+      this.registeredGitlabEndpoints = Collections.emptyList();
+    }
+    if (oauthEndpoint != null) {
+      if (!registeredGitlabEndpoints.contains(StringUtils.trimEnd(oauthEndpoint, '/'))) {
+        throw new ConfigurationException(
+            "GitLab OAuth integration endpoint must be present in registered GitLab endpoints list.");
+      }
+      this.oAuthAPI = oAuthAPI;
+    } else {
+      this.oAuthAPI = null;
     }
   }
 
@@ -71,9 +89,17 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException {
     scmServerUrl = StringUtils.trimEnd(scmServerUrl, '/');
+    GitlabApiClient gitlabApiClient = getApiClient(scmServerUrl);
     if (gitlabApiClient == null || !gitlabApiClient.isConnected(scmServerUrl)) {
       LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
       return null;
+    }
+    if (oAuthAPI == null) {
+      throw new ScmCommunicationException(
+          format(
+              "OAuth 2 is not configured for SCM provider [%s]. For details, refer "
+                  + "the documentation in section of SCM providers configuration.",
+              OAUTH_PROVIDER_NAME));
     }
     OAuthToken oAuthToken;
     try {
@@ -117,8 +143,8 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
   }
 
   @Override
-  public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
-      throws ScmCommunicationException, ScmUnauthorizedException {
+  public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken) {
+    GitlabApiClient gitlabApiClient = getApiClient(personalAccessToken.getScmProviderUrl());
     if (gitlabApiClient == null
         || !gitlabApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
       LOG.debug(
@@ -151,5 +177,11 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
         + "/oauth/authenticate?oauth_provider="
         + OAUTH_PROVIDER_NAME
         + "&request_method=POST&signature_method=rsa";
+  }
+
+  private GitlabApiClient getApiClient(String scmServerUrl) {
+    return registeredGitlabEndpoints.contains(scmServerUrl)
+        ? new GitlabApiClient(scmServerUrl)
+        : null;
   }
 }

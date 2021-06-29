@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class KeycloakServiceClient {
 
-  private KeycloakSettings keycloakSettings;
+  private final KeycloakSettings keycloakSettings;
   private final OIDCInfo oidcInfo;
 
   private static final Logger LOG = LoggerFactory.getLogger(KeycloakServiceClient.class);

@@ -12,6 +12,7 @@
 package org.eclipse.che.multiuser.keycloak.server;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.*;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -25,6 +26,7 @@ import com.jayway.restassured.RestAssured;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtParser;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.ws.rs.GET;
@@ -36,6 +38,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.core.AuthenticationException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -152,6 +155,14 @@ public class KeycloakServiceClientTest {
   }
 
   @Test(
+      expectedExceptions = IOException.class,
+      expectedExceptionsMessageRegExp = "Could not obtain token from identity provider.")
+  public void shouldThrowParse502ExceptionText() throws Exception {
+    keycloakService = new KeycloakService(null, null, null, new AuthenticationException("foo"));
+    keycloakServiceClient.getIdentityProviderToken("github");
+  }
+
+  @Test(
       expectedExceptions = NotFoundException.class,
       expectedExceptionsMessageRegExp = "Not found.")
   public void shouldThrowNotFoundException() throws Exception {
@@ -202,12 +213,12 @@ public class KeycloakServiceClientTest {
   }
 
   @Provider
-  public class LocalApiExceptionMapper implements ExceptionMapper<ApiException> {
+  public static class LocalApiExceptionMapper implements ExceptionMapper<ApiException> {
     @Override
     public Response toResponse(ApiException exception) {
 
       if (exception instanceof ForbiddenException)
-        return Response.status(Response.Status.FORBIDDEN)
+        return Response.status(FORBIDDEN)
             .entity(
                 DtoFactory.getInstance()
                     .toJson(
@@ -216,7 +227,7 @@ public class KeycloakServiceClientTest {
             .type(MediaType.APPLICATION_JSON)
             .build();
       else if (exception instanceof NotFoundException)
-        return Response.status(Response.Status.NOT_FOUND)
+        return Response.status(NOT_FOUND)
             .entity(
                 DtoFactory.getInstance()
                     .toJson(
@@ -225,7 +236,7 @@ public class KeycloakServiceClientTest {
             .type(MediaType.APPLICATION_JSON)
             .build();
       else if (exception instanceof UnauthorizedException)
-        return Response.status(Response.Status.UNAUTHORIZED)
+        return Response.status(UNAUTHORIZED)
             .entity(
                 DtoFactory.getInstance()
                     .toJson(
@@ -234,7 +245,7 @@ public class KeycloakServiceClientTest {
             .type(MediaType.APPLICATION_JSON)
             .build();
       else if (exception instanceof BadRequestException)
-        return Response.status(Response.Status.BAD_REQUEST)
+        return Response.status(BAD_REQUEST)
             .entity(
                 DtoFactory.getInstance()
                     .toJson(
@@ -252,13 +263,16 @@ public class KeycloakServiceClientTest {
             .type(MediaType.APPLICATION_JSON)
             .build();
       else
-        return Response.serverError()
+        return Response.status(BAD_GATEWAY)
             .entity(
-                DtoFactory.getInstance()
-                    .toJson(
-                        newDto(KeycloakErrorResponse.class)
-                            .withErrorMessage(exception.getServiceError().getMessage())))
-            .type(MediaType.APPLICATION_JSON)
+                "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"  \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
+                    + "<html xmlns=\"http://www.w3.org/1999/xhtml\" class=\"\">\n"
+                    + "        <div id=\"kc-error-message\">\n"
+                    + "            <p class=\"instruction\">Could not obtain token from identity provider.</p>\n"
+                    + "        </div>\n"
+                    + "</body>\n"
+                    + "</html>\n")
+            .type(MediaType.TEXT_HTML_TYPE)
             .build();
     }
   }

@@ -63,11 +63,11 @@ public class DevfileToApiExceptionMapper {
               "oauth_authentication_url", scmCause.getAuthenticateUrl()));
     } else if (cause instanceof UnknownScmProviderException) {
       return new ServerException(
-          "Provided location is unknown or misconfigured on the server side. Error message:"
+          "Provided location is unknown or misconfigured on the server side. Error message: "
               + cause.getMessage());
     } else if (cause instanceof ScmCommunicationException) {
       return new ServerException(
-          "There is an error happened when communicate with SCM server. Error message:"
+          "There is an error happened when communicate with SCM server. Error message: "
               + cause.getMessage());
     }
     return null;

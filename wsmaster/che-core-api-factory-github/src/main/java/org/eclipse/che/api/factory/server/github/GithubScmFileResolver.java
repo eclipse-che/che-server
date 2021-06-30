@@ -19,6 +19,8 @@ import javax.validation.constraints.NotNull;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
@@ -27,11 +29,19 @@ public class GithubScmFileResolver implements ScmFileResolver {
 
   private final GithubURLParser githubUrlParser;
   private final URLFetcher urlFetcher;
+  private final GitCredentialManager gitCredentialManager;
+  private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
-  public GithubScmFileResolver(GithubURLParser githubUrlParser, URLFetcher urlFetcher) {
+  public GithubScmFileResolver(
+      GithubURLParser githubUrlParser,
+      URLFetcher urlFetcher,
+      GitCredentialManager gitCredentialManager,
+      PersonalAccessTokenManager personalAccessTokenManager) {
     this.githubUrlParser = githubUrlParser;
     this.urlFetcher = urlFetcher;
+    this.gitCredentialManager = gitCredentialManager;
+    this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
   @Override
@@ -45,7 +55,8 @@ public class GithubScmFileResolver implements ScmFileResolver {
       throws ApiException {
     final GithubUrl githubUrl = githubUrlParser.parse(repository);
     try {
-      return new GithubFileContentProvider(githubUrl, urlFetcher)
+      return new GithubAuthorizingFileContentProvider(
+              githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
           .fetchContent(githubUrl.rawFileLocation(filePath));
     } catch (IOException e) {
       throw new NotFoundException("Unable to retrieve file from given location.");

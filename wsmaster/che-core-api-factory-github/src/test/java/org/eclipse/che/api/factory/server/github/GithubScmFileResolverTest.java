@@ -15,6 +15,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.mockito.Mock;
@@ -32,13 +34,18 @@ public class GithubScmFileResolverTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
+  @Mock private GitCredentialManager gitCredentialManager;
+  @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+
   private GithubScmFileResolver githubScmFileResolver;
 
   @BeforeMethod
   protected void init() {
     githubURLParser = new GithubURLParser(urlFetcher, devfileFilenamesProvider);
     assertNotNull(this.githubURLParser);
-    githubScmFileResolver = new GithubScmFileResolver(githubURLParser, urlFetcher);
+    githubScmFileResolver =
+        new GithubScmFileResolver(
+            githubURLParser, urlFetcher, gitCredentialManager, personalAccessTokenManager);
     assertNotNull(this.githubScmFileResolver);
   }
 

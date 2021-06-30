@@ -57,7 +57,7 @@ public class GitlabScmFileResolver implements ScmFileResolver {
               gitlabUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
           .fetchContent(filePath);
     } catch (IOException e) {
-      throw new NotFoundException("Unable to retrieve file from given location.");
+      throw new NotFoundException(e.getMessage());
     } catch (DevfileException devfileException) {
       throw toApiException(devfileException);
     }

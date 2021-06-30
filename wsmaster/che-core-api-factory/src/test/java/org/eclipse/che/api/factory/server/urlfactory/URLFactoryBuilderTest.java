@@ -327,13 +327,13 @@ public class URLFactoryBuilderTest {
       {
         new ScmCommunicationException("foo"),
         ServerException.class,
-        "There is an error happened when communicate with SCM server. Error message:foo",
+        "There is an error happened when communicate with SCM server. Error message: foo",
         null
       },
       {
         new UnknownScmProviderException("foo", "bar"),
         ServerException.class,
-        "Provided location is unknown or misconfigured on the server side. Error message:foo",
+        "Provided location is unknown or misconfigured on the server side. Error message: foo",
         null
       },
       {

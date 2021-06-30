@@ -59,7 +59,7 @@ public class GithubScmFileResolver implements ScmFileResolver {
               githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
           .fetchContent(githubUrl.rawFileLocation(filePath));
     } catch (IOException e) {
-      throw new NotFoundException("Unable to retrieve file from given location.");
+      throw new NotFoundException(e.getMessage());
     } catch (DevfileException devfileException) {
       throw toApiException(devfileException);
     }

@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -51,6 +52,8 @@ import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakErrorResponse;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helps to perform keycloak operations and provide correct errors handling.
@@ -60,11 +63,16 @@ import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
 @Singleton
 public class KeycloakServiceClient {
 
-  private KeycloakSettings keycloakSettings;
+  private final KeycloakSettings keycloakSettings;
   private final OIDCInfo oidcInfo;
+
+  private static final Logger LOG = LoggerFactory.getLogger(KeycloakServiceClient.class);
 
   private static final Pattern assotiateUserPattern =
       Pattern.compile("User (.+) is not associated with identity provider (.+)");
+
+  private static final Pattern errorPageMessagePattern =
+      Pattern.compile("<div id=\"kc-error-message\">(\\s*)<p class=\"instruction\">(.+?)</p>");
 
   private static final Gson gson = new Gson();
   private JwtParser jwtParser;
@@ -177,16 +185,24 @@ public class KeycloakServiceClient {
         if (in == null) {
           in = conn.getInputStream();
         }
-        final String str;
+        final String output;
         try (Reader reader = new InputStreamReader(in)) {
-          str = CharStreams.toString(reader);
+          String read = CharStreams.toString(reader);
+          // Unspecific errors always returned from Keycloak as 502 + HTML error page.
+          // So try to handle that case separately
+          if (responseCode == 502) {
+            Matcher matcher = errorPageMessagePattern.matcher(read);
+            output = matcher.find() ? matcher.group(2) : read;
+          } else {
+            output = read;
+          }
         }
         final String contentType = conn.getContentType();
         if (contentType != null
             && (contentType.startsWith(MediaType.APPLICATION_JSON)
                 || contentType.startsWith("application/vnd.api+json"))) {
           final KeycloakErrorResponse serviceError =
-              DtoFactory.getInstance().createDtoFromJson(str, KeycloakErrorResponse.class);
+              DtoFactory.getInstance().createDtoFromJson(output, KeycloakErrorResponse.class);
           if (responseCode == Response.Status.FORBIDDEN.getStatusCode()) {
             throw new ForbiddenException(serviceError.getErrorMessage());
           } else if (responseCode == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -201,10 +217,14 @@ public class KeycloakServiceClient {
           throw new ServerException(serviceError.getErrorMessage());
         }
         // Can't parse content as json or content has format other we expect for error.
-        throw new IOException(
+        LOG.warn(
             String.format(
                 "Failed access: %s, method: %s, response code: %d, message: %s",
-                UriBuilder.fromUri(url).replaceQuery("token").build(), method, responseCode, str));
+                UriBuilder.fromUri(url).replaceQuery("token").build(),
+                method,
+                responseCode,
+                output));
+        throw new IOException(output);
       }
       try (Reader reader = new InputStreamReader(conn.getInputStream())) {
         return CharStreams.toString(reader);

@@ -180,4 +180,28 @@ public class GithubPersonalAccessTokenFetcherTest {
         githubPATFetcher.fetchPersonalAccessToken(subject, GithubApiClient.GITHUB_SERVER);
     assertNotNull(token);
   }
+
+  @Test
+  public void shouldValidatePersonalToken() throws Exception {
+    stubFor(
+        get(urlEqualTo("/user"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo")
+                    .withBodyFile("github/rest/user/response.json")));
+
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://github.com",
+            "cheUser",
+            "username",
+            "123456789",
+            "token-name",
+            "tid-23434",
+            githubOauthToken);
+
+    assertTrue(githubPATFetcher.isValid(token).get());
+  }
 }

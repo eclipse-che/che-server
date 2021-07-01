@@ -52,7 +52,6 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
   private static final String OAUTH_PROVIDER_NAME = "gitlab";
   public static final Set<String> DEFAULT_TOKEN_SCOPES =
       ImmutableSet.of("api", "write_repository", "openid");
-  public static final String OAUTH_2_PREFIX = "oauth2-";
 
   private final List<String> registeredGitlabEndpoints;
   private final OAuthAPI oAuthAPI;
@@ -164,8 +163,12 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
       // validating personal access token from secret. Since PAT API is accessible only in
       // latest GitLab version, we just perform check by accessing something from API.
       try {
-        gitlabApiClient.getUser(personalAccessToken.getToken());
-        return Optional.of(Boolean.TRUE);
+        GitlabUser user = gitlabApiClient.getUser(personalAccessToken.getToken());
+        if (personalAccessToken.getScmUserId().equals(Long.toString(user.getId()))) {
+          return Optional.of(Boolean.TRUE);
+        } else {
+          return Optional.of(Boolean.FALSE);
+        }
       } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
         return Optional.of(Boolean.FALSE);
       }

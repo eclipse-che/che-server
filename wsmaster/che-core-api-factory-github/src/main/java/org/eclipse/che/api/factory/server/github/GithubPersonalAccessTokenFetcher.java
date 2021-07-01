@@ -146,7 +146,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
               cheSubject.getUserId(),
               user.getLogin(),
               Long.toString(user.getId()),
-              NameGenerator.generate("oauth2-", 5),
+              NameGenerator.generate(OAUTH_2_PREFIX, 5),
               NameGenerator.generate("id-", 5),
               oAuthToken.getToken());
       Optional<Boolean> valid = isValid(token);
@@ -192,12 +192,27 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
       return Optional.empty();
     }
 
-    try {
-      String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken());
-      return Optional.of(Boolean.valueOf(containsScopes(scopes, DEFAULT_TOKEN_SCOPES)));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
-      LOG.error(e.getMessage(), e);
-      throw new ScmCommunicationException(e.getMessage(), e);
+    if (personalAccessToken.getScmTokenName() != null
+        && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+      try {
+        String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken());
+        return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
+      } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+        LOG.error(e.getMessage(), e);
+        throw new ScmCommunicationException(e.getMessage(), e);
+      }
+    } else {
+      // No REST API for PAT-s in Github found yet. Just try to do some action.
+      try {
+        GithubUser user = githubApiClient.getUser(personalAccessToken.getToken());
+        if (personalAccessToken.getScmUserId().equals(Long.toString(user.getId()))) {
+          return Optional.of(Boolean.TRUE);
+        } else {
+          return Optional.of(Boolean.FALSE);
+        }
+      } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+        return Optional.of(Boolean.FALSE);
+      }
     }
   }
 

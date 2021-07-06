@@ -90,7 +90,7 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
       MachineTokenEnvVarProvider machineTokenEnvVarProvider,
       String artifactsBrokerImage,
       String metadataBrokerImage,
-      String pluginRegistryUrl,
+      String pluginRegistryExternalUrl,
       String pluginRegistryInternalUrl,
       TrustedCAProvisioner trustedCAProvisioner,
       String certificateMountPath,
@@ -102,7 +102,9 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
     this.artifactsBrokerImage = artifactsBrokerImage;
     this.metadataBrokerImage = metadataBrokerImage;
     this.pluginRegistryUrl =
-        isNullOrEmpty(pluginRegistryInternalUrl) ? pluginRegistryUrl : pluginRegistryInternalUrl;
+        isNullOrEmpty(pluginRegistryInternalUrl)
+            ? pluginRegistryExternalUrl
+            : pluginRegistryInternalUrl;
     this.trustedCAProvisioner = trustedCAProvisioner;
     this.certificateMountPath = certificateMountPath;
     this.certProvisioner = certProvisioner;

@@ -41,7 +41,7 @@ public class KubernetesBrokerEnvironmentFactory
       MachineTokenEnvVarProvider machineTokenEnvVarProvider,
       @Named("che.workspace.plugin_broker.artifacts.image") String artifactsBrokerImage,
       @Named("che.workspace.plugin_broker.metadata.image") String metadataBrokerImage,
-      @Nullable @Named("che.workspace.plugin_registry_url") String pluginRegistryUrl,
+      @Nullable @Named("che.workspace.plugin_registry_url") String pluginRegistryExternalUrl,
       @Nullable @Named("che.workspace.plugin_registry_internal_url")
           String pluginRegistryInternalUrl,
       KubernetesTrustedCAProvisioner trustedCAProvisioner,
@@ -53,7 +53,7 @@ public class KubernetesBrokerEnvironmentFactory
         machineTokenEnvVarProvider,
         artifactsBrokerImage,
         metadataBrokerImage,
-        pluginRegistryUrl,
+        pluginRegistryExternalUrl,
         pluginRegistryInternalUrl,
         trustedCAProvisioner,
         certificateMountPath,

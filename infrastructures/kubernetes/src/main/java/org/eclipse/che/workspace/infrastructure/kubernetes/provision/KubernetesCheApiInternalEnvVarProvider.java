@@ -16,6 +16,7 @@ import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.Pair;
 
 /**
@@ -29,12 +30,15 @@ public class KubernetesCheApiInternalEnvVarProvider implements CheApiInternalEnv
 
   @Inject
   public KubernetesCheApiInternalEnvVarProvider(
-      @Named("che.api.internal") String cheServerEndpoint) {
+      @Nullable @Named("che.api.internal") String cheServerEndpoint) {
     this.cheServerEndpoint = cheServerEndpoint;
   }
 
   @Override
   public Pair<String, String> get(RuntimeIdentity runtimeIdentity) throws InfrastructureException {
-    return Pair.of(CHE_API_INTERNAL_VARIABLE, cheServerEndpoint);
+    if (this.cheServerEndpoint != null) {
+      return Pair.of(CHE_API_INTERNAL_VARIABLE, cheServerEndpoint);
+    }
+    return null;
   }
 }

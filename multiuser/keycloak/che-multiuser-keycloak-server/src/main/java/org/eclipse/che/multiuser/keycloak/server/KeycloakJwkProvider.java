@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import com.auth0.jwk.GuavaCachedJwkProvider;
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.UrlJwkProvider;
@@ -27,7 +29,10 @@ public class KeycloakJwkProvider implements Provider<JwkProvider> {
 
   @Inject
   public KeycloakJwkProvider(OIDCInfo oidcInfo) throws MalformedURLException {
-    final String jwksUrl = oidcInfo.getJwksUri();
+    final String jwksUrl =
+        isNullOrEmpty(oidcInfo.getJwksInternalUri())
+            ? oidcInfo.getJwksPublicUri()
+            : oidcInfo.getJwksInternalUri();
 
     if (jwksUrl == null) {
       throw new ConfigurationException("Jwks endpoint url not found in keycloak settings");

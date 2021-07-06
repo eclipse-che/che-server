@@ -17,6 +17,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -110,12 +111,8 @@ public class OIDCInfoProviderTest {
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/logout",
         oidcInfo.getEndSessionPublicEndpoint());
-    assertEquals(
-        serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/userinfo",
-        oidcInfo.getUserInfoEndpoint());
-    assertEquals(
-        serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/certs",
-        oidcInfo.getJwksUri());
+    assertNull(oidcInfo.getUserInfoInternalEndpoint());
+    assertNull(oidcInfo.getJwksInternalUri());
   }
 
   @Test
@@ -174,10 +171,10 @@ public class OIDCInfoProviderTest {
 
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/certs",
-        oidcInfo.getJwksUri());
+        oidcInfo.getJwksInternalUri());
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/userinfo",
-        oidcInfo.getUserInfoEndpoint());
+        oidcInfo.getUserInfoInternalEndpoint());
     assertEquals(serverUrl, oidcInfo.getAuthServerURL());
   }
 
@@ -239,10 +236,10 @@ public class OIDCInfoProviderTest {
 
     assertEquals(
         serverInternalUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/certs",
-        oidcInfo.getJwksUri());
+        oidcInfo.getJwksInternalUri());
     assertEquals(
         serverInternalUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/userinfo",
-        oidcInfo.getUserInfoEndpoint());
+        oidcInfo.getUserInfoInternalEndpoint());
 
     assertEquals(serverInternalUrl, oidcInfo.getAuthServerURL());
     assertEquals(serverPublicUrl, oidcInfo.getAuthServerPublicURL());
@@ -271,10 +268,10 @@ public class OIDCInfoProviderTest {
         oidcInfo.getEndSessionPublicEndpoint());
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/userinfo",
-        oidcInfo.getUserInfoEndpoint());
+        oidcInfo.getUserInfoInternalEndpoint());
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/certs",
-        oidcInfo.getJwksUri());
+        oidcInfo.getJwksInternalUri());
   }
 
   @Test(

@@ -17,9 +17,9 @@ public class OIDCInfo {
   private final String tokenPublicEndpoint;
   private final String endSessionPublicEndpoint;
   private final String userInfoPublicEndpoint;
-  private final String userInfoEndpoint;
+  private final String userInfoInternalEndpoint;
   private final String jwksPublicUri;
-  private final String jwksUri;
+  private final String jwksInternalUri;
   private final String authServerURL;
   private final String authServerPublicURL;
 
@@ -27,17 +27,17 @@ public class OIDCInfo {
       String tokenPublicEndpoint,
       String endSessionPublicEndpoint,
       String userInfoPublicEndpoint,
-      String userInfoEndpoint,
+      String userInfoInternalEndpoint,
       String jwksPublicUri,
-      String jwksUri,
+      String jwksInternalUri,
       String authServerURL,
       String authServerPublicURL) {
     this.tokenPublicEndpoint = tokenPublicEndpoint;
     this.endSessionPublicEndpoint = endSessionPublicEndpoint;
     this.userInfoPublicEndpoint = userInfoPublicEndpoint;
-    this.userInfoEndpoint = userInfoEndpoint;
+    this.userInfoInternalEndpoint = userInfoInternalEndpoint;
     this.jwksPublicUri = jwksPublicUri;
-    this.jwksUri = jwksUri;
+    this.jwksInternalUri = jwksInternalUri;
 
     this.authServerURL = authServerURL;
     this.authServerPublicURL = authServerPublicURL;
@@ -58,12 +58,9 @@ public class OIDCInfo {
     return userInfoPublicEndpoint;
   }
 
-  /**
-   * @return url to get user profile information. Url will be internal if internal network enabled,
-   *     otherwise url will be public.
-   */
-  public String getUserInfoEndpoint() {
-    return userInfoEndpoint;
+  /** @return internal network url to get user profile information. */
+  public String getUserInfoInternalEndpoint() {
+    return userInfoInternalEndpoint;
   }
 
   /** @return public url to retrieve JWK public key for token validation. */
@@ -71,12 +68,9 @@ public class OIDCInfo {
     return jwksPublicUri;
   }
 
-  /**
-   * @return url to retrieve JWK public key for token validation. Url will be internal if internal
-   *     network enabled, otherwise url will be public.
-   */
-  public String getJwksUri() {
-    return jwksUri;
+  /** @return internal network url to retrieve JWK public key for token validation. */
+  public String getJwksInternalUri() {
+    return jwksInternalUri;
   }
 
   /**

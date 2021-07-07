@@ -171,7 +171,7 @@ public class GitlabOAuthTokenFetcherTest {
             wireMockServer.baseUrl(),
             "cheUser",
             "username",
-            "userId",
+            "1",
             "token-name",
             "tid-23434",
             "token123");

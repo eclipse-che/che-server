@@ -17,6 +17,10 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.commons.subject.Subject;
 
 public interface PersonalAccessTokenFetcher {
+
+  /** Prefix for token names indication it is OAuth token (to differentiate from PAT-s) */
+  String OAUTH_2_PREFIX = "oauth2-";
+
   /**
    * Retrieve new PersonalAccessToken from concrete scm provider
    *

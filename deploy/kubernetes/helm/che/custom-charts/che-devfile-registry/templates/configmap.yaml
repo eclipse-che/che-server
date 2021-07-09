@@ -23,4 +23,8 @@ data:
   CHE_DEVFILE_IMAGES_REGISTRY_TAG: {{ . | quote }}
   {{- end }}
 {{- end }}
+{{- if .Values.che.workspace.devfileRegistryUrl }}
+  CHE_DEVFILE_REGISTRY_URL: {{ .Values.che.workspace.devfileRegistryUrl | quote }}
+{{- else }}
   CHE_DEVFILE_REGISTRY_URL: {{ template "devfileRegistryUrl" . }}
+{{- end }}

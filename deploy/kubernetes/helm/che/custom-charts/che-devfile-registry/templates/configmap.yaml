@@ -23,4 +23,4 @@ data:
   CHE_DEVFILE_IMAGES_REGISTRY_TAG: {{ . | quote }}
   {{- end }}
 {{- end }}
-CHE_DEVFILE_REGISTRY_URL: {{ template "devfileRegistryUrl" . }}
+  CHE_DEVFILE_REGISTRY_URL: {{ template "devfileRegistryUrl" . }}

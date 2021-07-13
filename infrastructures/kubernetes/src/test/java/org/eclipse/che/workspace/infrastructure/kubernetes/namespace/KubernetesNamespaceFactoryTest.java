@@ -655,6 +655,14 @@ public class KubernetesNamespaceFactoryTest {
         Sets.newHashSet("workspace-view", "workspace-metrics", "exec", "workspace-secrets"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
 
+    assertEquals(
+        Sets.newHashSet("list", "create", "delete", "get", "watch"),
+        roles
+            .getItems()
+            .stream()
+            .map(r -> r.getRules().get(0).getVerbs())
+            .collect(Collectors.toSet()));
+
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
         bindings

@@ -145,7 +145,7 @@ commitChangeOrCreatePR() {
     aBRANCH="$2"
     PR_BRANCH="$3"
 
-    COMMIT_MSG="[release] Bump to ${aVERSION} in ${aBRANCH}"
+    COMMIT_MSG="chore: Bump to ${aVERSION} in ${aBRANCH}"
 
     # commit change into branch
     git commit -asm "${COMMIT_MSG}"
@@ -176,7 +176,7 @@ tagAndCommit() {
     cd $1
     # this branch isn't meant to be pushed
     git checkout -b release-${CHE_VERSION}
-    git commit -asm "Release version ${CHE_VERSION}"
+    git commit -asm "chore: Release version ${CHE_VERSION}"
     if [ $(git tag -l "$CHE_VERSION") ]; then
         echo "tag ${CHE_VERSION} already exists! recreating ..."
         git tag -d ${CHE_VERSION}
@@ -389,7 +389,7 @@ updateImageTagsInCheServer() {
     cd .ci
     ./set_tag_version_images.sh ${CHE_VERSION}
     cd ..
-    git commit -asm "Set ${CHE_VERSION} release image tags"
+    git commit -asm "chore: Set ${CHE_VERSION} release image tags"
     git push origin ${BRANCH}
 }
 

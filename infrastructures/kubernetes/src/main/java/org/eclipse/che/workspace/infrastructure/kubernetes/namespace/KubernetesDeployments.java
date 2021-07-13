@@ -28,6 +28,7 @@ import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Event;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectReference;
 import io.fabric8.kubernetes.api.model.OwnerReference;
@@ -190,6 +191,17 @@ public class KubernetesDeployments {
 
   private Pod createDeployment(Deployment deployment, String workspaceId)
       throws InfrastructureException {
+    final PodSpec podSpec = deployment.getSpec().getTemplate().getSpec();
+    List<LocalObjectReference> imagePullSecretsOfSA =
+        clientFactory
+            .create(workspaceId)
+            .serviceAccounts()
+            .inNamespace(namespace)
+            .withName(podSpec.getServiceAccountName())
+            .get()
+            .getImagePullSecrets();
+    imagePullSecretsOfSA.addAll(podSpec.getImagePullSecrets());
+    podSpec.setImagePullSecrets(imagePullSecretsOfSA);
     final String deploymentName = deployment.getMetadata().getName();
     final CompletableFuture<Pod> createFuture = new CompletableFuture<>();
     final Watch createWatch =

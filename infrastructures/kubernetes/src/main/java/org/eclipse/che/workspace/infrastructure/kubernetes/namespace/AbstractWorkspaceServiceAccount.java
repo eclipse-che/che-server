@@ -47,6 +47,7 @@ public abstract class AbstractWorkspaceServiceAccount<
   public static final String EXEC_ROLE_NAME = "exec";
   public static final String VIEW_ROLE_NAME = "workspace-view";
   public static final String METRICS_ROLE_NAME = "workspace-metrics";
+  public static final String SECRETS_ROLE_NAME = "workspace-secrets";
 
   protected final String namespace;
   protected final String serviceAccountName;
@@ -133,6 +134,15 @@ public abstract class AbstractWorkspaceServiceAccount<
         singletonList("metrics.k8s.io"),
         Arrays.asList("list", "get", "watch"),
         serviceAccountName + "-metrics");
+
+    // secrets role
+    createRoleWithBinding(
+        k8sClient,
+        SECRETS_ROLE_NAME,
+        Arrays.asList("secrets"),
+        singletonList(""),
+        Arrays.asList("list", "create", "delete"),
+        serviceAccountName + "-secrets");
   }
 
   private void createRoleWithBinding(

@@ -652,8 +652,16 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "exec"),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "exec", "workspace-secrets"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
+
+    assertEquals(
+        Sets.newHashSet("list", "create", "delete", "get", "watch"),
+        roles
+            .getItems()
+            .stream()
+            .map(r -> r.getRules().get(0).getVerbs())
+            .collect(Collectors.toSet()));
 
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
@@ -708,7 +716,7 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "exec"),
+        Sets.newHashSet("workspace-view", "workspace-secrets", "workspace-metrics", "exec"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
     Role role1 = roles.getItems().get(0);
     Role role2 = roles.getItems().get(1);

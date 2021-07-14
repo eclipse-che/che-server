@@ -18,6 +18,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secr
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_GIT_CREDENTIALS;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_MOUNT_AS;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_MOUNT_PATH;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_USER_NAME;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertTrue;
@@ -139,7 +140,7 @@ public class GitCredentialStorageFileSecretApplierTest {
   @Test(
       expectedExceptions = InfrastructureException.class,
       expectedExceptionsMessageRegExp =
-          "Multiple git credentials secrets found. Please remove duplication.")
+          "Multiple git credential secrets for user user5 found in namespace test-ns. That may be caused by reinstalling product without user namespaces cleanup or using multiple instances of product with the same namespace namings template.")
   public void shouldThrowInfrastructureExceptionIfGitConfigAlreadyContainsSecretConfig()
       throws InfrastructureException {
     // given
@@ -158,8 +159,11 @@ public class GitCredentialStorageFileSecretApplierTest {
                             ANNOTATION_GIT_CREDENTIALS,
                             "true",
                             ANNOTATION_AUTOMOUNT,
-                            "true"))
+                            "true",
+                            ANNOTATION_USER_NAME,
+                            "user5"))
                     .withLabels(emptyMap())
+                    .withNamespace("test-ns")
                     .build())
             .build();
 

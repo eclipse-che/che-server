@@ -94,7 +94,7 @@ public class DirectKubernetesAPIAccessHelperTest {
   }
 
   @Test
-  public void testSendsRequestHeaders() throws Exception {
+  public void testSendsOnlyContentTypeHeaders() throws Exception {
     // given
     when(headers.getRequestHeaders())
         .thenReturn(

@@ -111,12 +111,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
         labelNamespaces ? namespaceLabels : emptyMap());
 
-    if (!isNullOrEmpty(getServiceAccountName())) {
-      OpenShiftWorkspaceServiceAccount osWorkspaceServiceAccount =
-          doCreateServiceAccount(osProject.getWorkspaceId(), osProject.getName());
-      osWorkspaceServiceAccount.prepare();
-    }
-
     if (!isNullOrEmpty(oAuthIdentityProvider)) {
       stopWorkspaceRoleProvisioner.provision(osProject.getName());
     }

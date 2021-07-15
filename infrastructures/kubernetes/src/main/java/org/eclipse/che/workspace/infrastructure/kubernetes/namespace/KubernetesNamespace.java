@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
 import static java.lang.String.format;
 
@@ -33,6 +34,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -80,6 +82,8 @@ public class KubernetesNamespace {
 
   private final KubernetesSecrets secrets;
   private final KubernetesConfigsMaps configMaps;
+  protected final String serviceAccountName;
+  protected final Set<String> clusterRoleNames;
 
   @VisibleForTesting
   protected KubernetesNamespace(
@@ -92,7 +96,9 @@ public class KubernetesNamespace {
       KubernetesPersistentVolumeClaims pvcs,
       KubernetesIngresses kubernetesIngresses,
       KubernetesSecrets secrets,
-      KubernetesConfigsMaps configMaps) {
+      KubernetesConfigsMaps configMaps,
+      String serviceAccountName,
+      Set<String> clusterRoleNames) {
     this.clientFactory = clientFactory;
     this.cheSAClientFactory = cheSAClientFactory;
     this.workspaceId = workspaceId;
@@ -103,6 +109,8 @@ public class KubernetesNamespace {
     this.ingresses = kubernetesIngresses;
     this.secrets = secrets;
     this.configMaps = configMaps;
+    this.serviceAccountName = serviceAccountName;
+    this.clusterRoleNames = clusterRoleNames;
   }
 
   public KubernetesNamespace(
@@ -110,11 +118,15 @@ public class KubernetesNamespace {
       KubernetesClientFactory cheSAClientFactory,
       Executor executor,
       String name,
-      String workspaceId) {
+      String workspaceId,
+      String serviceAccountName,
+      Set<String> clusterRoleNames) {
     this.clientFactory = clientFactory;
     this.cheSAClientFactory = cheSAClientFactory;
     this.workspaceId = workspaceId;
     this.name = name;
+    this.serviceAccountName = serviceAccountName;
+    this.clusterRoleNames = clusterRoleNames;
     this.deployments = new KubernetesDeployments(name, workspaceId, clientFactory, executor);
     this.services = new KubernetesServices(name, workspaceId, clientFactory);
     this.pvcs = new KubernetesPersistentVolumeClaims(name, workspaceId, clientFactory);
@@ -148,8 +160,14 @@ public class KubernetesNamespace {
             format("Creating the namespace '%s' is not allowed, yet it was not found.", name));
       }
       namespace = create(name, client);
+      // make sure SA in created as well
+      if (!isNullOrEmpty(serviceAccountName)) {
+        new KubernetesWorkspaceServiceAccount(
+            workspaceId, name, serviceAccountName, clusterRoleNames, clientFactory).prepare();
+      }
     }
     label(namespace, labels);
+
   }
 
   /**

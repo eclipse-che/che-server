@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.project;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -22,6 +23,7 @@ import io.fabric8.openshift.api.model.RoleBindingBuilder;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.InternalInfrastructureException;
@@ -66,7 +68,9 @@ public class OpenShiftProject extends KubernetesNamespace {
       KubernetesPersistentVolumeClaims pvcs,
       KubernetesIngresses ingresses,
       KubernetesSecrets secrets,
-      KubernetesConfigsMaps configMaps) {
+      KubernetesConfigsMaps configMaps,
+      String serviceAccountName,
+      Set<String> clusterRoleNames) {
     super(
         clientFactory,
         cheClientFactory,
@@ -77,7 +81,9 @@ public class OpenShiftProject extends KubernetesNamespace {
         pvcs,
         ingresses,
         secrets,
-        configMaps);
+        configMaps,
+        serviceAccountName,
+        clusterRoleNames);
     this.cheClientFactory = cheClientFactory;
     this.clientFactory = clientFactory;
     this.routes = routes;
@@ -90,8 +96,11 @@ public class OpenShiftProject extends KubernetesNamespace {
       CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory,
       Executor executor,
       String name,
-      String workspaceId) {
-    super(clientFactory, cheClientFactory, executor, name, workspaceId);
+      String workspaceId,
+      String serviceAccountName,
+      Set<String> clusterRoleNames) {
+    super(clientFactory, cheClientFactory, executor, name, workspaceId, serviceAccountName,
+        clusterRoleNames);
     this.clientFactory = clientFactory;
     this.cheClientFactory = cheClientFactory;
     this.routes = new OpenShiftRoutes(name, workspaceId, clientFactory);
@@ -150,6 +159,10 @@ public class OpenShiftProject extends KubernetesNamespace {
       } else {
         create(projectName, osClient);
         waitDefaultServiceAccount(projectName, kubeClient);
+        if (!isNullOrEmpty(serviceAccountName)) {
+          new OpenShiftWorkspaceServiceAccount(
+              workspaceId, projectName, serviceAccountName, clusterRoleNames, clientFactory).prepare();
+        }
       }
     }
     label(osClient.namespaces().withName(projectName).get(), labels);

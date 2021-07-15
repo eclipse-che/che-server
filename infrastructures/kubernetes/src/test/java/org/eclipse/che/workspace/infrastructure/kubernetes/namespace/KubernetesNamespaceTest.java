@@ -105,7 +105,7 @@ public class KubernetesNamespaceTest {
             pvcs,
             ingresses,
             secrets,
-            configMaps);
+            configMaps, serviceAccountName, clusterRoleNames);
   }
 
   @Test
@@ -113,7 +113,8 @@ public class KubernetesNamespaceTest {
     // given
     prepareNamespace(NAMESPACE);
     KubernetesNamespace namespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     // when
     namespace.prepare(true, Map.of());
@@ -129,7 +130,8 @@ public class KubernetesNamespaceTest {
     Resource resource = prepareNamespaceResource(NAMESPACE);
     doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
     KubernetesNamespace namespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     // when
     namespace.prepare(true, Map.of());
@@ -146,7 +148,8 @@ public class KubernetesNamespaceTest {
     Resource resource = prepareNamespaceResource(NAMESPACE);
     doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
     KubernetesNamespace namespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     // when
     namespace.prepare(false, Map.of());
@@ -195,7 +198,8 @@ public class KubernetesNamespaceTest {
     doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
     doThrow(KubernetesClientException.class).when(kubernetesClient).serviceAccounts();
 
-    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
+    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+        serviceAccountName, clusterRoleNames)
         .prepare(false, Map.of());
   }
 
@@ -206,7 +210,8 @@ public class KubernetesNamespaceTest {
     doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
     when(serviceAccountResource.get()).thenReturn(null);
 
-    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
+    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+        serviceAccountName, clusterRoleNames)
         .prepare(false, Map.of());
   }
 
@@ -225,7 +230,8 @@ public class KubernetesNamespaceTest {
         .when(serviceAccountResource)
         .watch(any());
 
-    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
+    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+        serviceAccountName, clusterRoleNames)
         .prepare(false, Map.of());
   }
 
@@ -244,7 +250,8 @@ public class KubernetesNamespaceTest {
         .when(serviceAccountResource)
         .watch(any());
 
-    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
+    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+        serviceAccountName, clusterRoleNames)
         .prepare(true, Map.of());
 
     verify(serviceAccountResource).get();
@@ -255,7 +262,8 @@ public class KubernetesNamespaceTest {
   public void testDeletesExistingNamespace() throws Exception {
     // given
     KubernetesNamespace namespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
     Resource resource = prepareNamespaceResource(NAMESPACE);
 
     // when
@@ -269,7 +277,8 @@ public class KubernetesNamespaceTest {
   public void testDoesntFailIfDeletedNamespaceDoesntExist() throws Exception {
     // given
     KubernetesNamespace namespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
     Resource resource = prepareNamespaceResource(NAMESPACE);
     when(resource.get()).thenThrow(new KubernetesClientException("err", 404, null));
     when(resource.delete()).thenThrow(new KubernetesClientException("err", 404, null));
@@ -286,7 +295,8 @@ public class KubernetesNamespaceTest {
   public void testDoesntFailIfDeletedNamespaceIsBeingDeleted() throws Exception {
     // given
     KubernetesNamespace namespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
     Resource resource = prepareNamespaceResource(NAMESPACE);
     when(resource.delete()).thenThrow(new KubernetesClientException("err", 409, null));
 
@@ -303,7 +313,8 @@ public class KubernetesNamespaceTest {
     // given
     prepareNamespace(NAMESPACE);
     KubernetesNamespace kubernetesNamespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     KubernetesClient cheKubeClient = mock(KubernetesClient.class);
     doReturn(cheKubeClient).when(cheClientFactory).create();
@@ -336,7 +347,8 @@ public class KubernetesNamespaceTest {
     Namespace namespace = prepareNamespace(NAMESPACE);
     namespace.getMetadata().setLabels(labels);
     KubernetesNamespace kubernetesNamespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     KubernetesClient cheKubeClient = mock(KubernetesClient.class);
     lenient().doReturn(cheKubeClient).when(cheClientFactory).create();
@@ -364,7 +376,8 @@ public class KubernetesNamespaceTest {
     Namespace namespace = prepareNamespace(NAMESPACE);
     namespace.getMetadata().setLabels(existingLabels);
     KubernetesNamespace kubernetesNamespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     KubernetesClient cheKubeClient = mock(KubernetesClient.class);
     lenient().doReturn(cheKubeClient).when(cheClientFactory).create();
@@ -393,7 +406,8 @@ public class KubernetesNamespaceTest {
 
     prepareNamespace(NAMESPACE);
     KubernetesNamespace kubernetesNamespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     KubernetesClient cheKubeClient = mock(KubernetesClient.class);
     lenient().doReturn(cheKubeClient).when(cheClientFactory).create();
@@ -424,7 +438,8 @@ public class KubernetesNamespaceTest {
 
     Namespace namespace = prepareNamespace(NAMESPACE);
     KubernetesNamespace kubernetesNamespace =
-        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID,
+            serviceAccountName, clusterRoleNames);
 
     KubernetesClient cheKubeClient = mock(KubernetesClient.class);
     lenient().doReturn(cheKubeClient).when(cheClientFactory).create();

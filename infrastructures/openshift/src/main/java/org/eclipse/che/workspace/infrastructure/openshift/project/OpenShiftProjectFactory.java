@@ -165,7 +165,9 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         cheOpenShiftClientFactory,
         sharedPool.getExecutor(),
         name,
-        workspaceId);
+        workspaceId,
+        getServiceAccountName(),
+        getClusterRoleNames());
   }
 
   @VisibleForTesting

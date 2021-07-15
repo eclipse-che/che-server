@@ -655,6 +655,17 @@ public class KubernetesNamespaceFactoryTest {
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
+        roles
+            .getItems()
+            .stream()
+            .map(r -> r.getRules().get(0).getVerbs())
+            .collect(Collectors.toSet()),
+        Sets.newHashSet(
+            singletonList("create"),
+            singletonList("list"),
+            Arrays.asList("list", "get", "watch"),
+            Arrays.asList("list", "create", "delete")));
+    assertEquals(
         bindings
             .getItems()
             .stream()

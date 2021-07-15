@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret;
 
 import static java.lang.String.format;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_MOUNT_PATH;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_USER_NAME;
 
 import com.google.common.annotations.Beta;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -68,7 +69,10 @@ public class GitCredentialStorageFileSecretApplier extends FileSecretApplier {
       if (gitConfig != null) {
         if (gitConfig.contains("helper = store --file") && gitConfig.contains("[credential]")) {
           throw new InfrastructureException(
-              "Multiple git credentials secrets found. Please remove duplication.");
+              format(
+                  "Multiple git credential secrets for user %s found in namespace %s. That may be caused by reinstalling product without user namespaces cleanup or using multiple instances of product with the same namespace namings template.",
+                  secret.getMetadata().getAnnotations().get(ANNOTATION_USER_NAME),
+                  secret.getMetadata().getNamespace()));
         }
 
         HashMap<String, String> newGitConfigMapData = new HashMap<>(gitConfigMapData);

@@ -45,7 +45,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.LogWatchTimeouts;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.LogWatcher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.PodLogToEventPublisher;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TolerationsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.Containers;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.slf4j.Logger;
@@ -88,6 +90,8 @@ public class PVCSubPathHelper {
   private final RuntimeEventsPublisher eventsPublisher;
 
   private final SecurityContextProvisioner securityContextProvisioner;
+  private final NodeSelectorProvisioner nodeSelectorProvisioner;
+  private final TolerationsProvisioner tolerationsProvisioner;
 
   @Inject
   PVCSubPathHelper(
@@ -96,6 +100,8 @@ public class PVCSubPathHelper {
       @Named("che.infra.kubernetes.pvc.jobs.image.pull_policy") String imagePullPolicy,
       KubernetesNamespaceFactory factory,
       SecurityContextProvisioner securityContextProvisioner,
+      NodeSelectorProvisioner nodeSelectorProvisioner,
+      TolerationsProvisioner tolerationsProvisioner,
       ExecutorServiceWrapper executorServiceWrapper,
       RuntimeEventsPublisher eventPublisher) {
     this.jobMemoryLimit = jobMemoryLimit;
@@ -103,6 +109,8 @@ public class PVCSubPathHelper {
     this.imagePullPolicy = imagePullPolicy;
     this.factory = factory;
     this.securityContextProvisioner = securityContextProvisioner;
+    this.nodeSelectorProvisioner = nodeSelectorProvisioner;
+    this.tolerationsProvisioner = tolerationsProvisioner;
     this.eventsPublisher = eventPublisher;
     this.executor =
         executorServiceWrapper.wrap(
@@ -204,6 +212,8 @@ public class PVCSubPathHelper {
     final String[] command = buildCommand(commandBase, arguments);
     final Pod pod = newPod(podName, pvcName, command);
     securityContextProvisioner.provision(pod.getSpec());
+    nodeSelectorProvisioner.provision(pod.getSpec());
+    tolerationsProvisioner.provision(pod.getSpec());
 
     KubernetesDeployments deployments = null;
     try {

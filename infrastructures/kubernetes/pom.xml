@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-infrastructures-parent</artifactId>
         <groupId>org.eclipse.che.infrastructure</groupId>
-        <version>7.33.0-SNAPSHOT</version>
+        <version>7.34.0-SNAPSHOT</version>
     </parent>
     <artifactId>infrastructure-kubernetes</artifactId>
     <name>Infrastructure :: Kubernetes</name>
@@ -237,6 +237,12 @@
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-server-mock</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>junit-jupiter-api</artifactId>
+                    <groupId>org.junit.jupiter</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>

@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 import static java.util.Collections.emptyMap;
 
 import com.google.common.base.Splitter;
+import io.fabric8.kubernetes.api.model.PodSpec;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,6 +45,12 @@ public class NodeSelectorProvisioner implements ConfigurationProvisioner {
           .getPodsData()
           .values()
           .forEach(d -> d.getSpec().setNodeSelector(nodeSelectorAttributes));
+    }
+  }
+
+  public void provision(PodSpec podSpec) {
+    if (!nodeSelectorAttributes.isEmpty()) {
+      podSpec.setNodeSelector(nodeSelectorAttributes);
     }
   }
 }

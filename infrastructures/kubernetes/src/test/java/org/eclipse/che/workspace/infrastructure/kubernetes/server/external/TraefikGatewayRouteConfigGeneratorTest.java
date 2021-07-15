@@ -134,7 +134,7 @@ public class TraefikGatewayRouteConfigGeneratorTest {
             .endMetadata()
             .build();
 
-    gatewayConfigGenerator.addRouteConfig("external-server-1", routeConfig);
+    gatewayConfigGeneratorNonDefaultDomain.addRouteConfig("external-server-1", routeConfig);
     Map<String, String> generatedConfig =
         gatewayConfigGeneratorNonDefaultDomain.generate("che-namespace");
 

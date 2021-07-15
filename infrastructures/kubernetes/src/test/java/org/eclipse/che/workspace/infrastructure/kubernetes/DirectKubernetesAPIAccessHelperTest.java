@@ -94,7 +94,7 @@ public class DirectKubernetesAPIAccessHelperTest {
   }
 
   @Test
-  public void testSendsRequestHeaders() throws Exception {
+  public void testSendsOnlyContentTypeHeaders() throws Exception {
     // given
     when(headers.getRequestHeaders())
         .thenReturn(
@@ -114,8 +114,8 @@ public class DirectKubernetesAPIAccessHelperTest {
             new ByteArrayInputStream("null".getBytes(StandardCharsets.UTF_8)));
 
     // then
-    assertEquals(requestCaptor.getValue().header("ducks"), "many");
-    assertEquals(requestCaptor.getValue().header("geese"), "volumes");
+    assertEquals(requestCaptor.getValue().header("ducks"), null);
+    assertEquals(requestCaptor.getValue().header("geese"), null);
     assertEquals(requestCaptor.getValue().header("Content-Type"), "text/literary");
   }
 

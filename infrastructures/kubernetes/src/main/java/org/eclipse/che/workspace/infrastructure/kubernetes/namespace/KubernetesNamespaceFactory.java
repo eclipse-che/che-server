@@ -93,6 +93,7 @@ public class KubernetesNamespaceFactory {
 
   private final String defaultNamespaceName;
   protected final boolean labelNamespaces;
+  protected final boolean annotateNamespaces;
   protected final Map<String, String> namespaceLabels;
   protected final Map<String, String> namespaceAnnotations;
 
@@ -112,6 +113,7 @@ public class KubernetesNamespaceFactory {
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelNamespaces,
+      @Named("che.infra.kubernetes.namespace.annotate") boolean annotateNamespaces,
       @Named("che.infra.kubernetes.namespace.labels") String namespaceLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String namespaceAnnotations,
       KubernetesClientFactory clientFactory,
@@ -129,6 +131,7 @@ public class KubernetesNamespaceFactory {
     this.preferenceManager = preferenceManager;
     this.sharedPool = sharedPool;
     this.labelNamespaces = labelNamespaces;
+    this.annotateNamespaces = annotateNamespaces;
 
     //noinspection UnstableApiUsage
     Splitter.MapSplitter csvMapSplitter = Splitter.on(",").withKeyValueSeparator("=");
@@ -327,7 +330,10 @@ public class KubernetesNamespaceFactory {
   public KubernetesNamespace getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     KubernetesNamespace namespace = get(identity);
 
-    namespace.prepare(canCreateNamespace(identity), labelNamespaces ? namespaceLabels : emptyMap());
+    namespace.prepare(
+        canCreateNamespace(identity),
+        labelNamespaces ? namespaceLabels : emptyMap(),
+        annotateNamespaces ? namespaceAnnotations : emptyMap());
 
     if (!isNullOrEmpty(serviceAccountName)) {
       KubernetesWorkspaceServiceAccount workspaceServiceAccount =

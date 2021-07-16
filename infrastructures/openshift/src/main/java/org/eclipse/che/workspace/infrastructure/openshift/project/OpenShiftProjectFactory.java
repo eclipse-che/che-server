@@ -71,6 +71,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelProjects,
+      @Named("che.infra.kubernetes.namespace.annotate") boolean annotateProjects,
       @Named("che.infra.kubernetes.namespace.labels") String projectLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String projectAnnotations,
       @Named("che.infra.openshift.project.init_with_server_sa") boolean initWithCheServerSa,
@@ -89,6 +90,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         defaultNamespaceName,
         namespaceCreationAllowed,
         labelProjects,
+        annotateProjects,
         projectLabels,
         projectAnnotations,
         clientFactory,
@@ -109,7 +111,8 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
     osProject.prepare(
         canCreateNamespace(identity),
         initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
-        labelNamespaces ? namespaceLabels : emptyMap());
+        labelNamespaces ? namespaceLabels : emptyMap(),
+        annotateNamespaces ? namespaceAnnotations : emptyMap());
 
     if (!isNullOrEmpty(getServiceAccountName())) {
       OpenShiftWorkspaceServiceAccount osWorkspaceServiceAccount =

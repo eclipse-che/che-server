@@ -157,7 +157,7 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     // when
-    project.prepare(true, true, Map.of());
+    project.prepare(true, true, Map.of(), Map.of());
 
     // then
     verify(metadataNested, never()).withName(PROJECT_NAME);
@@ -180,7 +180,7 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     // when
-    openShiftProject.prepare(true, false, Map.of());
+    openShiftProject.prepare(true, false, Map.of(), Map.of());
 
     // then
     ArgumentCaptor<ProjectRequest> captor = ArgumentCaptor.forClass(ProjectRequest.class);
@@ -211,7 +211,7 @@ public class OpenShiftProjectTest {
     when(openShiftClient.currentUser())
         .thenReturn(new UserBuilder().withNewMetadata().withName("user").endMetadata().build());
     // when
-    openShiftProject.prepare(true, true, Map.of());
+    openShiftProject.prepare(true, true, Map.of(), Map.of());
 
     // then
     ArgumentCaptor<ProjectRequest> captor = ArgumentCaptor.forClass(ProjectRequest.class);
@@ -248,7 +248,7 @@ public class OpenShiftProjectTest {
     when(openShiftClient.currentUser())
         .thenReturn(new UserBuilder().withNewMetadata().withName("jdoe").endMetadata().build());
     // when
-    openShiftProject.prepare(true, true, Map.of());
+    openShiftProject.prepare(true, true, Map.of(), Map.of());
 
     // then
     ArgumentCaptor<RoleBinding> roleBindingArgumentCaptor =
@@ -276,7 +276,7 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     // when
-    project.prepare(false, true, Map.of());
+    project.prepare(false, true, Map.of(), Map.of());
 
     // then
     // exception is thrown
@@ -408,7 +408,7 @@ public class OpenShiftProjectTest {
     Map<String, String> labels = Map.of("label.with.this", "yes", "and.this", "of courese");
 
     // when
-    openShiftProject.prepare(true, true, labels);
+    openShiftProject.prepare(true, true, labels, Map.of());
 
     // then
     Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
@@ -445,10 +445,89 @@ public class OpenShiftProjectTest {
         .createOrReplace(any(Namespace.class));
 
     // when
-    openShiftProject.prepare(true, true, labels);
+    openShiftProject.prepare(true, true, labels, Map.of());
 
     // then
     assertTrue(namespace.getMetadata().getLabels().entrySet().containsAll(labels.entrySet()));
+    verify(nonNamespaceOperation, never()).createOrReplace(any());
+  }
+
+  @Test
+  public void testAnnotateNamespace() throws InfrastructureException {
+    // given
+    prepareProject(PROJECT_NAME);
+    prepareNamespaceGet(PROJECT_NAME);
+    OpenShiftProject openShiftProject =
+        new OpenShiftProject(
+            clientFactory,
+            cheClientFactory,
+            cheServerOpenshiftClientFactory,
+            executor,
+            PROJECT_NAME,
+            WORKSPACE_ID);
+
+    KubernetesClient cheKubeClient = mock(KubernetesClient.class);
+    doReturn(cheKubeClient).when(cheClientFactory).create();
+
+    NonNamespaceOperation nonNamespaceOperation = mock(NonNamespaceOperation.class);
+    doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
+
+    ArgumentCaptor<Namespace> namespaceArgumentCaptor = ArgumentCaptor.forClass(Namespace.class);
+    doAnswer(a -> a.getArgument(0))
+        .when(nonNamespaceOperation)
+        .createOrReplace(namespaceArgumentCaptor.capture());
+
+    Map<String, String> annotations =
+        Map.of("annotation.with.this", "yes", "and.this", "of courese");
+
+    // when
+    openShiftProject.prepare(true, true, Map.of(), annotations);
+
+    // then
+    Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
+    assertTrue(
+        updatedNamespace
+            .getMetadata()
+            .getAnnotations()
+            .entrySet()
+            .containsAll(annotations.entrySet()));
+    assertEquals(updatedNamespace.getMetadata().getName(), PROJECT_NAME);
+  }
+
+  @Test
+  public void testDontTryToAnnotateNamespaceIfAlreadyAnnotated() throws InfrastructureException {
+    // given
+    Map<String, String> annotations =
+        Map.of("annotation.with.this", "yes", "and.this", "of courese");
+
+    prepareProject(PROJECT_NAME);
+    Namespace namespace = prepareNamespaceGet(PROJECT_NAME);
+    namespace.getMetadata().setAnnotations(annotations);
+    OpenShiftProject openShiftProject =
+        new OpenShiftProject(
+            clientFactory,
+            cheClientFactory,
+            cheServerOpenshiftClientFactory,
+            executor,
+            PROJECT_NAME,
+            WORKSPACE_ID);
+
+    KubernetesClient cheKubeClient = mock(KubernetesClient.class);
+    doReturn(cheKubeClient).when(cheClientFactory).create();
+
+    NonNamespaceOperation nonNamespaceOperation = mock(NonNamespaceOperation.class);
+    doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
+
+    doAnswer(a -> a.getArgument(0))
+        .when(nonNamespaceOperation)
+        .createOrReplace(any(Namespace.class));
+
+    // when
+    openShiftProject.prepare(true, true, Map.of(), annotations);
+
+    // then
+    assertTrue(
+        namespace.getMetadata().getAnnotations().entrySet().containsAll(annotations.entrySet()));
     verify(nonNamespaceOperation, never()).createOrReplace(any());
   }
 
@@ -481,7 +560,7 @@ public class OpenShiftProjectTest {
         .createOrReplace(namespaceArgumentCaptor.capture());
 
     // when
-    openShiftProject.prepare(true, true, labels);
+    openShiftProject.prepare(true, true, labels, Map.of());
 
     // then
     Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
@@ -518,7 +597,7 @@ public class OpenShiftProjectTest {
         .createOrReplace(any(Namespace.class));
 
     // when
-    openShiftProject.prepare(true, true, labels);
+    openShiftProject.prepare(true, true, labels, Map.of());
 
     // then
     verify(nonNamespaceOperation).createOrReplace(namespace);

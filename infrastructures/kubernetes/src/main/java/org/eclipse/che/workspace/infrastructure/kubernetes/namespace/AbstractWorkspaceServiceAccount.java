@@ -226,7 +226,9 @@ public abstract class AbstractWorkspaceServiceAccount<
       List<String> apiGroups,
       List<String> verbs) {
     //noinspection unchecked
-    roles.apply(k8sClient).inNamespace(namespace)
+    roles
+        .apply(k8sClient)
+        .inNamespace(namespace)
         .createOrReplace(buildRole(name, resources, apiGroups, verbs));
   }
 

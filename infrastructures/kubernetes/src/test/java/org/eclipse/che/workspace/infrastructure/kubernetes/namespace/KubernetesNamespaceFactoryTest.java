@@ -25,6 +25,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -524,6 +525,7 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     assertEquals(toReturnNamespace, namespace);
+    verify(namespaceFactory, never()).doCreateServiceAccount(any(), any());
     verify(toReturnNamespace).prepare(eq(false), any());
   }
 
@@ -555,46 +557,47 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     assertEquals(toReturnNamespace, namespace);
+    verify(namespaceFactory, never()).doCreateServiceAccount(any(), any());
     verify(toReturnNamespace).prepare(eq(false), any());
   }
 
-  //  @Test
-  //  public void shouldPrepareWorkspaceServiceAccountIfItIsConfiguredAndNamespaceIsNotPredefined()
-  //      throws Exception {
-  //    // given
-  //    namespaceFactory =
-  //        spy(
-  //            new KubernetesNamespaceFactory(
-  //                "serviceAccount",
-  //                "",
-  //                "<username>-che",
-  //                true,
-  //                true,
-  //                NAMESPACE_LABELS,
-  //                NAMESPACE_ANNOTATIONS,
-  //                clientFactory,
-  //                cheClientFactory,
-  //                userManager,
-  //                preferenceManager,
-  //                pool));
-  //    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
-  //    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
-  //    when(toReturnNamespace.getName()).thenReturn("workspace123");
-  //    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
-  //
-  //    KubernetesWorkspaceServiceAccount serviceAccount =
-  //        mock(KubernetesWorkspaceServiceAccount.class);
-  //    doReturn(serviceAccount).when(namespaceFactory).doCreateServiceAccount(any(), any());
-  //
-  //    // when
-  //    RuntimeIdentity identity =
-  //        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
-  //    namespaceFactory.getOrCreate(identity);
-  //
-  //    // then
-  //    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
-  //    verify(serviceAccount).prepare();
-  //  }
+  @Test
+  public void shouldPrepareWorkspaceServiceAccountIfItIsConfiguredAndNamespaceIsNotPredefined()
+      throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "serviceAccount",
+                "",
+                "<username>-che",
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
+    when(toReturnNamespace.getName()).thenReturn("workspace123");
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+
+    KubernetesWorkspaceServiceAccount serviceAccount =
+        mock(KubernetesWorkspaceServiceAccount.class);
+    doReturn(serviceAccount).when(namespaceFactory).doCreateServiceAccount(any(), any());
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    namespaceFactory.getOrCreate(identity);
+
+    // then
+    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
+    verify(serviceAccount).prepare();
+  }
 
   @Test
   public void shouldBindToAllConfiguredClusterRoles() throws Exception {
@@ -640,6 +643,8 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
+    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
+
     ServiceAccountList sas = k8sClient.serviceAccounts().inNamespace("workspace123").list();
     assertEquals(sas.getItems().size(), 1);
     assertEquals(sas.getItems().get(0).getMetadata().getName(), "serviceAccount");
@@ -694,6 +699,8 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
+    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
+
     ServiceAccountList sas = k8sClient.serviceAccounts().inNamespace("workspace123").list();
     assertEquals(sas.getItems().size(), 1);
     assertEquals(sas.getItems().get(0).getMetadata().getName(), "serviceAccount");

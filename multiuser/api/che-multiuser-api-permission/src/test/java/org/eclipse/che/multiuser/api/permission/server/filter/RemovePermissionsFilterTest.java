@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,7 +12,6 @@
 package org.eclipse.che.multiuser.api.permission.server.filter;
 
 import static com.jayway.restassured.RestAssured.given;
-import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
@@ -21,11 +20,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -76,7 +76,7 @@ public class RemovePermissionsFilterTest {
 
   @BeforeMethod
   public void setUp() {
-    when(subject.getUserId()).thenReturn("user321");
+    lenient().when(subject.getUserId()).thenReturn("user321");
   }
 
   @Test
@@ -93,17 +93,16 @@ public class RemovePermissionsFilterTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .delete(SECURE_PATH + "/permissions/test?instance=test123&user123");
+            .delete(SECURE_PATH + "/permissions/test?instance=test123&user=user123");
 
     assertEquals(response.getStatusCode(), 403);
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
     verify(instanceValidator).validate("test", "test123");
     verify(rmPermissionsChecker, times(1)).check(anyString(), anyString(), anyString());
   }
 
   @Test
   public void shouldRespond400IfInstanceIsNotValid() throws Exception {
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(false);
     doThrow(new BadRequestException("instance is not valid"))
         .when(instanceValidator)
         .validate(any(), any());
@@ -114,11 +113,11 @@ public class RemovePermissionsFilterTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .delete(SECURE_PATH + "/permissions/test?instance=test123&user123");
+            .delete(SECURE_PATH + "/permissions/test?instance=test123&user=user123");
 
     assertEquals(response.getStatusCode(), 400);
     assertEquals(unwrapError(response), "instance is not valid");
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
     verify(instanceValidator).validate("test", "test123");
   }
 
@@ -126,7 +125,7 @@ public class RemovePermissionsFilterTest {
   public void shouldDoChainIfUserHasAnyPermissionsForInstance() throws Exception {
     final RemovePermissionsChecker rmPermissionsChecker = mock(RemovePermissionsChecker.class);
     when(domainsPermissionsCheckers.getRemoveChecker("test")).thenReturn(rmPermissionsChecker);
-    doNothing().when(rmPermissionsChecker).check(ADMIN_USER_NAME, "test", "test123");
+    doNothing().when(rmPermissionsChecker).check("user123", "test", "test123");
     final Response response =
         given()
             .auth()
@@ -163,7 +162,6 @@ public class RemovePermissionsFilterTest {
   public void shouldDoChainIfUserDoesNotHavePermissionToSetPermissionsButHasSuperPrivileges()
       throws Exception {
     when(superPrivilegesChecker.isPrivilegedToManagePermissions(anyString())).thenReturn(true);
-    //    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(false);
 
     final Response response =
         given()

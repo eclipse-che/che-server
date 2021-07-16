@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -73,8 +72,8 @@ public class OrganizationResourcesDistributorTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    doNothing().when(manager).checkResourcesAvailability(anyString(), any());
-    when(resourcesLocks.lock(anyString())).thenReturn(lock);
+    lenient().doNothing().when(manager).checkResourcesAvailability(anyString(), any());
+    lenient().when(resourcesLocks.lock(anyString())).thenReturn(lock);
 
     lenient()
         .when(organizationManager.getById(ORG_ID))

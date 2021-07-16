@@ -81,7 +81,7 @@ public class GatewayTlsProvisionerTest {
     GatewayTlsProvisioner<KubernetesEnvironment> gatewayTlsProvisioner =
         new GatewayTlsProvisioner<>(tlsEnabled, gatewayConfigmapLabels, tlsProvisionerProvider);
 
-    when(k8sEnv.getConfigMaps()).thenReturn(singletonMap("route", routeConfigMap));
+    lenient().when(k8sEnv.getConfigMaps()).thenReturn(singletonMap("route", routeConfigMap));
 
     // when
     gatewayTlsProvisioner.provision(k8sEnv, runtimeIdentity);

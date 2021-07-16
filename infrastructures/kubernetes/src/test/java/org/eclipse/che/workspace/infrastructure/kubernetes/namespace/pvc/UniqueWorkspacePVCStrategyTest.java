@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -98,7 +97,7 @@ public class UniqueWorkspacePVCStrategyTest {
 
     lenient().when(factory.getOrCreate(eq(IDENTITY))).thenReturn(k8sNamespace);
     lenient().when(factory.get(any(Workspace.class))).thenReturn(k8sNamespace);
-    when(k8sNamespace.persistentVolumeClaims()).thenReturn(pvcs);
+    lenient().when(k8sNamespace.persistentVolumeClaims()).thenReturn(pvcs);
   }
 
   @Test
@@ -151,7 +150,6 @@ public class UniqueWorkspacePVCStrategyTest {
     final PersistentVolumeClaim pvc = newPVC(uniqueName);
     k8sEnv.getPersistentVolumeClaims().clear();
     k8sEnv.getPersistentVolumeClaims().putAll(singletonMap(uniqueName, pvc));
-    doReturn(pvc).when(pvcs).create(any());
 
     strategy.prepare(k8sEnv, IDENTITY, 100, emptyMap());
 
@@ -173,7 +171,6 @@ public class UniqueWorkspacePVCStrategyTest {
     final PersistentVolumeClaim pvc = newPVC(uniqueName);
     k8sEnv.getPersistentVolumeClaims().clear();
     k8sEnv.getPersistentVolumeClaims().putAll(singletonMap(uniqueName, pvc));
-    doReturn(pvc).when(pvcs).create(any());
 
     strategy.prepare(k8sEnv, IDENTITY, 100, emptyMap());
 

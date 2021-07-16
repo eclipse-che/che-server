@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -97,7 +98,7 @@ public class JwtProxyProvisionerTest {
   public void setUp() throws Exception {
     when(signatureKeyManager.getOrCreateKeyPair(anyString()))
         .thenReturn(new KeyPair(publicKey, null));
-    when(publicKey.getEncoded()).thenReturn("publickey".getBytes());
+    lenient().when(publicKey.getEncoded()).thenReturn("publickey".getBytes());
 
     when(configBuilderFactory.create(any()))
         .thenReturn(

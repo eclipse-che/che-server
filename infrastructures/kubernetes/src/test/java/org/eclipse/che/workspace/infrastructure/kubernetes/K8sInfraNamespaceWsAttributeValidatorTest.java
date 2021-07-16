@@ -20,7 +20,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.common.collect.ImmutableMap;
 import javax.inject.Provider;
@@ -93,7 +93,7 @@ public class K8sInfraNamespaceWsAttributeValidatorTest {
   public void shouldDoNothingWhenNamespaceAttributeIsMissing() throws ValidationException {
     validator.validate(emptyMap());
 
-    verifyZeroInteractions(namespaceFactory);
+    verifyNoMoreInteractions(namespaceFactory);
   }
 
   @Test(

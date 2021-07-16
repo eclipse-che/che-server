@@ -34,7 +34,7 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.EnvImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.testng.reporters.Files;
@@ -50,7 +50,7 @@ public class DevfileIntegrityValidatorTest {
 
   @Mock private ComponentIntegrityValidator dummyComponentValidator;
 
-  @BeforeClass
+  @BeforeMethod
   public void setUp() throws Exception {
     Map<String, ComponentIntegrityValidator> componentValidators = new HashMap<>();
     componentValidators.put(KUBERNETES_COMPONENT_TYPE, dummyComponentValidator);

@@ -790,8 +790,6 @@ public class KubernetesNamespaceFactoryTest {
             preferenceManager,
             pool);
 
-    when(namespaceResource.get()).thenReturn(null);
-
     WorkspaceImpl workspace =
         new WorkspaceImplBuilder().setId("workspace123").setAttributes(emptyMap()).build();
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));

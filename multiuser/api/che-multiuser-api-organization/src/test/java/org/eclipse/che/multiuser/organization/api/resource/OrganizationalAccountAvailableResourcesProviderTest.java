@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -73,7 +72,7 @@ public class OrganizationalAccountAvailableResourcesProviderTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    when(resourceManagerProvider.get()).thenReturn(resourceManager);
+    lenient().when(resourceManagerProvider.get()).thenReturn(resourceManager);
 
     rootOrganization = new OrganizationImpl(ROOT_ORG_ID, ROOT_ORG_NAME, null);
     suborganization = new OrganizationImpl(SUBORG_ID, "root/suborg", ROOT_ORG_ID);

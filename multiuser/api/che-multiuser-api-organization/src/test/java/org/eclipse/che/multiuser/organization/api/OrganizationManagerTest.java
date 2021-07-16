@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -89,7 +90,9 @@ public class OrganizationManagerTest {
             new OrganizationManager(
                 eventService, organizationDao, memberDao, new String[] {"reserved"}));
 
-    when(eventService.publish(any())).thenAnswer(invocation -> invocation.getArguments()[0]);
+    lenient()
+        .when(eventService.publish(any()))
+        .thenAnswer(invocation -> invocation.getArguments()[0]);
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl(USER_NAME, USER_ID, "userToken", false));
   }

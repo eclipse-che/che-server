@@ -178,8 +178,7 @@ public class KubernetesNamespaceFactory {
   @VisibleForTesting
   KubernetesNamespace doCreateNamespaceAccess(String workspaceId, String name) {
     return new KubernetesNamespace(
-        clientFactory, cheClientFactory, sharedPool.getExecutor(), name, workspaceId,
-        serviceAccountName, clusterRoleNames);
+        clientFactory, cheClientFactory, sharedPool.getExecutor(), name, workspaceId);
   }
 
   /**
@@ -329,6 +328,12 @@ public class KubernetesNamespaceFactory {
     KubernetesNamespace namespace = get(identity);
 
     namespace.prepare(canCreateNamespace(identity), labelNamespaces ? namespaceLabels : emptyMap());
+
+    if (!isNullOrEmpty(serviceAccountName)) {
+      KubernetesWorkspaceServiceAccount workspaceServiceAccount =
+          doCreateServiceAccount(namespace.getWorkspaceId(), namespace.getName());
+      workspaceServiceAccount.prepare();
+    }
 
     return namespace;
   }
@@ -696,6 +701,13 @@ public class KubernetesNamespaceFactory {
         Math.min(
             namespaceName.length(),
             METADATA_NAME_MAX_LENGTH)); // limit length to METADATA_NAME_MAX_LENGTH
+  }
+
+  @VisibleForTesting
+  KubernetesWorkspaceServiceAccount doCreateServiceAccount(
+      String workspaceId, String namespaceName) {
+    return new KubernetesWorkspaceServiceAccount(
+        workspaceId, namespaceName, serviceAccountName, getClusterRoleNames(), clientFactory);
   }
 
   protected String getServiceAccountName() {

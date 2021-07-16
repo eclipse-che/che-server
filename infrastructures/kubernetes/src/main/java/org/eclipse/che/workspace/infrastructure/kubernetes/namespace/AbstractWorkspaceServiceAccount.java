@@ -133,7 +133,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         serviceAccountName + "-metrics");
 
     // secrets role
-    ensureRoleWithBinding(
+    createRoleWithBinding(
         k8sClient,
         SECRETS_ROLE_NAME,
         Arrays.asList("secrets"),
@@ -202,7 +202,7 @@ public abstract class AbstractWorkspaceServiceAccount<
    * @param roleName the name of the role to bind to
    * @param bindingName the name of the binding
    * @param clusterRole whether the binding is for a cluster role or to a role in the namespace
-   * @return role binding prototype
+   * @return
    */
   protected abstract B createRoleBinding(String roleName, String bindingName, boolean clusterRole);
 
@@ -225,9 +225,10 @@ public abstract class AbstractWorkspaceServiceAccount<
       List<String> resources,
       List<String> apiGroups,
       List<String> verbs) {
-    //noinspection unchecked
-    roles.apply(k8sClient).inNamespace(namespace)
-        .createOrReplace(buildRole(name, resources, apiGroups, verbs));
+    if (roles.apply(k8sClient).inNamespace(namespace).withName(name).get() == null) {
+      R role = buildRole(name, resources, apiGroups, verbs);
+      roles.apply(k8sClient).inNamespace(namespace).create(role);
+    }
   }
 
   public interface ClientFactory<C extends KubernetesClient> {

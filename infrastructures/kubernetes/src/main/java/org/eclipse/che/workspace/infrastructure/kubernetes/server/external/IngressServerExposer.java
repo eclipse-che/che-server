@@ -16,6 +16,7 @@ import static java.util.Collections.emptyMap;
 import com.google.common.base.Splitter;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -41,8 +42,10 @@ public class IngressServerExposer<T extends KubernetesEnvironment>
    */
   static final String PATH_TRANSFORM_PATH_CATCH = "%s";
 
+  static final String SERVICE_NAME_PLACEHOLDER = "<service-name>";
+
   private final ExternalServiceExposureStrategy serviceExposureStrategy;
-  private final Map<String, String> ingressAnnotations;
+  private final Map<String, String> preconfiguredAnnotations;
   private final Map<String, String> labels;
   private final String pathTransformFmt;
 
@@ -53,7 +56,7 @@ public class IngressServerExposer<T extends KubernetesEnvironment>
       @Nullable @Named("che.infra.kubernetes.ingress.labels") String labelsProperty,
       @Nullable @Named("che.infra.kubernetes.ingress.path_transform") String pathTransformFmt) {
     this.serviceExposureStrategy = serviceExposureStrategy;
-    this.ingressAnnotations = annotations;
+    this.preconfiguredAnnotations = annotations;
     this.pathTransformFmt = pathTransformFmt == null ? PATH_TRANSFORM_PATH_CATCH : pathTransformFmt;
     this.labels =
         labelsProperty != null
@@ -102,6 +105,14 @@ public class IngressServerExposer<T extends KubernetesEnvironment>
       ingressBuilder = ingressBuilder.withHost(host);
     }
 
+    Map<String, String> annotations = new HashMap<>(preconfiguredAnnotations);
+    for (Map.Entry<String, String> entry : annotations.entrySet()) {
+      String value = entry.getValue();
+      if (value.contains(SERVICE_NAME_PLACEHOLDER)) {
+        entry.setValue(value.replaceAll(SERVICE_NAME_PLACEHOLDER, serviceName));
+      }
+    }
+
     return ingressBuilder
         .withPath(
             String.format(
@@ -111,7 +122,7 @@ public class IngressServerExposer<T extends KubernetesEnvironment>
         .withName(getIngressName(serviceName, serverName))
         .withMachineName(machineName)
         .withServiceName(serviceName)
-        .withAnnotations(ingressAnnotations)
+        .withAnnotations(annotations)
         .withLabels(labels)
         .withServicePort(servicePort.getName())
         .withServers(servers)

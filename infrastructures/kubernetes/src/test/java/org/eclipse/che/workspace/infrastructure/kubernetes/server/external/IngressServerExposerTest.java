@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.server.external;
 
 import static java.util.Collections.emptyMap;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.IngressServerExposer.SERVICE_NAME_PLACEHOLDER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -46,7 +47,7 @@ public class IngressServerExposerTest {
     // given
     Map<String, String> annotations = new HashMap<>();
     annotations.put("ssl", "true");
-    annotations.put("websocket-service", "<<service-name>>");
+    annotations.put("websocket-service", SERVICE_NAME_PLACEHOLDER);
 
     IngressServerExposer<KubernetesEnvironment> exposer =
         new IngressServerExposer<>(serviceExposureStrategy, annotations, null, "");

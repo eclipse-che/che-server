@@ -42,6 +42,8 @@ public class IngressServerExposer<T extends KubernetesEnvironment>
    */
   static final String PATH_TRANSFORM_PATH_CATCH = "%s";
 
+  static final String SERVICE_NAME_PLACEHOLDER = "<service-name>";
+
   private final ExternalServiceExposureStrategy serviceExposureStrategy;
   private final Map<String, String> preconfiguredAnnotations;
   private final Map<String, String> labels;
@@ -106,8 +108,8 @@ public class IngressServerExposer<T extends KubernetesEnvironment>
     Map<String, String> annotations = new HashMap<>(preconfiguredAnnotations);
     for (Map.Entry<String, String> entry : annotations.entrySet()) {
       String value = entry.getValue();
-      if (value.contains("<<service-name>>")) {
-        entry.setValue(value.replaceAll("<<service-name>>", serviceName));
+      if (value.contains(SERVICE_NAME_PLACEHOLDER)) {
+        entry.setValue(value.replaceAll(SERVICE_NAME_PLACEHOLDER, serviceName));
       }
     }
 

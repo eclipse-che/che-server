@@ -99,7 +99,6 @@ public class EnvironmentVariableSecretApplierTest {
                     .build())
             .build();
 
-    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
     secretApplier.applySecret(environment, runtimeIdentity, secret);
 
     // container has env set
@@ -136,7 +135,6 @@ public class EnvironmentVariableSecretApplierTest {
                     .build())
             .build();
 
-    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
     secretApplier.applySecret(environment, runtimeIdentity, secret);
 
     // container has env set
@@ -174,7 +172,6 @@ public class EnvironmentVariableSecretApplierTest {
                     .build())
             .build();
 
-    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
     secretApplier.applySecret(environment, runtimeIdentity, secret);
 
     // both containers has env set
@@ -222,7 +219,6 @@ public class EnvironmentVariableSecretApplierTest {
                     .build())
             .build();
 
-    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
     secretApplier.applySecret(environment, runtimeIdentity, secret);
 
     // only first container has env set

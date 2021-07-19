@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,10 +15,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -56,12 +56,12 @@ public class KeycloakUserManagerTest {
 
   @BeforeMethod
   public void setUp() {
-    initMocks(this);
     keycloakUserManager =
         new KeycloakUserManager(
             userDao, profileDao, preferenceDao, accountManager, eventService, new String[] {});
 
-    when(eventService.publish(any()))
+    lenient()
+        .when(eventService.publish(any()))
         .thenAnswer(
             invocationOnMock -> {
               Object arg = invocationOnMock.getArguments()[0];

@@ -13,6 +13,7 @@ package org.eclipse.che;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -97,7 +98,7 @@ public class DashboardRedirectionFilterTest {
   public void shouldSkipNotGETNorHEADRequest(String method) throws Exception {
     // given
     when(request.getMethod()).thenReturn(method);
-    when(request.getRequestURI()).thenReturn("/namespace/workspaceName");
+    lenient().when(request.getRequestURI()).thenReturn("/namespace/workspaceName");
 
     // when
     filter.doFilter(request, response, chain);

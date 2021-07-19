@@ -23,7 +23,7 @@ import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLoc
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -44,7 +44,7 @@ public class GithubUrlTest {
   private GithubUrl githubUrl;
 
   /** Setup objects/ */
-  @BeforeClass
+  @BeforeMethod
   protected void init() {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));

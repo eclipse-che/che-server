@@ -85,7 +85,7 @@ public class KeycloakEnvironmentInitializationFilterTest {
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     lenient().when(request.getScheme()).thenReturn("http");
-    when(request.getSession(anyBoolean())).thenReturn(session);
+    lenient().when(request.getSession(anyBoolean())).thenReturn(session);
     lenient().when(response.getOutputStream()).thenReturn(servletOutputStream);
     EnvironmentContext context = spy(EnvironmentContext.getCurrent());
     EnvironmentContext.setCurrent(context);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -58,8 +58,6 @@ public class FreeResourcesProviderTest {
     when(account.getType()).thenReturn(TEST_ACCOUNT_TYPE);
 
     when(defaultResourcesProvider.getAccountType()).thenReturn(TEST_ACCOUNT_TYPE);
-    when(defaultResourcesProvider.getResources(any()))
-        .thenReturn(singletonList(new ResourceImpl(TEST_RESOURCE_TYPE, 1020, TEST_RESOURCE_UNIT)));
 
     provider =
         new FreeResourcesProvider(
@@ -71,7 +69,8 @@ public class FreeResourcesProviderTest {
     // given
     when(accountManager.getById(any())).thenReturn(account);
     when(freeResourcesLimitManager.get(any())).thenThrow(new NotFoundException("not found"));
-
+    when(defaultResourcesProvider.getResources(any()))
+        .thenReturn(singletonList(new ResourceImpl(TEST_RESOURCE_TYPE, 1020, TEST_RESOURCE_UNIT)));
     // when
     List<ProvidedResources> result = provider.getResources("user123");
 
@@ -124,7 +123,6 @@ public class FreeResourcesProviderTest {
     // given
     when(account.getType()).thenReturn("anotherTestType");
     when(accountManager.getById(any())).thenReturn(account);
-    when(freeResourcesLimitManager.get(any())).thenThrow(new NotFoundException("not found"));
     doThrow(new NotFoundException("not found")).when(freeResourcesLimitManager).get(any());
 
     // when

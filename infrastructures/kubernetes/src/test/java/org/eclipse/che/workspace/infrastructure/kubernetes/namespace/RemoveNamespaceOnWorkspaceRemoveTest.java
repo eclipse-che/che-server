@@ -17,7 +17,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.notification.EventService;
@@ -48,8 +47,7 @@ public class RemoveNamespaceOnWorkspaceRemoveTest {
     removeNamespaceOnWorkspaceRemove = spy(new RemoveNamespaceOnWorkspaceRemove(namespaceFactory));
 
     lenient().doNothing().when(namespaceFactory).deleteIfManaged(any());
-
-    when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
   }
 
   @Test

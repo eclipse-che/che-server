@@ -16,7 +16,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -102,7 +102,7 @@ public class GitConfigProvisionerTest {
 
     gitConfigProvisioner.provision(k8sEnv, runtimeIdentity);
 
-    verifyZeroInteractions(runtimeIdentity);
+    verifyNoMoreInteractions(runtimeIdentity);
   }
 
   @Test
@@ -112,7 +112,7 @@ public class GitConfigProvisionerTest {
 
     gitConfigProvisioner.provision(k8sEnv, runtimeIdentity);
 
-    verifyZeroInteractions(runtimeIdentity);
+    verifyNoMoreInteractions(runtimeIdentity);
 
     List<Warning> warnings = k8sEnv.getWarnings();
 
@@ -135,7 +135,7 @@ public class GitConfigProvisionerTest {
 
     gitConfigProvisioner.provision(k8sEnv, runtimeIdentity);
 
-    verifyZeroInteractions(runtimeIdentity);
+    verifyNoMoreInteractions(runtimeIdentity);
 
     List<Warning> warnings = k8sEnv.getWarnings();
 
@@ -160,7 +160,7 @@ public class GitConfigProvisionerTest {
 
     gitConfigProvisioner.provision(k8sEnv, runtimeIdentity);
 
-    verifyZeroInteractions(runtimeIdentity);
+    verifyNoMoreInteractions(runtimeIdentity);
 
     List<Warning> warnings = k8sEnv.getWarnings();
 
@@ -181,7 +181,6 @@ public class GitConfigProvisionerTest {
     String json = "{\"git.user.name\":\"user\",\"git.user.email\":\"email\"}";
     Map<String, String> preferences = singletonMap("theia-user-preferences", json);
     when(preferenceManager.find(eq("id"), eq("theia-user-preferences"))).thenReturn(preferences);
-    when(runtimeIdentity.getWorkspaceId()).thenReturn("wksp");
 
     ObjectMeta podMeta = new ObjectMetaBuilder().withName("wksp").build();
     when(pod.getMetadata()).thenReturn(podMeta);
@@ -233,7 +232,6 @@ public class GitConfigProvisionerTest {
   public void testShouldParseOnlyNameWhenEmailIsNotAString(String json) throws Exception {
     Map<String, String> preferences = singletonMap("theia-user-preferences", json);
     when(preferenceManager.find(eq("id"), eq("theia-user-preferences"))).thenReturn(preferences);
-    when(runtimeIdentity.getWorkspaceId()).thenReturn("wksp");
 
     ObjectMeta podMeta = new ObjectMetaBuilder().withName("wksp").build();
     when(pod.getMetadata()).thenReturn(podMeta);
@@ -285,7 +283,6 @@ public class GitConfigProvisionerTest {
   public void testShouldParseOnlyEmailWhenNameIsNotAString(String json) throws Exception {
     Map<String, String> preferences = singletonMap("theia-user-preferences", json);
     when(preferenceManager.find(eq("id"), eq("theia-user-preferences"))).thenReturn(preferences);
-    when(runtimeIdentity.getWorkspaceId()).thenReturn("wksp");
 
     ObjectMeta podMeta = new ObjectMetaBuilder().withName("wksp").build();
     when(pod.getMetadata()).thenReturn(podMeta);
@@ -330,7 +327,6 @@ public class GitConfigProvisionerTest {
         "{\"chePlugins.repositories\":{\"Plugins\":\"http://url/\",\"my\":\"https://url/plugins.json\"}, \"git.user.name\":\"user\",\"git.user.email\":\"email\"}";
     Map<String, String> preferences = singletonMap("theia-user-preferences", json);
     when(preferenceManager.find(eq("id"), eq("theia-user-preferences"))).thenReturn(preferences);
-    when(runtimeIdentity.getWorkspaceId()).thenReturn("wksp");
 
     ObjectMeta podMeta = new ObjectMetaBuilder().withName("wksp").build();
     when(pod.getMetadata()).thenReturn(podMeta);
@@ -373,7 +369,6 @@ public class GitConfigProvisionerTest {
     String json = "{}";
     Map<String, String> preferences = singletonMap("theia-user-preferences", json);
     when(preferenceManager.find(eq("id"), eq("theia-user-preferences"))).thenReturn(preferences);
-    when(runtimeIdentity.getWorkspaceId()).thenReturn("wksp");
 
     ObjectMeta podMeta = new ObjectMetaBuilder().withName("wksp").build();
     when(pod.getMetadata()).thenReturn(podMeta);

@@ -663,7 +663,6 @@ public class WorkspaceServiceTest {
   public void shouldUpdateTheWorkspace() throws Exception {
     final WorkspaceImpl workspace = createWorkspace(createConfigDto());
     when(wsManager.updateWorkspace(any(), any())).thenReturn(workspace);
-    when(wsManager.getWorkspace(workspace.getId())).thenReturn(workspace);
     final WorkspaceDto workspaceDto = asDto(workspace);
 
     final Response response =
@@ -748,9 +747,6 @@ public class WorkspaceServiceTest {
   @Test
   public void shouldDeleteWorkspace() throws Exception {
     final WorkspaceImpl workspace = createWorkspace(createConfigDto());
-
-    when(wsManager.getWorkspace(workspace.getId())).thenReturn(workspace);
-
     final Response response =
         given()
             .auth()
@@ -766,7 +762,6 @@ public class WorkspaceServiceTest {
   public void shouldStartWorkspace() throws Exception {
     final WorkspaceImpl workspace = createWorkspace(createConfigDto());
     when(wsManager.startWorkspace(any(), any(), any())).thenReturn(workspace);
-    when(wsManager.getWorkspace(workspace.getId())).thenReturn(workspace);
 
     final Response response =
         given()
@@ -792,7 +787,6 @@ public class WorkspaceServiceTest {
   public void shouldStartWorkspaceWithStartupDebug() throws Exception {
     final WorkspaceImpl workspace = createWorkspace(createConfigDto());
     when(wsManager.startWorkspace(any(), any(), any())).thenReturn(workspace);
-    when(wsManager.getWorkspace(workspace.getId())).thenReturn(workspace);
 
     final Response response =
         given()
@@ -827,7 +821,6 @@ public class WorkspaceServiceTest {
   @Test
   public void shouldStopWorkspace() throws Exception {
     final WorkspaceImpl workspace = createWorkspace(createConfigDto());
-    when(wsManager.getWorkspace(workspace.getId())).thenReturn(workspace);
 
     final Response response =
         given()

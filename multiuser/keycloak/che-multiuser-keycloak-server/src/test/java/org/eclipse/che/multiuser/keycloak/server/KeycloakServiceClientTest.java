@@ -17,6 +17,7 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -82,10 +83,11 @@ public class KeycloakServiceClientTest {
   public void setUp() throws Exception {
     when(oidcInfo.getAuthServerURL())
         .thenReturn(RestAssured.baseURI + ":" + RestAssured.port + RestAssured.basePath);
-    when(oidcInfo.getAuthServerPublicURL()).thenReturn("https://keycloak-che");
-    when(jwtParser.parseClaimsJws(token)).thenReturn(jws);
-    when(jws.getBody()).thenReturn(claims);
-    when(claims.get(anyString(), eq(String.class)))
+    lenient().when(oidcInfo.getAuthServerPublicURL()).thenReturn("https://keycloak-che");
+    lenient().when(jwtParser.parseClaimsJws(token)).thenReturn(jws);
+    lenient().when(jws.getBody()).thenReturn(claims);
+    lenient()
+        .when(claims.get(anyString(), eq(String.class)))
         .thenAnswer(
             invocationOnMock -> {
               String arg = (String) invocationOnMock.getArguments()[0];

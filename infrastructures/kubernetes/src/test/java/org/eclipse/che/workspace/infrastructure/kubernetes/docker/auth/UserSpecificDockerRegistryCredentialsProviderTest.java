@@ -28,7 +28,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.Docker
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.DockerAuthConfigs;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -42,7 +42,7 @@ public class UserSpecificDockerRegistryCredentialsProviderTest {
 
   private UserSpecificDockerRegistryCredentialsProvider dockerCredentials;
 
-  @BeforeClass
+  @BeforeMethod
   private void before() {
     dockerCredentials = new UserSpecificDockerRegistryCredentialsProvider(preferenceManager);
   }

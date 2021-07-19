@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -61,13 +61,14 @@ public class EnvironmentRamCalculatorTest {
   public void setUp() throws Exception {
     envRamCalculator =
         new EnvironmentRamCalculator(ImmutableMap.of(RECIPE_TYPE, environmentFactory));
-    when(environmentFactory.create(environment)).thenReturn(internalEnv);
-    when(internalEnv.getMachines())
+    lenient().when(environmentFactory.create(environment)).thenReturn(internalEnv);
+    lenient()
+        .when(internalEnv.getMachines())
         .thenReturn(
             ImmutableMap.of(
                 MACHINE_NAME_1, machineConfig1,
                 MACHINE_NAME_2, machineConfig2));
-    when(environment.getRecipe()).thenReturn(recipeMock);
+    lenient().when(environment.getRecipe()).thenReturn(recipeMock);
     lenient()
         .doReturn(ImmutableMap.of(MACHINE_NAME_1, machine1, MACHINE_NAME_2, machine2))
         .when(runtime)

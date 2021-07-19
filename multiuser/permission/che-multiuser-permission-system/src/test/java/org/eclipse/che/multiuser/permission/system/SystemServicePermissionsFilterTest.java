@@ -18,8 +18,9 @@ import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyObject;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.fail;
@@ -139,7 +140,8 @@ public class SystemServicePermissionsFilterTest {
   }
 
   private static void permitSubject(String... allowedActions) throws ForbiddenException {
-    doAnswer(
+    lenient()
+        .doAnswer(
             inv -> {
               if (!new HashSet<>(Arrays.asList(allowedActions))
                   .contains(inv.getArguments()[2].toString())) {
@@ -148,7 +150,7 @@ public class SystemServicePermissionsFilterTest {
               return null;
             })
         .when(subject)
-        .checkPermission(anyObject(), anyObject(), anyObject());
+        .checkPermission(anyString(), isNull(), anyString());
   }
 
   private static Set<String> getDeclaredPublicMethods(Class<?> c) {

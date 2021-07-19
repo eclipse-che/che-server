@@ -13,7 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
@@ -53,7 +53,7 @@ public class KubernetesWorkspaceServiceAccountTest {
     serverMock = new KubernetesServer(true, true);
     serverMock.before();
     k8sClient = serverMock.getClient();
-    lenient().when(clientFactory.create(anyString())).thenReturn(k8sClient);
+    when(clientFactory.create(anyString())).thenReturn(k8sClient);
   }
 
   @Test

@@ -18,12 +18,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -32,6 +35,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,6 +46,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import org.apache.commons.codec.Charsets;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -142,7 +147,7 @@ public class KeycloakServiceClient {
             .build(keycloakSettings.get().get(REALM_SETTING), oauthProvider)
             .toString();
     try {
-      String response = doRequest(url, HttpMethod.GET, null);
+      String response = doRequest(url, HttpMethod.GET, null, null);
       // Successful answer is not a json, but key=value&foo=bar format pairs
       return DtoFactory.getInstance()
           .createDtoFromJson(toJson(response), KeycloakTokenResponse.class);
@@ -156,7 +161,42 @@ public class KeycloakServiceClient {
     }
   }
 
-  private String doRequest(String url, String method, List<Pair<String, ?>> parameters)
+  public KeycloakTokenResponse getIdentityProviderTokenByExchange(String oauthProvider)
+      throws ForbiddenException, BadRequestException, IOException, NotFoundException,
+      ServerException, UnauthorizedException {
+    String url =
+        UriBuilder.fromUri(oidcInfo.getAuthServerURL())
+            .path("/realms/{realm}/protocol/openid-connect/token")
+            .build(keycloakSettings.get().get(REALM_SETTING))
+            .toString();
+
+    Map<String,String> postData = new HashMap<>();
+    postData.put("client_id", "che-public");
+    postData.put("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange");
+    postData.put("requested_token_type", "urn:ietf:params:oauth:token-type:access_token");
+    postData.put("requested_issuer", oauthProvider);
+    postData.put("subject_token", EnvironmentContext.getCurrent().getSubject().getToken());
+    StringJoiner sj = new StringJoiner("&");
+    for(Map.Entry<String,String> entry : postData.entrySet())
+      sj.add(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8) + "="
+          + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+
+    try {
+      String response = doRequest(url, HttpMethod.POST, null, sj.toString());
+      // Successful answer is not a json, but key=value&foo=bar format pairs
+      return DtoFactory.getInstance()
+          .createDtoFromJson(toJson(response), KeycloakTokenResponse.class);
+    } catch (BadRequestException e) {
+      if (assotiateUserPattern.matcher(e.getMessage()).matches()) {
+        // If user has no link with identity provider yet,
+        // we should threat this as unauthorized and send to OAuth login page.
+        throw new UnauthorizedException(e.getMessage());
+      }
+      throw e;
+    }
+  }
+
+  private String doRequest(String url, String method, List<Pair<String, ?>> parameters, String postData)
       throws IOException, ServerException, ForbiddenException, NotFoundException,
           UnauthorizedException, BadRequestException {
     final String authToken = EnvironmentContext.getCurrent().getSubject().getToken();
@@ -178,6 +218,12 @@ public class KeycloakServiceClient {
       conn.addRequestProperty(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON);
       if (authToken != null) {
         conn.setRequestProperty(HttpHeaders.AUTHORIZATION, "bearer " + authToken);
+      }
+      if (postData != null) {
+        conn.setDoOutput(true);
+        try (DataOutputStream dataOutputStream = new DataOutputStream(conn.getOutputStream())) {
+          dataOutputStream.write(postData.getBytes(Charsets.UTF_8));
+        }
       }
       final int responseCode = conn.getResponseCode();
       if ((responseCode / 100) != 2) {

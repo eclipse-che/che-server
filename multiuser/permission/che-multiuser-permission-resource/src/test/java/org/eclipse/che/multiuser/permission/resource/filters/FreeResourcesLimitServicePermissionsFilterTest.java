@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,9 +18,10 @@ import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -75,8 +76,10 @@ public class FreeResourcesLimitServicePermissionsFilterTest {
   public void setUp() throws Exception {
     filter = new FreeResourcesLimitServicePermissionsFilter();
 
-    when(subject.hasPermission(
-            nullable(String.class), nullable(String.class), nullable(String.class)))
+    lenient()
+        .when(
+            subject.hasPermission(
+                nullable(String.class), nullable(String.class), nullable(String.class)))
         .thenReturn(true);
   }
 
@@ -198,7 +201,7 @@ public class FreeResourcesLimitServicePermissionsFilterTest {
         unwrapError(response), "The user does not have permission to perform this operation");
 
     verify(subject).hasPermission(SystemDomain.DOMAIN_ID, null, SystemDomain.MANAGE_SYSTEM_ACTION);
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   @DataProvider(name = "coveredPaths")

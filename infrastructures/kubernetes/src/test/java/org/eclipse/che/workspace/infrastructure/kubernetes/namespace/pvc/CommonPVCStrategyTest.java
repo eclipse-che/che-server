@@ -438,11 +438,6 @@ public class CommonPVCStrategyTest {
     WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
     lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
 
-    AccountImpl account = mock(AccountImpl.class);
-    when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
-    when(account.getId()).thenReturn("id123");
-    when(workspace.getAccount()).thenReturn(account);
-
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
     lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
     workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "false");

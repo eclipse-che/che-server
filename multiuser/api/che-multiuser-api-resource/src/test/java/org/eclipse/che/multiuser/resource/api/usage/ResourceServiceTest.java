@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,6 +19,7 @@ import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -63,9 +64,9 @@ public class ResourceServiceTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    when(resource.getType()).thenReturn(RESOURCE_TYPE);
-    when(resource.getAmount()).thenReturn(RESOURCE_AMOUNT);
-    when(resource.getUnit()).thenReturn(RESOURCE_UNIT);
+    lenient().when(resource.getType()).thenReturn(RESOURCE_TYPE);
+    lenient().when(resource.getAmount()).thenReturn(RESOURCE_AMOUNT);
+    lenient().when(resource.getUnit()).thenReturn(RESOURCE_UNIT);
   }
 
   @Test

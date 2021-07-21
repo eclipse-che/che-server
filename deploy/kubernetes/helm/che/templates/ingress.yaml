@@ -18,6 +18,7 @@ metadata:
     kubernetes.io/ingress.class: {{ .Values.global.ingress.class | quote }}
     {{ .Values.global.ingressAnnotationsPrefix }}ingress.kubernetes.io/proxy-read-timeout: "3600"
     {{ .Values.global.ingressAnnotationsPrefix }}ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    {{ .Values.global.ingressAnnotationsPrefix }}org/websocket-services: "che-host"
 {{- if and .Values.global.tls .Values.global.tls.enabled }}
     {{ .Values.global.ingressAnnotationsPrefix }}ingress.kubernetes.io/ssl-redirect: "true"
 {{- else }}

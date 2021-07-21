@@ -17,7 +17,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
@@ -153,7 +152,6 @@ public class OpenShiftStopWorkspaceRoleProvisionerTest {
 
   @Test
   public void shouldCreateRoleBinding() throws InfrastructureException {
-    when(cheInstallationLocation.getInstallationLocationNamespace()).thenReturn("che");
     assertEquals(
         stopWorkspaceRoleProvisioner.createStopWorkspacesRoleBinding("developer-che"),
         expectedRoleBinding);

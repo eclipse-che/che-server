@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,7 +12,6 @@
 package org.eclipse.che.multiuser.api.permission.server.filter;
 
 import static com.jayway.restassured.RestAssured.given;
-import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
@@ -24,7 +23,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -83,7 +82,6 @@ public class SetPermissionsFilterTest {
 
   @Test
   public void shouldRespond400IfBodyIsNull() throws Exception {
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(false);
 
     final Response response =
         given()
@@ -95,12 +93,11 @@ public class SetPermissionsFilterTest {
 
     assertEquals(response.getStatusCode(), 400);
     assertEquals(unwrapError(response), "Permissions descriptor required");
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
   }
 
   @Test
   public void shouldRespond400IfDomainIdIsEmpty() throws Exception {
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(false);
 
     final Response response =
         given()
@@ -118,12 +115,11 @@ public class SetPermissionsFilterTest {
 
     assertEquals(response.getStatusCode(), 400);
     assertEquals(unwrapError(response), "Domain required");
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
   }
 
   @Test
   public void shouldRespond400IfInstanceIsNotValid() throws Exception {
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(false);
     doThrow(new BadRequestException("instance is not valid"))
         .when(instanceValidator)
         .validate(any(), any());
@@ -144,14 +140,12 @@ public class SetPermissionsFilterTest {
 
     assertEquals(response.getStatusCode(), 400);
     assertEquals(unwrapError(response), "instance is not valid");
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
     verify(instanceValidator).validate("test", "test123");
   }
 
   @Test
   public void shouldRespond403IfUserDoesNotHaveAnyPermissionsForInstance() throws Exception {
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(false);
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(true);
     final SetPermissionsChecker setPermissionsChecker = mock(SetPermissionsChecker.class);
     when(domainsPermissionsCheckers.getSetChecker("test")).thenReturn(setPermissionsChecker);
     doThrow(new ForbiddenException("ex")).when(setPermissionsChecker).check(any(Permissions.class));
@@ -171,14 +165,13 @@ public class SetPermissionsFilterTest {
             .post(SECURE_PATH + "/permissions");
 
     assertEquals(response.getStatusCode(), 403);
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
     verify(instanceValidator).validate("test", "test123");
     verify(setPermissionsChecker, times(1)).check(any(Permissions.class));
   }
 
   @Test
   public void shouldDoChainIfUserHasAnyPermissionsForInstance() throws Exception {
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(true);
     final SetPermissionsChecker setPermissionsChecker = mock(SetPermissionsChecker.class);
     when(domainsPermissionsCheckers.getSetChecker("test")).thenReturn(setPermissionsChecker);
     doNothing().when(setPermissionsChecker).check(any(Permissions.class));

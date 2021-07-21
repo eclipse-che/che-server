@@ -12,7 +12,6 @@
 package org.eclipse.che.api.workspace.server;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
@@ -40,7 +39,6 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -176,7 +174,7 @@ public class WorkspaceManagerTest {
           }
         });
 
-    when(runtimes.isInfrastructureNamespaceValid(any())).thenReturn(true);
+    lenient().when(runtimes.isInfrastructureNamespaceValid(any())).thenReturn(true);
   }
 
   @Test
@@ -379,8 +377,6 @@ public class WorkspaceManagerTest {
     mockRuntimeStatus(workspace1, STOPPED);
     mockRuntimeStatus(workspace2, RUNNING);
 
-    doNothing().when(runtimes).injectRuntime(workspace1);
-
     // when
     final Page<WorkspaceImpl> result = workspaceManager.getWorkspaces(NAMESPACE_1, false, 30, 0);
 
@@ -573,19 +569,6 @@ public class WorkspaceManagerTest {
             NAMESPACE_1,
             ImmutableMap.of(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, INFRA_NAMESPACE));
 
-    EnvironmentImpl environment = new EnvironmentImpl(null, emptyMap());
-    Command command = new CommandImpl("cmd", "echo hello", "custom");
-    WorkspaceConfigImpl convertedConfig =
-        new WorkspaceConfigImpl(
-            "any",
-            "",
-            "default",
-            singletonList(command),
-            emptyList(),
-            ImmutableMap.of("default", environment),
-            ImmutableMap.of("attr", "value"));
-    when(devfileConverter.convert(any())).thenReturn(convertedConfig);
-
     mockAnyWorkspaceStart();
 
     workspaceManager.startWorkspace(workspace.getId(), null, emptyMap());
@@ -599,19 +582,6 @@ public class WorkspaceManagerTest {
     WorkspaceImpl workspace = createAndMockWorkspace(devfile, NAMESPACE_1, new HashMap<>());
     workspace.getAttributes().remove(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE);
     when(runtimes.evalInfrastructureNamespace(any())).thenReturn("evaluated-legacy");
-
-    EnvironmentImpl environment = new EnvironmentImpl(null, emptyMap());
-    Command command = new CommandImpl("cmd", "echo hello", "custom");
-    WorkspaceConfigImpl convertedConfig =
-        new WorkspaceConfigImpl(
-            "any",
-            "",
-            "default",
-            singletonList(command),
-            emptyList(),
-            ImmutableMap.of("default", environment),
-            ImmutableMap.of("attr", "value"));
-    when(devfileConverter.convert(any())).thenReturn(convertedConfig);
 
     mockAnyWorkspaceStart();
 
@@ -640,19 +610,6 @@ public class WorkspaceManagerTest {
             NAMESPACE_1,
             ImmutableMap.of(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, "-invalid-dns-name"));
     when(runtimes.evalInfrastructureNamespace(any())).thenReturn("evaluated-legal");
-
-    EnvironmentImpl environment = new EnvironmentImpl(null, emptyMap());
-    Command command = new CommandImpl("cmd", "echo hello", "custom");
-    WorkspaceConfigImpl convertedConfig =
-        new WorkspaceConfigImpl(
-            "any",
-            "",
-            "default",
-            singletonList(command),
-            emptyList(),
-            ImmutableMap.of("default", environment),
-            ImmutableMap.of("attr", "value"));
-    when(devfileConverter.convert(any())).thenReturn(convertedConfig);
     when(runtimes.isInfrastructureNamespaceValid(eq("-invalid-dns-name"))).thenReturn(false);
 
     mockAnyWorkspaceStart();
@@ -681,19 +638,6 @@ public class WorkspaceManagerTest {
             devfile,
             NAMESPACE_1,
             ImmutableMap.of(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, "user-defined"));
-
-    EnvironmentImpl environment = new EnvironmentImpl(null, emptyMap());
-    Command command = new CommandImpl("cmd", "echo hello", "custom");
-    WorkspaceConfigImpl convertedConfig =
-        new WorkspaceConfigImpl(
-            "any",
-            "",
-            "default",
-            singletonList(command),
-            emptyList(),
-            ImmutableMap.of("default", environment),
-            ImmutableMap.of("attr", "value"));
-    when(devfileConverter.convert(any())).thenReturn(convertedConfig);
 
     mockAnyWorkspaceStart();
 
@@ -777,10 +721,7 @@ public class WorkspaceManagerTest {
     final WorkspaceImpl workspace = createAndMockWorkspace();
     workspace.setTemporary(true);
     mockRuntime(workspace, RUNNING);
-    doThrow(new ConflictException("runtime stop failed"))
-        .when(runtimes)
-        .stopAsync(workspace, emptyMap());
-    mockAnyWorkspaceStop();
+    mockAnyWorkspaceStopExceptionally(new ConflictException("runtime stop failed"));
 
     workspaceManager.stopWorkspace(workspace.getId(), emptyMap());
     verify(workspaceDao).remove(workspace.getId());
@@ -857,10 +798,6 @@ public class WorkspaceManagerTest {
     final WorkspaceImpl workspace = createAndMockWorkspace();
     Runtime runtime = mockRuntime(workspace, WorkspaceStatus.RUNNING);
     workspace.setRuntime(runtime);
-    Map<String, String> pref = new HashMap<>(2);
-    pref.put(LAST_ACTIVITY_TIME, "now");
-    pref.put(LAST_ACTIVE_INFRASTRUCTURE_NAMESPACE, "my_namespace");
-    when(preferenceManager.find("owner")).thenReturn(pref);
 
     mockAnyWorkspaceStart();
     workspaceManager.startWorkspace(
@@ -874,12 +811,16 @@ public class WorkspaceManagerTest {
 
   @Test
   public void stopsLastWorkspaceShouldUpdatePreferences() throws Exception {
+    // given
     final WorkspaceImpl workspace = createAndMockWorkspace(createConfig(), NAMESPACE_1);
     mockRuntime(workspace, RUNNING);
     mockAnyWorkspaceStop();
-    when(runtimes.isAnyActive()).thenReturn(false);
     long epochSecond = Clock.systemDefaultZone().instant().getEpochSecond();
+
+    // when
     workspaceManager.stopWorkspace(workspace.getId(), emptyMap());
+
+    // then
     verify(runtimes).stopAsync(workspace, emptyMap());
     verify(workspaceDao).update(workspaceCaptor.capture());
     verify(preferenceManager).find("owner");
@@ -1020,9 +961,16 @@ public class WorkspaceManagerTest {
     lenient().when(runtimes.startAsync(any(), any(), any())).thenReturn(cmpFuture);
   }
 
-  private void mockAnyWorkspaceStop() throws Exception {
+  private CompletableFuture<Void> mockAnyWorkspaceStop() throws Exception {
     CompletableFuture<Void> cmpFuture = CompletableFuture.completedFuture(null);
     doReturn(cmpFuture).when(runtimes).stopAsync(any(), any());
+    return cmpFuture;
+  }
+
+  private CompletableFuture<Void> mockAnyWorkspaceStopExceptionally(Throwable ex) throws Exception {
+    CompletableFuture<Void> cmpFuture = CompletableFuture.failedFuture(ex);
+    doReturn(cmpFuture).when(runtimes).stopAsync(any(), any());
+    return cmpFuture;
   }
 
   private void mockAnyWorkspaceStartFailed(Exception cause) throws Exception {

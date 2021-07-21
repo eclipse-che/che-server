@@ -34,7 +34,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -322,8 +321,8 @@ public class DevfileServiceTest {
     ServiceError error = unwrapDto(response, ServiceError.class);
     assertNotNull(error);
     assertEquals(error.getMessage(), expectedErrorMessage);
-    verifyZeroInteractions(userDevfileManager);
-    verifyZeroInteractions(linksInjector);
+    verifyNoMoreInteractions(userDevfileManager);
+    verifyNoMoreInteractions(linksInjector);
   }
 
   @Test

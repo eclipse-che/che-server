@@ -16,7 +16,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.Cert
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner.CERT_MOUNT_PATH;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner.CHE_SELF_SIGNED_CERT_SECRET_SUFFIX;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner.CHE_SELF_SIGNED_CERT_VOLUME;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -59,7 +59,7 @@ public class CertificateProvisionerTest {
 
   @BeforeMethod
   public void setUp() {
-    when(runtimeId.getWorkspaceId()).thenReturn(WORKSPACE_ID);
+    lenient().when(runtimeId.getWorkspaceId()).thenReturn(WORKSPACE_ID);
 
     provisioner = new CertificateProvisioner("--BEGIN FJASBNDF END");
     k8sEnv = KubernetesEnvironment.builder().build();

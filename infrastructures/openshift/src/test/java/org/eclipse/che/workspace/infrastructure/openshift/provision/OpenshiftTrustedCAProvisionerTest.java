@@ -15,7 +15,7 @@ import static com.google.common.collect.ImmutableMap.of;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -142,7 +142,7 @@ public class OpenshiftTrustedCAProvisionerTest {
             clientFactory);
 
     localProvisioner.provision(k8sEnv, runtimeID);
-    verifyZeroInteractions(k8sEnv, openShiftProject, clientFactory, runtimeID, clientFactory);
+    verifyNoMoreInteractions(k8sEnv, openShiftProject, clientFactory, runtimeID, clientFactory);
   }
 
   @Test

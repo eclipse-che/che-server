@@ -13,7 +13,7 @@ package org.eclipse.che;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import javax.servlet.FilterChain;
@@ -48,7 +48,7 @@ public class ApiAccessRejectionFilterTest {
     filter.doFilter(request, response, chain);
 
     // then
-    verifyZeroInteractions(chain);
+    verifyNoMoreInteractions(chain);
     verify(response).setStatus(500);
     verify(outputStream).write(eq(ApiAccessRejectionFilter.ERROR_MESSAGE.getBytes()));
   }

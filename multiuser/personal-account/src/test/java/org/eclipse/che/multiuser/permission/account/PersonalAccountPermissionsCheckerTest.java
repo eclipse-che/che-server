@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,12 +11,13 @@
  */
 package org.eclipse.che.multiuser.permission.account;
 
+import static org.mockito.Mockito.lenient;
+
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -33,7 +34,7 @@ public class PersonalAccountPermissionsCheckerTest {
 
   @BeforeMethod
   public void setUp() {
-    Mockito.when(subject.getUserId()).thenReturn(userId);
+    lenient().when(subject.getUserId()).thenReturn(userId);
     EnvironmentContext.getCurrent().setSubject(subject);
 
     permissionsChecker = new PersonalAccountPermissionsChecker();

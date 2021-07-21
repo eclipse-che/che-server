@@ -28,7 +28,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -39,7 +39,6 @@ import java.lang.reflect.Method;
 import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
@@ -139,7 +138,7 @@ public class WorkspacePermissionsFilterTest {
     assertEquals(response.getStatusCode(), 204);
     verify(workspaceService).create(any(DevfileDto.class), any(), any(), eq("userok"), any());
     verify(permissionsFilter).checkAccountPermissions("userok", AccountOperation.CREATE_WORKSPACE);
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -159,7 +158,7 @@ public class WorkspacePermissionsFilterTest {
     verify(superPrivilegesChecker).hasSuperPrivileges();
     verify(workspaceService).getByNamespace(any(), eq("userok"));
     verify(permissionsFilter).checkAccountPermissions("userok", AccountOperation.MANAGE_WORKSPACES);
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -167,7 +166,6 @@ public class WorkspacePermissionsFilterTest {
       shouldNotCheckAccountPermissionsIfUserHasSuperPrivilegesOnFetchingWorkspacesByNamespace()
           throws Exception {
     when(superPrivilegesChecker.hasSuperPrivileges()).thenReturn(true);
-    doNothing().when(permissionsFilter).checkAccountPermissions(anyString(), any());
 
     final Response response =
         given()
@@ -182,7 +180,7 @@ public class WorkspacePermissionsFilterTest {
     verify(workspaceService).getByNamespace(any(), eq("userok"));
     verify(permissionsFilter, never())
         .checkAccountPermissions("userok", AccountOperation.MANAGE_WORKSPACES);
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -198,7 +196,7 @@ public class WorkspacePermissionsFilterTest {
     assertEquals(response.getStatusCode(), 200);
     verify(workspaceService).getSettings();
     verify(permissionsFilter, never()).checkAccountPermissions(anyString(), any());
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -214,7 +212,7 @@ public class WorkspacePermissionsFilterTest {
     assertEquals(response.getStatusCode(), 204);
     verify(workspaceService).getWorkspaces(any(), anyInt(), nullable(String.class));
     verify(permissionsFilter, never()).checkAccountPermissions(anyString(), any());
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -320,12 +318,6 @@ public class WorkspacePermissionsFilterTest {
   @Test
   public void shouldCheckPermissionsOnGetWorkspaceByUserNameAndWorkspaceName() throws Exception {
     when(subject.hasPermission("workspace", "workspace123", "read")).thenReturn(true);
-    User storedUser = mock(User.class);
-    when(storedUser.getId()).thenReturn("user123");
-
-    WorkspaceImpl workspace = mock(WorkspaceImpl.class);
-    when(workspace.getId()).thenReturn("workspace123");
-    when(workspaceManager.getWorkspace("myWorkspace", "userok")).thenReturn(workspace);
 
     final Response response =
         given()
@@ -376,15 +368,13 @@ public class WorkspacePermissionsFilterTest {
         unwrapError(response),
         "The user does not have permission to " + action + " workspace with id 'workspace123'");
 
-    verifyZeroInteractions(workspaceService);
+    verifyNoMoreInteractions(workspaceService);
   }
 
   @Test(dataProvider = "coveredPaths")
   public void shouldNotCheckWorkspacePermissionsWhenWorkspaceBelongToHisPersonalAccount(
       String path, String method, String action) throws Exception {
     doNothing().when(permissionsFilter).checkAccountPermissions(anyString(), any());
-    when(superPrivilegesChecker.hasSuperPrivileges()).thenReturn(false);
-    when(workspace.getNamespace()).thenReturn(USERNAME);
 
     Response response =
         request(
@@ -402,7 +392,6 @@ public class WorkspacePermissionsFilterTest {
   @Test
   public void shouldNotThrowExceptionWhenNamespaceIsNullOnNamespaceAccessChecking()
       throws Exception {
-    doCallRealMethod().when(permissionsFilter).checkAccountPermissions(anyString(), any());
 
     permissionsFilter.checkAccountPermissions(null, AccountOperation.MANAGE_WORKSPACES);
 

@@ -62,8 +62,12 @@ public class WorkspaceLinksGeneratorTest {
     when(workspace.getNamespace()).thenReturn("my-namespace");
     when(workspace.getName()).thenReturn("my-name");
 
-    when(runtimeCtx.getOutputChannel()).thenReturn(URI.create("ws://localhost/output/websocket"));
-    when(runtimes.getRuntimeContext(workspace.getId())).thenReturn(Optional.of(runtimeCtx));
+    lenient()
+        .when(runtimeCtx.getOutputChannel())
+        .thenReturn(URI.create("ws://localhost/output/websocket"));
+    lenient()
+        .when(runtimes.getRuntimeContext(workspace.getId()))
+        .thenReturn(Optional.of(runtimeCtx));
 
     final UriBuilder uriBuilder = new UriBuilderImpl();
     uriBuilder.uri(URI_BASE);

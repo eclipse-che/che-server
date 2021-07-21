@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,7 @@ import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.testng.Assert.assertEquals;
 
 import com.jayway.restassured.response.Response;
@@ -96,7 +96,7 @@ public class LoggerServicePermissionsFilterTest {
     assertEquals(unwrapError(response), "User is not authorized");
     verify(subject)
         .checkPermission(SystemDomain.DOMAIN_ID, null, SystemDomain.MANAGE_SYSTEM_ACTION);
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   @Test
@@ -131,7 +131,7 @@ public class LoggerServicePermissionsFilterTest {
     assertEquals(unwrapError(response), "User is not authorized");
     verify(subject)
         .checkPermission(SystemDomain.DOMAIN_ID, null, SystemDomain.MANAGE_SYSTEM_ACTION);
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   @Test
@@ -168,7 +168,7 @@ public class LoggerServicePermissionsFilterTest {
     assertEquals(unwrapError(response), "User is not authorized");
     verify(subject)
         .checkPermission(SystemDomain.DOMAIN_ID, null, SystemDomain.MANAGE_SYSTEM_ACTION);
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   @Test
@@ -205,7 +205,7 @@ public class LoggerServicePermissionsFilterTest {
     assertEquals(unwrapError(response), "User is not authorized");
     verify(subject)
         .checkPermission(SystemDomain.DOMAIN_ID, null, SystemDomain.MANAGE_SYSTEM_ACTION);
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   private static String unwrapError(Response response) {

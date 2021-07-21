@@ -47,9 +47,6 @@ public class WorkspacePVCCleanerTest {
   @BeforeMethod
   public void setUp() throws Exception {
     workspacePVCCleaner = new WorkspacePVCCleaner(true, pvcStrategy);
-    when(workspace.getId()).thenReturn("123");
-    when(event.getWorkspace()).thenReturn(workspace);
-
     eventService = spy(new EventService());
   }
 
@@ -71,6 +68,7 @@ public class WorkspacePVCCleanerTest {
 
   @Test
   public void testInvokeCleanupWhenWorkspaceRemovedEventPublished() throws Exception {
+    when(event.getWorkspace()).thenReturn(workspace);
     workspacePVCCleaner.subscribe(eventService);
 
     eventService.publish(event);
@@ -80,8 +78,10 @@ public class WorkspacePVCCleanerTest {
 
   @Test
   public void testDoNotRethrowExceptionWhenErrorOnCleanupOccurs() throws Exception {
-    doThrow(InfrastructureException.class).when(pvcStrategy).cleanup(workspace);
 
+    when(workspace.getId()).thenReturn("123");
+    when(event.getWorkspace()).thenReturn(workspace);
+    doThrow(InfrastructureException.class).when(pvcStrategy).cleanup(workspace);
     workspacePVCCleaner.subscribe(eventService);
 
     eventService.publish(event);

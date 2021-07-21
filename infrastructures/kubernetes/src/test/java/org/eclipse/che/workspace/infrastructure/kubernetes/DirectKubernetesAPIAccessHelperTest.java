@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -48,7 +49,7 @@ public class DirectKubernetesAPIAccessHelperTest {
 
   @BeforeMethod
   public void setup() {
-    when(headers.getRequestHeaders()).thenReturn(new MultivaluedHashMap<>());
+    lenient().when(headers.getRequestHeaders()).thenReturn(new MultivaluedHashMap<>());
     when(client.newCall(requestCaptor.capture())).thenReturn(call);
   }
 

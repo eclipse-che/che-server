@@ -166,9 +166,9 @@ public class KubernetesDeploymentsTest {
 
     // Model DSL: client.events().inNamespace(...).watch(...)
     //            event.getInvolvedObject().getKind()
-    when(kubernetesClient.v1()).thenReturn(v1APIGroupDSL);
-    when(v1APIGroupDSL.events()).thenReturn(eventMixedOperation);
-    when(eventMixedOperation.inNamespace(any())).thenReturn(eventNamespaceMixedOperation);
+    lenient().when(kubernetesClient.v1()).thenReturn(v1APIGroupDSL);
+    lenient().when(v1APIGroupDSL.events()).thenReturn(eventMixedOperation);
+    lenient().when(eventMixedOperation.inNamespace(any())).thenReturn(eventNamespaceMixedOperation);
     lenient().when(event.getInvolvedObject()).thenReturn(objectReference);
     lenient().when(event.getMetadata()).thenReturn(new ObjectMeta());
     // Workaround to ensure mocked event happens 'after' watcher initialisation.
@@ -475,7 +475,6 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeleteNonExistingPodBeforeWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
-    doReturn(POD_NAME).when(metadata).getName();
 
     doReturn(Boolean.FALSE).when(podResource).delete();
     doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
@@ -492,7 +491,6 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeletePodThrowingKubernetesClientExceptionShouldCloseWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
-    doReturn(POD_NAME).when(metadata).getName();
     doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     doThrow(KubernetesClientException.class).when(podResource).delete();
     Watch watch = mock(Watch.class);
@@ -513,8 +511,6 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeleteNonExistingDeploymentBeforeWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
-    doReturn(DEPLOYMENT_NAME).when(deploymentMetadata).getName();
-    doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     doReturn(deploymentResource).when(deploymentResource).withPropagationPolicy(eq(BACKGROUND));
     doReturn(Boolean.FALSE).when(deploymentResource).delete();
     Watch watch = mock(Watch.class);
@@ -531,7 +527,6 @@ public class KubernetesDeploymentsTest {
   public void testDeleteDeploymentThrowingKubernetesClientExceptionShouldCloseWatch()
       throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
-    doReturn(DEPLOYMENT_NAME).when(deploymentMetadata).getName();
 
     doThrow(KubernetesClientException.class).when(deploymentResource).delete();
     doReturn(deploymentResource).when(deploymentResource).withPropagationPolicy(eq(BACKGROUND));
@@ -553,9 +548,9 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeletePodThrowingAnyExceptionShouldCloseWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
-    doReturn(POD_NAME).when(metadata).getName();
-
+    doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     doThrow(RuntimeException.class).when(podResource).delete();
+
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
 
@@ -563,18 +558,19 @@ public class KubernetesDeploymentsTest {
       new KubernetesDeployments("", "", clientFactory, executor)
           .doDeletePod(POD_NAME)
           .get(5, TimeUnit.SECONDS);
+      fail("The exception should have been rethrown");
     } catch (RuntimeException e) {
       verify(watch).close();
       return;
     }
-    fail("The exception should have been rethrown");
   }
 
   @Test
   public void testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
-
-    doThrow(RuntimeException.class).when(deploymentResource).delete();
+    when(deploymentResource.withPropagationPolicy(eq(BACKGROUND)))
+        .thenReturn(deploymentsMixedOperation);
+    doThrow(RuntimeException.class).when(deploymentsMixedOperation).delete();
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
 
@@ -582,11 +578,11 @@ public class KubernetesDeploymentsTest {
       new KubernetesDeployments("", "", clientFactory, executor)
           .doDeleteDeployment(DEPLOYMENT_NAME)
           .get(5, TimeUnit.SECONDS);
+      fail("The exception should have been rethrown");
     } catch (RuntimeException e) {
       verify(watch).close();
       return;
     }
-    fail("The exception should have been rethrown");
   }
 
   @Test
@@ -631,7 +627,6 @@ public class KubernetesDeploymentsTest {
     cal.add(Calendar.YEAR, 2);
     Date nextYear = cal.getTime();
     when(event.getLastTimestamp()).thenReturn(PodEvents.convertDateToEventTimestamp(nextYear));
-    when(event.getFirstTimestamp()).thenReturn(PodEvents.convertDateToEventTimestamp(new Date()));
 
     // When
     watcher.eventReceived(Watcher.Action.ADDED, event);

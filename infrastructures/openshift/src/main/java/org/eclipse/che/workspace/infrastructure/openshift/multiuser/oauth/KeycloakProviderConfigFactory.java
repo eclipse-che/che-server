@@ -171,19 +171,20 @@ public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory
 
   private Config personalizeConfig(Config defaultConfig) throws InfrastructureException {
     try {
-      KeycloakTokenResponse keycloakTokenInfos =
+      KeycloakTokenResponse keycloakTokenResponse =
           keycloakServiceClient.getIdentityProviderTokenByExchange(oauthIdentityProvider);
-//      if ("user:full".equals(keycloakTokenInfos.getScope())) {
-        return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
-            .withOauthToken(keycloakTokenInfos.getAccessToken())
-            .build();
-//      } else {
-//        throw new InfrastructureException(
-//            "Cannot retrieve user OpenShift token: '"
-//                + oauthIdentityProvider
-//                + "' identity provider is not granted full rights: "
-//                + oauthIdentityProvider);
-//      }
+      final String scope = keycloakTokenResponse.getScope();
+      if (scope != null && !scope.equals("user:full")) {
+        throw new InfrastructureException(
+            "Cannot retrieve user OpenShift token: '"
+                + oauthIdentityProvider
+                + "' identity provider is not granted full rights: "
+                + oauthIdentityProvider);
+      }
+      return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
+          .withOauthToken(keycloakTokenResponse.getAccessToken())
+          .build();
+
     } catch (UnauthorizedException e) {
       LOG.error("Cannot retrieve User OpenShift token from the identity provider", e);
 

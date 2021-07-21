@@ -11,7 +11,9 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
+import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.CLIENT_ID_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
+import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.TOKEN_ENDPOINT_SETTING;
 
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
@@ -80,7 +82,7 @@ public class KeycloakServiceClient {
       Pattern.compile("<div id=\"kc-error-message\">(\\s*)<p class=\"instruction\">(.+?)</p>");
 
   private static final Gson gson = new Gson();
-  private JwtParser jwtParser;
+  private final JwtParser jwtParser;
 
   @Inject
   public KeycloakServiceClient(
@@ -161,17 +163,30 @@ public class KeycloakServiceClient {
     }
   }
 
+  /**
+   * Gets auth token from given identity provider by using token exchange mechanism.
+   * See {@link https://www.keycloak.org/docs/latest/securing_apps/#internal-token-to-external-token-exchange}
+   *
+   * @param oauthProvider provider name
+   * @return KeycloakTokenResponse token response
+   * @throws ForbiddenException when HTTP request was forbidden
+   * @throws BadRequestException when HTTP request considered as bad
+   * @throws IOException when unable to parse error response
+   * @throws NotFoundException when requested URL not found
+   * @throws ServerException when other error occurs
+   * @throws UnauthorizedException when no token present for user or user not linked to provider
+   */
   public KeycloakTokenResponse getIdentityProviderTokenByExchange(String oauthProvider)
       throws ForbiddenException, BadRequestException, IOException, NotFoundException,
       ServerException, UnauthorizedException {
     String url =
         UriBuilder.fromUri(oidcInfo.getAuthServerURL())
-            .path("/realms/{realm}/protocol/openid-connect/token")
-            .build(keycloakSettings.get().get(REALM_SETTING))
+            .path(keycloakSettings.get().get(TOKEN_ENDPOINT_SETTING))
+            .build()
             .toString();
 
     Map<String,String> postData = new HashMap<>();
-    postData.put("client_id", "che-public");
+    postData.put("client_id", keycloakSettings.get().get(CLIENT_ID_SETTING));
     postData.put("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange");
     postData.put("requested_token_type", "urn:ietf:params:oauth:token-type:access_token");
     postData.put("requested_issuer", oauthProvider);

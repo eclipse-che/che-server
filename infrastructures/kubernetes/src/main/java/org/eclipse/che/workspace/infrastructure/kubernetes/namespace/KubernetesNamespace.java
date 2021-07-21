@@ -256,7 +256,7 @@ public class KubernetesNamespace {
                 + "(Che operator might have already prepared a cluster role called "
                 + "`che-namespace-editor` for this, depending on its configuration). "
                 + "Alternatively, consider disabling the feature by setting "
-                + "`che.infra.kubernetes.namepsace.annotate` to `false`.");
+                + "`che.infra.kubernetes.namepsace.annotation` to `false`.");
         return;
       }
       throw new InfrastructureException(kce);

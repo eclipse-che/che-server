@@ -113,7 +113,7 @@ public class KubernetesNamespaceFactory {
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelNamespaces,
-      @Named("che.infra.kubernetes.namespace.annotate") boolean annotateNamespaces,
+      @Named("che.infra.kubernetes.namespace.annotation") boolean annotateNamespaces,
       @Named("che.infra.kubernetes.namespace.labels") String namespaceLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String namespaceAnnotations,
       KubernetesClientFactory clientFactory,

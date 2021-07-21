@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -78,9 +78,9 @@ public class KubernetesWorkspaceServiceAccountTest {
     // then
     // make sure more roles added
     RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
-    assertEquals(5, rl.getItems().size());
+    assertTrue(rl.getItems().size() > 1);
 
     RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
-    assertEquals(5, rbl.getItems().size());
+    assertTrue(rbl.getItems().size() > 1);
   }
 }

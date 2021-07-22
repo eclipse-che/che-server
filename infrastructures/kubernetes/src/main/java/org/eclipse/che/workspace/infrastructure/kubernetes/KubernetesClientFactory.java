@@ -20,7 +20,6 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.utils.HttpClientUtils;
 import io.fabric8.kubernetes.client.utils.ImpersonatorInterceptor;
-import io.fabric8.kubernetes.client.utils.Utils;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -126,7 +125,23 @@ public class KubernetesClientFactory {
       connectionPool.evictAll();
     }
 
-    Utils.shutdownExecutorService(executorService);
+    if (executorService != null && !executorService.isShutdown()) {
+      executorService.shutdown();
+      try {
+        Logger logger = LoggerFactory.getLogger(getClass());
+        logger.debug("Shutdown kubernetes client threads pool, wait 30s to stop normally");
+        if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+          executorService.shutdownNow();
+          logger.debug("Interrupt kubernetes client threads pool, wait 60s to stop");
+          if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+            logger.error("Couldn't shutdown kubernetes client threads pool");
+          }
+        }
+      } catch (InterruptedException x) {
+        executorService.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   /** Retrieves the {@link OkHttpClient} instance shared by all Kubernetes clients. */

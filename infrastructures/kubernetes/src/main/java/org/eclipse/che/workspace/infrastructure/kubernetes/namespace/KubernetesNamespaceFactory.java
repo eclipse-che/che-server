@@ -330,10 +330,15 @@ public class KubernetesNamespaceFactory {
   public KubernetesNamespace getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     KubernetesNamespace namespace = get(identity);
 
+    NamespaceResolutionContext resolutionCtx =
+        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+    Map<String, String> namespaceAnnotationsEvaluated =
+        evaluateAnnotationPlaceholders(resolutionCtx);
+
     namespace.prepare(
         canCreateNamespace(identity),
         labelNamespaces ? namespaceLabels : emptyMap(),
-        annotateNamespaces ? namespaceAnnotations : emptyMap());
+        annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
 
     if (!isNullOrEmpty(serviceAccountName)) {
       KubernetesWorkspaceServiceAccount workspaceServiceAccount =

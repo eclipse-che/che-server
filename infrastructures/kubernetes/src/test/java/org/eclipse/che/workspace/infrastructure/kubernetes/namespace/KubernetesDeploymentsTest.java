@@ -40,11 +40,18 @@ import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.EventList;
 import io.fabric8.kubernetes.api.model.LabelSelector;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.LocalObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.ObjectReference;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.PodSpecBuilder;
 import io.fabric8.kubernetes.api.model.PodStatus;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
@@ -60,9 +67,12 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1APIGroupDSL;
+import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -133,6 +143,7 @@ public class KubernetesDeploymentsTest {
   @Mock private V1APIGroupDSL v1APIGroupDSL;
 
   private KubernetesDeployments kubernetesDeployments;
+  private KubernetesServer serverMock;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -677,4 +688,65 @@ public class KubernetesDeploymentsTest {
     PodEvent podEvent = captor.getValue();
     assertNotNull(podEvent.getLastTimestamp());
   }
+
+  @Test( enabled=false )
+  public void podShouldHaveImagePullSecretsOfSAAndSelf() throws InfrastructureException {
+    serverMock = new KubernetesServer(true, true);
+    serverMock.before();
+    when(clientFactory.create(anyString())).thenReturn(serverMock.getClient());
+
+    final String serviceAccountName = "workspace-sa";
+    LocalObjectReference pullSecretOfSA =
+        new LocalObjectReferenceBuilder().withName("pullsecret-sa").build();
+    LocalObjectReference pullSecretOfPod =
+        new LocalObjectReferenceBuilder().withName("pullsecret-pod").build();
+
+    ServiceAccount serviceAccount =
+        new ServiceAccountBuilder()
+            .withMetadata(
+                new ObjectMetaBuilder()
+                    .withName(serviceAccountName)
+                    .withNamespace(kubernetesDeployments.namespace)
+                    .build())
+            .withImagePullSecrets(pullSecretOfSA)
+            .build();
+
+    serverMock
+        .getClient()
+        .serviceAccounts()
+        .inNamespace(kubernetesDeployments.namespace)
+        .create(serviceAccount);
+
+    List<LocalObjectReference> imagePullSecrets = new ArrayList<>();
+    imagePullSecrets.add(pullSecretOfPod);
+
+    Pod pod =
+        new PodBuilder()
+            .withSpec(new PodSpecBuilder().withImagePullSecrets(imagePullSecrets).build())
+            .withMetadata(
+                new ObjectMetaBuilder()
+                    .withName("test-pod")
+                    .withNamespace(kubernetesDeployments.namespace)
+                    .build())
+            .build();
+    pod.getSpec().setImagePullSecrets(imagePullSecrets);
+    pod.getSpec().setServiceAccount(serviceAccountName);
+
+    Pod deployedPod = kubernetesDeployments.deploy(pod);
+
+    imagePullSecrets.add(pullSecretOfSA);
+    assert deployedPod.getSpec().getImagePullSecrets().containsAll(imagePullSecrets);
+    assert serverMock
+        .getClient()
+        .pods()
+        .inNamespace(kubernetesDeployments.namespace)
+        .withName(kubernetesDeployments.workspaceId)
+        .get()
+        .getSpec()
+        .getImagePullSecrets()
+        .containsAll(imagePullSecrets);
+  }
+
+  @Test
+  public void podShouldHaveNoImagePullSecrets() {}
 }

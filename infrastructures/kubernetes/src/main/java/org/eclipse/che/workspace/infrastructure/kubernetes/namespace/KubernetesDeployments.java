@@ -197,7 +197,7 @@ public class KubernetesDeployments {
             .create(workspaceId)
             .serviceAccounts()
             .inNamespace(namespace)
-            .withName(podSpec.getServiceAccountName())
+            .withName(podSpec.getServiceAccount())
             .get()
             .getImagePullSecrets();
     imagePullSecretsOfSA.addAll(podSpec.getImagePullSecrets());

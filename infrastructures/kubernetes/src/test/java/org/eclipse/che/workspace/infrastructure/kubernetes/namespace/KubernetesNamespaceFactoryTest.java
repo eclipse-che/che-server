@@ -1056,6 +1056,40 @@ public class KubernetesNamespaceFactoryTest {
     verify(namespaceOperation).withLabels(Map.of("try_placeholder_here", "<username>"));
   }
 
+  @Test
+  public void testUsernamePlaceholderInAnnotationsIsEvaluated() throws InfrastructureException {
+
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                "try_placeholder_here=<username>",
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+
+    // when
+    RuntimeIdentity identity = new RuntimeIdentityImpl("workspace123", null, USER_ID, "old-che");
+    KubernetesNamespace namespace = namespaceFactory.getOrCreate(identity);
+
+    // then
+    assertEquals(toReturnNamespace, namespace);
+    verify(toReturnNamespace)
+        .prepare(eq(false), any(), eq(Map.of("try_placeholder_here", "jondoe")));
+  }
+
   @Test(dataProvider = "invalidUsernames")
   public void normalizeTest(String raw, String expected) {
     namespaceFactory =

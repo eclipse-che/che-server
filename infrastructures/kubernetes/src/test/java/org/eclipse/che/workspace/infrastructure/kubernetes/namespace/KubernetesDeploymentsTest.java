@@ -750,7 +750,8 @@ public class KubernetesDeploymentsTest {
   }
 
   @Test
-  public void deploymentShouldHavePullSecretsOnlyOfSelfWithNonexistentSA() throws InfrastructureException {
+  public void deploymentShouldHavePullSecretsOnlyOfSelfWithNonexistentSA()
+      throws InfrastructureException {
     doReturn(serverMock.getClient()).when(clientFactory).create(anyString());
 
     LocalObjectReference pullSecretOfPod =

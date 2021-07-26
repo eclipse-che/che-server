@@ -20,7 +20,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner.ASYNC_STORAGE;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -42,7 +42,6 @@ import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
-import org.eclipse.che.api.workspace.server.spi.InternalRuntime;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.mockito.Mock;
@@ -76,27 +75,27 @@ public class AsyncStoragePodWatcherTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    when(user.getId()).thenReturn(USER_ID);
+    lenient().when(user.getId()).thenReturn(USER_ID);
     userPref = new HashMap<>(3);
     long epochSecond = now().getEpochSecond();
     long activityTime = epochSecond - 600; // stored time 10 minutes early
     userPref.put(Constants.LAST_ACTIVITY_TIME, Long.toString(activityTime));
     userPref.put(Constants.LAST_ACTIVE_INFRASTRUCTURE_NAMESPACE, NAMESPACE);
-    when(preferenceManager.find(USER_ID)).thenReturn(userPref);
+    lenient().when(preferenceManager.find(USER_ID)).thenReturn(userPref);
 
     Page<UserImpl> userPage = new Page<>(Collections.singleton(user), 0, 1, 1);
-    when(userManager.getAll(anyInt(), anyLong())).thenReturn(userPage);
+    lenient().when(userManager.getAll(anyInt(), anyLong())).thenReturn(userPage);
 
-    when(kubernetesClientFactory.create()).thenReturn(kubernetesClient);
-    when(kubernetesClient.apps()).thenReturn(apps);
-    when(apps.deployments()).thenReturn(mixedOperation);
-    when(mixedOperation.inNamespace(NAMESPACE)).thenReturn(namespaceOperation);
-    when(namespaceOperation.withName(ASYNC_STORAGE)).thenReturn(deploymentResource);
+    lenient().when(kubernetesClientFactory.create()).thenReturn(kubernetesClient);
+    lenient().when(kubernetesClient.apps()).thenReturn(apps);
+    lenient().when(apps.deployments()).thenReturn(mixedOperation);
+    lenient().when(mixedOperation.inNamespace(NAMESPACE)).thenReturn(namespaceOperation);
+    lenient().when(namespaceOperation.withName(ASYNC_STORAGE)).thenReturn(deploymentResource);
 
-    when(kubernetesClient.pods()).thenReturn(mixedOperationPod);
-    when(mixedOperationPod.inNamespace(NAMESPACE)).thenReturn(namespacePodOperation);
-    when(namespacePodOperation.withName(ASYNC_STORAGE)).thenReturn(podResource);
-    when(podResource.get()).thenReturn(null);
+    lenient().when(kubernetesClient.pods()).thenReturn(mixedOperationPod);
+    lenient().when(mixedOperationPod.inNamespace(NAMESPACE)).thenReturn(namespacePodOperation);
+    lenient().when(namespacePodOperation.withName(ASYNC_STORAGE)).thenReturn(podResource);
+    lenient().when(podResource.get()).thenReturn(null);
   }
 
   @Test
@@ -162,10 +161,7 @@ public class AsyncStoragePodWatcherTest {
             1);
 
     // has active runtime
-    InternalRuntime runtime = mock(InternalRuntime.class);
-    when(runtime.getOwner()).thenReturn(USER_ID);
     when(runtimes.getInProgress(USER_ID)).thenReturn(singleton(WORKSPACE_ID));
-    when(runtimes.getInternalRuntime(WORKSPACE_ID)).thenReturn(runtime);
 
     Page<UserImpl> userPage = new Page<>(Collections.singleton(user), 0, 1, 1);
     when(userManager.getAll(anyInt(), anyLong())).thenReturn(userPage);
@@ -210,7 +206,6 @@ public class AsyncStoragePodWatcherTest {
             "my-own-strategy",
             "<username>",
             1);
-    when(preferenceManager.find(USER_ID)).thenReturn(emptyMap()); // no records in user preferences
 
     watcher.check();
 
@@ -231,7 +226,6 @@ public class AsyncStoragePodWatcherTest {
             "my-own-strategy",
             "<username>",
             1);
-    when(preferenceManager.find(USER_ID)).thenReturn(emptyMap()); // no records in user preferences
 
     watcher.check();
 
@@ -252,8 +246,6 @@ public class AsyncStoragePodWatcherTest {
             "my-own-strategy",
             "<foo-bar>",
             1);
-    when(preferenceManager.find(USER_ID)).thenReturn(emptyMap()); // no records in user preferences
-
     watcher.check();
 
     verifyNoMoreInteractions(preferenceManager);
@@ -273,7 +265,6 @@ public class AsyncStoragePodWatcherTest {
             "my-own-strategy",
             "<foo-bar>",
             2);
-    when(preferenceManager.find(USER_ID)).thenReturn(emptyMap()); // no records in user preferences
 
     watcher.check();
 
@@ -294,7 +285,6 @@ public class AsyncStoragePodWatcherTest {
             COMMON_STRATEGY,
             "<username>",
             1);
-    when(preferenceManager.find(USER_ID)).thenReturn(emptyMap()); // no records in user preferences
 
     watcher.check();
 

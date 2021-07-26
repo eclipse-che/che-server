@@ -85,9 +85,6 @@ public abstract class AbstractWorkspaceServiceAccount<
    * Make sure that workspace service account exists and has `view` and `exec` role bindings, as
    * well as create workspace-view and exec roles in namespace scope
    *
-   * <p>Do NOT make any changes to the service account if it already exists in the namespace to
-   * preserve its configuration done by someone else.
-   *
    * @throws InfrastructureException when any exception occurred
    */
   public void prepare() throws InfrastructureException {
@@ -95,9 +92,9 @@ public abstract class AbstractWorkspaceServiceAccount<
     if (k8sClient.serviceAccounts().inNamespace(namespace).withName(serviceAccountName).get()
         == null) {
       createWorkspaceServiceAccount(k8sClient);
-      createImplicitRolesWithBindings(k8sClient);
-      createExplicitClusterRoleBindings(k8sClient);
     }
+    ensureImplicitRolesWithBindings(k8sClient);
+    ensureExplicitClusterRoleBindings(k8sClient);
   }
 
   /**
@@ -106,9 +103,9 @@ public abstract class AbstractWorkspaceServiceAccount<
    *
    * <p>creates {@code <sa>-exec} and {@code <sa>-view}
    */
-  private void createImplicitRolesWithBindings(Client k8sClient) {
+  private void ensureImplicitRolesWithBindings(Client k8sClient) {
     // exec role
-    createRoleWithBinding(
+    ensureRoleWithBinding(
         k8sClient,
         EXEC_ROLE_NAME,
         singletonList("pods/exec"),
@@ -117,7 +114,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         serviceAccountName + "-exec");
 
     // view role
-    createRoleWithBinding(
+    ensureRoleWithBinding(
         k8sClient,
         VIEW_ROLE_NAME,
         Arrays.asList("pods", "services"),
@@ -126,7 +123,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         serviceAccountName + "-view");
 
     // metrics role
-    createRoleWithBinding(
+    ensureRoleWithBinding(
         k8sClient,
         METRICS_ROLE_NAME,
         Arrays.asList("pods", "nodes"),
@@ -135,14 +132,14 @@ public abstract class AbstractWorkspaceServiceAccount<
         serviceAccountName + "-metrics");
   }
 
-  private void createRoleWithBinding(
+  private void ensureRoleWithBinding(
       Client k8sClient,
       String roleName,
       List<String> resources,
       List<String> apiGroups,
       List<String> verbs,
       String bindingName) {
-    createRole(k8sClient, roleName, resources, apiGroups, verbs);
+    ensureRole(k8sClient, roleName, resources, apiGroups, verbs);
     //noinspection unchecked
     roleBindings
         .apply(k8sClient)
@@ -158,7 +155,7 @@ public abstract class AbstractWorkspaceServiceAccount<
    *     boolean, String, String, KubernetesClientFactory, CheServerKubernetesClientFactory,
    *     UserManager, PreferenceManager, KubernetesSharedPool)
    */
-  private void createExplicitClusterRoleBindings(Client k8sClient) {
+  private void ensureExplicitClusterRoleBindings(Client k8sClient) {
     // If the user specified an additional cluster roles for the workspace,
     // create a role binding for them too
     int idx = 0;
@@ -212,16 +209,17 @@ public abstract class AbstractWorkspaceServiceAccount<
                 .build());
   }
 
-  private void createRole(
+  private void ensureRole(
       Client k8sClient,
       String name,
       List<String> resources,
       List<String> apiGroups,
       List<String> verbs) {
-    if (roles.apply(k8sClient).inNamespace(namespace).withName(name).get() == null) {
-      R role = buildRole(name, resources, apiGroups, verbs);
-      roles.apply(k8sClient).inNamespace(namespace).create(role);
-    }
+    //noinspection unchecked
+    roles
+        .apply(k8sClient)
+        .inNamespace(namespace)
+        .createOrReplace(buildRole(name, resources, apiGroups, verbs));
   }
 
   public interface ClientFactory<C extends KubernetesClient> {

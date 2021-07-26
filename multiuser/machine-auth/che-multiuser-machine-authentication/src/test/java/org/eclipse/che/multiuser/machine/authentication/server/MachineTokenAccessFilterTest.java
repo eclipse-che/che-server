@@ -12,7 +12,7 @@
 package org.eclipse.che.multiuser.machine.authentication.server;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
@@ -55,7 +55,7 @@ public class MachineTokenAccessFilterTest {
     when(environmentContext.getSubject()).thenReturn(authorizedSubject);
     EnvironmentContext.setCurrent(environmentContext);
     filter.filter(genericMethodResource, new Object[] {});
-    verifyZeroInteractions(genericMethodResource);
+    verifyNoMoreInteractions(genericMethodResource);
   }
 
   @Test(expectedExceptions = ForbiddenException.class)

@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphas
 
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,14 +88,16 @@ public class BrokerEnvironmentFactoryTest {
               }
             });
 
-    when(authEnableEnvVarProvider.get(any(RuntimeIdentity.class)))
+    lenient()
+        .when(authEnableEnvVarProvider.get(any(RuntimeIdentity.class)))
         .thenReturn(new Pair<>("test1", "value1"));
-    when(machineTokenEnvVarProvider.get(any(RuntimeIdentity.class)))
+    lenient()
+        .when(machineTokenEnvVarProvider.get(any(RuntimeIdentity.class)))
         .thenReturn(new Pair<>("test2", "value2"));
-    when(runtimeId.getEnvName()).thenReturn("env");
-    when(runtimeId.getOwnerId()).thenReturn("owner");
-    when(runtimeId.getWorkspaceId()).thenReturn("wsid");
-    when(certProvisioner.isConfigured()).thenReturn(false);
+    lenient().when(runtimeId.getEnvName()).thenReturn("env");
+    lenient().when(runtimeId.getOwnerId()).thenReturn("owner");
+    lenient().when(runtimeId.getWorkspaceId()).thenReturn("wsid");
+    lenient().when(certProvisioner.isConfigured()).thenReturn(false);
   }
 
   @Test

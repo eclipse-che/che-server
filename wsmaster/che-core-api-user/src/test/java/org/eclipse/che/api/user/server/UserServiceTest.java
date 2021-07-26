@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -308,9 +308,8 @@ public class UserServiceTest {
   }
 
   @Test
-  public void shouldNotFindUserByNameOrEmailWhenBothSpecified() throws Exception {
+  public void shouldNotFindUserByNameOrEmailWhenBothSpecified() {
     final UserImpl testUser = copySubject();
-    when(userManager.getByName(testUser.getName())).thenReturn(testUser);
 
     final Response response =
         given()
@@ -331,9 +330,7 @@ public class UserServiceTest {
   }
 
   @Test
-  public void shouldNotFindUserByNameOrEmailWhenBothAreEmpty() throws Exception {
-    final UserImpl testUser = copySubject();
-    when(userManager.getByName(testUser.getName())).thenReturn(testUser);
+  public void shouldNotFindUserByNameOrEmailWhenBothAreEmpty() {
 
     final Response response =
         given()
@@ -360,15 +357,14 @@ public class UserServiceTest {
             .when()
             .post(SECURE_PATH + "/user/password");
 
+    assertEquals(response.getStatusCode(), 204);
     verify(userManager).update(userCaptor.capture());
     final User fetchedUser = userCaptor.getValue();
     assertEquals(fetchedUser.getPassword(), "password12345");
   }
 
   @Test
-  public void shouldNotUpdatePasswordIfPasswordContainsOnlyDigits() throws Exception {
-    final UserImpl testUser = copySubject();
-    when(userManager.getById(testUser.getId())).thenReturn(testUser);
+  public void shouldNotUpdatePasswordIfPasswordContainsOnlyDigits() {
 
     final Response response =
         given()
@@ -384,9 +380,7 @@ public class UserServiceTest {
   }
 
   @Test
-  public void shouldNotUpdatePasswordIfPasswordContainsLessThan8Chars() throws Exception {
-    final UserImpl testUser = copySubject();
-    when(userManager.getById(testUser.getId())).thenReturn(testUser);
+  public void shouldNotUpdatePasswordIfPasswordContainsLessThan8Chars() {
 
     final Response response =
         given()
@@ -402,9 +396,7 @@ public class UserServiceTest {
   }
 
   @Test
-  public void shouldNotUpdatePasswordIfPasswordIsNull() throws Exception {
-    final UserImpl testUser = copySubject();
-    when(userManager.getById(testUser.getId())).thenReturn(testUser);
+  public void shouldNotUpdatePasswordIfPasswordIsNull() {
 
     final Response response =
         given()

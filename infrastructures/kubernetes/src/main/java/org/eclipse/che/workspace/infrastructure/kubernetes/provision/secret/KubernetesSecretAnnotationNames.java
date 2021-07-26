@@ -30,6 +30,9 @@ public class KubernetesSecretAnnotationNames {
   public static final String ANNOTATION_GIT_CREDENTIALS =
       ANNOTATION_PREFIX + "/" + "git-credential";
 
+  /** Defines user name given secret belongs to */
+  public static final String ANNOTATION_USER_NAME = ANNOTATION_PREFIX + "/" + "scm-username";
+
   /** For 'file' type secrets defines the path where ih should be mount */
   public static final String ANNOTATION_MOUNT_PATH = ANNOTATION_PREFIX + "/" + "mount-path";
 

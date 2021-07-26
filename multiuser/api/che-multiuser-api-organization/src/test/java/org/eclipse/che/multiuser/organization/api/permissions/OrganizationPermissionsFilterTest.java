@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,7 +29,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -96,7 +95,8 @@ public class OrganizationPermissionsFilterTest {
   public void setUp() throws Exception {
     lenient().when(subject.getUserId()).thenReturn(USER_ID);
 
-    when(manager.getById(anyString()))
+    lenient()
+        .when(manager.getById(anyString()))
         .thenReturn(new OrganizationImpl("organization123", "test", null));
   }
 
@@ -214,7 +214,7 @@ public class OrganizationPermissionsFilterTest {
 
     assertEquals(unwrapError(response), "The user is able to specify only his own id");
     verify(superPrivilegesChecker).hasSuperPrivileges();
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   @Test
@@ -358,7 +358,7 @@ public class OrganizationPermissionsFilterTest {
 
     assertEquals(response.getStatusCode(), 204);
     verify(service).create(any());
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -395,7 +395,7 @@ public class OrganizationPermissionsFilterTest {
             .post(SECURE_PATH + "/organization");
 
     assertEquals(response.getStatusCode(), 403);
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
     verify(subject).hasPermission(DOMAIN_ID, "parent-org", MANAGE_SUBORGANIZATIONS);
   }
 
@@ -433,7 +433,7 @@ public class OrganizationPermissionsFilterTest {
             + action
             + " organization with id 'organization123'");
 
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   @Test(dataProvider = "coveredPaths")
@@ -455,7 +455,7 @@ public class OrganizationPermissionsFilterTest {
     assertEquals(response.getStatusCode(), 404);
     assertEquals(unwrapError(response), "Organization was not found");
 
-    verifyZeroInteractions(service);
+    verifyNoMoreInteractions(service);
   }
 
   @DataProvider(name = "coveredPaths")

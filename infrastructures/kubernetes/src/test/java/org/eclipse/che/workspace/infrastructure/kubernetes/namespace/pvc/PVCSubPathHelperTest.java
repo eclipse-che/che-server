@@ -49,7 +49,9 @@ import org.eclipse.che.commons.observability.NoopExecutorServiceWrapper;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesDeployments;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TolerationsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -76,6 +78,8 @@ public class PVCSubPathHelperTest {
   private static final String M2_PATH = "/.m2";
 
   @Mock private SecurityContextProvisioner securityContextProvisioner;
+  @Mock private NodeSelectorProvisioner nodeSelectorProvisioner;
+  @Mock private TolerationsProvisioner tolerationsProvisioner;
   @Mock private KubernetesNamespaceFactory k8sNamespaceFactory;
   @Mock private KubernetesNamespace k8sNamespace;
   @Mock private KubernetesDeployments osDeployments;
@@ -97,6 +101,8 @@ public class PVCSubPathHelperTest {
             "IfNotPresent",
             k8sNamespaceFactory,
             securityContextProvisioner,
+            nodeSelectorProvisioner,
+            tolerationsProvisioner,
             new NoopExecutorServiceWrapper(),
             eventsPublisher);
     lenient().when(identity.getInfrastructureNamespace()).thenReturn(NAMESPACE);
@@ -144,6 +150,8 @@ public class PVCSubPathHelperTest {
     verify(podStatus).getPhase();
     verify(osDeployments).delete(anyString());
     verify(securityContextProvisioner).provision(any());
+    verify(nodeSelectorProvisioner).provision(any());
+    verify(tolerationsProvisioner).provision(any());
   }
 
   @Test
@@ -181,6 +189,8 @@ public class PVCSubPathHelperTest {
     verify(podStatus).getPhase();
     verify(osDeployments).delete(anyString());
     verify(securityContextProvisioner).provision(any());
+    verify(nodeSelectorProvisioner).provision(any());
+    verify(tolerationsProvisioner).provision(any());
   }
 
   @Test
@@ -248,6 +258,8 @@ public class PVCSubPathHelperTest {
             "ToBeOrNotIfPresent",
             k8sNamespaceFactory,
             securityContextProvisioner,
+            nodeSelectorProvisioner,
+            tolerationsProvisioner,
             new NoopExecutorServiceWrapper(),
             eventsPublisher);
     // when

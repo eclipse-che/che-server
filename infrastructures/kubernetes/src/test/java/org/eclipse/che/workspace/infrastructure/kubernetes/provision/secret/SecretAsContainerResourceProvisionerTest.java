@@ -22,7 +22,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secr
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableMap;
@@ -117,8 +117,8 @@ public class SecretAsContainerResourceProvisionerTest {
     // then
     verify(environmentVariableSecretApplier)
         .applySecret(eq(environment), eq(runtimeIdentity), eq(secret));
-    verifyZeroInteractions(fileSecretApplier);
-    verifyZeroInteractions(gitCredentialStorageFileSecretApplier);
+    verifyNoMoreInteractions(fileSecretApplier);
+    verifyNoMoreInteractions(gitCredentialStorageFileSecretApplier);
   }
 
   @Test
@@ -147,8 +147,8 @@ public class SecretAsContainerResourceProvisionerTest {
     provisioner.provision(environment, runtimeIdentity, namespace);
     // then
     verify(fileSecretApplier).applySecret(eq(environment), eq(runtimeIdentity), eq(secret));
-    verifyZeroInteractions(environmentVariableSecretApplier);
-    verifyZeroInteractions(gitCredentialStorageFileSecretApplier);
+    verifyNoMoreInteractions(environmentVariableSecretApplier);
+    verifyNoMoreInteractions(gitCredentialStorageFileSecretApplier);
   }
 
   @Test
@@ -180,7 +180,7 @@ public class SecretAsContainerResourceProvisionerTest {
     // then
     verify(gitCredentialStorageFileSecretApplier)
         .applySecret(eq(environment), eq(runtimeIdentity), eq(secret));
-    verifyZeroInteractions(environmentVariableSecretApplier);
-    verifyZeroInteractions(fileSecretApplier);
+    verifyNoMoreInteractions(environmentVariableSecretApplier);
+    verifyNoMoreInteractions(fileSecretApplier);
   }
 }

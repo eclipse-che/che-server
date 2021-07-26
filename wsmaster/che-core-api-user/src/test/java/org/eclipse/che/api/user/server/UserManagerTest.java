@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -68,7 +67,6 @@ public class UserManagerTest {
 
   @BeforeMethod
   public void setUp() {
-    initMocks(this);
     manager =
         new UserManager(
             userDao, profileDao, preferencesDao, eventService, new String[] {"reserved"});
@@ -143,7 +141,6 @@ public class UserManagerTest {
     final UserImpl user =
         new UserImpl(
             "identifier", "test@email.com", "testName", "password", Collections.emptyList());
-    when(manager.getById(user.getId())).thenReturn(user);
     UserImpl user2 = new UserImpl(user);
     user2.setName("testName2");
     manager.update(user2);

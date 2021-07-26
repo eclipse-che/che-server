@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,9 +84,9 @@ public class ResourceServicePermissionsFilterTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    when(accountManager.getById(any())).thenReturn(account);
+    lenient().when(accountManager.getById(any())).thenReturn(account);
 
-    when(account.getType()).thenReturn("test");
+    lenient().when(account.getType()).thenReturn("test");
     when(checker.getAccountType()).thenReturn("test");
 
     filter = new ResourceServicePermissionsFilter(accountManager, ImmutableSet.of(checker));

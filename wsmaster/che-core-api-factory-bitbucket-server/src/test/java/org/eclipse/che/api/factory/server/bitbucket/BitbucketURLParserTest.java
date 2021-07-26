@@ -17,7 +17,7 @@ import static org.testng.Assert.assertTrue;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -30,7 +30,7 @@ public class BitbucketURLParserTest {
   /** Instance of component that will be tested. */
   private BitbucketURLParser bitbucketURLParser;
 
-  @BeforeClass
+  @BeforeMethod
   public void setUp() {
     bitbucketURLParser =
         new BitbucketURLParser(

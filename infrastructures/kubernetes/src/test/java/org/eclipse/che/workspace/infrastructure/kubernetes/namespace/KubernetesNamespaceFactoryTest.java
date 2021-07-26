@@ -97,7 +97,6 @@ import org.testng.collections.Sets;
  *
  * @author Sergii Leshchenko
  */
-@Test
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesNamespaceFactoryTest {
 
@@ -654,7 +653,6 @@ public class KubernetesNamespaceFactoryTest {
     assertEquals(
         Sets.newHashSet("workspace-view", "workspace-metrics", "exec"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
-
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
         bindings
@@ -720,12 +718,12 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("serviceAccount-metrics", "serviceAccount-view", "serviceAccount-exec"),
         bindings
             .getItems()
             .stream()
             .map(r -> r.getMetadata().getName())
-            .collect(Collectors.toSet()));
+            .collect(Collectors.toSet()),
+        Sets.newHashSet("serviceAccount-metrics", "serviceAccount-view", "serviceAccount-exec"));
   }
 
   @Test
@@ -786,8 +784,6 @@ public class KubernetesNamespaceFactoryTest {
             userManager,
             preferenceManager,
             pool);
-
-    when(namespaceResource.get()).thenReturn(null);
 
     WorkspaceImpl workspace =
         new WorkspaceImplBuilder().setId("workspace123").setAttributes(emptyMap()).build();

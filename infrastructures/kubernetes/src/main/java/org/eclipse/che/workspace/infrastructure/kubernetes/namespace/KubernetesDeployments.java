@@ -28,13 +28,13 @@ import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Event;
-import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectReference;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.PodStatus;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -191,17 +191,7 @@ public class KubernetesDeployments {
 
   private Pod createDeployment(Deployment deployment, String workspaceId)
       throws InfrastructureException {
-    final PodSpec podSpec = deployment.getSpec().getTemplate().getSpec();
-    List<LocalObjectReference> imagePullSecretsOfSA =
-        clientFactory
-            .create(workspaceId)
-            .serviceAccounts()
-            .inNamespace(namespace)
-            .withName(podSpec.getServiceAccount())
-            .get()
-            .getImagePullSecrets();
-    imagePullSecretsOfSA.addAll(podSpec.getImagePullSecrets());
-    podSpec.setImagePullSecrets(imagePullSecretsOfSA);
+    addPullSecretsOfSA(deployment);
     final String deploymentName = deployment.getMetadata().getName();
     final CompletableFuture<Pod> createFuture = new CompletableFuture<>();
     final Watch createWatch =
@@ -1179,5 +1169,24 @@ public class KubernetesDeployments {
         throw new InfrastructureException("Timeout reached while execution of command");
       }
     }
+  }
+
+  void addPullSecretsOfSA(Deployment deployment) throws InfrastructureException {
+    final PodSpec podSpec = deployment.getSpec().getTemplate().getSpec();
+    final String podServiceAccountName = podSpec.getServiceAccount();
+    if (podServiceAccountName == null) {
+      return;
+    }
+    ServiceAccount deploymentServiceAccount =
+        clientFactory
+            .create(workspaceId)
+            .serviceAccounts()
+            .inNamespace(namespace)
+            .withName(podSpec.getServiceAccount())
+            .get();
+    if (deploymentServiceAccount == null) {
+      return;
+    }
+    podSpec.getImagePullSecrets().addAll(deploymentServiceAccount.getImagePullSecrets());
   }
 }

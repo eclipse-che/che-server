@@ -36,6 +36,7 @@ import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
@@ -108,11 +109,16 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   public OpenShiftProject getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     OpenShiftProject osProject = get(identity);
 
+    NamespaceResolutionContext resolutionCtx =
+        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+    Map<String, String> namespaceAnnotationsEvaluated =
+        evaluateAnnotationPlaceholders(resolutionCtx);
+
     osProject.prepare(
         canCreateNamespace(identity),
         initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
         labelNamespaces ? namespaceLabels : emptyMap(),
-        annotateNamespaces ? namespaceAnnotations : emptyMap());
+        annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
 
     if (!isNullOrEmpty(getServiceAccountName())) {
       OpenShiftWorkspaceServiceAccount osWorkspaceServiceAccount =

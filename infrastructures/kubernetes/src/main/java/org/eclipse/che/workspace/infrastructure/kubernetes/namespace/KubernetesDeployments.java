@@ -29,6 +29,7 @@ import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Event;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectReference;
 import io.fabric8.kubernetes.api.model.OwnerReference;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1179,16 +1181,23 @@ public class KubernetesDeployments {
     if (podServiceAccountName == null) {
       return;
     }
-    ServiceAccount deploymentServiceAccount =
+    ServiceAccount podServiceAccount =
         clientFactory
             .create(workspaceId)
             .serviceAccounts()
             .inNamespace(namespace)
             .withName(podServiceAccountName)
             .get();
-    if (deploymentServiceAccount == null) {
+    if (podServiceAccount == null) {
       return;
     }
-    podSpec.getImagePullSecrets().addAll(deploymentServiceAccount.getImagePullSecrets());
+    Set<LocalObjectReference> uniquePullSecrets = new HashSet<>();
+    if (podSpec.getImagePullSecrets() != null) {
+      uniquePullSecrets.addAll(podSpec.getImagePullSecrets());
+    }
+    if (podServiceAccount.getImagePullSecrets() != null) {
+      uniquePullSecrets.addAll(podServiceAccount.getImagePullSecrets());
+    }
+    podSpec.setImagePullSecrets(new ArrayList<>(uniquePullSecrets));
   }
 }

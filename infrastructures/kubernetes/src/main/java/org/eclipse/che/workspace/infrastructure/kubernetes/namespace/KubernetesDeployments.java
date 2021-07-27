@@ -23,6 +23,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.POD_
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.setSelector;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
@@ -1171,6 +1172,7 @@ public class KubernetesDeployments {
     }
   }
 
+  @VisibleForTesting
   void addPullSecretsOfSA(Deployment deployment) throws InfrastructureException {
     final PodSpec podSpec = deployment.getSpec().getTemplate().getSpec();
     final String podServiceAccountName = podSpec.getServiceAccount();

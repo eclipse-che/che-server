@@ -736,12 +736,13 @@ public class KubernetesDeploymentsTest {
 
     kubernetesDeployments.addPullSecretsOfSA(deployment);
     imagePullSecrets.add(pullSecretOfSA);
-    assert deployment
-        .getSpec()
-        .getTemplate()
-        .getSpec()
-        .getImagePullSecrets()
-        .containsAll(imagePullSecrets);
+    assertTrue(
+        deployment
+            .getSpec()
+            .getTemplate()
+            .getSpec()
+            .getImagePullSecrets()
+            .containsAll(imagePullSecrets));
   }
 
   @Test
@@ -774,11 +775,12 @@ public class KubernetesDeploymentsTest {
             .build();
 
     kubernetesDeployments.addPullSecretsOfSA(deployment);
-    assert deployment
-        .getSpec()
-        .getTemplate()
-        .getSpec()
-        .getImagePullSecrets()
-        .contains(pullSecretOfPod);
+    assertTrue(
+        deployment
+            .getSpec()
+            .getTemplate()
+            .getSpec()
+            .getImagePullSecrets()
+            .contains(pullSecretOfPod));
   }
 }

@@ -1175,7 +1175,7 @@ public class KubernetesDeployments {
   @VisibleForTesting
   void addPullSecretsOfSA(Deployment deployment) throws InfrastructureException {
     final PodSpec podSpec = deployment.getSpec().getTemplate().getSpec();
-    final String podServiceAccountName = podSpec.getServiceAccount();
+    final String podServiceAccountName = podSpec.getServiceAccountName();
     if (podServiceAccountName == null) {
       return;
     }
@@ -1184,7 +1184,7 @@ public class KubernetesDeployments {
             .create(workspaceId)
             .serviceAccounts()
             .inNamespace(namespace)
-            .withName(podSpec.getServiceAccount())
+            .withName(podServiceAccountName)
             .get();
     if (deploymentServiceAccount == null) {
       return;

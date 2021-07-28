@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
+import static java.util.Collections.emptyList;
+
 import io.fabric8.kubernetes.api.model.rbac.PolicyRuleBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBinding;
@@ -20,6 +22,7 @@ import io.fabric8.kubernetes.api.model.rbac.SubjectBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.List;
 import java.util.Set;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 
 /**
@@ -50,7 +53,11 @@ public class KubernetesWorkspaceServiceAccount
 
   @Override
   protected Role buildRole(
-      String name, List<String> resources, List<String> apiGroups, List<String> verbs) {
+      String name,
+      List<String> resources,
+      @Nullable List<String> resourceNames,
+      List<String> apiGroups,
+      List<String> verbs) {
     return new RoleBuilder()
         .withNewMetadata()
         .withName(name)
@@ -58,6 +65,7 @@ public class KubernetesWorkspaceServiceAccount
         .withRules(
             new PolicyRuleBuilder()
                 .withResources(resources)
+                .withResourceNames(resourceNames != null ? resourceNames : emptyList())
                 .withApiGroups(apiGroups)
                 .withVerbs(verbs)
                 .build())

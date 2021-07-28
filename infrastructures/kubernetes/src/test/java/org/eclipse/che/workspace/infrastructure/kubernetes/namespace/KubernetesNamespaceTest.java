@@ -21,6 +21,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -29,6 +30,7 @@ import static org.testng.Assert.assertTrue;
 
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -88,8 +90,9 @@ public class KubernetesNamespaceTest {
     lenient().doReturn(namespaceOperation).when(kubernetesClient).namespaces();
 
     final MixedOperation mixedOperation = mock(MixedOperation.class);
-    final NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
     lenient().doReturn(mixedOperation).when(kubernetesClient).serviceAccounts();
+    lenient().doReturn(mixedOperation).when(kubernetesClient).secrets();
+    lenient().doReturn(namespaceOperation).when(mixedOperation).inNamespace(anyString());
     lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
     lenient().when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
     lenient().when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
@@ -120,6 +123,7 @@ public class KubernetesNamespaceTest {
 
     // then
     verify(namespaceOperation, never()).create(any(Namespace.class));
+    verify(kubernetesClient, never()).secrets();
   }
 
   @Test
@@ -135,9 +139,14 @@ public class KubernetesNamespaceTest {
     namespace.prepare(true, Map.of());
 
     // then
-    ArgumentCaptor<Namespace> captor = ArgumentCaptor.forClass(Namespace.class);
-    verify(namespaceOperation).create(captor.capture());
-    Assert.assertEquals(captor.getValue().getMetadata().getName(), NAMESPACE);
+    ArgumentCaptor<Namespace> namespaceCaptor = ArgumentCaptor.forClass(Namespace.class);
+    ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
+    verify(namespaceOperation, times(2)).create(namespaceCaptor.capture());
+    verify(namespaceOperation, times(2)).create(secretsCaptor.capture());
+    Assert.assertEquals(namespaceCaptor.getAllValues().get(0).getMetadata().getName(), NAMESPACE);
+    Secret secret = secretsCaptor.getAllValues().get(1);
+    Assert.assertEquals(secret.getMetadata().getName(), "che-credentials-secret");
+    Assert.assertEquals(secret.getType(), "opaque");
   }
 
   @Test(expectedExceptions = InfrastructureException.class)

@@ -26,6 +26,7 @@ import java.util.function.Function;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
@@ -47,6 +48,7 @@ public abstract class AbstractWorkspaceServiceAccount<
   public static final String EXEC_ROLE_NAME = "exec";
   public static final String VIEW_ROLE_NAME = "workspace-view";
   public static final String METRICS_ROLE_NAME = "workspace-metrics";
+  public static final String SECRETS_ROLE_NAME = "workspace-secrets";
 
   protected final String namespace;
   protected final String serviceAccountName;
@@ -109,6 +111,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         k8sClient,
         EXEC_ROLE_NAME,
         singletonList("pods/exec"),
+        null,
         singletonList(""),
         singletonList("create"),
         serviceAccountName + "-exec");
@@ -118,6 +121,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         k8sClient,
         VIEW_ROLE_NAME,
         Arrays.asList("pods", "services"),
+        null,
         singletonList(""),
         singletonList("list"),
         serviceAccountName + "-view");
@@ -127,19 +131,31 @@ public abstract class AbstractWorkspaceServiceAccount<
         k8sClient,
         METRICS_ROLE_NAME,
         Arrays.asList("pods", "nodes"),
+        null,
         singletonList("metrics.k8s.io"),
         Arrays.asList("list", "get", "watch"),
         serviceAccountName + "-metrics");
+
+    // credentials-secret role
+    ensureRoleWithBinding(
+        k8sClient,
+        SECRETS_ROLE_NAME,
+        singletonList("secrets"),
+        singletonList("che-credentials-secret"),
+        singletonList(""),
+        Arrays.asList("get", "patch"),
+        serviceAccountName + "-secrets");
   }
 
   private void ensureRoleWithBinding(
       Client k8sClient,
       String roleName,
       List<String> resources,
+      @Nullable List<String> resourceNames,
       List<String> apiGroups,
       List<String> verbs,
       String bindingName) {
-    ensureRole(k8sClient, roleName, resources, apiGroups, verbs);
+    ensureRole(k8sClient, roleName, resources, resourceNames, apiGroups, verbs);
     //noinspection unchecked
     roleBindings
         .apply(k8sClient)
@@ -180,11 +196,17 @@ public abstract class AbstractWorkspaceServiceAccount<
    *
    * @param name the name of the role
    * @param resources the resources the role grants access to
+   * @param resourceNames specific resource names witch the role grants access to. {@code null} if
+   *     empty.
    * @param verbs the verbs the role allows
    * @return the role object for the given type of Client
    */
   protected abstract R buildRole(
-      String name, List<String> resources, List<String> apiGroups, List<String> verbs);
+      String name,
+      List<String> resources,
+      @Nullable List<String> resourceNames,
+      List<String> apiGroups,
+      List<String> verbs);
 
   /**
    * Builds a new role binding but does not persist it.
@@ -213,13 +235,14 @@ public abstract class AbstractWorkspaceServiceAccount<
       Client k8sClient,
       String name,
       List<String> resources,
+      @Nullable List<String> resourceNames,
       List<String> apiGroups,
       List<String> verbs) {
     //noinspection unchecked
     roles
         .apply(k8sClient)
         .inNamespace(namespace)
-        .createOrReplace(buildRole(name, resources, apiGroups, verbs));
+        .createOrReplace(buildRole(name, resources, resourceNames, apiGroups, verbs));
   }
 
   public interface ClientFactory<C extends KubernetesClient> {

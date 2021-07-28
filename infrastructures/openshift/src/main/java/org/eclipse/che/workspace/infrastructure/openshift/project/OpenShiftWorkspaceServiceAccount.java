@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.project;
 
+import static java.util.Collections.emptyList;
+
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.openshift.api.model.PolicyRuleBuilder;
 import io.fabric8.openshift.api.model.Role;
@@ -21,6 +23,7 @@ import io.fabric8.openshift.api.model.RoleBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.util.List;
 import java.util.Set;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 
@@ -55,7 +58,11 @@ class OpenShiftWorkspaceServiceAccount
 
   @Override
   protected Role buildRole(
-      String name, List<String> resources, List<String> apiGroups, List<String> verbs) {
+      String name,
+      List<String> resources,
+      @Nullable List<String> resourceNames,
+      List<String> apiGroups,
+      List<String> verbs) {
     return new RoleBuilder()
         .withNewMetadata()
         .withName(name)
@@ -63,6 +70,7 @@ class OpenShiftWorkspaceServiceAccount
         .withRules(
             new PolicyRuleBuilder()
                 .withResources(resources)
+                .withResourceNames(resourceNames != null ? resourceNames : emptyList())
                 .withApiGroups(apiGroups)
                 .withVerbs(verbs)
                 .build())

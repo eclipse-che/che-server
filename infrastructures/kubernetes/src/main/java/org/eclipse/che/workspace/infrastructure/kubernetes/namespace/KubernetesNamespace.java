@@ -21,6 +21,7 @@ import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -126,7 +127,8 @@ public class KubernetesNamespace {
   /**
    * Prepare namespace for using.
    *
-   * <p>Preparing includes creating if needed and waiting for default service account.
+   * <p>Preparing includes creating if needed and waiting for default service account, then it
+   * creates a secret for storing credentials.
    *
    * <p>The method will try to label the namespace with provided `labels`. It does not matter if the
    * namespace already exists or we create new one. If update labels operation fail due to lack of
@@ -148,6 +150,14 @@ public class KubernetesNamespace {
             format("Creating the namespace '%s' is not allowed, yet it was not found.", name));
       }
       namespace = create(name, client);
+      Secret secret =
+          new SecretBuilder()
+              .withType("opaque")
+              .withNewMetadata()
+              .withName("che-credentials-secret")
+              .endMetadata()
+              .build();
+      client.secrets().inNamespace(name).create(secret);
     }
     label(namespace, labels);
   }

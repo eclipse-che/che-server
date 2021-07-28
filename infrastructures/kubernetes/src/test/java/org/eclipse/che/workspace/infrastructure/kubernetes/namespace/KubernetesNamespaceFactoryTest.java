@@ -16,6 +16,7 @@ import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -43,6 +44,7 @@ import io.fabric8.kubernetes.api.model.NamespaceList;
 import io.fabric8.kubernetes.api.model.ServiceAccountList;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBuilder;
+import io.fabric8.kubernetes.api.model.rbac.PolicyRule;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingList;
 import io.fabric8.kubernetes.api.model.rbac.RoleList;
@@ -57,6 +59,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -651,7 +654,7 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "exec"),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
@@ -665,7 +668,65 @@ public class KubernetesNamespaceFactoryTest {
             "serviceAccount-cluster0",
             "serviceAccount-cluster1",
             "serviceAccount-view",
-            "serviceAccount-exec"));
+            "serviceAccount-exec",
+            "serviceAccount-secrets"));
+  }
+
+  @Test
+  public void shouldCreateAndBindCredentialsSecretRole() throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "serviceAccount",
+                "cr2, cr3",
+                "<username>-che",
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
+    when(toReturnNamespace.getName()).thenReturn("workspace123");
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    when(clientFactory.create(any())).thenReturn(k8sClient);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    namespaceFactory.getOrCreate(identity);
+
+    // then
+    Optional<Role> roleOptional =
+        k8sClient
+            .rbac()
+            .roles()
+            .inNamespace("workspace123")
+            .list()
+            .getItems()
+            .stream()
+            .filter(r -> r.getMetadata().getName().equals(SECRETS_ROLE_NAME))
+            .findAny();
+    assertTrue(roleOptional.isPresent());
+    PolicyRule rule = roleOptional.get().getRules().get(0);
+    assertEquals(rule.getResources(), singletonList("secrets"));
+    assertEquals(rule.getResourceNames(), singletonList("che-credentials-secret"));
+    assertEquals(rule.getApiGroups(), singletonList(""));
+    assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
+    assertTrue(
+        k8sClient
+            .rbac()
+            .roleBindings()
+            .inNamespace("workspace123")
+            .list()
+            .getItems()
+            .stream()
+            .anyMatch(rb -> rb.getMetadata().getName().equals("serviceAccount-secrets")));
   }
 
   @Test
@@ -706,7 +767,7 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "exec"),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
     Role role1 = roles.getItems().get(0);
     Role role2 = roles.getItems().get(1);
@@ -723,7 +784,11 @@ public class KubernetesNamespaceFactoryTest {
             .stream()
             .map(r -> r.getMetadata().getName())
             .collect(Collectors.toSet()),
-        Sets.newHashSet("serviceAccount-metrics", "serviceAccount-view", "serviceAccount-exec"));
+        Sets.newHashSet(
+            "serviceAccount-metrics",
+            "serviceAccount-view",
+            "serviceAccount-exec",
+            "serviceAccount-secrets"));
   }
 
   @Test

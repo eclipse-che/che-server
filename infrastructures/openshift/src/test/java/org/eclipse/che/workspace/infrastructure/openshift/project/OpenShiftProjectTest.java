@@ -513,12 +513,13 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     KubernetesClient cheKubeClient = mock(KubernetesClient.class);
-    doReturn(cheKubeClient).when(cheClientFactory).create();
+    lenient().doReturn(cheKubeClient).when(cheClientFactory).create();
 
     NonNamespaceOperation nonNamespaceOperation = mock(NonNamespaceOperation.class);
-    doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
+    lenient().doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
 
-    doAnswer(a -> a.getArgument(0))
+    lenient()
+        .doAnswer(a -> a.getArgument(0))
         .when(nonNamespaceOperation)
         .createOrReplace(any(Namespace.class));
 

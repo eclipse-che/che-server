@@ -430,24 +430,12 @@ public class KubernetesNamespaceTest {
     KubernetesNamespace kubernetesNamespace =
         new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
 
-    KubernetesClient cheKubeClient = mock(KubernetesClient.class);
-    lenient().doReturn(cheKubeClient).when(cheClientFactory).create();
-
-    NonNamespaceOperation nonNamespaceOperation = mock(NonNamespaceOperation.class);
-    lenient().doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
-
-    lenient()
-        .doAnswer(a -> a.getArgument(0))
-        .when(nonNamespaceOperation)
-        .createOrReplace(any(Namespace.class));
-
     // when
     kubernetesNamespace.prepare(true, emptyMap(), annotations);
 
     // then
     assertTrue(
         namespace.getMetadata().getAnnotations().entrySet().containsAll(annotations.entrySet()));
-    verify(nonNamespaceOperation, never()).createOrReplace(any());
   }
 
   @Test
@@ -460,17 +448,6 @@ public class KubernetesNamespaceTest {
     KubernetesNamespace kubernetesNamespace =
         new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
 
-    KubernetesClient cheKubeClient = mock(KubernetesClient.class);
-    lenient().doReturn(cheKubeClient).when(cheClientFactory).create();
-
-    NonNamespaceOperation nonNamespaceOperation = mock(NonNamespaceOperation.class);
-    lenient().doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
-
-    lenient()
-        .doAnswer(a -> a.getArgument(0))
-        .when(nonNamespaceOperation)
-        .createOrReplace(any(Namespace.class));
-
     // when
     kubernetesNamespace.prepare(true, emptyMap(), emptyMap());
 
@@ -481,7 +458,6 @@ public class KubernetesNamespaceTest {
             .getAnnotations()
             .entrySet()
             .containsAll(existingAnnotations.entrySet()));
-    verify(nonNamespaceOperation, never()).createOrReplace(any());
   }
 
   @Test

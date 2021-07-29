@@ -77,7 +77,9 @@ public class KubernetesNamespaceService extends Service {
       response = KubernetesNamespaceMetaDto.class)
   @ApiResponses({
     @ApiResponse(code = 200, message = "The namespaces successfully provisioned"),
-    @ApiResponse(code = 500, message = "Internal server error occurred during namespaces provisioning")
+    @ApiResponse(
+        code = 500,
+        message = "Internal server error occurred during namespaces provisioning")
   })
   public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
     return asDto(

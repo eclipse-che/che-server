@@ -351,7 +351,7 @@ public class KubernetesNamespaceFactory {
 
     return fetchNamespace(namespace.getName())
         .orElseThrow(
-            () -> new InfrastructureException("Not able to find namespace" + namespace.getName()));
+            () -> new InfrastructureException("Not able to find namespace " + namespace.getName()));
   }
 
   public KubernetesNamespace get(RuntimeIdentity identity) throws InfrastructureException {

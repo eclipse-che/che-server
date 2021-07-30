@@ -72,8 +72,8 @@ public class KubernetesNamespaceService extends Service {
   @ApiOperation(
       value = "Provision k8s namespaces where user is able to create workspaces",
       notes =
-          "This operation can be performed only by authorized user."
-              + "This is under beta and may be significant changed",
+          "This operation can be performed only by an authorized user."
+              + " This is a beta feature that may be significantly changed.",
       response = KubernetesNamespaceMetaDto.class)
   @ApiResponses({
     @ApiResponse(code = 200, message = "The namespaces successfully provisioned"),

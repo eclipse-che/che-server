@@ -1022,7 +1022,8 @@ public class KubernetesNamespaceFactoryTest {
     KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
 
     // then
-    assertEquals(actual, namespaceMeta);
+    assertEquals(actual.getName(), "jondoe-che");
+    assertEquals(actual.getAttributes(), ImmutableMap.of("phase", "active", "default", "true"));
   }
 
   @Test(
@@ -1059,7 +1060,8 @@ public class KubernetesNamespaceFactoryTest {
     KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
 
     // then
-    assertEquals(actual, namespaceMeta);
+    assertEquals(actual.getName(), "jondoe-cha-cha-cha");
+    assertEquals(actual.getAttributes(), ImmutableMap.of("phase", "active", "default", "true"));
   }
 
   @Test(
@@ -1098,7 +1100,8 @@ public class KubernetesNamespaceFactoryTest {
     KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
 
     // then
-    assertEquals(actual, namespaceMeta);
+    assertEquals(actual.getName(), "jondoe-cha-cha-cha");
+    assertEquals(actual.getAttributes(), ImmutableMap.of("phase", "active", "default", "true"));
   }
 
   @Test

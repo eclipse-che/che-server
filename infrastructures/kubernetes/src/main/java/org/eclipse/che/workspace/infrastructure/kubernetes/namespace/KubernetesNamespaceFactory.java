@@ -344,8 +344,8 @@ public class KubernetesNamespaceFactory {
     KubernetesNamespace namespace =
         getOrCreate(
             new RuntimeIdentityImpl(
-                "wsid",
-                "env",
+                null,
+                null,
                 namespaceResolutionContext.getUserId(),
                 evaluateNamespaceName(namespaceResolutionContext)));
 

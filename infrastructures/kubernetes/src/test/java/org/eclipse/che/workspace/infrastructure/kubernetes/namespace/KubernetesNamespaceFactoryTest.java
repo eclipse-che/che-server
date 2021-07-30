@@ -33,6 +33,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
@@ -1057,11 +1058,10 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
+    namespaceFactory.provision(context);
 
     // then
-    assertEquals(actual.getName(), "jondoe-cha-cha-cha");
-    assertEquals(actual.getAttributes(), ImmutableMap.of("phase", "active", "default", "true"));
+    fail("should not reach this point since exception has to be thrown");
   }
 
   @Test(
@@ -1097,11 +1097,10 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
+    namespaceFactory.provision(context);
 
     // then
-    assertEquals(actual.getName(), "jondoe-cha-cha-cha");
-    assertEquals(actual.getAttributes(), ImmutableMap.of("phase", "active", "default", "true"));
+    fail("should not reach this point since exception has to be thrown");
   }
 
   @Test

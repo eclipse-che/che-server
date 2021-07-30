@@ -40,14 +40,21 @@ import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.EventList;
 import io.fabric8.kubernetes.api.model.LabelSelector;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.LocalObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.ObjectReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.PodStatus;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
+import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
@@ -60,9 +67,12 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1APIGroupDSL;
+import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -133,6 +143,7 @@ public class KubernetesDeploymentsTest {
   @Mock private V1APIGroupDSL v1APIGroupDSL;
 
   private KubernetesDeployments kubernetesDeployments;
+  private KubernetesServer serverMock;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -166,9 +177,9 @@ public class KubernetesDeploymentsTest {
 
     // Model DSL: client.events().inNamespace(...).watch(...)
     //            event.getInvolvedObject().getKind()
-    when(kubernetesClient.v1()).thenReturn(v1APIGroupDSL);
-    when(v1APIGroupDSL.events()).thenReturn(eventMixedOperation);
-    when(eventMixedOperation.inNamespace(any())).thenReturn(eventNamespaceMixedOperation);
+    lenient().when(kubernetesClient.v1()).thenReturn(v1APIGroupDSL);
+    lenient().when(v1APIGroupDSL.events()).thenReturn(eventMixedOperation);
+    lenient().when(eventMixedOperation.inNamespace(any())).thenReturn(eventNamespaceMixedOperation);
     lenient().when(event.getInvolvedObject()).thenReturn(objectReference);
     lenient().when(event.getMetadata()).thenReturn(new ObjectMeta());
     // Workaround to ensure mocked event happens 'after' watcher initialisation.
@@ -180,6 +191,8 @@ public class KubernetesDeploymentsTest {
 
     kubernetesDeployments =
         new KubernetesDeployments("namespace", "workspace123", clientFactory, executor);
+    serverMock = new KubernetesServer(true, true);
+    serverMock.before();
   }
 
   @Test
@@ -475,7 +488,6 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeleteNonExistingPodBeforeWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
-    doReturn(POD_NAME).when(metadata).getName();
 
     doReturn(Boolean.FALSE).when(podResource).delete();
     doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
@@ -492,7 +504,6 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeletePodThrowingKubernetesClientExceptionShouldCloseWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
-    doReturn(POD_NAME).when(metadata).getName();
     doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     doThrow(KubernetesClientException.class).when(podResource).delete();
     Watch watch = mock(Watch.class);
@@ -513,8 +524,6 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeleteNonExistingDeploymentBeforeWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
-    doReturn(DEPLOYMENT_NAME).when(deploymentMetadata).getName();
-    doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     doReturn(deploymentResource).when(deploymentResource).withPropagationPolicy(eq(BACKGROUND));
     doReturn(Boolean.FALSE).when(deploymentResource).delete();
     Watch watch = mock(Watch.class);
@@ -531,7 +540,6 @@ public class KubernetesDeploymentsTest {
   public void testDeleteDeploymentThrowingKubernetesClientExceptionShouldCloseWatch()
       throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
-    doReturn(DEPLOYMENT_NAME).when(deploymentMetadata).getName();
 
     doThrow(KubernetesClientException.class).when(deploymentResource).delete();
     doReturn(deploymentResource).when(deploymentResource).withPropagationPolicy(eq(BACKGROUND));
@@ -553,9 +561,9 @@ public class KubernetesDeploymentsTest {
   @Test
   public void testDeletePodThrowingAnyExceptionShouldCloseWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
-    doReturn(POD_NAME).when(metadata).getName();
-
+    doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     doThrow(RuntimeException.class).when(podResource).delete();
+
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
 
@@ -563,18 +571,19 @@ public class KubernetesDeploymentsTest {
       new KubernetesDeployments("", "", clientFactory, executor)
           .doDeletePod(POD_NAME)
           .get(5, TimeUnit.SECONDS);
+      fail("The exception should have been rethrown");
     } catch (RuntimeException e) {
       verify(watch).close();
       return;
     }
-    fail("The exception should have been rethrown");
   }
 
   @Test
   public void testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
-
-    doThrow(RuntimeException.class).when(deploymentResource).delete();
+    when(deploymentResource.withPropagationPolicy(eq(BACKGROUND)))
+        .thenReturn(deploymentsMixedOperation);
+    doThrow(RuntimeException.class).when(deploymentsMixedOperation).delete();
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
 
@@ -582,11 +591,11 @@ public class KubernetesDeploymentsTest {
       new KubernetesDeployments("", "", clientFactory, executor)
           .doDeleteDeployment(DEPLOYMENT_NAME)
           .get(5, TimeUnit.SECONDS);
+      fail("The exception should have been rethrown");
     } catch (RuntimeException e) {
       verify(watch).close();
       return;
     }
-    fail("The exception should have been rethrown");
   }
 
   @Test
@@ -631,7 +640,6 @@ public class KubernetesDeploymentsTest {
     cal.add(Calendar.YEAR, 2);
     Date nextYear = cal.getTime();
     when(event.getLastTimestamp()).thenReturn(PodEvents.convertDateToEventTimestamp(nextYear));
-    when(event.getFirstTimestamp()).thenReturn(PodEvents.convertDateToEventTimestamp(new Date()));
 
     // When
     watcher.eventReceived(Watcher.Action.ADDED, event);
@@ -676,5 +684,103 @@ public class KubernetesDeploymentsTest {
     verify(podEventHandler).handle(captor.capture());
     PodEvent podEvent = captor.getValue();
     assertNotNull(podEvent.getLastTimestamp());
+  }
+
+  @Test
+  public void deploymentShouldHaveImagePullSecretsOfSAAndSelf() throws InfrastructureException {
+    doReturn(serverMock.getClient()).when(clientFactory).create(anyString());
+
+    final String serviceAccountName = "workspace-sa";
+    LocalObjectReference pullSecretOfSA =
+        new LocalObjectReferenceBuilder().withName("pullsecret-sa").build();
+    LocalObjectReference pullSecretOfPod =
+        new LocalObjectReferenceBuilder().withName("pullsecret-pod").build();
+    List<LocalObjectReference> imagePullSecrets = new ArrayList<>();
+    imagePullSecrets.add(pullSecretOfPod);
+
+    ServiceAccount serviceAccount =
+        new ServiceAccountBuilder()
+            .withMetadata(
+                new ObjectMetaBuilder()
+                    .withName(serviceAccountName)
+                    .withNamespace(kubernetesDeployments.namespace)
+                    .build())
+            .withImagePullSecrets(pullSecretOfSA)
+            .build();
+    serverMock
+        .getClient()
+        .serviceAccounts()
+        .inNamespace(kubernetesDeployments.namespace)
+        .create(serviceAccount);
+
+    ObjectMeta objectMeta =
+        new ObjectMetaBuilder()
+            .withName("test-pod")
+            .withNamespace(kubernetesDeployments.namespace)
+            .build();
+
+    Deployment deployment =
+        new DeploymentBuilder()
+            .withMetadata(objectMeta)
+            .withSpec(
+                new DeploymentSpecBuilder()
+                    .withNewTemplate()
+                    .withMetadata(objectMeta)
+                    .withNewSpec()
+                    .withImagePullSecrets(imagePullSecrets)
+                    .withServiceAccountName(serviceAccountName)
+                    .endSpec()
+                    .endTemplate()
+                    .build())
+            .build();
+
+    kubernetesDeployments.addPullSecretsOfSA(deployment);
+    imagePullSecrets.add(pullSecretOfSA);
+    assertTrue(
+        deployment
+            .getSpec()
+            .getTemplate()
+            .getSpec()
+            .getImagePullSecrets()
+            .containsAll(imagePullSecrets));
+  }
+
+  @Test
+  public void deploymentShouldHavePullSecretsOnlyOfSelfWithNonexistentSA()
+      throws InfrastructureException {
+    doReturn(serverMock.getClient()).when(clientFactory).create(anyString());
+
+    LocalObjectReference pullSecretOfPod =
+        new LocalObjectReferenceBuilder().withName("pullsecret-pod").build();
+
+    ObjectMeta objectMeta =
+        new ObjectMetaBuilder()
+            .withName("test-pod")
+            .withNamespace(kubernetesDeployments.namespace)
+            .build();
+
+    Deployment deployment =
+        new DeploymentBuilder()
+            .withMetadata(objectMeta)
+            .withSpec(
+                new DeploymentSpecBuilder()
+                    .withNewTemplate()
+                    .withMetadata(objectMeta)
+                    .withNewSpec()
+                    .withImagePullSecrets(pullSecretOfPod)
+                    .withServiceAccountName("nonexistent-sa")
+                    .endSpec()
+                    .endTemplate()
+                    .build())
+            .build();
+
+    kubernetesDeployments.addPullSecretsOfSA(deployment);
+    assertTrue(
+        deployment
+            .getSpec()
+            .getTemplate()
+            .getSpec()
+            .getImagePullSecrets()
+            .contains(pullSecretOfPod));
   }
 }

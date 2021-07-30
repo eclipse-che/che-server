@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,7 +13,6 @@ package org.eclipse.che.multiuser.api.permission.server.filter;
 
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
-import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
@@ -24,7 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -93,13 +92,12 @@ public class GetPermissionsFilterTest {
 
     assertEquals(response.getStatusCode(), 403);
     assertEquals(unwrapError(response), "User is not authorized to perform this operation");
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
     verify(instanceValidator).validate("test", "test123");
   }
 
   @Test
   public void shouldRespond400IfInstanceIsNotValid() throws Exception {
-    when(subject.hasPermission("test", "test123", SET_PERMISSIONS)).thenReturn(false);
     doThrow(new BadRequestException("instance is not valid"))
         .when(instanceValidator)
         .validate(any(), any());
@@ -114,7 +112,7 @@ public class GetPermissionsFilterTest {
 
     assertEquals(response.getStatusCode(), 400);
     assertEquals(unwrapError(response), "instance is not valid");
-    verifyZeroInteractions(permissionsService);
+    verifyNoMoreInteractions(permissionsService);
     verify(instanceValidator).validate("test", "test123");
   }
 

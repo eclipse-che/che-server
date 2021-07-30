@@ -17,7 +17,7 @@ import static org.testng.Assert.assertTrue;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -30,7 +30,7 @@ public class GitlabUrlParserTest {
   /** Instance of component that will be tested. */
   private GitlabUrlParser gitlabUrlParser;
 
-  @BeforeClass
+  @BeforeMethod
   public void setUp() {
     gitlabUrlParser =
         new GitlabUrlParser("https://gitlab1.com,https://gitlab.foo.xxx", devfileFilenamesProvider);

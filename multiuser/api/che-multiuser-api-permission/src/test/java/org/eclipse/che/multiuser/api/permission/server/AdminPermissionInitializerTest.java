@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -61,11 +61,6 @@ public class AdminPermissionInitializerTest {
   public void setUp() throws Exception {
     user = new UserImpl("qwe", "qwe", "qwe", "qwe", emptyList());
     adminUser = new UserImpl("id-admin", EMAIL, NAME, PASSWORD, emptyList());
-
-    doNothing().when(permissionsManager).storePermission(any(SystemPermissionsImpl.class));
-    doReturn(new SystemDomain(Collections.emptySet()))
-        .when(permissionsManager)
-        .getDomain(anyString());
     initializer =
         new AdminPermissionInitializer(NAME, userManager, permissionsManager, eventService);
   }
@@ -74,6 +69,10 @@ public class AdminPermissionInitializerTest {
   public void shouldAddSystemPermissionsOnPostUserPersistedEvent() throws Exception {
     // given
     when(userManager.getByName(eq(NAME))).thenReturn(user);
+    doNothing().when(permissionsManager).storePermission(any(SystemPermissionsImpl.class));
+    doReturn(new SystemDomain(Collections.emptySet()))
+        .when(permissionsManager)
+        .getDomain(anyString());
     initializer.init();
     // when
     initializer.onEvent(
@@ -103,6 +102,10 @@ public class AdminPermissionInitializerTest {
   public void shouldAddSystemPermissionsForExistedAdmin() throws Exception {
     // given
     when(userManager.getByName(eq(NAME))).thenReturn(adminUser);
+    doNothing().when(permissionsManager).storePermission(any(SystemPermissionsImpl.class));
+    doReturn(new SystemDomain(Collections.emptySet()))
+        .when(permissionsManager)
+        .getDomain(anyString());
     // when
     initializer.init();
     // then
@@ -110,8 +113,7 @@ public class AdminPermissionInitializerTest {
         .storePermission(
             argThat(
                 (ArgumentMatcher<SystemPermissionsImpl>)
-                    argument ->
-                        ((SystemPermissionsImpl) argument).getUserId().equals(adminUser.getId())));
+                    argument -> argument.getUserId().equals(adminUser.getId())));
   }
 
   @Test

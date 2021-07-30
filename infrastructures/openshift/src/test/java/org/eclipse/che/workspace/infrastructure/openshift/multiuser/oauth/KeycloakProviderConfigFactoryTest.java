@@ -114,7 +114,7 @@ public class KeycloakProviderConfigFactoryTest {
     when(keycloakSettings.get()).thenReturn(keycloakSettingsMap);
     context = spy(EnvironmentContext.getCurrent());
     EnvironmentContext.setCurrent(context);
-    doReturn(subject).when(context).getSubject();
+    lenient().doReturn(subject).when(context).getSubject();
     lenient().when(workspaceRuntimeProvider.get()).thenReturn(workspaceRuntimes);
     lenient()
         .when(workspaceRuntimes.getRuntimeContext(anyString()))
@@ -142,7 +142,6 @@ public class KeycloakProviderConfigFactoryTest {
 
   @Test
   public void testFallbackToDefaultConfigWhenProvideIsNull() throws Exception {
-    when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     configBuilder =
         new KeycloakProviderConfigFactory(
             keycloakServiceClient, keycloakSettings, workspaceRuntimeProvider, null, API_ENDPOINT);
@@ -151,7 +150,6 @@ public class KeycloakProviderConfigFactoryTest {
 
   @Test
   public void testFallbackToDefaultConfigWhenSubjectIsAnonymous() throws Exception {
-    when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     doReturn(Subject.ANONYMOUS).when(context).getSubject();
     assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }
@@ -159,7 +157,6 @@ public class KeycloakProviderConfigFactoryTest {
   @Test
   public void testFallbackToDefaultConfigWhenCurrentUserIsDifferentFromWorkspaceOwner()
       throws Exception {
-    when(keycloakServiceClient.getIdentityProviderToken(anyString())).thenReturn(tokenResponse);
     when(runtimeIdentity.getOwnerId()).thenReturn(ANOTHER_USER_ID);
     assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }

@@ -666,7 +666,7 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "exec", "workspace-secrets"),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "exec"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
@@ -680,8 +680,7 @@ public class KubernetesNamespaceFactoryTest {
             "serviceAccount-cluster0",
             "serviceAccount-cluster1",
             "serviceAccount-view",
-            "serviceAccount-exec",
-            "serviceAccount-secrets"));
+            "serviceAccount-exec"));
   }
 
   @Test
@@ -723,7 +722,7 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-secrets", "workspace-metrics", "exec"),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "exec"),
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
     Role role1 = roles.getItems().get(0);
     Role role2 = roles.getItems().get(1);
@@ -740,11 +739,7 @@ public class KubernetesNamespaceFactoryTest {
             .stream()
             .map(r -> r.getMetadata().getName())
             .collect(Collectors.toSet()),
-        Sets.newHashSet(
-            "serviceAccount-metrics",
-            "serviceAccount-view",
-            "serviceAccount-exec",
-            "serviceAccount-secrets"));
+        Sets.newHashSet("serviceAccount-metrics", "serviceAccount-view", "serviceAccount-exec"));
   }
 
   @Test
@@ -808,8 +803,6 @@ public class KubernetesNamespaceFactoryTest {
             userManager,
             preferenceManager,
             pool);
-
-    when(namespaceResource.get()).thenReturn(null);
 
     WorkspaceImpl workspace =
         new WorkspaceImplBuilder().setId("workspace123").setAttributes(emptyMap()).build();

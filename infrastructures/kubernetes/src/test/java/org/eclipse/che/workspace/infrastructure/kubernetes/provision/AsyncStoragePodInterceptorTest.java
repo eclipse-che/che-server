@@ -75,11 +75,6 @@ public class AsyncStoragePodInterceptorTest {
 
   @Test
   public void shouldDoNothingIfNotCommonStrategy() throws Exception {
-    when(kubernetesClient.pods()).thenReturn(mixedOperationPod);
-    when(mixedOperationPod.inNamespace(NAMESPACE)).thenReturn(namespacePodOperation);
-    when(namespacePodOperation.withName(ASYNC_STORAGE)).thenReturn(podResource);
-    when(podResource.get()).thenReturn(null);
-
     AsyncStoragePodInterceptor asyncStoragePodInterceptor =
         new AsyncStoragePodInterceptor(randomUUID().toString(), clientFactory);
     asyncStoragePodInterceptor.intercept(kubernetesEnvironment, identity);

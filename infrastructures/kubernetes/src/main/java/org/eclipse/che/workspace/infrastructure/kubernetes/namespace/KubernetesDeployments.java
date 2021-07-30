@@ -23,17 +23,20 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.POD_
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.setSelector;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Event;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectReference;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.PodStatus;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -52,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -190,6 +194,7 @@ public class KubernetesDeployments {
 
   private Pod createDeployment(Deployment deployment, String workspaceId)
       throws InfrastructureException {
+    addPullSecretsOfSA(deployment);
     final String deploymentName = deployment.getMetadata().getName();
     final CompletableFuture<Pod> createFuture = new CompletableFuture<>();
     final Watch createWatch =
@@ -1167,5 +1172,32 @@ public class KubernetesDeployments {
         throw new InfrastructureException("Timeout reached while execution of command");
       }
     }
+  }
+
+  @VisibleForTesting
+  void addPullSecretsOfSA(Deployment deployment) throws InfrastructureException {
+    final PodSpec podSpec = deployment.getSpec().getTemplate().getSpec();
+    final String podServiceAccountName = podSpec.getServiceAccountName();
+    if (podServiceAccountName == null) {
+      return;
+    }
+    ServiceAccount podServiceAccount =
+        clientFactory
+            .create(workspaceId)
+            .serviceAccounts()
+            .inNamespace(namespace)
+            .withName(podServiceAccountName)
+            .get();
+    if (podServiceAccount == null) {
+      return;
+    }
+    Set<LocalObjectReference> uniquePullSecrets = new HashSet<>();
+    if (podSpec.getImagePullSecrets() != null) {
+      uniquePullSecrets.addAll(podSpec.getImagePullSecrets());
+    }
+    if (podServiceAccount.getImagePullSecrets() != null) {
+      uniquePullSecrets.addAll(podServiceAccount.getImagePullSecrets());
+    }
+    podSpec.setImagePullSecrets(new ArrayList<>(uniquePullSecrets));
   }
 }

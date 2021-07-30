@@ -62,7 +62,7 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -88,7 +88,7 @@ public class URLFactoryBuilderTest {
   /** Tested instance. */
   private URLFactoryBuilder urlFactoryBuilder;
 
-  @BeforeClass
+  @BeforeMethod
   public void setUp() {
     this.urlFactoryBuilder =
         new URLFactoryBuilder(defaultEditor, defaultPlugin, devfileParser, devfileVersionDetector);
@@ -120,7 +120,6 @@ public class URLFactoryBuilderTest {
     workspaceConfigImpl.setEnvironments(singletonMap("name", expectedEnv));
     workspaceConfigImpl.setDefaultEnv("name");
 
-    when(urlFetcher.fetchSafely(anyString())).thenReturn("random_content");
     when(devfileParser.parseYamlRaw(anyString()))
         .thenReturn(new ObjectNode(JsonNodeFactory.instance));
     when(devfileParser.parseJsonNode(any(JsonNode.class), anyMap())).thenReturn(devfile);

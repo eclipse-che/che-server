@@ -21,7 +21,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import io.jsonwebtoken.Claims;
@@ -123,7 +123,7 @@ public class MachineLoginFilterTest {
 
     verify(keyManagerMock, atLeastOnce()).getOrCreateKeyPair(eq(WORKSPACE_ID));
     verify(userManagerMock).getById(anyString());
-    verifyZeroInteractions(responseMock);
+    verifyNoMoreInteractions(responseMock);
   }
 
   @Test
@@ -179,9 +179,9 @@ public class MachineLoginFilterTest {
 
     verify(tokenExtractorMock, atLeastOnce()).getToken(any(HttpServletRequest.class));
     verify(chainMock).doFilter(requestMock, responseMock);
-    verifyZeroInteractions(keyManagerMock);
-    verifyZeroInteractions(userManagerMock);
-    verifyZeroInteractions(responseMock);
+    verifyNoMoreInteractions(keyManagerMock);
+    verifyNoMoreInteractions(userManagerMock);
+    verifyNoMoreInteractions(responseMock);
   }
 
   @Test

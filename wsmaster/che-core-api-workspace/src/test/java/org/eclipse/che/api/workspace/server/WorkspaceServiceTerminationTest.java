@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -75,8 +75,6 @@ public class WorkspaceServiceTerminationTest {
     when(workspaceRuntimes.getActive()).thenReturn(Collections.singleton(workspaceId));
     when(workspaceRuntimes.getStatus(workspaceId)).thenReturn(status);
 
-    when(runtimeInfrastructure.getIdentities()).thenReturn(Collections.emptySet());
-
     // once stopped change the flag
     doAnswer(
             inv -> {
@@ -93,11 +91,6 @@ public class WorkspaceServiceTerminationTest {
   @Test
   public void suspendsWorkspaceService() throws Exception {
     AtomicBoolean isAnyRunning = new AtomicBoolean(true);
-    String workspaceId = "workspace123";
-
-    // one workspace is running
-    when(workspaceRuntimes.getActive()).thenReturn(Collections.singleton(workspaceId));
-    when(workspaceRuntimes.getStatus(workspaceId)).thenReturn(WorkspaceStatus.RUNNING);
 
     when(workspaceRuntimes.isAnyInProgress())
         .thenAnswer(

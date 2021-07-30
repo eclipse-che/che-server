@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,7 +66,8 @@ public class RemoveWorkspaceBeforeAccountRemovedEventSubscriberTest {
   public void setUp() throws Exception {
     account = new AccountImpl("id", "name", "test");
     workspace = new WorkspaceImpl(workspaceId, account, new WorkspaceConfigImpl());
-    when(workspaceManager.getByNamespace(anyString(), anyBoolean(), anyInt(), anyLong()))
+    lenient()
+        .when(workspaceManager.getByNamespace(anyString(), anyBoolean(), anyInt(), anyLong()))
         .thenReturn(new Page<>(Arrays.asList(workspace), 0, 1, 1));
   }
 
@@ -94,9 +96,6 @@ public class RemoveWorkspaceBeforeAccountRemovedEventSubscriberTest {
   @Test
   public void shouldStopAndRemoveRunningWorkspaceByOwner() throws Exception {
     workspace.setStatus(WorkspaceStatus.RUNNING);
-    Runtime runtime = mock(Runtime.class);
-    when(runtime.getOwner()).thenReturn(user);
-    workspace.setRuntime(runtime);
     EnvironmentContext.getCurrent().setSubject(SUBJECT);
 
     doAnswer(
@@ -115,9 +114,6 @@ public class RemoveWorkspaceBeforeAccountRemovedEventSubscriberTest {
   @Test
   public void shouldStopAndRemoveStartingWorkspaceByOwner() throws Exception {
     workspace.setStatus(WorkspaceStatus.STARTING);
-    Runtime runtime = mock(Runtime.class);
-    when(runtime.getOwner()).thenReturn(user);
-    workspace.setRuntime(runtime);
     EnvironmentContext.getCurrent().setSubject(SUBJECT);
 
     doAnswer(
@@ -136,9 +132,6 @@ public class RemoveWorkspaceBeforeAccountRemovedEventSubscriberTest {
   @Test
   public void shouldStopAndRemoveWorkspaceByAdmin() throws Exception {
     workspace.setStatus(WorkspaceStatus.STARTING);
-    Runtime runtime = mock(Runtime.class);
-    when(runtime.getOwner()).thenReturn(otherUser);
-    workspace.setRuntime(runtime);
     EnvironmentContext.getCurrent().setSubject(SUBJECT);
 
     doAnswer(

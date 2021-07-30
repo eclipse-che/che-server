@@ -21,7 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -218,7 +217,7 @@ public class OpenShiftProjectTest {
     verify(projectRequestOperation).create(captor.capture());
     Assert.assertEquals(captor.getValue().getMetadata().getName(), PROJECT_NAME);
     verifyNoMoreInteractions(openShiftCheServerClient);
-    verifyZeroInteractions(kubernetesClient);
+    verifyNoMoreInteractions(kubernetesClient);
     ArgumentCaptor<RoleBinding> roleBindingArgumentCaptor =
         ArgumentCaptor.forClass(RoleBinding.class);
     verify(nonNamespaceRoleBindingOperation).createOrReplace(roleBindingArgumentCaptor.capture());
@@ -347,7 +346,6 @@ public class OpenShiftProjectTest {
             PROJECT_NAME,
             WORKSPACE_ID);
     Resource resource = prepareProjectResource(PROJECT_NAME);
-    when(resource.get()).thenThrow(new KubernetesClientException("err", 404, null));
     when(resource.delete()).thenThrow(new KubernetesClientException("err", 404, null));
 
     // when
@@ -435,12 +433,13 @@ public class OpenShiftProjectTest {
             WORKSPACE_ID);
 
     KubernetesClient cheKubeClient = mock(KubernetesClient.class);
-    doReturn(cheKubeClient).when(cheClientFactory).create();
+    lenient().doReturn(cheKubeClient).when(cheClientFactory).create();
 
     NonNamespaceOperation nonNamespaceOperation = mock(NonNamespaceOperation.class);
-    doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
+    lenient().doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
 
-    doAnswer(a -> a.getArgument(0))
+    lenient()
+        .doAnswer(a -> a.getArgument(0))
         .when(nonNamespaceOperation)
         .createOrReplace(any(Namespace.class));
 

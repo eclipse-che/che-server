@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -93,9 +93,9 @@ public class ResourceManagerTest {
                   final List<Resource> argument = invocationOnMock.getArgument(0);
                   return argument.stream().collect(toMap(Resource::getType, identity()));
                 });
-    when(account.getId()).thenReturn(ACCOUNT_ID);
-    when(account.getType()).thenReturn("organizational");
-    when(accountManager.getById(ACCOUNT_ID)).thenReturn(account);
+    lenient().when(account.getId()).thenReturn(ACCOUNT_ID);
+    lenient().when(account.getType()).thenReturn("organizational");
+    lenient().when(accountManager.getById(ACCOUNT_ID)).thenReturn(account);
   }
 
   @Test

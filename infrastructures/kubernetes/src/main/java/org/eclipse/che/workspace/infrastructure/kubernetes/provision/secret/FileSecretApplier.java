@@ -86,7 +86,7 @@ public class FileSecretApplier extends KubernetesSecretApplier<KubernetesEnviron
             .withName(secret.getMetadata().getName())
             .withSecret(
                 new SecretVolumeSourceBuilder()
-                    .withNewSecretName(secret.getMetadata().getName())
+                    .withSecretName(secret.getMetadata().getName())
                     .build())
             .build();
 

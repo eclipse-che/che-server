@@ -24,7 +24,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.testng.Assert.assertEquals;
 
 import com.jayway.restassured.response.Response;
@@ -116,7 +116,7 @@ public class UserDevfilePermissionsFilterTest {
             .post(SECURE_PATH + "/devfile/");
     // then
     assertEquals(response.getStatusCode(), 204);
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -134,7 +134,7 @@ public class UserDevfilePermissionsFilterTest {
             .get(SECURE_PATH + "/devfile/search");
     // then
     assertEquals(response.getStatusCode(), 200);
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test
@@ -152,7 +152,7 @@ public class UserDevfilePermissionsFilterTest {
             .get(SECURE_PATH + "/devfile");
     // then
     assertEquals(response.getStatusCode(), 200);
-    verifyZeroInteractions(subject);
+    verifyNoMoreInteractions(subject);
   }
 
   @Test

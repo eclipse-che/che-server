@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -54,8 +54,6 @@ public class AccountValidatorTest {
 
   @Test(dataProvider = "namesToValidate")
   public void testValidUserName(String input, boolean expected) throws Exception {
-    doThrow(NotFoundException.class).when(accountManager).getByName(anyString());
-
     Assert.assertEquals(accountValidator.isValidName(input), expected);
   }
 

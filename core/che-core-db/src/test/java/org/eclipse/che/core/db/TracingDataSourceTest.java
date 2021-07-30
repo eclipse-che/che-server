@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.core.db;
 
+import static org.mockito.Mockito.lenient;
 import static org.testng.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
@@ -44,8 +45,8 @@ public class TracingDataSourceTest {
     HashMap<String, String> newEnv = new HashMap<>(System.getenv());
     newEnv.remove("CHE_DB_TRACING_ENABLED");
     setEnv(newEnv);
-    Mockito.when(dataSource.getConnection()).thenReturn(connection);
-    Mockito.when(connection.getMetaData()).thenReturn(databaseMetaData);
+    lenient().when(dataSource.getConnection()).thenReturn(connection);
+    lenient().when(connection.getMetaData()).thenReturn(databaseMetaData);
   }
 
   @Test

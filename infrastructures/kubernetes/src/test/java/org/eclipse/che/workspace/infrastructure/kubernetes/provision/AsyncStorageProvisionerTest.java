@@ -242,11 +242,6 @@ public class AsyncStorageProvisionerTest {
     configMap.setMetadata(meta);
     when(mapResource.get()).thenReturn(configMap);
 
-    when(kubernetesClient.pods()).thenReturn(mixedOperationPod);
-    when(mixedOperationPod.inNamespace(NAMESPACE)).thenReturn(namespacePodOperation);
-    when(namespacePodOperation.withName(ASYNC_STORAGE)).thenReturn(podResource);
-    when(podResource.get()).thenReturn(null);
-
     when(kubernetesClient.apps()).thenReturn(apps);
     when(apps.deployments()).thenReturn(mixedOperationDeployment);
     when(mixedOperationDeployment.inNamespace(NAMESPACE)).thenReturn(namespaceDeploymentOperation);
@@ -295,7 +290,6 @@ public class AsyncStorageProvisionerTest {
 
     when(kubernetesClient.pods()).thenReturn(mixedOperationPod);
     when(mixedOperationPod.inNamespace(NAMESPACE)).thenReturn(namespacePodOperation);
-    when(namespacePodOperation.withName(ASYNC_STORAGE)).thenReturn(podResource);
 
     when(kubernetesClient.apps()).thenReturn(apps);
     when(apps.deployments()).thenReturn(mixedOperationDeployment);
@@ -344,11 +338,6 @@ public class AsyncStorageProvisionerTest {
     when(mixedOperationConfigMap.inNamespace(NAMESPACE)).thenReturn(namespaceConfigMapOperation);
     when(namespaceConfigMapOperation.withName(CONFIGMAP_NAME)).thenReturn(mapResource);
     when(mapResource.get()).thenReturn(null);
-
-    when(kubernetesClient.pods()).thenReturn(mixedOperationPod);
-    when(mixedOperationPod.inNamespace(NAMESPACE)).thenReturn(namespacePodOperation);
-    when(namespacePodOperation.withName(ASYNC_STORAGE)).thenReturn(podResource);
-    when(podResource.get()).thenReturn(null);
 
     when(kubernetesClient.apps()).thenReturn(apps);
     when(apps.deployments()).thenReturn(mixedOperationDeployment);

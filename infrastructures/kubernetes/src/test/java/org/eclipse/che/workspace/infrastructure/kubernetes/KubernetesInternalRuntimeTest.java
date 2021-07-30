@@ -44,7 +44,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -956,7 +956,7 @@ public class KubernetesInternalRuntimeTest {
     internalRuntime.scheduleServersCheckers();
 
     // then
-    verifyZeroInteractions(probesScheduler);
+    verifyNoMoreInteractions(probesScheduler);
   }
 
   @DataProvider(name = "nonStartingRunningStatuses")

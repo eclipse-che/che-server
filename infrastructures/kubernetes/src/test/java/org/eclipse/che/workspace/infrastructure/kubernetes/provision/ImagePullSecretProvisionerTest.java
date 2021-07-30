@@ -12,8 +12,9 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner.SECRET_NAME_SUFFIX;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -74,13 +75,15 @@ public class ImagePullSecretProvisionerTest {
 
   @BeforeMethod
   public void setup() {
-    when(runtimeIdentity.getWorkspaceId()).thenReturn(WORKSPACE_ID);
+    lenient().when(runtimeIdentity.getWorkspaceId()).thenReturn(WORKSPACE_ID);
 
     k8sEnv = KubernetesEnvironment.builder().build();
     ObjectMeta podMeta = new ObjectMetaBuilder().withName("wksp").build();
     when(pod.getMetadata()).thenReturn(podMeta);
-    when(pod.getSpec()).thenReturn(podSpec);
-    when(podSpec.getImagePullSecrets()).thenReturn(ImmutableList.of(existingImagePullSecretRef));
+    lenient().when(pod.getSpec()).thenReturn(podSpec);
+    lenient()
+        .when(podSpec.getImagePullSecrets())
+        .thenReturn(ImmutableList.of(existingImagePullSecretRef));
     k8sEnv.addPod(pod);
 
     when(credentialsProvider.getCredentials()).thenReturn(dockerAuthConfigs);
@@ -94,7 +97,7 @@ public class ImagePullSecretProvisionerTest {
     imagePullSecretProvisioner.provision(k8sEnv, runtimeIdentity);
 
     assertTrue(k8sEnv.getSecrets().isEmpty());
-    verifyZeroInteractions(podSpec);
+    verifyNoMoreInteractions(podSpec);
   }
 
   @Test

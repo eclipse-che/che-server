@@ -70,16 +70,16 @@ public class KubernetesNamespaceService extends Service {
   @Path("provision")
   @Produces(APPLICATION_JSON)
   @ApiOperation(
-      value = "Provision k8s namespaces where user is able to create workspaces",
+      value = "Provision k8s namespace where user is able to create workspaces",
       notes =
           "This operation can be performed only by an authorized user."
               + " This is a beta feature that may be significantly changed.",
       response = KubernetesNamespaceMetaDto.class)
   @ApiResponses({
-    @ApiResponse(code = 200, message = "The namespaces successfully provisioned"),
+    @ApiResponse(code = 200, message = "The namespace successfully provisioned"),
     @ApiResponse(
         code = 500,
-        message = "Internal server error occurred during namespaces provisioning")
+        message = "Internal server error occurred during namespace provisioning")
   })
   public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
     return asDto(

@@ -16,6 +16,7 @@ import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
@@ -715,7 +716,7 @@ public class KubernetesNamespaceFactoryTest {
     assertTrue(roleOptional.isPresent());
     PolicyRule rule = roleOptional.get().getRules().get(0);
     assertEquals(rule.getResources(), singletonList("secrets"));
-    assertEquals(rule.getResourceNames(), singletonList("che-credentials-secret"));
+    assertEquals(rule.getResourceNames(), singletonList(CREDENTIALS_SECRET_NAME));
     assertEquals(rule.getApiGroups(), singletonList(""));
     assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
     assertTrue(

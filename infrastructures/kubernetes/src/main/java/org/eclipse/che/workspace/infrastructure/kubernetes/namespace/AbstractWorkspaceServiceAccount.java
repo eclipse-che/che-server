@@ -49,6 +49,7 @@ public abstract class AbstractWorkspaceServiceAccount<
   public static final String VIEW_ROLE_NAME = "workspace-view";
   public static final String METRICS_ROLE_NAME = "workspace-metrics";
   public static final String SECRETS_ROLE_NAME = "workspace-secrets";
+  public static final String CREDENTIALS_SECRET_NAME = "workspace-credentials-secret";
 
   protected final String namespace;
   protected final String serviceAccountName;
@@ -141,7 +142,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         k8sClient,
         SECRETS_ROLE_NAME,
         singletonList("secrets"),
-        singletonList("che-credentials-secret"),
+        singletonList(CREDENTIALS_SECRET_NAME),
         singletonList(""),
         Arrays.asList("get", "patch"),
         serviceAccountName + "-secrets");

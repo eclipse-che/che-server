@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -145,7 +146,7 @@ public class KubernetesNamespaceTest {
     verify(namespaceOperation, times(2)).create(secretsCaptor.capture());
     Assert.assertEquals(namespaceCaptor.getAllValues().get(0).getMetadata().getName(), NAMESPACE);
     Secret secret = secretsCaptor.getAllValues().get(1);
-    Assert.assertEquals(secret.getMetadata().getName(), "che-credentials-secret");
+    Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
     Assert.assertEquals(secret.getType(), "opaque");
   }
 

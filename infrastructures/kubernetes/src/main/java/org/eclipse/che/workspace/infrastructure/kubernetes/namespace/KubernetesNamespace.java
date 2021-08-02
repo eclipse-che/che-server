@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
 import static java.lang.String.format;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -154,7 +155,7 @@ public class KubernetesNamespace {
           new SecretBuilder()
               .withType("opaque")
               .withNewMetadata()
-              .withName("che-credentials-secret")
+              .withName(CREDENTIALS_SECRET_NAME)
               .endMetadata()
               .build();
       client.secrets().inNamespace(name).create(secret);

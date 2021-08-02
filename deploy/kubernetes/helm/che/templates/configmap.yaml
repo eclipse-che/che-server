@@ -33,6 +33,10 @@ data:
   CHE_WEBSOCKET_ENDPOINT__MINOR:  ws://{{ template "cheHost" . }}/api/websocket-minor
   CHE_INFRA_KUBERNETES_BOOTSTRAPPER_BINARY__URL: http://{{ template "cheHost" . }}/agent-binaries/linux_amd64/bootstrapper/bootstrapper
 {{- end }}
+{{- if .Values.global.useInternalClusterSVCNames }}
+  CHE_WEBSOCKET_INTERNAL_ENDPOINT: ws://che-host.{{ .Release.Namespace }}.svc:8080/api/websocket
+  CHE_WEBSOCKET_INTERNAL_ENDPOINT__MINOR: ws://che-host.{{ .Release.Namespace }}.svc:8080/api/websocket-minor
+{{- end }}
   CHE_DEBUG_SERVER: "true"
   CHE_INFRASTRUCTURE_ACTIVE: "kubernetes"
   CHE_INFRA_KUBERNETES_INGRESS_DOMAIN: {{ .Values.global.ingressDomain }}

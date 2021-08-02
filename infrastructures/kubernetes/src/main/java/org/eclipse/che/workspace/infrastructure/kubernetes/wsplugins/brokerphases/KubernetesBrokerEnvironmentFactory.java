@@ -35,6 +35,7 @@ public class KubernetesBrokerEnvironmentFactory
   @Inject
   public KubernetesBrokerEnvironmentFactory(
       @Named("che.websocket.endpoint") String cheWebsocketEndpoint,
+      @Nullable @Named("che.websocket.internal.endpoint") String cheWebsocketInternalEndpoint,
       @Named("che.workspace.plugin_broker.pull_policy") String brokerPullPolicy,
       @Named("che.infra.kubernetes.trusted_ca.mount_path") String certificateMountPath,
       AgentAuthEnableEnvVarProvider authEnableEnvVarProvider,
@@ -48,6 +49,7 @@ public class KubernetesBrokerEnvironmentFactory
       CertificateProvisioner certProvisioner) {
     super(
         cheWebsocketEndpoint,
+        cheWebsocketInternalEndpoint,
         brokerPullPolicy,
         authEnableEnvVarProvider,
         machineTokenEnvVarProvider,

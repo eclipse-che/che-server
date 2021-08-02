@@ -85,6 +85,7 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
 
   public BrokerEnvironmentFactory(
       String cheWebsocketEndpoint,
+      String cheWebsocketInternalEndpoint,
       String brokerPullPolicy,
       AgentAuthEnableEnvVarProvider authEnableEnvVarProvider,
       MachineTokenEnvVarProvider machineTokenEnvVarProvider,
@@ -95,7 +96,10 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
       TrustedCAProvisioner trustedCAProvisioner,
       String certificateMountPath,
       CertificateProvisioner certProvisioner) {
-    this.cheWebsocketEndpoint = cheWebsocketEndpoint;
+    this.cheWebsocketEndpoint =
+        isNullOrEmpty(cheWebsocketInternalEndpoint)
+            ? cheWebsocketEndpoint
+            : cheWebsocketInternalEndpoint;
     this.brokerPullPolicy = brokerPullPolicy;
     this.authEnableEnvVarProvider = authEnableEnvVarProvider;
     this.machineTokenEnvVarProvider = machineTokenEnvVarProvider;

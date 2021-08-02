@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
+import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_WORKSPACE_ID_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 
@@ -27,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructureException;
@@ -53,13 +55,14 @@ public class KubernetesIngresses {
   public Ingress create(Ingress ingress) throws InfrastructureException {
     putLabel(ingress, CHE_WORKSPACE_ID_LABEL, workspaceId);
     try {
-      return clientFactory
+      return asExtensionsIngress(clientFactory
           .create(workspaceId)
-          .extensions()
+          .network()
+          .v1()
           .ingresses()
           .inNamespace(namespace)
           .withName(ingress.getMetadata().getName())
-          .create(ingress);
+          .create(asNetworkingIngress(ingress)));
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
     }
@@ -67,14 +70,16 @@ public class KubernetesIngresses {
 
   public List<Ingress> get() throws InfrastructureException {
     try {
-      return clientFactory
+      List<io.fabric8.kubernetes.api.model.networking.v1.Ingress> v1Ingresses = clientFactory
           .create(workspaceId)
-          .extensions()
+          .network()
+          .v1()
           .ingresses()
           .inNamespace(namespace)
           .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
           .list()
           .getItems();
+      return v1Ingresses.stream().map(this::asExtensionsIngress).collect(toList());
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
     }
@@ -85,10 +90,11 @@ public class KubernetesIngresses {
     CompletableFuture<Ingress> future = new CompletableFuture<>();
     Watch watch = null;
     try {
-      Resource<Ingress> ingressResource =
+      Resource<io.fabric8.kubernetes.api.model.networking.v1.Ingress> ingressResource =
           clientFactory
               .create(workspaceId)
-              .extensions()
+              .network()
+              .v1()
               .ingresses()
               .inNamespace(namespace)
               .withName(name);
@@ -97,9 +103,10 @@ public class KubernetesIngresses {
           ingressResource.watch(
               new Watcher<>() {
                 @Override
-                public void eventReceived(Action action, Ingress ingress) {
-                  if (predicate.test(ingress)) {
-                    future.complete(ingress);
+                public void eventReceived(Action action, io.fabric8.kubernetes.api.model.networking.v1.Ingress ingress) {
+                  Ingress extIngress = asExtensionsIngress(ingress);
+                  if (predicate.test(extIngress)) {
+                    future.complete(extIngress);
                   }
                 }
 
@@ -111,7 +118,7 @@ public class KubernetesIngresses {
                 }
               });
 
-      Ingress actualIngress = ingressResource.get();
+      Ingress actualIngress = asExtensionsIngress(ingressResource.get());
       if (actualIngress == null) {
         throw new InfrastructureException("Specified ingress " + name + " doesn't exist");
       }
@@ -139,6 +146,7 @@ public class KubernetesIngresses {
 
   public void delete() throws InfrastructureException {
     try {
+
       clientFactory
           .create(workspaceId)
           .extensions()
@@ -147,8 +155,26 @@ public class KubernetesIngresses {
           .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
           .withPropagationPolicy(BACKGROUND)
           .delete();
+
+      clientFactory
+          .create(workspaceId)
+          .network()
+          .ingresses()
+          .inNamespace(namespace)
+          .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
+          .withPropagationPolicy(BACKGROUND)
+          .delete();
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
     }
+  }
+
+
+  private io.fabric8.kubernetes.api.model.networking.v1.Ingress asNetworkingIngress(Ingress ingress) {
+    ...
+  }
+
+  private Ingress asExtensionsIngress(io.fabric8.kubernetes.api.model.networking.v1.Ingress ingress) {
+    ...
   }
 }

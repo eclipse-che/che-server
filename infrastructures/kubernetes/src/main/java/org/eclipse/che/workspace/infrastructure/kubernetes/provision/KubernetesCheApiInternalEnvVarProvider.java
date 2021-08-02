@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
@@ -36,9 +38,9 @@ public class KubernetesCheApiInternalEnvVarProvider implements CheApiInternalEnv
 
   @Override
   public Pair<String, String> get(RuntimeIdentity runtimeIdentity) throws InfrastructureException {
-    if (this.cheServerEndpoint != null) {
-      return Pair.of(CHE_API_INTERNAL_VARIABLE, cheServerEndpoint);
+    if (isNullOrEmpty(this.cheServerEndpoint)) {
+      return null;
     }
-    return null;
+    return Pair.of(CHE_API_INTERNAL_VARIABLE, cheServerEndpoint);
   }
 }

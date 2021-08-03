@@ -24,7 +24,7 @@ import static org.testng.Assert.assertNull;
 
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;

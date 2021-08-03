@@ -12,8 +12,8 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Singleton;

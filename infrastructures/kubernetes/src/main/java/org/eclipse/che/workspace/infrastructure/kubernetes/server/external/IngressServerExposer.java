@@ -15,7 +15,7 @@ import static java.util.Collections.emptyMap;
 
 import com.google.common.base.Splitter;
 import io.fabric8.kubernetes.api.model.ServicePort;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;

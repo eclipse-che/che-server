@@ -21,12 +21,14 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServiceSpec;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressRuleValue;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
-import io.fabric8.kubernetes.api.model.extensions.IngressRule;
-import io.fabric8.kubernetes.api.model.extensions.IngressSpec;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValue;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressSpec;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
 import java.util.Optional;
 import org.testng.annotations.Test;
 
@@ -38,7 +40,8 @@ public class IngressesTest {
     final int PORT = 8080;
 
     Service service = createService(SERVER_PORT_NAME, PORT);
-    Ingress ingress = createIngress(new IngressBackend(null, "servicename", new IntOrString(PORT)));
+    Ingress ingress = createIngress(new IngressBackend(null, new IngressServiceBackend(
+        "servicename", new ServiceBackendPort(SERVER_PORT_NAME, PORT))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);
@@ -53,7 +56,8 @@ public class IngressesTest {
 
     Service service = createService(SERVER_PORT_NAME, PORT);
     Ingress ingress =
-        createIngress(new IngressBackend(null, "servicename", new IntOrString(SERVER_PORT_NAME)));
+        createIngress(new IngressBackend(null, new IngressServiceBackend(
+            "servicename", new ServiceBackendPort(SERVER_PORT_NAME, PORT))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);
@@ -68,7 +72,8 @@ public class IngressesTest {
 
     Service service = createService(SERVER_PORT_NAME, PORT);
     Ingress ingress =
-        createIngress(new IngressBackend(null, "servicename", new IntOrString("does not exist")));
+        createIngress(new IngressBackend(null, new IngressServiceBackend(
+            "servicename", new ServiceBackendPort("does not exist", null))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);
@@ -81,7 +86,8 @@ public class IngressesTest {
     final int PORT = 8080;
 
     Service service = createService(SERVER_PORT_NAME, PORT);
-    Ingress ingress = createIngress(new IngressBackend(null, "servicename", new IntOrString(666)));
+    Ingress ingress = createIngress(new IngressBackend(null, new IngressServiceBackend(
+        "servicename", new ServiceBackendPort(null, 666))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);

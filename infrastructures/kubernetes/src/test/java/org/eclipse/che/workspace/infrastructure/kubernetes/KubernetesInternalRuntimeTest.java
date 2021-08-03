@@ -72,10 +72,12 @@ import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpec;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
-import io.fabric8.kubernetes.api.model.extensions.IngressRule;
-import io.fabric8.kubernetes.api.model.extensions.IngressSpec;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressSpec;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
 import io.opentracing.Tracer;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -1319,11 +1321,14 @@ public class KubernetesInternalRuntimeTest {
     final Ingress ingress = mock(Ingress.class);
     mockName(INGRESS_NAME, ingress);
     final IngressSpec spec = mock(IngressSpec.class);
-
     final IngressBackend backend = mock(IngressBackend.class);
-    when(backend.getServiceName()).thenReturn(SERVICE_NAME);
-    when(backend.getServicePort()).thenReturn(new IntOrString(EXPOSED_PORT_1));
-    when(spec.getBackend()).thenReturn(backend);
+    final IngressServiceBackend ingressServiceBackend = mock(IngressServiceBackend.class);
+    final ServiceBackendPort serviceBackendPort = mock(ServiceBackendPort.class);
+    when(spec.getDefaultBackend()).thenReturn(backend);
+    when(backend.getService()).thenReturn(ingressServiceBackend);
+    when(ingressServiceBackend.getPort()).thenReturn(serviceBackendPort);
+    when(ingressServiceBackend.getName()).thenReturn(SERVICE_NAME);
+    when(serviceBackendPort.getNumber()).thenReturn(EXPOSED_PORT_1);
 
     final IngressRule rule = mock(IngressRule.class);
     when(rule.getHost()).thenReturn(INGRESS_HOST);

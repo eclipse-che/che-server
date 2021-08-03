@@ -15,17 +15,22 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPathBuilder;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressRuleValue;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressRuleValueBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackendBuilder;
-import io.fabric8.kubernetes.api.model.extensions.IngressRule;
-import io.fabric8.kubernetes.api.model.extensions.IngressRuleBuilder;
-import io.fabric8.kubernetes.api.model.extensions.IngressSpec;
-import io.fabric8.kubernetes.api.model.extensions.IngressSpecBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPathBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValue;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValueBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackendBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRuleBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackendBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressSpec;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressSpecBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPortBuilder;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
@@ -97,11 +102,17 @@ public class ExternalServerIngressBuilder {
 
   public Ingress build() {
 
-    IngressBackend ingressBackend =
-        new IngressBackendBuilder()
-            .withServiceName(serviceName)
-            .withNewServicePort(servicePort.getStrVal())
+    ServiceBackendPort serviceBackendPort =
+        new ServiceBackendPortBuilder().withNumber(servicePort.getIntVal()).build();
+
+    IngressServiceBackend ingressServiceBackend =
+        new IngressServiceBackendBuilder()
+            .withPort(serviceBackendPort)
+            .withName(serviceName)
             .build();
+
+    IngressBackend ingressBackend =
+        new IngressBackendBuilder().withService(ingressServiceBackend).build();
 
     HTTPIngressPathBuilder httpIngressPathBuilder =
         new HTTPIngressPathBuilder().withBackend(ingressBackend);
@@ -128,7 +139,7 @@ public class ExternalServerIngressBuilder {
     ingressAnnotations.putAll(
         Annotations.newSerializer().servers(serversConfigs).machineName(machineName).annotations());
 
-    return new io.fabric8.kubernetes.api.model.extensions.IngressBuilder()
+    return new IngressBuilder()
         .withSpec(ingressSpec)
         .withMetadata(
             new ObjectMetaBuilder()

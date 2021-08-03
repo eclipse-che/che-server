@@ -16,8 +16,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
@@ -116,8 +116,8 @@ public class ExternalServerIngressBuilderTest {
     HTTPIngressPath httpIngressPath =
         ingress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
     assertEquals(httpIngressPath.getPath(), path);
-    assertEquals(httpIngressPath.getBackend().getServiceName(), SERVICE_NAME);
-    assertEquals(httpIngressPath.getBackend().getServicePort().getStrVal(), SERVICE_PORT);
+    assertEquals(httpIngressPath.getBackend().getService().getName(), SERVICE_NAME);
+    assertEquals(httpIngressPath.getBackend().getService().getPort().getName(), SERVICE_PORT);
 
     assertEquals(ingress.getMetadata().getName(), NAME);
     assertTrue(ingress.getMetadata().getAnnotations().containsKey("annotation-key"));

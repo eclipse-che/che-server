@@ -86,16 +86,16 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
       String endSessionPublicEndpoint =
           setPublicUrl((String) openIdConfiguration.get("end_session_endpoint"));
       String jwksPublicUri = setPublicUrl((String) openIdConfiguration.get("jwks_uri"));
-      String jwksUri = setInternalUrl(jwksPublicUri);
-      String userInfoEndpoint = setInternalUrl(userInfoPublicEndpoint);
+      String jwksInternalUri = setInternalUrl(jwksPublicUri);
+      String userInfoInternalEndpoint = setInternalUrl(userInfoPublicEndpoint);
 
       return new OIDCInfo(
           tokenPublicEndPoint,
           endSessionPublicEndpoint,
           userInfoPublicEndpoint,
-          userInfoEndpoint,
+          userInfoInternalEndpoint,
           jwksPublicUri,
-          jwksUri,
+          jwksInternalUri,
           serverAuthUrl,
           serverURL);
     } catch (IOException e) {
@@ -136,7 +136,7 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
     if (serverURL != null && serverInternalURL != null) {
       return endpointUrl.replace(serverURL, serverInternalURL);
     }
-    return endpointUrl;
+    return null;
   }
 
   private String setPublicUrl(String endpointUrl) {

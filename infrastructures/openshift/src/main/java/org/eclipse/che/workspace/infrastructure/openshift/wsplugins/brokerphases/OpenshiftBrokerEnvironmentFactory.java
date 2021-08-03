@@ -33,6 +33,7 @@ public class OpenshiftBrokerEnvironmentFactory
   @Inject
   public OpenshiftBrokerEnvironmentFactory(
       @Named("che.websocket.endpoint") String cheWebsocketEndpoint,
+      @Nullable @Named("che.websocket.internal.endpoint") String cheWebsocketInternalEndpoint,
       @Named("che.workspace.plugin_broker.pull_policy") String brokerPullPolicy,
       AgentAuthEnableEnvVarProvider authEnableEnvVarProvider,
       MachineTokenEnvVarProvider machineTokenEnvVarProvider,
@@ -46,6 +47,7 @@ public class OpenshiftBrokerEnvironmentFactory
       OpenshiftTrustedCAProvisioner trustedCAProvisioner) {
     super(
         cheWebsocketEndpoint,
+        cheWebsocketInternalEndpoint,
         brokerPullPolicy,
         authEnableEnvVarProvider,
         machineTokenEnvVarProvider,

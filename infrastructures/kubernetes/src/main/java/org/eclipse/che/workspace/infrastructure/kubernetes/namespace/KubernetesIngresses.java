@@ -16,7 +16,13 @@ import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_WORKSPACE_ID_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 
+import io.fabric8.kubernetes.api.model.LoadBalancerStatusBuilder;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPathBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackendBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackendBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLSBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
@@ -28,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructureException;
@@ -55,14 +60,15 @@ public class KubernetesIngresses {
   public Ingress create(Ingress ingress) throws InfrastructureException {
     putLabel(ingress, CHE_WORKSPACE_ID_LABEL, workspaceId);
     try {
-      return asExtensionsIngress(clientFactory
-          .create(workspaceId)
-          .network()
-          .v1()
-          .ingresses()
-          .inNamespace(namespace)
-          .withName(ingress.getMetadata().getName())
-          .create(asNetworkingIngress(ingress)));
+      return asExtensionsIngress(
+          clientFactory
+              .create(workspaceId)
+              .network()
+              .v1()
+              .ingresses()
+              .inNamespace(namespace)
+              .withName(ingress.getMetadata().getName())
+              .create(asNetworkingIngress(ingress)));
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
     }
@@ -70,15 +76,16 @@ public class KubernetesIngresses {
 
   public List<Ingress> get() throws InfrastructureException {
     try {
-      List<io.fabric8.kubernetes.api.model.networking.v1.Ingress> v1Ingresses = clientFactory
-          .create(workspaceId)
-          .network()
-          .v1()
-          .ingresses()
-          .inNamespace(namespace)
-          .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
-          .list()
-          .getItems();
+      List<io.fabric8.kubernetes.api.model.networking.v1.Ingress> v1Ingresses =
+          clientFactory
+              .create(workspaceId)
+              .network()
+              .v1()
+              .ingresses()
+              .inNamespace(namespace)
+              .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
+              .list()
+              .getItems();
       return v1Ingresses.stream().map(this::asExtensionsIngress).collect(toList());
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
@@ -103,7 +110,8 @@ public class KubernetesIngresses {
           ingressResource.watch(
               new Watcher<>() {
                 @Override
-                public void eventReceived(Action action, io.fabric8.kubernetes.api.model.networking.v1.Ingress ingress) {
+                public void eventReceived(
+                    Action action, io.fabric8.kubernetes.api.model.networking.v1.Ingress ingress) {
                   Ingress extIngress = asExtensionsIngress(ingress);
                   if (predicate.test(extIngress)) {
                     future.complete(extIngress);
@@ -169,12 +177,161 @@ public class KubernetesIngresses {
     }
   }
 
-
-  private io.fabric8.kubernetes.api.model.networking.v1.Ingress asNetworkingIngress(Ingress ingress) {
-    ...
+  private io.fabric8.kubernetes.api.model.networking.v1.Ingress asNetworkingIngress(
+      Ingress ingress) {
+    return new IngressBuilder()
+        .withKind(ingress.getKind())
+        .withMetadata(ingress.getMetadata())
+        .withNewStatus()
+        .withLoadBalancer(
+            new LoadBalancerStatusBuilder()
+                .withIngress(ingress.getStatus().getLoadBalancer().getIngress())
+                .build())
+        .endStatus()
+        .withNewSpec()
+        .withIngressClassName(ingress.getSpec().getIngressClassName())
+        .withDefaultBackend(
+            new IngressBackendBuilder()
+                .withResource(ingress.getSpec().getBackend().getResource())
+                .build())
+        .withTls(
+            ingress
+                .getSpec()
+                .getTls()
+                .stream()
+                .map(
+                    t ->
+                        new IngressTLSBuilder()
+                            .withSecretName(t.getSecretName())
+                            .withHosts(t.getHosts())
+                            .build())
+                .collect(toList()))
+        .withRules(
+            ingress
+                .getSpec()
+                .getRules()
+                .stream()
+                .map(
+                    r ->
+                        new io.fabric8.kubernetes.api.model.networking.v1.IngressRuleBuilder()
+                            .withHost(r.getHost())
+                            .withHttp(
+                                new io.fabric8.kubernetes.api.model.networking.v1
+                                        .HTTPIngressRuleValueBuilder()
+                                    .withPaths(
+                                        r.getHttp()
+                                            .getPaths()
+                                            .stream()
+                                            .map(
+                                                httpIngressPath ->
+                                                    new HTTPIngressPathBuilder()
+                                                        .withBackend(
+                                                            new IngressBackendBuilder()
+                                                                .withService(
+                                                                    new IngressServiceBackendBuilder()
+                                                                        .withName(
+                                                                            httpIngressPath
+                                                                                .getBackend()
+                                                                                .getServiceName())
+                                                                        .withNewPort(
+                                                                            httpIngressPath
+                                                                                .getBackend()
+                                                                                .getServicePort()
+                                                                                .getStrVal(),
+                                                                            httpIngressPath
+                                                                                .getBackend()
+                                                                                .getServicePort()
+                                                                                .getIntVal())
+                                                                        .build())
+                                                                .build())
+                                                        .build())
+                                            .collect(toList()))
+                                    .build())
+                            .build())
+                .collect(toList()))
+        .endSpec()
+        .build();
   }
 
-  private Ingress asExtensionsIngress(io.fabric8.kubernetes.api.model.networking.v1.Ingress ingress) {
-    ...
+  private Ingress asExtensionsIngress(
+      io.fabric8.kubernetes.api.model.networking.v1.Ingress ingress) {
+    return new io.fabric8.kubernetes.api.model.extensions.IngressBuilder()
+        .withKind(ingress.getKind())
+        .withMetadata(ingress.getMetadata())
+        .withNewStatus()
+        .withLoadBalancer(
+            new LoadBalancerStatusBuilder()
+                .withIngress(ingress.getStatus().getLoadBalancer().getIngress())
+                .build())
+        .endStatus()
+        .withNewSpec()
+        .withIngressClassName(ingress.getSpec().getIngressClassName())
+        .withBackend(
+            new io.fabric8.kubernetes.api.model.extensions.IngressBackendBuilder()
+                .withResource(ingress.getSpec().getDefaultBackend().getResource())
+                .build())
+        .withTls(
+            ingress
+                .getSpec()
+                .getTls()
+                .stream()
+                .map(
+                    t ->
+                        new io.fabric8.kubernetes.api.model.extensions.IngressTLSBuilder()
+                            .withSecretName(t.getSecretName())
+                            .withHosts(t.getHosts())
+                            .build())
+                .collect(toList()))
+        .withRules(
+            ingress
+                .getSpec()
+                .getRules()
+                .stream()
+                .map(
+                    r ->
+                        new io.fabric8.kubernetes.api.model.extensions.IngressRuleBuilder()
+                            .withHost(r.getHost())
+                            .withHttp(
+                                new io.fabric8.kubernetes.api.model.extensions
+                                        .HTTPIngressRuleValueBuilder()
+                                    .withPaths(
+                                        r.getHttp()
+                                            .getPaths()
+                                            .stream()
+                                            .map(
+                                                httpIngressPath ->
+                                                    new io.fabric8.kubernetes.api.model.extensions
+                                                            .HTTPIngressPathBuilder()
+                                                        .withBackend(
+                                                            new io.fabric8.kubernetes.api.model
+                                                                    .extensions
+                                                                    .IngressBackendBuilder()
+                                                                .withServiceName(
+                                                                    httpIngressPath
+                                                                        .getBackend()
+                                                                        .getService()
+                                                                        .getName())
+                                                                .withNewServicePort()
+                                                                .withIntVal(
+                                                                    httpIngressPath
+                                                                        .getBackend()
+                                                                        .getService()
+                                                                        .getPort()
+                                                                        .getNumber())
+                                                                .withStrVal(
+                                                                    httpIngressPath
+                                                                        .getBackend()
+                                                                        .getService()
+                                                                        .getPort()
+                                                                        .getName())
+                                                                .endServicePort()
+                                                                .build())
+                                                        .build())
+                                            .collect(toList()))
+                                    .build())
+                            .build())
+                .collect(toList()))
+        .endSpec()
+        .build();
   }
 }

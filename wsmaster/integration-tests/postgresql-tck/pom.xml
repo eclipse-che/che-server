@@ -291,17 +291,16 @@
                                     <port>jdbc.port:5432</port>
                                 </ports>
                                 <wait>
-                                    <log>server started</log>
+                                    <log>PostgreSQL init process complete; ready for start up.</log>
                                     <time>60000</time>
                                 </wait>
                                 <restartPolicy>
                                     <name>always</name>
                                 </restartPolicy>
                                 <env>
-                                    <POSTGRESQL_USER>${jdbc.user.name}</POSTGRESQL_USER>
-                                    <POSTGRESQL_PASSWORD>${jdbc.user.password}</POSTGRESQL_PASSWORD>
-                                    <POSTGRESQL_DATABASE>che</POSTGRESQL_DATABASE>
-                                    <POSTGRESQL_ADMIN_PASSWORD>${jdbc.admin.password}</POSTGRESQL_ADMIN_PASSWORD>
+                                    <POSTGRES_USER>${jdbc.admin.name}</POSTGRES_USER>
+                                    <POSTGRES_PASSWORD>${jdbc.admin.password}</POSTGRES_PASSWORD>
+                                    <POSTGRES_DB>che</POSTGRES_DB>
                                 </env>
                             </run>
                         </image>

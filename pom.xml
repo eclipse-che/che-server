@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.che</groupId>
     <artifactId>che-server</artifactId>
-    <version>7.34.0-SNAPSHOT</version>
+    <version>7.35.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
     <description>Eclipse Che Server</description>
@@ -72,7 +72,7 @@
         <commons-lang.version>2.6</commons-lang.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-96-centos7:9.6-b681d78125361519180a6ac05242c296f8906c11eab7e207b5ca9a89b6344392</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client>5.4.1</io.fabric8.kubernetes-client>
+        <io.fabric8.kubernetes-client>5.6.0</io.fabric8.kubernetes-client>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.1.3</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.0.0</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.0.0</io.jaegertracing.version>
@@ -101,7 +101,7 @@
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
-        <che.version>7.34.0-SNAPSHOT</che.version>
+        <che.version>7.35.0-SNAPSHOT</che.version>
         <specification.version>1.0-beta2</specification.version>
         <?SORTPOM RESUME?>
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>

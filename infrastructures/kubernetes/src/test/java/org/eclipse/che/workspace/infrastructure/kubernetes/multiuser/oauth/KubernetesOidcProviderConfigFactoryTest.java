@@ -33,6 +33,7 @@ public class KubernetesOidcProviderConfigFactoryTest {
 
   @BeforeMethod
   public void setUp() {
+    EnvironmentContext.reset();
     defaultConfig = new ConfigBuilder().build();
   }
 
@@ -44,7 +45,7 @@ public class KubernetesOidcProviderConfigFactoryTest {
   }
 
   @Test
-  public void test() {
+  public void getConfigWithTokenWhenTokenIsSet() {
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl("test_name", "test_id", TEST_TOKEN, false));
 

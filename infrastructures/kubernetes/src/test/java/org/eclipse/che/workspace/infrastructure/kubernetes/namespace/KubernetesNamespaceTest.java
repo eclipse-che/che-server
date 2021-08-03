@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
+import static java.util.Collections.emptyMap;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -40,7 +41,6 @@ import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -116,7 +116,7 @@ public class KubernetesNamespaceTest {
         new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
 
     // when
-    namespace.prepare(true, Map.of());
+    namespace.prepare(true, Map.of(), Map.of());
 
     // then
     verify(namespaceOperation, never()).create(any(Namespace.class));
@@ -132,7 +132,7 @@ public class KubernetesNamespaceTest {
         new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
 
     // when
-    namespace.prepare(true, Map.of());
+    namespace.prepare(true, Map.of(), Map.of());
 
     // then
     ArgumentCaptor<Namespace> captor = ArgumentCaptor.forClass(Namespace.class);
@@ -149,7 +149,7 @@ public class KubernetesNamespaceTest {
         new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
 
     // when
-    namespace.prepare(false, Map.of());
+    namespace.prepare(false, Map.of(), Map.of());
 
     // then
     // exception is thrown
@@ -196,7 +196,7 @@ public class KubernetesNamespaceTest {
     doThrow(KubernetesClientException.class).when(kubernetesClient).serviceAccounts();
 
     new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
-        .prepare(false, Map.of());
+        .prepare(false, Map.of(), Map.of());
   }
 
   @Test(expectedExceptions = InfrastructureException.class)
@@ -207,7 +207,7 @@ public class KubernetesNamespaceTest {
     when(serviceAccountResource.get()).thenReturn(null);
 
     new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
-        .prepare(false, Map.of());
+        .prepare(false, Map.of(), Map.of());
   }
 
   @Test(expectedExceptions = InfrastructureException.class)
@@ -226,7 +226,7 @@ public class KubernetesNamespaceTest {
         .watch(any());
 
     new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
-        .prepare(false, Map.of());
+        .prepare(false, Map.of(), Map.of());
   }
 
   @Test
@@ -245,7 +245,7 @@ public class KubernetesNamespaceTest {
         .watch(any());
 
     new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
-        .prepare(true, Map.of());
+        .prepare(true, Map.of(), Map.of());
 
     verify(serviceAccountResource).get();
     verify(serviceAccountResource).watch(any());
@@ -318,7 +318,7 @@ public class KubernetesNamespaceTest {
     Map<String, String> labels = Map.of("label.with.this", "yes", "and.this", "of courese");
 
     // when
-    kubernetesNamespace.prepare(true, labels);
+    kubernetesNamespace.prepare(true, labels, emptyMap());
 
     // then
     Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
@@ -349,7 +349,7 @@ public class KubernetesNamespaceTest {
         .createOrReplace(any(Namespace.class));
 
     // when
-    kubernetesNamespace.prepare(true, labels);
+    kubernetesNamespace.prepare(true, labels, emptyMap());
 
     // then
     assertTrue(namespace.getMetadata().getLabels().entrySet().containsAll(labels.entrySet()));
@@ -377,12 +377,86 @@ public class KubernetesNamespaceTest {
         .createOrReplace(any(Namespace.class));
 
     // when
-    kubernetesNamespace.prepare(true, Collections.emptyMap());
+    kubernetesNamespace.prepare(true, emptyMap(), emptyMap());
 
     // then
     assertTrue(
         namespace.getMetadata().getLabels().entrySet().containsAll(existingLabels.entrySet()));
     verify(nonNamespaceOperation, never()).createOrReplace(any());
+  }
+
+  public void testAnnotateNamespace() throws InfrastructureException {
+    // given
+    prepareNamespace(NAMESPACE);
+    KubernetesNamespace kubernetesNamespace =
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+
+    KubernetesClient cheKubeClient = mock(KubernetesClient.class);
+    doReturn(cheKubeClient).when(cheClientFactory).create();
+
+    NonNamespaceOperation nonNamespaceOperation = mock(NonNamespaceOperation.class);
+    doReturn(nonNamespaceOperation).when(cheKubeClient).namespaces();
+
+    ArgumentCaptor<Namespace> namespaceArgumentCaptor = ArgumentCaptor.forClass(Namespace.class);
+    doAnswer(a -> a.getArgument(0))
+        .when(nonNamespaceOperation)
+        .createOrReplace(namespaceArgumentCaptor.capture());
+
+    Map<String, String> annotations = Map.of("annotate.with.this", "yes", "and.this", "of courese");
+
+    // when
+    kubernetesNamespace.prepare(true, emptyMap(), annotations);
+
+    // then
+    Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
+    assertTrue(
+        updatedNamespace
+            .getMetadata()
+            .getAnnotations()
+            .entrySet()
+            .containsAll(annotations.entrySet()));
+    assertEquals(updatedNamespace.getMetadata().getName(), NAMESPACE);
+  }
+
+  @Test
+  public void testDontTryToAnnotateNamespaceIfAlreadyAnnoted() throws InfrastructureException {
+    // given
+    Map<String, String> annotations =
+        Map.of("annotation.with.this", "yes", "and.this", "of courese");
+
+    Namespace namespace = prepareNamespace(NAMESPACE);
+    namespace.getMetadata().setAnnotations(annotations);
+    KubernetesNamespace kubernetesNamespace =
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+
+    // when
+    kubernetesNamespace.prepare(true, emptyMap(), annotations);
+
+    // then
+    assertTrue(
+        namespace.getMetadata().getAnnotations().entrySet().containsAll(annotations.entrySet()));
+  }
+
+  @Test
+  public void testDontTryToAnnotateNamespaceIfNoNamespacesProvided()
+      throws InfrastructureException {
+    // given
+    Map<String, String> existingAnnotations = Map.of("some", "annotations");
+    Namespace namespace = prepareNamespace(NAMESPACE);
+    namespace.getMetadata().setAnnotations(existingAnnotations);
+    KubernetesNamespace kubernetesNamespace =
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+
+    // when
+    kubernetesNamespace.prepare(true, emptyMap(), emptyMap());
+
+    // then
+    assertTrue(
+        namespace
+            .getMetadata()
+            .getAnnotations()
+            .entrySet()
+            .containsAll(existingAnnotations.entrySet()));
   }
 
   @Test
@@ -407,7 +481,7 @@ public class KubernetesNamespaceTest {
         .createOrReplace(namespaceArgumentCaptor.capture());
 
     // when
-    kubernetesNamespace.prepare(true, labels);
+    kubernetesNamespace.prepare(true, labels, emptyMap());
 
     // then
     Namespace updatedNamespace = namespaceArgumentCaptor.getValue();
@@ -437,7 +511,7 @@ public class KubernetesNamespaceTest {
         .createOrReplace(any(Namespace.class));
 
     // when
-    kubernetesNamespace.prepare(true, labels);
+    kubernetesNamespace.prepare(true, labels, emptyMap());
 
     // then
     verify(nonNamespaceOperation).createOrReplace(namespace);

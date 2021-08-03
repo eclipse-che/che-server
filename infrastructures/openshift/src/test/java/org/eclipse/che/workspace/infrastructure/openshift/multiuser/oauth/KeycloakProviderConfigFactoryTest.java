@@ -44,6 +44,7 @@ import org.eclipse.che.multiuser.keycloak.server.KeycloakSettings;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -132,6 +133,11 @@ public class KeycloakProviderConfigFactoryTest {
             PROVIDER,
             API_ENDPOINT);
     defaultConfig = new io.fabric8.kubernetes.client.ConfigBuilder().build();
+  }
+
+  @AfterMethod
+  public void cleanup() {
+    EnvironmentContext.reset();
   }
 
   @Test

@@ -33,6 +33,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
@@ -57,6 +58,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,6 +78,7 @@ import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.mockito.ArgumentCaptor;
@@ -1011,6 +1014,118 @@ public class KubernetesNamespaceFactoryTest {
             new NamespaceResolutionContext("workspace123", "user123", "jondoe"));
 
     assertEquals(namespace, "ns1");
+  }
+
+  @Test
+  public void shouldHandleProvision() throws InfrastructureException {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-che",
+                false,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.getName()).thenReturn("jondoe-che");
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    KubernetesNamespaceMetaImpl namespaceMeta =
+        new KubernetesNamespaceMetaImpl(
+            "jondoe-che", ImmutableMap.of("phase", "active", "default", "true"));
+    doReturn(Optional.of(namespaceMeta)).when(namespaceFactory).fetchNamespace(eq("jondoe-che"));
+
+    // when
+    NamespaceResolutionContext context =
+        new NamespaceResolutionContext("workspace123", "user123", "jondoe");
+    KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
+
+    // then
+    assertEquals(actual.getName(), "jondoe-che");
+    assertEquals(actual.getAttributes(), ImmutableMap.of("phase", "active", "default", "true"));
+  }
+
+  @Test(
+      expectedExceptions = InfrastructureException.class,
+      expectedExceptionsMessageRegExp = "Not able to find namespace jondoe-cha-cha-cha")
+  public void shouldFailToProvisionIfNotAbleToFindNamespace() throws InfrastructureException {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-cha-cha-cha",
+                false,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.getName()).thenReturn("jondoe-cha-cha-cha");
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    KubernetesNamespaceMetaImpl namespaceMeta =
+        new KubernetesNamespaceMetaImpl(
+            "jondoe-cha-cha-cha", ImmutableMap.of("phase", "active", "default", "true"));
+    doReturn(Optional.empty()).when(namespaceFactory).fetchNamespace(eq("jondoe-cha-cha-cha"));
+
+    // when
+    NamespaceResolutionContext context =
+        new NamespaceResolutionContext("workspace123", "user123", "jondoe");
+    namespaceFactory.provision(context);
+
+    // then
+    fail("should not reach this point since exception has to be thrown");
+  }
+
+  @Test(
+      expectedExceptions = InfrastructureException.class,
+      expectedExceptionsMessageRegExp = "Error occurred when tried to fetch default namespace")
+  public void shouldFail2ProvisionIfNotAbleToFindNamespace() throws InfrastructureException {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-cha-cha-cha",
+                false,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.getName()).thenReturn("jondoe-cha-cha-cha");
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    KubernetesNamespaceMetaImpl namespaceMeta =
+        new KubernetesNamespaceMetaImpl(
+            "jondoe-cha-cha-cha", ImmutableMap.of("phase", "active", "default", "true"));
+    doThrow(new InfrastructureException("Error occurred when tried to fetch default namespace"))
+        .when(namespaceFactory)
+        .fetchNamespace(eq("jondoe-cha-cha-cha"));
+
+    // when
+    NamespaceResolutionContext context =
+        new NamespaceResolutionContext("workspace123", "user123", "jondoe");
+    namespaceFactory.provision(context);
+
+    // then
+    fail("should not reach this point since exception has to be thrown");
   }
 
   @Test

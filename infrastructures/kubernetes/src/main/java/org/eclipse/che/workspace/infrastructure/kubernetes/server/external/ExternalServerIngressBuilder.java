@@ -13,7 +13,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.server.external;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
-import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPathBuilder;
@@ -48,7 +47,8 @@ public class ExternalServerIngressBuilder {
   private String path;
   private String name;
   private String serviceName;
-  private IntOrString servicePort;
+  private String servicePortName;
+  private Integer servicePort;
   private Map<String, ? extends ServerConfig> serversConfigs;
   private String machineName;
   private Map<String, String> annotations;
@@ -79,8 +79,13 @@ public class ExternalServerIngressBuilder {
     return this;
   }
 
-  public ExternalServerIngressBuilder withServicePort(String targetPortName) {
-    this.servicePort = new IntOrString(targetPortName);
+  public ExternalServerIngressBuilder withServicePort(Integer targetPort) {
+    this.servicePort = targetPort;
+    return this;
+  }
+
+  public ExternalServerIngressBuilder withServicePortName(String targetPortName) {
+    this.servicePortName = targetPortName;
     return this;
   }
 
@@ -103,7 +108,7 @@ public class ExternalServerIngressBuilder {
   public Ingress build() {
 
     ServiceBackendPort serviceBackendPort =
-        new ServiceBackendPortBuilder().withNumber(servicePort.getIntVal()).build();
+        new ServiceBackendPortBuilder().withName(servicePortName).withNumber(servicePort).build();
 
     IngressServiceBackend ingressServiceBackend =
         new IngressServiceBackendBuilder()

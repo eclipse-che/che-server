@@ -40,8 +40,12 @@ public class IngressesTest {
     final int PORT = 8080;
 
     Service service = createService(SERVER_PORT_NAME, PORT);
-    Ingress ingress = createIngress(new IngressBackend(null, new IngressServiceBackend(
-        "servicename", new ServiceBackendPort(SERVER_PORT_NAME, PORT))));
+    Ingress ingress =
+        createIngress(
+            new IngressBackend(
+                null,
+                new IngressServiceBackend(
+                    "servicename", new ServiceBackendPort(SERVER_PORT_NAME, PORT))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);
@@ -56,8 +60,11 @@ public class IngressesTest {
 
     Service service = createService(SERVER_PORT_NAME, PORT);
     Ingress ingress =
-        createIngress(new IngressBackend(null, new IngressServiceBackend(
-            "servicename", new ServiceBackendPort(SERVER_PORT_NAME, PORT))));
+        createIngress(
+            new IngressBackend(
+                null,
+                new IngressServiceBackend(
+                    "servicename", new ServiceBackendPort(SERVER_PORT_NAME, PORT))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);
@@ -72,8 +79,11 @@ public class IngressesTest {
 
     Service service = createService(SERVER_PORT_NAME, PORT);
     Ingress ingress =
-        createIngress(new IngressBackend(null, new IngressServiceBackend(
-            "servicename", new ServiceBackendPort("does not exist", null))));
+        createIngress(
+            new IngressBackend(
+                null,
+                new IngressServiceBackend(
+                    "servicename", new ServiceBackendPort("does not exist", null))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);
@@ -86,8 +96,10 @@ public class IngressesTest {
     final int PORT = 8080;
 
     Service service = createService(SERVER_PORT_NAME, PORT);
-    Ingress ingress = createIngress(new IngressBackend(null, new IngressServiceBackend(
-        "servicename", new ServiceBackendPort(null, 666))));
+    Ingress ingress =
+        createIngress(
+            new IngressBackend(
+                null, new IngressServiceBackend("servicename", new ServiceBackendPort(null, 666))));
 
     Optional<IngressRule> foundRule =
         Ingresses.findIngressRuleForServicePort(singletonList(ingress), service, PORT);

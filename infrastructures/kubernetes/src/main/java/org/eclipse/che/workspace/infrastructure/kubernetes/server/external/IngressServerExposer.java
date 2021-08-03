@@ -124,7 +124,8 @@ public class IngressServerExposer<T extends KubernetesEnvironment>
         .withServiceName(serviceName)
         .withAnnotations(annotations)
         .withLabels(labels)
-        .withServicePort(servicePort.getName())
+        .withServicePortName(servicePort.getName())
+        .withServicePort(servicePort.getPort())
         .withServers(servers)
         .build();
   }

@@ -20,9 +20,15 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Kube
 
 import com.google.inject.Inject;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Named;
 import org.eclipse.che.account.spi.AccountImpl;
@@ -94,6 +100,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   private final String configuredPVCName;
   private final String pvcAccessMode;
   private final String pvcStorageClassName;
+  private final String infraNamespace;
   private final PVCSubPathHelper pvcSubPathHelper;
   private final KubernetesNamespaceFactory factory;
   private final EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter;
@@ -111,6 +118,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
       @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
+      @Named("che.infra.kubernetes.namespace.default") String infraNamespace,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
       EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter,
@@ -124,6 +132,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
     this.preCreateDirs = preCreateDirs;
     this.pvcStorageClassName = pvcStorageClassName;
     this.waitBound = waitBound;
+    this.infraNamespace = infraNamespace;
     this.pvcSubPathHelper = pvcSubPathHelper;
     this.factory = factory;
     this.ephemeralWorkspaceAdapter = ephemeralWorkspaceAdapter;
@@ -242,8 +251,33 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
     AccountImpl account = ((WorkspaceImpl) workspace).getAccount();
     if (isPersonalAccount(account) && accountHasNoWorkspaces(account)) {
       log.debug("Deleting the common PVC: '{}',", configuredPVCName);
-      deleteCommonPVC(workspace);
-      return;
+      String namespace = infraNamespace.replaceFirst("<username>", workspace.getNamespace());
+
+      // wait until all running rm pods have finished before deleting common PVC
+      try (KubernetesClient client = new DefaultKubernetesClient()) {
+        PodList pods = client.pods().inNamespace(namespace).list();
+        for (Pod pod : pods.getItems()) {
+          String podName = pod.getMetadata().getName();
+          if (podName.startsWith(PVCSubPathHelper.RM_COMMAND_BASE[0])) {
+            client
+                .pods()
+                .inNamespace(namespace)
+                .withName(podName)
+                .waitUntilCondition(CommonPVCStrategy::podRemoveCondition, 5, TimeUnit.MINUTES);
+          }
+        }
+
+      } catch (KubernetesClientException e) {
+        e.printStackTrace();
+      }
+
+      // check if account has no workspaces again, since
+      // a new workspace could have started while waiting for
+      // rm pods to finish
+      if (accountHasNoWorkspaces(account)) {
+        deleteCommonPVC(workspace);
+        return;
+      }
     }
 
     String workspaceId = workspace.getId();
@@ -253,6 +287,18 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
         factory.get(workspace).getName(),
         pvc.getMetadata().getName(),
         subpathPrefixes.getWorkspaceSubPath(workspaceId));
+  }
+
+  private static boolean podRemoveCondition(Pod pod) {
+    boolean result = true;
+    try {
+      result =
+          pod.getStatus().getPhase().equals(PVCSubPathHelper.POD_PHASE_SUCCEEDED)
+              || pod.getStatus().getPhase().equals(PVCSubPathHelper.POD_PHASE_FAILED);
+    } catch (NullPointerException e) {
+      // do nothing, return true
+    }
+    return result;
   }
 
   private PersistentVolumeClaim replacePVCsWithCommon(

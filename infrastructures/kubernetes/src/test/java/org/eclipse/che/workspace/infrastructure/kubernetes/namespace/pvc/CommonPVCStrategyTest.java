@@ -112,6 +112,7 @@ public class CommonPVCStrategyTest {
             true,
             PVC_STORAGE_CLASS_NAME,
             true,
+            NAMESPACE,
             pvcSubPathHelper,
             factory,
             ephemeralWorkspaceAdapter,
@@ -179,6 +180,7 @@ public class CommonPVCStrategyTest {
             false,
             PVC_STORAGE_CLASS_NAME,
             true,
+            NAMESPACE,
             pvcSubPathHelper,
             factory,
             ephemeralWorkspaceAdapter,
@@ -228,6 +230,7 @@ public class CommonPVCStrategyTest {
             true,
             PVC_STORAGE_CLASS_NAME,
             false, // wait bound PVCs
+            NAMESPACE,
             pvcSubPathHelper,
             factory,
             ephemeralWorkspaceAdapter,

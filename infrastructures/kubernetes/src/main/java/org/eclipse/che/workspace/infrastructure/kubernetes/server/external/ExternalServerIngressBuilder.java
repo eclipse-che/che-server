@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.server.external;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
 import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPathBuilder;
@@ -28,7 +29,6 @@ import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackend;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackendBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressSpec;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressSpecBuilder;
-import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
 import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPortBuilder;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,6 +53,9 @@ public class ExternalServerIngressBuilder {
   private String machineName;
   private Map<String, String> annotations;
   private Map<String, String> labels;
+
+  @VisibleForTesting
+  static final String INGRESS_PATH_TYPE = "ImplementationSpecific";
 
   public ExternalServerIngressBuilder withHost(String host) {
     this.host = host;
@@ -107,12 +110,19 @@ public class ExternalServerIngressBuilder {
 
   public Ingress build() {
 
-    ServiceBackendPort serviceBackendPort =
-        new ServiceBackendPortBuilder().withName(servicePortName).withNumber(servicePort).build();
+    ServiceBackendPortBuilder serviceBackendPortBuilder =
+        new ServiceBackendPortBuilder();
+
+    //cannot set both port and name
+    if (servicePort != null) {
+      serviceBackendPortBuilder.withNumber(servicePort);
+    } else if (!isNullOrEmpty(servicePortName)) {
+      serviceBackendPortBuilder.withName(servicePortName);
+    }
 
     IngressServiceBackend ingressServiceBackend =
         new IngressServiceBackendBuilder()
-            .withPort(serviceBackendPort)
+            .withPort(serviceBackendPortBuilder.build())
             .withName(serviceName)
             .build();
 
@@ -120,7 +130,7 @@ public class ExternalServerIngressBuilder {
         new IngressBackendBuilder().withService(ingressServiceBackend).build();
 
     HTTPIngressPathBuilder httpIngressPathBuilder =
-        new HTTPIngressPathBuilder().withBackend(ingressBackend);
+        new HTTPIngressPathBuilder().withBackend(ingressBackend).withPathType(INGRESS_PATH_TYPE);
 
     if (!isNullOrEmpty(path)) {
       httpIngressPathBuilder.withPath(path);

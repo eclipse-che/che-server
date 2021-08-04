@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.server.external;
 
 import static java.util.Collections.singletonMap;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ExternalServerIngressBuilder.INGRESS_PATH_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -120,6 +121,7 @@ public class ExternalServerIngressBuilderTest {
     HTTPIngressPath httpIngressPath =
         ingress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
     assertEquals(httpIngressPath.getPath(), path);
+    assertEquals(httpIngressPath.getPathType(), INGRESS_PATH_TYPE);
     assertEquals(httpIngressPath.getBackend().getService().getName(), SERVICE_NAME);
     assertEquals(httpIngressPath.getBackend().getService().getPort().getName(), SERVICE_PORT_NAME);
 

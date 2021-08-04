@@ -55,7 +55,7 @@ public class ExternalServerIngressBuilder {
   private Map<String, String> labels;
 
   @VisibleForTesting
-  static final String INGRESS_PATH_TYPE = "ImplementationSpecific";
+  static final String INGRESS_PATH_TYPE = "Prefix";
 
   public ExternalServerIngressBuilder withHost(String host) {
     this.host = host;

@@ -152,6 +152,7 @@ public class OpenShiftProjectFactoryTest {
             "<username>-che",
             true,
             true,
+            true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
             true,
@@ -184,6 +185,7 @@ public class OpenShiftProjectFactoryTest {
             "<username>-che",
             true,
             true,
+            true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
             true,
@@ -214,6 +216,7 @@ public class OpenShiftProjectFactoryTest {
             "",
             null,
             null,
+            true,
             true,
             true,
             NAMESPACE_LABELS,
@@ -251,6 +254,7 @@ public class OpenShiftProjectFactoryTest {
             "",
             "",
             "<userid>-che",
+            true,
             true,
             true,
             NAMESPACE_LABELS,
@@ -291,6 +295,7 @@ public class OpenShiftProjectFactoryTest {
             "<userid>-che",
             true,
             true,
+            true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
             true,
@@ -323,6 +328,7 @@ public class OpenShiftProjectFactoryTest {
             "",
             "",
             "<userid>-che",
+            true,
             true,
             true,
             NAMESPACE_LABELS,
@@ -369,6 +375,7 @@ public class OpenShiftProjectFactoryTest {
             "<username>-che",
             true,
             true,
+            true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
             true,
@@ -405,6 +412,7 @@ public class OpenShiftProjectFactoryTest {
             "",
             null,
             "<username>-che",
+            true,
             true,
             true,
             NAMESPACE_LABELS,
@@ -445,6 +453,7 @@ public class OpenShiftProjectFactoryTest {
             "<username>-che",
             true,
             true,
+            true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
             true,
@@ -471,6 +480,7 @@ public class OpenShiftProjectFactoryTest {
             "",
             null,
             "<username>-che",
+            true,
             true,
             true,
             NAMESPACE_LABELS,
@@ -506,6 +516,7 @@ public class OpenShiftProjectFactoryTest {
                 "<userid>-che",
                 true,
                 true,
+                true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
@@ -528,7 +539,7 @@ public class OpenShiftProjectFactoryTest {
     // then
     assertEquals(toReturnProject, project);
     verify(projectFactory, never()).doCreateServiceAccount(any(), any());
-    verify(toReturnProject).prepare(eq(false), eq(false), any());
+    verify(toReturnProject).prepare(eq(false), eq(false), any(), any());
   }
 
   @Test
@@ -541,6 +552,7 @@ public class OpenShiftProjectFactoryTest {
                 "serviceAccount",
                 null,
                 "<userid>-che",
+                true,
                 true,
                 true,
                 NAMESPACE_LABELS,
@@ -582,6 +594,7 @@ public class OpenShiftProjectFactoryTest {
                 "<userid>-che",
                 true,
                 true,
+                true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
@@ -621,6 +634,7 @@ public class OpenShiftProjectFactoryTest {
                 "serviceAccount",
                 null,
                 "<userid>-che",
+                true,
                 true,
                 true,
                 NAMESPACE_LABELS,
@@ -676,6 +690,7 @@ public class OpenShiftProjectFactoryTest {
             "<userid>-che",
             true,
             true,
+            true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
             true,
@@ -710,6 +725,7 @@ public class OpenShiftProjectFactoryTest {
             "<userid>-che",
             true,
             true,
+            true,
             "try_placeholder_here=<username>",
             NAMESPACE_ANNOTATIONS,
             true,
@@ -725,6 +741,44 @@ public class OpenShiftProjectFactoryTest {
     projectFactory.list();
 
     verify(projectOperation).withLabels(Map.of("try_placeholder_here", "<username>"));
+  }
+
+  @Test
+  public void testUsernamePlaceholderInAnnotationsIsEvaluated() throws InfrastructureException {
+
+    // given
+    projectFactory =
+        spy(
+            new OpenShiftProjectFactory(
+                "",
+                null,
+                "<userid>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                "try_placeholder_here=<username>",
+                true,
+                clientFactory,
+                cheClientFactory,
+                cheServerOpenshiftClientFactory,
+                stopWorkspaceRoleProvisioner,
+                userManager,
+                preferenceManager,
+                pool,
+                NO_OAUTH_IDENTITY_PROVIDER));
+    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+
+    // when
+    RuntimeIdentity identity = new RuntimeIdentityImpl("workspace123", null, USER_ID, "old-che");
+    OpenShiftProject project = projectFactory.getOrCreate(identity);
+
+    // then
+    assertEquals(toReturnProject, project);
+    verify(toReturnProject)
+        .prepare(eq(false), eq(false), any(), eq(Map.of("try_placeholder_here", "jondoe")));
   }
 
   private void prepareNamespaceToBeFoundByName(String name, Project project) throws Exception {

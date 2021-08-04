@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
@@ -37,7 +39,10 @@ public class KeycloakProfileRetriever {
   @Inject
   public KeycloakProfileRetriever(OIDCInfo oidcInfo, HttpJsonRequestFactory requestFactory) {
     this.requestFactory = requestFactory;
-    this.keyclockCurrentUserInfoUrl = oidcInfo.getUserInfoEndpoint();
+    this.keyclockCurrentUserInfoUrl =
+        isNullOrEmpty(oidcInfo.getUserInfoInternalEndpoint())
+            ? oidcInfo.getUserInfoPublicEndpoint()
+            : oidcInfo.getUserInfoInternalEndpoint();
   }
 
   /**

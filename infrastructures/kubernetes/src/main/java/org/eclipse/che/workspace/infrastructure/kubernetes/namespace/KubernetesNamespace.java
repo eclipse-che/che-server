@@ -135,13 +135,19 @@ public class KubernetesNamespace {
    * namespace already exists or we create new one. If update labels operation fail due to lack of
    * permission, we do not fail completely.
    *
+   * <p>The method will try to annotate the namespace with provided `annotations`. It does not
+   * matter if the namespace already exists or we create new one. If update annotations operation
+   * fail due to lack of permission, we do not fail completely.
+   *
    * @param canCreate defines what to do when the namespace is not found. The namespace is created
    *     when {@code true}, otherwise an exception is thrown.
    * @param labels labels that should be set to the namespace
+   * @param annotations annotations that should be set to the namespace
    * @throws InfrastructureException if any exception occurs during namespace preparation or if the
    *     namespace doesn't exist and {@code canCreate} is {@code false}.
    */
-  void prepare(boolean canCreate, Map<String, String> labels) throws InfrastructureException {
+  void prepare(boolean canCreate, Map<String, String> labels, Map<String, String> annotations)
+      throws InfrastructureException {
     KubernetesClient client = clientFactory.create(workspaceId);
     Namespace namespace = get(name, client);
 
@@ -161,6 +167,7 @@ public class KubernetesNamespace {
       client.secrets().inNamespace(name).create(secret);
     }
     label(namespace, labels);
+    annotate(namespace, annotations);
   }
 
   /**
@@ -209,6 +216,58 @@ public class KubernetesNamespace {
                 + "`che-namespace-editor` for this, depending on its configuration). "
                 + "Alternatively, consider disabling the feature by setting "
                 + "`che.infra.kubernetes.namepsace.label` to `false`.");
+        return;
+      }
+      throw new InfrastructureException(kce);
+    }
+  }
+
+  /**
+   * Applies given `ensureAnnotations` into given `namespace` and update the `namespace` in the
+   * Kubernetes.
+   *
+   * <p>If we do not have permissions to do so (code=403), this method does not throw any exception.
+   *
+   * @param namespace namespace to annotate
+   * @param ensureAnnotations these annotations should be applied on given `namespace`
+   * @throws InfrastructureException if something goes wrong with update, except lack of permissions
+   */
+  protected void annotate(Namespace namespace, Map<String, String> ensureAnnotations)
+      throws InfrastructureException {
+    if (ensureAnnotations.isEmpty()) {
+      return;
+    }
+    Map<String, String> currentAnnotations = namespace.getMetadata().getAnnotations();
+    Map<String, String> newAnnotations =
+        currentAnnotations != null ? new HashMap<>(currentAnnotations) : new HashMap<>();
+
+    if (newAnnotations.entrySet().containsAll(ensureAnnotations.entrySet())) {
+      LOG.debug(
+          "Nothing to do, namespace [{}] already has all required annotations.",
+          namespace.getMetadata().getName());
+      return;
+    }
+
+    try {
+      // update the namespace with new annotations
+      cheSAClientFactory
+          .create()
+          .namespaces()
+          .createOrReplace(
+              new NamespaceBuilder(namespace)
+                  .editMetadata()
+                  .addToAnnotations(ensureAnnotations)
+                  .endMetadata()
+                  .build());
+    } catch (KubernetesClientException kce) {
+      if (kce.getCode() == 403) {
+        LOG.warn(
+            "Can't annotate the namespace due to lack of permissions. Grant cluster-wide permissions "
+                + "to `get` and `update` the `namespaces` to the `che` service account "
+                + "(Che operator might have already prepared a cluster role called "
+                + "`che-namespace-editor` for this, depending on its configuration). "
+                + "Alternatively, consider disabling the feature by setting "
+                + "`che.infra.kubernetes.namepsace.annotate` to `false`.");
         return;
       }
       throw new InfrastructureException(kce);

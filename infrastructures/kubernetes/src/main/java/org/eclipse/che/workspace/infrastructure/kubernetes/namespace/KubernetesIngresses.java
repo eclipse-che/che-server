@@ -142,21 +142,10 @@ public class KubernetesIngresses {
 
   public void delete() throws InfrastructureException {
     try {
-
       clientFactory
           .create(workspaceId)
           .network()
           .v1()
-          .ingresses()
-          .inNamespace(namespace)
-          .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
-          .withPropagationPolicy(BACKGROUND)
-          .delete();
-
-      // compatibility
-      clientFactory
-          .create(workspaceId)
-          .extensions()
           .ingresses()
           .inNamespace(namespace)
           .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)

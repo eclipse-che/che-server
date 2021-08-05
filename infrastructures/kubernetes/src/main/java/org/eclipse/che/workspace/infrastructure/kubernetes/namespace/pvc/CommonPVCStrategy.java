@@ -100,7 +100,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   private final String configuredPVCName;
   private final String pvcAccessMode;
   private final String pvcStorageClassName;
-  private final String infraNamespace;
   private final PVCSubPathHelper pvcSubPathHelper;
   private final KubernetesNamespaceFactory factory;
   private final EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter;
@@ -118,7 +117,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
       @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
-      @Named("che.infra.kubernetes.namespace.default") String infraNamespace,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
       EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter,
@@ -132,7 +130,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
     this.preCreateDirs = preCreateDirs;
     this.pvcStorageClassName = pvcStorageClassName;
     this.waitBound = waitBound;
-    this.infraNamespace = infraNamespace;
     this.pvcSubPathHelper = pvcSubPathHelper;
     this.factory = factory;
     this.ephemeralWorkspaceAdapter = ephemeralWorkspaceAdapter;
@@ -251,30 +248,14 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
     AccountImpl account = ((WorkspaceImpl) workspace).getAccount();
     if (isPersonalAccount(account) && accountHasNoWorkspaces(account)) {
       log.debug("Deleting the common PVC: '{}',", configuredPVCName);
-      String namespace = infraNamespace.replaceFirst("<username>", workspace.getNamespace());
-
-      // wait until all running rm pods have finished before deleting common PVC
-      try (KubernetesClient client = new DefaultKubernetesClient()) {
-        PodList pods = client.pods().inNamespace(namespace).list();
-        for (Pod pod : pods.getItems()) {
-          String podName = pod.getMetadata().getName();
-          if (podName.startsWith(PVCSubPathHelper.RM_COMMAND_BASE[0])) {
-            client
-                .pods()
-                .inNamespace(namespace)
-                .withName(podName)
-                .waitUntilCondition(CommonPVCStrategy::podRemoveCondition, 5, TimeUnit.MINUTES);
-          }
-        }
-
-      } catch (KubernetesClientException e) {
-        e.printStackTrace();
-      }
+      String namespace = factory.get(workspace).getName();
+      waitForRmPodsFinish(namespace, 5);
 
       // check if account has no workspaces again, since
       // a new workspace could have started while waiting for
       // rm pods to finish
       if (accountHasNoWorkspaces(account)) {
+        deleteRmPods(namespace); // sanity check
         deleteCommonPVC(workspace);
         return;
       }
@@ -287,18 +268,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
         factory.get(workspace).getName(),
         pvc.getMetadata().getName(),
         subpathPrefixes.getWorkspaceSubPath(workspaceId));
-  }
-
-  private static boolean podRemoveCondition(Pod pod) {
-    boolean result = true;
-    try {
-      result =
-          pod.getStatus().getPhase().equals(PVCSubPathHelper.POD_PHASE_SUCCEEDED)
-              || pod.getStatus().getPhase().equals(PVCSubPathHelper.POD_PHASE_FAILED);
-    } catch (NullPointerException e) {
-      // do nothing, return true
-    }
-    return result;
   }
 
   private PersistentVolumeClaim replacePVCsWithCommon(
@@ -319,6 +288,62 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
         .map(VolumeMount::getSubPath)
         .filter(subpath -> !isNullOrEmpty(subpath))
         .collect(Collectors.toSet());
+  }
+
+  /**
+   * Wait until all running rm pods from the provided namespace
+   * have finished
+   *
+   * @param namespace
+   * @param minutes timeout in minutes
+   * @throws InfrastructureException
+   */
+  private void waitForRmPodsFinish(String namespace, long minutes) throws InfrastructureException {
+    try (KubernetesClient client = new DefaultKubernetesClient()) {
+      PodList pods = client.pods().inNamespace(namespace).list();
+      for (Pod pod : pods.getItems()) {
+        String podName = pod.getMetadata().getName();
+        if (podName.startsWith(PVCSubPathHelper.RM_COMMAND_BASE[0])) {
+          client
+                  .pods()
+                  .inNamespace(namespace)
+                  .withName(podName)
+                  .waitUntilCondition(CommonPVCStrategy::podRemoveCondition, minutes, TimeUnit.MINUTES);
+        }
+      }
+
+    } catch (KubernetesClientException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static boolean podRemoveCondition(Pod pod) {
+    if (pod == null) {
+      return true;
+    }
+    return pod.getStatus().getPhase().equals(PVCSubPathHelper.POD_PHASE_SUCCEEDED)
+            || pod.getStatus().getPhase().equals(PVCSubPathHelper.POD_PHASE_FAILED);
+  }
+
+  /**
+   * Deletes all rm pods from the provided namespace
+   *
+   * @param namespace
+   * @throws InfrastructureException
+   */
+  private void deleteRmPods(String namespace) throws InfrastructureException {
+    try (KubernetesClient client = new DefaultKubernetesClient()) {
+      PodList pods = client.pods().inNamespace(namespace).list();
+      for (Pod pod : pods.getItems()) {
+        String podName = pod.getMetadata().getName();
+        if (podName.startsWith(PVCSubPathHelper.RM_COMMAND_BASE[0])) {
+          // TODO: not thoroughly tested yet
+          client.pods().inNamespace(namespace).delete(pod);
+        }
+      }
+    } catch (KubernetesClientException e) {
+      e.printStackTrace();
+    }
   }
 
   private void deleteCommonPVC(Workspace workspace) throws InfrastructureException {

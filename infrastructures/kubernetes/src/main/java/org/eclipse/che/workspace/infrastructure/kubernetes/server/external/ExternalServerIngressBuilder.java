@@ -54,8 +54,7 @@ public class ExternalServerIngressBuilder {
   private Map<String, String> annotations;
   private Map<String, String> labels;
 
-  @VisibleForTesting
-  static final String INGRESS_PATH_TYPE = "Prefix";
+  @VisibleForTesting static final String INGRESS_PATH_TYPE = "Prefix";
 
   public ExternalServerIngressBuilder withHost(String host) {
     this.host = host;
@@ -110,10 +109,9 @@ public class ExternalServerIngressBuilder {
 
   public Ingress build() {
 
-    ServiceBackendPortBuilder serviceBackendPortBuilder =
-        new ServiceBackendPortBuilder();
+    ServiceBackendPortBuilder serviceBackendPortBuilder = new ServiceBackendPortBuilder();
 
-    //cannot set both port and name
+    // cannot set both port and name
     if (servicePort != null) {
       serviceBackendPortBuilder.withNumber(servicePort);
     } else if (!isNullOrEmpty(servicePortName)) {

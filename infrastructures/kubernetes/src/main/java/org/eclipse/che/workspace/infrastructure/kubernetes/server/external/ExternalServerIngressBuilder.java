@@ -112,10 +112,10 @@ public class ExternalServerIngressBuilder {
     ServiceBackendPortBuilder serviceBackendPortBuilder = new ServiceBackendPortBuilder();
 
     // cannot set both port and name
-    if (servicePort != null) {
-      serviceBackendPortBuilder.withNumber(servicePort);
-    } else if (!isNullOrEmpty(servicePortName)) {
+    if (!isNullOrEmpty(servicePortName)) {
       serviceBackendPortBuilder.withName(servicePortName);
+    } else if (servicePort != null) {
+      serviceBackendPortBuilder.withNumber(servicePort);
     }
 
     IngressServiceBackend ingressServiceBackend =

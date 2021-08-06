@@ -13,7 +13,6 @@ package org.eclipse.che.api.core.rest;
 
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
-import javax.inject.Singleton;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAcceptableException;
@@ -27,6 +26,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+import javax.inject.Singleton;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
 import org.eclipse.che.dto.server.DtoFactory;
 

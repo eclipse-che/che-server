@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,17 +15,6 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 
 import com.google.common.collect.ListMultimap;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.DefaultValue;
@@ -41,6 +30,17 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.rest.annotations.Description;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;

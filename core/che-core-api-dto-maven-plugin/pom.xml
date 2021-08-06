@@ -23,17 +23,18 @@
     <packaging>maven-plugin</packaging>
     <name>Che Core :: Commons :: API :: DTO Maven Plugin</name>
     <properties>
-        <findbugs.failonerror>false</findbugs.failonerror>
+        <enforcer.skip>true</enforcer.skip>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-dto</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>

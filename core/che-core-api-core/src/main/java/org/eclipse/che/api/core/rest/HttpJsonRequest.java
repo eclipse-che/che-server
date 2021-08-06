@@ -12,12 +12,12 @@
 package org.eclipse.che.api.core.rest;
 
 import com.google.common.annotations.Beta;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.HttpMethod;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.HttpMethod;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;

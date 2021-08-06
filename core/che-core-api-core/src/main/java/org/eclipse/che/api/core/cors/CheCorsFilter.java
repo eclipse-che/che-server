@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,14 +12,14 @@
 package org.eclipse.che.api.core.cors;
 
 import com.google.inject.Singleton;
-import java.io.IOException;
-import javax.inject.Inject;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import java.io.IOException;
+import javax.inject.Inject;
 import org.apache.catalina.filters.CorsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

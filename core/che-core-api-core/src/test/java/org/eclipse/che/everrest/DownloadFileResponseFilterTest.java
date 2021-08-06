@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,9 +16,6 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.everrest.core.ApplicationContext.anApplicationContext;
 import static org.testng.Assert.assertEquals;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.POST;
@@ -27,6 +24,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.DownloadFileResponseFilter;
 import org.everrest.core.ApplicationContext;

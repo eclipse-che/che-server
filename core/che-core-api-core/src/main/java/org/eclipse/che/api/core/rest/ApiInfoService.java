@@ -13,14 +13,14 @@ package org.eclipse.che.api.core.rest;
 
 import static java.util.stream.Collectors.toList;
 
-import java.util.function.Function;
-import javax.inject.Inject;
 import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import java.util.function.Function;
+import javax.inject.Inject;
 import org.eclipse.che.api.core.rest.annotations.OPTIONS;
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 import org.eclipse.che.commons.annotation.Nullable;

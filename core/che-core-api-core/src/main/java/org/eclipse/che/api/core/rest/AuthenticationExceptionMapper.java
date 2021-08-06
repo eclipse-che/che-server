@@ -11,11 +11,11 @@
  */
 package org.eclipse.che.api.core.rest;
 
-import javax.inject.Singleton;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+import javax.inject.Singleton;
 import org.eclipse.che.api.core.AuthenticationException;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;

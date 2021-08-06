@@ -129,7 +129,7 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
       throws ServerException, NotFoundException, ConflictException, ValidationException {
     String accountId = accountManager.getByName(namespace).getId();
     try (@SuppressWarnings("unused")
-    Unlocker u = resourcesLocks.lock(accountId)) {
+        Unlocker u = resourcesLocks.lock(accountId)) {
       checkWorkspaceResourceAvailability(accountId);
 
       return super.createWorkspace(devfile, namespace, attributes, contentProvider);

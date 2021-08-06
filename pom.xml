@@ -125,6 +125,7 @@
         <maven.sonar.plugin.version>3.9.0.2155</maven.sonar.plugin.version>
         <maven.sortpom.plugin.version>2.3.1</maven.sortpom.plugin.version>
         <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
+        <maven.supported-versions>[3.6.2,)</maven.supported-versions>
         <maven.surefire.plugin.version>3.0.0-M5</maven.surefire.plugin.version>
         <maven.war.plugin.version>3.3.1</maven.war.plugin.version>
         <mysql.connector.version>8.0.16</mysql.connector.version>
@@ -1790,6 +1791,18 @@
                     <artifactId>sonar-maven-plugin</artifactId>
                     <version>${maven.sonar.plugin.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${maven.enforcer.plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.ceilfors.maven.plugin</groupId>
+                            <artifactId>enforcer-rules</artifactId>
+                            <version>1.2.0</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -1837,7 +1850,7 @@
                             <rules>
                                 <requireDepMgt>
                                     <message>You are trying to use artifacts that are not in the list of allowed artifacts included in
-                                        dependencyManagement in maven-depmgt-pom or have different version.</message>
+                                        dependencyManagement in root pom or have different version.</message>
                                     <checkVersion>true</checkVersion>
                                     <ignoreScopes>
                                         <ignoreScope>runtime</ignoreScope>

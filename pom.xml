@@ -61,13 +61,11 @@
         <com.google.oauth-client.version>1.27.0</com.google.oauth-client.version>
         <com.googlecode.gson.version>2.8.5</com.googlecode.gson.version>
         <com.h2database.version>1.4.196</com.h2database.version>
-        <com.jayway.restassured.version>2.6.0</com.jayway.restassured.version>
         <com.jcraft.jsch.version>0.1.54</com.jcraft.jsch.version>
         <com.squareup.okhttp3.version>3.12.12</com.squareup.okhttp3.version>
         <com.squareup.okio.version>1.15.0</com.squareup.okio.version>
         <commons-codec.version>1.11</commons-codec.version>
         <commons-compress.version>1.19</commons-compress.version>
-        <commons-fileupload.version>1.3.3</commons-fileupload.version>
         <commons-io.version>2.8.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
@@ -86,16 +84,16 @@
         <io.opentracing.version>0.33.0</io.opentracing.version>
         <io.opentracing.web-servlet-filter.version>0.4.0</io.opentracing.web-servlet-filter.version>
         <io.prometheus.simpleclient.version>0.7.0</io.prometheus.simpleclient.version>
+        <io.rest-assured.version>4.4.0</io.rest-assured.version>
         <io.swagger.version>1.6.2</io.swagger.version>
+        <jakarta.annotation.version>2.0.0</jakarta.annotation.version>
+        <jakarta.inject.version>1.0.3</jakarta.inject.version>
         <jakarta.json.version>2.0.0</jakarta.json.version>
+        <jakarta.mail.version>2.0.1</jakarta.mail.version>
+        <jakarta.servlet.version>5.0.0</jakarta.servlet.version>
+        <jakarta.websocket.version>2.0.0</jakarta.websocket.version>
+        <jakarta.ws.rs.version>3.0.0</jakarta.ws.rs.version>
         <java.target.version>11</java.target.version>
-        <javax.annotation.version>1.2</javax.annotation.version>
-        <javax.inject.version>1</javax.inject.version>
-        <javax.mail.version>1.4.4</javax.mail.version>
-        <javax.servlet.version>3.1.0</javax.servlet.version>
-        <javax.validation.version>1.1.0.Final</javax.validation.version>
-        <javax.websocket.api.version>1.1</javax.websocket.api.version>
-        <javax.ws.rs.version>2.0</javax.ws.rs.version>
         <jdk.min.version>${java.target.version}</jdk.min.version>
         <junit.version>4.13.1</junit.version>
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
@@ -112,6 +110,8 @@
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
         <maven.clean.plugin.version>3.1.0</maven.clean.plugin.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+        <maven.dependency.plugin.version>3.1.2</maven.dependency.plugin.version>
+        <maven.enforcer.plugin.version>3.0.0</maven.enforcer.plugin.version>
         <maven.exec.plugin.version>3.0.0</maven.exec.plugin.version>
         <maven.fabric8io.docker.plugin.version>0.35.0</maven.fabric8io.docker.plugin.version>
         <maven.failsafe.plugin.version>3.0.0-M5</maven.failsafe.plugin.version>
@@ -141,9 +141,9 @@
         <org.eclipse.persistence.eclipselink.version>2.7.5</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.0</org.eclipse.persistence.version>
         <org.eclipse.sisu.version>0.3.0</org.eclipse.sisu.version>
-        <org.everrest.version>1.14.4</org.everrest.version>
+        <org.everrest.version>1.14.6-SNAPSHOT</org.everrest.version>
         <org.flyway.version>4.2.0</org.flyway.version>
-        <org.hamcrest.version>1.3</org.hamcrest.version>
+        <org.hamcrest.version>2.2</org.hamcrest.version>
         <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
@@ -222,6 +222,10 @@
                 <version>${com.google.code.guice.version}</version>
                 <exclusions>
                     <exclusion>
+                        <artifactId>javax.inject</artifactId>
+                        <groupId>javax.inject</groupId>
+                    </exclusion>
+                    <exclusion>
                         <artifactId>guava</artifactId>
                         <groupId>com.google.guava</groupId>
                     </exclusion>
@@ -241,6 +245,12 @@
                 <groupId>com.google.inject.extensions</groupId>
                 <artifactId>guice-servlet</artifactId>
                 <version>${com.google.code.guice.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>servlet-api</artifactId>
+                        <groupId>javax.servlet</groupId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.oauth-client</groupId>
@@ -284,14 +294,20 @@
                 <version>${com.squareup.okio.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>jakarta.mail</artifactId>
+                <version>${jakarta.mail.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>jakarta.activation</artifactId>
+                        <groupId>com.sun.activation</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-fileupload</groupId>
-                <artifactId>commons-fileupload</artifactId>
-                <version>${commons-fileupload.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -421,6 +437,17 @@
                 <version>${io.prometheus.simpleclient.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.rest-assured</groupId>
+                <artifactId>rest-assured</artifactId>
+                <version>${io.rest-assured.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>xml-path</artifactId>
+                        <groupId>io.rest-assured</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-annotations</artifactId>
                 <version>${io.swagger.version}</version>
@@ -489,39 +516,34 @@
                 <version>${io.swagger.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.annotation</groupId>
-                <artifactId>javax.annotation-api</artifactId>
-                <version>${javax.annotation.version}</version>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>${jakarta.activation.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.inject</groupId>
-                <artifactId>javax.inject</artifactId>
-                <version>${javax.inject.version}</version>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${jakarta.annotation.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.mail</groupId>
-                <artifactId>mail</artifactId>
-                <version>${javax.mail.version}</version>
+                <groupId>jakarta.inject</groupId>
+                <artifactId>jakarta.inject-api</artifactId>
+                <version>${jakarta.inject.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <version>${javax.servlet.version}</version>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>${jakarta.servlet.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.validation</groupId>
-                <artifactId>validation-api</artifactId>
-                <version>${javax.validation.version}</version>
+                <groupId>jakarta.websocket</groupId>
+                <artifactId>jakarta.websocket-api</artifactId>
+                <version>${jakarta.websocket.version}</version>
             </dependency>
             <dependency>
-                <groupId>javax.websocket</groupId>
-                <artifactId>javax.websocket-api</artifactId>
-                <version>${javax.websocket.api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>javax.ws.rs</groupId>
-                <artifactId>javax.ws.rs-api</artifactId>
-                <version>${javax.ws.rs.version}</version>
+                <groupId>jakarta.ws.rs</groupId>
+                <artifactId>jakarta.ws.rs-api</artifactId>
+                <version>${jakarta.ws.rs.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
@@ -1247,6 +1269,11 @@
             </dependency>
             <dependency>
                 <groupId>org.everrest</groupId>
+                <artifactId>everrest-commons-fileupload</artifactId>
+                <version>${org.everrest.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.everrest</groupId>
                 <artifactId>everrest-core</artifactId>
                 <version>${org.everrest.version}</version>
             </dependency>
@@ -1499,6 +1526,15 @@
                         <sortProperties>true</sortProperties>
                         <sortDependencies>scope,groupId,artifactId</sortDependencies>
                         <verifyFail>Stop</verifyFail>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven.dependency.plugin.version}</version>
+                    <configuration>
+                        <!-- Perfs improvements - PAR-191 -->
+                        <useJvmChmod>true</useJvmChmod>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -1787,6 +1823,79 @@
                     <timestampFormat>{0, date,yyyyMMdd}</timestampFormat>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven.enforcer.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireDepMgt>
+                                    <message>You are trying to use artifacts that are not in the list of allowed artifacts included in
+                                        dependencyManagement in maven-depmgt-pom or have different version.</message>
+                                    <checkVersion>true</checkVersion>
+                                    <ignoreScopes>
+                                        <ignoreScope>runtime</ignoreScope>
+                                    </ignoreScopes>
+                                </requireDepMgt>
+                                <dependencyConvergence />
+                                <requireJavaVersion>
+                                    <version>[${java.target.version},)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>${maven.supported-versions}</version>
+                                </requireMavenVersion>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <!-- Exclude javax dependencies in favor of Jakarta -->
+                                        <exclude>javax.activation:activation</exclude>
+                                        <exclude>javax.activation:javax.activation-api</exclude>
+                                        <exclude>javax.annotation:javax.annotation-api</exclude>
+                                        <exclude>javax.enterprise:cdi-api</exclude>
+                                        <exclude>javax.inject:javax.inject</exclude>
+                                        <exclude>javax.json:javax.json-api</exclude>
+                                        <exclude>javax.json.bind:javax.json.bind-api</exclude>
+                                        <exclude>org.glassfish:javax.json</exclude>
+                                        <exclude>org.glassfish:javax.el</exclude>
+                                        <exclude>javax.persistence:javax.persistence-api</exclude>
+                                        <exclude>javax.persistence:persistence-api</exclude>
+                                        <exclude>javax.security.enterprise:javax.security.enterprise-api</exclude>
+                                        <exclude>javax.servlet:servlet-api</exclude>
+                                        <exclude>javax.servlet:javax.servlet-api</exclude>
+                                        <exclude>javax.transaction:jta</exclude>
+                                        <exclude>javax.transaction:javax.transaction-api</exclude>
+                                        <exclude>javax.validation:validation-api</exclude>
+                                        <exclude>javax.xml.bind:jaxb-api</exclude>
+                                        <exclude>javax.websocket:javax.websocket-api</exclude>
+                                        <exclude>javax.ws.rs:javax.ws.rs-api</exclude>
+                                        <exclude>com.sun.activation:jakarta.activation</exclude>
+                                        <exclude>commons-logging:commons-logging-api</exclude>
+                                        <exclude>concurrent:concurrent</exclude>
+                                        <exclude>com.google.code.findbugs:annotations</exclude>
+                                        <exclude>jboss:jboss-logging-spi</exclude>
+                                        <exclude>org.apache.xalan:serializer</exclude>
+                                        <exclude>org.apache.xalan:xalan</exclude>
+                                        <exclude>org.slf4j:slf4j-nop</exclude>
+                                        <exclude>org.slf4j:slf4j-jdk14</exclude>
+                                        <exclude>org.slf4j:slf4j-log4j12</exclude>
+                                        <exclude>org.slf4j:slf4j-log4j13</exclude>
+                                        <exclude>stax:stax-api</exclude>
+                                        <exclude>sun-jaxb:jaxb-api</exclude>
+                                        <exclude>trove:trove</exclude>
+                                        <exclude>woodstox:wstx-lgpl</exclude>
+                                        <exclude>xml-apis:xml-apis</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <profiles>
@@ -1880,6 +1989,23 @@
                                 <goals>
                                     <goal>verify</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>analyze</id>
+                                <goals>
+                                    <goal>analyze-only</goal>
+                                </goals>
+                                <configuration>
+                                    <failOnWarning>true</failOnWarning>
+                                    <ignoreNonCompile>true</ignoreNonCompile>
+                                    <outputXML>true</outputXML>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

@@ -12,9 +12,9 @@
 package org.eclipse.che.api.devfile.server;
 
 import static io.restassured.RestAssured.given;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_SUBJECT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.USER_DEVFILE_ID;
@@ -224,10 +224,12 @@ public class DevfileServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/id-22323");
+            .get(SECURE_PATH + "/devfile/id-22323")
+            .then()
+            .extract()
+            .response();
 
+    assertEquals(response.getStatusCode(), 200);
     assertEquals(
         new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT), userDevfile);
     verify(userDevfileManager).getById(eq("id-22323"));
@@ -402,10 +404,13 @@ public class DevfileServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
+
     // then
+    assertEquals(response.getStatusCode(), 200);
     final List<UserDevfileDto> res = unwrapDtoList(response, UserDevfileDto.class);
     assertEquals(res.size(), 1);
     assertEquals(res.get(0).withLinks(emptyList()), devfileDto);
@@ -427,10 +432,13 @@ public class DevfileServiceTest {
             .queryParam("maxItems", 5)
             .queryParam("skipCount", 52)
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
     // then
+    // then
+    assertEquals(response.getStatusCode(), 200);
     verify(userDevfileManager).getUserDevfiles(eq(5), eq(52), anyList(), anyList());
   }
 
@@ -451,10 +459,13 @@ public class DevfileServiceTest {
             .queryParam("id", "sdfsdf5")
             .queryParam("devfile.meta.name", "like:%dfdf")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
+
     // then
+    assertEquals(response.getStatusCode(), 200);
     Class<List<Pair<String, String>>> listClass =
         (Class<List<Pair<String, String>>>) (Class) ArrayList.class;
     ArgumentCaptor<List<Pair<String, String>>> filterCaptor = ArgumentCaptor.forClass(listClass);
@@ -478,10 +489,12 @@ public class DevfileServiceTest {
             .contentType("application/json")
             .queryParam("order", "id:asc,name:desc")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
     // then
+    assertEquals(response.getStatusCode(), 200);
     Class<List<Pair<String, String>>> listClass =
         (Class<List<Pair<String, String>>>) (Class) ArrayList.class;
     ArgumentCaptor<List<Pair<String, String>>> orderCaptor = ArgumentCaptor.forClass(listClass);

@@ -15,8 +15,8 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
-import javax.inject.Singleton;
 import jakarta.ws.rs.HttpMethod;
+import javax.inject.Singleton;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.devfile.shared.Constants;

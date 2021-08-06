@@ -11,7 +11,7 @@
 # but not this ingress
 {{- if not (and (eq .Values.global.serverStrategy "single-host") (eq .Values.global.singleHostExposure "gateway")) }}
 
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: che-dashboard-ingress
@@ -46,7 +46,10 @@ spec:
       paths:
         # The path rule for Che Dashboard
       - path: {{ .Values.dashboard.ingressPath }}
+        pathType: ImplementationSpecific
         backend:
-          serviceName: che-dashboard
-          servicePort: 8080
+          service:
+            name: che-dashboard
+            port:
+              number: 8080
 {{- end }}

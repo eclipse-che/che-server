@@ -7,7 +7,7 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: che-ingress
@@ -42,10 +42,13 @@ spec:
 {{- end }}
       paths:
       - path: /
+        pathType: ImplementationSpecific
         backend:
-          servicePort: 8080
+          service:
+            port:
+              number: 8080
 {{- if and (eq .Values.global.serverStrategy "single-host") (eq .Values.global.singleHostExposure "gateway") }}
-          serviceName: che-gateway
+            name: che-gateway
 {{- else }}
-          serviceName: che-host
+            name: che-host
 {{- end }}

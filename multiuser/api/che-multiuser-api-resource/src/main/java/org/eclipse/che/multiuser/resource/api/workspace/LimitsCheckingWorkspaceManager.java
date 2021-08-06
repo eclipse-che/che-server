@@ -111,8 +111,7 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
       throws ServerException, ConflictException, NotFoundException, ValidationException {
     checkMaxEnvironmentRam(config);
     String accountId = accountManager.getByName(namespace).getId();
-    try (@SuppressWarnings("unused")
-        Unlocker u = resourcesLocks.lock(accountId)) {
+    try (Unlocker ignored = resourcesLocks.lock(accountId)) {
       checkWorkspaceResourceAvailability(accountId);
 
       return super.createWorkspace(config, namespace, attributes);
@@ -128,8 +127,7 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
       FileContentProvider contentProvider)
       throws ServerException, NotFoundException, ConflictException, ValidationException {
     String accountId = accountManager.getByName(namespace).getId();
-    try (@SuppressWarnings("unused")
-        Unlocker u = resourcesLocks.lock(accountId)) {
+    try (Unlocker ignored = resourcesLocks.lock(accountId)) {
       checkWorkspaceResourceAvailability(accountId);
 
       return super.createWorkspace(devfile, namespace, attributes, contentProvider);

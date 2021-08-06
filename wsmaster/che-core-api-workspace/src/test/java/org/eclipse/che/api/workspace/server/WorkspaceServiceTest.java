@@ -436,7 +436,7 @@ public class WorkspaceServiceTest {
         given()
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .queryParameter("includeInternalServers", Boolean.TRUE.toString())
+            .queryParam("includeInternalServers", Boolean.TRUE.toString())
             .when()
             .get(SECURE_PATH + "/workspace/" + workspace.getId());
 
@@ -488,7 +488,7 @@ public class WorkspaceServiceTest {
         given()
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .queryParameter("includeInternalServers", "")
+            .queryParam("includeInternalServers", "")
             .when()
             .get(SECURE_PATH + "/workspace/" + workspace.getId());
 
@@ -540,7 +540,7 @@ public class WorkspaceServiceTest {
         given()
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .queryParameter("includeInternalServers")
+            .queryParam("includeInternalServers")
             .when()
             .get(SECURE_PATH + "/workspace/" + workspace.getId());
 

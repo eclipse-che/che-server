@@ -159,6 +159,11 @@
             <artifactId>flyway-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- Mock testing -->
         <dependency>
             <groupId>org.mockito</groupId>

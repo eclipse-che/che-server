@@ -11,9 +11,6 @@
  */
 package org.eclipse.che.core.metrics;
 
-import java.io.IOException;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -21,6 +18,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Filter for tracking all HTTP requests through {@link ApiResponseCounter}

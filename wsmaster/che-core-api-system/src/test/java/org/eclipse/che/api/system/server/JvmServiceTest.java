@@ -15,10 +15,10 @@ import static io.restassured.RestAssured.expect;
 import static org.testng.Assert.*;
 
 import io.restassured.response.Response;
+import jakarta.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import jakarta.ws.rs.core.MediaType;
 import org.eclipse.che.commons.lang.ZipUtils;
 import org.everrest.assured.EverrestJetty;
 import org.testng.annotations.Listeners;

@@ -22,6 +22,9 @@
     <artifactId>che-core-typescript-dto-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
     <name>Che Core :: Commons :: API :: TypeScript DTO maven plugin</name>
+    <properties>
+        <enforcer.skip>true</enforcer.skip>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.google.code.gson</groupId>

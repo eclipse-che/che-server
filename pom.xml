@@ -262,11 +262,6 @@
                 <version>${com.h2database.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.jayway.restassured</groupId>
-                <artifactId>rest-assured</artifactId>
-                <version>${com.jayway.restassured.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.jcraft</groupId>
                 <artifactId>jsch</artifactId>
                 <version>${com.jcraft.jsch.version}</version>
@@ -437,6 +432,10 @@
                     <exclusion>
                         <artifactId>xml-path</artifactId>
                         <groupId>io.rest-assured</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>hamcrest</artifactId>
+                        <groupId>org.hamcrest</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1299,6 +1298,11 @@
                 <groupId>org.glassfish</groupId>
                 <artifactId>jakarta.json</artifactId>
                 <version>${jakarta.json.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${org.hamcrest.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>

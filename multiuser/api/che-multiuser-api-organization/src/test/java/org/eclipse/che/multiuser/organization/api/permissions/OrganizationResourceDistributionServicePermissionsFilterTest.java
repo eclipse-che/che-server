@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.organization.api.permissions;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;

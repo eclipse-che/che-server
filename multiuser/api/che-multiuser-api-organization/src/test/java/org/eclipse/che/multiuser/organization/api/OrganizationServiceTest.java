@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.organization.api;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.HashSet;
 import java.util.List;
 import org.eclipse.che.api.core.BadRequestException;

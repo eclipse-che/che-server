@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.user.server;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Arrays.asList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.Map;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.commons.env.EnvironmentContext;

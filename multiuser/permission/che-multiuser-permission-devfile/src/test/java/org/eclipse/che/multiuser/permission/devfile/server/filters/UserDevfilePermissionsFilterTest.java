@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.filters;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.testng.Assert.assertEquals;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.Collections;
 import java.util.HashSet;
 import org.eclipse.che.api.core.BadRequestException;

@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.organization.api.resource;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;

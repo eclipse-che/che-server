@@ -13,10 +13,10 @@ package org.eclipse.che.api.core.websocket.impl;
 
 import com.google.inject.Injector;
 import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
+import jakarta.websocket.server.ServerEndpointConfig;
 import javax.inject.Inject;
-import javax.websocket.HandshakeResponse;
-import javax.websocket.server.HandshakeRequest;
-import javax.websocket.server.ServerEndpointConfig;
 
 /**
  * Allows inject Guice instances on WEB SOCKET endpoint creation.

@@ -11,12 +11,12 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.eclipse.che.multiuser.keycloak.server.UnavailableResourceInMultiUserFilter.ERROR_RESPONSE_JSON_MESSAGE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import org.everrest.assured.EverrestJetty;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.DataProvider;

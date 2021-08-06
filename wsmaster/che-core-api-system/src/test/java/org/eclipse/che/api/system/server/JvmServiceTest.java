@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.api.system.server;
 
-import static com.jayway.restassured.RestAssured.expect;
+import static io.restassured.RestAssured.expect;
 import static org.testng.Assert.*;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.devfile.server;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -40,7 +40,7 @@ import static org.testng.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;

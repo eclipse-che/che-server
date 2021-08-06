@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.core.rest;
 
-import static com.jayway.restassured.RestAssured.expect;
+import static io.restassured.RestAssured.expect;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

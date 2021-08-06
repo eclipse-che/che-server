@@ -18,9 +18,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.Session;
 import java.util.Optional;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.Session;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;

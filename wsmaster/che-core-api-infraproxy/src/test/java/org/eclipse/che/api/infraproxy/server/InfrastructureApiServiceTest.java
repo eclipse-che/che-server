@@ -11,13 +11,13 @@
  */
 package org.eclipse.che.api.infraproxy.server;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.everrest.assured.EverrestJetty;

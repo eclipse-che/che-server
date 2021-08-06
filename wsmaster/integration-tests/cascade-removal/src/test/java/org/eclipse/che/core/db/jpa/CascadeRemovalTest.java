@@ -41,7 +41,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.persistence.EntityManagerFactory;
 import org.eclipse.che.account.api.AccountManager;

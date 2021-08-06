@@ -15,7 +15,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.servlet.ServletModule;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import java.lang.reflect.Field;
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import org.apache.catalina.Manager;
 import org.apache.catalina.core.ApplicationContext;
 import org.apache.catalina.core.ApplicationContextFacade;

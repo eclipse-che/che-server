@@ -13,7 +13,7 @@ package org.eclipse.che.multiuser.organization.api.listener;
 
 import static org.eclipse.che.multiuser.organization.api.DtoConverter.asDto;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.NotFoundException;

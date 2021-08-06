@@ -12,7 +12,7 @@
 package org.eclipse.che.api.factory.server;
 
 import java.util.Map;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;

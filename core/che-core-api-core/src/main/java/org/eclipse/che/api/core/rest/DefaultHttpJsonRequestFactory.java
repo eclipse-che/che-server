@@ -12,7 +12,7 @@
 package org.eclipse.che.api.core.rest;
 
 import javax.inject.Singleton;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 
 /**

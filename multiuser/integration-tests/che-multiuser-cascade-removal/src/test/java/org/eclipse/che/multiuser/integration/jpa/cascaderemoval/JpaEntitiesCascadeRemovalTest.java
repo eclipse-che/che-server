@@ -48,7 +48,7 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Singleton;
 import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.account.api.AccountModule;

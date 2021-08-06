@@ -14,7 +14,7 @@ package org.eclipse.che.api.devfile.server;
 import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_SUBJECT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.USER_DEVFILE_ID;

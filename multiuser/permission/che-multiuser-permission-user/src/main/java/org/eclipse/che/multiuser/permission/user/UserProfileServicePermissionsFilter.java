@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.permission.user;
 
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;

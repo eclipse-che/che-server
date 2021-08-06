@@ -86,11 +86,13 @@
         <io.prometheus.simpleclient.version>0.7.0</io.prometheus.simpleclient.version>
         <io.rest-assured.version>4.4.0</io.rest-assured.version>
         <io.swagger.version>1.6.2</io.swagger.version>
+        <jakarta.activation.version>2.0.1</jakarta.activation.version>
         <jakarta.annotation.version>2.0.0</jakarta.annotation.version>
         <jakarta.inject.version>1.0.3</jakarta.inject.version>
         <jakarta.json.version>2.0.0</jakarta.json.version>
         <jakarta.mail.version>2.0.1</jakarta.mail.version>
         <jakarta.servlet.version>5.0.0</jakarta.servlet.version>
+        <jakarta.validatio-api.version>3.0.0</jakarta.validatio-api.version>
         <jakarta.websocket.version>2.0.0</jakarta.websocket.version>
         <jakarta.ws.rs.version>3.0.0</jakarta.ws.rs.version>
         <java.target.version>11</java.target.version>
@@ -241,17 +243,6 @@
                 <groupId>com.google.inject.extensions</groupId>
                 <artifactId>guice-persist</artifactId>
                 <version>${com.google.code.guice.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.inject.extensions</groupId>
-                <artifactId>guice-servlet</artifactId>
-                <version>${com.google.code.guice.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>servlet-api</artifactId>
-                        <groupId>javax.servlet</groupId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.oauth-client</groupId>
@@ -537,6 +528,11 @@
                 <version>${jakarta.servlet.version}</version>
             </dependency>
             <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>${jakarta.validatio-api.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>jakarta.websocket</groupId>
                 <artifactId>jakarta.websocket-api</artifactId>
                 <version>${jakarta.websocket.version}</version>
@@ -618,7 +614,7 @@
                 <exclusions>
                     <exclusion>
                         <artifactId>jsr250-api</artifactId>
-                        <groupId>javax.annotation</groupId>
+                        <groupId>jakarta.annotation</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1276,6 +1272,11 @@
             <dependency>
                 <groupId>org.everrest</groupId>
                 <artifactId>everrest-core</artifactId>
+                <version>${org.everrest.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.everrest</groupId>
+                <artifactId>everrest-guice-servlet</artifactId>
                 <version>${org.everrest.version}</version>
             </dependency>
             <dependency>

@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.core.rest;
 
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
 /**
  * Helps to deliver context of RESTful request to components.

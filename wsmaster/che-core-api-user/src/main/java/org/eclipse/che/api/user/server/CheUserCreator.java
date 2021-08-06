@@ -13,7 +13,7 @@ package org.eclipse.che.api.user.server;
 
 import static java.util.Collections.emptyList;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.account.api.AccountManager;

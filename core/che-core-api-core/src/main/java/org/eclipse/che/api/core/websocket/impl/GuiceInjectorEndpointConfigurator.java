@@ -13,7 +13,7 @@ package org.eclipse.che.api.core.websocket.impl;
 
 import com.google.inject.Injector;
 import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import javax.websocket.HandshakeResponse;
 import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpointConfig;

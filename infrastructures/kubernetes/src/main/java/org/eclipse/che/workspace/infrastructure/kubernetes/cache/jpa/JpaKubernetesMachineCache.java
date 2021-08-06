@@ -18,7 +18,7 @@ import com.google.inject.persist.Transactional;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;

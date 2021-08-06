@@ -15,7 +15,7 @@ import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toA
 
 import java.io.IOException;
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.factory.server.ScmFileResolver;

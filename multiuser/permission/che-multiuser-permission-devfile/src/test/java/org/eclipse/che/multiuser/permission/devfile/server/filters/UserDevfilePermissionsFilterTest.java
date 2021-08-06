@@ -124,7 +124,7 @@ public class UserDevfilePermissionsFilterTest {
       throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
     // given
     Mockito.when(devfileService.getUserDevfiles(any(), any(), any()))
-        .thenReturn(javax.ws.rs.core.Response.ok().build());
+        .thenReturn(jakarta.ws.rs.core.Response.ok().build());
     // when
     final Response response =
         given()
@@ -142,7 +142,7 @@ public class UserDevfilePermissionsFilterTest {
       throws NotFoundException, ServerException {
     // given
     Mockito.when(devfileService.getSchema(CURRENT_API_VERSION))
-        .thenReturn(javax.ws.rs.core.Response.ok().build());
+        .thenReturn(jakarta.ws.rs.core.Response.ok().build());
     // when
     final Response response =
         given()

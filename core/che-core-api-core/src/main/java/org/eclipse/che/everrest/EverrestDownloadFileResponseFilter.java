@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.everrest;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Request;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.che.api.core.rest.DownloadFileResponseFilter;
 import org.everrest.core.ApplicationContext;
 import org.everrest.core.Filter;

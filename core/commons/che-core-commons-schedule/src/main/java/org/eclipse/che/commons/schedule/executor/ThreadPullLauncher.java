@@ -12,9 +12,9 @@
 package org.eclipse.che.commons.schedule.executor;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jakarta.annotation.PreDestroy;
 import java.text.ParseException;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

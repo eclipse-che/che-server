@@ -15,7 +15,7 @@ import static org.eclipse.che.api.user.server.UserService.USER_SELF_CREATION_ALL
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.user.server.UserService;

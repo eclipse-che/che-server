@@ -11,13 +11,13 @@
  */
 package org.eclipse.che.multiuser.organization.api;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Singleton;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.util.LinksHelper;

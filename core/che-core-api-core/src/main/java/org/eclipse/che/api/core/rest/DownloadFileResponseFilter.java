@@ -16,12 +16,12 @@ import static org.eclipse.che.api.core.rest.DownloadFileResponseFilter.EntityTyp
 import static org.eclipse.che.api.core.rest.DownloadFileResponseFilter.EntityType.UNKNOWN;
 
 import java.util.List;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Request;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.che.dto.server.JsonSerializable;
 
 /**

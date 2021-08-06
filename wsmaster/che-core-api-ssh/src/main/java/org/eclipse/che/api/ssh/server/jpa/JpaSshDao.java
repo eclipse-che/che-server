@@ -16,8 +16,8 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.inject.persist.Transactional;
 import java.util.List;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;

@@ -12,7 +12,7 @@
 package org.eclipse.che.multiuser.organization.api.permissions;
 
 import javax.inject.Inject;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.commons.env.EnvironmentContext;

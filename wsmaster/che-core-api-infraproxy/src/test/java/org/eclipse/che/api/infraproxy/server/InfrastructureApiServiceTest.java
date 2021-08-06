@@ -82,7 +82,7 @@ public class InfrastructureApiServiceTest {
         new InfrastructureApiService("kubernetes", true, "not-openshift-identityProvider", infra);
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
 
@@ -121,7 +121,7 @@ public class InfrastructureApiServiceTest {
     // given
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), eq(null)))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
     // when
@@ -141,7 +141,7 @@ public class InfrastructureApiServiceTest {
     // given
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
     // when
@@ -162,7 +162,7 @@ public class InfrastructureApiServiceTest {
     // given
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
     // when
@@ -183,7 +183,7 @@ public class InfrastructureApiServiceTest {
     // given
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
     // when
@@ -202,7 +202,7 @@ public class InfrastructureApiServiceTest {
     // given
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
     // when
@@ -223,7 +223,7 @@ public class InfrastructureApiServiceTest {
     // given
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
     // when
@@ -243,7 +243,7 @@ public class InfrastructureApiServiceTest {
     // given
     when(infra.sendDirectInfrastructureRequest(any(), any(), any(), any()))
         .thenReturn(
-            javax.ws.rs.core.Response.ok()
+            jakarta.ws.rs.core.Response.ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .build());
     // when

@@ -18,7 +18,7 @@ import com.jayway.restassured.response.Response;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import org.eclipse.che.commons.lang.ZipUtils;
 import org.everrest.assured.EverrestJetty;
 import org.testng.annotations.Listeners;

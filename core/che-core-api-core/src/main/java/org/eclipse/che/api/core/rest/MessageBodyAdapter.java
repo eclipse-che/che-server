@@ -15,7 +15,7 @@ import com.google.common.annotations.Beta;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * Adapts an entity stream in an implementation specific way.

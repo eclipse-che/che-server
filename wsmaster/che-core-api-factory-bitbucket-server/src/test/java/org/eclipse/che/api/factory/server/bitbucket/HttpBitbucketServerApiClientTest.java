@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;

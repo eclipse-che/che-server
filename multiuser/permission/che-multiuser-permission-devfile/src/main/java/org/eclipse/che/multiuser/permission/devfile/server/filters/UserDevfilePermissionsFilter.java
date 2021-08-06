@@ -18,7 +18,7 @@ import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDom
 
 import com.google.common.annotations.VisibleForTesting;
 import javax.inject.Inject;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.devfile.server.DevfileService;
 import org.eclipse.che.api.devfile.server.UserDevfileManager;

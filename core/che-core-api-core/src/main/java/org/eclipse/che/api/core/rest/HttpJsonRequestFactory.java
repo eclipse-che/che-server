@@ -13,7 +13,7 @@ package org.eclipse.che.api.core.rest;
 
 import com.google.common.annotations.Beta;
 import com.google.inject.ImplementedBy;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 
 /**

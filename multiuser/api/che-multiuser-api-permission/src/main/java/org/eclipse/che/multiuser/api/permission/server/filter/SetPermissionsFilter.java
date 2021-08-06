@@ -14,7 +14,7 @@ package org.eclipse.che.multiuser.api.permission.server.filter;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import javax.inject.Inject;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;

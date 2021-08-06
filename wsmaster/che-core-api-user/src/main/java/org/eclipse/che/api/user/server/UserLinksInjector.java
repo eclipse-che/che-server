@@ -11,8 +11,8 @@
  */
 package org.eclipse.che.api.user.server;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.user.server.Constants.LINK_REL_CURRENT_USER;
 import static org.eclipse.che.api.user.server.Constants.LINK_REL_CURRENT_USER_PASSWORD;
 import static org.eclipse.che.api.user.server.Constants.LINK_REL_CURRENT_USER_SETTINGS;
@@ -23,8 +23,8 @@ import static org.eclipse.che.api.user.server.Constants.LINK_REL_SELF;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Singleton;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.util.LinksHelper;

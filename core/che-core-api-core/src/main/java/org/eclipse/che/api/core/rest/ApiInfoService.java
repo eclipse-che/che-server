@@ -15,12 +15,12 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.function.Function;
 import javax.inject.Inject;
-import javax.servlet.ServletContext;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
+import jakarta.servlet.ServletContext;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import org.eclipse.che.api.core.rest.annotations.OPTIONS;
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 import org.eclipse.che.commons.annotation.Nullable;

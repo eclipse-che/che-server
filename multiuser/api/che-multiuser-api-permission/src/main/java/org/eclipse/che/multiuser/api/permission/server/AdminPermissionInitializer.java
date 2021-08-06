@@ -13,8 +13,8 @@ package org.eclipse.che.multiuser.api.permission.server;
 
 import static java.lang.String.format;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

@@ -12,7 +12,7 @@
 package org.eclipse.che.api.system.server;
 
 import com.google.common.annotations.VisibleForTesting;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.notification.RemoteSubscriptionManager;

@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.api.authentication.commons.token;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /** Allows to extract sso token from request. */
 public interface RequestTokenExtractor {

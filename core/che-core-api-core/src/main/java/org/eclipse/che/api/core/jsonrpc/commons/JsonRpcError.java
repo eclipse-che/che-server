@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.core.jsonrpc.commons;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /** Represents JSON RPC error object */
 public class JsonRpcError {

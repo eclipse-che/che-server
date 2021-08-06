@@ -15,7 +15,7 @@ import static org.eclipse.che.multiuser.organization.shared.event.EventType.MEMB
 import static org.eclipse.che.multiuser.organization.shared.event.EventType.MEMBER_REMOVED;
 
 import java.util.Map;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.notification.RemoteSubscriptionManager;

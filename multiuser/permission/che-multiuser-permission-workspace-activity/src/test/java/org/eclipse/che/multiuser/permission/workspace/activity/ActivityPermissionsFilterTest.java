@@ -104,7 +104,7 @@ public class ActivityPermissionsFilterTest {
     when(service.getWorkspacesByActivity(
             eq(WorkspaceStatus.RUNNING), eq(-1L), eq(-1L), eq(Pages.DEFAULT_PAGE_SIZE), eq(0L)))
         .thenReturn(
-            javax.ws.rs.core.Response.ok(new Page<String>(Collections.emptyList(), 0, 1, 0))
+            jakarta.ws.rs.core.Response.ok(new Page<String>(Collections.emptyList(), 0, 1, 0))
                 .build());
 
     final Response response =

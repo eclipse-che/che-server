@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  *   <li>sub-classes of {@link org.eclipse.che.api.core.rest.Service Service}. In this case value of
  *       this annotation is copied to the field {@link
  *       org.eclipse.che.api.core.rest.shared.dto.ServiceDescriptor#getDescription()}
- *   <li>parameter of RESTful method annotated with {@link javax.ws.rs.QueryParam &#64;QueryParam}.
+ *   <li>parameter of RESTful method annotated with {@link jakarta.ws.rs.QueryParam &#64;QueryParam}.
  *       In this case value of this annotation is copied to the field {@link
  *       org.eclipse.che.api.core.rest.shared.dto.LinkParameter#getDescription()}
  *   <li>entity parameter (not annotated with JAX-RS annotations) of RESTful method. Entity

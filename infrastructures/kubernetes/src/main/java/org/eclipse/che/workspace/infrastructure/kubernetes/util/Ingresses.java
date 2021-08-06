@@ -11,13 +11,13 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.util;
 
-import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
-import io.fabric8.kubernetes.api.model.extensions.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -41,8 +41,8 @@ public class Ingresses {
       for (IngressRule rule : ingress.getSpec().getRules()) {
         for (HTTPIngressPath path : rule.getHttp().getPaths()) {
           IngressBackend backend = path.getBackend();
-          if (backend.getServiceName().equals(service.getMetadata().getName())
-              && matchesServicePort(backend.getServicePort(), foundPort.get())) {
+          if (backend.getService().getName().equals(service.getMetadata().getName())
+              && matchesServicePort(backend.getService().getPort(), foundPort.get())) {
             return Optional.of(rule);
           }
         }
@@ -51,11 +51,12 @@ public class Ingresses {
     return Optional.empty();
   }
 
-  private static boolean matchesServicePort(IntOrString backendPort, ServicePort servicePort) {
-    if (backendPort.getStrVal() != null && backendPort.getStrVal().equals(servicePort.getName())) {
+  private static boolean matchesServicePort(
+      ServiceBackendPort backendPort, ServicePort servicePort) {
+    if (backendPort.getName() != null && backendPort.getName().equals(servicePort.getName())) {
       return true;
     }
-    if (backendPort.getIntVal() != null && backendPort.getIntVal().equals(servicePort.getPort())) {
+    if (backendPort.getNumber() != null && backendPort.getNumber().equals(servicePort.getPort())) {
       return true;
     }
     return false;

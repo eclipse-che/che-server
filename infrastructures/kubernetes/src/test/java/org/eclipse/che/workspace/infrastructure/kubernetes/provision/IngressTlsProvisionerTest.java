@@ -24,7 +24,7 @@ import static org.testng.Assert.assertNull;
 
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
@@ -65,7 +65,8 @@ public class IngressTlsProvisionerTest {
   private final String machine = "machine";
   private final String name = "IngressName";
   private final String serviceName = "ServiceName";
-  private final String servicePort = "server-port";
+  private final String servicePortName = "server-port";
+  private final Integer servicePort = 7777;
   private final String host = "server-host";
 
   private final ExternalServerIngressBuilder externalServerIngressBuilder =
@@ -78,6 +79,7 @@ public class IngressTlsProvisionerTest {
           .withName(name)
           .withServers(servers)
           .withServiceName(serviceName)
+          .withServicePortName(servicePortName)
           .withServicePort(servicePort)
           .build();
 

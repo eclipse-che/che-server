@@ -15,7 +15,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.server.Workspa
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.WorkspaceExposureType.NATIVE;
 
 import com.google.common.collect.ImmutableMap;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

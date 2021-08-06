@@ -19,7 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

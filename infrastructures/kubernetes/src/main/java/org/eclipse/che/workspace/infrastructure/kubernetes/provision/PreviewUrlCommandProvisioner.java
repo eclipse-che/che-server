@@ -17,7 +17,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.Warnings.NOT_A
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

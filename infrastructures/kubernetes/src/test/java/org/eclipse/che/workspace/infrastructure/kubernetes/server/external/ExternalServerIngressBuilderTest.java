@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,12 +12,13 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.server.external;
 
 import static java.util.Collections.singletonMap;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ExternalServerIngressBuilder.INGRESS_PATH_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
@@ -37,7 +38,8 @@ public class ExternalServerIngressBuilderTest {
   private static final String MACHINE_NAME = "machine";
   private static final String NAME = "IngressName";
   private static final String SERVICE_NAME = "ServiceName";
-  private static final String SERVICE_PORT = "server-port";
+  private static final String SERVICE_PORT_NAME = "server-port";
+  private static final Integer SERVICE_PORT = 7777;
 
   private ExternalServerIngressBuilder externalServerIngressBuilder;
 
@@ -62,6 +64,7 @@ public class ExternalServerIngressBuilderTest {
             .withName(NAME)
             .withServers(SERVERS)
             .withServiceName(SERVICE_NAME)
+            .withServicePortName(SERVICE_PORT_NAME)
             .withServicePort(SERVICE_PORT)
             .build();
 
@@ -83,6 +86,7 @@ public class ExternalServerIngressBuilderTest {
             .withName(NAME)
             .withServers(SERVERS)
             .withServiceName(SERVICE_NAME)
+            .withServicePortName(SERVICE_PORT_NAME)
             .withServicePort(SERVICE_PORT)
             .build();
 
@@ -104,6 +108,7 @@ public class ExternalServerIngressBuilderTest {
             .withName(NAME)
             .withServers(SERVERS)
             .withServiceName(SERVICE_NAME)
+            .withServicePortName(SERVICE_PORT_NAME)
             .withServicePort(SERVICE_PORT)
             .build();
 
@@ -116,8 +121,9 @@ public class ExternalServerIngressBuilderTest {
     HTTPIngressPath httpIngressPath =
         ingress.getSpec().getRules().get(0).getHttp().getPaths().get(0);
     assertEquals(httpIngressPath.getPath(), path);
-    assertEquals(httpIngressPath.getBackend().getServiceName(), SERVICE_NAME);
-    assertEquals(httpIngressPath.getBackend().getServicePort().getStrVal(), SERVICE_PORT);
+    assertEquals(httpIngressPath.getPathType(), INGRESS_PATH_TYPE);
+    assertEquals(httpIngressPath.getBackend().getService().getName(), SERVICE_NAME);
+    assertEquals(httpIngressPath.getBackend().getService().getPort().getName(), SERVICE_PORT_NAME);
 
     assertEquals(ingress.getMetadata().getName(), NAME);
     assertTrue(ingress.getMetadata().getAnnotations().containsKey("annotation-key"));

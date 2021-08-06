@@ -16,9 +16,9 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.TlsP
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressTLS;
-import io.fabric8.kubernetes.api.model.extensions.IngressTLSBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLS;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressTLSBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

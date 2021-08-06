@@ -93,7 +93,6 @@ public class KubernetesNamespaceTest {
     final MixedOperation mixedOperation = mock(MixedOperation.class);
     lenient().doReturn(mixedOperation).when(kubernetesClient).serviceAccounts();
     lenient().doReturn(mixedOperation).when(kubernetesClient).secrets();
-    lenient().doReturn(namespaceOperation).when(mixedOperation).inNamespace(anyString());
     lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
     lenient().when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
     lenient().when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));

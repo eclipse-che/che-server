@@ -12,8 +12,11 @@
 package org.eclipse.che.workspace.infrastructure.openshift.project;
 
 import static java.lang.String.format;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.Project;
@@ -101,7 +104,8 @@ public class OpenShiftProject extends KubernetesNamespace {
   /**
    * Prepare a project for using.
    *
-   * <p>Preparing includes creating if needed and waiting for default service account.
+   * <p>Preparing includes creating if needed and waiting for default service account, then it
+   * creates a secret for storing credentials.
    *
    * @param canCreate defines what to do when the project is not found. The project is created when
    *     {@code true}, otherwise an exception is thrown.
@@ -212,6 +216,14 @@ public class OpenShiftProject extends KubernetesNamespace {
                   .withName(projectName)
                   .endMetadata()
                   .build());
+      Secret secret =
+          new SecretBuilder()
+              .withType("opaque")
+              .withNewMetadata()
+              .withName(CREDENTIALS_SECRET_NAME)
+              .endMetadata()
+              .build();
+      osClient.secrets().inNamespace(projectName).create(secret);
     } catch (KubernetesClientException e) {
       if (e.getCode() == 403) {
         LOG.error(

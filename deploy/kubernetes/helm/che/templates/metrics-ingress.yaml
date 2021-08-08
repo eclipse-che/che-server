@@ -17,7 +17,7 @@
 
 {{- if .Values.global.metricsEnabled }}
 
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: che-metrics-ingress
@@ -45,15 +45,21 @@ spec:
     http:
       paths:
       - path: /
+        pathType: ImplementationSpecific
         backend:
-          serviceName: che-prometheus-server
-          servicePort: 80
+          service:
+            name: che-prometheus-server
+            port:
+              number: 80
   - host: {{ template "grafanaHost" . }}
     http:
       paths:
       - path: /
+        pathType: ImplementationSpecific
         backend:
-          serviceName: che-grafana
-          servicePort: 80
+          service:
+            name: che-grafana
+            port:
+              number: 80
 
 {{- end }}

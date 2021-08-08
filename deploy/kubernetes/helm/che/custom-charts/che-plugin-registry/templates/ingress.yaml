@@ -9,7 +9,7 @@
 
 {{- if not (and (eq .Values.global.serverStrategy "single-host") (eq .Values.global.singleHostExposure "gateway")) }}
 
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: plugin-registry
@@ -45,9 +45,12 @@ spec:
       paths:
       - path: /
 {{- end }}
+        pathType: ImplementationSpecific
         backend:
-          serviceName: plugin-registry
-          servicePort: 8080
+          service:
+            name: plugin-registry
+            port:
+              number: 8080
 {{- if .Values.global.tls.enabled }}
   tls:
   - hosts:

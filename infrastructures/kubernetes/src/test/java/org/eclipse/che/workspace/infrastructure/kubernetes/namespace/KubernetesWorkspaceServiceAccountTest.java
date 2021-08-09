@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertTrue;
 
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;

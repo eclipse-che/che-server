@@ -11,8 +11,8 @@
  */
 package org.eclipse.che.api.deploy.jsonrpc;
 
-import javax.inject.Inject;
 import jakarta.websocket.server.ServerEndpoint;
+import javax.inject.Inject;
 import org.eclipse.che.api.core.websocket.commons.WebSocketMessageReceiver;
 import org.eclipse.che.api.core.websocket.impl.BasicWebSocketEndpoint;
 import org.eclipse.che.api.core.websocket.impl.GuiceInjectorEndpointConfigurator;

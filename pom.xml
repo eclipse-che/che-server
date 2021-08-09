@@ -53,7 +53,6 @@
         <com.fasterxml.jackson.version>2.11.2</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
         <com.github.tomakehurst.wiremock-jre8-standalone.version>2.27.2</com.github.tomakehurst.wiremock-jre8-standalone.version>
-        <com.google.code.findbugs.jsr305.version>3.0.2</com.google.code.findbugs.jsr305.version>
         <com.google.code.guice.version>4.2.2</com.google.code.guice.version>
         <com.google.errorprone>2.3.4</com.google.errorprone>
         <com.google.guava.version>30.1.1-jre</com.google.guava.version>
@@ -186,11 +185,6 @@
                 <version>${com.github.tomakehurst.wiremock-jre8-standalone.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>jsr305</artifactId>
-                <version>${com.google.code.findbugs.jsr305.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
                 <version>${com.googlecode.gson.version}</version>
@@ -199,6 +193,12 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${com.google.guava.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>jsr305</artifactId>
+                        <groupId>com.google.code.findbugs</groupId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.http-client</groupId>
@@ -1906,6 +1906,7 @@
                                         <exclude>commons-logging:commons-logging-api</exclude>
                                         <exclude>concurrent:concurrent</exclude>
                                         <exclude>com.google.code.findbugs:annotations</exclude>
+                                        <exclude>com.google.code.findbugs:jsr305</exclude>
                                         <exclude>jboss:jboss-logging-spi</exclude>
                                         <exclude>org.apache.xalan:serializer</exclude>
                                         <exclude>org.apache.xalan:xalan</exclude>

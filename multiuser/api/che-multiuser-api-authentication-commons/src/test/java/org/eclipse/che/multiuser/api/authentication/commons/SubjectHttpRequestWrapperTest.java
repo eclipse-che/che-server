@@ -16,8 +16,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-import java.security.Principal;
 import jakarta.servlet.http.HttpServletRequest;
+import java.security.Principal;
 import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;

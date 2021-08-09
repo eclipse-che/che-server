@@ -165,10 +165,9 @@ public class ResourceServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/resource/account123/details");
 
+    assertEquals(response.statusCode(), 200);
     final ResourcesDetailsDto resourceDetailsDto =
         DtoFactory.getInstance()
             .createDtoFromJson(response.body().print(), ResourcesDetailsDto.class);

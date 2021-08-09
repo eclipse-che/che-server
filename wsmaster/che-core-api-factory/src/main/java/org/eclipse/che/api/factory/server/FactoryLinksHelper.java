@@ -19,10 +19,10 @@ import static org.eclipse.che.api.factory.shared.Constants.FACTORY_ACCEPTANCE_RE
 import static org.eclipse.che.api.factory.shared.Constants.NAMED_FACTORY_ACCEPTANCE_REL_ATT;
 import static org.eclipse.che.api.factory.shared.Constants.RETRIEVE_FACTORY_REL_ATT;
 
-import java.util.LinkedList;
-import java.util.List;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.UriBuilder;
+import java.util.LinkedList;
+import java.util.List;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;

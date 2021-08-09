@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.multiuser.api.authentication.commons;
 
+import jakarta.servlet.http.HttpSession;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import javax.inject.Singleton;
-import jakarta.servlet.http.HttpSession;
 
 /**
  * Thread safe {@link HttpSession} storage based on {@link ConcurrentHashMap}. Sessions are stored

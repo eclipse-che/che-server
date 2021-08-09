@@ -12,9 +12,9 @@
 package org.eclipse.che.api.factory.server;
 
 import static io.restassured.RestAssured.given;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static java.lang.String.valueOf;
 import static java.util.Collections.singletonMap;
-import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.eclipse.che.api.factory.server.FactoryService.VALIDATE_QUERY_PARAMETER;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;

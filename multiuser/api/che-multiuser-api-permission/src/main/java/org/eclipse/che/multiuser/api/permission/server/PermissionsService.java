@@ -17,6 +17,9 @@ import static java.util.Collections.singletonList;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
@@ -69,10 +72,12 @@ public class PermissionsService extends Service {
   @Produces(APPLICATION_JSON)
   @Operation(
       summary = "Get all supported domains or only requested if domain parameter specified",
-      response = DomainDto.class,
-      responseContainer = "List",
       responses = {
-        @ApiResponse(responseCode = "200", description = "The domains successfully fetched"),
+        @ApiResponse(
+            responseCode = "200",
+            description = "The domains successfully fetched",
+            content =
+                @Content(array = @ArraySchema(schema = @Schema(implementation = DomainDto.class)))),
         @ApiResponse(responseCode = "404", description = "Requested domain is not supported"),
         @ApiResponse(
             responseCode = "500",
@@ -126,10 +131,12 @@ public class PermissionsService extends Service {
   @Produces(APPLICATION_JSON)
   @Operation(
       summary =
-          "Get permissions of current user which are related to specified domain and instance",
-      response = PermissionsDto.class,
+          "Get permissions of current user which are related to specified sdomain and instance",
       responses = {
-        @ApiResponse(responseCode = "200", description = "The permissions successfully fetched"),
+        @ApiResponse(
+            responseCode = "200",
+            description = "The permissions successfully fetched",
+            content = @Content(schema = @Schema(implementation = PermissionsDto.class))),
         @ApiResponse(
             responseCode = "400",
             description = "Missed required parameters, parameters are not valid"),
@@ -162,10 +169,13 @@ public class PermissionsService extends Service {
   @Produces(APPLICATION_JSON)
   @Operation(
       summary = "Get permissions which are related to specified domain and instance",
-      response = PermissionsDto.class,
-      responseContainer = "List",
       responses = {
-        @ApiResponse(responseCode = "200", description = "The permissions successfully fetched"),
+        @ApiResponse(
+            responseCode = "200",
+            description = "The permissions successfully fetched",
+            content =
+                @Content(
+                    array = @ArraySchema(schema = @Schema(implementation = PermissionsDto.class)))),
         @ApiResponse(
             responseCode = "400",
             description = "Missed required parameters, parameters are not valid"),

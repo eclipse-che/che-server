@@ -15,11 +15,13 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -50,7 +52,8 @@ import org.eclipse.che.multiuser.resource.shared.dto.ResourceDto;
  *
  * @author Sergii Leschenko
  */
-@Tag(name = "organization-resource",
+@Tag(
+    name = "organization-resource",
     description = "REST API for resources distribution between suborganizations")
 @Path("/organization/resource")
 public class OrganizationResourcesDistributionService extends Service {
@@ -67,19 +70,28 @@ public class OrganizationResourcesDistributionService extends Service {
   @POST
   @Path("/{suborganizationId}/cap")
   @Consumes(APPLICATION_JSON)
-  @Operation(summary = "Cap usage of shared resources.. By default suborganization is able to use all parent organization resources."
+  @Operation(
+      summary =
+          "Cap usage of shared resources.. By default suborganization is able to use all parent organization resources."
               + "Cap allow to limit usage of shared resources by suborganization.",
-          responses = {
-    @ApiResponse(responseCode = "204", description = "Resources successfully capped"),
-    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
-    @ApiResponse(responseCode = "409", description = "Specified organization is root organization"),
-    @ApiResponse(responseCode = "409", description = "Suborganization is using shared resources"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
-  })
+      responses = {
+        @ApiResponse(responseCode = "204", description = "Resources successfully capped"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Specified organization is root organization"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Suborganization is using shared resources"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public void capResources(
-      @Parameter(description ="Suborganization id") @PathParam("suborganizationId") String suborganizationId,
-      @Parameter(description ="Resources to cap") List<ResourceDto> resourcesCap)
+      @Parameter(description = "Suborganization id") @PathParam("suborganizationId")
+          String suborganizationId,
+      @Parameter(description = "Resources to cap") List<ResourceDto> resourcesCap)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     checkArgument(resourcesCap != null, "Missed resources caps.");
     Set<String> resourcesToSet = new HashSet<>();
@@ -99,17 +111,28 @@ public class OrganizationResourcesDistributionService extends Service {
   @GET
   @Path("/{suborganizationId}/cap")
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get resources cap of specified suborganization.",
-      response = OrganizationDistributedResourcesDto.class,
-      responseContainer = "list",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "Resources caps successfully fetched"),
-    @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
-    @ApiResponse(responseCode = "409", description = "Specified organization is root organization"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
-  })
+  @Operation(
+      summary = "Get resources cap of specified suborganization.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Resources caps successfully fetched",
+            content =
+                @Content(
+                    array =
+                        @ArraySchema(
+                            schema =
+                                @Schema(
+                                    implementation = OrganizationDistributedResourcesDto.class)))),
+        @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Specified organization is root organization"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public List<ResourceDto> getResourcesCap(
-      @Parameter(description ="Suborganization id") @PathParam("suborganizationId") String suborganization)
+      @Parameter(description = "Suborganization id") @PathParam("suborganizationId")
+          String suborganization)
       throws NotFoundException, ConflictException, ServerException {
     return resourcesDistributor
         .getResourcesCaps(suborganization)
@@ -121,17 +144,28 @@ public class OrganizationResourcesDistributionService extends Service {
   @GET
   @Path("/{organizationId}")
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get resources which are distributed by specified parent.",
-      response = OrganizationDistributedResourcesDto.class,
-      responseContainer = "list",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "Resources caps successfully fetched"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
-  })
+  @Operation(
+      summary = "Get resources which are distributed by specified parent.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Resources caps successfully fetched",
+            content =
+                @Content(
+                    array =
+                        @ArraySchema(
+                            schema =
+                                @Schema(
+                                    implementation = OrganizationDistributedResourcesDto.class)))),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public Response getDistributedResources(
-      @Parameter(description ="Organization id") @PathParam("organizationId") String organizationId,
-      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0") long skipCount)
+      @Parameter(description = "Organization id") @PathParam("organizationId")
+          String organizationId,
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30")
+          int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0")
+          long skipCount)
       throws BadRequestException, ServerException {
     checkArgument(maxItems >= 0, "The number of items to return can't be negative.");
     checkArgument(skipCount >= 0, "The number of items to skip can't be negative.");

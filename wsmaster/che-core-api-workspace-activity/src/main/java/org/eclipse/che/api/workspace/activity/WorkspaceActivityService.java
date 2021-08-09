@@ -16,7 +16,11 @@ import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.RUNNING;
 import com.google.common.annotations.Beta;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
@@ -49,6 +53,9 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 @Path("/activity")
+@Tag(
+    name = "activity",
+    description = "Service for accessing API for updating activity timestamp of running workspaces")
 public class WorkspaceActivityService extends Service {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkspaceActivityService.class);
@@ -67,8 +74,8 @@ public class WorkspaceActivityService extends Service {
   @Path("/{wsId}")
   @Operation(
       summary =
-          "Notifies workspace activity. Notifies workspace activity to prevent stop by timeout when workspace is used.")
-  @ApiResponses(@ApiResponse(responseCode = "204", description = "Activity counted"))
+          "Notifies workspace activity. Notifies workspace activity to prevent stop by timeout when workspace is used.",
+      responses = {@ApiResponse(responseCode = "204", description = "Activity counted")})
   public void active(@Parameter(description = "Workspace id") @PathParam("wsId") String wsId)
       throws ForbiddenException, NotFoundException, ServerException {
     final WorkspaceImpl workspace = workspaceManager.getWorkspace(wsId);
@@ -80,12 +87,15 @@ public class WorkspaceActivityService extends Service {
 
   @Beta
   @GET
-  @Operation(summary = "Retrieves the IDs of workspaces that have been in given state.")
-  @ApiResponses(
-      @ApiResponse(
-          responseCode = "200",
-          message = "Array of workspace IDs produced.",
-          response = String[].class))
+  @Operation(
+      summary = "Retrieves the IDs of workspaces that have been in given state.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Array of workspace IDs produced.",
+            content =
+                @Content(array = @ArraySchema(schema = @Schema(implementation = String.class))))
+      })
   @Produces(MediaType.APPLICATION_JSON)
   public Response getWorkspacesByActivity(
       @QueryParam("status")

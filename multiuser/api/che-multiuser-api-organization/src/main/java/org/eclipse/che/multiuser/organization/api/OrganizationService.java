@@ -64,7 +64,7 @@ public class OrganizationService extends Service {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Create new organization", response = OrganizationDto.class,
+  @Operation(summary = "Create new organization", response = OrganizationDto.class,
           responses = {
     @ApiResponse(responseCode = "201", description = "The organization successfully created"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
@@ -89,7 +89,7 @@ public class OrganizationService extends Service {
   @Path("/{id}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Update organization", response = OrganizationDto.class,
+  @Operation(summary = "Update organization", response = OrganizationDto.class,
           responses = {
     @ApiResponse(responseCode = "200", description = "The organization successfully updated"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
@@ -124,7 +124,7 @@ public class OrganizationService extends Service {
   @GET
   @Produces(APPLICATION_JSON)
   @Path("/{organizationId}")
-  @ApiOperation(value = "Get organization by id", response = OrganizationDto.class,
+  @Operation(summary = "Get organization by id", response = OrganizationDto.class,
           responses = {
     @ApiResponse(responseCode = "200", description = "The organization successfully fetched"),
     @ApiResponse(responseCode = "404", description = "The organization with given id was not found"),
@@ -140,7 +140,7 @@ public class OrganizationService extends Service {
   @GET
   @Produces(APPLICATION_JSON)
   @Path("/find")
-  @ApiOperation(value = "Find organization by name", response = OrganizationDto.class,
+  @Operation(summary = "Find organization by name", response = OrganizationDto.class,
           responses = {
     @ApiResponse(responseCode = "200", description = "The organization successfully fetched"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),

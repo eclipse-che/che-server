@@ -65,7 +65,9 @@ public class WorkspaceActivityService extends Service {
 
   @PUT
   @Path("/{wsId}")
-  @Operation(summary = "Notifies workspace activity. Notifies workspace activity to prevent stop by timeout when workspace is used.")
+  @Operation(
+      summary =
+          "Notifies workspace activity. Notifies workspace activity to prevent stop by timeout when workspace is used.")
   @ApiResponses(@ApiResponse(responseCode = "204", description = "Activity counted"))
   public void active(@Parameter(description = "Workspace id") @PathParam("wsId") String wsId)
       throws ForbiddenException, NotFoundException, ServerException {
@@ -86,28 +88,34 @@ public class WorkspaceActivityService extends Service {
           response = String[].class))
   @Produces(MediaType.APPLICATION_JSON)
   public Response getWorkspacesByActivity(
-      @QueryParam("status") @Required @Parameter(description ="The requested status of the workspaces")
+      @QueryParam("status")
+          @Required
+          @Parameter(description = "The requested status of the workspaces")
           WorkspaceStatus status,
       @QueryParam("threshold")
           @DefaultValue("-1")
-          @Parameter(description =
-              "Optionally, limit the results only to workspaces that have been in the provided"
-                  + " status since before this time (in epoch millis). If both threshold and minDuration"
-                  + " are specified, minDuration is NOT taken into account.")
+          @Parameter(
+              description =
+                  "Optionally, limit the results only to workspaces that have been in the provided"
+                      + " status since before this time (in epoch millis). If both threshold and minDuration"
+                      + " are specified, minDuration is NOT taken into account.")
           long threshold,
       @QueryParam("minDuration")
           @DefaultValue("-1")
-          @Parameter(description =
-              "Instead of a threshold, one can also use this parameter to specify the minimum"
-                  + " duration that the workspaces need to have been in the given state. The duration is"
-                  + " specified in milliseconds. If both threshold and minDuration are specified,"
-                  + " minDuration is NOT taken into account.")
+          @Parameter(
+              description =
+                  "Instead of a threshold, one can also use this parameter to specify the minimum"
+                      + " duration that the workspaces need to have been in the given state. The duration is"
+                      + " specified in milliseconds. If both threshold and minDuration are specified,"
+                      + " minDuration is NOT taken into account.")
           long minDuration,
       @QueryParam("maxItems")
           @DefaultValue("" + Pages.DEFAULT_PAGE_SIZE)
-          @Parameter(description ="Maximum number of items on a page of results.")
+          @Parameter(description = "Maximum number of items on a page of results.")
           int maxItems,
-      @QueryParam("skipCount") @DefaultValue("0") @Parameter(description ="How many items to skip.")
+      @QueryParam("skipCount")
+          @DefaultValue("0")
+          @Parameter(description = "How many items to skip.")
           long skipCount)
       throws ServerException, BadRequestException {
 

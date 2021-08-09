@@ -38,7 +38,7 @@ public class ScmService extends Service {
 
   @GET
   @Path("/resolve")
-  @ApiOperation(value = "Get file content by specific repository and filename.",
+  @Operation(summary = "Get file content by specific repository and filename.",
           responses = {
     @ApiResponse(responseCode = "200", description = "Factory successfully built from parameters"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters."),

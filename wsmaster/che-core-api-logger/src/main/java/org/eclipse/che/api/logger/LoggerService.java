@@ -49,7 +49,7 @@ public class LoggerService extends Service {
   @GET
   @Path("/{name}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Get the logger level for the given logger",
+  @Operation(summary = "Get the logger level for the given logger",
           responses = {
     @ApiResponse(responseCode = "200", description = "The response contains requested logger entity"),
     @ApiResponse(responseCode = "404", description = "The logger with specified name does not exist")
@@ -94,7 +94,7 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Update the logger level",
+  @Operation(summary = "Update the logger level",
           responses = {
     @ApiResponse(responseCode = "200", description = "The logger successfully updated"),
   })
@@ -110,7 +110,7 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Create a new logger level",
+  @Operation(summary = "Create a new logger level",
           responses = {
     @ApiResponse(responseCode = "200", description = "The logger successfully created"),
   })

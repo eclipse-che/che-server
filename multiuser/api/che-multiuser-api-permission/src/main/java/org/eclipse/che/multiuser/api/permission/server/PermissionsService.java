@@ -183,7 +183,7 @@ public class PermissionsService extends Service {
     @ApiResponse(responseCode = "204", description = "The permissions successfully removed"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
-    @ApiResponse(responseCode = "409, description = "User has last 'setPermissions' of given instance"),
+    @ApiResponse(responseCode = "409", description = "User has last 'setPermissions' of given instance"),
     @ApiResponse(
         responseCode = "409",
         description = "Given domain requires non nullable value for instance but it is null"),

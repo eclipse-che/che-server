@@ -60,11 +60,11 @@ public class FreeResourcesLimitService extends Service {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Store free resources limit", response = FreeResourcesLimitDto.class,
+  @Operation(summary = "Store free resources limit", response = FreeResourcesLimitDto.class,
           responses = {
     @ApiResponse(responseCode = "201", description = "The resources limit successfully stored"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "409, description = "The specified account doesn't exist"),
+    @ApiResponse(responseCode = "409", description = "The specified account doesn't exist"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response storeFreeResourcesLimit(

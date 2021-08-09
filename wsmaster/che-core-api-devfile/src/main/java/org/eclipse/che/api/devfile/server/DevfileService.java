@@ -83,7 +83,7 @@ public class DevfileService extends Service {
    */
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Retrieves current version of devfile JSON schema",
+  @Operation(summary = "Retrieves current version of devfile JSON schema",
           responses = {
     @ApiResponse(responseCode = "200", description = "The schema successfully retrieved"),
     @ApiResponse(responseCode = "404", description = "The schema for given version was not found"),
@@ -121,8 +121,8 @@ public class DevfileService extends Service {
           responses = {
     @ApiResponse(responseCode = "201", description = "The devfile successfully created"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, description = "The user does not have access to create a new devfile"),
-    @ApiResponse(responseCode = "409, description = "Conflict error occurred during the devfile creation"),
+    @ApiResponse(responseCode = "403", description = "The user does not have access to create a new devfile"),
+    @ApiResponse(responseCode = "409", description = "Conflict error occurred during the devfile creation"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response createFromDevfileYaml(
@@ -153,7 +153,7 @@ public class DevfileService extends Service {
           responses = {
     @ApiResponse(responseCode = "201", description = "The devfile successfully created"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, description = "The user does not have access to create a new devfile"),
+    @ApiResponse(responseCode = "403", description = "The user does not have access to create a new devfile"),
     @ApiResponse(
         responseCode = "409",
       description = "Conflict error occurred during the devfile creation"
@@ -175,11 +175,11 @@ public class DevfileService extends Service {
   @GET
   @Path("/{id}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Get devfile by its identifier",
+  @Operation(summary = "Get devfile by its identifier",
           responses = {
     @ApiResponse(responseCode = "200", description = "The response contains requested workspace entity"),
     @ApiResponse(responseCode = "404", description = "The devfile with specified id does not exist"),
-    @ApiResponse(responseCode = "403, description = "The user is not allowed to read devfile"),
+    @ApiResponse(responseCode = "403", description = "The user is not allowed to read devfile"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public UserDevfileDto getById(
@@ -261,11 +261,11 @@ public class DevfileService extends Service {
   @Path("/{id}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Update the devfile by replacing all the existing data with update",
+  @Operation(summary = "Update the devfile by replacing all the existing data with update",
           responses = {
     @ApiResponse(responseCode = "200", description = "The devfile successfully updated"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, description = "The user does not have access to update the devfile"),
+    @ApiResponse(responseCode = "403", description = "The user does not have access to update the devfile"),
     @ApiResponse(
         responseCode = "409",
       description = "Conflict error occurred during devfile update"
@@ -285,10 +285,10 @@ public class DevfileService extends Service {
 
   @DELETE
   @Path("/{id}")
-  @ApiOperation(value = "Removes the devfile",
+  @Operation(summary = "Removes the devfile",
           responses = {
     @ApiResponse(responseCode = "204", description = "The devfile successfully removed"),
-    @ApiResponse(responseCode = "403, description = "The user does not have access to remove the devfile"),
+    @ApiResponse(responseCode = "403", description = "The user does not have access to remove the devfile"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void delete(@Parameter(description ="The devfile id") @PathParam("id") String id)

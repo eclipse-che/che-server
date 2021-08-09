@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server;
 
-        import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import javax.inject.Inject;

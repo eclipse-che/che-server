@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,9 @@ package org.eclipse.che.multiuser.keycloak.server;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,9 +24,6 @@ import java.net.URLConnection;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
 import org.eclipse.che.api.core.rest.Service;
 
 /**

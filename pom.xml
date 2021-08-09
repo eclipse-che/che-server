@@ -421,7 +421,7 @@
             </dependency>
             <dependency>
                 <groupId>io.opentracing.contrib</groupId>
-                                            <artifactId>opentracing-web-servlet-filter</artifactId>
+                <artifactId>opentracing-web-servlet-filter</artifactId>
                 <version>${io.opentracing.web-servlet-filter.version}</version>
             </dependency>
             <dependency>

@@ -12,6 +12,8 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
 import com.google.common.io.ByteStreams;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -21,8 +23,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
 import okhttp3.Call;
 import okhttp3.Headers;
 import okhttp3.MediaType;

@@ -11,7 +11,8 @@
  */
 package org.eclipse.che.api.user.shared.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
@@ -27,35 +28,39 @@ import org.eclipse.che.dto.shared.DTO;
  */
 @DTO
 public interface UserDto extends User {
-  @ApiModelProperty("User ID")
+  @Schema(description = "User ID")
   String getId();
 
   void setId(String id);
 
   UserDto withId(String id);
 
-  @ApiModelProperty("User alias which is used for OAuth")
+  @ArraySchema(
+      schema =
+          @Schema(
+              implementation = String.class,
+              description = "User alias which is used for OAuth"))
   List<String> getAliases();
 
   void setAliases(List<String> aliases);
 
   UserDto withAliases(List<String> aliases);
 
-  @ApiModelProperty("User email")
+  @Schema(description = "User email")
   String getEmail();
 
   void setEmail(String email);
 
   UserDto withEmail(String email);
 
-  @ApiModelProperty("User name")
+  @Schema(description = "User name")
   String getName();
 
   void setName(String name);
 
   UserDto withName(String name);
 
-  @ApiModelProperty("User password")
+  @Schema(description = "User password")
   String getPassword();
 
   void setPassword(String password);

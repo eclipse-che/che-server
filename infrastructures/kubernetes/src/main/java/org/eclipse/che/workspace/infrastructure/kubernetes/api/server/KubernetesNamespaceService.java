@@ -50,16 +50,13 @@ public class KubernetesNamespaceService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get k8s namespaces where user is able to create workspaces",
-      notes =
-          "This operation can be performed only by authorized user."
+  @Operation(summary = "Get k8s namespaces where user is able to create workspaces. This operation can be performed only by authorized user."
               + "This is under beta and may be significant changed",
       response = String.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The namespaces successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred during namespaces fetching")
+      responseContainer = "List",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The namespaces successfully fetched"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred during namespaces fetching")
   })
   public List<KubernetesNamespaceMetaDto> getNamespaces() throws InfrastructureException {
     return namespaceFactory.list().stream().map(this::asDto).collect(Collectors.toList());
@@ -68,17 +65,14 @@ public class KubernetesNamespaceService extends Service {
   @POST
   @Path("provision")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Provision k8s namespace where user is able to create workspaces",
-      notes =
-          "This operation can be performed only by an authorized user."
+  @Operation(summary = "Provision k8s namespace where user is able to create workspaces. This operation can be performed only by an authorized user."
               + " This is a beta feature that may be significantly changed.",
-      response = KubernetesNamespaceMetaDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The namespace successfully provisioned"),
+      response = KubernetesNamespaceMetaDto.class,
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The namespace successfully provisioned"),
     @ApiResponse(
         code = 500,
-        message = "Internal server error occurred during namespace provisioning")
+        description = "Internal server error occurred during namespace provisioning")
   })
   public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
     return asDto(

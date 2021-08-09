@@ -61,12 +61,12 @@ public class FreeResourcesLimitService extends Service {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Store free resources limit", response = FreeResourcesLimitDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 201, message = "The resources limit successfully stored"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 409, message = "The specified account doesn't exist"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @ApiOperation(value = "Store free resources limit", response = FreeResourcesLimitDto.class,
+          responses = {
+    @ApiResponse(responseCode = "201, message = "The resources limit successfully stored"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "409, message = "The specified account doesn't exist"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response storeFreeResourcesLimit(
       @Parameter(description = "Free resources limit") FreeResourcesLimitDto resourcesLimit)
@@ -79,13 +79,12 @@ public class FreeResourcesLimitService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get free resources limits",
+  @Operation(summary = "Get free resources limits",
       response = FreeResourcesLimitDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The resources limits successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "List",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The resources limits successfully fetched"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response getFreeResourcesLimits(
       @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
@@ -104,14 +103,13 @@ public class FreeResourcesLimitService extends Service {
   @GET
   @Path("/{accountId}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get free resources limit for account with given id",
-      response = FreeResourcesLimitDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The resources limit successfully fetched"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 404, message = "Resources limit for given account was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @Operation(summary = "Get free resources limit for account with given id",
+      response = FreeResourcesLimitDto.class,
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The resources limit successfully fetched"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "404", description = "Resources limit for given account was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public FreeResourcesLimitDto getFreeResourcesLimit(
       @Parameter(description = "Account id") @PathParam("accountId") String accountId)
@@ -121,12 +119,11 @@ public class FreeResourcesLimitService extends Service {
 
   @DELETE
   @Path("/{accountId}")
-  @ApiOperation(
-      value = "Remove free resources limit for account with given id",
-      response = FreeResourcesLimitDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The resources limit successfully removed"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @Operation(summary = "Remove free resources limit for account with given id",
+      response = FreeResourcesLimitDto.class,
+          responses = {
+    @ApiResponse(responseCode = "204", description = "The resources limit successfully removed"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void removeFreeResourcesLimit(
       @Parameter(description = "Account id") @PathParam("accountId") String accountId)

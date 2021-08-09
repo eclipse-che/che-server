@@ -66,10 +66,9 @@ public class WorkspaceActivityService extends Service {
 
   @PUT
   @Path("/{wsId}")
-  @ApiOperation(
-      value = "Notifies workspace activity",
+  @Operation(summary = "Notifies workspace activity",
       notes = "Notifies workspace activity to prevent stop by timeout when workspace is used.")
-  @ApiResponses(@ApiResponse(code = 204, message = "Activity counted"))
+  @ApiResponses(@ApiResponse(responseCode = "204", description = "Activity counted"))
   public void active(@Parameter(description = "Workspace id") @PathParam("wsId") String wsId)
       throws ForbiddenException, NotFoundException, ServerException {
     final WorkspaceImpl workspace = workspaceManager.getWorkspace(wsId);
@@ -81,10 +80,10 @@ public class WorkspaceActivityService extends Service {
 
   @Beta
   @GET
-  @ApiOperation("Retrieves the IDs of workspaces that have been in given state.")
+  @Operation(summary = "Retrieves the IDs of workspaces that have been in given state.")
   @ApiResponses(
       @ApiResponse(
-          code = 200,
+          responseCode = "200",
           message = "Array of workspace IDs produced.",
           response = String[].class))
   @Produces(MediaType.APPLICATION_JSON)

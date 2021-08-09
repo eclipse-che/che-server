@@ -53,14 +53,13 @@ public class ResourceService extends Service {
   @GET
   @Path("/{accountId}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get list of resources which are available for given account",
+  @Operation(summary = "Get list of resources which are available for given account",
       response = ResourceDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The total resources are successfully fetched"),
-    @ApiResponse(code = 404, message = "Account with specified id was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "List",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The total resources are successfully fetched"),
+    @ApiResponse(responseCode = "404", description = "Account with specified id was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public List<ResourceDto> getTotalResources(
       @Parameter(description ="Account id") @PathParam("accountId") String accountId)
@@ -75,14 +74,13 @@ public class ResourceService extends Service {
   @GET
   @Path("/{accountId}/available")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get list of resources which are available for usage by given account",
+  @Operation(summary = "Get list of resources which are available for usage by given account",
       response = ResourceDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The available resources are successfully fetched"),
-    @ApiResponse(code = 404, message = "Account with specified id was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "List",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The available resources are successfully fetched"),
+    @ApiResponse(responseCode = "404", description = "Account with specified id was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public List<ResourceDto> getAvailableResources(@PathParam("accountId") String accountId)
       throws NotFoundException, ServerException {
@@ -96,14 +94,13 @@ public class ResourceService extends Service {
   @GET
   @Path("/{accountId}/used")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get list of resources which are used by given account",
+  @Operation(summary = "Get list of resources which are used by given account",
       response = ResourceDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The used resources are successfully fetched"),
-    @ApiResponse(code = 404, message = "Account with specified id was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "List",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The used resources are successfully fetched"),
+    @ApiResponse(responseCode = "404", description = "Account with specified id was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public List<ResourceDto> getUsedResources(@PathParam("accountId") String accountId)
       throws NotFoundException, ServerException {
@@ -117,13 +114,12 @@ public class ResourceService extends Service {
   @GET
   @Path("{accountId}/details")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get detailed information about resources for given account",
-      response = ResourcesDetailsDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The resources details successfully fetched"),
-    @ApiResponse(code = 404, message = "Account with specified id was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @Operation(summary = "Get detailed information about resources for given account",
+      response = ResourcesDetailsDto.class,
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The resources details successfully fetched"),
+    @ApiResponse(responseCode = "404", description = "Account with specified id was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public ResourcesDetailsDto getResourceDetails(
       @Parameter(description ="Account id") @PathParam("accountId") String accountId)

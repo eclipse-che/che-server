@@ -84,11 +84,11 @@ public class DevfileService extends Service {
    */
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Retrieves current version of devfile JSON schema")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The schema successfully retrieved"),
-    @ApiResponse(code = 404, message = "The schema for given version was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @ApiOperation(value = "Retrieves current version of devfile JSON schema",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The schema successfully retrieved"),
+    @ApiResponse(responseCode = "404", description = "The schema for given version was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response getSchema(
       @Parameter(description ="Devfile schema version") @DefaultValue(CURRENT_API_VERSION) @QueryParam("version")
@@ -114,18 +114,17 @@ public class DevfileService extends Service {
   @POST
   @Consumes({APPLICATION_JSON, "text/yaml", "text/x-yaml"})
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Creates a new persistent Devfile from yaml representation",
+  @Operation(summary = "Creates a new persistent Devfile from yaml representation",
       consumes = "application/json, text/yaml, text/x-yaml",
       produces = APPLICATION_JSON,
       nickname = "createFromDevfileYaml",
-      response = UserDevfileDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 201, message = "The devfile successfully created"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 403, message = "The user does not have access to create a new devfile"),
-    @ApiResponse(code = 409, message = "Conflict error occurred during the devfile creation"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      response = UserDevfileDto.class,
+          responses = {
+    @ApiResponse(responseCode = "201, message = "The devfile successfully created"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "403, message = "The user does not have access to create a new devfile"),
+    @ApiResponse(responseCode = "409, message = "Conflict error occurred during the devfile creation"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response createFromDevfileYaml(
       @Parameter(description = "The devfile to create", required = true) DevfileDto devfile)
@@ -147,22 +146,20 @@ public class DevfileService extends Service {
   @POST
   @Consumes({APPLICATION_JSON})
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Creates a new persistent Devfile",
+  @Operation(summary = "Creates a new persistent Devfile",
       consumes = "application/json",
       produces = APPLICATION_JSON,
       nickname = "create",
-      response = UserDevfileDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 201, message = "The devfile successfully created"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 403, message = "The user does not have access to create a new devfile"),
+      response = UserDevfileDto.class,
+          responses = {
+    @ApiResponse(responseCode = "201, message = "The devfile successfully created"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "403, message = "The user does not have access to create a new devfile"),
     @ApiResponse(
         code = 409,
-        message =
-            "Conflict error occurred during the devfile creation"
+      description = "Conflict error occurred during the devfile creation"
                 + "(e.g. The devfile with such name already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response createFromUserDevfile(
       @Parameter(description = "The devfile to create", required = true) UserDevfileDto userDevfileDto)
@@ -179,12 +176,12 @@ public class DevfileService extends Service {
   @GET
   @Path("/{id}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Get devfile by its identifier")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The response contains requested workspace entity"),
-    @ApiResponse(code = 404, message = "The devfile with specified id does not exist"),
-    @ApiResponse(code = 403, message = "The user is not allowed to read devfile"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @ApiOperation(value = "Get devfile by its identifier",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The response contains requested workspace entity"),
+    @ApiResponse(responseCode = "404", description = "The devfile with specified id does not exist"),
+    @ApiResponse(responseCode = "403, message = "The user is not allowed to read devfile"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public UserDevfileDto getById(
       @Parameter(description = "UserDevfile identifier") @PathParam("id") String id)
@@ -196,20 +193,17 @@ public class DevfileService extends Service {
   @GET
   @Path("search")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get devfiles which user can read",
-      notes =
-          "This operation can be performed only by authorized user. "
+  @Operation(summary = "Get devfiles which user can read. This operation can be performed only by authorized user. "
               + "It is possible to add additional constraints for the desired devfiles by specifying\n"
               + "multiple query parameters that is representing fields of the devfile. All constrains\n"
               + "would be combined with \"And\" condition. Also, it is possible to specify 'like:' prefix\n"
               + "for the query parameters. In this case instead of an exact match would be used SQL pattern like search.\n"
               + "Examples id=sdfsdf5&devfile.meta.name=like:%dfdf&",
       response = UserDevfileDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The devfiles successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred during devfiles fetching")
+      responseContainer = "List",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The devfiles successfully fetched"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred during devfiles fetching")
   })
   public Response getUserDevfiles(
       @Parameter(description ="The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
@@ -268,17 +262,16 @@ public class DevfileService extends Service {
   @Path("/{id}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Update the devfile by replacing all the existing data with update")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The devfile successfully updated"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 403, message = "The user does not have access to update the devfile"),
+  @ApiOperation(value = "Update the devfile by replacing all the existing data with update",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The devfile successfully updated"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "403, message = "The user does not have access to update the devfile"),
     @ApiResponse(
         code = 409,
-        message =
-            "Conflict error occurred during devfile update"
+      description = "Conflict error occurred during devfile update"
                 + "(e.g. Workspace with such name already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public UserDevfileDto update(
       @Parameter(description ="The devfile id") @PathParam("id") String id,
@@ -293,11 +286,11 @@ public class DevfileService extends Service {
 
   @DELETE
   @Path("/{id}")
-  @ApiOperation(value = "Removes the devfile")
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The devfile successfully removed"),
-    @ApiResponse(code = 403, message = "The user does not have access to remove the devfile"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @ApiOperation(value = "Removes the devfile",
+          responses = {
+    @ApiResponse(responseCode = "204", description = "The devfile successfully removed"),
+    @ApiResponse(responseCode = "403, message = "The user does not have access to remove the devfile"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void delete(@Parameter(description ="The devfile id") @PathParam("id") String id)
       throws BadRequestException, ServerException, ForbiddenException {

@@ -74,13 +74,12 @@ public class FactoryService extends Service {
   @Path("/resolver")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Create factory by providing map of parameters",
-      notes = "Get JSON with factory information")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "Factory successfully built from parameters"),
-    @ApiResponse(code = 400, message = "Missed required parameters, failed to validate factory"),
-    @ApiResponse(code = 500, message = "Internal server error")
+  @Operation(summary = "Create factory by providing map of parameters",
+      notes = "Get JSON with factory information",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "Factory successfully built from parameters"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, failed to validate factory"),
+    @ApiResponse(responseCode = "500", description = "Internal server error")
   })
   public FactoryMetaDto resolveFactory(
       @Parameter(description = "Parameters provided to create factories") Map<String, String> parameters,

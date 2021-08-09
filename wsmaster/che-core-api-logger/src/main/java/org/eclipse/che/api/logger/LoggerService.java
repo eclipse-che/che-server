@@ -50,10 +50,10 @@ public class LoggerService extends Service {
   @GET
   @Path("/{name}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Get the logger level for the given logger")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The response contains requested logger entity"),
-    @ApiResponse(code = 404, message = "The logger with specified name does not exist")
+  @ApiOperation(value = "Get the logger level for the given logger",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The response contains requested logger entity"),
+    @ApiResponse(responseCode = "404", description = "The logger with specified name does not exist")
   })
   public LoggerDto getLoggerByName(@Parameter(description = "logger name") @PathParam("name") String name)
       throws NotFoundException {
@@ -62,13 +62,12 @@ public class LoggerService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get loggers which are configured",
+  @Operation(summary = "Get loggers which are configured",
       notes = "This operation can be performed only by authorized user",
       response = LoggerDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The loggers successfully fetched"),
+      responseContainer = "List",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The loggers successfully fetched"),
   })
   public List<LoggerDto> getLoggers(
       @Parameter(description ="The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
@@ -97,9 +96,9 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Update the logger level")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The logger successfully updated"),
+  @ApiOperation(value = "Update the logger level",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The logger successfully updated"),
   })
   public LoggerDto updateLogger(
       @Parameter(description = "logger name") @PathParam("name") String name, LoggerDto update)
@@ -113,9 +112,9 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Create a new logger level")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The logger successfully created"),
+  @ApiOperation(value = "Create a new logger level",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The logger successfully created"),
   })
   public LoggerDto createLogger(
       @Parameter(description = "logger name") @PathParam("name") String name, LoggerDto createdLogger)

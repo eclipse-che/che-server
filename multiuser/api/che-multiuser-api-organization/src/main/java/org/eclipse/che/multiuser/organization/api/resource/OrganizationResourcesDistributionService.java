@@ -68,18 +68,15 @@ public class OrganizationResourcesDistributionService extends Service {
   @POST
   @Path("/{suborganizationId}/cap")
   @Consumes(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Cap usage of shared resources.",
-      notes =
-          "By default suborganization is able to use all parent organization resources."
-              + "Cap allow to limit usage of shared resources by suborganization.")
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "Resources successfully capped"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 404, message = "Specified organization was not found"),
-    @ApiResponse(code = 409, message = "Specified organization is root organization"),
-    @ApiResponse(code = 409, message = "Suborganization is using shared resources"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @Operation(summary = "Cap usage of shared resources.. By default suborganization is able to use all parent organization resources."
+              + "Cap allow to limit usage of shared resources by suborganization.",
+          responses = {
+    @ApiResponse(responseCode = "204", description = "Resources successfully capped"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
+    @ApiResponse(responseCode = "409, message = "Specified organization is root organization"),
+    @ApiResponse(responseCode = "409, message = "Suborganization is using shared resources"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void capResources(
       @Parameter(description ="Suborganization id") @PathParam("suborganizationId") String suborganizationId,
@@ -103,15 +100,14 @@ public class OrganizationResourcesDistributionService extends Service {
   @GET
   @Path("/{suborganizationId}/cap")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get resources cap of specified suborganization.",
+  @Operation(summary = "Get resources cap of specified suborganization.",
       response = OrganizationDistributedResourcesDto.class,
-      responseContainer = "list")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "Resources caps successfully fetched"),
-    @ApiResponse(code = 404, message = "Specified organization was not found"),
-    @ApiResponse(code = 409, message = "Specified organization is root organization"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "list",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "Resources caps successfully fetched"),
+    @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
+    @ApiResponse(responseCode = "409, message = "Specified organization is root organization"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public List<ResourceDto> getResourcesCap(
       @Parameter(description ="Suborganization id") @PathParam("suborganizationId") String suborganization)
@@ -126,13 +122,12 @@ public class OrganizationResourcesDistributionService extends Service {
   @GET
   @Path("/{organizationId}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get resources which are distributed by specified parent.",
+  @Operation(summary = "Get resources which are distributed by specified parent.",
       response = OrganizationDistributedResourcesDto.class,
-      responseContainer = "list")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "Resources caps successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "list",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "Resources caps successfully fetched"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response getDistributedResources(
       @Parameter(description ="Organization id") @PathParam("organizationId") String organizationId,

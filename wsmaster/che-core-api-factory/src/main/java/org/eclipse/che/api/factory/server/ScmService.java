@@ -39,12 +39,12 @@ public class ScmService extends Service {
 
   @GET
   @Path("/resolve")
-  @ApiOperation(value = "Get file content by specific repository and filename.")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "Factory successfully built from parameters"),
-    @ApiResponse(code = 400, message = "Missed required parameters."),
-    @ApiResponse(code = 404, message = "Requested file not found."),
-    @ApiResponse(code = 500, message = "Internal server error")
+  @ApiOperation(value = "Get file content by specific repository and filename.",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "Factory successfully built from parameters"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters."),
+    @ApiResponse(responseCode = "404", description = "Requested file not found."),
+    @ApiResponse(responseCode = "500", description = "Internal server error")
   })
   public Response resolveFile(
       @Parameter(description = "Repository URL") @QueryParam("repository") String repository,

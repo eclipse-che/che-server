@@ -65,16 +65,15 @@ public class OrganizationService extends Service {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Create new organization", response = OrganizationDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 201, message = "The organization successfully created"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
+  @ApiOperation(value = "Create new organization", response = OrganizationDto.class,
+          responses = {
+    @ApiResponse(responseCode = "201, message = "The organization successfully created"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(
         code = 409,
-        message =
-            "Conflict error occurred during the organization creation"
+      description = "Conflict error occurred during the organization creation"
                 + "(e.g. The organization with such name already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response create(
       @Parameter(description = "Organization to create", required = true) OrganizationDto organization)
@@ -91,17 +90,16 @@ public class OrganizationService extends Service {
   @Path("/{id}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Update organization", response = OrganizationDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The organization successfully updated"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 404, message = "The organization with given id was not found"),
+  @ApiOperation(value = "Update organization", response = OrganizationDto.class,
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The organization successfully updated"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "404", description = "The organization with given id was not found"),
     @ApiResponse(
         code = 409,
-        message =
-            "Conflict error occurred during the organization creation"
+      description = "Conflict error occurred during the organization creation"
                 + "(e.g. The organization with such name already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public OrganizationDto update(
       @Parameter(description ="Organization id") @PathParam("id") String organizationId,
@@ -114,10 +112,10 @@ public class OrganizationService extends Service {
 
   @DELETE
   @Path("/{id}")
-  @ApiOperation("Remove organization with given id")
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The organization successfully removed"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @Operation(summary = "Remove organization with given id",
+          responses = {
+    @ApiResponse(responseCode = "204", description = "The organization successfully removed"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void remove(@Parameter(description ="Organization id") @PathParam("id") String organization)
       throws ServerException {
@@ -127,11 +125,11 @@ public class OrganizationService extends Service {
   @GET
   @Produces(APPLICATION_JSON)
   @Path("/{organizationId}")
-  @ApiOperation(value = "Get organization by id", response = OrganizationDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The organization successfully fetched"),
-    @ApiResponse(code = 404, message = "The organization with given id was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @ApiOperation(value = "Get organization by id", response = OrganizationDto.class,
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The organization successfully fetched"),
+    @ApiResponse(responseCode = "404", description = "The organization with given id was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public OrganizationDto getById(
       @Parameter(description ="Organization id") @PathParam("organizationId") String organizationId)
@@ -143,12 +141,12 @@ public class OrganizationService extends Service {
   @GET
   @Produces(APPLICATION_JSON)
   @Path("/find")
-  @ApiOperation(value = "Find organization by name", response = OrganizationDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The organization successfully fetched"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 404, message = "The organization with given name was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+  @ApiOperation(value = "Find organization by name", response = OrganizationDto.class,
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The organization successfully fetched"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "404", description = "The organization with given name was not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public OrganizationDto find(
       @Parameter(description = "Organization name", required = true) @QueryParam("name")
@@ -162,13 +160,12 @@ public class OrganizationService extends Service {
   @GET
   @Produces(APPLICATION_JSON)
   @Path("/{parent}/organizations")
-  @ApiOperation(
-      value = "Get child organizations",
+  @Operation(summary = "Get child organizations",
       response = OrganizationDto.class,
-      responseContainer = "list")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The child organizations successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "list",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The child organizations successfully fetched"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response getByParent(
       @Parameter(description ="Parent organization id") @PathParam("parent") String parent,
@@ -191,15 +188,14 @@ public class OrganizationService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get user's organizations",
+  @Operation(summary = "Get user's organizations",
       notes = "When user parameter is missed then will be fetched current user's organizations",
       response = OrganizationDto.class,
-      responseContainer = "list")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The organizations successfully fetched"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
+      responseContainer = "list",
+          responses = {
+    @ApiResponse(responseCode = "200", description = "The organizations successfully fetched"),
+    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response getOrganizations(
       @Parameter(description = "User id") @QueryParam("user") String userId,

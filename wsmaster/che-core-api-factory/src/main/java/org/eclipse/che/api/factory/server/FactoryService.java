@@ -16,10 +16,9 @@ import static org.eclipse.che.api.factory.server.FactoryLinksHelper.createLinks;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -74,8 +73,7 @@ public class FactoryService extends Service {
   @Path("/resolver")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Create factory by providing map of parameters",
-      notes = "Get JSON with factory information",
+  @Operation(summary = "Create factory by providing map of parameters. Get JSON with factory information",
           responses = {
     @ApiResponse(responseCode = "200", description = "Factory successfully built from parameters"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, failed to validate factory"),

@@ -15,10 +15,9 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.multiuser.resource.api.DtoConverter.asDto;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;

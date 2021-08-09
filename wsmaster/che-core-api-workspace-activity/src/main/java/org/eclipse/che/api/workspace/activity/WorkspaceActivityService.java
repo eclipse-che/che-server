@@ -14,10 +14,9 @@ package org.eclipse.che.api.workspace.activity;
 import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.RUNNING;
 
 import com.google.common.annotations.Beta;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
@@ -66,8 +65,7 @@ public class WorkspaceActivityService extends Service {
 
   @PUT
   @Path("/{wsId}")
-  @Operation(summary = "Notifies workspace activity",
-      notes = "Notifies workspace activity to prevent stop by timeout when workspace is used.")
+  @Operation(summary = "Notifies workspace activity. Notifies workspace activity to prevent stop by timeout when workspace is used.")
   @ApiResponses(@ApiResponse(responseCode = "204", description = "Activity counted"))
   public void active(@Parameter(description = "Workspace id") @PathParam("wsId") String wsId)
       throws ForbiddenException, NotFoundException, ServerException {

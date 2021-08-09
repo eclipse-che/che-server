@@ -18,10 +18,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -62,8 +61,7 @@ public class LoggerService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get loggers which are configured",
-      notes = "This operation can be performed only by authorized user",
+  @Operation(summary = "Get loggers which are configured. This operation can be performed only by authorized user",
       response = LoggerDto.class,
       responseContainer = "List",
           responses = {

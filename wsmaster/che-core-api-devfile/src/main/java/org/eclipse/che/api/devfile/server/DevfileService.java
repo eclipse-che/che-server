@@ -20,10 +20,9 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.SUPPORTED_V
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -120,10 +119,10 @@ public class DevfileService extends Service {
       nickname = "createFromDevfileYaml",
       response = UserDevfileDto.class,
           responses = {
-    @ApiResponse(responseCode = "201, message = "The devfile successfully created"),
+    @ApiResponse(responseCode = "201", description = "The devfile successfully created"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, message = "The user does not have access to create a new devfile"),
-    @ApiResponse(responseCode = "409, message = "Conflict error occurred during the devfile creation"),
+    @ApiResponse(responseCode = "403, description = "The user does not have access to create a new devfile"),
+    @ApiResponse(responseCode = "409, description = "Conflict error occurred during the devfile creation"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response createFromDevfileYaml(
@@ -152,11 +151,11 @@ public class DevfileService extends Service {
       nickname = "create",
       response = UserDevfileDto.class,
           responses = {
-    @ApiResponse(responseCode = "201, message = "The devfile successfully created"),
+    @ApiResponse(responseCode = "201", description = "The devfile successfully created"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, message = "The user does not have access to create a new devfile"),
+    @ApiResponse(responseCode = "403, description = "The user does not have access to create a new devfile"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
       description = "Conflict error occurred during the devfile creation"
                 + "(e.g. The devfile with such name already exists)"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
@@ -180,7 +179,7 @@ public class DevfileService extends Service {
           responses = {
     @ApiResponse(responseCode = "200", description = "The response contains requested workspace entity"),
     @ApiResponse(responseCode = "404", description = "The devfile with specified id does not exist"),
-    @ApiResponse(responseCode = "403, message = "The user is not allowed to read devfile"),
+    @ApiResponse(responseCode = "403, description = "The user is not allowed to read devfile"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public UserDevfileDto getById(
@@ -266,9 +265,9 @@ public class DevfileService extends Service {
           responses = {
     @ApiResponse(responseCode = "200", description = "The devfile successfully updated"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, message = "The user does not have access to update the devfile"),
+    @ApiResponse(responseCode = "403, description = "The user does not have access to update the devfile"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
       description = "Conflict error occurred during devfile update"
                 + "(e.g. Workspace with such name already exists)"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
@@ -289,7 +288,7 @@ public class DevfileService extends Service {
   @ApiOperation(value = "Removes the devfile",
           responses = {
     @ApiResponse(responseCode = "204", description = "The devfile successfully removed"),
-    @ApiResponse(responseCode = "403, message = "The user does not have access to remove the devfile"),
+    @ApiResponse(responseCode = "403, description = "The user does not have access to remove the devfile"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void delete(@Parameter(description ="The devfile id") @PathParam("id") String id)

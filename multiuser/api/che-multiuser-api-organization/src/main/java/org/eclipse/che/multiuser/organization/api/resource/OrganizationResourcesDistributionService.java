@@ -16,10 +16,9 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -74,8 +73,8 @@ public class OrganizationResourcesDistributionService extends Service {
     @ApiResponse(responseCode = "204", description = "Resources successfully capped"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
-    @ApiResponse(responseCode = "409, message = "Specified organization is root organization"),
-    @ApiResponse(responseCode = "409, message = "Suborganization is using shared resources"),
+    @ApiResponse(responseCode = "409, description = "Specified organization is root organization"),
+    @ApiResponse(responseCode = "409, description = "Suborganization is using shared resources"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void capResources(
@@ -106,7 +105,7 @@ public class OrganizationResourcesDistributionService extends Service {
           responses = {
     @ApiResponse(responseCode = "200", description = "Resources caps successfully fetched"),
     @ApiResponse(responseCode = "404", description = "Specified organization was not found"),
-    @ApiResponse(responseCode = "409, message = "Specified organization is root organization"),
+    @ApiResponse(responseCode = "409, description = "Specified organization is root organization"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public List<ResourceDto> getResourcesCap(

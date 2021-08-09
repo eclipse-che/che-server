@@ -15,10 +15,9 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.multiuser.organization.api.DtoConverter.asDto;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -67,10 +66,10 @@ public class OrganizationService extends Service {
   @Produces(APPLICATION_JSON)
   @ApiOperation(value = "Create new organization", response = OrganizationDto.class,
           responses = {
-    @ApiResponse(responseCode = "201, message = "The organization successfully created"),
+    @ApiResponse(responseCode = "201", description = "The organization successfully created"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
       description = "Conflict error occurred during the organization creation"
                 + "(e.g. The organization with such name already exists)"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
@@ -96,7 +95,7 @@ public class OrganizationService extends Service {
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(responseCode = "404", description = "The organization with given id was not found"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
       description = "Conflict error occurred during the organization creation"
                 + "(e.g. The organization with such name already exists)"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
@@ -188,8 +187,7 @@ public class OrganizationService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get user's organizations",
-      notes = "When user parameter is missed then will be fetched current user's organizations",
+  @Operation(summary = "Get user's organizations. When user parameter is missed then will be fetched current user's organizations",
       response = OrganizationDto.class,
       responseContainer = "list",
           responses = {

@@ -36,10 +36,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.annotations.Example;
 import io.swagger.annotations.ExampleProperty;
 import jakarta.ws.rs.Consumes;
@@ -166,11 +165,11 @@ public class WorkspaceService extends Service {
       nickname = "createFromDevfile",
       response = WorkspaceDto.class,
           responses = {
-    @ApiResponse(responseCode = "201, message = "The workspace successfully created"),
+    @ApiResponse(responseCode = "201", description = "The workspace successfully created"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, message = "The user does not have access to create a new workspace"),
+    @ApiResponse(responseCode = "403, description = "The user does not have access to create a new workspace"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
       description = "Conflict error occurred during the workspace creation"
                 + "(e.g. The workspace with such name already exists)"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
@@ -232,7 +231,7 @@ public class WorkspaceService extends Service {
           responses = {
     @ApiResponse(responseCode = "200", description = "The response contains requested workspace entity"),
     @ApiResponse(responseCode = "404", description = "The workspace with specified id does not exist"),
-    @ApiResponse(responseCode = "403, message = "The user is not workspace owner"),
+    @ApiResponse(responseCode = "403, description = "The user is not workspace owner"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public WorkspaceDto getByKey(
@@ -259,8 +258,7 @@ public class WorkspaceService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get workspaces which user can read",
-      notes = "This operation can be performed only by authorized user",
+  @Operation(summary = "Get workspaces which user can read. This operation can be performed only by authorized user",
       response = WorkspaceDto.class,
       responseContainer = "List",
           responses = {
@@ -294,8 +292,7 @@ public class WorkspaceService extends Service {
   @GET
   @Path("/namespace/{namespace:.*}")
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get workspaces by given namespace",
-      notes = "This operation can be performed only by authorized user",
+  @Operation(summary = "Get workspaces by given namespace. This operation can be performed only by authorized user",
       response = WorkspaceDto.class,
       responseContainer = "List",
           responses = {
@@ -318,14 +315,13 @@ public class WorkspaceService extends Service {
   @Path("/{id}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Update the workspace by replacing all the existing data with update",
-      notes = "This operation can be performed only by the workspace owner",
+  @Operation(summary = "Update the workspace by replacing all the existing data with update. This operation can be performed only by the workspace owner",
           responses = {
     @ApiResponse(responseCode = "200", description = "The workspace successfully updated"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "403, message = "The user does not have access to update the workspace"),
+    @ApiResponse(responseCode = "403, description = "The user does not have access to update the workspace"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
       description = "Conflict error occurred during workspace update"
                 + "(e.g. Workspace with such name already exists)"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
@@ -344,13 +340,12 @@ public class WorkspaceService extends Service {
 
   @DELETE
   @Path("/{id}")
-  @Operation(summary = "Removes the workspace",
-      notes = "This operation can be performed only by the workspace owner",
+  @Operation(summary = "Removes the workspace. This operation can be performed only by the workspace owner",
           responses = {
     @ApiResponse(responseCode = "204", description = "The workspace successfully removed"),
-    @ApiResponse(responseCode = "403, message = "The user does not have access to remove the workspace"),
+    @ApiResponse(responseCode = "403, description = "The user does not have access to remove the workspace"),
     @ApiResponse(responseCode = "404", description = "The workspace doesn't exist"),
-    @ApiResponse(responseCode = "409, message = "The workspace is not stopped(has runtime)"),
+    @ApiResponse(responseCode = "409, description = "The workspace is not stopped(has runtime)"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void delete(@Parameter(description ="The workspace id") @PathParam("id") String id)
@@ -370,7 +365,7 @@ public class WorkspaceService extends Service {
     @ApiResponse(
         code = 403,
         description = "The user is not workspace owner." + "The operation is not allowed for the user"),
-    @ApiResponse(responseCode = "409, message = "Any conflict occurs during the workspace start"),
+    @ApiResponse(responseCode = "409, description = "Any conflict occurs during the workspace start"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public WorkspaceDto startById(
@@ -398,7 +393,7 @@ public class WorkspaceService extends Service {
           responses = {
     @ApiResponse(responseCode = "204", description = "The workspace is stopping"),
     @ApiResponse(responseCode = "404", description = "The workspace with specified id doesn't exist"),
-    @ApiResponse(responseCode = "403, message = "The user is not workspace owner"),
+    @ApiResponse(responseCode = "403, description = "The user is not workspace owner"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public void stop(@Parameter(description ="The workspace id") @PathParam("id") String id)

@@ -16,10 +16,9 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.singletonList;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -94,10 +93,10 @@ public class PermissionsService extends Service {
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(responseCode = "404", description = "Domain of permissions is not supported"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
         description = "New permissions removes last 'setPermissions' of given instance"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
         description = "Given domain requires non nullable value for instance but it is null"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions storing")
   })
@@ -126,7 +125,7 @@ public class PermissionsService extends Service {
         responseCode = "404",
         description = "Permissions for current user with specified domain and instance was not found"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
         description = "Given domain requires non nullable value for instance but it is null"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions fetching")
   })
@@ -153,7 +152,7 @@ public class PermissionsService extends Service {
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
         description = "Given domain requires non nullable value for instance but it is null"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions fetching")
   })
@@ -184,9 +183,9 @@ public class PermissionsService extends Service {
     @ApiResponse(responseCode = "204", description = "The permissions successfully removed"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
     @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
-    @ApiResponse(responseCode = "409, message = "User has last 'setPermissions' of given instance"),
+    @ApiResponse(responseCode = "409, description = "User has last 'setPermissions' of given instance"),
     @ApiResponse(
-        code = 409,
+        responseCode = "409",
         description = "Given domain requires non nullable value for instance but it is null"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions removing")
   })

@@ -14,10 +14,9 @@ package org.eclipse.che.multiuser.resource.api.free;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -63,9 +62,9 @@ public class FreeResourcesLimitService extends Service {
   @Produces(APPLICATION_JSON)
   @ApiOperation(value = "Store free resources limit", response = FreeResourcesLimitDto.class,
           responses = {
-    @ApiResponse(responseCode = "201, message = "The resources limit successfully stored"),
+    @ApiResponse(responseCode = "201", description = "The resources limit successfully stored"),
     @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "409, message = "The specified account doesn't exist"),
+    @ApiResponse(responseCode = "409, description = "The specified account doesn't exist"),
     @ApiResponse(responseCode = "500", description = "Internal server error occurred")
   })
   public Response storeFreeResourcesLimit(

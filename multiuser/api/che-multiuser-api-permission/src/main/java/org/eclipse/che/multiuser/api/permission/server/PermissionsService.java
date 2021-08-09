@@ -15,10 +15,10 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.singletonList;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -67,16 +67,19 @@ public class PermissionsService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get all supported domains or only requested if domain parameter specified",
+  @Operation(
+      summary = "Get all supported domains or only requested if domain parameter specified",
       response = DomainDto.class,
       responseContainer = "List",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The domains successfully fetched"),
-    @ApiResponse(responseCode = "404", description = "Requested domain is not supported"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred during domains fetching")
-  })
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The domains successfully fetched"),
+        @ApiResponse(responseCode = "404", description = "Requested domain is not supported"),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error occurred during domains fetching")
+      })
   public List<DomainDto> getSupportedDomains(
-      @Parameter(description ="Id of requested domain") @QueryParam("domain") String domainId)
+      @Parameter(description = "Id of requested domain") @QueryParam("domain") String domainId)
       throws NotFoundException {
     if (isNullOrEmpty(domainId)) {
       return permissionsManager.getDomains().stream().map(this::asDto).collect(Collectors.toList());
@@ -87,21 +90,27 @@ public class PermissionsService extends Service {
 
   @POST
   @Consumes(APPLICATION_JSON)
-  @Operation(summary = "Store given permissions",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The permissions successfully stored"),
-    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "404", description = "Domain of permissions is not supported"),
-    @ApiResponse(
-        responseCode = "409",
-        description = "New permissions removes last 'setPermissions' of given instance"),
-    @ApiResponse(
-        responseCode = "409",
-        description = "Given domain requires non nullable value for instance but it is null"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions storing")
-  })
+  @Operation(
+      summary = "Store given permissions",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The permissions successfully stored"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(responseCode = "404", description = "Domain of permissions is not supported"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "New permissions removes last 'setPermissions' of given instance"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Given domain requires non nullable value for instance but it is null"),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error occurred during permissions storing")
+      })
   public void storePermissions(
-      @Parameter(description = "The permissions to store", required = true) PermissionsDto permissionsDto)
+      @Parameter(description = "The permissions to store", required = true)
+          PermissionsDto permissionsDto)
       throws ServerException, BadRequestException, ConflictException, NotFoundException {
     checkArgument(permissionsDto != null, "Permissions descriptor required");
     checkArgument(!isNullOrEmpty(permissionsDto.getUserId()), "User required");
@@ -115,20 +124,27 @@ public class PermissionsService extends Service {
   @GET
   @Path("/{domain}")
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get permissions of current user which are related to specified domain and instance",
+  @Operation(
+      summary =
+          "Get permissions of current user which are related to specified domain and instance",
       response = PermissionsDto.class,
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The permissions successfully fetched"),
-    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
-    @ApiResponse(
-        responseCode = "404",
-        description = "Permissions for current user with specified domain and instance was not found"),
-    @ApiResponse(
-        responseCode = "409",
-        description = "Given domain requires non nullable value for instance but it is null"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions fetching")
-  })
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The permissions successfully fetched"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
+        @ApiResponse(
+            responseCode = "404",
+            description =
+                "Permissions for current user with specified domain and instance was not found"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Given domain requires non nullable value for instance but it is null"),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error occurred during permissions fetching")
+      })
   public PermissionsDto getCurrentUsersPermissions(
       @Parameter(description = "Domain id to retrieve user's permissions") @PathParam("domain")
           String domain,
@@ -144,25 +160,32 @@ public class PermissionsService extends Service {
   @GET
   @Path("/{domain}/all")
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get permissions which are related to specified domain and instance",
+  @Operation(
+      summary = "Get permissions which are related to specified domain and instance",
       response = PermissionsDto.class,
       responseContainer = "List",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The permissions successfully fetched"),
-    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
-    @ApiResponse(
-        responseCode = "409",
-        description = "Given domain requires non nullable value for instance but it is null"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions fetching")
-  })
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The permissions successfully fetched"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Given domain requires non nullable value for instance but it is null"),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error occurred during permissions fetching")
+      })
   public Response getUsersPermissions(
       @Parameter(description = "Domain id to retrieve users' permissions") @PathParam("domain")
           String domain,
       @Parameter(description = "Instance id to retrieve users' permissions") @QueryParam("instance")
           String instance,
-      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30")
+          int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0")
+          int skipCount)
       throws ServerException, NotFoundException, ConflictException, BadRequestException {
     instanceValidator.validate(domain, instance);
     checkArgument(maxItems >= 0, "The number of items to return can't be negative.");
@@ -178,22 +201,31 @@ public class PermissionsService extends Service {
 
   @DELETE
   @Path("/{domain}")
-  @Operation(summary = "Removes user's permissions related to the particular instance of specified domain",
-          responses = {
-    @ApiResponse(responseCode = "204", description = "The permissions successfully removed"),
-    @ApiResponse(responseCode = "400", description = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
-    @ApiResponse(responseCode = "409", description = "User has last 'setPermissions' of given instance"),
-    @ApiResponse(
-        responseCode = "409",
-        description = "Given domain requires non nullable value for instance but it is null"),
-    @ApiResponse(responseCode = "500", description = "Internal server error occurred during permissions removing")
-  })
+  @Operation(
+      summary = "Removes user's permissions related to the particular instance of specified domain",
+      responses = {
+        @ApiResponse(responseCode = "204", description = "The permissions successfully removed"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(responseCode = "404", description = "Specified domain is unsupported"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "User has last 'setPermissions' of given instance"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Given domain requires non nullable value for instance but it is null"),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error occurred during permissions removing")
+      })
   public void removePermissions(
-      @Parameter(description ="Domain id to remove user's permissions") @PathParam("domain") String domain,
+      @Parameter(description = "Domain id to remove user's permissions") @PathParam("domain")
+          String domain,
       @Parameter(description = "Instance id to remove user's permissions") @QueryParam("instance")
           String instance,
-      @Parameter(description = "User id", required = true) @QueryParam("user") @Required String user)
+      @Parameter(description = "User id", required = true) @QueryParam("user") @Required
+          String user)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     instanceValidator.validate(domain, instance);
     permissionsManager.remove(user, domain, instance);

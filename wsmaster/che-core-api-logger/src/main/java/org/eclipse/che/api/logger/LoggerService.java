@@ -17,10 +17,13 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -49,28 +52,40 @@ public class LoggerService extends Service {
   @GET
   @Path("/{name}")
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get the logger level for the given logger",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The response contains requested logger entity"),
-    @ApiResponse(responseCode = "404", description = "The logger with specified name does not exist")
-  })
-  public LoggerDto getLoggerByName(@Parameter(description = "logger name") @PathParam("name") String name)
+  @Operation(
+      summary = "Get the logger level for the given logger",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The response contains requested logger entity"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "The logger with specified name does not exist")
+      })
+  public LoggerDto getLoggerByName(
+      @Parameter(description = "logger name") @PathParam("name") String name)
       throws NotFoundException {
     return asDto(getLogger(name));
   }
 
   @GET
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Get loggers which are configured. This operation can be performed only by authorized user",
-      response = LoggerDto.class,
-      responseContainer = "List",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The loggers successfully fetched"),
-  })
+  @Operation(
+      summary =
+          "Get loggers which are configured. This operation can be performed only by authorized user",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The loggers successfully fetched",
+            content =
+                @Content(array = @ArraySchema(schema = @Schema(implementation = LoggerDto.class)))),
+      })
   public List<LoggerDto> getLoggers(
-      @Parameter(description ="The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
+      @Parameter(description = "The number of the items to skip")
+          @DefaultValue("0")
+          @QueryParam("skipCount")
           Integer skipCount,
-      @Parameter(description ="The limit of the items in the response, default is 30")
+      @Parameter(description = "The limit of the items in the response, default is 30")
           @DefaultValue("30")
           @QueryParam("maxItems")
           Integer maxItems) {
@@ -94,10 +109,11 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Update the logger level",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The logger successfully updated"),
-  })
+  @Operation(
+      summary = "Update the logger level",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The logger successfully updated"),
+      })
   public LoggerDto updateLogger(
       @Parameter(description = "logger name") @PathParam("name") String name, LoggerDto update)
       throws NotFoundException {
@@ -110,12 +126,14 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Create a new logger level",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "The logger successfully created"),
-  })
+  @Operation(
+      summary = "Create a new logger level",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The logger successfully created"),
+      })
   public LoggerDto createLogger(
-      @Parameter(description = "logger name") @PathParam("name") String name, LoggerDto createdLogger)
+      @Parameter(description = "logger name") @PathParam("name") String name,
+      LoggerDto createdLogger)
       throws NotFoundException {
     Logger logger = getLogger(name, false);
     logger.setLevel(Level.toLevel(createdLogger.getLevel()));

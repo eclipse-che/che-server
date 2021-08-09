@@ -88,9 +88,7 @@ public class FactoryService extends Service {
           Map<String, String> parameters,
       @Parameter(
               description =
-                  "Whether or not to validate values like it is done when accepting a Factory",
-              allowableValues = "true,false",
-              defaultValue = "false")
+                  "Whether or not to validate values like it is done when accepting a Factory")
           @DefaultValue("false")
           @QueryParam(VALIDATE_QUERY_PARAMETER)
           Boolean validate)

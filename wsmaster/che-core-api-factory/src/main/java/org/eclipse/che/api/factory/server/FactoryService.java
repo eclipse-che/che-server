@@ -15,7 +15,6 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.factory.server.FactoryLinksHelper.createLinks;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -73,15 +72,23 @@ public class FactoryService extends Service {
   @Path("/resolver")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @Operation(summary = "Create factory by providing map of parameters. Get JSON with factory information",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "Factory successfully built from parameters"),
-    @ApiResponse(responseCode = "400", description = "Missed required parameters, failed to validate factory"),
-    @ApiResponse(responseCode = "500", description = "Internal server error")
-  })
+  @Operation(
+      summary = "Create factory by providing map of parameters. Get JSON with factory information",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Factory successfully built from parameters"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, failed to validate factory"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+      })
   public FactoryMetaDto resolveFactory(
-      @Parameter(description = "Parameters provided to create factories") Map<String, String> parameters,
-      @Parameter(description = "Whether or not to validate values like it is done when accepting a Factory",
+      @Parameter(description = "Parameters provided to create factories")
+          Map<String, String> parameters,
+      @Parameter(
+              description =
+                  "Whether or not to validate values like it is done when accepting a Factory",
               allowableValues = "true,false",
               defaultValue = "false")
           @DefaultValue("false")

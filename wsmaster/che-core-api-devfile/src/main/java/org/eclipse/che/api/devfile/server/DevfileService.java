@@ -21,6 +21,9 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
@@ -120,12 +123,11 @@ public class DevfileService extends Service {
   @Produces(APPLICATION_JSON)
   @Operation(
       summary = "Creates a new persistent Devfile from yaml representation",
-      consumes = "application/json, text/yaml, text/x-yaml",
-      produces = APPLICATION_JSON,
-      nickname = "createFromDevfileYaml",
-      response = UserDevfileDto.class,
       responses = {
-        @ApiResponse(responseCode = "201", description = "The devfile successfully created"),
+        @ApiResponse(
+            responseCode = "201",
+            description = "The devfile successfully created",
+            content = @Content(schema = @Schema(implementation = UserDevfileDto.class))),
         @ApiResponse(
             responseCode = "400",
             description = "Missed required parameters, parameters are not valid"),
@@ -159,12 +161,11 @@ public class DevfileService extends Service {
   @Produces(APPLICATION_JSON)
   @Operation(
       summary = "Creates a new persistent Devfile",
-      consumes = "application/json",
-      produces = APPLICATION_JSON,
-      nickname = "create",
-      response = UserDevfileDto.class,
       responses = {
-        @ApiResponse(responseCode = "201", description = "The devfile successfully created"),
+        @ApiResponse(
+            responseCode = "201",
+            description = "The devfile successfully created",
+            content = @Content(schema = @Schema(implementation = UserDevfileDto.class))),
         @ApiResponse(
             responseCode = "400",
             description = "Missed required parameters, parameters are not valid"),
@@ -224,10 +225,13 @@ public class DevfileService extends Service {
               + "would be combined with \"And\" condition. Also, it is possible to specify 'like:' prefix\n"
               + "for the query parameters. In this case instead of an exact match would be used SQL pattern like search.\n"
               + "Examples id=sdfsdf5&devfile.meta.name=like:%dfdf&",
-      response = UserDevfileDto.class,
-      responseContainer = "List",
       responses = {
-        @ApiResponse(responseCode = "200", description = "The devfiles successfully fetched"),
+        @ApiResponse(
+            responseCode = "200",
+            description = "The devfiles successfully fetched",
+            content =
+                @Content(
+                    array = @ArraySchema(schema = @Schema(implementation = UserDevfileDto.class)))),
         @ApiResponse(
             responseCode = "500",
             description = "Internal server error occurred during devfiles fetching")

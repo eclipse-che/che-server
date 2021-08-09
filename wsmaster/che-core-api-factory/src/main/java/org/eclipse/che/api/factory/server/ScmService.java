@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.api.factory.server;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
@@ -38,13 +38,16 @@ public class ScmService extends Service {
 
   @GET
   @Path("/resolve")
-  @Operation(summary = "Get file content by specific repository and filename.",
-          responses = {
-    @ApiResponse(responseCode = "200", description = "Factory successfully built from parameters"),
-    @ApiResponse(responseCode = "400", description = "Missed required parameters."),
-    @ApiResponse(responseCode = "404", description = "Requested file not found."),
-    @ApiResponse(responseCode = "500", description = "Internal server error")
-  })
+  @Operation(
+      summary = "Get file content by specific repository and filename.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Factory successfully built from parameters"),
+        @ApiResponse(responseCode = "400", description = "Missed required parameters."),
+        @ApiResponse(responseCode = "404", description = "Requested file not found."),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+      })
   public Response resolveFile(
       @Parameter(description = "Repository URL") @QueryParam("repository") String repository,
       @Parameter(description = "File name or path") @QueryParam("file") String filePath)

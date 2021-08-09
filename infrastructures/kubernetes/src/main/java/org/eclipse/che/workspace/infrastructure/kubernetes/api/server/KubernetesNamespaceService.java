@@ -14,7 +14,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.api.server;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import com.google.common.annotations.Beta;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -35,8 +35,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.Kubern
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
 /** @author Sergii Leshchenko */
-@Api(
-    value = "kubernetes-namespace",
+@Tag(name = "kubernetes-namespace",
     description = "Kubernetes REST API for working with Namespaces")
 @Path("/kubernetes/namespace")
 @Beta

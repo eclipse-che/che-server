@@ -15,11 +15,12 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -50,8 +51,7 @@ import org.eclipse.che.multiuser.resource.shared.dto.ResourceDto;
  *
  * @author Sergii Leschenko
  */
-@Api(
-    value = "organization-resource",
+@Tag(name = "organization-resource",
     description = "REST API for resources distribution between suborganizations")
 @Path("/organization/resource")
 public class OrganizationResourcesDistributionService extends Service {
@@ -82,8 +82,8 @@ public class OrganizationResourcesDistributionService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public void capResources(
-      @ApiParam("Suborganization id") @PathParam("suborganizationId") String suborganizationId,
-      @ApiParam("Resources to cap") List<ResourceDto> resourcesCap)
+      @Parameter(description ="Suborganization id") @PathParam("suborganizationId") String suborganizationId,
+      @Parameter(description ="Resources to cap") List<ResourceDto> resourcesCap)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     checkArgument(resourcesCap != null, "Missed resources caps.");
     Set<String> resourcesToSet = new HashSet<>();
@@ -114,7 +114,7 @@ public class OrganizationResourcesDistributionService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public List<ResourceDto> getResourcesCap(
-      @ApiParam("Suborganization id") @PathParam("suborganizationId") String suborganization)
+      @Parameter(description ="Suborganization id") @PathParam("suborganizationId") String suborganization)
       throws NotFoundException, ConflictException, ServerException {
     return resourcesDistributor
         .getResourcesCaps(suborganization)
@@ -135,9 +135,9 @@ public class OrganizationResourcesDistributionService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response getDistributedResources(
-      @ApiParam("Organization id") @PathParam("organizationId") String organizationId,
-      @ApiParam(value = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @ApiParam(value = "Skip count") @QueryParam("skipCount") @DefaultValue("0") long skipCount)
+      @Parameter(description ="Organization id") @PathParam("organizationId") String organizationId,
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0") long skipCount)
       throws BadRequestException, ServerException {
     checkArgument(maxItems >= 0, "The number of items to return can't be negative.");
     checkArgument(skipCount >= 0, "The number of items to skip can't be negative.");

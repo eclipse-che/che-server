@@ -15,9 +15,9 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.user.server.Constants.LINK_REL_CURRENT_PROFILE;
 import static org.eclipse.che.api.user.server.Constants.LINK_REL_CURRENT_PROFILE_ATTRIBUTES;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
@@ -49,7 +49,7 @@ import org.eclipse.che.dto.server.DtoFactory;
  *
  * @author Yevhenii Voevodin
  */
-@Api(value = "/profile", description = "Profile REST API")
+@Tag(name = "profile", description = "Profile REST API")
 @Path("/profile")
 public class ProfileService extends Service {
 
@@ -85,7 +85,7 @@ public class ProfileService extends Service {
         message = "Profile for the user with requested identifier doesn't exist"),
     @ApiResponse(code = 500, message = "Couldn't retrieve profile due to internal server error")
   })
-  public ProfileDto getById(@ApiParam("User identifier") @PathParam("id") String userId)
+  public ProfileDto getById(@Parameter(description ="User identifier") @PathParam("id") String userId)
       throws NotFoundException, ServerException {
     return linksInjector.injectLinks(
         asDto(profileManager.getById(userId), userManager.getById(userId)), getServiceContext());
@@ -112,8 +112,8 @@ public class ProfileService extends Service {
     @ApiResponse(code = 500, message = "Couldn't retrieve profile due to internal server error")
   })
   public ProfileDto updateAttributesById(
-      @ApiParam("Id of the user") @PathParam("id") String userId,
-      @ApiParam("New profile attributes") Map<String, String> updates)
+      @Parameter(description ="Id of the user") @PathParam("id") String userId,
+      @Parameter(description ="New profile attributes") Map<String, String> updates)
       throws NotFoundException, ServerException, BadRequestException {
     checkAttributes(updates);
     final ProfileImpl profile = new ProfileImpl(profileManager.getById(userId));
@@ -134,7 +134,7 @@ public class ProfileService extends Service {
           "The replace strategy is used for the update, so all the existing profile "
               + "attributes will be override with incoming values")
   public ProfileDto updateAttributes(
-      @ApiParam("New profile attributes") Map<String, String> updates)
+      @Parameter(description ="New profile attributes") Map<String, String> updates)
       throws NotFoundException, ServerException, BadRequestException {
     checkAttributes(updates);
     final ProfileImpl profile = new ProfileImpl(profileManager.getById(userId()));
@@ -159,7 +159,7 @@ public class ProfileService extends Service {
     @ApiResponse(code = 500, message = "Couldn't remove attributes due to internal server error")
   })
   public void removeAttributes(
-      @ApiParam("The names of the profile attributes to remove") List<String> names)
+      @Parameter(description ="The names of the profile attributes to remove") List<String> names)
       throws NotFoundException, ServerException {
     final Profile profile = profileManager.getById(userId());
     final Map<String, String> attributes = profile.getAttributes();

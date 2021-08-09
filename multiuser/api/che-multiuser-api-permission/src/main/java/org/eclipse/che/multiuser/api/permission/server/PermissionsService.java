@@ -15,9 +15,9 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.singletonList;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
@@ -53,7 +53,7 @@ import org.eclipse.che.multiuser.api.permission.shared.model.PermissionsDomain;
  *
  * @author Sergii Leschenko
  */
-@Api(value = "/permissions", description = "Permissions REST API")
+@Tag(name = "permissions", description = "Permissions REST API")
 @Path("/permissions")
 public class PermissionsService extends Service {
   private final PermissionsManager permissionsManager;
@@ -78,7 +78,7 @@ public class PermissionsService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during domains fetching")
   })
   public List<DomainDto> getSupportedDomains(
-      @ApiParam("Id of requested domain") @QueryParam("domain") String domainId)
+      @Parameter(description ="Id of requested domain") @QueryParam("domain") String domainId)
       throws NotFoundException {
     if (isNullOrEmpty(domainId)) {
       return permissionsManager.getDomains().stream().map(this::asDto).collect(Collectors.toList());
@@ -103,7 +103,7 @@ public class PermissionsService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during permissions storing")
   })
   public void storePermissions(
-      @ApiParam(value = "The permissions to store", required = true) PermissionsDto permissionsDto)
+      @Parameter(description = "The permissions to store", required = true) PermissionsDto permissionsDto)
       throws ServerException, BadRequestException, ConflictException, NotFoundException {
     checkArgument(permissionsDto != null, "Permissions descriptor required");
     checkArgument(!isNullOrEmpty(permissionsDto.getUserId()), "User required");
@@ -133,9 +133,9 @@ public class PermissionsService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during permissions fetching")
   })
   public PermissionsDto getCurrentUsersPermissions(
-      @ApiParam(value = "Domain id to retrieve user's permissions") @PathParam("domain")
+      @Parameter(description = "Domain id to retrieve user's permissions") @PathParam("domain")
           String domain,
-      @ApiParam(value = "Instance id to retrieve user's permissions") @QueryParam("instance")
+      @Parameter(description = "Instance id to retrieve user's permissions") @QueryParam("instance")
           String instance)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     instanceValidator.validate(domain, instance);
@@ -161,12 +161,12 @@ public class PermissionsService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during permissions fetching")
   })
   public Response getUsersPermissions(
-      @ApiParam(value = "Domain id to retrieve users' permissions") @PathParam("domain")
+      @Parameter(description = "Domain id to retrieve users' permissions") @PathParam("domain")
           String domain,
-      @ApiParam(value = "Instance id to retrieve users' permissions") @QueryParam("instance")
+      @Parameter(description = "Instance id to retrieve users' permissions") @QueryParam("instance")
           String instance,
-      @ApiParam(value = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @ApiParam(value = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
       throws ServerException, NotFoundException, ConflictException, BadRequestException {
     instanceValidator.validate(domain, instance);
     checkArgument(maxItems >= 0, "The number of items to return can't be negative.");
@@ -194,10 +194,10 @@ public class PermissionsService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during permissions removing")
   })
   public void removePermissions(
-      @ApiParam("Domain id to remove user's permissions") @PathParam("domain") String domain,
-      @ApiParam(value = "Instance id to remove user's permissions") @QueryParam("instance")
+      @Parameter(description ="Domain id to remove user's permissions") @PathParam("domain") String domain,
+      @Parameter(description = "Instance id to remove user's permissions") @QueryParam("instance")
           String instance,
-      @ApiParam(value = "User id", required = true) @QueryParam("user") @Required String user)
+      @Parameter(description = "User id", required = true) @QueryParam("user") @Required String user)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     instanceValidator.validate(domain, instance);
     permissionsManager.remove(user, domain, instance);

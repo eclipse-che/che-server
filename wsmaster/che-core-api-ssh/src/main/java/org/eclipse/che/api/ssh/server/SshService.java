@@ -16,9 +16,9 @@ import static org.eclipse.che.api.ssh.shared.Constants.LINK_REL_GET_PAIR;
 import static org.eclipse.che.api.ssh.shared.Constants.LINK_REL_REMOVE_PAIR;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
@@ -58,7 +58,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  *
  * @author Sergii Leschenko
  */
-@Api(value = "/ssh", description = "Ssh REST API")
+@Tag(name = "ssh", description = "Ssh REST API")
 @Path("/ssh")
 public class SshService extends Service {
   private final SshManager sshManager;
@@ -90,7 +90,7 @@ public class SshService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response generatePair(
-      @ApiParam(value = "The configuration to generate the new ssh pair", required = true)
+      @Parameter(description = "The configuration to generate the new ssh pair", required = true)
           GenerateSshPairRequest request)
       throws BadRequestException, ServerException, ConflictException {
     requiredNotNull(request, "Generate ssh pair request required");
@@ -169,7 +169,7 @@ public class SshService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public void createPair(
-      @ApiParam(value = "The ssh pair to create", required = true) SshPairDto sshPair)
+      @Parameter(description = "The ssh pair to create", required = true) SshPairDto sshPair)
       throws BadRequestException, ServerException, ConflictException {
     requiredNotNull(sshPair, "Ssh pair required");
     requiredNotNull(sshPair.getService(), "Service name required");
@@ -196,8 +196,8 @@ public class SshService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public SshPairDto getPair(
-      @ApiParam("Name of service") @PathParam("service") String service,
-      @ApiParam(value = "Name of ssh pair", required = true) @QueryParam("name") String name)
+      @Parameter(description ="Name of service") @PathParam("service") String service,
+      @Parameter(description = "Name of ssh pair", required = true) @QueryParam("name") String name)
       throws NotFoundException, ServerException, BadRequestException {
     requiredNotNull(name, "Name of ssh pair");
     return injectLinks(asDto(sshManager.getPair(getCurrentUserId(), service, name)));
@@ -215,8 +215,8 @@ public class SshService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public void removePair(
-      @ApiParam("Name of service") @PathParam("service") String service,
-      @ApiParam(value = "Name of ssh pair", required = true) @QueryParam("name") String name)
+      @Parameter(description ="Name of service") @PathParam("service") String service,
+      @Parameter(description = "Name of ssh pair", required = true) @QueryParam("name") String name)
       throws ServerException, NotFoundException, BadRequestException {
     requiredNotNull(name, "Name of ssh pair");
     sshManager.removePair(getCurrentUserId(), service, name);
@@ -235,7 +235,7 @@ public class SshService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public List<SshPairDto> getPairs(
-      @ApiParam("Name of service") @PathParam("service") String service) throws ServerException {
+      @Parameter(description ="Name of service") @PathParam("service") String service) throws ServerException {
     return sshManager
         .getPairs(getCurrentUserId(), service)
         .stream()

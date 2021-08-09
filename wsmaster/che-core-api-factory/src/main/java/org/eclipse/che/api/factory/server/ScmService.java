@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.api.factory.server;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.GET;
@@ -26,7 +26,7 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.rest.Service;
 
-@Api(value = "/scm")
+@Tag(name = "scm")
 @Path("/scm")
 public class ScmService extends Service {
 
@@ -47,8 +47,8 @@ public class ScmService extends Service {
     @ApiResponse(code = 500, message = "Internal server error")
   })
   public Response resolveFile(
-      @ApiParam(value = "Repository URL") @QueryParam("repository") String repository,
-      @ApiParam(value = "File name or path") @QueryParam("file") String filePath)
+      @Parameter(description = "Repository URL") @QueryParam("repository") String repository,
+      @Parameter(description = "File name or path") @QueryParam("file") String filePath)
       throws ApiException {
     requireNonNull(repository, "Repository");
     requireNonNull(repository, "File");

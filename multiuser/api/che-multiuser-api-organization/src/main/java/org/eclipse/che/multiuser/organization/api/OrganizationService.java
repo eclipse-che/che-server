@@ -14,9 +14,9 @@ package org.eclipse.che.multiuser.organization.api;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.multiuser.organization.api.DtoConverter.asDto;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
@@ -45,7 +45,7 @@ import org.eclipse.che.multiuser.organization.shared.model.Organization;
  *
  * @author Sergii Leschenko
  */
-@Api(value = "/organization", description = "Organization REST API")
+@Tag(name = "organization", description = "Organization REST API")
 @Path("/organization")
 public class OrganizationService extends Service {
   private final OrganizationManager organizationManager;
@@ -77,7 +77,7 @@ public class OrganizationService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response create(
-      @ApiParam(value = "Organization to create", required = true) OrganizationDto organization)
+      @Parameter(description = "Organization to create", required = true) OrganizationDto organization)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     organizationValidator.checkOrganization(organization);
     return Response.status(201)
@@ -104,8 +104,8 @@ public class OrganizationService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public OrganizationDto update(
-      @ApiParam("Organization id") @PathParam("id") String organizationId,
-      @ApiParam(value = "Organization to update", required = true) OrganizationDto organization)
+      @Parameter(description ="Organization id") @PathParam("id") String organizationId,
+      @Parameter(description = "Organization to update", required = true) OrganizationDto organization)
       throws BadRequestException, ConflictException, NotFoundException, ServerException {
     organizationValidator.checkOrganization(organization);
     return linksInjector.injectLinks(
@@ -119,7 +119,7 @@ public class OrganizationService extends Service {
     @ApiResponse(code = 204, message = "The organization successfully removed"),
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
-  public void remove(@ApiParam("Organization id") @PathParam("id") String organization)
+  public void remove(@Parameter(description ="Organization id") @PathParam("id") String organization)
       throws ServerException {
     organizationManager.remove(organization);
   }
@@ -134,7 +134,7 @@ public class OrganizationService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public OrganizationDto getById(
-      @ApiParam("Organization id") @PathParam("organizationId") String organizationId)
+      @Parameter(description ="Organization id") @PathParam("organizationId") String organizationId)
       throws NotFoundException, ServerException {
     return linksInjector.injectLinks(
         asDto(organizationManager.getById(organizationId)), getServiceContext());
@@ -151,7 +151,7 @@ public class OrganizationService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public OrganizationDto find(
-      @ApiParam(value = "Organization name", required = true) @QueryParam("name")
+      @Parameter(description = "Organization name", required = true) @QueryParam("name")
           String organizationName)
       throws NotFoundException, ServerException, BadRequestException {
     checkArgument(organizationName != null, "Missed organization's name");
@@ -171,9 +171,9 @@ public class OrganizationService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response getByParent(
-      @ApiParam("Parent organization id") @PathParam("parent") String parent,
-      @ApiParam(value = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @ApiParam(value = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
+      @Parameter(description ="Parent organization id") @PathParam("parent") String parent,
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
       throws ServerException, BadRequestException {
 
     checkArgument(maxItems >= 0, "The number of items to return can't be negative.");
@@ -202,9 +202,9 @@ public class OrganizationService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response getOrganizations(
-      @ApiParam(value = "User id") @QueryParam("user") String userId,
-      @ApiParam(value = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @ApiParam(value = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
+      @Parameter(description = "User id") @QueryParam("user") String userId,
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
       throws ServerException, BadRequestException {
 
     checkArgument(maxItems >= 0, "The number of items to return can't be negative.");

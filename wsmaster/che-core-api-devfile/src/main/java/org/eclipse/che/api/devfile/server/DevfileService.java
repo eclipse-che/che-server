@@ -19,9 +19,9 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.SUPPORTED_V
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
@@ -59,7 +59,7 @@ import org.eclipse.che.commons.lang.URLEncodedUtils;
 import org.eclipse.che.dto.server.DtoFactory;
 
 /** Defines Devfile REST API. */
-@Api(value = "/devfile", description = "Devfile REST API")
+@Tag(name = "devfile", description = "Devfile REST API")
 @Path("/devfile")
 public class DevfileService extends Service {
 
@@ -91,7 +91,7 @@ public class DevfileService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response getSchema(
-      @ApiParam("Devfile schema version") @DefaultValue(CURRENT_API_VERSION) @QueryParam("version")
+      @Parameter(description ="Devfile schema version") @DefaultValue(CURRENT_API_VERSION) @QueryParam("version")
           String version)
       throws ServerException, NotFoundException {
     if (!SUPPORTED_VERSIONS.contains(version)) {
@@ -128,7 +128,7 @@ public class DevfileService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response createFromDevfileYaml(
-      @ApiParam(value = "The devfile to create", required = true) DevfileDto devfile)
+      @Parameter(description = "The devfile to create", required = true) DevfileDto devfile)
       throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
           ServerException {
     requiredNotNull(devfile, "Devfile");
@@ -165,7 +165,7 @@ public class DevfileService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response createFromUserDevfile(
-      @ApiParam(value = "The devfile to create", required = true) UserDevfileDto userDevfileDto)
+      @Parameter(description = "The devfile to create", required = true) UserDevfileDto userDevfileDto)
       throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
           ServerException {
     requiredNotNull(userDevfileDto, "Devfile");
@@ -187,7 +187,7 @@ public class DevfileService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public UserDevfileDto getById(
-      @ApiParam(value = "UserDevfile identifier") @PathParam("id") String id)
+      @Parameter(description = "UserDevfile identifier") @PathParam("id") String id)
       throws NotFoundException, ServerException, ForbiddenException, BadRequestException {
     requiredNotNull(id, "id");
     return linksInjector.injectLinks(asDto(userDevfileManager.getById(id)), getServiceContext());
@@ -212,13 +212,13 @@ public class DevfileService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during devfiles fetching")
   })
   public Response getUserDevfiles(
-      @ApiParam("The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
+      @Parameter(description ="The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
           Integer skipCount,
-      @ApiParam("The limit of the items in the response, default is 30, maximum 60")
+      @Parameter(description ="The limit of the items in the response, default is 30, maximum 60")
           @DefaultValue("30")
           @QueryParam("maxItems")
           Integer maxItems,
-      @ApiParam(
+      @Parameter(description =
               "A list of fields and directions of sort. By default items would be sorted by id. Example id:asc,name:desc.")
           @QueryParam("order")
           String order)
@@ -281,8 +281,8 @@ public class DevfileService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public UserDevfileDto update(
-      @ApiParam("The devfile id") @PathParam("id") String id,
-      @ApiParam(value = "The devfile update", required = true) UserDevfileDto update)
+      @Parameter(description ="The devfile id") @PathParam("id") String id,
+      @Parameter(description = "The devfile update", required = true) UserDevfileDto update)
       throws BadRequestException, ServerException, ForbiddenException, NotFoundException,
           ConflictException {
     requiredNotNull(update, "User Devfile configuration");
@@ -299,7 +299,7 @@ public class DevfileService extends Service {
     @ApiResponse(code = 403, message = "The user does not have access to remove the devfile"),
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
-  public void delete(@ApiParam("The devfile id") @PathParam("id") String id)
+  public void delete(@Parameter(description ="The devfile id") @PathParam("id") String id)
       throws BadRequestException, ServerException, ForbiddenException {
     userDevfileManager.removeUserDevfile(id);
   }

@@ -13,9 +13,9 @@ package org.eclipse.che.multiuser.resource.api.free;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
@@ -44,7 +44,7 @@ import org.eclipse.che.multiuser.resource.shared.dto.FreeResourcesLimitDto;
  *
  * @author Sergii Leschenko
  */
-@Api(value = "resource-free", description = "Free resources limit REST API")
+@Tag(name = "resource-free", description = "Free resources limit REST API")
 @Path("/resource/free")
 public class FreeResourcesLimitService extends Service {
   private final FreeResourcesLimitManager freeResourcesLimitManager;
@@ -69,7 +69,7 @@ public class FreeResourcesLimitService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response storeFreeResourcesLimit(
-      @ApiParam(value = "Free resources limit") FreeResourcesLimitDto resourcesLimit)
+      @Parameter(description = "Free resources limit") FreeResourcesLimitDto resourcesLimit)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     freeResourcesLimitValidator.check(resourcesLimit);
     return Response.status(201)
@@ -88,8 +88,8 @@ public class FreeResourcesLimitService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response getFreeResourcesLimits(
-      @ApiParam(value = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @ApiParam(value = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
       throws ServerException {
 
     final Page<? extends FreeResourcesLimit> limitsPage =
@@ -114,7 +114,7 @@ public class FreeResourcesLimitService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public FreeResourcesLimitDto getFreeResourcesLimit(
-      @ApiParam(value = "Account id") @PathParam("accountId") String accountId)
+      @Parameter(description = "Account id") @PathParam("accountId") String accountId)
       throws BadRequestException, NotFoundException, ServerException {
     return DtoConverter.asDto(freeResourcesLimitManager.get(accountId));
   }
@@ -129,7 +129,7 @@ public class FreeResourcesLimitService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public void removeFreeResourcesLimit(
-      @ApiParam(value = "Account id") @PathParam("accountId") String accountId)
+      @Parameter(description = "Account id") @PathParam("accountId") String accountId)
       throws ServerException {
     freeResourcesLimitManager.remove(accountId);
   }

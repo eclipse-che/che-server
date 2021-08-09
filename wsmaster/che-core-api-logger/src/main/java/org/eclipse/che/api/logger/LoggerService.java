@@ -17,9 +17,9 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Florent Benoit
  */
-@Api(value = "/logger", description = "Logger REST API")
+@Tag(name = "logger", description = "Logger REST API")
 @Path("/logger")
 public class LoggerService extends Service {
 
@@ -55,7 +55,7 @@ public class LoggerService extends Service {
     @ApiResponse(code = 200, message = "The response contains requested logger entity"),
     @ApiResponse(code = 404, message = "The logger with specified name does not exist")
   })
-  public LoggerDto getLoggerByName(@ApiParam(value = "logger name") @PathParam("name") String name)
+  public LoggerDto getLoggerByName(@Parameter(description = "logger name") @PathParam("name") String name)
       throws NotFoundException {
     return asDto(getLogger(name));
   }
@@ -71,9 +71,9 @@ public class LoggerService extends Service {
     @ApiResponse(code = 200, message = "The loggers successfully fetched"),
   })
   public List<LoggerDto> getLoggers(
-      @ApiParam("The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
+      @Parameter(description ="The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
           Integer skipCount,
-      @ApiParam("The limit of the items in the response, default is 30")
+      @Parameter(description ="The limit of the items in the response, default is 30")
           @DefaultValue("30")
           @QueryParam("maxItems")
           Integer maxItems) {
@@ -102,7 +102,7 @@ public class LoggerService extends Service {
     @ApiResponse(code = 200, message = "The logger successfully updated"),
   })
   public LoggerDto updateLogger(
-      @ApiParam(value = "logger name") @PathParam("name") String name, LoggerDto update)
+      @Parameter(description = "logger name") @PathParam("name") String name, LoggerDto update)
       throws NotFoundException {
     Logger logger = getLogger(name);
     logger.setLevel(Level.toLevel(update.getLevel()));
@@ -118,7 +118,7 @@ public class LoggerService extends Service {
     @ApiResponse(code = 200, message = "The logger successfully created"),
   })
   public LoggerDto createLogger(
-      @ApiParam(value = "logger name") @PathParam("name") String name, LoggerDto createdLogger)
+      @Parameter(description = "logger name") @PathParam("name") String name, LoggerDto createdLogger)
       throws NotFoundException {
     Logger logger = getLogger(name, false);
     logger.setLevel(Level.toLevel(createdLogger.getLevel()));

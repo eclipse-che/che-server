@@ -14,9 +14,9 @@ package org.eclipse.che.multiuser.resource.api.usage;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.multiuser.resource.api.DtoConverter.asDto;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.GET;
@@ -39,7 +39,7 @@ import org.eclipse.che.multiuser.resource.shared.dto.ResourcesDetailsDto;
  *
  * @author Sergii Leschenko
  */
-@Api(value = "/resource", description = "Resource REST API")
+@Tag(name = "resource", description = "Resource REST API")
 @Path("/resource")
 public class ResourceService extends Service {
 
@@ -63,7 +63,7 @@ public class ResourceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public List<ResourceDto> getTotalResources(
-      @ApiParam("Account id") @PathParam("accountId") String accountId)
+      @Parameter(description ="Account id") @PathParam("accountId") String accountId)
       throws NotFoundException, ServerException, ConflictException {
     return resourceManager
         .getTotalResources(accountId)
@@ -126,7 +126,7 @@ public class ResourceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public ResourcesDetailsDto getResourceDetails(
-      @ApiParam("Account id") @PathParam("accountId") String accountId)
+      @Parameter(description ="Account id") @PathParam("accountId") String accountId)
       throws NotFoundException, ServerException {
     return asDto(resourceManager.getResourceDetails(accountId));
   }

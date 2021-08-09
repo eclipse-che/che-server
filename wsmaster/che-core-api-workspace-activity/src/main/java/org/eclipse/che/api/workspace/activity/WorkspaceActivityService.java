@@ -15,7 +15,7 @@ import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.RUNNING;
 
 import com.google.common.annotations.Beta;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.DefaultValue;
@@ -70,7 +70,7 @@ public class WorkspaceActivityService extends Service {
       value = "Notifies workspace activity",
       notes = "Notifies workspace activity to prevent stop by timeout when workspace is used.")
   @ApiResponses(@ApiResponse(code = 204, message = "Activity counted"))
-  public void active(@ApiParam(value = "Workspace id") @PathParam("wsId") String wsId)
+  public void active(@Parameter(description = "Workspace id") @PathParam("wsId") String wsId)
       throws ForbiddenException, NotFoundException, ServerException {
     final WorkspaceImpl workspace = workspaceManager.getWorkspace(wsId);
     if (workspace.getStatus() == RUNNING) {
@@ -89,18 +89,18 @@ public class WorkspaceActivityService extends Service {
           response = String[].class))
   @Produces(MediaType.APPLICATION_JSON)
   public Response getWorkspacesByActivity(
-      @QueryParam("status") @Required @ApiParam("The requested status of the workspaces")
+      @QueryParam("status") @Required @Parameter(description ="The requested status of the workspaces")
           WorkspaceStatus status,
       @QueryParam("threshold")
           @DefaultValue("-1")
-          @ApiParam(
+          @Parameter(description =
               "Optionally, limit the results only to workspaces that have been in the provided"
                   + " status since before this time (in epoch millis). If both threshold and minDuration"
                   + " are specified, minDuration is NOT taken into account.")
           long threshold,
       @QueryParam("minDuration")
           @DefaultValue("-1")
-          @ApiParam(
+          @Parameter(description =
               "Instead of a threshold, one can also use this parameter to specify the minimum"
                   + " duration that the workspaces need to have been in the given state. The duration is"
                   + " specified in milliseconds. If both threshold and minDuration are specified,"
@@ -108,9 +108,9 @@ public class WorkspaceActivityService extends Service {
           long minDuration,
       @QueryParam("maxItems")
           @DefaultValue("" + Pages.DEFAULT_PAGE_SIZE)
-          @ApiParam("Maximum number of items on a page of results.")
+          @Parameter(description ="Maximum number of items on a page of results.")
           int maxItems,
-      @QueryParam("skipCount") @DefaultValue("0") @ApiParam("How many items to skip.")
+      @QueryParam("skipCount") @DefaultValue("0") @Parameter(description ="How many items to skip.")
           long skipCount)
       throws ServerException, BadRequestException {
 

@@ -15,11 +15,12 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.factory.server.FactoryLinksHelper.createLinks;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.POST;
@@ -41,7 +42,7 @@ import org.eclipse.che.api.user.server.UserManager;
  * @author Anton Korneta
  * @author Florent Benoit
  */
-@Api(value = "/factory", description = "Factory manager")
+@Tag(name = "factory", description = "Factory manager")
 @Path("/factory")
 public class FactoryService extends Service {
 
@@ -82,9 +83,8 @@ public class FactoryService extends Service {
     @ApiResponse(code = 500, message = "Internal server error")
   })
   public FactoryMetaDto resolveFactory(
-      @ApiParam(value = "Parameters provided to create factories") Map<String, String> parameters,
-      @ApiParam(
-              value = "Whether or not to validate values like it is done when accepting a Factory",
+      @Parameter(description = "Parameters provided to create factories") Map<String, String> parameters,
+      @Parameter(description = "Whether or not to validate values like it is done when accepting a Factory",
               allowableValues = "true,false",
               defaultValue = "false")
           @DefaultValue("false")

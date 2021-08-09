@@ -35,9 +35,9 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Example;
@@ -97,7 +97,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  * @author Yevhenii Voevodin
  * @author Igor Vinokur
  */
-@Api(value = "/workspace", description = "Workspace REST API")
+@Tag(name = "workspace", description = "Workspace REST API")
 @Path("/workspace")
 public class WorkspaceService extends Service {
 
@@ -178,22 +178,22 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public Response create(
-      @ApiParam(value = "The devfile of the workspace to create", required = true)
+      @Parameter(description = "The devfile of the workspace to create", required = true)
           DevfileDto devfile,
-      @ApiParam(
+      @Parameter(description =
               value =
                   "Workspace attribute defined in 'attrName:attrValue' format. "
                       + "The first ':' is considered as attribute name and value separator",
               examples = @Example({@ExampleProperty("attrName:value-with:colon")}))
           @QueryParam("attribute")
           List<String> attrsList,
-      @ApiParam(
+      @Parameter(description =
               "If true then the workspace will be immediately "
                   + "started after it is successfully created")
           @QueryParam("start-after-create")
           @DefaultValue("false")
           Boolean startAfterCreate,
-      @ApiParam("Che namespace where workspace should be created") @QueryParam("namespace")
+      @Parameter(description ="Che namespace where workspace should be created") @QueryParam("namespace")
           String namespace,
       @HeaderParam(CONTENT_TYPE) MediaType contentType)
       throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
@@ -241,8 +241,7 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public WorkspaceDto getByKey(
-      @ApiParam(
-              value = "Composite key",
+      @Parameter(description = "Composite key",
               examples =
                   @Example({
                     @ExampleProperty("workspace12345678"),
@@ -251,7 +250,7 @@ public class WorkspaceService extends Service {
                   }))
           @PathParam("key")
           String key,
-      @ApiParam("Whether to include internal servers into runtime or not")
+      @Parameter(description ="Whether to include internal servers into runtime or not")
           @DefaultValue("false")
           @QueryParam("includeInternalServers")
           String includeInternalServers)
@@ -275,13 +274,13 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during workspaces fetching")
   })
   public Response getWorkspaces(
-      @ApiParam("The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
+      @Parameter(description ="The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
           Integer skipCount,
-      @ApiParam("The limit of the items in the response, default is 30")
+      @Parameter(description ="The limit of the items in the response, default is 30")
           @DefaultValue("30")
           @QueryParam("maxItems")
           Integer maxItems,
-      @ApiParam("Workspace status") @QueryParam("status") String status)
+      @Parameter(description ="Workspace status") @QueryParam("status") String status)
       throws ServerException, BadRequestException {
     Page<WorkspaceImpl> workspacesPage =
         workspaceManager.getWorkspaces(
@@ -311,8 +310,8 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred during workspaces fetching")
   })
   public List<WorkspaceDto> getByNamespace(
-      @ApiParam("Workspace status") @QueryParam("status") String status,
-      @ApiParam("The namespace") @PathParam("namespace") String namespace)
+      @Parameter(description ="Workspace status") @QueryParam("status") String status,
+      @Parameter(description ="The namespace") @PathParam("namespace") String namespace)
       throws ServerException, BadRequestException {
     return asDtosWithLinks(
         Pages.stream(
@@ -341,8 +340,8 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public WorkspaceDto update(
-      @ApiParam("The workspace id") @PathParam("id") String id,
-      @ApiParam(value = "The workspace update", required = true) WorkspaceDto update)
+      @Parameter(description ="The workspace id") @PathParam("id") String id,
+      @Parameter(description = "The workspace update", required = true) WorkspaceDto update)
       throws BadRequestException, ServerException, ForbiddenException, NotFoundException,
           ConflictException {
     checkArgument(
@@ -364,7 +363,7 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 409, message = "The workspace is not stopped(has runtime)"),
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
-  public void delete(@ApiParam("The workspace id") @PathParam("id") String id)
+  public void delete(@Parameter(description ="The workspace id") @PathParam("id") String id)
       throws BadRequestException, ServerException, NotFoundException, ConflictException,
           ForbiddenException {
     workspaceManager.removeWorkspace(id);
@@ -388,8 +387,8 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
   public WorkspaceDto startById(
-      @ApiParam("The workspace id") @PathParam("id") String workspaceId,
-      @ApiParam("The name of the workspace environment that should be used for start")
+      @Parameter(description ="The workspace id") @PathParam("id") String workspaceId,
+      @Parameter(description ="The name of the workspace environment that should be used for start")
           @QueryParam("environment")
           String envName,
       @QueryParam(DEBUG_WORKSPACE_START) @DefaultValue("false") Boolean debugWorkspaceStart)
@@ -418,7 +417,7 @@ public class WorkspaceService extends Service {
     @ApiResponse(code = 403, message = "The user is not workspace owner"),
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
-  public void stop(@ApiParam("The workspace id") @PathParam("id") String id)
+  public void stop(@Parameter(description ="The workspace id") @PathParam("id") String id)
       throws ForbiddenException, NotFoundException, ServerException, ConflictException {
     workspaceManager.stopWorkspace(id, emptyMap());
   }

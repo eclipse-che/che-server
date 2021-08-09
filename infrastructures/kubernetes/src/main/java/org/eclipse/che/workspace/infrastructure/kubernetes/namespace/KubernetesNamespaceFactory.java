@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceNameValidator.METADATA_NAME_MAX_LENGTH;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -30,6 +31,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -336,10 +339,25 @@ public class KubernetesNamespaceFactory {
     Map<String, String> namespaceAnnotationsEvaluated =
         evaluateAnnotationPlaceholders(resolutionCtx);
 
-    namespace.prepare(
-        canCreateNamespace(identity),
-        labelNamespaces ? namespaceLabels : emptyMap(),
-        annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
+    boolean newNamespace =
+        namespace.prepare(
+            canCreateNamespace(identity),
+            labelNamespaces ? namespaceLabels : emptyMap(),
+            annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
+    if (newNamespace) {
+      Secret secret =
+          new SecretBuilder()
+              .withType("opaque")
+              .withNewMetadata()
+              .withName(CREDENTIALS_SECRET_NAME)
+              .endMetadata()
+              .build();
+      clientFactory
+          .create()
+          .secrets()
+          .inNamespace(identity.getInfrastructureNamespace())
+          .create(secret);
+    }
 
     if (!isNullOrEmpty(serviceAccountName)) {
       KubernetesWorkspaceServiceAccount workspaceServiceAccount =

@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -26,7 +27,6 @@ import java.util.function.Function;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
@@ -113,7 +113,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         buildRole(
             EXEC_ROLE_NAME,
             singletonList("pods/exec"),
-            null,
+            emptyList(),
             singletonList(""),
             singletonList("create")),
         serviceAccountName + "-exec");
@@ -124,7 +124,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         buildRole(
             VIEW_ROLE_NAME,
             Arrays.asList("pods", "services"),
-            null,
+            emptyList(),
             singletonList(""),
             singletonList("list")),
         serviceAccountName + "-view");
@@ -135,7 +135,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         buildRole(
             METRICS_ROLE_NAME,
             Arrays.asList("pods", "nodes"),
-            null,
+            emptyList(),
             singletonList("metrics.k8s.io"),
             Arrays.asList("list", "get", "watch")),
         serviceAccountName + "-metrics");
@@ -194,15 +194,14 @@ public abstract class AbstractWorkspaceServiceAccount<
    *
    * @param name the name of the role
    * @param resources the resources the role grants access to
-   * @param resourceNames specific resource names witch the role grants access to. {@code null} if
-   *     empty.
+   * @param resourceNames specific resource names witch the role grants access to.
    * @param verbs the verbs the role allows
    * @return the role object for the given type of Client
    */
   protected abstract R buildRole(
       String name,
       List<String> resources,
-      @Nullable List<String> resourceNames,
+      List<String> resourceNames,
       List<String> apiGroups,
       List<String> verbs);
 

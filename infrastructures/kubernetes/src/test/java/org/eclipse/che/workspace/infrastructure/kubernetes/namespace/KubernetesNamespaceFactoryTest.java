@@ -20,6 +20,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Abst
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,6 +44,7 @@ import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.NamespaceList;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceAccountList;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBuilder;
@@ -53,6 +55,7 @@ import io.fabric8.kubernetes.api.model.rbac.RoleList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
@@ -121,8 +124,7 @@ public class KubernetesNamespaceFactoryTest {
   @Mock private PreferenceManager preferenceManager;
   @Mock Appender mockedAppender;
 
-  @Mock
-  private NonNamespaceOperation<Namespace, NamespaceList, Resource<Namespace>> namespaceOperation;
+  @Mock private NonNamespaceOperation namespaceOperation;
 
   @Mock private Resource<Namespace> namespaceResource;
 
@@ -455,6 +457,45 @@ public class KubernetesNamespaceFactoryTest {
         defaultNamespace
             .getAttributes()
             .get(PHASE_ATTRIBUTE)); // no phase - means such namespace does not exist
+  }
+
+  @Test
+  public void shouldCreateCredentialsSecretWhenNamespaceDoesNotExist() throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.prepare(anyBoolean(), anyMap(), anyMap())).thenReturn(true);
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    MixedOperation mixedOperation = mock(MixedOperation.class);
+    lenient().when(k8sClient.secrets()).thenReturn(mixedOperation);
+    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    namespaceFactory.getOrCreate(identity);
+
+    // then
+    ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
+    verify(namespaceOperation).create(secretsCaptor.capture());
+    Secret secret = secretsCaptor.getValue();
+    Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
+    Assert.assertEquals(secret.getType(), "opaque");
   }
 
   @Test(

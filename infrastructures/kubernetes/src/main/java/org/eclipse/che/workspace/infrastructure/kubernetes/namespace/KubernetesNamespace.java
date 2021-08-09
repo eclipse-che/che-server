@@ -13,7 +13,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
 import static java.lang.String.format;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -22,7 +21,6 @@ import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -128,8 +126,7 @@ public class KubernetesNamespace {
   /**
    * Prepare namespace for using.
    *
-   * <p>Preparing includes creating if needed and waiting for default service account, then it
-   * creates a secret for storing credentials.
+   * <p>Preparing includes creating if needed and waiting for default service account.
    *
    * <p>The method will try to label the namespace with provided `labels`. It does not matter if the
    * namespace already exists or we create new one. If update labels operation fail due to lack of
@@ -145,29 +142,26 @@ public class KubernetesNamespace {
    * @param annotations annotations that should be set to the namespace
    * @throws InfrastructureException if any exception occurs during namespace preparation or if the
    *     namespace doesn't exist and {@code canCreate} is {@code false}.
+   * @return {@code true} if the namespace didn't exist and namespace creation was invoked, {@code
+   *     false} if the namespace was already created in the previous calls.
    */
-  void prepare(boolean canCreate, Map<String, String> labels, Map<String, String> annotations)
+  boolean prepare(boolean canCreate, Map<String, String> labels, Map<String, String> annotations)
       throws InfrastructureException {
     KubernetesClient client = clientFactory.create(workspaceId);
     Namespace namespace = get(name, client);
+    boolean needToCreateNewNamespace = false;
 
     if (namespace == null) {
+      needToCreateNewNamespace = true;
       if (!canCreate) {
         throw new InfrastructureException(
             format("Creating the namespace '%s' is not allowed, yet it was not found.", name));
       }
       namespace = create(name, client);
-      Secret secret =
-          new SecretBuilder()
-              .withType("opaque")
-              .withNewMetadata()
-              .withName(CREDENTIALS_SECRET_NAME)
-              .endMetadata()
-              .build();
-      client.secrets().inNamespace(name).create(secret);
     }
     label(namespace, labels);
     annotate(namespace, annotations);
+    return needToCreateNewNamespace;
   }
 
   /**

@@ -1937,6 +1937,8 @@
                                         <exclude>trove:trove</exclude>
                                         <exclude>woodstox:wstx-lgpl</exclude>
                                         <exclude>xml-apis:xml-apis</exclude>
+                                        <exclude>com.google.inject.extensions:guice-servlet</exclude>
+                                        <exclude>commons-fileupload:commons-fileupload</exclude>
                                     </excludes>
                                 </bannedDependencies>
                             </rules>

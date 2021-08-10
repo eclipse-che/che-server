@@ -76,6 +76,10 @@
             <artifactId>jjwt-impl</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-jaxrs2-jakarta</artifactId>
         </dependency>
@@ -488,6 +492,7 @@
                                 <dep>com.google.guava:guava</dep>
                                 <dep>org.everrest:everrest-core</dep>
                                 <dep>io.swagger.core.v3:swagger-jaxrs2-servlet-initializer-v2-jakarta</dep>
+                                <dep>io.jsonwebtoken:jjwt-jackson</dep>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>

@@ -32,9 +32,9 @@ public class WsMasterServletModule extends ServletModule {
   @Override
   protected void configureServlets() {
 
-    if (Boolean.valueOf(System.getenv("CHE_TRACING_ENABLED"))) {
-      install(new org.eclipse.che.core.tracing.web.TracingWebModule());
-    }
+    //    if (Boolean.valueOf(System.getenv("CHE_TRACING_ENABLED"))) {
+    //      install(new org.eclipse.che.core.tracing.web.TracingWebModule());
+    //    }
     if (isCheCorsEnabled()) {
       filter("/*").through(CheCorsFilter.class);
     }

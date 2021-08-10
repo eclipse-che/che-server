@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.swagger.deploy;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.servlet.ServletModule;
 
 /**
@@ -23,14 +22,14 @@ public class BasicSwaggerConfigurationModule extends ServletModule {
 
   @Override
   protected void configureServlets() {
-    bind(io.swagger.jaxrs.config.DefaultJaxrsConfig.class).asEagerSingleton();
-
-    serve("/swaggerinit")
-        .with(
-            io.swagger.jaxrs.config.DefaultJaxrsConfig.class,
-            ImmutableMap.of(
-                "api.version", "7.x",
-                "swagger.api.title", "Eclipse Che",
-                "swagger.api.basepath", "/api"));
+    //    bind(io.swagger.jaxrs.config.DefaultJaxrsConfig.class).asEagerSingleton();
+    //
+    //    serve("/swaggerinit")
+    //        .with(
+    //            io.swagger.jaxrs.config.DefaultJaxrsConfig.class,
+    //            ImmutableMap.of(
+    //                "api.version", "7.x",
+    //                "swagger.api.title", "Eclipse Che",
+    //                "swagger.api.basepath", "/api"));
   }
 }

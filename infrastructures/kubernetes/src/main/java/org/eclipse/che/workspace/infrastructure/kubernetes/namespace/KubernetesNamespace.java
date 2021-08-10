@@ -142,17 +142,13 @@ public class KubernetesNamespace {
    * @param annotations annotations that should be set to the namespace
    * @throws InfrastructureException if any exception occurs during namespace preparation or if the
    *     namespace doesn't exist and {@code canCreate} is {@code false}.
-   * @return {@code true} if the namespace didn't exist and namespace creation was invoked, {@code
-   *     false} if the namespace was already created in the previous calls.
    */
-  boolean prepare(boolean canCreate, Map<String, String> labels, Map<String, String> annotations)
+  void prepare(boolean canCreate, Map<String, String> labels, Map<String, String> annotations)
       throws InfrastructureException {
     KubernetesClient client = clientFactory.create(workspaceId);
     Namespace namespace = get(name, client);
-    boolean needToCreateNewNamespace = false;
 
     if (namespace == null) {
-      needToCreateNewNamespace = true;
       if (!canCreate) {
         throw new InfrastructureException(
             format("Creating the namespace '%s' is not allowed, yet it was not found.", name));
@@ -161,7 +157,6 @@ public class KubernetesNamespace {
     }
     label(namespace, labels);
     annotate(namespace, annotations);
-    return needToCreateNewNamespace;
   }
 
   /**

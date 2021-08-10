@@ -20,7 +20,6 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Abst
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -44,6 +43,7 @@ import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.NamespaceList;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceAccountList;
 import io.fabric8.kubernetes.api.model.Status;
@@ -460,7 +460,7 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void shouldCreateCredentialsSecretWhenNamespaceDoesNotExist() throws Exception {
+  public void shouldCreateCredentialsSecretIfExists() throws Exception {
     // given
     namespaceFactory =
         spy(
@@ -479,7 +479,9 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
-    when(toReturnNamespace.prepare(anyBoolean(), anyMap(), anyMap())).thenReturn(true);
+    KubernetesSecrets secrets = mock(KubernetesSecrets.class);
+    when(toReturnNamespace.secrets()).thenReturn(secrets);
+    when(secrets.get()).thenReturn(Collections.emptyList());
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     MixedOperation mixedOperation = mock(MixedOperation.class);
     lenient().when(k8sClient.secrets()).thenReturn(mixedOperation);
@@ -496,6 +498,41 @@ public class KubernetesNamespaceFactoryTest {
     Secret secret = secretsCaptor.getValue();
     Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
     Assert.assertEquals(secret.getType(), "opaque");
+  }
+
+  @Test
+  public void shouldNotCreateCredentialsSecretIfNotExists() throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    MixedOperation mixedOperation = mock(MixedOperation.class);
+    lenient().when(k8sClient.secrets()).thenReturn(mixedOperation);
+    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    namespaceFactory.getOrCreate(identity);
+
+    // then
+    verify(namespaceOperation, never()).create(any());
   }
 
   @Test(
@@ -576,6 +613,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
 
     // when
@@ -608,6 +646,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
 
     // when
@@ -642,6 +681,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
@@ -680,6 +720,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
@@ -751,6 +792,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
@@ -809,6 +851,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
@@ -1143,6 +1186,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     when(toReturnNamespace.getName()).thenReturn("jondoe-che");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     KubernetesNamespaceMetaImpl namespaceMeta =
@@ -1182,6 +1226,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     when(toReturnNamespace.getName()).thenReturn("jondoe-cha-cha-cha");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     KubernetesNamespaceMetaImpl namespaceMeta =
@@ -1220,6 +1265,7 @@ public class KubernetesNamespaceFactoryTest {
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     when(toReturnNamespace.getName()).thenReturn("jondoe-cha-cha-cha");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     KubernetesNamespaceMetaImpl namespaceMeta =
@@ -1296,6 +1342,7 @@ public class KubernetesNamespaceFactoryTest {
                 pool));
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
 
     // when
@@ -1415,6 +1462,16 @@ public class KubernetesNamespaceFactoryTest {
 
   private void throwOnTryToGetNamespacesList(Throwable e) throws Exception {
     when(namespaceList.getItems()).thenThrow(e);
+  }
+
+  private void prepareNamespace(KubernetesNamespace namespace) throws InfrastructureException {
+    KubernetesSecrets secrets = mock(KubernetesSecrets.class);
+    when(namespace.secrets()).thenReturn(secrets);
+    Secret secretMock = mock(Secret.class);
+    ObjectMeta objectMeta = mock(ObjectMeta.class);
+    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);
+    when(secretMock.getMetadata()).thenReturn(objectMeta);
+    when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
   }
 
   private Namespace createNamespace(String name, String phase) {

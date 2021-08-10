@@ -339,12 +339,16 @@ public class KubernetesNamespaceFactory {
     Map<String, String> namespaceAnnotationsEvaluated =
         evaluateAnnotationPlaceholders(resolutionCtx);
 
-    boolean newNamespace =
-        namespace.prepare(
-            canCreateNamespace(identity),
-            labelNamespaces ? namespaceLabels : emptyMap(),
-            annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
-    if (newNamespace) {
+    namespace.prepare(
+        canCreateNamespace(identity),
+        labelNamespaces ? namespaceLabels : emptyMap(),
+        annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
+
+    if (namespace
+        .secrets()
+        .get()
+        .stream()
+        .noneMatch(s -> s.getMetadata().getName().equals(CREDENTIALS_SECRET_NAME))) {
       Secret secret =
           new SecretBuilder()
               .withType("opaque")

@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.project;
 
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -30,7 +29,6 @@ import static org.testng.Assert.assertTrue;
 import com.google.common.collect.ImmutableList;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -124,7 +122,6 @@ public class OpenShiftProjectTest {
     lenient().when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
     lenient().when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
     lenient().doReturn(projectRequestOperation).when(openShiftClient).projectrequests();
-    lenient().doReturn(mixedOperation).when(openShiftClient).secrets();
     lenient().doReturn(metadataNested).when(metadataNested).withName(anyString());
 
     openShiftProject =
@@ -163,7 +160,6 @@ public class OpenShiftProjectTest {
 
     // then
     verify(metadataNested, never()).withName(PROJECT_NAME);
-    verify(kubernetesClient, never()).secrets();
   }
 
   @Test
@@ -202,7 +198,6 @@ public class OpenShiftProjectTest {
     final MixedOperation mixedOperation = mock(MixedOperation.class);
     final NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
     doReturn(mixedOperation).when(openShiftCheServerClient).serviceAccounts();
-    doReturn(mixedOperation).when(openShiftCheServerClient).secrets();
     when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
     when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
     when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
@@ -240,7 +235,6 @@ public class OpenShiftProjectTest {
     final MixedOperation mixedOperation = mock(MixedOperation.class);
     final NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
     doReturn(mixedOperation).when(openShiftCheServerClient).serviceAccounts();
-    doReturn(mixedOperation).when(openShiftCheServerClient).secrets();
     when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
     when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
     when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
@@ -264,40 +258,6 @@ public class OpenShiftProjectTest {
     assertEquals(roleBinding.getMetadata().getName(), "admin");
     assertEquals(roleBinding.getRoleRef().getName(), "admin");
     assertEquals(roleBinding.getUserNames(), ImmutableList.of("jdoe"));
-  }
-
-  @Test
-  public void testOpenShiftProjectPreparingSecretWhenProjectDoesNotExistWithCheServerSA()
-      throws Exception {
-    // given
-    prepareNamespaceGet(PROJECT_NAME);
-
-    Resource resource = prepareProjectResource(PROJECT_NAME);
-    doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
-    final MixedOperation mixedOperation = mock(MixedOperation.class);
-    final NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
-    doReturn(mixedOperation).when(openShiftCheServerClient).serviceAccounts();
-    doReturn(mixedOperation).when(openShiftCheServerClient).secrets();
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
-    when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
-    when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
-    doReturn(projectRequestOperation).when(openShiftCheServerClient).projectrequests();
-    when(openShiftCheServerClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
-    lenient()
-        .when(mixedRoleBindingOperation.inNamespace(anyString()))
-        .thenReturn(nonNamespaceRoleBindingOperation);
-    when(openShiftClient.currentUser())
-        .thenReturn(new UserBuilder().withNewMetadata().withName("jdoe").endMetadata().build());
-
-    // when
-    openShiftProject.prepare(true, true, Map.of(), Map.of());
-
-    // then
-    ArgumentCaptor<Secret> secretsArgumentCaptor = ArgumentCaptor.forClass(Secret.class);
-    verify(namespaceOperation).create(secretsArgumentCaptor.capture());
-    Secret secret = secretsArgumentCaptor.getValue();
-    Assert.assertEquals(secret.getType(), "opaque");
-    Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
   }
 
   @Test(expectedExceptions = InfrastructureException.class)

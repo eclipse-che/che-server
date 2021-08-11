@@ -460,7 +460,7 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void shouldCreateCredentialsSecretIfExists() throws Exception {
+  public void shouldCreateCredentialsSecretIfNotExists() throws Exception {
     // given
     namespaceFactory =
         spy(
@@ -501,7 +501,7 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void shouldNotCreateCredentialsSecretIfNotExists() throws Exception {
+  public void shouldNotCreateCredentialsSecretIfExists() throws Exception {
     // given
     namespaceFactory =
         spy(

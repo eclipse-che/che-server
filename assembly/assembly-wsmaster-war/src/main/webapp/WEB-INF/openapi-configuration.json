@@ -19,6 +19,20 @@
         "name": "Eclipse Public License - v 2.0",
         "url": "https://www.eclipse.org/legal/epl-2.0/  "
       }
-    }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
   }
 }

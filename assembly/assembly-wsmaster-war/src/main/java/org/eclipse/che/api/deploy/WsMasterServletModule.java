@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.deploy;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.servlet.ServletModule;
 import org.eclipse.che.api.core.cors.CheCorsFilter;
 import org.eclipse.che.commons.logback.filter.RequestIdLoggerFilter;
@@ -42,7 +43,8 @@ public class WsMasterServletModule extends ServletModule {
     filter("/*").through(RequestIdLoggerFilter.class);
 
     // Matching group SHOULD contain forward slash.
-    serveRegex("^(?!/websocket.?)(.*)").with(GuiceEverrestServlet.class);
+    serveRegex("^(?!/websocket.?)(.*)")
+        .with(GuiceEverrestServlet.class, ImmutableMap.of("openapi.context.id", "org.eclipse.che"));
     install(new org.eclipse.che.swagger.deploy.BasicSwaggerConfigurationModule());
 
     if (Boolean.valueOf(System.getenv("CHE_MULTIUSER"))) {

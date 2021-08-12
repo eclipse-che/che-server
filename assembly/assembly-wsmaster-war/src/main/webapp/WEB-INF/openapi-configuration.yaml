@@ -1,0 +1,25 @@
+#
+# Copyright (c) 2012-2021 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+
+resourcePackages:
+  - org.eclipse.che
+openapi: 3.0.0
+servers:
+  - url: /api
+info:
+  description: >-
+    Che Server API3
+  version: 7.0.0
+  title: Che Server API3
+  license:
+    name: Eclipse Public License - v 2.0
+    url: 'https://www.eclipse.org/legal/epl-2.0/'   

@@ -83,10 +83,10 @@
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-jaxrs2-jakarta</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-jaxrs2-servlet-initializer-v2-jakarta</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.swagger.core.v3</groupId>-->
+<!--            <artifactId>swagger-jaxrs2-servlet-initializer-v2-jakarta</artifactId>-->
+<!--        </dependency>-->
         <!--        <dependency>-->
         <!--            <groupId>io.swagger</groupId>-->
         <!--            <artifactId>swagger-models</artifactId>-->

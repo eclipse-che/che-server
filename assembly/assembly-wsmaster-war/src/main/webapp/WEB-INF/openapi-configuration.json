@@ -1,0 +1,24 @@
+{
+  "resourcePackages": [
+    "org.eclipse.che"
+  ],
+  "prettyPrint" : true,
+  "cacheTTL": 0,
+  "openAPI": {
+    "servers": [
+      {
+        "url": "/api"
+      }
+    ],
+    "info": {
+      "version": "7.X",
+      "title": "Che Server API",
+      "description": "Che Server API",
+      "termsOfService": "http://swagger.io/terms/",
+      "license": {
+        "name": "Eclipse Public License - v 2.0",
+        "url": "https://www.eclipse.org/legal/epl-2.0/  "
+      }
+    }
+  }
+}

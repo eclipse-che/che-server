@@ -14,7 +14,7 @@ package org.eclipse.che.api.infraproxy.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HEAD;
@@ -43,7 +43,7 @@ import org.eclipse.che.commons.annotation.Nullable;
  * is only allowed when we can properly impersonate the user - e.g. on OpenShift with OpenShift
  * OAuth switched on.
  */
-@Tag(name = InfrastructureApiService.PATH_PREFIX)
+@Hidden
 @Beta
 @Path(InfrastructureApiService.PATH_PREFIX)
 public class InfrastructureApiService extends Service {

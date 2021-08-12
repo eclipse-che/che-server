@@ -1327,8 +1327,8 @@
                 <version>${org.postgresql.version}</version>
                 <exclusions>
                     <exclusion>
-                        <groupId>org.checkerframework</groupId>
                         <artifactId>checker-qual</artifactId>
+                        <groupId>org.checkerframework</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>

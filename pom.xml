@@ -459,73 +459,14 @@
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-jaxrs2-jakarta</artifactId>
                 <version>${io.swagger.version}</version>
-                <exclusions>
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jackson-jaxrs-json-provider</artifactId>-->
-                    <!--                        <groupId>com.fasterxml.jackson.jaxrs</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jackson-dataformat-yaml</artifactId>-->
-                    <!--                        <groupId>com.fasterxml.jackson.dataformat</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jackson-dataformat-xml</artifactId>-->
-                    <!--                        <groupId>com.fasterxml.jackson.dataformat</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>commons-lang3</artifactId>-->
-                    <!--                        <groupId>org.apache.commons</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jsr305</artifactId>-->
-                    <!--                        <groupId>com.google.code.findbugs</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jsr311-api</artifactId>-->
-                    <!--                        <groupId>javax.ws.rs</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jakarta.xml.bind</artifactId>-->
-                    <!--                        <groupId>jakarta.xml.bind-api</groupId>-->
-                    <!--                    </exclusion>-->
-                </exclusions>
+                <exclusions />
             </dependency>
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-jaxrs2-servlet-initializer-v2-jakarta</artifactId>
                 <version>${io.swagger.version}</version>
-                <exclusions>
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jackson-datatype-joda</artifactId>-->
-                    <!--                        <groupId>com.fasterxml.jackson.datatype</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>commons-lang3</artifactId>-->
-                    <!--                        <groupId>org.apache.commons</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jsr305</artifactId>-->
-                    <!--                        <groupId>com.google.code.findbugs</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jsr311-api</artifactId>-->
-                    <!--                        <groupId>javax.ws.rs</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jackson-dataformat-yaml</artifactId>-->
-                    <!--                        <groupId>com.fasterxml.jackson.dataformat</groupId>-->
-                    <!--                    </exclusion>-->
-                    <!--                    <exclusion>-->
-                    <!--                        <artifactId>jakarta.xml.bind</artifactId>-->
-                    <!--                        <groupId>jakarta.xml.bind-api</groupId>-->
-                    <!--                    </exclusion>-->
-                </exclusions>
+                <exclusions />
             </dependency>
-            <!--            <dependency>-->
-            <!--                <groupId>io.swagger</groupId>-->
-            <!--                <artifactId>swagger-models</artifactId>-->
-            <!--                <version>${io.swagger.version}</version>-->
-            <!--            </dependency>-->
             <dependency>
                 <groupId>jakarta.activation</groupId>
                 <artifactId>jakarta.activation-api</artifactId>

@@ -16,12 +16,12 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.openshift.Constants.PROJECT_DESCRIPTION_ANNOTATION;
 import static org.eclipse.che.workspace.infrastructure.openshift.Constants.PROJECT_DESCRIPTION_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.openshift.Constants.PROJECT_DISPLAY_NAME_ANNOTATION;
 import static org.eclipse.che.workspace.infrastructure.openshift.Constants.PROJECT_DISPLAY_NAME_ATTRIBUTE;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -35,9 +35,13 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 import com.google.common.collect.ImmutableMap;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.ProjectBuilder;
@@ -45,6 +49,7 @@ import io.fabric8.openshift.api.model.ProjectList;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.dsl.ProjectOperation;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,12 +68,15 @@ import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesSecrets;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -529,6 +537,7 @@ public class OpenShiftProjectFactoryTest {
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
 
     // when
@@ -540,6 +549,92 @@ public class OpenShiftProjectFactoryTest {
     assertEquals(toReturnProject, project);
     verify(projectFactory, never()).doCreateServiceAccount(any(), any());
     verify(toReturnProject).prepare(eq(false), eq(false), any(), any());
+  }
+
+  @Test
+  public void shouldCreateCredentialsSecretIfNotExists() throws Exception {
+    // given
+    projectFactory =
+        spy(
+            new OpenShiftProjectFactory(
+                "",
+                null,
+                "<userid>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                true,
+                clientFactory,
+                cheClientFactory,
+                cheServerOpenshiftClientFactory,
+                stopWorkspaceRoleProvisioner,
+                userManager,
+                preferenceManager,
+                pool,
+                NO_OAUTH_IDENTITY_PROVIDER));
+    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+    NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
+    MixedOperation mixedOperation = mock(MixedOperation.class);
+    KubernetesSecrets secrets = mock(KubernetesSecrets.class);
+    when(toReturnProject.secrets()).thenReturn(secrets);
+    when(secrets.get()).thenReturn(Collections.emptyList());
+    lenient().when(osClient.secrets()).thenReturn(mixedOperation);
+    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    projectFactory.getOrCreate(identity);
+
+    // then
+    ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
+    verify(namespaceOperation).create(secretsCaptor.capture());
+    Secret secret = secretsCaptor.getValue();
+    Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
+    Assert.assertEquals(secret.getType(), "opaque");
+  }
+
+  @Test
+  public void shouldNotCreateCredentialsSecretIfExist() throws Exception {
+    // given
+    projectFactory =
+        spy(
+            new OpenShiftProjectFactory(
+                "",
+                null,
+                "<userid>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                true,
+                clientFactory,
+                cheClientFactory,
+                cheServerOpenshiftClientFactory,
+                stopWorkspaceRoleProvisioner,
+                userManager,
+                preferenceManager,
+                pool,
+                NO_OAUTH_IDENTITY_PROVIDER));
+    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    prepareProject(toReturnProject);
+    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+    NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
+    MixedOperation mixedOperation = mock(MixedOperation.class);
+    lenient().when(osClient.secrets()).thenReturn(mixedOperation);
+    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    projectFactory.getOrCreate(identity);
+
+    // then
+    verify(namespaceOperation, never()).create(any());
   }
 
   @Test
@@ -567,6 +662,7 @@ public class OpenShiftProjectFactoryTest {
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    prepareProject(toReturnProject);
     when(toReturnProject.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnProject.getName()).thenReturn("workspace123");
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
@@ -609,6 +705,7 @@ public class OpenShiftProjectFactoryTest {
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     when(toReturnProject.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnProject.getName()).thenReturn("workspace123");
+    prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
 
     OpenShiftWorkspaceServiceAccount serviceAccount = mock(OpenShiftWorkspaceServiceAccount.class);
@@ -649,6 +746,7 @@ public class OpenShiftProjectFactoryTest {
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    prepareProject(toReturnProject);
     when(toReturnProject.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnProject.getName()).thenReturn("workspace123");
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
@@ -769,6 +867,7 @@ public class OpenShiftProjectFactoryTest {
                 NO_OAUTH_IDENTITY_PROVIDER));
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
 
     // when
@@ -804,6 +903,16 @@ public class OpenShiftProjectFactoryTest {
     when(projectOperation.list()).thenReturn(projectList);
 
     when(projectList.getItems()).thenReturn(projects);
+  }
+
+  private void prepareProject(OpenShiftProject project) throws InfrastructureException {
+    KubernetesSecrets secrets = mock(KubernetesSecrets.class);
+    when(project.secrets()).thenReturn(secrets);
+    Secret secretMock = mock(Secret.class);
+    ObjectMeta objectMeta = mock(ObjectMeta.class);
+    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);
+    when(secretMock.getMetadata()).thenReturn(objectMeta);
+    when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
   }
 
   private void throwOnTryToGetProjectsList(Throwable e) throws Exception {

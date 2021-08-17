@@ -45,7 +45,6 @@ public class WsMasterServletModule extends ServletModule {
     // Matching group SHOULD contain forward slash.
     serveRegex("^(?!/websocket.?)(.*)")
         .with(GuiceEverrestServlet.class, ImmutableMap.of("openapi.context.id", "org.eclipse.che"));
-    install(new org.eclipse.che.swagger.deploy.BasicSwaggerConfigurationModule());
 
     if (Boolean.valueOf(System.getenv("CHE_MULTIUSER"))) {
       if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {

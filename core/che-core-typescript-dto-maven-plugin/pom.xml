@@ -81,7 +81,7 @@
             <exclusions>
                 <exclusion>
                     <artifactId>jsr250-api</artifactId>
-                    <groupId>jakarta.annotation</groupId>
+                    <groupId>javax.annotation</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

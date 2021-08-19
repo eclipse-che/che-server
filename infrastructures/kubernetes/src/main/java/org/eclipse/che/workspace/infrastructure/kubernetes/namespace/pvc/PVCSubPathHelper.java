@@ -21,15 +21,20 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodStatus;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -41,7 +46,9 @@ import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.eclipse.che.commons.lang.concurrent.ThreadLocalPropagateContext;
 import org.eclipse.che.commons.observability.ExecutorServiceWrapper;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesDeployments;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.PodEvent;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.LogWatchTimeouts;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.LogWatcher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.PodLogToEventPublisher;
@@ -80,6 +87,10 @@ public class PVCSubPathHelper {
   static final String POD_RESTART_POLICY = "Never";
   static final String POD_PHASE_SUCCEEDED = "Succeeded";
   static final String POD_PHASE_FAILED = "Failed";
+  static final String POD_EVENT_FAILED = "Failed";
+  static final String POD_EVENT_FAILED_SCHEDULING = "FailedScheduling";
+  static final String POD_EVENT_FAILED_MOUNT = "FailedMount";
+  static final String PVC_PHASE_TERMINATING = "Terminating";
   static final String JOB_MOUNT_PATH = "/tmp/job_mount";
 
   private final String jobImage;
@@ -217,11 +228,17 @@ public class PVCSubPathHelper {
 
     KubernetesDeployments deployments = null;
     try {
-      deployments = factory.access(workspaceId, namespace).deployments();
+      KubernetesNamespace ns = factory.access(workspaceId, namespace);
+
+      if (!checkPVCExistsAndNotTerminating(ns, pvcName)) {
+        return;
+      }
+
+      deployments = ns.deployments();
       deployments.create(pod);
       watchLogsIfDebugEnabled(deployments, pod, identity, startOptions);
-      final Pod finished = deployments.wait(podName, WAIT_POD_TIMEOUT_MIN, POD_PREDICATE::apply);
-      PodStatus finishedStatus = finished.getStatus();
+
+      PodStatus finishedStatus = watchFailureEventsAndWaitPod(podName, deployments);
       if (POD_PHASE_FAILED.equals(finishedStatus.getPhase())) {
         String logs = deployments.getPodLogs(podName);
         LOG.error(
@@ -245,6 +262,77 @@ public class PVCSubPathHelper {
         }
       }
     }
+  }
+
+  /**
+   * Returns true if specified PVC exists and is not in a terminating phase.
+   *
+   * @param namespace the namespace to check the PVC for
+   * @param pvcName the name of the PVC to check for
+   * @return true if if specified PVC exists and is not in a terminating phase
+   */
+  private boolean checkPVCExistsAndNotTerminating(KubernetesNamespace namespace, String pvcName)
+      throws InfrastructureException {
+    for (PersistentVolumeClaim pvc : namespace.persistentVolumeClaims().get()) {
+      if (pvcName.equals(pvc.getMetadata().getName())) {
+        return !PVC_PHASE_TERMINATING.equals(pvc.getStatus().getPhase());
+      }
+    }
+    // PVC does not exist
+    return false;
+  }
+
+  /**
+   * Returns the PodStatus of a specified pod after waiting for the pod to terminate. If a failure
+   * event is detected while waiting, this method will cancel the wait, delete the pod and throw an
+   * InfrastructureException.
+   *
+   * @param podName the name of the pod to check events and wait for
+   * @param deployments the KubernetesDeployments object used to create the pod
+   * @throws InfrastructureException
+   */
+  private PodStatus watchFailureEventsAndWaitPod(String podName, KubernetesDeployments deployments)
+      throws InfrastructureException {
+
+    CompletableFuture<Pod> podFuture = deployments.waitAsync(podName, POD_PREDICATE::apply);
+    watchFailureEvents(podName, deployments, podFuture);
+
+    try {
+      return podFuture.get(WAIT_POD_TIMEOUT_MIN, TimeUnit.MINUTES).getStatus();
+    } catch (ExecutionException e) {
+      throw new InfrastructureException(e.getCause().getMessage(), e);
+    } catch (TimeoutException e) {
+      throw new InfrastructureException("Waiting for pod '" + podName + "' reached timeout");
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new InfrastructureException("Waiting for pod '" + podName + "' was interrupted");
+    } catch (CancellationException e) {
+      throw new InfrastructureException("Cancelled waiting for pod: '" + podName + "'");
+    }
+  }
+
+  private void watchFailureEvents(
+      String podName, KubernetesDeployments deployments, CompletableFuture<Pod> futureToCancel)
+      throws InfrastructureException {
+    deployments.watchEvents(
+        event -> {
+          if (podName.equals(event.getPodName()) && isPodFailureEvent(event)) {
+            try {
+              LOG.debug(
+                  "Deleting pod: '{}' due to failure event: '{}'", podName, event.getMessage());
+              futureToCancel.cancel(true);
+              deployments.delete(event.getPodName());
+            } catch (InfrastructureException ex) {
+              LOG.error("Unable to delete failing pod: '{}' cause: '{}'", podName, ex.getMessage());
+            }
+          }
+        });
+  }
+
+  private boolean isPodFailureEvent(PodEvent event) {
+    return POD_EVENT_FAILED.equals(event.getReason())
+        || POD_EVENT_FAILED_SCHEDULING.equals(event.getReason())
+        || POD_EVENT_FAILED_MOUNT.equals(event.getReason());
   }
 
   private void watchLogsIfDebugEnabled(

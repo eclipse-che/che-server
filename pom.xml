@@ -71,7 +71,7 @@
         <commons-io.version>2.8.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
-        <integration.postgresql.db.image>centos/postgresql-13-centos7:1</integration.postgresql.db.image>
+        <integration.postgresql.db.image>quay.io/eclipse/registry.redhat.io--rhel8--postgresql-13:1-8755650687f2c94d7f0d08f491afa0cba97199ceb7946afed260a619a3f5f49b</integration.postgresql.db.image>
         <io.fabric8.kubernetes-client>5.7.0</io.fabric8.kubernetes-client>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.1.3</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.0.0</io.jaegertracing.micrometer.version>

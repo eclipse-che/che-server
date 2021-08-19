@@ -77,6 +77,20 @@ public class KubernetesSecrets {
   }
 
   /**
+   * Get all secrets.
+   *
+   * @return namespace secrets list
+   * @throws InfrastructureException when any exception occurs
+   */
+  public List<Secret> get() throws InfrastructureException {
+    try {
+      return clientFactory.create(workspaceId).secrets().inNamespace(namespace).list().getItems();
+    } catch (KubernetesClientException e) {
+      throw new KubernetesInfrastructureException(e);
+    }
+  }
+
+  /**
    * Deletes all existing secrets.
    *
    * @throws InfrastructureException when any exception occurs

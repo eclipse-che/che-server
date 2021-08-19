@@ -110,7 +110,11 @@ public class OpenShiftProject extends KubernetesNamespace {
    * @throws InfrastructureException if any exception occurs during project preparation or if the
    *     project doesn't exist and {@code canCreate} is {@code false}.
    */
-  void prepare(boolean canCreate, boolean initWithCheServerSa, Map<String, String> labels)
+  void prepare(
+      boolean canCreate,
+      boolean initWithCheServerSa,
+      Map<String, String> labels,
+      Map<String, String> annotations)
       throws InfrastructureException {
     String workspaceId = getWorkspaceId();
     String projectName = getName();
@@ -153,6 +157,7 @@ public class OpenShiftProject extends KubernetesNamespace {
       }
     }
     label(osClient.namespaces().withName(projectName).get(), labels);
+    annotate(osClient.namespaces().withName(projectName).get(), annotations);
   }
 
   /**

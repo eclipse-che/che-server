@@ -72,6 +72,7 @@ public class BrokerEnvironmentFactoryTest {
         spy(
             new BrokerEnvironmentFactory<KubernetesEnvironment>(
                 PUSH_ENDPOINT,
+                null,
                 IMAGE_PULL_POLICY,
                 authEnableEnvVarProvider,
                 machineTokenEnvVarProvider,

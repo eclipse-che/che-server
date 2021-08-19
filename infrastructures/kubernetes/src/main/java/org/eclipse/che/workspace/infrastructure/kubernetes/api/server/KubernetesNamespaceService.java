@@ -22,10 +22,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.KubernetesNamespaceMetaDto;
@@ -61,6 +64,27 @@ public class KubernetesNamespaceService extends Service {
   })
   public List<KubernetesNamespaceMetaDto> getNamespaces() throws InfrastructureException {
     return namespaceFactory.list().stream().map(this::asDto).collect(Collectors.toList());
+  }
+
+  @POST
+  @Path("provision")
+  @Produces(APPLICATION_JSON)
+  @ApiOperation(
+      value = "Provision k8s namespace where user is able to create workspaces",
+      notes =
+          "This operation can be performed only by an authorized user."
+              + " This is a beta feature that may be significantly changed.",
+      response = KubernetesNamespaceMetaDto.class)
+  @ApiResponses({
+    @ApiResponse(code = 200, message = "The namespace successfully provisioned"),
+    @ApiResponse(
+        code = 500,
+        message = "Internal server error occurred during namespace provisioning")
+  })
+  public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
+    return asDto(
+        namespaceFactory.provision(
+            new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject())));
   }
 
   private KubernetesNamespaceMetaDto asDto(KubernetesNamespaceMeta kubernetesNamespaceMeta) {

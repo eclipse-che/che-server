@@ -16,11 +16,14 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.Project;
 import java.util.HashMap;
@@ -36,6 +39,7 @@ import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
@@ -71,6 +75,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelProjects,
+      @Named("che.infra.kubernetes.namespace.annotate") boolean annotateProjects,
       @Named("che.infra.kubernetes.namespace.labels") String projectLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String projectAnnotations,
       @Named("che.infra.openshift.project.init_with_server_sa") boolean initWithCheServerSa,
@@ -89,6 +94,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         defaultNamespaceName,
         namespaceCreationAllowed,
         labelProjects,
+        annotateProjects,
         projectLabels,
         projectAnnotations,
         clientFactory,
@@ -106,10 +112,36 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   public OpenShiftProject getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     OpenShiftProject osProject = get(identity);
 
+    NamespaceResolutionContext resolutionCtx =
+        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+    Map<String, String> namespaceAnnotationsEvaluated =
+        evaluateAnnotationPlaceholders(resolutionCtx);
+
     osProject.prepare(
         canCreateNamespace(identity),
         initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
-        labelNamespaces ? namespaceLabels : emptyMap());
+        labelNamespaces ? namespaceLabels : emptyMap(),
+        annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
+
+    // create credentials secret
+    if (osProject
+        .secrets()
+        .get()
+        .stream()
+        .noneMatch(s -> s.getMetadata().getName().equals(CREDENTIALS_SECRET_NAME))) {
+      Secret secret =
+          new SecretBuilder()
+              .withType("opaque")
+              .withNewMetadata()
+              .withName(CREDENTIALS_SECRET_NAME)
+              .endMetadata()
+              .build();
+      clientFactory
+          .createOC()
+          .secrets()
+          .inNamespace(identity.getInfrastructureNamespace())
+          .create(secret);
+    }
 
     if (!isNullOrEmpty(getServiceAccountName())) {
       OpenShiftWorkspaceServiceAccount osWorkspaceServiceAccount =

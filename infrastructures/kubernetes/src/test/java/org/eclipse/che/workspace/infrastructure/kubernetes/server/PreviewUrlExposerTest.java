@@ -20,12 +20,14 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServiceSpec;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.extensions.HTTPIngressRuleValue;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
-import io.fabric8.kubernetes.api.model.extensions.IngressRule;
-import io.fabric8.kubernetes.api.model.extensions.IngressSpec;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValue;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressSpec;
+import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +47,7 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class PreviewUrlExposerTest {
 
-  private PreviewUrlExposer<KubernetesEnvironment> previewUrlExposer;
+  private PreviewUrlExposer previewUrlExposer;
 
   @Mock private ExternalServiceExposureStrategy externalServiceExposureStrategy;
 
@@ -111,7 +113,10 @@ public class PreviewUrlExposerTest {
     IngressRule ingressRule = new IngressRule();
     ingressRule.setHost("ingresshost");
     IngressBackend ingressBackend =
-        new IngressBackend(null, "servicename", new IntOrString(SERVER_PORT_NAME));
+        new IngressBackend(
+            null,
+            new IngressServiceBackend(
+                "servicename", new ServiceBackendPort(SERVER_PORT_NAME, PORT)));
     ingressRule.setHttp(
         new HTTPIngressRuleValue(singletonList(new HTTPIngressPath(ingressBackend, null, null))));
     ingressSpec.setRules(singletonList(ingressRule));
@@ -172,8 +177,8 @@ public class PreviewUrlExposerTest {
     Ingress provisionedIngress = env.getIngresses().values().iterator().next();
     IngressBackend provisionedIngressBackend =
         provisionedIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0).getBackend();
-    assertEquals(provisionedIngressBackend.getServicePort().getStrVal(), SERVER_PORT_NAME);
-    assertEquals(provisionedIngressBackend.getServiceName(), SERVICE_NAME);
+    assertEquals(provisionedIngressBackend.getService().getPort().getName(), SERVER_PORT_NAME);
+    assertEquals(provisionedIngressBackend.getService().getName(), SERVICE_NAME);
   }
 
   @Test
@@ -209,8 +214,9 @@ public class PreviewUrlExposerTest {
     Ingress provisionedIngress = env.getIngresses().values().iterator().next();
     IngressBackend provisionedIngressBackend =
         provisionedIngress.getSpec().getRules().get(0).getHttp().getPaths().get(0).getBackend();
-    assertEquals(provisionedIngressBackend.getServicePort().getStrVal(), SERVER_PORT_NAME);
+    assertEquals(provisionedIngressBackend.getService().getPort().getName(), SERVER_PORT_NAME);
     assertEquals(
-        provisionedIngressBackend.getServiceName(), provisionedService.getMetadata().getName());
+        provisionedIngressBackend.getService().getName(),
+        provisionedService.getMetadata().getName());
   }
 }

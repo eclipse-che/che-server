@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -32,10 +32,14 @@ public class CheApiEnvVarProvider implements EnvVarProvider {
   public static final String CHE_API_VARIABLE = "CHE_API";
 
   private final CheApiInternalEnvVarProvider cheApiInternalEnvVarProvider;
+  private final CheApiExternalEnvVarProvider cheApiExternalEnvVarProvider;
 
   @Inject
-  public CheApiEnvVarProvider(CheApiInternalEnvVarProvider cheApiInternalEnvVarProvider) {
+  public CheApiEnvVarProvider(
+      CheApiInternalEnvVarProvider cheApiInternalEnvVarProvider,
+      CheApiExternalEnvVarProvider cheApiExternalEnvVarProvider) {
     this.cheApiInternalEnvVarProvider = cheApiInternalEnvVarProvider;
+    this.cheApiExternalEnvVarProvider = cheApiExternalEnvVarProvider;
   }
 
   /**
@@ -45,6 +49,9 @@ public class CheApiEnvVarProvider implements EnvVarProvider {
    */
   @Override
   public Pair<String, String> get(RuntimeIdentity runtimeIdentity) throws InfrastructureException {
-    return Pair.of(CHE_API_VARIABLE, cheApiInternalEnvVarProvider.get(runtimeIdentity).second);
+    if (cheApiInternalEnvVarProvider.get(runtimeIdentity) != null) {
+      return Pair.of(CHE_API_VARIABLE, cheApiInternalEnvVarProvider.get(runtimeIdentity).second);
+    }
+    return Pair.of(CHE_API_VARIABLE, cheApiExternalEnvVarProvider.get(runtimeIdentity).second);
   }
 }

@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceNameValidator.METADATA_NAME_MAX_LENGTH;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -30,6 +31,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +53,7 @@ import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
+import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -93,6 +97,7 @@ public class KubernetesNamespaceFactory {
 
   private final String defaultNamespaceName;
   protected final boolean labelNamespaces;
+  protected final boolean annotateNamespaces;
   protected final Map<String, String> namespaceLabels;
   protected final Map<String, String> namespaceAnnotations;
 
@@ -112,6 +117,7 @@ public class KubernetesNamespaceFactory {
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelNamespaces,
+      @Named("che.infra.kubernetes.namespace.annotate") boolean annotateNamespaces,
       @Named("che.infra.kubernetes.namespace.labels") String namespaceLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String namespaceAnnotations,
       KubernetesClientFactory clientFactory,
@@ -129,6 +135,7 @@ public class KubernetesNamespaceFactory {
     this.preferenceManager = preferenceManager;
     this.sharedPool = sharedPool;
     this.labelNamespaces = labelNamespaces;
+    this.annotateNamespaces = annotateNamespaces;
 
     //noinspection UnstableApiUsage
     Splitter.MapSplitter csvMapSplitter = Splitter.on(",").withKeyValueSeparator("=");
@@ -327,7 +334,34 @@ public class KubernetesNamespaceFactory {
   public KubernetesNamespace getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     KubernetesNamespace namespace = get(identity);
 
-    namespace.prepare(canCreateNamespace(identity), labelNamespaces ? namespaceLabels : emptyMap());
+    NamespaceResolutionContext resolutionCtx =
+        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+    Map<String, String> namespaceAnnotationsEvaluated =
+        evaluateAnnotationPlaceholders(resolutionCtx);
+
+    namespace.prepare(
+        canCreateNamespace(identity),
+        labelNamespaces ? namespaceLabels : emptyMap(),
+        annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
+
+    if (namespace
+        .secrets()
+        .get()
+        .stream()
+        .noneMatch(s -> s.getMetadata().getName().equals(CREDENTIALS_SECRET_NAME))) {
+      Secret secret =
+          new SecretBuilder()
+              .withType("opaque")
+              .withNewMetadata()
+              .withName(CREDENTIALS_SECRET_NAME)
+              .endMetadata()
+              .build();
+      clientFactory
+          .create()
+          .secrets()
+          .inNamespace(identity.getInfrastructureNamespace())
+          .create(secret);
+    }
 
     if (!isNullOrEmpty(serviceAccountName)) {
       KubernetesWorkspaceServiceAccount workspaceServiceAccount =
@@ -336,6 +370,21 @@ public class KubernetesNamespaceFactory {
     }
 
     return namespace;
+  }
+
+  public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
+      throws InfrastructureException {
+    KubernetesNamespace namespace =
+        getOrCreate(
+            new RuntimeIdentityImpl(
+                null,
+                null,
+                namespaceResolutionContext.getUserId(),
+                evaluateNamespaceName(namespaceResolutionContext)));
+
+    return fetchNamespace(namespace.getName())
+        .orElseThrow(
+            () -> new InfrastructureException("Not able to find namespace " + namespace.getName()));
   }
 
   public KubernetesNamespace get(RuntimeIdentity identity) throws InfrastructureException {

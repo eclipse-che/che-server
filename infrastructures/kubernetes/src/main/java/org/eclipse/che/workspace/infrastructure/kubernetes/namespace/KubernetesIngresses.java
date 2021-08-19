@@ -15,7 +15,7 @@ import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_WORKSPACE_ID_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.putLabel;
 
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
@@ -55,7 +55,8 @@ public class KubernetesIngresses {
     try {
       return clientFactory
           .create(workspaceId)
-          .extensions()
+          .network()
+          .v1()
           .ingresses()
           .inNamespace(namespace)
           .withName(ingress.getMetadata().getName())
@@ -69,7 +70,8 @@ public class KubernetesIngresses {
     try {
       return clientFactory
           .create(workspaceId)
-          .extensions()
+          .network()
+          .v1()
           .ingresses()
           .inNamespace(namespace)
           .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)
@@ -88,7 +90,8 @@ public class KubernetesIngresses {
       Resource<Ingress> ingressResource =
           clientFactory
               .create(workspaceId)
-              .extensions()
+              .network()
+              .v1()
               .ingresses()
               .inNamespace(namespace)
               .withName(name);
@@ -141,7 +144,8 @@ public class KubernetesIngresses {
     try {
       clientFactory
           .create(workspaceId)
-          .extensions()
+          .network()
+          .v1()
           .ingresses()
           .inNamespace(namespace)
           .withLabel(CHE_WORKSPACE_ID_LABEL, workspaceId)

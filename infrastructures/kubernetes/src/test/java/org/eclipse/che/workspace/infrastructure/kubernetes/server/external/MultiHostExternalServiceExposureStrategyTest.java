@@ -25,9 +25,9 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.api.model.extensions.IngressBackend;
-import io.fabric8.kubernetes.api.model.extensions.IngressRule;
+import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
@@ -120,8 +120,8 @@ public class MultiHostExternalServiceExposureStrategyTest {
     assertEquals(ingressRule.getHost(), ingressName + "." + DOMAIN);
     assertEquals(ingressRule.getHttp().getPaths().get(0).getPath(), "/");
     IngressBackend backend = ingressRule.getHttp().getPaths().get(0).getBackend();
-    assertEquals(backend.getServiceName(), serviceName);
-    assertEquals(backend.getServicePort().getStrVal(), servicePort.getName());
+    assertEquals(backend.getService().getName(), serviceName);
+    assertEquals(backend.getService().getPort().getName(), servicePort.getName());
 
     Annotations.Deserializer ingressAnnotations =
         Annotations.newDeserializer(ingress.getMetadata().getAnnotations());

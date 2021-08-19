@@ -144,7 +144,7 @@
         <org.eclipse.persistence.eclipselink.version>2.7.5</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.0</org.eclipse.persistence.version>
         <org.eclipse.sisu.version>0.3.0</org.eclipse.sisu.version>
-        <org.everrest.version>1.14.6-SNAPSHOT</org.everrest.version>
+        <org.everrest.version>1.15.0</org.everrest.version>
         <org.flyway.version>4.2.0</org.flyway.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
         <org.javassist.version>3.18.2-GA</org.javassist.version>

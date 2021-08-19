@@ -73,8 +73,7 @@ public class WorkspaceActivityService extends Service {
   @PUT
   @Path("/{wsId}")
   @Operation(
-      summary =
-          "Notifies workspace activity to prevent stop by timeout when workspace is used.",
+      summary = "Notifies workspace activity to prevent stop by timeout when workspace is used.",
       responses = {@ApiResponse(responseCode = "204", description = "Activity counted")})
   public void active(@Parameter(description = "Workspace id") @PathParam("wsId") String wsId)
       throws ForbiddenException, NotFoundException, ServerException {

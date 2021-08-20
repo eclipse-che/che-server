@@ -232,7 +232,7 @@ init() {
       export CHE_HOME="/assembly"
       echo "Found custom assembly in ${CHE_HOME}"
     else
-      export CHE_HOME=$(echo /home/user/eclipse-che/)
+      export CHE_HOME=$(echo /home/user/eclipse-che)
       echo "Using embedded assembly in ${CHE_HOME}."
     fi
   else

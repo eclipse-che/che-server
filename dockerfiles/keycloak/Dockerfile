@@ -6,15 +6,15 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-FROM jboss/keycloak:15.0.0
+FROM quay.io/keycloak/keycloak:15.0.1
 
 ADD che /opt/jboss/keycloak/themes/che
 ADD che-username-readonly /opt/jboss/keycloak/themes/che-username-readonly
 ADD . /scripts/
 ADD cli /scripts/cli
 USER root
-RUN microdnf install findutils nano && microdnf clean all; \
-    ln -s /opt/jboss/tools/docker-entrypoint.sh ; chmod +x /opt/jboss/tools/docker-entrypoint.sh
+RUN microdnf install findutils && microdnf clean all && \
+    ln -s /opt/jboss/tools/docker-entrypoint.sh && chmod +x /opt/jboss/tools/docker-entrypoint.sh
 
 USER root
 RUN chown -R 1000:0 /scripts && \

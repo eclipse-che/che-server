@@ -15,7 +15,6 @@ import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.spi.ObjectFactory;
-import org.eclipse.che.core.db.h2.H2SQLJndiDataSourceFactory;
 import org.eclipse.che.core.db.postgresql.PostgreSQLJndiDataSourceFactory;
 
 /**
@@ -28,10 +27,7 @@ public class CommonJndiDataSourceFactory implements ObjectFactory {
   private final ObjectFactory delegate;
 
   public CommonJndiDataSourceFactory() throws Exception {
-    delegate =
-        Boolean.valueOf(System.getenv("CHE_MULTIUSER"))
-            ? new PostgreSQLJndiDataSourceFactory()
-            : new H2SQLJndiDataSourceFactory();
+    delegate = new PostgreSQLJndiDataSourceFactory();
   }
 
   @Override

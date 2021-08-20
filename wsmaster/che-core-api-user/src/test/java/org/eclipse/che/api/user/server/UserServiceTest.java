@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.user.server;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.emptyList;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
@@ -28,7 +28,7 @@ import static org.testng.Assert.assertEquals;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.Map;
 import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.account.spi.AccountValidator;

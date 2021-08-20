@@ -12,6 +12,8 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
 import com.google.common.io.ByteStreams;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -21,8 +23,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import okhttp3.Call;
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -38,7 +38,7 @@ public class DirectKubernetesAPIAccessHelper {
   private static final int MAX_BODY_SIZE = 4 * 1024 * 1024;
 
   private static final String DEFAULT_MEDIA_TYPE =
-      javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
+      jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
           .withCharset(StandardCharsets.UTF_8.name())
           .toString();
 
@@ -141,7 +141,7 @@ public class DirectKubernetesAPIAccessHelper {
   }
 
   private static String inputMediaType(@Nullable HttpHeaders headers) {
-    javax.ws.rs.core.MediaType mediaTypeHeader = headers == null ? null : headers.getMediaType();
+    jakarta.ws.rs.core.MediaType mediaTypeHeader = headers == null ? null : headers.getMediaType();
     return mediaTypeHeader == null ? DEFAULT_MEDIA_TYPE : mediaTypeHeader.toString();
   }
 

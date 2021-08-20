@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,9 +13,9 @@ package org.eclipse.che.multiuser.permission.user;
 
 import static org.eclipse.che.api.user.server.UserService.USER_SELF_CREATION_ALLOWED;
 
+import jakarta.ws.rs.Path;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.Path;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.user.server.UserService;

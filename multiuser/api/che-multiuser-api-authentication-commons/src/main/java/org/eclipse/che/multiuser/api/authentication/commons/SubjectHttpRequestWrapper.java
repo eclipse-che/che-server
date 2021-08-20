@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.multiuser.api.authentication.commons;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import java.security.Principal;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import org.eclipse.che.commons.subject.Subject;
 
 /**

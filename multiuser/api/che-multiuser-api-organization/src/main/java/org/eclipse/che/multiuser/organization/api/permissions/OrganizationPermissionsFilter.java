@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,8 +14,8 @@ package org.eclipse.che.multiuser.organization.api.permissions;
 import static org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain.DOMAIN_ID;
 import static org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain.MANAGE_SUBORGANIZATIONS;
 
+import jakarta.ws.rs.Path;
 import javax.inject.Inject;
-import javax.ws.rs.Path;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.commons.env.EnvironmentContext;

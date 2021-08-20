@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.multiuser.api.authentication.commons.token;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.HttpHeaders;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.HttpHeaders;
 
 /** Extract sso token from request headers. */
 public class HeaderRequestTokenExtractor implements RequestTokenExtractor {

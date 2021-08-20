@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.organization.api.permissions;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain.DELETE;
 import static org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain.DOMAIN_ID;
 import static org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain.MANAGE_SUBORGANIZATIONS;
@@ -33,8 +33,8 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.jayway.restassured.response.Response;
-import com.jayway.restassured.specification.RequestSpecification;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;

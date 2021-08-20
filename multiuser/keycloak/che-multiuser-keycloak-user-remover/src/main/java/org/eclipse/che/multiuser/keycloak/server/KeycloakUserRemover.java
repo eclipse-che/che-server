@@ -15,9 +15,9 @@ import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.*;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

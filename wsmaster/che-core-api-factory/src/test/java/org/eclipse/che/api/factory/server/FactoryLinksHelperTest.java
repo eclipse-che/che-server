@@ -15,10 +15,10 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
+import jakarta.ws.rs.core.UriBuilder;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.shared.dto.AuthorDto;

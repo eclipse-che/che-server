@@ -13,8 +13,8 @@ package org.eclipse.che.api.devfile.server;
 
 import static org.eclipse.che.api.core.Pages.iterate;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.account.event.BeforeAccountRemovedEvent;

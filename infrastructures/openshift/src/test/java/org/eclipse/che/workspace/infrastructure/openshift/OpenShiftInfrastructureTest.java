@@ -16,9 +16,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.client.Config;
+import jakarta.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.util.Collections;
-import javax.ws.rs.core.HttpHeaders;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProjectFactory;

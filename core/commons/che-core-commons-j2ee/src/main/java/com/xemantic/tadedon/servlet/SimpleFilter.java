@@ -15,9 +15,9 @@
  */
 package com.xemantic.tadedon.servlet;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 
 /**
  * Servlet {@link Filter} which does not require initialization and clean up.

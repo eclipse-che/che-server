@@ -23,7 +23,7 @@ public class KeycloakServletModule extends ServletModule {
           // not equals to /keycloak/OIDCKeycloak.js
           + "(?!/keycloak/(OIDC|oidc)[^\\/]+$)"
           // not contains /docs/ (for swagger)
-          + "(?!.*(/docs/))"
+          + "(?!.*(/openapi\\.json))"
           // not ends with '/oauth/callback/' or '/oauth/1.0/callback/' or '/keycloak/settings/' or
           // '/system/state'
           + "(?!.*(/keycloak/settings/?|/oauth/callback/?|/oauth/1.0/callback/?|/system/state/?)$)"

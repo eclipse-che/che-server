@@ -58,7 +58,7 @@
     </dependencySets>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}/dependency/assembly-che-tomcat8</directory>
+            <directory>${project.build.directory}/dependency/assembly-che-tomcat</directory>
             <outputDirectory>tomcat/</outputDirectory>
             <excludes>
                 <exclude>bin/*.bat</exclude>

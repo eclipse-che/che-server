@@ -19,11 +19,11 @@
         <groupId>org.eclipse.che</groupId>
         <version>7.36.0-SNAPSHOT</version>
     </parent>
-    <artifactId>assembly-che-tomcat8</artifactId>
+    <artifactId>assembly-che-tomcat</artifactId>
     <packaging>jar</packaging>
-    <name>Che Assembly :: Assemblies Che Tomcat8</name>
+    <name>Che Assembly :: Assemblies Che Tomcat</name>
     <build>
-        <finalName>assembly-che-tomcat8</finalName>
+        <finalName>assembly-che-tomcat</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

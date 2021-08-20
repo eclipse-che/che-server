@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,28 +11,30 @@
  */
 package org.eclipse.che.api.logger;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.logger.shared.dto.LoggerDto;
@@ -43,37 +45,47 @@ import org.slf4j.LoggerFactory;
  *
  * @author Florent Benoit
  */
-@Api(value = "/logger", description = "Logger REST API")
+@Tag(name = "logger", description = "Logger REST API")
 @Path("/logger")
 public class LoggerService extends Service {
 
   @GET
   @Path("/{name}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Get the logger level for the given logger")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The response contains requested logger entity"),
-    @ApiResponse(code = 404, message = "The logger with specified name does not exist")
-  })
-  public LoggerDto getLoggerByName(@ApiParam(value = "logger name") @PathParam("name") String name)
+  @Operation(
+      summary = "Get the logger level for the given logger",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The response contains requested logger entity"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "The logger with specified name does not exist")
+      })
+  public LoggerDto getLoggerByName(
+      @Parameter(description = "logger name") @PathParam("name") String name)
       throws NotFoundException {
     return asDto(getLogger(name));
   }
 
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get loggers which are configured",
-      notes = "This operation can be performed only by authorized user",
-      response = LoggerDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The loggers successfully fetched"),
-  })
+  @Operation(
+      summary =
+          "Get loggers which are configured. This operation can be performed only by authorized user",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The loggers successfully fetched",
+            content =
+                @Content(array = @ArraySchema(schema = @Schema(implementation = LoggerDto.class)))),
+      })
   public List<LoggerDto> getLoggers(
-      @ApiParam("The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
+      @Parameter(description = "The number of the items to skip")
+          @DefaultValue("0")
+          @QueryParam("skipCount")
           Integer skipCount,
-      @ApiParam("The limit of the items in the response, default is 30")
+      @Parameter(description = "The limit of the items in the response, default is 30")
           @DefaultValue("30")
           @QueryParam("maxItems")
           Integer maxItems) {
@@ -97,12 +109,13 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Update the logger level")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The logger successfully updated"),
-  })
+  @Operation(
+      summary = "Update the logger level",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The logger successfully updated"),
+      })
   public LoggerDto updateLogger(
-      @ApiParam(value = "logger name") @PathParam("name") String name, LoggerDto update)
+      @Parameter(description = "logger name") @PathParam("name") String name, LoggerDto update)
       throws NotFoundException {
     Logger logger = getLogger(name);
     logger.setLevel(Level.toLevel(update.getLevel()));
@@ -113,12 +126,14 @@ public class LoggerService extends Service {
   @Path("/{name}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Create a new logger level")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The logger successfully created"),
-  })
+  @Operation(
+      summary = "Create a new logger level",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The logger successfully created"),
+      })
   public LoggerDto createLogger(
-      @ApiParam(value = "logger name") @PathParam("name") String name, LoggerDto createdLogger)
+      @Parameter(description = "logger name") @PathParam("name") String name,
+      LoggerDto createdLogger)
       throws NotFoundException {
     Logger logger = getLogger(name, false);
     logger.setLevel(Level.toLevel(createdLogger.getLevel()));

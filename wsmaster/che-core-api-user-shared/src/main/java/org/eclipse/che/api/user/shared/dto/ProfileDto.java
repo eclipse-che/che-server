@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.user.shared.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.che.api.core.model.user.Profile;
@@ -31,12 +31,12 @@ public interface ProfileDto extends Profile {
 
   void setUserId(String id);
 
-  @ApiModelProperty("Profile ID")
+  @Schema(description = "Profile ID")
   String getUserId();
 
   ProfileDto withUserId(String id);
 
-  @ApiModelProperty("Profile attributes")
+  @Schema(description = "Profile attributes")
   Map<String, String> getAttributes();
 
   void setAttributes(Map<String, String> attributes);

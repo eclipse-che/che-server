@@ -66,8 +66,6 @@ cat /scripts/che-realm.json.erb | \
                                 sed -e "s@<%= scope\.lookupvar('che::che_server_url') %>@${PROTOCOL}://${CHE_HOST}@" \
                                 > /scripts/che-realm.json
 
-echo "Creating Admin user..."
-
 # Handle CA certificates
 KEYSTORE_PATH=/scripts/openshift.jks
 TRUST_STORE_PASSWORD=${TRUSTPASS:-openshift}

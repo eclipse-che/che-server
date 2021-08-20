@@ -68,10 +68,6 @@ cat /scripts/che-realm.json.erb | \
 
 echo "Creating Admin user..."
 
-if [ $KEYCLOAK_USER ] && [ $KEYCLOAK_PASSWORD ]; then
-    /opt/jboss/keycloak/bin/add-user-keycloak.sh --user $KEYCLOAK_USER --password $KEYCLOAK_PASSWORD
-fi
-
 # Handle CA certificates
 KEYSTORE_PATH=/scripts/openshift.jks
 TRUST_STORE_PASSWORD=${TRUSTPASS:-openshift}
@@ -116,4 +112,4 @@ if [ $KEYCLOAK_HOSTNAME ] && [ $PROTOCOL == "https" ]; then
   SYS_PROPS+=" -Dkeycloak.hostname.fixed.alwaysHttps=true"
 fi
 
-exec /opt/jboss/docker-entrypoint.sh $SYS_PROPS
+exec /opt/jboss/tools/docker-entrypoint.sh $SYS_PROPS

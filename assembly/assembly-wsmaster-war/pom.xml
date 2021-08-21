@@ -244,10 +244,6 @@
             <artifactId>che-core-tracing-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>wsmaster-local</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.che.infrastructure</groupId>
             <artifactId>infrastructure-distributed</artifactId>
         </dependency>

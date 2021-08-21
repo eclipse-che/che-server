@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-FROM quay.io/keycloak/keycloak:15.0.1
+FROM quay.io/keycloak/keycloak:15.0.2
 
 ADD che /opt/jboss/keycloak/themes/che
 ADD che-username-readonly /opt/jboss/keycloak/themes/che-username-readonly

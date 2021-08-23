@@ -14,19 +14,12 @@ package org.eclipse.che.api.user.server;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.model.user.User;
-import org.eclipse.che.api.user.server.model.impl.UserImpl;
 
-/**
- * Dummy implementation of {@link org.eclipse.che.api.user.server.TokenValidator}.
- *
- * @author Ann Shumilova
- * @author Dmitry Shnurenko
- */
 @Singleton
-public class DummyTokenValidator implements TokenValidator {
+public class NotImplementedTokenValidator implements TokenValidator {
 
   @Override
   public User validateToken(String token) throws ConflictException {
-    return new UserImpl("che", "che", "che@eclipse.org");
+    throw new ConflictException("Token validation do not implemented");
   }
 }

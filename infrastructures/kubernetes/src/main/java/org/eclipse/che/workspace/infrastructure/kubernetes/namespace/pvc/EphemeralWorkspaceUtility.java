@@ -43,6 +43,7 @@ public class EphemeralWorkspaceUtility {
     if (devfile != null) {
       return isEphemeral(devfile.getAttributes());
     }
+
     return isEphemeral(workspace.getConfig().getAttributes());
   }
 

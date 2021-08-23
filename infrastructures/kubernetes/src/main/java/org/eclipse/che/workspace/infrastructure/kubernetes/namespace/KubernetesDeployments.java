@@ -286,8 +286,8 @@ public class KubernetesDeployments {
   /**
    * Returns a future which completes when pod state satisfies the specified predicate.
    *
-   * <p>Note that the resulting future must be explicitly cancelled when its completion no longer
-   * important, for resource cleanup.
+   * <p>Note that for resource cleanup, the resulting future must be explicitly cancelled when its
+   * completion no longer important.
    *
    * @param name name of pod or deployment containing pod that should be watched
    * @param predicate predicate to perform state check

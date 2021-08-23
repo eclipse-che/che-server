@@ -171,7 +171,7 @@ public class PVCSubPathHelper {
         Arrays.toString(dirs));
     return CompletableFuture.runAsync(
         ThreadLocalPropagateContext.wrap(
-            () -> execute(workspaceId, namespace, pvcName, RM_COMMAND_BASE, dirs)),
+            () -> execute(workspaceId, namespace, pvcName, RM_COMMAND_BASE, true, dirs)),
         executor);
   }
 
@@ -190,6 +190,26 @@ public class PVCSubPathHelper {
         pvcName,
         commandBase,
         startOptions,
+        false,
+        arguments);
+  }
+
+  @VisibleForTesting
+  void execute(
+      String workspaceId,
+      String namespace,
+      String pvcName,
+      String[] commandBase,
+      boolean watchFailureEvents,
+      String... arguments) {
+    execute(
+        null,
+        workspaceId,
+        namespace,
+        pvcName,
+        commandBase,
+        Collections.emptyMap(),
+        watchFailureEvents,
         arguments);
   }
 
@@ -207,7 +227,15 @@ public class PVCSubPathHelper {
       String pvcName,
       String[] commandBase,
       String... arguments) {
-    execute(null, workspaceId, namespace, pvcName, commandBase, Collections.emptyMap(), arguments);
+    execute(
+        null,
+        workspaceId,
+        namespace,
+        pvcName,
+        commandBase,
+        Collections.emptyMap(),
+        false,
+        arguments);
   }
 
   private void execute(
@@ -217,6 +245,7 @@ public class PVCSubPathHelper {
       String pvcName,
       String[] commandBase,
       Map<String, String> startOptions,
+      boolean watchFailureEvents,
       String... arguments) {
     final String jobName = commandBase[0];
     final String podName = jobName + '-' + workspaceId;
@@ -238,7 +267,7 @@ public class PVCSubPathHelper {
       deployments.create(pod);
       watchLogsIfDebugEnabled(deployments, pod, identity, startOptions);
 
-      PodStatus finishedStatus = watchFailureEventsAndWaitPod(podName, deployments);
+      PodStatus finishedStatus = waitPodStatus(podName, deployments, watchFailureEvents);
       if (POD_PHASE_FAILED.equals(finishedStatus.getPhase())) {
         String logs = deployments.getPodLogs(podName);
         LOG.error(
@@ -283,19 +312,24 @@ public class PVCSubPathHelper {
   }
 
   /**
-   * Returns the PodStatus of a specified pod after waiting for the pod to terminate. If a failure
-   * event is detected while waiting, this method will cancel the wait, delete the pod and throw an
-   * InfrastructureException.
+   * Returns the PodStatus of a specified pod after waiting for the pod to terminate. If
+   * watchFailureEvents is true and a failure event is detected while waiting, this method will
+   * cancel the wait, delete the pod and throw an InfrastructureException.
    *
-   * @param podName the name of the pod to check events and wait for
+   * @param podName the name of the pod to wait for
    * @param deployments the KubernetesDeployments object used to create the pod
+   * @param watchFailureEvents true if failure events should be watched
    * @throws InfrastructureException
    */
-  private PodStatus watchFailureEventsAndWaitPod(String podName, KubernetesDeployments deployments)
+  private PodStatus waitPodStatus(
+      String podName, KubernetesDeployments deployments, boolean watchFailureEvents)
       throws InfrastructureException {
 
     CompletableFuture<Pod> podFuture = deployments.waitAsync(podName, POD_PREDICATE::apply);
-    watchFailureEvents(podName, deployments, podFuture);
+
+    if (watchFailureEvents) {
+      watchFailureEvents(podName, deployments, podFuture);
+    }
 
     try {
       return podFuture.get(WAIT_POD_TIMEOUT_MIN, TimeUnit.MINUTES).getStatus();

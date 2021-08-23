@@ -21,6 +21,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.MKDIR_COMMAND_BASE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.POD_PHASE_FAILED;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.POD_PHASE_SUCCEEDED;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PVCSubPathHelper.RM_COMMAND_BASE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -203,6 +204,22 @@ public class PVCSubPathHelperTest {
   }
 
   @Test
+  public void testDoNotWatchFailureEventsWhenCreatingWorkspaceDirs()
+      throws InfrastructureException {
+    when(podStatus.getPhase()).thenReturn(POD_PHASE_SUCCEEDED);
+
+    pvcSubPathHelper.createDirs(
+        identity,
+        WORKSPACE_ID,
+        PVC_NAME,
+        ImmutableMap.of(
+            DEBUG_WORKSPACE_START, TRUE.toString(), DEBUG_WORKSPACE_START_LOG_LIMIT_BYTES, "123"),
+        WORKSPACE_ID + PROJECTS_PATH);
+
+    verify(osDeployments, never()).watchEvents(any(PodEventHandler.class));
+  }
+
+  @Test
   public void testSetMemoryLimitAndRequest() throws Exception {
     when(podStatus.getPhase()).thenReturn(POD_PHASE_SUCCEEDED);
 
@@ -328,7 +345,7 @@ public class PVCSubPathHelperTest {
                 h ->
                     h.handle(
                         new PodEvent(
-                            MKDIR_COMMAND_BASE[0] + "-" + WORKSPACE_ID,
+                            RM_COMMAND_BASE[0] + "-" + WORKSPACE_ID,
                             "containerName",
                             event.getReason(),
                             "message",
@@ -350,8 +367,9 @@ public class PVCSubPathHelperTest {
         .watchEvents(any(PodEventHandler.class));
 
     // when
-    pvcSubPathHelper.execute(
-        WORKSPACE_ID, NAMESPACE, PVC_NAME, MKDIR_COMMAND_BASE, WORKSPACE_ID + PROJECTS_PATH);
+    pvcSubPathHelper
+        .removeDirsAsync(WORKSPACE_ID, NAMESPACE, PVC_NAME, WORKSPACE_ID + PROJECTS_PATH)
+        .get();
     // simulate failure events
     watcher.eventReceived(Watcher.Action.ADDED, newEvent("Failed"));
     watcher.eventReceived(Watcher.Action.ADDED, newEvent("FailedScheduling"));
@@ -359,6 +377,22 @@ public class PVCSubPathHelperTest {
 
     // then
     verify(futureToCancel, times(3)).cancel(anyBoolean());
+  }
+
+  @Test
+  public void testWatchFailureEvents() throws InfrastructureException {
+    pvcSubPathHelper.execute(
+        WORKSPACE_ID, NAMESPACE, PVC_NAME, MKDIR_COMMAND_BASE, true, WORKSPACE_ID + PROJECTS_PATH);
+
+    verify(osDeployments).watchEvents(any(PodEventHandler.class));
+  }
+
+  @Test
+  public void testDoNotWatchFailureEvents() throws InfrastructureException {
+    pvcSubPathHelper.execute(
+        WORKSPACE_ID, NAMESPACE, PVC_NAME, MKDIR_COMMAND_BASE, WORKSPACE_ID + PROJECTS_PATH);
+
+    verify(osDeployments, never()).watchEvents(any(PodEventHandler.class));
   }
 
   @Test

@@ -16,5 +16,5 @@
 
   <Resource name="jdbc/che" auth="Container"
     type="javax.sql.DataSource"
-    factory="org.eclipse.che.api.CommonJndiDataSourceFactory"/>
+    factory="org.eclipse.che.core.db.postgresql.PostgreSQLJndiDataSourceFactory"/>
 </Context>

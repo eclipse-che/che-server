@@ -47,7 +47,7 @@ import org.eclipse.che.api.infraproxy.server.InfraProxyModule;
 import org.eclipse.che.api.metrics.WsMasterMetricsModule;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.system.server.SystemModule;
-import org.eclipse.che.api.user.server.DummyTokenValidator;
+import org.eclipse.che.api.user.server.NotImplementedTokenValidator;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.jpa.JpaPreferenceDao;
 import org.eclipse.che.api.user.server.jpa.JpaProfileDao;
@@ -395,7 +395,7 @@ public class WsMasterModule extends AbstractModule {
     install(new OrganizationJpaModule());
 
     if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      bind(TokenValidator.class).to(DummyTokenValidator.class);
+      bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
       bind(JwtParser.class).to(DefaultJwtParser.class);
       bind(ProfileDao.class).to(JpaProfileDao.class);
       bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class);

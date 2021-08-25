@@ -459,13 +459,12 @@
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-jaxrs2-jakarta</artifactId>
                 <version>${io.swagger.version}</version>
-                <exclusions />
-            </dependency>
-            <dependency>
-                <groupId>io.swagger.core.v3</groupId>
-                <artifactId>swagger-jaxrs2-servlet-initializer-v2-jakarta</artifactId>
-                <version>${io.swagger.version}</version>
-                <exclusions />
+                <exclusions>
+                    <exclusion>
+                        <artifactId>jackson-jaxrs-json-provider</artifactId>
+                        <groupId>com.fasterxml.jackson.jaxrs</groupId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>jakarta.activation</groupId>
@@ -1886,6 +1885,7 @@
                                         <exclude>xml-apis:xml-apis</exclude>
                                         <exclude>com.google.inject.extensions:guice-servlet</exclude>
                                         <exclude>commons-fileupload:commons-fileupload</exclude>
+                                        <exclude>com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider</exclude>
                                     </excludes>
                                 </bannedDependencies>
                             </rules>

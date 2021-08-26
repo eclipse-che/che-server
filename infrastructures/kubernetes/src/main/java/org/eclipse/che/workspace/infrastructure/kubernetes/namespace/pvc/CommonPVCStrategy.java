@@ -235,14 +235,14 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
 
   @Override
   public void cleanup(Workspace workspace) throws InfrastructureException {
-    if (EphemeralWorkspaceUtility.isEphemeral(workspace)) {
-      return;
-    }
-
     AccountImpl account = ((WorkspaceImpl) workspace).getAccount();
     if (isPersonalAccount(account) && accountHasNoWorkspaces(account)) {
       log.debug("Deleting the common PVC: '{}',", configuredPVCName);
       deleteCommonPVC(workspace);
+      return;
+    }
+
+    if (EphemeralWorkspaceUtility.isEphemeral(workspace)) {
       return;
     }
 

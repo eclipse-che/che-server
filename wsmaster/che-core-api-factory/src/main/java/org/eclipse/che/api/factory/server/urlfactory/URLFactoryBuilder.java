@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.urlfactory;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.String.format;
 import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
@@ -159,16 +160,16 @@ public class URLFactoryBuilder {
           .withDevfile(DtoConverter.asDto(devfile))
           .withSource(location.filename().isPresent() ? location.filename().get() : null);
 
+    } else if (devWorskspacesEnabled) {
+      return newDto(FactoryDevfileV2Dto.class)
+          .withV(CURRENT_VERSION)
+          .withDevfile(devfileParser.convertYamlToMap(devfileJson))
+          .withSource(location.filename().isPresent() ? location.filename().get() : null);
     } else {
-      if (devWorskspacesEnabled) {
-        return newDto(FactoryDevfileV2Dto.class)
-            .withV(CURRENT_VERSION)
-            .withDevfile(devfileParser.convertYamlToMap(devfileJson))
-            .withSource(location.filename().isPresent() ? location.filename().get() : null);
-      } else {
-        throw new DevfileException(
-            "Devfiles of versions 2.x cannot be used in that deployment, because of DevWorkspaces feature is disabled.");
-      }
+      throw new DevfileException(
+          format(
+              "Devfile of version %s cannot be used in current deployment, because of DevWorkspaces feature is disabled. Only '1.0.0' version devfiles are supported for such installations.",
+              devfileVersionDetector.devfileVersion(devfileJson)));
     }
   }
 

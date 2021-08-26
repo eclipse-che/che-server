@@ -24,6 +24,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -197,5 +198,15 @@ public class DevfileParserTest {
 
     // when
     devfileParser.parseJson(DEVFILE_YAML_CONTENT);
+  }
+
+  @Test
+  public void shouldConvertYamlToMapAndValidate() throws Exception {
+    // when
+    devfileParser.convertYamlToMap(devfileJsonNode);
+
+    //then
+    verify(schemaValidator).validate(eq(devfileJsonNode));
+    verify(yamlMapper).convertValue(eq(devfileJsonNode), any(TypeReference.class));
   }
 }

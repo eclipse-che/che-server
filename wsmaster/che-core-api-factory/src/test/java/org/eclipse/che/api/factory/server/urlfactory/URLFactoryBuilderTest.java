@@ -227,7 +227,7 @@ public class URLFactoryBuilderTest {
   @Test(
       expectedExceptions = BadRequestException.class,
       expectedExceptionsMessageRegExp =
-          "Error occurred during creation a workspace from devfile located at `http://foo-location/`. Cause: Devfiles of versions 2.x cannot be used in that deployment, because of DevWorkspaces feature is disabled.")
+          "Error occurred during creation a workspace from devfile located at `http://foo-location/`. Cause: Devfile of version 2.0.1 cannot be used in current deployment, because of DevWorkspaces feature is disabled. Only '1.0.0' version devfiles are supported for such installations.")
   public void testShouldThrowExceptionOnDevfileV2WithDevworkspacesDisabled()
       throws ApiException, DevfileException {
     String myLocation = "http://foo-location/";
@@ -237,6 +237,7 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
+    when(devfileVersionDetector.devfileVersion(devfile)).thenReturn("2.0.1");
 
     URLFactoryBuilder localUrlFactoryBuilder =
         new URLFactoryBuilder(

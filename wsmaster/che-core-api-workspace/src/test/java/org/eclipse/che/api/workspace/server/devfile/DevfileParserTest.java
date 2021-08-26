@@ -205,7 +205,7 @@ public class DevfileParserTest {
     // when
     devfileParser.convertYamlToMap(devfileJsonNode);
 
-    //then
+    // then
     verify(schemaValidator).validate(eq(devfileJsonNode));
     verify(yamlMapper).convertValue(eq(devfileJsonNode), any(TypeReference.class));
   }

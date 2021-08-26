@@ -62,6 +62,7 @@ public class URLFactoryBuilder {
   private final String defaultCheEditor;
   private final String defaultChePlugins;
 
+  private final boolean devWorskspacesEnabled;
   private final DevfileParser devfileParser;
   private final DevfileVersionDetector devfileVersionDetector;
 
@@ -69,10 +70,12 @@ public class URLFactoryBuilder {
   public URLFactoryBuilder(
       @Named("che.factory.default_editor") String defaultCheEditor,
       @Nullable @Named("che.factory.default_plugins") String defaultChePlugins,
+      @Named("che.devworkspaces.enabled") boolean devWorskspacesEnabled,
       DevfileParser devfileParser,
       DevfileVersionDetector devfileVersionDetector) {
     this.defaultCheEditor = defaultCheEditor;
     this.defaultChePlugins = defaultChePlugins;
+    this.devWorskspacesEnabled = devWorskspacesEnabled;
     this.devfileParser = devfileParser;
     this.devfileVersionDetector = devfileVersionDetector;
   }
@@ -157,10 +160,15 @@ public class URLFactoryBuilder {
           .withSource(location.filename().isPresent() ? location.filename().get() : null);
 
     } else {
-      return newDto(FactoryDevfileV2Dto.class)
-          .withV(CURRENT_VERSION)
-          .withDevfile(devfileParser.convertYamlToMap(devfileJson))
-          .withSource(location.filename().isPresent() ? location.filename().get() : null);
+      if (devWorskspacesEnabled) {
+        return newDto(FactoryDevfileV2Dto.class)
+            .withV(CURRENT_VERSION)
+            .withDevfile(devfileParser.convertYamlToMap(devfileJson))
+            .withSource(location.filename().isPresent() ? location.filename().get() : null);
+      } else {
+        throw new DevfileException(
+            "Devfiles of versions 2.x cannot be used in that deployment, because of DevWorkspaces feature is disabled.");
+      }
     }
   }
 

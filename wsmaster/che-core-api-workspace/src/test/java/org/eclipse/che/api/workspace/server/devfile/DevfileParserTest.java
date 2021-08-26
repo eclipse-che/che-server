@@ -83,9 +83,7 @@ public class DevfileParserTest {
   @Test
   public void testParseRaw() throws DevfileFormatException {
     JsonNode parsed = devfileParser.parseYamlRaw(DEVFILE_YAML_CONTENT);
-
     assertEquals(parsed, devfileJsonNode);
-    verify(schemaValidator).validate(eq(devfileJsonNode));
   }
 
   @Test(expectedExceptions = DevfileFormatException.class)

@@ -89,7 +89,7 @@ public class DevfileParser {
    */
   public DevfileImpl parseYaml(String devfileContent) throws DevfileFormatException {
     try {
-      return parse(parseYamlRaw(devfileContent, false), yamlMapper, emptyMap());
+      return parse(parseYamlRaw(devfileContent), yamlMapper, emptyMap());
     } catch (OverrideParameterException e) {
       // should never happen as we send empty overrides map
       throw new RuntimeException(e.getMessage());
@@ -97,28 +97,18 @@ public class DevfileParser {
   }
 
   /**
-   * Tries to parse given `yaml` into {@link JsonNode} and validates it with devfile schema.
+   * Tries to parse given `yaml` into {@link JsonNode}.
    *
    * @param yaml to parse
    * @return parsed yaml
-   * @throws DevfileFormatException if given yaml is empty or is not valid devfile
+   * @throws DevfileFormatException if given yaml is empty or invalid
    */
   public JsonNode parseYamlRaw(String yaml) throws DevfileFormatException {
-    return parseYamlRaw(yaml, true);
-  }
-
-  private JsonNode parseYamlRaw(String yaml, boolean validate) throws DevfileFormatException {
     try {
-      JsonNode devfileJson =
-          Optional.ofNullable(yamlMapper.readTree(yaml))
-              .orElseThrow(
-                  () ->
-                      new DevfileFormatException(
-                          "Unable to parse Devfile - provided source is empty"));
-      if (validate) {
-        schemaValidator.validate(devfileJson);
-      }
-      return devfileJson;
+      return Optional.ofNullable(yamlMapper.readTree(yaml))
+          .orElseThrow(
+              () ->
+                  new DevfileFormatException("Unable to parse Devfile - provided source is empty"));
     } catch (JsonProcessingException jpe) {
       throw new DevfileFormatException("Can't parse devfile yaml.", jpe);
     }
@@ -130,7 +120,8 @@ public class DevfileParser {
    * @param devfileJson json with devfile content
    * @return devfile in simple Map structure
    */
-  public Map<String, Object> convertYamlToMap(JsonNode devfileJson) {
+  public Map<String, Object> convertYamlToMap(JsonNode devfileJson) throws DevfileFormatException {
+    schemaValidator.validate(devfileJson);
     return yamlMapper.convertValue(devfileJson, new TypeReference<>() {});
   }
 

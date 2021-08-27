@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.urlfactory;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.String.format;
 import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
@@ -62,6 +63,7 @@ public class URLFactoryBuilder {
   private final String defaultCheEditor;
   private final String defaultChePlugins;
 
+  private final boolean devWorskspacesEnabled;
   private final DevfileParser devfileParser;
   private final DevfileVersionDetector devfileVersionDetector;
 
@@ -69,10 +71,12 @@ public class URLFactoryBuilder {
   public URLFactoryBuilder(
       @Named("che.factory.default_editor") String defaultCheEditor,
       @Nullable @Named("che.factory.default_plugins") String defaultChePlugins,
+      @Named("che.devworkspaces.enabled") boolean devWorskspacesEnabled,
       DevfileParser devfileParser,
       DevfileVersionDetector devfileVersionDetector) {
     this.defaultCheEditor = defaultCheEditor;
     this.defaultChePlugins = defaultChePlugins;
+    this.devWorskspacesEnabled = devWorskspacesEnabled;
     this.devfileParser = devfileParser;
     this.devfileVersionDetector = devfileVersionDetector;
   }
@@ -156,11 +160,16 @@ public class URLFactoryBuilder {
           .withDevfile(DtoConverter.asDto(devfile))
           .withSource(location.filename().isPresent() ? location.filename().get() : null);
 
-    } else {
+    } else if (devWorskspacesEnabled) {
       return newDto(FactoryDevfileV2Dto.class)
           .withV(CURRENT_VERSION)
           .withDevfile(devfileParser.convertYamlToMap(devfileJson))
           .withSource(location.filename().isPresent() ? location.filename().get() : null);
+    } else {
+      throw new DevfileException(
+          format(
+              "Devfile of version %s cannot be used in current deployment, because of DevWorkspaces feature is disabled. Only '1.0.0' version devfiles are supported for such installations.",
+              devfileVersionDetector.devfileVersion(devfileJson)));
     }
   }
 

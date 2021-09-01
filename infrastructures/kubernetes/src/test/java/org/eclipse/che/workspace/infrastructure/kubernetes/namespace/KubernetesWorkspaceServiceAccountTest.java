@@ -120,7 +120,7 @@ public class KubernetesWorkspaceServiceAccountTest {
     serviceAccount.prepare();
 
     // then
-    // make sure metrics role & rb added
+    // make sure metrics role & rb not added
     RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
     assertTrue(
         rl.getItems().stream().noneMatch(r -> r.getMetadata().getName().equals(METRICS_ROLE_NAME)));

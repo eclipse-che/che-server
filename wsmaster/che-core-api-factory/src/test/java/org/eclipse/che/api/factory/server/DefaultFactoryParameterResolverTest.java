@@ -81,7 +81,8 @@ public class DefaultFactoryParameterResolverTest {
     DevfileParser devfileParser = new DevfileParser(validator, integrityValidator);
 
     URLFactoryBuilder factoryBuilder =
-        new URLFactoryBuilder("editor", "plugin", devfileParser, new DevfileVersionDetector());
+        new URLFactoryBuilder(
+            "editor", "plugin", false, devfileParser, new DevfileVersionDetector());
 
     DefaultFactoryParameterResolver res =
         new DefaultFactoryParameterResolver(factoryBuilder, urlFetcher);

@@ -745,6 +745,7 @@ public class KubernetesNamespaceFactoryTest {
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
     when(clientFactory.create(any())).thenReturn(k8sClient);
 
     // pre-create the cluster roles
@@ -775,8 +776,8 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"),
-        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
+        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"));
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
         bindings
@@ -876,6 +877,7 @@ public class KubernetesNamespaceFactoryTest {
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
     when(clientFactory.create(any())).thenReturn(k8sClient);
 
     // when
@@ -892,8 +894,8 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"),
-        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
+        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"));
     Role role1 = roles.getItems().get(0);
     Role role2 = roles.getItems().get(1);
 

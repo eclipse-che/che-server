@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
+
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -78,7 +80,8 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
   @Override
   protected String getUserId(String token) {
     try {
-      return getCurrentUser(token).getMetadata().getUid();
+      io.fabric8.openshift.api.model.User user = getCurrentUser(token);
+      return firstNonNull(user.getMetadata().getUid(), user.getMetadata().getName());
     } catch (KubernetesClientException e) {
       if (e.getCode() == 401) {
         LOG.error(
@@ -96,7 +99,9 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
       ObjectMeta userMeta = getCurrentUser(token).getMetadata();
       User user =
           userManager.getOrCreateUser(
-              userMeta.getUid(), openshiftUserEmail(userMeta), userMeta.getName());
+              firstNonNull(userMeta.getUid(), userMeta.getName()),
+              openshiftUserEmail(userMeta),
+              userMeta.getName());
       return new AuthorizedSubject(
           new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
     } catch (InfrastructureException | ServerException | ConflictException e) {

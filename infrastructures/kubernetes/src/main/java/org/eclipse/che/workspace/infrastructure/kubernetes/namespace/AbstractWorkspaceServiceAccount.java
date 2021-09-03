@@ -128,12 +128,10 @@ public abstract class AbstractWorkspaceServiceAccount<
       if (k8sClient.supportsApiPath("/apis/metrics.k8s.io")) {
         ensureRoleWithBinding(
             k8sClient,
-            buildRole(
-                METRICS_ROLE_NAME,
-                Arrays.asList("pods", "nodes"),
-                emptyList(),
-                singletonList("metrics.k8s.io"),
-                Arrays.asList("list", "get", "watch")),
+            METRICS_ROLE_NAME,
+            Arrays.asList("pods", "nodes"),
+            singletonList("metrics.k8s.io"),
+            Arrays.asList("list", "get", "watch"),
             serviceAccountName + "-metrics");
       }
     } catch (KubernetesClientException e) {

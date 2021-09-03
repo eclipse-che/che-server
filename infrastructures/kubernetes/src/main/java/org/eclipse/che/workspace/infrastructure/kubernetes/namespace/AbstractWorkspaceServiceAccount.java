@@ -124,8 +124,8 @@ public abstract class AbstractWorkspaceServiceAccount<
         serviceAccountName + "-view");
 
     // metrics role
-    if (k8sClient.supportsApiPath("/apis/metrics.k8s.io")) {
-      try {
+    try {
+      if (k8sClient.supportsApiPath("/apis/metrics.k8s.io")) {
         ensureRoleWithBinding(
             k8sClient,
             buildRole(
@@ -135,14 +135,14 @@ public abstract class AbstractWorkspaceServiceAccount<
                 singletonList("metrics.k8s.io"),
                 Arrays.asList("list", "get", "watch")),
             serviceAccountName + "-metrics");
-      } catch (KubernetesClientException e) {
-        // workaround to unblock workspace start if no permissions for metrics
-        if (e.getCode() == 403) {
-          LOG.warn(
-              "Unable to add metrics roles due to insufficient permissions. Workspace metrics will be disabled.");
-        } else {
-          throw e;
-        }
+      }
+    } catch (KubernetesClientException e) {
+      // workaround to unblock workspace start if no permissions for metrics
+      if (e.getCode() == 403) {
+        LOG.warn(
+            "Unable to add metrics roles due to insufficient permissions. Workspace metrics will be disabled.");
+      } else {
+        throw e;
       }
     }
   }

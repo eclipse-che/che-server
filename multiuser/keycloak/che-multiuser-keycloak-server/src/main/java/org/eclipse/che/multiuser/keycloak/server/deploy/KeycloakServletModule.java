@@ -18,11 +18,11 @@ import org.eclipse.che.multiuser.keycloak.server.UnavailableResourceInMultiUserF
 
 public class KeycloakServletModule extends ServletModule {
 
-  private static final String KEYCLOAK_FILTER_PATHS =
+  static final String KEYCLOAK_FILTER_PATHS =
       "^"
           // not equals to /keycloak/OIDCKeycloak.js
           + "(?!/keycloak/(OIDC|oidc)[^\\/]+$)"
-          // not contains /docs/ (for swagger)
+          // not equals to openapi.json (for swagger)
           + "(?!.*(/openapi\\.json))"
           // not ends with '/oauth/callback/' or '/oauth/1.0/callback/' or '/keycloak/settings/' or
           // '/system/state'

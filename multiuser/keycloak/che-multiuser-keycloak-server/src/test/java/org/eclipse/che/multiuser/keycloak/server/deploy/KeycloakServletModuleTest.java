@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.keycloak.server;
+package org.eclipse.che.multiuser.keycloak.server.deploy;
 
 import java.util.regex.Pattern;
 import org.testng.Assert;
@@ -17,19 +17,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class KeycloakServletModuleTest {
-  private static final String KEYCLOAK_FILTER_PATHS =
-      "^"
-          // not equals to /keycloak/OIDCKeycloak.js
-          + "(?!/keycloak/(OIDC|oidc)[^\\/]+$)"
-          // not contains /docs/ (for swagger)
-          + "(?!.*(/openapi\\.json))"
-          // not ends with '/oauth/callback/' or 'c' or '/keycloak/settings/' or
-          // '/system/state'
-          + "(?!.*(/keycloak/settings/?|/oauth/callback/?|/oauth/1.0/callback/?|/system/state/?)$)"
-          // all other
-          + ".*";
   private static final Pattern KEYCLOAK_FILTER_PATHS_PATTERN =
-      Pattern.compile(KEYCLOAK_FILTER_PATHS);
+      Pattern.compile(KeycloakServletModule.KEYCLOAK_FILTER_PATHS);
 
   @Test(dataProvider = "allowedRequests")
   public void shouldSkipOpenApi(String url) {

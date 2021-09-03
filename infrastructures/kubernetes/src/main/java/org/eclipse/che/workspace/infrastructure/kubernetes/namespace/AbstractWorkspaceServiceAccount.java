@@ -17,6 +17,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Arrays;
@@ -123,13 +124,25 @@ public abstract class AbstractWorkspaceServiceAccount<
         serviceAccountName + "-view");
 
     // metrics role
-    ensureRoleWithBinding(
-        k8sClient,
-        METRICS_ROLE_NAME,
-        Arrays.asList("pods", "nodes"),
-        singletonList("metrics.k8s.io"),
-        Arrays.asList("list", "get", "watch"),
-        serviceAccountName + "-metrics");
+    try {
+      if (k8sClient.supportsApiPath("/apis/metrics.k8s.io")) {
+        ensureRoleWithBinding(
+            k8sClient,
+            METRICS_ROLE_NAME,
+            Arrays.asList("pods", "nodes"),
+            singletonList("metrics.k8s.io"),
+            Arrays.asList("list", "get", "watch"),
+            serviceAccountName + "-metrics");
+      }
+    } catch (KubernetesClientException e) {
+      // workaround to unblock workspace start if no permissions for metrics
+      if (e.getCode() == 403) {
+        LOG.warn(
+            "Unable to add metrics roles due to insufficient permissions. Workspace metrics will be disabled.");
+      } else {
+        throw e;
+      }
+    }
   }
 
   private void ensureRoleWithBinding(

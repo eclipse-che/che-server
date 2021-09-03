@@ -111,7 +111,7 @@ public class KubernetesWorkspaceServiceAccountTest {
   }
 
   @Test
-  public void shouldNotCreateMetricsRoleIfAPIEnabledOnServer() throws Exception {
+  public void shouldNotCreateMetricsRoleIfAPINotEnabledOnServer() throws Exception {
     KubernetesClient localK8sClient = spy(serverMock.getClient());
     when(localK8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(false);
     when(clientFactory.create(anyString())).thenReturn(localK8sClient);

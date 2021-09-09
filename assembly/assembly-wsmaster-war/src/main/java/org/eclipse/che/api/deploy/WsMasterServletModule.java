@@ -46,16 +46,12 @@ public class WsMasterServletModule extends ServletModule {
     serveRegex("^(?!/websocket.?)(.*)")
         .with(GuiceEverrestServlet.class, ImmutableMap.of("openapi.context.id", "org.eclipse.che"));
 
-    if (Boolean.valueOf(System.getenv("CHE_MULTIUSER"))) {
-      if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-        LOG.info("Running in native-user mode ...");
-        configureNativeUserMode();
-      } else {
-        LOG.info("Running in classic multi-user mode ...");
-        configureMultiUserMode();
-      }
+    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+      LOG.info("Running in native-user mode ...");
+      configureNativeUserMode();
     } else {
-      configureSingleUserMode();
+      LOG.info("Running in classic multi-user mode ...");
+      configureMultiUserMode();
     }
 
     if (Boolean.valueOf(System.getenv("CHE_METRICS_ENABLED"))) {
@@ -71,10 +67,6 @@ public class WsMasterServletModule extends ServletModule {
     } else {
       return Boolean.valueOf(cheCorsEnabledEnvVar);
     }
-  }
-
-  private void configureSingleUserMode() {
-    filter("/*").through(org.eclipse.che.api.local.filters.EnvironmentInitializationFilter.class);
   }
 
   private void configureMultiUserMode() {

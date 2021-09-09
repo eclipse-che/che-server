@@ -52,10 +52,6 @@
             <artifactId>guice-persist</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.jaegertracing</groupId>
             <artifactId>jaeger-client</artifactId>
         </dependency>
@@ -193,14 +189,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-db-vendor-h2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-db-vendor-mysql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-db-vendor-postgresql</artifactId>
         </dependency>
         <dependency>
@@ -226,10 +214,6 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-tracing-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>wsmaster-local</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.infrastructure</groupId>
@@ -462,8 +446,6 @@
                                 <dep>org.slf4j:log4j-over-slf4j</dep>
                                 <dep>ch.qos.logback:logback-classic</dep>
                                 <dep>net.logstash.logback:logstash-logback-encoder</dep>
-                                <dep>com.h2database:h2</dep>
-                                <dep>org.eclipse.che.core:che-core-db-vendor-mysql</dep>
                                 <dep>org.eclipse.che.core:che-core-sql-schema</dep>
                                 <dep>org.eclipse.che.core:che-core-api-ssh-shared</dep>
                                 <dep>org.eclipse.che.multiuser:che-multiuser-sql-schema</dep>

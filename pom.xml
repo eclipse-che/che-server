@@ -64,7 +64,7 @@
         <com.squareup.okhttp3.version>3.12.12</com.squareup.okhttp3.version>
         <com.squareup.okio.version>1.15.0</com.squareup.okio.version>
         <commons-codec.version>1.11</commons-codec.version>
-        <commons-compress.version>1.19</commons-compress.version>
+        <commons-fileupload.version>1.3.3</commons-fileupload.version>
         <commons-io.version>2.8.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <enforcer.skip>false</enforcer.skip>
@@ -525,11 +525,6 @@
                 <groupId>org.antlr</groupId>
                 <artifactId>ST4</artifactId>
                 <version>${org.antlr.st4.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-compress</artifactId>
-                <version>${commons-compress.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

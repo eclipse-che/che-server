@@ -213,6 +213,27 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.checkIfNamespaceIsAllowed("any-namespace");
   }
 
+  @Test
+  public void shouldNormaliseNamespaceWhenUserNameStartsWithKube() {
+    namespaceFactory =
+        new KubernetesNamespaceFactory(
+            "",
+            "",
+            "che-<userid>",
+            true,
+            true,
+            true,
+            NAMESPACE_LABELS,
+            NAMESPACE_ANNOTATIONS,
+            clientFactory,
+            cheClientFactory,
+            userManager,
+            preferenceManager,
+            pool);
+
+    assertEquals("che-kube-admin", namespaceFactory.normalizeNamespaceName("kube:admin"));
+  }
+
   @Test(
       expectedExceptions = ValidationException.class,
       expectedExceptionsMessageRegExp =
@@ -1059,6 +1080,34 @@ public class KubernetesNamespaceFactoryTest {
             new NamespaceResolutionContext("workspace123", "user123", "jondoe"));
 
     assertEquals(namespace, "che-user123-jondoe");
+  }
+
+  @Test
+  public void testEvalNamespaceKubeAdmin() throws Exception {
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "che-<username>",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    doReturn(Optional.empty()).when(namespaceFactory).fetchNamespace(anyString());
+
+    String namespace =
+        namespaceFactory.evaluateNamespaceName(
+            new NamespaceResolutionContext("workspace123", "kube:admin", "kube:admin"));
+
+    assertTrue(namespace.startsWith("che-kube-admin-"));
+    assertEquals(namespace.length(), 21);
   }
 
   @Test

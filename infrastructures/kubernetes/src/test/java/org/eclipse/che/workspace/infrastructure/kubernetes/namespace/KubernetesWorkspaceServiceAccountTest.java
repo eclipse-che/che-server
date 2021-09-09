@@ -11,8 +11,11 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.METRICS_ROLE_NAME;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
@@ -52,6 +55,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
     serverMock = new KubernetesServer(true, true);
     serverMock.before();
+
     k8sClient = serverMock.getClient();
     when(clientFactory.create(anyString())).thenReturn(k8sClient);
   }
@@ -82,5 +86,49 @@ public class KubernetesWorkspaceServiceAccountTest {
 
     RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
     assertTrue(rbl.getItems().size() > 1);
+  }
+
+  @Test
+  public void shouldCreateMetricsRoleIfAPIEnabledOnServer() throws Exception {
+    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    when(localK8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
+    when(clientFactory.create(anyString())).thenReturn(localK8sClient);
+
+    // when
+    serviceAccount.prepare();
+
+    // then
+    // make sure metrics role & rb added
+    RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
+    assertTrue(
+        rl.getItems().stream().anyMatch(r -> r.getMetadata().getName().equals(METRICS_ROLE_NAME)));
+
+    RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
+    assertTrue(
+        rbl.getItems()
+            .stream()
+            .anyMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-metrics")));
+  }
+
+  @Test
+  public void shouldNotCreateMetricsRoleIfAPINotEnabledOnServer() throws Exception {
+    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    when(localK8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(false);
+    when(clientFactory.create(anyString())).thenReturn(localK8sClient);
+
+    // when
+    serviceAccount.prepare();
+
+    // then
+    // make sure metrics role & rb not added
+    RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
+    assertTrue(
+        rl.getItems().stream().noneMatch(r -> r.getMetadata().getName().equals(METRICS_ROLE_NAME)));
+
+    RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
+    assertTrue(
+        rbl.getItems()
+            .stream()
+            .noneMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-metrics")));
   }
 }

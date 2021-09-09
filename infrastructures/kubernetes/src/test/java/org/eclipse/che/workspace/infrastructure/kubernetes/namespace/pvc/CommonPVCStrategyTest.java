@@ -365,17 +365,10 @@ public class CommonPVCStrategyTest {
         .thenReturn((workspaces));
     when(workspaces.isEmpty()).thenReturn(true);
 
-    WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
-    when(workspace.getConfig()).thenReturn(workspaceConfig);
-
     AccountImpl account = mock(AccountImpl.class);
     when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
     when(account.getId()).thenReturn("id123");
     when(workspace.getAccount()).thenReturn(account);
-
-    Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
-    workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "true");
 
     KubernetesNamespace ns = mock(KubernetesNamespace.class);
     when(factory.get(eq(workspace))).thenReturn(ns);
@@ -388,6 +381,8 @@ public class CommonPVCStrategyTest {
     verify(ns).persistentVolumeClaims();
     verify(persistentVolumeClaims).delete(PVC_NAME);
     verify(pvcSubPathHelper, never()).removeDirsAsync(WORKSPACE_ID, "ns", PVC_NAME, WORKSPACE_ID);
+    verify(workspace, never()).getConfig();
+    verify(workspace, never()).getDevfile();
   }
 
   @Test
@@ -429,24 +424,36 @@ public class CommonPVCStrategyTest {
   }
 
   @Test
-  public void shouldDoNothingIfPersistAttributeIsSetToFalseInWorkspaceConfigWhenCleanupCalled()
-      throws Exception {
+  public void
+      shouldDoNothingIfPersistAttributeIsSetToFalseInWorkspaceConfigAndWorkspacesNotEmptyWhenCleanupCalled()
+          throws Exception {
     // given
     WorkspaceImpl workspace = mock(WorkspaceImpl.class);
-    lenient().when(workspace.getId()).thenReturn(WORKSPACE_ID);
+    Page workspaces = mock(Page.class);
+    KubernetesPersistentVolumeClaims persistentVolumeClaims =
+        mock(KubernetesPersistentVolumeClaims.class);
+
+    when(workspaceManager.getWorkspaces(anyString(), eq(false), anyInt(), anyLong()))
+        .thenReturn((workspaces));
+    when(workspaces.isEmpty()).thenReturn(false);
+
+    AccountImpl account = mock(AccountImpl.class);
+    when(account.getType()).thenReturn(PERSONAL_ACCOUNT);
+    when(account.getId()).thenReturn("id123");
+    when(workspace.getAccount()).thenReturn(account);
 
     WorkspaceConfigImpl workspaceConfig = mock(WorkspaceConfigImpl.class);
-    lenient().when(workspace.getConfig()).thenReturn(workspaceConfig);
-
+    when(workspace.getConfig()).thenReturn(workspaceConfig);
     Map<String, String> workspaceConfigAttributes = new HashMap<>();
-    lenient().when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
+    when(workspaceConfig.getAttributes()).thenReturn(workspaceConfigAttributes);
     workspaceConfigAttributes.put(PERSIST_VOLUMES_ATTRIBUTE, "false");
 
     // when
     commonPVCStrategy.cleanup(workspace);
 
     // then
-    verify(pvcSubPathHelper, never()).removeDirsAsync(WORKSPACE_ID, null, WORKSPACE_ID);
+    verify(persistentVolumeClaims, never()).delete(PVC_NAME);
+    verify(pvcSubPathHelper, never()).removeDirsAsync(WORKSPACE_ID, "ns", PVC_NAME, WORKSPACE_ID);
   }
 
   private static PersistentVolumeClaim newPVC(String name) {

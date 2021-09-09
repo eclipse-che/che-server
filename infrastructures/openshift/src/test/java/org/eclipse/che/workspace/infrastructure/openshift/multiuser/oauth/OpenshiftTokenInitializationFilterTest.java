@@ -85,6 +85,26 @@ public class OpenshiftTokenInitializationFilterTest {
   }
 
   @Test
+  public void shouldBeAbleToHandleKubeAdminUserWithoutUid()
+      throws ServerException, ConflictException {
+    String KUBE_ADMIN_USERNAME = "kube:admin";
+    when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);
+    when(openShiftClient.currentUser()).thenReturn(openshiftUser);
+    when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
+    when(openshiftUserMeta.getUid()).thenReturn(null);
+    when(openshiftUserMeta.getName()).thenReturn(KUBE_ADMIN_USERNAME);
+    when(userManager.getOrCreateUser(
+            KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME))
+        .thenReturn(
+            new UserImpl(KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME));
+
+    Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN);
+
+    assertEquals(subject.getUserId(), KUBE_ADMIN_USERNAME);
+    assertEquals(subject.getUserName(), KUBE_ADMIN_USERNAME);
+  }
+
+  @Test
   public void extractSubjectCreatesSubjectWithCurretlyAuthenticatedUser()
       throws InfrastructureException, ServerException, ConflictException {
     when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);

@@ -284,27 +284,27 @@ public class KubernetesDeployments {
   }
 
   /**
-   * Waits until pod state will suit for specified predicate.
+   * Returns a future which completes when pod state satisfies the specified predicate.
+   *
+   * <p>Note that for resource cleanup, the resulting future must be explicitly cancelled when its
+   * completion no longer important.
    *
    * @param name name of pod or deployment containing pod that should be watched
-   * @param timeoutMin waiting timeout in minutes
    * @param predicate predicate to perform state check
    * @return pod that satisfies the specified predicate
-   * @throws InfrastructureException when specified timeout is reached
-   * @throws InfrastructureException when {@link Thread} is interrupted while waiting
+   * @throws InfrastructureException when specified pod or deployment does not exist
    * @throws InfrastructureException when any other exception occurs
    */
-  public Pod wait(String name, int timeoutMin, Predicate<Pod> predicate)
+  public CompletableFuture<Pod> waitAsync(String name, Predicate<Pod> predicate)
       throws InfrastructureException {
     String podName = getPodName(name);
     CompletableFuture<Pod> future = new CompletableFuture<>();
-    Watch watch = null;
     try {
 
       PodResource<Pod> podResource =
           clientFactory.create(workspaceId).pods().inNamespace(namespace).withName(podName);
 
-      watch =
+      Watch watch =
           podResource.watch(
               new Watcher<>() {
                 @Override
@@ -331,24 +331,14 @@ public class KubernetesDeployments {
         }
       }
       if (predicate.test(actualPod)) {
-        return actualPod;
+        return CompletableFuture.completedFuture(actualPod);
       }
-      try {
-        return future.get(timeoutMin, TimeUnit.MINUTES);
-      } catch (ExecutionException e) {
-        throw new InfrastructureException(e.getCause().getMessage(), e);
-      } catch (TimeoutException e) {
-        throw new InfrastructureException("Waiting for pod '" + podName + "' reached timeout");
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new InfrastructureException("Waiting for pod '" + podName + "' was interrupted");
-      }
+
+      future.whenComplete((ok, ex) -> watch.close());
+      return future;
+
     } catch (KubernetesClientException e) {
       throw new KubernetesInfrastructureException(e);
-    } finally {
-      if (watch != null) {
-        watch.close();
-      }
     }
   }
 
@@ -945,7 +935,7 @@ public class KubernetesDeployments {
               .withName(deploymentName);
       if (deploymentResource.get() == null) {
         throw new InfrastructureException(
-            format("No deployment foud to delete for name %s", deploymentName));
+            format("No deployment found to delete for name %s", deploymentName));
       }
 
       final CompletableFuture<Void> deleteFuture = new CompletableFuture<>();

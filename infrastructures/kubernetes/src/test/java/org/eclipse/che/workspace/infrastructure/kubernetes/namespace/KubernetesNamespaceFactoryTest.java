@@ -213,6 +213,27 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.checkIfNamespaceIsAllowed("any-namespace");
   }
 
+  @Test
+  public void shouldNormaliseNamespaceWhenUserNameStartsWithKube() {
+    namespaceFactory =
+        new KubernetesNamespaceFactory(
+            "",
+            "",
+            "che-<userid>",
+            true,
+            true,
+            true,
+            NAMESPACE_LABELS,
+            NAMESPACE_ANNOTATIONS,
+            clientFactory,
+            cheClientFactory,
+            userManager,
+            preferenceManager,
+            pool);
+
+    assertEquals("che-kube-admin", namespaceFactory.normalizeNamespaceName("kube:admin"));
+  }
+
   @Test(
       expectedExceptions = ValidationException.class,
       expectedExceptionsMessageRegExp =
@@ -724,6 +745,7 @@ public class KubernetesNamespaceFactoryTest {
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
     when(clientFactory.create(any())).thenReturn(k8sClient);
 
     // pre-create the cluster roles
@@ -754,8 +776,8 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"),
-        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
+        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"));
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
         bindings
@@ -855,6 +877,7 @@ public class KubernetesNamespaceFactoryTest {
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
     when(clientFactory.create(any())).thenReturn(k8sClient);
 
     // when
@@ -871,8 +894,8 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
-        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"),
-        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()));
+        roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()),
+        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"));
     Role role1 = roles.getItems().get(0);
     Role role2 = roles.getItems().get(1);
 
@@ -1057,6 +1080,34 @@ public class KubernetesNamespaceFactoryTest {
             new NamespaceResolutionContext("workspace123", "user123", "jondoe"));
 
     assertEquals(namespace, "che-user123-jondoe");
+  }
+
+  @Test
+  public void testEvalNamespaceKubeAdmin() throws Exception {
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "che-<username>",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    doReturn(Optional.empty()).when(namespaceFactory).fetchNamespace(anyString());
+
+    String namespace =
+        namespaceFactory.evaluateNamespaceName(
+            new NamespaceResolutionContext("workspace123", "kube:admin", "kube:admin"));
+
+    assertTrue(namespace.startsWith("che-kube-admin-"));
+    assertEquals(namespace.length(), 21);
   }
 
   @Test

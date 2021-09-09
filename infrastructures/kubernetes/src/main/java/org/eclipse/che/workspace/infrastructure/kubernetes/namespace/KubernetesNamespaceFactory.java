@@ -745,6 +745,9 @@ public class KubernetesNamespaceFactory {
             .replaceAll("[^-a-zA-Z0-9]", "-") // replace invalid chars with '-'
             .replaceAll("-+", "-") // replace multiple '-' with single ones
             .replaceAll("^-|-$", ""); // trim dashes at beginning/end of the string
+    if (namespaceName.startsWith("kube-")) {
+      namespaceName = "che-" + namespaceName;
+    }
     return namespaceName.substring(
         0,
         Math.min(

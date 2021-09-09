@@ -47,6 +47,7 @@ import org.eclipse.che.api.infraproxy.server.InfraProxyModule;
 import org.eclipse.che.api.metrics.WsMasterMetricsModule;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.system.server.SystemModule;
+import org.eclipse.che.api.user.server.NotImplementedTokenValidator;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.jpa.JpaPreferenceDao;
 import org.eclipse.che.api.user.server.jpa.JpaProfileDao;
@@ -75,7 +76,6 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.ProjectsRootEnvVar
 import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceIdEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceNameEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceNamespaceNameEnvVarProvider;
-import org.eclipse.che.api.workspace.server.token.MachineTokenProvider;
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.commons.observability.deploy.ExecutorWrapperModule;
 import org.eclipse.che.core.db.DBTermination;
@@ -280,11 +280,7 @@ public class WsMasterModule extends AbstractModule {
     installDefaultSecureServerExposer(infrastructure);
     install(new org.eclipse.che.security.oauth1.BitbucketModule());
 
-    if (Boolean.valueOf(System.getenv("CHE_MULTIUSER"))) {
-      configureMultiUserMode(persistenceProperties, infrastructure);
-    } else {
-      configureSingleUserMode(persistenceProperties, infrastructure);
-    }
+    configureMultiUserMode(persistenceProperties, infrastructure);
 
     install(
         new com.google.inject.persist.jpa.JpaPersistModule("main")
@@ -319,43 +315,6 @@ public class WsMasterModule extends AbstractModule {
     install(new ExecutorWrapperModule());
 
     install(new OpenShiftOAuthModule());
-  }
-
-  private void configureSingleUserMode(
-      Map<String, String> persistenceProperties, String infrastructure) {
-    persistenceProperties.put(
-        PersistenceUnitProperties.EXCEPTION_HANDLER_CLASS,
-        "org.eclipse.che.core.db.h2.jpa.eclipselink.H2ExceptionHandler");
-    bind(TokenValidator.class).to(org.eclipse.che.api.local.DummyTokenValidator.class);
-    bind(MachineTokenProvider.class).to(MachineTokenProvider.EmptyMachineTokenProvider.class);
-
-    bind(DataSource.class).toProvider(org.eclipse.che.core.db.h2.H2DataSourceProvider.class);
-
-    install(new org.eclipse.che.api.user.server.jpa.UserJpaModule());
-    install(new org.eclipse.che.api.workspace.server.jpa.WorkspaceJpaModule());
-    install(new org.eclipse.che.api.devfile.server.jpa.UserDevfileJpaModule());
-
-    bind(org.eclipse.che.api.user.server.CheUserCreator.class);
-
-    bindConstant().annotatedWith(Names.named("che.agents.auth_enabled")).to(false);
-
-    bind(org.eclipse.che.security.oauth.shared.OAuthTokenProvider.class)
-        .to(org.eclipse.che.security.oauth.OAuthAuthenticatorTokenProvider.class);
-    bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class);
-
-    bind(RemoteSubscriptionStorage.class)
-        .to(org.eclipse.che.api.core.notification.InmemoryRemoteSubscriptionStorage.class);
-    bind(WorkspaceLockService.class)
-        .to(org.eclipse.che.api.workspace.server.DefaultWorkspaceLockService.class);
-    bind(WorkspaceStatusCache.class)
-        .to(org.eclipse.che.api.workspace.server.DefaultWorkspaceStatusCache.class);
-
-    install(new org.eclipse.che.api.workspace.activity.inject.WorkspaceActivityModule());
-
-    // In single user mode jwtproxy provisioner isn't actually bound at all, but since
-    // it is the new default, we need to "fake it" by binding the passthrough provisioner
-    // as the jwtproxy impl.
-    configureImpostorJwtProxySecureProvisioner(infrastructure);
   }
 
   private void configureMultiUserMode(
@@ -436,7 +395,7 @@ public class WsMasterModule extends AbstractModule {
     install(new OrganizationJpaModule());
 
     if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      bind(TokenValidator.class).to(org.eclipse.che.api.local.DummyTokenValidator.class);
+      bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
       bind(JwtParser.class).to(DefaultJwtParser.class);
       bind(ProfileDao.class).to(JpaProfileDao.class);
       bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class);

@@ -33,7 +33,6 @@ spec:
       securityContext:
         fsGroup: {{ .Values.global.securityContext.fsGroup }}
       initContainers:
-{{- if .Values.global.multiuser }}
       - name: wait-for-postgres
         image: {{ .Values.global.endpointWatcher.image }}
         env:
@@ -43,9 +42,8 @@ spec:
                 fieldPath: metadata.namespace
           - name: ENDPOINT
             value: postgres
-{{- end }}
-#wait for keycloak if in multiuser mode and .Values.customOidcProvider was not defined
-{{- if (and .Values.global.multiuser (not .Values.customOidcProvider)) }}
+#wait for keycloak if .Values.customOidcProvider was not defined
+{{- if not .Values.customOidcProvider }}
       - name: wait-for-keycloak
         image: {{ .Values.global.endpointWatcher.image }}
         env:
@@ -55,15 +53,6 @@ spec:
                 fieldPath: metadata.namespace
           - name: ENDPOINT
             value: keycloak
-{{- end }}
-{{- if not .Values.global.multiuser }}
-      - name: fmp-volume-permission
-        image: busybox
-        command: ["chmod", "777", "/data"]
-        volumeMounts: [{
-              "mountPath": "/data",
-              "name": "che-data-volume"
-        }]
 {{- end }}
       containers:
       - envFrom:
@@ -160,30 +149,16 @@ spec:
             memory: 600Mi
           requests:
             memory: 256Mi
-{{- if or (not .Values.global.multiuser) (not (eq .Values.global.tls.serverTrustStoreConfigMapName "")) }}
-        volumeMounts:
-{{- if not .Values.global.multiuser }}
-        - mountPath: /data
-          name: che-data-volume
-{{- end }}
 # If serverTrustStoreConfigMapName is defined, then add the che-public-certs volume mount with certificate contents
 # to propagate them to trust store.
 {{- if not (eq .Values.global.tls.serverTrustStoreConfigMapName "") }}
+      volumeMounts:
         - mountPath: /public-certs
           name: che-public-certs
-{{- end }}
       volumes:
-{{- if not .Values.global.multiuser }}
-      - name: che-data-volume
-        persistentVolumeClaim:
-          claimName: che-data-volume
-{{- end }}
-# If serverTrustStoreConfigMapName is defined, then add config-map volume.
-{{- if not (eq .Values.global.tls.serverTrustStoreConfigMapName "") }}
       - name: che-public-certs
         configMap:
           name: {{ .Values.global.tls.serverTrustStoreConfigMapName }}
-{{- end }}
 {{- end }}
 {{- if .Values.registry }}
 {{- if and .Values.registry.password .Values.registry.username }}

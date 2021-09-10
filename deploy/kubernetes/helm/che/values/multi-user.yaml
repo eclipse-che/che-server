@@ -7,5 +7,5 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-global:
-  multiuser: true
+# multi user authentication mode the only available and enabled by default
+# keep this file for backward compatibility

@@ -49,18 +49,16 @@ data:
   CHE_INFRA_KUBERNETES_TLS__ENABLED: "false"
   CHE_INFRA_KUBERNETES_TLS__SECRET: ""
 {{- end }}
-{{- if .Values.global.multiuser }}
   CHE_KEYCLOAK_CLIENT__ID: {{ .Values.cheKeycloakClientId | quote}}
   CHE_KEYCLOAK_AUTH__SERVER__URL: {{ template "keycloakAuthUrl" . }}
   {{- if .Values.global.useInternalClusterSVCNames }}
   CHE_KEYCLOAK_AUTH__INTERNAL__SERVER__URL: http://keycloak.{{ .Release.Namespace }}.svc:5050/auth
   {{- end }}
   CHE_KEYCLOAK_REALM: {{ .Values.cheKeycloakRealm }}
-{{- end }}
-{{- if (and .Values.global.multiuser .Values.customOidcProvider) }}
+{{- if .Values.customOidcProvider }}
   CHE_KEYCLOAK_OIDC__PROVIDER: {{ .Values.customOidcProvider }}
 {{- end }}
-{{- if and .Values.global.multiuser .Values.customOidcUsernameClaim }}
+{{- if .Values.customOidcUsernameClaim }}
   CHE_KEYCLOAK_USERNAME__CLAIM: {{ .Values.customOidcUsernameClaim }}
 {{- end }}
 {{- if not (eq .Values.global.tls.serverTrustStoreConfigMapName "") }}
@@ -84,7 +82,7 @@ data:
   CHE_LOCAL_CONF_DIR: /etc/conf
   CHE_LOGS_DIR: /data/logs
   CHE_LOG_LEVEL: {{ .Values.che.logLevel | quote }}
-  CHE_MULTIUSER: {{ .Values.global.multiuser | quote }}
+  CHE_MULTIUSER: "true"
   CHE_OAUTH_GITHUB_CLIENTID: {{ .Values.global.gitHubClientID | quote}}
   CHE_OAUTH_GITHUB_CLIENTSECRET: {{ .Values.global.gitHubClientSecret | quote}}
   CHE_OAUTH_OPENSHIFT_CLIENTID: {{ .Values.global.openShiftClientID | quote}}

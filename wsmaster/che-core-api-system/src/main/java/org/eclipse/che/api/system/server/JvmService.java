@@ -11,21 +11,20 @@
  */
 package org.eclipse.che.api.system.server;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sergii Kabashniuk
  */
-@Api("/jvm")
+@Tag(name = "jvm", description = "API for JVM manipulations")
 @Path("/jvm")
 public class JvmService {
 
@@ -50,9 +49,12 @@ public class JvmService {
   @GET
   @Path("/dump/thread")
   @Produces(MediaType.TEXT_PLAIN)
-  @ApiOperation("Get thread dump of jvm")
-  @ApiResponses(@ApiResponse(code = 200, message = "The response contains thread dump"))
-  @ApiResponse(code = 500, message = "Internal server error occurred")
+  @Operation(
+      summary = "Get thread dump of jvm",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The response contains thread dump"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public StreamingOutput threadDump() {
     return manager::writeThreadDump;
   }
@@ -60,9 +62,12 @@ public class JvmService {
   @GET
   @Path("/dump/heap")
   @Produces("application/zip")
-  @ApiOperation("Get heap dump of jvm")
-  @ApiResponses(@ApiResponse(code = 200, message = "The response contains jvm heap dump"))
-  @ApiResponse(code = 500, message = "Internal server error occurred")
+  @Operation(
+      summary = "Get heap dump of jvm",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The response contains jvm heap dump"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public Response heapDump() throws IOException {
     File heapDump = manager.createZippedHeapDump();
     heapDump.deleteOnExit();

@@ -16,6 +16,7 @@ import static org.eclipse.che.api.workspace.shared.Constants.LINK_REL_ENVIRONMEN
 import static org.eclipse.che.api.workspace.shared.Constants.LINK_REL_IDE_URL;
 import static org.eclipse.che.api.workspace.shared.Constants.LINK_REL_SELF;
 
+import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,7 +24,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.rest.ServiceContext;

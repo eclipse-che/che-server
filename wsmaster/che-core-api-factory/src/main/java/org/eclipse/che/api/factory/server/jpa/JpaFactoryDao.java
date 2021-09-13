@@ -20,12 +20,12 @@ import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.api.core.Pages.iterate;
 
 import com.google.inject.persist.Transactional;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;

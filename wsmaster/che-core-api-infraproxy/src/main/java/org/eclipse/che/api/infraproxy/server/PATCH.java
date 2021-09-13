@@ -14,10 +14,10 @@ package org.eclipse.che.api.infraproxy.server;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import jakarta.ws.rs.HttpMethod;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import javax.ws.rs.HttpMethod;
 
 /**
  * Kubernetes API accepts PATCH requests but JAX-RS doesn't provide the annotation for such requests

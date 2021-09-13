@@ -13,11 +13,11 @@ package org.eclipse.che.api.workspace.server;
 
 import static org.eclipse.che.api.core.model.workspace.config.Command.PREVIEW_URL_ATTRIBUTE;
 
+import jakarta.ws.rs.core.UriBuilder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Singleton;
-import javax.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.model.workspace.config.Command;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 

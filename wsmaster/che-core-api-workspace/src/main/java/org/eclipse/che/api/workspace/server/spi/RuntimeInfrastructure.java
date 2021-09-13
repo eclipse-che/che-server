@@ -13,13 +13,13 @@ package org.eclipse.che.api.workspace.server.spi;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.core.notification.EventService;

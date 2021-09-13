@@ -32,8 +32,7 @@ cheKeycloakClientId: "che-public"
 #workspaceSidecarDefaultRamLimit: ""
 
 global:
-  multiuser: false
-  #  This value can be passed if custom Oidc provider is used, and there is no need to deploy keycloak in multiuser mode
+  #  This value can be passed if custom Oidc provider is used, and there is no need to deploy keycloak
   #  default (if empty) is true
   #cheDedicatedKeycloak: false
   ingressDomain: 192.168.99.100.nip.io

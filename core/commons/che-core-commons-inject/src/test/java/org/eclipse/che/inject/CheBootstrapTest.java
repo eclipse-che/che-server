@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,6 +26,8 @@ import static org.testng.Assert.assertEquals;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -35,8 +37,6 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Properties;
 import javax.inject.Named;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.IoUtil;
 import org.eclipse.che.commons.lang.Pair;

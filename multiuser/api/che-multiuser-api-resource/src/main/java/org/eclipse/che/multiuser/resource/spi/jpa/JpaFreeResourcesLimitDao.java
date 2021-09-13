@@ -15,10 +15,10 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 import com.google.inject.persist.Transactional;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;

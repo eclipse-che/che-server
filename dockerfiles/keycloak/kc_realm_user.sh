@@ -66,12 +66,6 @@ cat /scripts/che-realm.json.erb | \
                                 sed -e "s@<%= scope\.lookupvar('che::che_server_url') %>@${PROTOCOL}://${CHE_HOST}@" \
                                 > /scripts/che-realm.json
 
-echo "Creating Admin user..."
-
-if [ $KEYCLOAK_USER ] && [ $KEYCLOAK_PASSWORD ]; then
-    /opt/jboss/keycloak/bin/add-user-keycloak.sh --user $KEYCLOAK_USER --password $KEYCLOAK_PASSWORD
-fi
-
 # Handle CA certificates
 KEYSTORE_PATH=/scripts/openshift.jks
 TRUST_STORE_PASSWORD=${TRUSTPASS:-openshift}
@@ -96,10 +90,6 @@ if [ -f "$KEYSTORE_PATH" ]; then
     /opt/jboss/keycloak/bin/jboss-cli.sh --file=/scripts/cli/add_openshift_certificate.cli && rm -rf /opt/jboss/keycloak/standalone/configuration/standalone_xml_history
 fi
 
-# Patch configuration to allow to set 'keycloak.hostname.fixed.alwaysHttps'
-sed -i 's|<property name="httpsPort" value="${keycloak.hostname.fixed.httpsPort:-1}"/>|<property name="httpsPort" value="${keycloak.hostname.fixed.httpsPort:-1}"/><property name="alwaysHttps" value="${keycloak.hostname.fixed.alwaysHttps:false}"/>|g' /opt/jboss/keycloak/standalone/configuration/standalone.xml
-sed -i 's|<property name="httpsPort" value="${keycloak.hostname.fixed.httpsPort:-1}"/>|<property name="httpsPort" value="${keycloak.hostname.fixed.httpsPort:-1}"/><property name="alwaysHttps" value="${keycloak.hostname.fixed.alwaysHttps:false}"/>|g' /opt/jboss/keycloak/standalone/configuration/standalone-ha.xml
-
 # POSTGRES_PORT is assigned by Kubernetes controller
 # and it isn't fit to docker-entrypoin.sh.
 unset POSTGRES_PORT
@@ -112,8 +102,4 @@ SYS_PROPS="-Dkeycloak.migration.action=import \
     -Dkeycloak.migration.dir=/scripts/ \
     -Djboss.bind.address=0.0.0.0"
 
-if [ $KEYCLOAK_HOSTNAME ] && [ $PROTOCOL == "https" ]; then
-  SYS_PROPS+=" -Dkeycloak.hostname.fixed.alwaysHttps=true"
-fi
-
-exec /opt/jboss/docker-entrypoint.sh $SYS_PROPS
+exec /opt/jboss/tools/docker-entrypoint.sh $SYS_PROPS

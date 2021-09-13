@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.core.util;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 import org.slf4j.Logger;

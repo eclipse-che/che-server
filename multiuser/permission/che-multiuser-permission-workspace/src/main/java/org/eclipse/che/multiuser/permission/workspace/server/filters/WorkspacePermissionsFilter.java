@@ -19,10 +19,10 @@ import static org.eclipse.che.multiuser.permission.workspace.server.WorkspaceDom
 import static org.eclipse.che.multiuser.permission.workspace.server.WorkspaceDomain.READ;
 import static org.eclipse.che.multiuser.permission.workspace.server.WorkspaceDomain.RUN;
 
+import jakarta.ws.rs.Path;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.ws.rs.Path;
 import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.api.core.ForbiddenException;

@@ -110,8 +110,8 @@ export class KeycloakLoader {
                     onLoad: 'login-required',
                     checkLoginIframe: false,
                     useNonce: useNonce,
-                    scope: 'email profile',
-                    redirectUri: keycloakSettings['che.keycloak.redirect_url.ide']
+                    scope: 'openid',
+                    redirectUri: decodeURIComponent(location.href)
                 })
                 .success(() => {
                     resolve(keycloak);

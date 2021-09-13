@@ -15,12 +15,12 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 
 import com.google.inject.persist.Transactional;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;

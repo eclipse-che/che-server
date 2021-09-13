@@ -11,18 +11,18 @@
  */
 package org.eclipse.che.api.core.rest;
 
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
 import org.eclipse.che.api.core.AuthenticationException;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * javax.ws.rs.ext.ExceptionMapper for AuthenticationException
+ * jakarta.ws.rs.ext.ExceptionMapper for AuthenticationException
  *
  * @author Alexander Garagatyi
  */

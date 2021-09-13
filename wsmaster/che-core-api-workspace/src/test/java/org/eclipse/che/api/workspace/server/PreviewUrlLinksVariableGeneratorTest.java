@@ -14,13 +14,13 @@ package org.eclipse.che.api.workspace.server;
 import static java.util.Collections.singletonList;
 import static org.testng.Assert.*;
 
+import jakarta.ws.rs.core.UriBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.core.UriBuilder;
 import org.eclipse.che.api.core.model.workspace.config.Command;
 import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeImpl;

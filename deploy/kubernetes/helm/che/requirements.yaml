@@ -23,11 +23,10 @@ dependencies:
   - name: che-postgres
     repository: file://./custom-charts/che-postgres/
     version: 1.0.0
-    condition: global.multiuser
   - name: che-keycloak
     repository: file://./custom-charts/che-keycloak/
     version: 1.0.0
-    condition: global.cheDedicatedKeycloak,global.multiuser
+    condition: global.cheDedicatedKeycloak
   - name: che-jaeger
     repository: file://./custom-charts/che-jaeger
     version: 1.0.0

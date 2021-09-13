@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.api.authentication.commons.token;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Try to extract token from request in 3 steps. 1. From query parameter. 2. From header. 3. From

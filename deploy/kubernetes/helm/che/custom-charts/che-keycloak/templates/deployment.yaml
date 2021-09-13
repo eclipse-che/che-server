@@ -74,8 +74,13 @@ spec:
         - name: CHE_HOST
           value: {{ template "cheHost" . }}
 {{- if .Values.global.useInternalClusterSVCNames }}
-        - name: KEYCLOAK_HOSTNAME
-          value: {{ template "keycloakHost" . }}
+        {{- if .Values.global.tls.enabled }}
+        - name: KEYCLOAK_FRONTEND_URL
+          value: https://{{ template "keycloakHost" . }}/auth
+        {{- else }}
+        - name: KEYCLOAK_FRONTEND_URL
+          value: http://{{ template "keycloakHost" . }}/auth
+        {{- end }}
 {{- end }}
         - name: ROUTING_SUFFIX
           value: {{ .Values.global.ingressDomain }}

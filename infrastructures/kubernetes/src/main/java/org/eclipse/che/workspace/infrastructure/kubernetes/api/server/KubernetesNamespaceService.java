@@ -27,12 +27,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.KubernetesNamespaceMetaDto;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceProvisioner;
 
 /** @author Sergii Leshchenko */
 @Api(
@@ -43,10 +42,13 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 public class KubernetesNamespaceService extends Service {
 
   private final KubernetesNamespaceFactory namespaceFactory;
+  private final NamespaceProvisioner namespaceProvisioner;
 
   @Inject
-  public KubernetesNamespaceService(KubernetesNamespaceFactory namespaceFactory) {
+  public KubernetesNamespaceService(
+      KubernetesNamespaceFactory namespaceFactory, NamespaceProvisioner namespaceProvisioner) {
     this.namespaceFactory = namespaceFactory;
+    this.namespaceProvisioner = namespaceProvisioner;
   }
 
   @GET
@@ -82,9 +84,7 @@ public class KubernetesNamespaceService extends Service {
         message = "Internal server error occurred during namespace provisioning")
   })
   public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
-    return asDto(
-        namespaceFactory.provision(
-            new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject())));
+    return asDto(namespaceProvisioner.provision());
   }
 
   private KubernetesNamespaceMetaDto asDto(KubernetesNamespaceMeta kubernetesNamespaceMeta) {

@@ -13,11 +13,11 @@ package org.eclipse.che.api.core.websocket.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import jakarta.websocket.Session;
 import java.io.IOException;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.websocket.Session;
 import org.eclipse.che.api.core.websocket.commons.WebSocketMessageTransmitter;
 import org.slf4j.Logger;
 

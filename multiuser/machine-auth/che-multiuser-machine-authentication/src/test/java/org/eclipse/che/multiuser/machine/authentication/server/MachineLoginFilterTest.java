@@ -27,14 +27,14 @@ import static org.mockito.Mockito.when;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.DefaultClaims;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
@@ -60,7 +60,7 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class MachineLoginFilterTest {
 
-  private static final int KEY_SIZE = 1024;
+  private static final int KEY_SIZE = 2048;
 
   private static final String REQUEST_SCHEME = "https";
   private static final String SIGNATURE_ALGORITHM = "RSA";

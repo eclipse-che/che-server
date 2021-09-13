@@ -11,12 +11,12 @@
  */
 package org.eclipse.che.api.devfile.server;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
+import jakarta.ws.rs.HttpMethod;
 import javax.inject.Singleton;
-import javax.ws.rs.HttpMethod;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.devfile.shared.Constants;

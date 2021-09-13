@@ -12,10 +12,10 @@
 package org.eclipse.che.api.workspace.server;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.workspace.server.DtoConverter.asDto;
 import static org.eclipse.che.api.workspace.server.WorkspaceKeyValidator.validateKey;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_DEVWORKSPACES_ENABLED_PROPERTY;
@@ -35,32 +35,33 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Maps;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Example;
-import io.swagger.annotations.ExampleProperty;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
@@ -97,7 +98,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  * @author Yevhenii Voevodin
  * @author Igor Vinokur
  */
-@Api(value = "/workspace", description = "Workspace REST API")
+@Tag(name = "workspace", description = "Workspace REST API")
 @Path("/workspace")
 public class WorkspaceService extends Service {
 
@@ -160,40 +161,45 @@ public class WorkspaceService extends Service {
   @POST
   @Consumes({APPLICATION_JSON, "text/yaml", "text/x-yaml"})
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Creates a new workspace based on the Devfile.",
-      consumes = "application/json, text/yaml, text/x-yaml",
-      produces = APPLICATION_JSON,
-      nickname = "createFromDevfile",
-      response = WorkspaceDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 201, message = "The workspace successfully created"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 403, message = "The user does not have access to create a new workspace"),
-    @ApiResponse(
-        code = 409,
-        message =
-            "Conflict error occurred during the workspace creation"
-                + "(e.g. The workspace with such name already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary = "Creates a new workspace based on the Devfile.",
+      responses = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "The workspace successfully created",
+            content = @Content(schema = @Schema(implementation = WorkspaceDto.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(
+            responseCode = "403",
+            description = "The user does not have access to create a new workspace"),
+        @ApiResponse(
+            responseCode = "409",
+            description =
+                "Conflict error occurred during the workspace creation"
+                    + "(e.g. The workspace with such name already exists)"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public Response create(
-      @ApiParam(value = "The devfile of the workspace to create", required = true)
+      @Parameter(description = "The devfile of the workspace to create", required = true)
           DevfileDto devfile,
-      @ApiParam(
-              value =
+      @Parameter(
+              description =
                   "Workspace attribute defined in 'attrName:attrValue' format. "
                       + "The first ':' is considered as attribute name and value separator",
-              examples = @Example({@ExampleProperty("attrName:value-with:colon")}))
+              examples = @ExampleObject(value = "attrName:value-with:colon"))
           @QueryParam("attribute")
           List<String> attrsList,
-      @ApiParam(
-              "If true then the workspace will be immediately "
-                  + "started after it is successfully created")
+      @Parameter(
+              description =
+                  "If true then the workspace will be immediately "
+                      + "started after it is successfully created")
           @QueryParam("start-after-create")
           @DefaultValue("false")
           Boolean startAfterCreate,
-      @ApiParam("Che namespace where workspace should be created") @QueryParam("namespace")
+      @Parameter(description = "Che namespace where workspace should be created")
+          @QueryParam("namespace")
           String namespace,
       @HeaderParam(CONTENT_TYPE) MediaType contentType)
       throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
@@ -228,30 +234,32 @@ public class WorkspaceService extends Service {
   @GET
   @Path("/{key:.*}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get the workspace by the composite key",
-      notes =
-          "Composite key can be just workspace ID or in the "
+  @Operation(
+      summary =
+          "Get the workspace by the composite key. Composite key can be just workspace ID or in the "
               + "namespace:workspace_name form, where namespace is optional (e.g :workspace_name is valid key too."
-              + "namespace/workspace_name form, where namespace can contain '/' character.")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The response contains requested workspace entity"),
-    @ApiResponse(code = 404, message = "The workspace with specified id does not exist"),
-    @ApiResponse(code = 403, message = "The user is not workspace owner"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+              + "namespace/workspace_name form, where namespace can contain '/' character.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The response contains requested workspace entity"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "The workspace with specified id does not exist"),
+        @ApiResponse(responseCode = "403", description = "The user is not workspace owner"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public WorkspaceDto getByKey(
-      @ApiParam(
-              value = "Composite key",
-              examples =
-                  @Example({
-                    @ExampleProperty("workspace12345678"),
-                    @ExampleProperty("namespace/workspace_name"),
-                    @ExampleProperty("namespace_part_1/namespace_part_2/workspace_name")
-                  }))
+      @Parameter(
+              description = "Composite key",
+              examples = {
+                @ExampleObject(name = "workspace12345678"),
+                @ExampleObject(name = "namespace/workspace_name"),
+                @ExampleObject(name = "namespace_part_1/namespace_part_2/workspace_name")
+              })
           @PathParam("key")
           String key,
-      @ApiParam("Whether to include internal servers into runtime or not")
+      @Parameter(description = "Whether to include internal servers into runtime or not")
           @DefaultValue("false")
           @QueryParam("includeInternalServers")
           String includeInternalServers)
@@ -265,23 +273,30 @@ public class WorkspaceService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get workspaces which user can read",
-      notes = "This operation can be performed only by authorized user",
-      response = WorkspaceDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The workspaces successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred during workspaces fetching")
-  })
+  @Operation(
+      summary =
+          "Get workspaces which user can read. This operation can be performed only by authorized user",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The workspaces successfully fetched",
+            content =
+                @Content(
+                    array = @ArraySchema(schema = @Schema(implementation = WorkspaceDto.class)))),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error occurred during workspaces fetching")
+      })
   public Response getWorkspaces(
-      @ApiParam("The number of the items to skip") @DefaultValue("0") @QueryParam("skipCount")
+      @Parameter(description = "The number of the items to skip")
+          @DefaultValue("0")
+          @QueryParam("skipCount")
           Integer skipCount,
-      @ApiParam("The limit of the items in the response, default is 30")
+      @Parameter(description = "The limit of the items in the response, default is 30")
           @DefaultValue("30")
           @QueryParam("maxItems")
           Integer maxItems,
-      @ApiParam("Workspace status") @QueryParam("status") String status)
+      @Parameter(description = "Workspace status") @QueryParam("status") String status)
       throws ServerException, BadRequestException {
     Page<WorkspaceImpl> workspacesPage =
         workspaceManager.getWorkspaces(
@@ -301,18 +316,23 @@ public class WorkspaceService extends Service {
   @GET
   @Path("/namespace/{namespace:.*}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get workspaces by given namespace",
-      notes = "This operation can be performed only by authorized user",
-      response = WorkspaceDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The workspaces successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred during workspaces fetching")
-  })
+  @Operation(
+      summary =
+          "Get workspaces by given namespace. This operation can be performed only by authorized user",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The workspaces successfully fetched",
+            content =
+                @Content(
+                    array = @ArraySchema(schema = @Schema(implementation = WorkspaceDto.class)))),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error occurred during workspaces fetching")
+      })
   public List<WorkspaceDto> getByNamespace(
-      @ApiParam("Workspace status") @QueryParam("status") String status,
-      @ApiParam("The namespace") @PathParam("namespace") String namespace)
+      @Parameter(description = "Workspace status") @QueryParam("status") String status,
+      @Parameter(description = "The namespace") @PathParam("namespace") String namespace)
       throws ServerException, BadRequestException {
     return asDtosWithLinks(
         Pages.stream(
@@ -326,23 +346,27 @@ public class WorkspaceService extends Service {
   @Path("/{id}")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Update the workspace by replacing all the existing data with update",
-      notes = "This operation can be performed only by the workspace owner")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The workspace successfully updated"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 403, message = "The user does not have access to update the workspace"),
-    @ApiResponse(
-        code = 409,
-        message =
-            "Conflict error occurred during workspace update"
-                + "(e.g. Workspace with such name already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary =
+          "Update the workspace by replacing all the existing data with update. This operation can be performed only by the workspace owner",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The workspace successfully updated"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(
+            responseCode = "403",
+            description = "The user does not have access to update the workspace"),
+        @ApiResponse(
+            responseCode = "409",
+            description =
+                "Conflict error occurred during workspace update"
+                    + "(e.g. Workspace with such name already exists)"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public WorkspaceDto update(
-      @ApiParam("The workspace id") @PathParam("id") String id,
-      @ApiParam(value = "The workspace update", required = true) WorkspaceDto update)
+      @Parameter(description = "The workspace id") @PathParam("id") String id,
+      @Parameter(description = "The workspace update", required = true) WorkspaceDto update)
       throws BadRequestException, ServerException, ForbiddenException, NotFoundException,
           ConflictException {
     checkArgument(
@@ -354,17 +378,21 @@ public class WorkspaceService extends Service {
 
   @DELETE
   @Path("/{id}")
-  @ApiOperation(
-      value = "Removes the workspace",
-      notes = "This operation can be performed only by the workspace owner")
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The workspace successfully removed"),
-    @ApiResponse(code = 403, message = "The user does not have access to remove the workspace"),
-    @ApiResponse(code = 404, message = "The workspace doesn't exist"),
-    @ApiResponse(code = 409, message = "The workspace is not stopped(has runtime)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
-  public void delete(@ApiParam("The workspace id") @PathParam("id") String id)
+  @Operation(
+      summary =
+          "Removes the workspace. This operation can be performed only by the workspace owner",
+      responses = {
+        @ApiResponse(responseCode = "204", description = "The workspace successfully removed"),
+        @ApiResponse(
+            responseCode = "403",
+            description = "The user does not have access to remove the workspace"),
+        @ApiResponse(responseCode = "404", description = "The workspace doesn't exist"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "The workspace is not stopped(has runtime)"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
+  public void delete(@Parameter(description = "The workspace id") @PathParam("id") String id)
       throws BadRequestException, ServerException, NotFoundException, ConflictException,
           ForbiddenException {
     workspaceManager.removeWorkspace(id);
@@ -373,23 +401,28 @@ public class WorkspaceService extends Service {
   @POST
   @Path("/{id}/runtime")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Start the workspace by the id",
-      notes =
-          "This operation can be performed only by the workspace owner."
-              + "The workspace starts asynchronously")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The workspace is starting"),
-    @ApiResponse(code = 404, message = "The workspace with specified id doesn't exist"),
-    @ApiResponse(
-        code = 403,
-        message = "The user is not workspace owner." + "The operation is not allowed for the user"),
-    @ApiResponse(code = 409, message = "Any conflict occurs during the workspace start"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary =
+          "Start the workspace by the id. This operation can be performed only by the workspace owner."
+              + "The workspace starts asynchronously",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The workspace is starting"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "The workspace with specified id doesn't exist"),
+        @ApiResponse(
+            responseCode = "403",
+            description =
+                "The user is not workspace owner." + "The operation is not allowed for the user"),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Any conflict occurs during the workspace start"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public WorkspaceDto startById(
-      @ApiParam("The workspace id") @PathParam("id") String workspaceId,
-      @ApiParam("The name of the workspace environment that should be used for start")
+      @Parameter(description = "The workspace id") @PathParam("id") String workspaceId,
+      @Parameter(
+              description = "The name of the workspace environment that should be used for start")
           @QueryParam("environment")
           String envName,
       @QueryParam(DEBUG_WORKSPACE_START) @DefaultValue("false") Boolean debugWorkspaceStart)
@@ -407,18 +440,19 @@ public class WorkspaceService extends Service {
 
   @DELETE
   @Path("/{id}/runtime")
-  @ApiOperation(
-      value = "Stop the workspace",
-      notes =
-          "This operation can be performed only by the workspace owner."
-              + "The workspace stops asynchronously")
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The workspace is stopping"),
-    @ApiResponse(code = 404, message = "The workspace with specified id doesn't exist"),
-    @ApiResponse(code = 403, message = "The user is not workspace owner"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
-  public void stop(@ApiParam("The workspace id") @PathParam("id") String id)
+  @Operation(
+      summary =
+          "Stop the workspace. This operation can be performed only by the workspace owner."
+              + "The workspace stops asynchronously",
+      responses = {
+        @ApiResponse(responseCode = "204", description = "The workspace is stopping"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "The workspace with specified id doesn't exist"),
+        @ApiResponse(responseCode = "403", description = "The user is not workspace owner"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
+  public void stop(@Parameter(description = "The workspace id") @PathParam("id") String id)
       throws ForbiddenException, NotFoundException, ServerException, ConflictException {
     workspaceManager.stopWorkspace(id, emptyMap());
   }
@@ -426,8 +460,11 @@ public class WorkspaceService extends Service {
   @GET
   @Path("/settings")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Get workspace server configuration values")
-  @ApiResponses({@ApiResponse(code = 200, message = "The response contains server settings")})
+  @Operation(
+      summary = "Get workspace server configuration values",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The response contains server settings")
+      })
   public Map<String, String> getSettings() {
     Builder<String, String> settings = ImmutableMap.builder();
 

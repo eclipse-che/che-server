@@ -11,15 +11,15 @@
  */
 package org.eclipse.che.multiuser.api.authentication.commons;
 
+import jakarta.servlet.http.HttpSession;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpSession;
 
 /**
  * Thread safe {@link HttpSession} storage based on {@link ConcurrentHashMap}. Sessions are stored
  * per user Id, and should be externally aligned with catalina session manager using {@link
- * javax.servlet.http.HttpSessionListener} etc.
+ * jakarta.servlet.http.HttpSessionListener} etc.
  */
 @Singleton
 public class SessionStore {

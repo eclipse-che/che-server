@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.organization.api.resource;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -75,9 +75,10 @@ public class OrganizationResourcesDistributionServiceTest {
         .contentType("application/json")
         .body(resources)
         .when()
-        .expect()
-        .statusCode(204)
-        .post(SECURE_PATH + "/organization/resource/organization123/cap");
+        .post(SECURE_PATH + "/organization/resource/organization123/cap")
+        .then()
+        .assertThat()
+        .statusCode(204);
 
     verify(organizationResourcesManager).capResources("organization123", resources);
     verify(resourceValidator).validate(resource);
@@ -92,20 +93,19 @@ public class OrganizationResourcesDistributionServiceTest {
             DtoFactory.newDto(ResourceDto.class).withType("test"),
             DtoFactory.newDto(ResourceDto.class).withType("test"));
 
-    String response =
+    Response response =
         given()
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .body(resources)
             .when()
-            .expect()
-            .statusCode(400)
-            .post(SECURE_PATH + "/organization/resource/organization123/cap")
-            .print();
-
+            .post(SECURE_PATH + "/organization/resource/organization123/cap");
+    assertEquals(response.statusCode(), 400);
     String errorMessage =
-        DtoFactory.getInstance().createDtoFromJson(response, ServiceError.class).getMessage();
+        DtoFactory.getInstance()
+            .createDtoFromJson(response.print(), ServiceError.class)
+            .getMessage();
     assertEquals(errorMessage, "Resources to cap must contain only one resource with type 'test'.");
   }
 
@@ -122,10 +122,9 @@ public class OrganizationResourcesDistributionServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/organization/resource/organization123/cap");
 
+    assertEquals(response.statusCode(), 200);
     final List<ResourceDto> fetched = unwrapDtoList(response, ResourceDto.class);
     assertEquals(fetched.size(), 1);
     assertTrue(fetched.contains(resourcesCap));
@@ -147,10 +146,8 @@ public class OrganizationResourcesDistributionServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/organization/resource/organization123?maxItems=1&skipCount=1");
-
+    assertEquals(response.statusCode(), 200);
     final List<OrganizationDistributedResourcesDto> fetched =
         unwrapDtoList(response, OrganizationDistributedResourcesDto.class);
     assertEquals(fetched.size(), 1);

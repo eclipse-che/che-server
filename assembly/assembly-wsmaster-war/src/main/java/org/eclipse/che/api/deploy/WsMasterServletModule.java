@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.deploy;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.servlet.ServletModule;
 import org.eclipse.che.api.core.cors.CheCorsFilter;
 import org.eclipse.che.commons.logback.filter.RequestIdLoggerFilter;
@@ -42,8 +43,8 @@ public class WsMasterServletModule extends ServletModule {
     filter("/*").through(RequestIdLoggerFilter.class);
 
     // Matching group SHOULD contain forward slash.
-    serveRegex("^(?!/websocket.?)(.*)").with(GuiceEverrestServlet.class);
-    install(new org.eclipse.che.swagger.deploy.BasicSwaggerConfigurationModule());
+    serveRegex("^(?!/websocket.?)(.*)")
+        .with(GuiceEverrestServlet.class, ImmutableMap.of("openapi.context.id", "org.eclipse.che"));
 
     if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
       LOG.info("Running in native-user mode ...");

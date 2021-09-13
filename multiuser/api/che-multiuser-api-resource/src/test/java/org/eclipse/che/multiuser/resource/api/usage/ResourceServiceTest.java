@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.resource.api.usage;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
@@ -165,10 +165,9 @@ public class ResourceServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/resource/account123/details");
 
+    assertEquals(response.statusCode(), 200);
     final ResourcesDetailsDto resourceDetailsDto =
         DtoFactory.getInstance()
             .createDtoFromJson(response.body().print(), ResourcesDetailsDto.class);

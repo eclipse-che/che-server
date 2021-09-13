@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.permission.user;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.lang.reflect.Method;
 import java.util.stream.Stream;
 import org.eclipse.che.api.core.ServerException;

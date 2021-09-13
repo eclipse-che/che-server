@@ -17,10 +17,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import jakarta.validation.constraints.NotNull;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.validation.constraints.NotNull;
 
 /** A {@link ThreadFactory} that monitors the number of threads created, running and terminated. */
 public class CountedThreadFactory implements ThreadFactory {

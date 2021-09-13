@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.workspace.server;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
@@ -51,7 +51,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -436,7 +436,7 @@ public class WorkspaceServiceTest {
         given()
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .queryParameter("includeInternalServers", Boolean.TRUE.toString())
+            .queryParam("includeInternalServers", Boolean.TRUE.toString())
             .when()
             .get(SECURE_PATH + "/workspace/" + workspace.getId());
 
@@ -488,7 +488,7 @@ public class WorkspaceServiceTest {
         given()
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .queryParameter("includeInternalServers", "")
+            .queryParam("includeInternalServers", "")
             .when()
             .get(SECURE_PATH + "/workspace/" + workspace.getId());
 
@@ -540,7 +540,7 @@ public class WorkspaceServiceTest {
         given()
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .queryParameter("includeInternalServers")
+            .queryParam("includeInternalServers")
             .when()
             .get(SECURE_PATH + "/workspace/" + workspace.getId());
 

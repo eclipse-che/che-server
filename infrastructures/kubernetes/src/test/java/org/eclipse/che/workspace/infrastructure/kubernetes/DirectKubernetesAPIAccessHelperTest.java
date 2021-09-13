@@ -16,12 +16,12 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedHashMap;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedHashMap;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -105,7 +105,7 @@ public class DirectKubernetesAPIAccessHelperTest {
     setupResponse(new Response.Builder().code(200));
 
     // when
-    javax.ws.rs.core.Response response =
+    jakarta.ws.rs.core.Response response =
         DirectKubernetesAPIAccessHelper.call(
             "https://master/",
             client,
@@ -131,7 +131,7 @@ public class DirectKubernetesAPIAccessHelperTest {
     setupResponse(new Response.Builder().code(200));
 
     // when
-    javax.ws.rs.core.Response response =
+    jakarta.ws.rs.core.Response response =
         DirectKubernetesAPIAccessHelper.call(
             "https://master/",
             client,
@@ -159,7 +159,7 @@ public class DirectKubernetesAPIAccessHelperTest {
             new MultivaluedHashMap<>(
                 ImmutableMap.of("Content-Type", "text/plain;charset=utf-16be")));
     when(headers.getMediaType())
-        .thenReturn(javax.ws.rs.core.MediaType.valueOf("text/plain;charset=utf-16be"));
+        .thenReturn(jakarta.ws.rs.core.MediaType.valueOf("text/plain;charset=utf-16be"));
 
     setupResponse(new Response.Builder().code(200));
 
@@ -194,7 +194,7 @@ public class DirectKubernetesAPIAccessHelperTest {
     setupResponse(new Response.Builder().code(200).header("header", "value"));
 
     // when
-    javax.ws.rs.core.Response response =
+    jakarta.ws.rs.core.Response response =
         DirectKubernetesAPIAccessHelper.call(
             "https://master/",
             client,
@@ -216,7 +216,7 @@ public class DirectKubernetesAPIAccessHelperTest {
             .body(ResponseBody.create(MediaType.get("application/json"), "true")));
 
     // when
-    javax.ws.rs.core.Response response =
+    jakarta.ws.rs.core.Response response =
         DirectKubernetesAPIAccessHelper.call(
             "https://master/",
             client,
@@ -228,7 +228,7 @@ public class DirectKubernetesAPIAccessHelperTest {
     // then
     assertEquals(
         response.getMediaType(),
-        javax.ws.rs.core.MediaType.valueOf("application/json; charset=utf-8"));
+        jakarta.ws.rs.core.MediaType.valueOf("application/json; charset=utf-8"));
     assertEquals(IoUtil.readAndCloseQuietly((InputStream) response.getEntity()), "true");
   }
 
@@ -237,7 +237,7 @@ public class DirectKubernetesAPIAccessHelperTest {
     setupResponse(new Response.Builder().code(200));
 
     // when
-    javax.ws.rs.core.Response response =
+    jakarta.ws.rs.core.Response response =
         DirectKubernetesAPIAccessHelper.call(
             "https://master/", client, "GET", URI.create("somewhere/over/the/rainbow"), null, null);
 

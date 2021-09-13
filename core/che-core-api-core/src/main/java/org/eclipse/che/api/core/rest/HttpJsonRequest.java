@@ -12,12 +12,12 @@
 package org.eclipse.che.api.core.rest;
 
 import com.google.common.annotations.Beta;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.HttpMethod;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.HttpMethod;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
@@ -64,7 +64,7 @@ import org.eclipse.che.dto.server.JsonSerializable;
 public interface HttpJsonRequest {
 
   /**
-   * Sets http method to use in this request(e.g. {@link javax.ws.rs.HttpMethod#GET GET}).
+   * Sets http method to use in this request(e.g. {@link jakarta.ws.rs.HttpMethod#GET GET}).
    *
    * @param method http method
    * @return this request instance

@@ -14,23 +14,23 @@ package org.eclipse.che.api.infraproxy.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.OPTIONS;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.OPTIONS;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.rest.Service;
@@ -43,7 +43,7 @@ import org.eclipse.che.commons.annotation.Nullable;
  * is only allowed when we can properly impersonate the user - e.g. on OpenShift with OpenShift
  * OAuth switched on.
  */
-@Api(InfrastructureApiService.PATH_PREFIX)
+@Hidden
 @Beta
 @Path(InfrastructureApiService.PATH_PREFIX)
 public class InfrastructureApiService extends Service {

@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.KubernetesNamespaceMetaDto;
@@ -89,7 +91,9 @@ public class KubernetesNamespaceService extends Service {
             description = "Internal server error occurred during namespace provisioning")
       })
   public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
-    return asDto(namespaceProvisioner.provision());
+    return asDto(
+        namespaceProvisioner.provision(
+            new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject())));
   }
 
   private KubernetesNamespaceMetaDto asDto(KubernetesNamespaceMeta kubernetesNamespaceMeta) {

@@ -30,8 +30,6 @@ import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.slf4j.Logger;
@@ -56,14 +54,13 @@ public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEv
     this.preferenceManager = preferenceManager;
   }
 
-  public KubernetesNamespaceMeta provision() throws InfrastructureException {
+  public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
+      throws InfrastructureException {
 
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
     KubernetesNamespaceMeta kubernetesNamespaceMeta =
-        namespaceFactory.provision(new NamespaceResolutionContext(subject));
-
+        namespaceFactory.provision(namespaceResolutionContext);
     try {
-      createOrUpdateSecrets(userManager.getById(subject.getUserId()));
+      createOrUpdateSecrets(userManager.getById(namespaceResolutionContext.getUserId()));
     } catch (NotFoundException | ServerException e) {
       LOG.error("Could not find current user. Skipping creation of user information secrets.", e);
     } catch (InfrastructureException e) {

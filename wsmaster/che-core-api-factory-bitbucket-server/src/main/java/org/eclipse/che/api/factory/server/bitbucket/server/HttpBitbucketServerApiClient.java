@@ -132,6 +132,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketUser getUser(String slug)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    assertAuthenticatorNonNull();
     URI uri = serverUri.resolve("/rest/api/1.0/users/" + slug);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
@@ -179,6 +180,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public void deletePersonalAccessTokens(String userSlug, Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    assertAuthenticatorNonNull();
+
     URI uri = serverUri.resolve("/rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
@@ -214,6 +217,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   public BitbucketPersonalAccessToken createPersonalAccessTokens(
       String userSlug, String tokenName, Set<String> permissions)
       throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException {
+    assertAuthenticatorNonNull();
+
     URI uri = serverUri.resolve("/rest/access-tokens/1.0/users/" + userSlug);
 
     try {
@@ -262,6 +267,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketPersonalAccessToken getPersonalAccessToken(String userSlug, Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    assertAuthenticatorNonNull();
 
     URI uri = serverUri.resolve("/rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
     HttpRequest request =
@@ -325,9 +331,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   private <T> List<T> doGetItems(Class<T> tClass, String api, String filter)
       throws ScmUnauthorizedException, ScmCommunicationException, ScmBadRequestException,
           ScmItemNotFoundException {
-    List<T> result = new ArrayList<>();
     Page<T> currentPage = doGetPage(tClass, api, 0, 25, filter);
-    result.addAll(currentPage.getValues());
+    List<T> result = new ArrayList<>(currentPage.getValues());
     while (!currentPage.isLastPage()) {
       currentPage = doGetPage(tClass, api, currentPage.getNextPageStart(), 25, filter);
       result.addAll(currentPage.getValues());
@@ -419,5 +424,12 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
         authenticator.getOAuthProvider(),
         "1.0",
         authenticator.getLocalAuthenticateUrl());
+  }
+
+  private void assertAuthenticatorNonNull() throws ScmCommunicationException {
+    if (authenticator == null) {
+      throw new ScmCommunicationException(
+          "OAuth authentication is not configured for Bitbucket SCM provider.");
+    }
   }
 }

@@ -57,7 +57,6 @@ public class HttpBitbucketServerApiClientTest {
   WireMockServer wireMockServer;
   WireMock wireMock;
   BitbucketServerApiClient bitbucketServer;
-  BitbucketServerOAuthAuthenticator authenticator;
 
   @BeforeMethod
   void start() {
@@ -275,5 +274,19 @@ public class HttpBitbucketServerApiClientTest {
 
     // when
     bitbucketServer.getPersonalAccessToken("ksmster", 5L);
+  }
+
+  @Test(
+      expectedExceptions = ScmCommunicationException.class,
+      expectedExceptionsMessageRegExp =
+          "OAuth authentication is not configured for Bitbucket SCM provider.")
+  public void shouldThrowScmCommunicationExceptionInNoOauthAuthenticator()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+
+    HttpBitbucketServerApiClient localServer =
+        new HttpBitbucketServerApiClient(wireMockServer.url("/"), null);
+
+    // when
+    localServer.getPersonalAccessToken("ksmster", 5L);
   }
 }

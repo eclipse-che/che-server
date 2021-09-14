@@ -136,6 +136,11 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException {
     OAuthToken oAuthToken;
+
+    if (githubApiClient == null || !githubApiClient.isConnected(scmServerUrl)) {
+      LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
+      return null;
+    }
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
       // Find the user associated to the OAuth token by querying the GitHub API.

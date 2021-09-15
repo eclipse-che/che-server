@@ -84,7 +84,7 @@ public class BitbucketServerApiClientProviderTest {
     assertTrue(NoopBitbucketServerApiClient.class.isAssignableFrom(actual.getClass()));
   }
 
-  @Test(dataProvider = "httpConfig")
+  @Test(dataProvider = "httpOnlyConfig")
   public void shouldProvideHttpAuthenticatorIfOauthConfigurationIsNotSet(
       @Nullable String bitbucketEndpoints,
       @Nullable String bitbucketOauth1Endpoint,
@@ -148,9 +148,10 @@ public class BitbucketServerApiClientProviderTest {
     };
   }
 
-  @DataProvider(name = "httpConfig")
-  public Object[][] httpConfig() {
+  @DataProvider(name = "httpOnlyConfig")
+  public Object[][] httpOnlyConfig() {
     return new Object[][] {
+      {"https://bitbucket.server.com", null, null},
       {"https://bitbucket.server.com, https://bitbucket2.server.com", null, null},
       {
         "https://bitbucket.server.com, https://bitbucket2.server.com",

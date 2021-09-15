@@ -62,16 +62,12 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
       throw new ConfigurationException(
           "`che.integration.bitbucket.server_endpoints` bitbucket configuration is missing."
               + " It should contain values from 'che.oauth1.bitbucket.endpoint'");
-    } else if (!isNullOrEmpty(bitbucketOauth1Endpoint) && !isNullOrEmpty(rawBitbucketEndpoints)) {
-      // sanitise URL-s first
+    } else if (isNullOrEmpty(bitbucketOauth1Endpoint) && !isNullOrEmpty(rawBitbucketEndpoints)) {
+      return new HttpBitbucketServerApiClient(
+          sanitizedEndpoints(rawBitbucketEndpoints).get(0), new NoopOAuthAuthenticator());
+    } else {
       bitbucketOauth1Endpoint = StringUtils.trimEnd(bitbucketOauth1Endpoint, '/');
-      List<String> bitbucketEndpoints =
-          Splitter.on(",")
-              .splitToList(rawBitbucketEndpoints)
-              .stream()
-              .map(s -> StringUtils.trimEnd(s, '/'))
-              .collect(Collectors.toList());
-      if (!bitbucketEndpoints.contains(bitbucketOauth1Endpoint)) {
+      if (!sanitizedEndpoints(rawBitbucketEndpoints).contains(bitbucketOauth1Endpoint)) {
         throw new ConfigurationException(
             "`che.integration.bitbucket.server_endpoints` must contain `"
                 + bitbucketOauth1Endpoint
@@ -92,10 +88,14 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
         }
         return new HttpBitbucketServerApiClient(bitbucketOauth1Endpoint, authenticator.get());
       }
-    } else {
-      return new HttpBitbucketServerApiClient(
-          StringUtils.trimEnd(Splitter.on(",").splitToList(rawBitbucketEndpoints).get(0), '/'),
-          new NoopOAuthAuthenticator());
     }
+  }
+
+  private static List<String> sanitizedEndpoints(String rawBitbucketEndpoints) {
+    return Splitter.on(",")
+        .splitToList(rawBitbucketEndpoints)
+        .stream()
+        .map(s -> StringUtils.trimEnd(s, '/'))
+        .collect(Collectors.toList());
   }
 }

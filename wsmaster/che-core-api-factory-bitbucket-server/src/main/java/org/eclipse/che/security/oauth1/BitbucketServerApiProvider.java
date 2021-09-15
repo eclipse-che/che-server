@@ -90,13 +90,12 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
           throw new ConfigurationException(
               "'che.oauth1.bitbucket.endpoint' is set but BitbucketServerOAuthAuthenticator is not deployed correctly");
         }
-        return new HttpBitbucketServerApiClient(
-            bitbucketOauth1Endpoint, (BitbucketServerOAuthAuthenticator) authenticator.get());
+        return new HttpBitbucketServerApiClient(bitbucketOauth1Endpoint, authenticator.get());
       }
     } else {
       return new HttpBitbucketServerApiClient(
           StringUtils.trimEnd(Splitter.on(",").splitToList(rawBitbucketEndpoints).get(0), '/'),
-          null);
+          new NoopOAuthAuthenticator());
     }
   }
 }

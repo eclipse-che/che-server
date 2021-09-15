@@ -43,6 +43,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationExceptio
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
+import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
 import org.eclipse.che.security.oauth1.OAuthAuthenticationException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -279,12 +280,12 @@ public class HttpBitbucketServerApiClientTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "OAuth authentication is not configured for Bitbucket SCM provider.")
+          "The fallback noop authenticator cannot be used for authentication. Make sure OAuth is properly configured.")
   public void shouldThrowScmCommunicationExceptionInNoOauthAuthenticator()
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
 
     HttpBitbucketServerApiClient localServer =
-        new HttpBitbucketServerApiClient(wireMockServer.url("/"), null);
+        new HttpBitbucketServerApiClient(wireMockServer.url("/"), new NoopOAuthAuthenticator());
 
     // when
     localServer.getPersonalAccessToken("ksmster", 5L);

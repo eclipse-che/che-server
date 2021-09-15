@@ -233,7 +233,7 @@ public abstract class OAuthAuthenticator {
    *
    * @return the oauth provider name.
    */
-  abstract String getOAuthProvider();
+  public abstract String getOAuthProvider();
 
   /**
    * Returns URL to initiate authentication process using given authenticator. Typically points to

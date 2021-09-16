@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.User;
 import io.fabric8.openshift.client.OpenShiftClient;
 import jakarta.servlet.FilterChain;
@@ -77,8 +78,10 @@ public class OpenshiftTokenInitializationFilterTest {
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
     when(openshiftUserMeta.getUid()).thenReturn(USER_UID);
 
-    String userId = openshiftTokenInitializationFilter.getUserId(TOKEN);
+    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    String userId = openshiftTokenInitializationFilter.getUserId(TOKEN, u);
 
+    assertEquals(u, openshiftUser);
     assertEquals(userId, USER_UID);
     verify(openShiftClientFactory).createAuthenticatedClient(TOKEN);
     verify(openShiftClient).currentUser();
@@ -98,14 +101,15 @@ public class OpenshiftTokenInitializationFilterTest {
         .thenReturn(
             new UserImpl(KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME));
 
-    Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN);
+    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN, u);
 
     assertEquals(subject.getUserId(), KUBE_ADMIN_USERNAME);
     assertEquals(subject.getUserName(), KUBE_ADMIN_USERNAME);
   }
 
   @Test
-  public void extractSubjectCreatesSubjectWithCurretlyAuthenticatedUser()
+  public void extractSubjectCreatesSubjectWithCurrentlyAuthenticatedUser()
       throws InfrastructureException, ServerException, ConflictException {
     when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);
     when(openShiftClient.currentUser()).thenReturn(openshiftUser);
@@ -115,8 +119,10 @@ public class OpenshiftTokenInitializationFilterTest {
     when(userManager.getOrCreateUser(USER_UID, USERNAME + "@che", USERNAME))
         .thenReturn(new UserImpl(USER_UID, USERNAME + "@che", USERNAME));
 
-    Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN);
+    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN, u);
 
+    assertEquals(u, openshiftUser);
     assertEquals(subject.getUserId(), USER_UID);
     assertEquals(subject.getUserName(), USERNAME);
   }
@@ -140,5 +146,15 @@ public class OpenshiftTokenInitializationFilterTest {
         servletRequest, servletResponse, filterChain);
 
     verify(servletResponse).sendError(eq(401), anyString());
+  }
+
+  @Test
+  public void invalidTokenShouldBeHandledAsMissing() throws Exception {
+    when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);
+    when(openShiftClient.currentUser())
+        .thenThrow(new KubernetesClientException("failah", 401, null));
+
+    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    assertNull(u);
   }
 }

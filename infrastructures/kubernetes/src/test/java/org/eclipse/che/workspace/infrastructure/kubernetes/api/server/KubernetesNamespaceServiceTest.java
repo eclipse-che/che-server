@@ -35,7 +35,7 @@ import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.KubernetesNamespaceMetaDto;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceProvisioner;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.core.Filter;
 import org.everrest.core.GenericContainerRequest;

@@ -13,7 +13,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -38,7 +37,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -111,10 +109,18 @@ public class NamespaceProvisionerTest {
   }
 
   @Test
-  public void shouldCreateNoSecretOnException() throws InfrastructureException, NotFoundException, ServerException {
+  public void shouldCreateNoSecretOnException()
+      throws InfrastructureException, NotFoundException, ServerException {
     when(userManager.getById(USER_ID)).thenThrow(new ServerException("Test server exception"));
     namespaceProvisioner.provision(new NamespaceResolutionContext(null, USER_ID, USER_NAME));
-    assertTrue(kubernetesServer.getClient().secrets().inNamespace(USER_NAMESPACE).list().getItems().isEmpty());
+    assertTrue(
+        kubernetesServer
+            .getClient()
+            .secrets()
+            .inNamespace(USER_NAMESPACE)
+            .list()
+            .getItems()
+            .isEmpty());
     verifyNoInteractions(clientFactory);
   }
 

@@ -87,18 +87,17 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
           } catch (ScmUnauthorizedException | UnknownScmProviderException e) {
             throw new DevfileException(e.getMessage(), e);
           } catch (ScmCommunicationException e) {
-            throw new DevfileException(
-                e.getMessage(),
-                new ScmCommunicationException(
-                    String.format(
-                        "Failed to fetch a content from URL %s. Make sure the URL"
-                            + " is correct. For private repository, make sure authentication is configured."
-                            + " Additionally, if you're using "
-                            + " relative form, make sure the referenced file are actually stored"
-                            + " relative to the devfile on the same host,"
-                            + " or try to specify URL in absolute form. The current attempt to authenticate"
-                            + " request, failed with the following error message: %s",
-                        fileURL, e.getMessage())));
+            throw new IOException(
+                String.format(
+                    "Failed to fetch a content from URL %s. Make sure the URL"
+                        + " is correct. For private repository, make sure authentication is configured."
+                        + " Additionally, if you're using "
+                        + " relative form, make sure the referenced file are actually stored"
+                        + " relative to the devfile on the same host,"
+                        + " or try to specify URL in absolute form. The current attempt to authenticate"
+                        + " request, failed with the following error message: %s",
+                    fileURL, e.getMessage()),
+                e);
           }
         }
       }

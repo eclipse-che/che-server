@@ -22,6 +22,7 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -46,9 +47,9 @@ public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEv
   private static final String USER_PREFERENCES_SECRET_MOUNT_PATH = "/config/user/preferences";
 
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final PreferenceManager preferenceManager;
   private final KubernetesClientFactory clientFactory;
   private final UserManager userManager;
+  private final PreferenceManager preferenceManager;
 
   @Inject
   public NamespaceProvisioner(
@@ -80,24 +81,32 @@ public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEv
     createOrUpdateSecrets(event.getUser());
   }
 
+  /**
+   * Creates k8s user profile and user preferences k8s secrets. This serves as a way for
+   * DevWorkspaces to acquire information about the user.
+   *
+   * @param user from its data are the secrets created
+   */
   private void createOrUpdateSecrets(User user) {
-
     Secret userProfileSecret = prepareProfileSecret(user);
-    Secret userPreferencesSecret = preparePreferencesSecret(user);
+    Optional<Secret> userPreferencesSecret = preparePreferencesSecret(user);
 
     try {
       String namespace =
-              namespaceFactory.evaluateNamespaceName(
-                      new NamespaceResolutionContext(null, user.getId(), user.getName()));
+          namespaceFactory.evaluateNamespaceName(
+              new NamespaceResolutionContext(null, user.getId(), user.getName()));
 
       clientFactory.create().secrets().inNamespace(namespace).createOrReplace(userProfileSecret);
-      if (userPreferencesSecret != null) {
-        clientFactory.create().secrets().inNamespace(namespace).createOrReplace(userPreferencesSecret);
+      if (userPreferencesSecret.isPresent()) {
+        clientFactory
+            .create()
+            .secrets()
+            .inNamespace(namespace)
+            .createOrReplace(userPreferencesSecret.get());
       }
     } catch (InfrastructureException | KubernetesClientException e) {
       LOG.error("There was a failure while creating user information secrets.", e);
     }
-
   }
 
   private Secret prepareProfileSecret(User user) {
@@ -118,7 +127,7 @@ public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEv
         .build();
   }
 
-  private Secret preparePreferencesSecret(User user) {
+  private Optional<Secret> preparePreferencesSecret(User user) {
     Base64.Encoder enc = Base64.getEncoder();
     Map<String, String> preferences;
     try {
@@ -126,39 +135,42 @@ public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEv
     } catch (ServerException e) {
       LOG.error(
           "Could not find user preferences. Skipping creation of user preferences secrets.", e);
-      return null;
+      return Optional.empty();
     }
-    if (preferences == null || preferences.isEmpty()){
-      LOG.error(
-              "User preferences are empty. Skipping creation of user preferences secrets.");
-      return null;
+    if (preferences == null || preferences.isEmpty()) {
+      LOG.error("User preferences are empty. Skipping creation of user preferences secrets.");
+      return Optional.empty();
     }
 
     Map<String, String> preferencesEncoded = new HashMap<>();
     preferences.forEach(
         (key, value) ->
-            preferencesEncoded.put(normalizeDataKey(key), enc.encodeToString(value.getBytes())));
+            preferencesEncoded.put(
+                normalizePreferenceName(key), enc.encodeToString(value.getBytes())));
 
-    return new SecretBuilder()
-        .addToData(preferencesEncoded)
-        .withNewMetadata()
-        .withName(USER_PREFERENCES_SECRET_NAME)
-        .addToLabels(DEV_WORKSPACE_MOUNT_LABEL, "true")
-        .addToAnnotations(DEV_WORKSPACE_MOUNT_AS_ANNOTATION, "file")
-        .addToAnnotations(DEV_WORKSPACE_MOUNT_PATH_ANNOTATION, USER_PREFERENCES_SECRET_MOUNT_PATH)
-        .endMetadata()
-        .build();
+    return Optional.of(
+        new SecretBuilder()
+            .addToData(preferencesEncoded)
+            .withNewMetadata()
+            .withName(USER_PREFERENCES_SECRET_NAME)
+            .addToLabels(DEV_WORKSPACE_MOUNT_LABEL, "true")
+            .addToAnnotations(DEV_WORKSPACE_MOUNT_AS_ANNOTATION, "file")
+            .addToAnnotations(
+                DEV_WORKSPACE_MOUNT_PATH_ANNOTATION, USER_PREFERENCES_SECRET_MOUNT_PATH)
+            .endMetadata()
+            .build());
   }
 
   /**
-   * Some preferences names are not compatible with k8s restrictions on key field in secret. This
-   * method replaces illegal characters with "-" (dash).
+   * Some preferences names are not compatible with k8s restrictions on key field in secret. The
+   * keys of data must consist of alphanumeric characters, -, _ or . This method replaces illegal
+   * characters with -
    *
    * @param name original preference name
    * @return k8s compatible preference name used as a key field in Secret
    */
   @VisibleForTesting
-  String normalizeDataKey(String name) {
+  String normalizePreferenceName(String name) {
     return name.replaceAll("[^-._a-zA-Z0-9]+", "-").replaceAll("-+", "-");
   }
 }

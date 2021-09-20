@@ -184,7 +184,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
         | ScmItemNotFoundException
         | ScmBadRequestException
         | ConflictException e) {
-      LOG.error(e.getMessage(), e);
+      LOG.error(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.commons.test.servlet;
 
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
 
 /** Utility class for mocking {@link ServletInputStream} */
 public class MockServletInputStream extends ServletInputStream {

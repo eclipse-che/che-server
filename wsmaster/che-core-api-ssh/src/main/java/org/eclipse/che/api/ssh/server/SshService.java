@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,32 +11,34 @@
  */
 package org.eclipse.che.api.ssh.server;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.ssh.shared.Constants.LINK_REL_GET_PAIR;
 import static org.eclipse.che.api.ssh.shared.Constants.LINK_REL_REMOVE_PAIR;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import org.apache.commons.fileupload.FileItem;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
@@ -58,7 +60,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  *
  * @author Sergii Leschenko
  */
-@Api(value = "/ssh", description = "Ssh REST API")
+@Tag(name = "ssh", description = "Ssh REST API")
 @Path("/ssh")
 public class SshService extends Service {
   private final SshManager sshManager;
@@ -73,24 +75,27 @@ public class SshService extends Service {
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
   @GenerateLink(rel = Constants.LINK_REL_GENERATE_PAIR)
-  @ApiOperation(
-      value = "Generate and stores ssh pair based on the request",
-      notes =
-          "This operation can be performed only by authorized user,"
+  @Operation(
+      summary =
+          "Generate and stores ssh pair based on the request. This operation can be performed only by authorized user,"
               + "this user will be the owner of the created ssh pair",
-      response = SshPairDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 201, message = "The ssh pair successfully generated"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(
-        code = 409,
-        message =
-            "Conflict error occurred during the ssh pair generation"
-                + "(e.g. The Ssh pair with such name and service already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+      responses = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "The ssh pair successfully generated",
+            content = @Content(schema = @Schema(implementation = SshPairDto.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(
+            responseCode = "409",
+            description =
+                "Conflict error occurred during the ssh pair generation"
+                    + "(e.g. The Ssh pair with such name and service already exists)"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public Response generatePair(
-      @ApiParam(value = "The configuration to generate the new ssh pair", required = true)
+      @Parameter(description = "The configuration to generate the new ssh pair", required = true)
           GenerateSshPairRequest request)
       throws BadRequestException, ServerException, ConflictException {
     requiredNotNull(request, "Generate ssh pair request required");
@@ -153,23 +158,24 @@ public class SshService extends Service {
   @POST
   @Consumes(APPLICATION_JSON)
   @GenerateLink(rel = Constants.LINK_REL_CREATE_PAIR)
-  @ApiOperation(
-      value = "Create a new ssh pair",
-      notes =
-          "This operation can be performed only by authorized user,"
-              + "this user will be the owner of the created ssh pair")
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The ssh pair successfully created"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(
-        code = 409,
-        message =
-            "Conflict error occurred during the ssh pair creation"
-                + "(e.g. The Ssh pair with such name and service already exists)"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary =
+          "Create a new ssh pair. This operation can be performed only by authorized user,"
+              + "this user will be the owner of the created ssh pair",
+      responses = {
+        @ApiResponse(responseCode = "204", description = "The ssh pair successfully created"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(
+            responseCode = "409",
+            description =
+                "Conflict error occurred during the ssh pair creation"
+                    + "(e.g. The Ssh pair with such name and service already exists)"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public void createPair(
-      @ApiParam(value = "The ssh pair to create", required = true) SshPairDto sshPair)
+      @Parameter(description = "The ssh pair to create", required = true) SshPairDto sshPair)
       throws BadRequestException, ServerException, ConflictException {
     requiredNotNull(sshPair, "Ssh pair required");
     requiredNotNull(sshPair.getService(), "Service name required");
@@ -184,20 +190,23 @@ public class SshService extends Service {
   @GET
   @Path("{service}/find")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get the ssh pair by the name of pair and name of service owned by the current user",
-      notes = "This operation can be performed only by authorized user.")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The ssh pair successfully fetched"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(
-        code = 404,
-        message = "The ssh pair with specified name and service does not exist for current user"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary =
+          "Get the ssh pair by the name of pair and name of service owned by the current user. This operation can be performed only by authorized user.",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "The ssh pair successfully fetched"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(
+            responseCode = "404",
+            description =
+                "The ssh pair with specified name and service does not exist for current user"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public SshPairDto getPair(
-      @ApiParam("Name of service") @PathParam("service") String service,
-      @ApiParam(value = "Name of ssh pair", required = true) @QueryParam("name") String name)
+      @Parameter(description = "Name of service") @PathParam("service") String service,
+      @Parameter(description = "Name of ssh pair", required = true) @QueryParam("name") String name)
       throws NotFoundException, ServerException, BadRequestException {
     requiredNotNull(name, "Name of ssh pair");
     return injectLinks(asDto(sshManager.getPair(getCurrentUserId(), service, name)));
@@ -205,18 +214,20 @@ public class SshService extends Service {
 
   @DELETE
   @Path("{service}")
-  @ApiOperation(
-      value =
-          "Remove the ssh pair by the name of pair and name of service owned by the current user")
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The ssh pair successfully removed"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 404, message = "The ssh pair doesn't exist"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary =
+          "Remove the ssh pair by the name of pair and name of service owned by the current user",
+      responses = {
+        @ApiResponse(responseCode = "204", description = "The ssh pair successfully removed"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(responseCode = "404", description = "The ssh pair doesn't exist"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public void removePair(
-      @ApiParam("Name of service") @PathParam("service") String service,
-      @ApiParam(value = "Name of ssh pair", required = true) @QueryParam("name") String name)
+      @Parameter(description = "Name of service") @PathParam("service") String service,
+      @Parameter(description = "Name of ssh pair", required = true) @QueryParam("name") String name)
       throws ServerException, NotFoundException, BadRequestException {
     requiredNotNull(name, "Name of ssh pair");
     sshManager.removePair(getCurrentUserId(), service, name);
@@ -225,17 +236,21 @@ public class SshService extends Service {
   @GET
   @Path("{service}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get the ssh pairs by name of service owned by the current user",
-      notes = "This operation can be performed only by authorized user.",
-      response = SshPairDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The ssh pairs successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary =
+          "Get the ssh pairs by name of service owned by the current user. This operation can be performed only by authorized user.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The ssh pairs successfully fetched",
+            content =
+                @Content(
+                    array = @ArraySchema(schema = @Schema(implementation = SshPairDto.class)))),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public List<SshPairDto> getPairs(
-      @ApiParam("Name of service") @PathParam("service") String service) throws ServerException {
+      @Parameter(description = "Name of service") @PathParam("service") String service)
+      throws ServerException {
     return sshManager
         .getPairs(getCurrentUserId(), service)
         .stream()

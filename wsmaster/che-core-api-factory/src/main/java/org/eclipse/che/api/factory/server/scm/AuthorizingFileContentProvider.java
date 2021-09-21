@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import javax.net.ssl.SSLException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
@@ -51,17 +52,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
 
   @Override
   public String fetchContent(String fileURL) throws IOException, DevfileException {
-    String requestURL;
-    try {
-      if (new URI(fileURL).isAbsolute()) {
-        requestURL = fileURL;
-      } else {
-        // since files retrieved via REST, we cannot use path symbols like . ./ so cut them off
-        requestURL = remoteFactoryUrl.rawFileLocation(fileURL.replaceAll("^[/.]+", ""));
-      }
-    } catch (URISyntaxException e) {
-      throw new DevfileException(e.getMessage(), e);
-    }
+    final String requestURL = formatUrl(fileURL);
     try {
       Optional<PersonalAccessToken> token =
           personalAccessTokenManager.get(
@@ -76,6 +67,14 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         try {
           return urlFetcher.fetch(requestURL);
         } catch (IOException exception) {
+          if (exception instanceof SSLException) {
+            ScmCommunicationException cause =
+                new ScmCommunicationException(
+                    String.format(
+                        "Failed to fetch a content from URL %s due to TLS key misconfiguration. Please refer to the docs about how to correctly import it. ",
+                        requestURL));
+            throw new DevfileException(exception.getMessage(), cause);
+          }
           // unable to determine exact cause, so let's just try to authorize...
           try {
             PersonalAccessToken personalAccessToken =
@@ -108,6 +107,21 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         | ScmCommunicationException e) {
       throw new DevfileException(e.getMessage(), e);
     }
+  }
+
+  private String formatUrl(String fileURL) throws DevfileException {
+    String requestURL;
+    try {
+      if (new URI(fileURL).isAbsolute()) {
+        requestURL = fileURL;
+      } else {
+        // since files retrieved via REST, we cannot use path symbols like . ./ so cut them off
+        requestURL = remoteFactoryUrl.rawFileLocation(fileURL.replaceAll("^[/.]+", ""));
+      }
+    } catch (URISyntaxException e) {
+      throw new DevfileException(e.getMessage(), e);
+    }
+    return requestURL;
   }
 
   protected String formatAuthorization(String token) {

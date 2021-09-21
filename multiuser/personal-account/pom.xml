@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-multiuser-parent</artifactId>
         <groupId>org.eclipse.che.multiuser</groupId>
-        <version>7.36.0-SNAPSHOT</version>
+        <version>7.37.0-SNAPSHOT</version>
     </parent>
     <artifactId>che-multiuser-personal-account</artifactId>
     <packaging>jar</packaging>
@@ -32,8 +32,8 @@
             <artifactId>guice-persist</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>

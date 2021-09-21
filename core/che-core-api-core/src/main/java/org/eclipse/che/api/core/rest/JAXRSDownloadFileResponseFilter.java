@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,13 +11,13 @@
  */
 package org.eclipse.che.api.core.rest;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.core.Request;
 import java.io.IOException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.Request;
 
 /**
  * JAX-RS implementation of download filter.
@@ -30,8 +30,8 @@ public class JAXRSDownloadFileResponseFilter extends DownloadFileResponseFilter
   /**
    * JAX-RS Filter method called after a response has been provided for a request
    *
-   * <p>Filters in the filter chain are ordered according to their {@code javax.annotation.Priority}
-   * class-level annotation value.
+   * <p>Filters in the filter chain are ordered according to their {@code
+   * jakarta.annotation.Priority} class-level annotation value.
    *
    * @param requestContext request context.
    * @param responseContext response context.

@@ -11,22 +11,21 @@
  */
 package org.eclipse.che.api.factory.server;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.rest.Service;
 
-@Api(value = "/scm")
+@Tag(name = "scm")
 @Path("/scm")
 public class ScmService extends Service {
 
@@ -39,16 +38,19 @@ public class ScmService extends Service {
 
   @GET
   @Path("/resolve")
-  @ApiOperation(value = "Get file content by specific repository and filename.")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "Factory successfully built from parameters"),
-    @ApiResponse(code = 400, message = "Missed required parameters."),
-    @ApiResponse(code = 404, message = "Requested file not found."),
-    @ApiResponse(code = 500, message = "Internal server error")
-  })
+  @Operation(
+      summary = "Get file content by specific repository and filename.",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Factory successfully built from parameters"),
+        @ApiResponse(responseCode = "400", description = "Missed required parameters."),
+        @ApiResponse(responseCode = "404", description = "Requested file not found."),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+      })
   public Response resolveFile(
-      @ApiParam(value = "Repository URL") @QueryParam("repository") String repository,
-      @ApiParam(value = "File name or path") @QueryParam("file") String filePath)
+      @Parameter(description = "Repository URL") @QueryParam("repository") String repository,
+      @Parameter(description = "File name or path") @QueryParam("file") String filePath)
       throws ApiException {
     requireNonNull(repository, "Repository");
     requireNonNull(repository, "File");

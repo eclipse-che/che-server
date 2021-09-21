@@ -11,24 +11,23 @@
  */
 package org.eclipse.che.api.factory.server;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.factory.server.FactoryLinksHelper.createLinks;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.rest.Service;
@@ -41,7 +40,7 @@ import org.eclipse.che.api.user.server.UserManager;
  * @author Anton Korneta
  * @author Florent Benoit
  */
-@Api(value = "/factory", description = "Factory manager")
+@Tag(name = "factory", description = "Factory manager")
 @Path("/factory")
 public class FactoryService extends Service {
 
@@ -73,20 +72,23 @@ public class FactoryService extends Service {
   @Path("/resolver")
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Create factory by providing map of parameters",
-      notes = "Get JSON with factory information")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "Factory successfully built from parameters"),
-    @ApiResponse(code = 400, message = "Missed required parameters, failed to validate factory"),
-    @ApiResponse(code = 500, message = "Internal server error")
-  })
+  @Operation(
+      summary = "Create factory by providing map of parameters. Get JSON with factory information",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Factory successfully built from parameters"),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, failed to validate factory"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+      })
   public FactoryMetaDto resolveFactory(
-      @ApiParam(value = "Parameters provided to create factories") Map<String, String> parameters,
-      @ApiParam(
-              value = "Whether or not to validate values like it is done when accepting a Factory",
-              allowableValues = "true,false",
-              defaultValue = "false")
+      @Parameter(description = "Parameters provided to create factories")
+          Map<String, String> parameters,
+      @Parameter(
+              description =
+                  "Whether or not to validate values like it is done when accepting a Factory")
           @DefaultValue("false")
           @QueryParam(VALIDATE_QUERY_PARAMETER)
           Boolean validate)

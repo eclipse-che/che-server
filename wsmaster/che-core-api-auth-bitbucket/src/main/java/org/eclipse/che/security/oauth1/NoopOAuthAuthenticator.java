@@ -18,32 +18,32 @@ import java.net.URL;
  * integration is configured.
  */
 public class NoopOAuthAuthenticator extends OAuthAuthenticator {
-  protected NoopOAuthAuthenticator() {
+  public NoopOAuthAuthenticator() {
     super(null, null, null, null, null, null, null);
   }
 
   @Override
-  String getOAuthProvider() {
+  public String getOAuthProvider() {
     return "Noop";
   }
 
   @Override
   String getAuthenticateUrl(URL requestUrl, String requestMethod, String signatureMethod)
       throws OAuthAuthenticationException {
-    throw new RuntimeException(
+    throw new OAuthAuthenticationException(
         "The fallback noop authenticator cannot be used for authentication. Make sure OAuth is properly configured.");
   }
 
   @Override
   String callback(URL requestUrl) throws OAuthAuthenticationException {
-    throw new RuntimeException(
+    throw new OAuthAuthenticationException(
         "The fallback noop authenticator cannot be used for authentication. Make sure OAuth is properly configured.");
   }
 
   @Override
   public String computeAuthorizationHeader(String userId, String requestMethod, String requestUrl)
       throws OAuthAuthenticationException {
-    throw new RuntimeException(
+    throw new OAuthAuthenticationException(
         "The fallback noop authenticator cannot be used for authentication. Make sure OAuth is properly configured.");
   }
 

@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.api.devfile.server;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_SUBJECT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.USER_DEVFILE_ID;
@@ -40,7 +40,7 @@ import static org.testng.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -224,10 +224,12 @@ public class DevfileServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/id-22323");
+            .get(SECURE_PATH + "/devfile/id-22323")
+            .then()
+            .extract()
+            .response();
 
+    assertEquals(response.getStatusCode(), 200);
     assertEquals(
         new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT), userDevfile);
     verify(userDevfileManager).getById(eq("id-22323"));
@@ -402,10 +404,13 @@ public class DevfileServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
+
     // then
+    assertEquals(response.getStatusCode(), 200);
     final List<UserDevfileDto> res = unwrapDtoList(response, UserDevfileDto.class);
     assertEquals(res.size(), 1);
     assertEquals(res.get(0).withLinks(emptyList()), devfileDto);
@@ -427,10 +432,13 @@ public class DevfileServiceTest {
             .queryParam("maxItems", 5)
             .queryParam("skipCount", 52)
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
     // then
+    // then
+    assertEquals(response.getStatusCode(), 200);
     verify(userDevfileManager).getUserDevfiles(eq(5), eq(52), anyList(), anyList());
   }
 
@@ -448,13 +456,16 @@ public class DevfileServiceTest {
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
-            .queryParameter("id", "sdfsdf5")
-            .queryParameter("devfile.meta.name", "like:%dfdf")
+            .queryParam("id", "sdfsdf5")
+            .queryParam("devfile.meta.name", "like:%dfdf")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
+
     // then
+    assertEquals(response.getStatusCode(), 200);
     Class<List<Pair<String, String>>> listClass =
         (Class<List<Pair<String, String>>>) (Class) ArrayList.class;
     ArgumentCaptor<List<Pair<String, String>>> filterCaptor = ArgumentCaptor.forClass(listClass);
@@ -476,12 +487,14 @@ public class DevfileServiceTest {
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
-            .queryParameter("order", "id:asc,name:desc")
+            .queryParam("order", "id:asc,name:desc")
             .when()
-            .expect()
-            .statusCode(200)
-            .get(SECURE_PATH + "/devfile/search");
+            .get(SECURE_PATH + "/devfile/search")
+            .then()
+            .extract()
+            .response();
     // then
+    assertEquals(response.getStatusCode(), 200);
     Class<List<Pair<String, String>>> listClass =
         (Class<List<Pair<String, String>>>) (Class) ArrayList.class;
     ArgumentCaptor<List<Pair<String, String>>> orderCaptor = ArgumentCaptor.forClass(listClass);

@@ -31,11 +31,13 @@ import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.config.Environment;
+import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
 import org.eclipse.che.api.workspace.server.WorkspaceValidator;
+import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
@@ -109,11 +111,26 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
       throws ServerException, ConflictException, NotFoundException, ValidationException {
     checkMaxEnvironmentRam(config);
     String accountId = accountManager.getByName(namespace).getId();
-    try (@SuppressWarnings("unused")
-        Unlocker u = resourcesLocks.lock(accountId)) {
+    try (Unlocker ignored = resourcesLocks.lock(accountId)) {
       checkWorkspaceResourceAvailability(accountId);
 
       return super.createWorkspace(config, namespace, attributes);
+    }
+  }
+
+  @Override
+  @Traced
+  public WorkspaceImpl createWorkspace(
+      Devfile devfile,
+      String namespace,
+      Map<String, String> attributes,
+      FileContentProvider contentProvider)
+      throws ServerException, NotFoundException, ConflictException, ValidationException {
+    String accountId = accountManager.getByName(namespace).getId();
+    try (Unlocker ignored = resourcesLocks.lock(accountId)) {
+      checkWorkspaceResourceAvailability(accountId);
+
+      return super.createWorkspace(devfile, namespace, attributes, contentProvider);
     }
   }
 

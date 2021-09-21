@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -53,7 +53,7 @@ public class MachineTokenRegistryTest {
 
   private MachineTokenRegistry tokenRegistry;
 
-  private static final int KEY_SIZE = 1024;
+  private static final int KEY_SIZE = 2048;
   private static final String SIGNATURE_ALGORITHM = "RSA";
   private static final String USER_ID = "user13";
   private static final String USER_NAME = "testUser";

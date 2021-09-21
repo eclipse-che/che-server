@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,10 +14,10 @@ package org.eclipse.che.multiuser.permission.resource.filters;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
+import jakarta.ws.rs.Path;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.ws.rs.Path;
 import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.api.core.ApiException;

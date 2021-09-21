@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.resource.api.free;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -75,10 +75,8 @@ public class FreeResourcesLimitServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/resource/free/account123");
-
+    assertEquals(response.statusCode(), 200);
     final FreeResourcesLimitDto fetchedLimit = unwrapDto(response, FreeResourcesLimitDto.class);
     assertEquals(fetchedLimit, DtoConverter.asDto(resourcesLimit));
     verify(freeResourcesLimitManager).get("account123");
@@ -104,10 +102,8 @@ public class FreeResourcesLimitServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/resource/free?skipCount=1&maxItems=5");
-
+    assertEquals(response.statusCode(), 200);
     final List<FreeResourcesLimitDto> freeResourcesLimits =
         unwrapDtoList(response, FreeResourcesLimitDto.class);
     assertEquals(freeResourcesLimits.size(), 2);
@@ -134,9 +130,8 @@ public class FreeResourcesLimitServiceTest {
             .contentType("application/json")
             .body(DtoConverter.asDto(toCreate))
             .when()
-            .expect()
-            .statusCode(201)
             .post(SECURE_PATH + "/resource/free");
+    assertEquals(response.statusCode(), 201);
     final FreeResourcesLimitDto result = unwrapDto(response, FreeResourcesLimitDto.class);
     assertEquals(DtoConverter.asDto(created), result);
     verify(freeResourcesLimitManager).store(DtoConverter.asDto(toCreate));
@@ -145,15 +140,14 @@ public class FreeResourcesLimitServiceTest {
 
   @Test
   public void shouldRemoveResourcesLimit() throws Exception {
-    given()
-        .auth()
-        .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-        .contentType("application/json")
-        .when()
-        .expect()
-        .statusCode(204)
-        .delete(SECURE_PATH + "/resource/free/account123");
-
+    Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .when()
+            .delete(SECURE_PATH + "/resource/free/account123");
+    assertEquals(response.statusCode(), 204);
     verify(freeResourcesLimitManager).remove("account123");
   }
 

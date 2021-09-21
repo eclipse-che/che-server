@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,8 +14,8 @@ package org.eclipse.che.api.core.websocket.impl;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.*;
 
+import jakarta.websocket.Session;
 import java.util.Optional;
-import javax.websocket.Session;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;

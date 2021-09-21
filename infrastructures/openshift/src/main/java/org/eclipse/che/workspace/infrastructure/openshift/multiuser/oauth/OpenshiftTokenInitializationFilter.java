@@ -11,20 +11,22 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
+
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.client.OpenShiftClient;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
@@ -78,7 +80,8 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
   @Override
   protected String getUserId(String token) {
     try {
-      return getCurrentUser(token).getMetadata().getUid();
+      io.fabric8.openshift.api.model.User user = getCurrentUser(token);
+      return firstNonNull(user.getMetadata().getUid(), user.getMetadata().getName());
     } catch (KubernetesClientException e) {
       if (e.getCode() == 401) {
         LOG.error(
@@ -96,7 +99,9 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
       ObjectMeta userMeta = getCurrentUser(token).getMetadata();
       User user =
           userManager.getOrCreateUser(
-              userMeta.getUid(), openshiftUserEmail(userMeta), userMeta.getName());
+              firstNonNull(userMeta.getUid(), userMeta.getName()),
+              openshiftUserEmail(userMeta),
+              userMeta.getName());
       return new AuthorizedSubject(
           new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
     } catch (InfrastructureException | ServerException | ConflictException e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,8 +20,8 @@ import java.lang.annotation.Target;
  * Helps to inform client about valid values of request parameters.
  *
  * <p>This annotation may be applied to parameter of RESTful method annotated with {@link
- * javax.ws.rs.QueryParam &#64;QueryParam}. In this case value of this annotation is copied to field
- * {@link org.eclipse.che.api.core.rest.shared.dto.LinkParameter#getValid()}
+ * jakarta.ws.rs.QueryParam &#64;QueryParam}. In this case value of this annotation is copied to
+ * field {@link org.eclipse.che.api.core.rest.shared.dto.LinkParameter#getValid()}
  *
  * <p>For example: There is EchoService. Let's see on the value of Valid annotation, it is {"hello",
  * "goodbye"}.

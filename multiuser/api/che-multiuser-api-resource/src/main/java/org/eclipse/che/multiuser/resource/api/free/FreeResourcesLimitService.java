@@ -11,24 +11,26 @@
  */
 package org.eclipse.che.multiuser.resource.api.free;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -44,7 +46,7 @@ import org.eclipse.che.multiuser.resource.shared.dto.FreeResourcesLimitDto;
  *
  * @author Sergii Leschenko
  */
-@Api(value = "resource-free", description = "Free resources limit REST API")
+@Tag(name = "resource-free", description = "Free resources limit REST API")
 @Path("/resource/free")
 public class FreeResourcesLimitService extends Service {
   private final FreeResourcesLimitManager freeResourcesLimitManager;
@@ -61,15 +63,21 @@ public class FreeResourcesLimitService extends Service {
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
-  @ApiOperation(value = "Store free resources limit", response = FreeResourcesLimitDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 201, message = "The resources limit successfully stored"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 409, message = "The specified account doesn't exist"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary = "Store free resources limit",
+      responses = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "The resources limit successfully stored",
+            content = @Content(schema = @Schema(implementation = FreeResourcesLimitDto.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(responseCode = "409", description = "The specified account doesn't exist"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public Response storeFreeResourcesLimit(
-      @ApiParam(value = "Free resources limit") FreeResourcesLimitDto resourcesLimit)
+      @Parameter(description = "Free resources limit") FreeResourcesLimitDto resourcesLimit)
       throws BadRequestException, NotFoundException, ConflictException, ServerException {
     freeResourcesLimitValidator.check(resourcesLimit);
     return Response.status(201)
@@ -79,17 +87,24 @@ public class FreeResourcesLimitService extends Service {
 
   @GET
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get free resources limits",
-      response = FreeResourcesLimitDto.class,
-      responseContainer = "List")
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The resources limits successfully fetched"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary = "Get free resources limits",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The resources limits successfully fetched",
+            content =
+                @Content(
+                    array =
+                        @ArraySchema(
+                            schema = @Schema(implementation = FreeResourcesLimitDto.class)))),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public Response getFreeResourcesLimits(
-      @ApiParam(value = "Max items") @QueryParam("maxItems") @DefaultValue("30") int maxItems,
-      @ApiParam(value = "Skip count") @QueryParam("skipCount") @DefaultValue("0") int skipCount)
+      @Parameter(description = "Max items") @QueryParam("maxItems") @DefaultValue("30")
+          int maxItems,
+      @Parameter(description = "Skip count") @QueryParam("skipCount") @DefaultValue("0")
+          int skipCount)
       throws ServerException {
 
     final Page<? extends FreeResourcesLimit> limitsPage =
@@ -104,32 +119,40 @@ public class FreeResourcesLimitService extends Service {
   @GET
   @Path("/{accountId}")
   @Produces(APPLICATION_JSON)
-  @ApiOperation(
-      value = "Get free resources limit for account with given id",
-      response = FreeResourcesLimitDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 200, message = "The resources limit successfully fetched"),
-    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
-    @ApiResponse(code = 404, message = "Resources limit for given account was not found"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary = "Get free resources limit for account with given id",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The resources limit successfully fetched",
+            content = @Content(schema = @Schema(implementation = FreeResourcesLimitDto.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Missed required parameters, parameters are not valid"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Resources limit for given account was not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public FreeResourcesLimitDto getFreeResourcesLimit(
-      @ApiParam(value = "Account id") @PathParam("accountId") String accountId)
+      @Parameter(description = "Account id") @PathParam("accountId") String accountId)
       throws BadRequestException, NotFoundException, ServerException {
     return DtoConverter.asDto(freeResourcesLimitManager.get(accountId));
   }
 
   @DELETE
   @Path("/{accountId}")
-  @ApiOperation(
-      value = "Remove free resources limit for account with given id",
-      response = FreeResourcesLimitDto.class)
-  @ApiResponses({
-    @ApiResponse(code = 204, message = "The resources limit successfully removed"),
-    @ApiResponse(code = 500, message = "Internal server error occurred")
-  })
+  @Operation(
+      summary = "Remove free resources limit for account with given id",
+      responses = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "The resources limit successfully removed",
+            content = @Content(schema = @Schema(implementation = FreeResourcesLimitDto.class))),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+      })
   public void removeFreeResourcesLimit(
-      @ApiParam(value = "Account id") @PathParam("accountId") String accountId)
+      @Parameter(description = "Account id") @PathParam("accountId") String accountId)
       throws ServerException {
     freeResourcesLimitManager.remove(accountId);
   }

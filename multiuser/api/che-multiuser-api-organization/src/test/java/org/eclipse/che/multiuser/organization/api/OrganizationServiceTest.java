@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.organization.api;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.HashSet;
 import java.util.List;
 import org.eclipse.che.api.core.BadRequestException;
@@ -104,10 +104,8 @@ public class OrganizationServiceTest {
             .contentType("application/json")
             .body(toCreate)
             .when()
-            .expect()
-            .statusCode(201)
             .post(SECURE_PATH + "/organization");
-
+    assertEquals(response.statusCode(), 201);
     final OrganizationDto createdOrganization = unwrapDto(response, OrganizationDto.class);
     assertEquals(createdOrganization, toCreate);
     verify(linksInjector).injectLinks(any(), any());
@@ -129,10 +127,8 @@ public class OrganizationServiceTest {
             .contentType("application/json")
             .body(toCreate)
             .when()
-            .expect()
-            .statusCode(400)
             .post(SECURE_PATH + "/organization");
-
+    assertEquals(response.statusCode(), 400);
     final ServiceError error = unwrapDto(response, ServiceError.class);
     assertEquals(error.getMessage(), "non valid organization");
     verify(validator).checkOrganization(toCreate);
@@ -154,10 +150,8 @@ public class OrganizationServiceTest {
             .contentType("application/json")
             .body(toUpdate)
             .when()
-            .expect()
-            .statusCode(200)
             .post(SECURE_PATH + "/organization/organization123");
-
+    assertEquals(response.statusCode(), 200);
     final OrganizationDto createdOrganization = unwrapDto(response, OrganizationDto.class);
     assertEquals(createdOrganization, toUpdate);
     verify(linksInjector).injectLinks(any(), any());
@@ -179,10 +173,8 @@ public class OrganizationServiceTest {
             .contentType("application/json")
             .body(toUpdate)
             .when()
-            .expect()
-            .statusCode(400)
             .post(SECURE_PATH + "/organization/organization123");
-
+    assertEquals(response.statusCode(), 400);
     final ServiceError error = unwrapDto(response, ServiceError.class);
     assertEquals(error.getMessage(), "non valid organization");
     verify(validator).checkOrganization(toUpdate);
@@ -190,15 +182,14 @@ public class OrganizationServiceTest {
 
   @Test
   public void shouldRemoveOrganization() throws Exception {
-    given()
-        .auth()
-        .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-        .contentType("application/json")
-        .when()
-        .expect()
-        .statusCode(204)
-        .delete(SECURE_PATH + "/organization/organization123");
-
+    Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .when()
+            .delete(SECURE_PATH + "/organization/organization123");
+    assertEquals(response.statusCode(), 204);
     verify(orgManager).remove(eq("organization123"));
   }
 
@@ -214,10 +205,9 @@ public class OrganizationServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/organization/organization123");
 
+    assertEquals(response.statusCode(), 200);
     final OrganizationDto fetchedOrganization = unwrapDto(response, OrganizationDto.class);
     assertEquals(fetchedOrganization, toFetch);
     verify(orgManager).getById(eq("organization123"));
@@ -235,11 +225,8 @@ public class OrganizationServiceTest {
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
-            .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/organization/find?name=subOrg");
-
+    assertEquals(response.statusCode(), 200);
     final OrganizationDto fetchedOrganization = unwrapDto(response, OrganizationDto.class);
     assertEquals(fetchedOrganization, toFetch);
     verify(orgManager).getByName(eq("subOrg"));
@@ -253,9 +240,10 @@ public class OrganizationServiceTest {
         .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
         .contentType("application/json")
         .when()
-        .expect()
-        .statusCode(400)
-        .get(SECURE_PATH + "/organization/find");
+        .get(SECURE_PATH + "/organization/find")
+        .then()
+        .assertThat()
+        .statusCode(400);
   }
 
   @Test
@@ -272,10 +260,8 @@ public class OrganizationServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/organization/parentOrg123/organizations?skipCount=0&maxItems=1");
-
+    assertEquals(response.statusCode(), 200);
     final List<OrganizationDto> organizationDtos = unwrapDtoList(response, OrganizationDto.class);
     assertEquals(organizationDtos.size(), 1);
     assertEquals(organizationDtos.get(0), toFetch);
@@ -297,10 +283,8 @@ public class OrganizationServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/organization?skipCount=0&maxItems=1");
-
+    assertEquals(response.statusCode(), 200);
     final List<OrganizationDto> organizationDtos = unwrapDtoList(response, OrganizationDto.class);
     assertEquals(organizationDtos.size(), 1);
     assertEquals(organizationDtos.get(0), toFetch);
@@ -322,10 +306,8 @@ public class OrganizationServiceTest {
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
             .when()
-            .expect()
-            .statusCode(200)
             .get(SECURE_PATH + "/organization?user=user789&skipCount=0&maxItems=1");
-
+    assertEquals(response.statusCode(), 200);
     final List<OrganizationDto> organizationDtos = unwrapDtoList(response, OrganizationDto.class);
     assertEquals(organizationDtos.size(), 1);
     assertEquals(organizationDtos.get(0), toFetch);

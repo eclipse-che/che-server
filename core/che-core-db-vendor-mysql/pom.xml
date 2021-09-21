@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-core-parent</artifactId>
         <groupId>org.eclipse.che.core</groupId>
-        <version>7.36.0-SNAPSHOT</version>
+        <version>7.37.0-SNAPSHOT</version>
     </parent>
     <artifactId>che-core-db-vendor-mysql</artifactId>
     <name>Che Core :: Commons :: DB :: Vendor MySQL</name>
@@ -32,7 +32,7 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
-            <artifactId>javax.persistence</artifactId>
+            <artifactId>jakarta.persistence</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>

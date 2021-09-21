@@ -8,6 +8,5 @@
 #
 
 global:
-  multiuser: true
   ingressDomain: 192.168.99.100
   serverStrategy: default-host

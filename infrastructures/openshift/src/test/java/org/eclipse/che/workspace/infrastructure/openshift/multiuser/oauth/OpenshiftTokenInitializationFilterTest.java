@@ -20,11 +20,11 @@ import static org.testng.Assert.*;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.openshift.api.model.User;
 import io.fabric8.openshift.client.OpenShiftClient;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.UserManager;
@@ -82,6 +82,26 @@ public class OpenshiftTokenInitializationFilterTest {
     assertEquals(userId, USER_UID);
     verify(openShiftClientFactory).createAuthenticatedClient(TOKEN);
     verify(openShiftClient).currentUser();
+  }
+
+  @Test
+  public void shouldBeAbleToHandleKubeAdminUserWithoutUid()
+      throws ServerException, ConflictException {
+    String KUBE_ADMIN_USERNAME = "kube:admin";
+    when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);
+    when(openShiftClient.currentUser()).thenReturn(openshiftUser);
+    when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
+    when(openshiftUserMeta.getUid()).thenReturn(null);
+    when(openshiftUserMeta.getName()).thenReturn(KUBE_ADMIN_USERNAME);
+    when(userManager.getOrCreateUser(
+            KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME))
+        .thenReturn(
+            new UserImpl(KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME));
+
+    Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN);
+
+    assertEquals(subject.getUserId(), KUBE_ADMIN_USERNAME);
+    assertEquals(subject.getUserName(), KUBE_ADMIN_USERNAME);
   }
 
   @Test

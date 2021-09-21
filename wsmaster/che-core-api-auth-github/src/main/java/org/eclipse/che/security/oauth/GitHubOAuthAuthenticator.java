@@ -14,6 +14,8 @@ package org.eclipse.che.security.oauth;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import com.google.api.client.util.store.MemoryDataStoreFactory;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -22,8 +24,6 @@ import java.net.URL;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonHelper;

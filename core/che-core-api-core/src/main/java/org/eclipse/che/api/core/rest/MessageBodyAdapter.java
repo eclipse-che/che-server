@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,10 +12,10 @@
 package org.eclipse.che.api.core.rest;
 
 import com.google.common.annotations.Beta;
+import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
-import javax.ws.rs.WebApplicationException;
 
 /**
  * Adapts an entity stream in an implementation specific way.

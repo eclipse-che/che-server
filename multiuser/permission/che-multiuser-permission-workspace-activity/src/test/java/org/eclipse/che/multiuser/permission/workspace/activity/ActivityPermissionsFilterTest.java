@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.multiuser.permission.workspace.activity;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-import com.jayway.restassured.response.Response;
+import io.restassured.response.Response;
 import java.util.Collections;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.Page;
@@ -104,7 +104,7 @@ public class ActivityPermissionsFilterTest {
     when(service.getWorkspacesByActivity(
             eq(WorkspaceStatus.RUNNING), eq(-1L), eq(-1L), eq(Pages.DEFAULT_PAGE_SIZE), eq(0L)))
         .thenReturn(
-            javax.ws.rs.core.Response.ok(new Page<String>(Collections.emptyList(), 0, 1, 0))
+            jakarta.ws.rs.core.Response.ok(new Page<String>(Collections.emptyList(), 0, 1, 0))
                 .build());
 
     final Response response =

@@ -116,7 +116,7 @@ checkoutTags() {
     cd ..
 }
 
-# check for build errors, since we're using set +e above to NOT fail the build for Nexus problems
+# check for build errors, since we're using set +e above to NOT fail the build for network errors
 checkLogForErrors () {
     tmplog="$1"
     errors_in_log="$(grep -E "FAILURE \[|BUILD FAILURE|Failed to execute goal" $tmplog || true)"
@@ -237,8 +237,8 @@ releaseCheServer() {
         mvn clean install -ntp -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
         EXIT_CODE=$?
         set -e
-        # try maven build again if Nexus dies
-        if grep -q -E "502 - Bad Gateway|Nexus connection problem" $tmpmvnlog; then
+        # try maven build again if we receive a server error
+        if grep -q -E "502 - Bad Gateway" $tmpmvnlog; then
             rm -f $tmpmvnlog || true
             mvn clean install -ntp -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
             EXIT_CODE=$?
@@ -260,8 +260,8 @@ releaseCheServer() {
     mvn clean install -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
     EXIT_CODE=$?
     set -e
-    # try maven build again if Nexus dies
-    if grep -q -E "502 - Bad Gateway|Nexus connection problem" $tmpmvnlog; then
+    # try maven build again if we receive a server error
+    if grep -q -E "502 - Bad Gateway" $tmpmvnlog; then
         rm -f $tmpmvnlog || true
         mvn clean install -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
         EXIT_CODE=$?

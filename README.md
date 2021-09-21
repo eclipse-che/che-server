@@ -2,15 +2,21 @@
 [![Release build Status](https://github.com/eclipse-che/che-theia/actions/workflows/release.yml/badge.svg)]
 
 # What is Che server
-Che Server is a core component of the Eclipse Che. The component is responsibe for creation and managing of Che workspaces.
+Che Server is a core component of the [Eclipse Che](https://github.com/eclipse/che/). This component is responsibe for creation and managing of Che workspaces, but will some day be replaced by the [Dev Workspace Operator](https://github.com/devfile/devworkspace-operator). 
 
 # Project structure
-Che Server is mostly a Java web application deployed on a Apache Tomcat server in a container. The primary root module ['pom.xml'](https://github.com/eclipse-che/che-server/tree/main/pom.xml) lists all the java submodules. In the ['dockerfiles'](https://github.com/eclipse-che/che-server/tree/main/dockerfiles) directory contains container image for Che Server, as well as additional images, such as container for PostgreSQL DB. Additionally, there is a separate ['typescript-dto'](https://github.com/eclipse-che/che-server/tree/main/typescript-dto) module, that provides DTO objects for typescript projects that may depend on Che Server, such as Che Theia.
+Che Server is primarily a Java web application deployed on a Apache Tomcat server in a container. 
+
+The primary root module ['pom.xml'](https://github.com/eclipse-che/che-server/tree/main/pom.xml) lists all the java submodules. 
+
+The ['dockerfiles'](https://github.com/eclipse-che/che-server/tree/main/dockerfiles) directory contains container image for Che Server, as well as additional images, such as container for PostgreSQL DB. 
+
+There is also a separate ['typescript-dto'](https://github.com/eclipse-che/che-server/tree/main/typescript-dto) module, that provides DTO objects for typescript projects that may depend on Che Server, such as Che Theia.
 
 # Build requirements
 - Apache Maven 3.6.3 or Higher
 - JDK Version 11
-- Docker 
+- Podman or Docker
 
 # CI
 There are several [GitHub Actions](https://github.com/eclipse-che/che-server/actions) workflows implemented for this repository:

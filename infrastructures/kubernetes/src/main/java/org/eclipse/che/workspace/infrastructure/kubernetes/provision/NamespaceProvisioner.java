@@ -39,6 +39,14 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * On namespace provisioning, creates k8s {@link Secret} profile and preferences
+ * from information about the User.
+ *
+ * Implements {@link EventSubscriber<PostUserPersistedEvent>} for updating these Secrets.
+ *
+ * @author Pavol Baran
+ */
 public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEvent> {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceProvisioner.class);
   private static final String USER_PROFILE_SECRET_NAME = "user-profile";
@@ -85,7 +93,7 @@ public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEv
    * Creates k8s user profile and user preferences k8s secrets. This serves as a way for
    * DevWorkspaces to acquire information about the user.
    *
-   * @param user from its data are the secrets created
+   * @param user from information about this user are the secrets created
    */
   private void createOrUpdateSecrets(User user) {
     Secret userProfileSecret = prepareProfileSecret(user);

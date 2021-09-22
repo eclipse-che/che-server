@@ -5,18 +5,26 @@
 Che Server is a core component of the [Eclipse Che](https://github.com/eclipse/che/). This component is responsibe for creation and managing of Che workspaces, but will some day be replaced by the [Dev Workspace Operator](https://github.com/devfile/devworkspace-operator). 
 
 # Project structure
-Che Server is primarily a Java web application deployed on a Apache Tomcat server in a container. 
-
-The primary root module ['pom.xml'](https://github.com/eclipse-che/che-server/tree/main/pom.xml) lists all the java submodules. 
-
-The ['dockerfiles'](https://github.com/eclipse-che/che-server/tree/main/dockerfiles) directory contains container image for Che Server, as well as additional images, such as container for PostgreSQL DB. 
-
-There is also a separate ['typescript-dto'](https://github.com/eclipse-che/che-server/tree/main/typescript-dto) module, that provides DTO objects for typescript projects that may depend on Che Server, such as Che Theia.
+Che Server is mostly a Java web application deployed on a Apache Tomcat server in a container. 
+- ['pom.xml'](https://github.com/eclipse-che/che-server/tree/main/pom.xml) The root Maven module, that lists all dependencies and structure. 
+- ['assembly'](https://github.com/eclipse-che/che-server/tree/main/assembly) - module for final assemblies of Che web applications
+- ['dockerfiles'](https://github.com/eclipse-che/che-server/tree/main/dockerfiles) - directory contains image Dockerfile for Che Server, as well as additional images.
+- ['core'](https://github.com/eclipse-che/che-server/tree/main/core) - core and utility modules for Che.
+- ['wsmaster'](https://github.com/eclipse-che/che-server/tree/main/wsmaster) - primary modules of the Che Server API.
+- ['multiuser'](https://github.com/eclipse-che/che-server/tree/main/multiuser) - modules related to multiuser implementation of Che.
+- ['infrastructure'](https://github.com/eclipse-che/che-server/tree/main/infrastructure) - implementations for the underlying infrastructure, on which Che is running (Kubernetes, Openshift, etc.)
+- ['deploy'](https://github.com/eclipse-che/che-server/tree/main/deploy) - deployment files for Helm installation.
+- ['typescript-dto'](https://github.com/eclipse-che/che-server/tree/main/typescript-dto) module, that provides DTO objects for typescript projects that may depend on Che Server, such as Che Theia.
 
 # Build requirements
 - Apache Maven 3.6.3 or Higher
 - JDK Version 11
-- Podman or Docker
+- Podman or Docker (required for running integration tests)
+
+# Build and debug
+Run `mvn clean install` to build 
+Activate a faster profile build by adding `-Pfast`
+To debug, run `mvn clean install -X` and connect your IDE to the debug port
 
 # CI
 There are several [GitHub Actions](https://github.com/eclipse-che/che-server/actions) workflows implemented for this repository:

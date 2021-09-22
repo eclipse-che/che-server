@@ -13,7 +13,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -108,20 +107,11 @@ public class NamespaceProvisionerTest {
     assertEquals(createdSecrets.get(0).getMetadata().getName(), "user-profile");
   }
 
-  @Test
-  public void shouldCreateNoSecretOnException()
+  @Test(expectedExceptions = InfrastructureException.class)
+  public void shouldCreateNoSecretWithInvalidUser()
       throws InfrastructureException, NotFoundException, ServerException {
-    when(userManager.getById(USER_ID)).thenThrow(new ServerException("Test server exception"));
+    when(userManager.getById(USER_ID)).thenThrow(new NotFoundException("Test exception"));
     namespaceProvisioner.provision(new NamespaceResolutionContext(null, USER_ID, USER_NAME));
-    assertTrue(
-        kubernetesServer
-            .getClient()
-            .secrets()
-            .inNamespace(USER_NAMESPACE)
-            .list()
-            .getItems()
-            .isEmpty());
-    verifyNoInteractions(clientFactory);
   }
 
   @Test

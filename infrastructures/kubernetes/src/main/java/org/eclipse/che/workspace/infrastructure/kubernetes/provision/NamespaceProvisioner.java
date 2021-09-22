@@ -27,10 +27,8 @@ import javax.inject.Inject;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
-import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -40,14 +38,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * On namespace provisioning, creates k8s {@link Secret} profile and preferences
- * from information about the User.
- *
- * Implements {@link EventSubscriber<PostUserPersistedEvent>} for updating these Secrets.
+ * On namespace provisioning, creates k8s {@link Secret} profile and preferences from information
+ * about the User.
  *
  * @author Pavol Baran
  */
-public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEvent> {
+public class NamespaceProvisioner {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceProvisioner.class);
   private static final String USER_PROFILE_SECRET_NAME = "user-profile";
   private static final String USER_PREFERENCES_SECRET_NAME = "user-preferences";
@@ -79,15 +75,12 @@ public class NamespaceProvisioner implements EventSubscriber<PostUserPersistedEv
     try {
       createOrUpdateSecrets(userManager.getById(namespaceResolutionContext.getUserId()));
     } catch (NotFoundException | ServerException e) {
-      LOG.error("Could not find current user. Skipping creation of user information secrets.", e);
+      throw new InfrastructureException(
+          "Could not find current user. Because of this, cannot create user profile and preferences secrets.",
+          e);
     }
     return kubernetesNamespaceMeta;
   };
-
-  @Override
-  public void onEvent(PostUserPersistedEvent event) {
-    createOrUpdateSecrets(event.getUser());
-  }
 
   /**
    * Creates k8s user profile and user preferences k8s secrets. This serves as a way for

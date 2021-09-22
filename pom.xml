@@ -147,7 +147,7 @@
         <org.everrest.version>1.15.0</org.everrest.version>
         <org.flyway.version>4.2.0</org.flyway.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
-        <org.javassist.version>3.18.2-GA</org.javassist.version>
+        <org.javassist.version>3.28.0-GA</org.javassist.version>
         <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>

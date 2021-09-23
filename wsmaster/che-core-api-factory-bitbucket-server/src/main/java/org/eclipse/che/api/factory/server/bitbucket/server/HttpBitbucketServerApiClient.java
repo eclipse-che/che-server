@@ -49,8 +49,8 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
 import org.eclipse.che.security.oauth1.OAuthAuthenticationException;
+import org.eclipse.che.security.oauth1.OAuthAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,11 +65,10 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   private static final Logger LOG = LoggerFactory.getLogger(HttpBitbucketServerApiClient.class);
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
   private final URI serverUri;
-  private final BitbucketServerOAuthAuthenticator authenticator;
+  private final OAuthAuthenticator authenticator;
   private final HttpClient httpClient;
 
-  public HttpBitbucketServerApiClient(
-      String serverUrl, BitbucketServerOAuthAuthenticator authenticator) {
+  public HttpBitbucketServerApiClient(String serverUrl, OAuthAuthenticator authenticator) {
     this.serverUri = URI.create(serverUrl);
     this.authenticator = authenticator;
     this.httpClient =
@@ -262,7 +261,6 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketPersonalAccessToken getPersonalAccessToken(String userSlug, Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-
     URI uri = serverUri.resolve("/rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
@@ -325,9 +323,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   private <T> List<T> doGetItems(Class<T> tClass, String api, String filter)
       throws ScmUnauthorizedException, ScmCommunicationException, ScmBadRequestException,
           ScmItemNotFoundException {
-    List<T> result = new ArrayList<>();
     Page<T> currentPage = doGetPage(tClass, api, 0, 25, filter);
-    result.addAll(currentPage.getValues());
+    List<T> result = new ArrayList<>(currentPage.getValues());
     while (!currentPage.isLastPage()) {
       currentPage = doGetPage(tClass, api, currentPage.getNextPageStart(), 25, filter);
       result.addAll(currentPage.getValues());

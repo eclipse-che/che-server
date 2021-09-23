@@ -56,46 +56,46 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
       String rawBitbucketEndpoints,
       String bitbucketOauth1Endpoint,
       Set<OAuthAuthenticator> authenticators) {
-    if (isNullOrEmpty(bitbucketOauth1Endpoint)) {
+    if (isNullOrEmpty(bitbucketOauth1Endpoint) && isNullOrEmpty(rawBitbucketEndpoints)) {
       return new NoopBitbucketServerApiClient();
+    } else if (!isNullOrEmpty(bitbucketOauth1Endpoint) && isNullOrEmpty(rawBitbucketEndpoints)) {
+      throw new ConfigurationException(
+          "`che.integration.bitbucket.server_endpoints` bitbucket configuration is missing."
+              + " It should contain values from 'che.oauth1.bitbucket.endpoint'");
+    } else if (isNullOrEmpty(bitbucketOauth1Endpoint) && !isNullOrEmpty(rawBitbucketEndpoints)) {
+      return new HttpBitbucketServerApiClient(
+          sanitizedEndpoints(rawBitbucketEndpoints).get(0), new NoopOAuthAuthenticator());
     } else {
-      if (isNullOrEmpty(rawBitbucketEndpoints)) {
+      bitbucketOauth1Endpoint = StringUtils.trimEnd(bitbucketOauth1Endpoint, '/');
+      if (!sanitizedEndpoints(rawBitbucketEndpoints).contains(bitbucketOauth1Endpoint)) {
         throw new ConfigurationException(
-            "`che.integration.bitbucket.server_endpoints` bitbucket configuration is missing."
-                + " It should contain values from 'che.oauth1.bitbucket.endpoint'");
+            "`che.integration.bitbucket.server_endpoints` must contain `"
+                + bitbucketOauth1Endpoint
+                + "` value");
       } else {
-        // sanitise URL-s first
-        bitbucketOauth1Endpoint = StringUtils.trimEnd(bitbucketOauth1Endpoint, '/');
-        List<String> bitbucketEndpoints =
-            Splitter.on(",")
-                .splitToList(rawBitbucketEndpoints)
+        Optional<OAuthAuthenticator> authenticator =
+            authenticators
                 .stream()
-                .map(s -> StringUtils.trimEnd(s, '/'))
-                .collect(Collectors.toList());
-        if (bitbucketEndpoints.contains(bitbucketOauth1Endpoint)) {
-          Optional<OAuthAuthenticator> authenticator =
-              authenticators
-                  .stream()
-                  .filter(
-                      a ->
-                          a.getOAuthProvider()
-                              .equals(BitbucketServerOAuthAuthenticator.AUTHENTICATOR_NAME))
-                  .filter(
-                      a -> BitbucketServerOAuthAuthenticator.class.isAssignableFrom(a.getClass()))
-                  .findFirst();
-          if (authenticator.isEmpty()) {
-            throw new ConfigurationException(
-                "'che.oauth1.bitbucket.endpoint' is set but BitbucketServerOAuthAuthenticator is not deployed correctly");
-          }
-          return new HttpBitbucketServerApiClient(
-              bitbucketOauth1Endpoint, (BitbucketServerOAuthAuthenticator) authenticator.get());
-        } else {
+                .filter(
+                    a ->
+                        a.getOAuthProvider()
+                            .equals(BitbucketServerOAuthAuthenticator.AUTHENTICATOR_NAME))
+                .filter(a -> BitbucketServerOAuthAuthenticator.class.isAssignableFrom(a.getClass()))
+                .findFirst();
+        if (authenticator.isEmpty()) {
           throw new ConfigurationException(
-              "`che.integration.bitbucket.server_endpoints` must contain `"
-                  + bitbucketOauth1Endpoint
-                  + "` value");
+              "'che.oauth1.bitbucket.endpoint' is set but BitbucketServerOAuthAuthenticator is not deployed correctly");
         }
+        return new HttpBitbucketServerApiClient(bitbucketOauth1Endpoint, authenticator.get());
       }
     }
+  }
+
+  private static List<String> sanitizedEndpoints(String rawBitbucketEndpoints) {
+    return Splitter.on(",")
+        .splitToList(rawBitbucketEndpoints)
+        .stream()
+        .map(s -> StringUtils.trimEnd(s, '/'))
+        .collect(Collectors.toList());
   }
 }

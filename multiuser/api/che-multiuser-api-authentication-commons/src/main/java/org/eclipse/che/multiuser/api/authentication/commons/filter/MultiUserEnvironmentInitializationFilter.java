@@ -23,6 +23,8 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Optional;
+
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -116,11 +118,13 @@ public abstract class MultiUserEnvironmentInitializationFilter<T> implements Fil
       handleMissingToken(request, response, chain);
       return;
     }
-    T processedToken = processToken(token);
-    if (processedToken == null) {
+    Optional<T> maybeProcessedToken = processToken(token);
+    if (maybeProcessedToken.isEmpty()) {
       handleMissingToken(request, response, chain);
       return;
     }
+
+    T processedToken = maybeProcessedToken.get();
 
     String userId = getUserId(token, processedToken);
 
@@ -165,7 +169,7 @@ public abstract class MultiUserEnvironmentInitializationFilter<T> implements Fil
    * @return a processed token or null if the token could not be processed for valid reasons (like
    *     expiry or not matching any user).
    */
-  protected abstract @Nullable T processToken(String token);
+  protected abstract Optional<T> processToken(String token);
 
   /**
    * Retrieves the id of the user from given authentication token.

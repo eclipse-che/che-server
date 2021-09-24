@@ -106,8 +106,8 @@ public class KeycloakEnvironmentInitializationFilter
   }
 
   @Override
-  protected Jws<Claims> processToken(String token) {
-    return jwtParser.parseClaimsJws(token);
+  protected Optional<Jws<Claims>> processToken(String token) {
+    return Optional.ofNullable(jwtParser.parseClaimsJws(token));
   }
 
   @Override

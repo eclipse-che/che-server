@@ -25,6 +25,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ConflictException;
@@ -79,8 +80,22 @@ public class OpenshiftTokenInitializationFilter
   }
 
   @Override
-  protected io.fabric8.openshift.api.model.User processToken(String token) {
-    return getCurrentUser(token);
+  protected Optional<io.fabric8.openshift.api.model.User> processToken(String token) {
+    // We're effectively creating new client for each request. It might be a good idea to somehow
+    // cache the client or user object. However, it may require non-trivial refactoring which may
+    // be unnecessary. Keeping it as is for now to avoid premature optimization.
+    try {
+      OpenShiftClient client = clientFactory.createAuthenticatedClient(token);
+      return Optional.of(client.currentUser());
+    } catch (KubernetesClientException e) {
+      if (e.getCode() == 401) {
+        LOG.error(
+                "Unauthorized when getting current user. Invalid OpenShift token, probably expired. Re-login? Re-request the token?");
+        return Optional.empty();
+      }
+
+      throw e;
+    }
   }
 
   @Override
@@ -89,7 +104,7 @@ public class OpenshiftTokenInitializationFilter
   }
 
   @Override
-  protected @Nullable Subject extractSubject(
+  protected Subject extractSubject(
       String token, io.fabric8.openshift.api.model.User osu) {
     try {
       ObjectMeta userMeta = osu.getMetadata();
@@ -100,32 +115,6 @@ public class OpenshiftTokenInitializationFilter
           new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
     } catch (ServerException | ConflictException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Returns the current user or null if the token cannot be authorized.
-   *
-   * @param token the token to authorize to OpenShift with
-   * @return the current OpenShift user or null
-   * @throws KubernetesClientException when the request to get the current user fails
-   */
-  private @Nullable io.fabric8.openshift.api.model.User getCurrentUser(String token)
-      throws KubernetesClientException {
-    // We're effectively creating new client for each request. It might be a good idea to somehow
-    // cache the client or user object. However, it may require non-trivial refactoring which may
-    // be unnecessary. Keeping it as is for now to avoid premature optimization.
-    try {
-      OpenShiftClient client = clientFactory.createAuthenticatedClient(token);
-      return client.currentUser();
-    } catch (KubernetesClientException e) {
-      if (e.getCode() == 401) {
-        LOG.error(
-            "Unauthorized when getting current user. Invalid OpenShift token, probably expired. Re-login? Re-request the token?");
-        return null;
-      }
-
-      throw e;
     }
   }
 

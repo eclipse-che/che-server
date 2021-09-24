@@ -26,6 +26,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.NotFoundException;
@@ -84,8 +85,8 @@ public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter
   }
 
   @Override
-  protected Claims processToken(String token) {
-    return jwtParser.parseClaimsJws(token).getBody();
+  protected Optional<Claims> processToken(String token) {
+    return Optional.ofNullable(jwtParser.parseClaimsJws(token).getBody());
   }
 
   @Override

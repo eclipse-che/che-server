@@ -40,6 +40,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
+
 @Listeners(value = MockitoTestNGListener.class)
 public class MultiUserEnvironmentInitializationFilterTest {
 
@@ -68,7 +70,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     lenient().when(filter.getUserId(anyString(), any())).thenReturn(userId);
     lenient().when(filter.extractSubject(anyString(), any())).thenReturn(subject);
     // pretend like we successfully processed the token unless defined otherwise in the tests
-    lenient().when(filter.processToken(anyString())).thenReturn(new Object());
+    lenient().when(filter.processToken(anyString())).thenReturn(Optional.of(new Object()));
   }
 
   @Test
@@ -91,7 +93,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
   public void shouldCallHandleMissingTokenIfTokenCannotBeProcessed() throws Exception {
     // given
     when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn("abc");
-    when(filter.processToken(anyString())).thenReturn(null);
+    when(filter.processToken(anyString())).thenReturn(Optional.empty());
 
     // when
     filter.doFilter(request, response, chain);

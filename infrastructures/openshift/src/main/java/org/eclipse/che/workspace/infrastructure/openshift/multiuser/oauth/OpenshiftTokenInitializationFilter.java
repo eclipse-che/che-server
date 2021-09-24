@@ -32,7 +32,6 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
@@ -90,7 +89,7 @@ public class OpenshiftTokenInitializationFilter
     } catch (KubernetesClientException e) {
       if (e.getCode() == 401) {
         LOG.error(
-                "Unauthorized when getting current user. Invalid OpenShift token, probably expired. Re-login? Re-request the token?");
+            "Unauthorized when getting current user. Invalid OpenShift token, probably expired. Re-login? Re-request the token?");
         return Optional.empty();
       }
 
@@ -104,8 +103,7 @@ public class OpenshiftTokenInitializationFilter
   }
 
   @Override
-  protected Subject extractSubject(
-      String token, io.fabric8.openshift.api.model.User osu) {
+  protected Subject extractSubject(String token, io.fabric8.openshift.api.model.User osu) {
     try {
       ObjectMeta userMeta = osu.getMetadata();
       User user =

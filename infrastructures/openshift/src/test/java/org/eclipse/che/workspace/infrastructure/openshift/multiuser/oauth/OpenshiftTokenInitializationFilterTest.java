@@ -26,6 +26,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.UserManager;
@@ -78,7 +79,7 @@ public class OpenshiftTokenInitializationFilterTest {
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
     when(openshiftUserMeta.getUid()).thenReturn(USER_UID);
 
-    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    User u = openshiftTokenInitializationFilter.processToken(TOKEN).get();
     String userId = openshiftTokenInitializationFilter.getUserId(TOKEN, u);
 
     assertEquals(u, openshiftUser);
@@ -101,7 +102,7 @@ public class OpenshiftTokenInitializationFilterTest {
         .thenReturn(
             new UserImpl(KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME));
 
-    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    User u = openshiftTokenInitializationFilter.processToken(TOKEN).get();
     Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN, u);
 
     assertEquals(subject.getUserId(), KUBE_ADMIN_USERNAME);
@@ -119,7 +120,7 @@ public class OpenshiftTokenInitializationFilterTest {
     when(userManager.getOrCreateUser(USER_UID, USERNAME + "@che", USERNAME))
         .thenReturn(new UserImpl(USER_UID, USERNAME + "@che", USERNAME));
 
-    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    User u = openshiftTokenInitializationFilter.processToken(TOKEN).get();
     Subject subject = openshiftTokenInitializationFilter.extractSubject(TOKEN, u);
 
     assertEquals(u, openshiftUser);
@@ -154,7 +155,7 @@ public class OpenshiftTokenInitializationFilterTest {
     when(openShiftClient.currentUser())
         .thenThrow(new KubernetesClientException("failah", 401, null));
 
-    User u = openshiftTokenInitializationFilter.processToken(TOKEN);
-    assertNull(u);
+    Optional<User> u = openshiftTokenInitializationFilter.processToken(TOKEN);
+    assertTrue(u.isEmpty());
   }
 }

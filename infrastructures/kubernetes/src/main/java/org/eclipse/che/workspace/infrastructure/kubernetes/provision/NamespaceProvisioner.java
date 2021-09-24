@@ -13,19 +13,15 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.client.KubernetesClientException;
 import javax.inject.Inject;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.user.User;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 
 /**
  * On namespace provisioning, creates k8s {@link Secret} profile and preferences from information
@@ -34,19 +30,16 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
  * @author Pavol Baran
  */
 public class NamespaceProvisioner {
-
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final KubernetesClientFactory clientFactory;
-  private final UserManager userManager;
+  private final UserProfileConfigurator userProfileConfigurator;
+  private final UserPreferencesConfigurator userPreferencesConfigurator;
 
   @Inject
   public NamespaceProvisioner(
-      KubernetesNamespaceFactory namespaceFactory,
-      KubernetesClientFactory clientFactory,
-      UserManager userManager) {
+          KubernetesNamespaceFactory namespaceFactory, UserProfileConfigurator userProfileConfigurator, UserPreferencesConfigurator userPreferencesConfigurator) {
     this.namespaceFactory = namespaceFactory;
-    this.clientFactory = clientFactory;
-    this.userManager = userManager;
+    this.userProfileConfigurator = userProfileConfigurator;
+    this.userPreferencesConfigurator = userPreferencesConfigurator;
   }
 
   public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
@@ -66,35 +59,16 @@ public class NamespaceProvisioner {
                 () ->
                     new InfrastructureException(
                         "Not able to find namespace " + namespace.getName()));
-
-    try {
-      createOrUpdateSecrets(userManager.getById(namespaceResolutionContext.getUserId()));
-    } catch (NotFoundException | ServerException e) {
-      throw new InfrastructureException(
-          "Could not find current user. Because of this, cannot create user profile and preferences secrets.",
-          e);
-    }
+    configureNamespace(namespaceResolutionContext);
     return namespaceMeta;
   }
 
   /**
    * Creates k8s user profile and user preferences k8s secrets. This serves as a way for
    * DevWorkspaces to acquire information about the user.
-   *
-   * @param user from information about this user are the secrets created
    */
-  private void createOrUpdateSecrets(User user) {
-
-    try {
-      if (userPreferencesSecret.isPresent()) {
-        clientFactory
-            .create()
-            .secrets()
-            .inNamespace(namespace)
-            .createOrReplace(userPreferencesSecret.get());
-      }
-    } catch (InfrastructureException | KubernetesClientException e) {
-      LOG.error("There was a failure while creating user information secrets.", e);
-    }
+  private void configureNamespace(NamespaceResolutionContext namespaceResolutionContext) throws InfrastructureException {
+    userProfileConfigurator.configure(namespaceResolutionContext);
+    userPreferencesConfigurator.configure(namespaceResolutionContext);
   }
 }

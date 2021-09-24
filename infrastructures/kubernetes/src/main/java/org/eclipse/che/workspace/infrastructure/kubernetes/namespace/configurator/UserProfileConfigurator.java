@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2012-2021 Red Hat, Inc.
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Red Hat, Inc. - initial API and implementation
+ */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_MOUNT_AS_ANNOTATION;
@@ -20,6 +31,12 @@ import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
+/**
+ * Creates {@link Secret} with user profile information such as his id, name and email. This serves
+ * as a way for DevWorkspaces to acquire information about the user.
+ *
+ * @author Pavol Baran
+ */
 public class UserProfileConfigurator implements NamespaceConfigurator {
   private static final String USER_PROFILE_SECRET_NAME = "user-profile";
   private static final String USER_PROFILE_SECRET_MOUNT_PATH = "/config/user/profile";

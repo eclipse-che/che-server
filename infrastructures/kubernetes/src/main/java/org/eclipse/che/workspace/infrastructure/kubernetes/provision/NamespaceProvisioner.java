@@ -11,8 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
-
-import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Namespace;
 import javax.inject.Inject;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -20,12 +19,13 @@ import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 
 /**
- * On namespace provisioning, creates k8s {@link Secret} profile and preferences from information
- * about the User.
+ * Provisions the k8s {@link Namespace}. After provisioning, configures the namespace through {@link
+ * NamespaceConfigurator}.
  *
  * @author Pavol Baran
  */
@@ -36,7 +36,9 @@ public class NamespaceProvisioner {
 
   @Inject
   public NamespaceProvisioner(
-          KubernetesNamespaceFactory namespaceFactory, UserProfileConfigurator userProfileConfigurator, UserPreferencesConfigurator userPreferencesConfigurator) {
+      KubernetesNamespaceFactory namespaceFactory,
+      UserProfileConfigurator userProfileConfigurator,
+      UserPreferencesConfigurator userPreferencesConfigurator) {
     this.namespaceFactory = namespaceFactory;
     this.userProfileConfigurator = userProfileConfigurator;
     this.userPreferencesConfigurator = userPreferencesConfigurator;
@@ -63,11 +65,8 @@ public class NamespaceProvisioner {
     return namespaceMeta;
   }
 
-  /**
-   * Creates k8s user profile and user preferences k8s secrets. This serves as a way for
-   * DevWorkspaces to acquire information about the user.
-   */
-  private void configureNamespace(NamespaceResolutionContext namespaceResolutionContext) throws InfrastructureException {
+  private void configureNamespace(NamespaceResolutionContext namespaceResolutionContext)
+      throws InfrastructureException {
     userProfileConfigurator.configure(namespaceResolutionContext);
     userPreferencesConfigurator.configure(namespaceResolutionContext);
   }

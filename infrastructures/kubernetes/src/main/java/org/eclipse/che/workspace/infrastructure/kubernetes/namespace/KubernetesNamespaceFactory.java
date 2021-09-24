@@ -255,7 +255,7 @@ public class KubernetesNamespaceFactory {
    * @return optional with kubernetes namespace meta
    * @throws InfrastructureException when any error occurs during namespace fetching
    */
-  protected Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
+  public Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
       throws InfrastructureException {
     try {
       Namespace namespace = clientFactory.create().namespaces().withName(name).get();
@@ -370,21 +370,6 @@ public class KubernetesNamespaceFactory {
     }
 
     return namespace;
-  }
-
-  public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
-      throws InfrastructureException {
-    KubernetesNamespace namespace =
-        getOrCreate(
-            new RuntimeIdentityImpl(
-                null,
-                null,
-                namespaceResolutionContext.getUserId(),
-                evaluateNamespaceName(namespaceResolutionContext)));
-
-    return fetchNamespace(namespace.getName())
-        .orElseThrow(
-            () -> new InfrastructureException("Not able to find namespace " + namespace.getName()));
   }
 
   public KubernetesNamespace get(RuntimeIdentity identity) throws InfrastructureException {

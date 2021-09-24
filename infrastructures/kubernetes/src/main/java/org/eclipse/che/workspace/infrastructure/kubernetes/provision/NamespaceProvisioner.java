@@ -29,10 +29,12 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
+import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,19 +70,28 @@ public class NamespaceProvisioner {
   }
 
   public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
-      throws InfrastructureException {
+          throws InfrastructureException {
+    KubernetesNamespace namespace =
+            namespaceFactory.getOrCreate(
+                    new RuntimeIdentityImpl(
+                            null,
+                            null,
+                            namespaceResolutionContext.getUserId(),
+                            namespaceFactory.evaluateNamespaceName(namespaceResolutionContext)));
 
-    KubernetesNamespaceMeta kubernetesNamespaceMeta =
-        namespaceFactory.provision(namespaceResolutionContext);
+    KubernetesNamespaceMeta namespaceMeta = namespaceFactory.fetchNamespace(namespace.getName())
+            .orElseThrow(
+                    () -> new InfrastructureException("Not able to find namespace " + namespace.getName()));
+
     try {
       createOrUpdateSecrets(userManager.getById(namespaceResolutionContext.getUserId()));
     } catch (NotFoundException | ServerException e) {
       throw new InfrastructureException(
-          "Could not find current user. Because of this, cannot create user profile and preferences secrets.",
-          e);
+              "Could not find current user. Because of this, cannot create user profile and preferences secrets.",
+              e);
     }
-    return kubernetesNamespaceMeta;
-  };
+    return namespaceMeta;
+  }
 
   /**
    * Creates k8s user profile and user preferences k8s secrets. This serves as a way for

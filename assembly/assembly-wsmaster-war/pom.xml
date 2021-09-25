@@ -61,6 +61,11 @@
         </dependency>
         <dependency>
             <groupId>io.jaegertracing</groupId>
+            <artifactId>jaeger-thrift</artifactId>
+            <classifier>shadow</classifier>
+        </dependency>
+        <dependency>
+            <groupId>io.jaegertracing</groupId>
             <artifactId>jaeger-tracerresolver</artifactId>
         </dependency>
         <dependency>
@@ -445,6 +450,7 @@
                                 <dep>io.jaegertracing:jaeger-core</dep>
                                 <dep>io.jaegertracing:jaeger-client</dep>
                                 <dep>io.jaegertracing:jaeger-tracerresolver</dep>
+                                <dep>io.jaegertracing:jaeger-thrift:jar</dep>
                                 <dep>org.eclipse.che.multiuser:che-multiuser-personal-account</dep>
                                 <dep>org.eclipse.che.multiuser:che-multiuser-keycloak-token-provider</dep>
                                 <dep>org.eclipse.persistence:org.eclipse.persistence.extension</dep>

@@ -44,6 +44,7 @@ public class NamespaceProvisioner {
     this.userPreferencesConfigurator = userPreferencesConfigurator;
   }
 
+  /** Tests for this method are in KubernetesFactoryTest. */
   public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
       throws InfrastructureException {
     KubernetesNamespace namespace =

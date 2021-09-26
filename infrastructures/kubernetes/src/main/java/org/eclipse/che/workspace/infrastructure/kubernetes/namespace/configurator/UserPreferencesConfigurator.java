@@ -73,7 +73,8 @@ public class UserPreferencesConfigurator implements NamespaceConfigurator {
           .inNamespace(namespace)
           .createOrReplace(userPreferencesSecret);
     } catch (KubernetesClientException e) {
-      throw new InfrastructureException(e);
+      throw new InfrastructureException(
+          "Error occurred while trying to create user preferences secret.", e);
     }
   }
 
@@ -87,11 +88,18 @@ public class UserPreferencesConfigurator implements NamespaceConfigurator {
       user = userManager.getById(namespaceResolutionContext.getUserId());
       preferences = preferenceManager.find(user.getId());
     } catch (NotFoundException | ServerException e) {
-      throw new InfrastructureException(e);
+      throw new InfrastructureException(
+          String.format(
+              "Preferences of user with id:%s cannot be retrieved.",
+              namespaceResolutionContext.getUserId()),
+          e);
     }
+
     if (preferences == null || preferences.isEmpty()) {
       throw new InfrastructureException(
-          "User preferences are empty. Skipping creation of user preferences secrets.");
+          String.format(
+              "Preferences of user with id:%s are empty. Cannot create user preferences secrets.",
+              namespaceResolutionContext.getUserId()));
     }
 
     Map<String, String> preferencesEncoded = new HashMap<>();

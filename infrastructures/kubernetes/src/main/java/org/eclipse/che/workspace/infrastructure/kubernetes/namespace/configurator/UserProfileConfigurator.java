@@ -63,7 +63,8 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
     try {
       clientFactory.create().secrets().inNamespace(namespace).createOrReplace(userProfileSecret);
     } catch (KubernetesClientException e) {
-      throw new InfrastructureException(e);
+      throw new InfrastructureException(
+          "Error occurred while trying to create user profile secret.", e);
     }
   }
 
@@ -73,7 +74,10 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
     try {
       user = userManager.getById(namespaceResolutionContext.getUserId());
     } catch (NotFoundException | ServerException e) {
-      throw new InfrastructureException(e);
+      throw new InfrastructureException(
+          String.format(
+              "Could not find current user with id:%s.", namespaceResolutionContext.getUserId()),
+          e);
     }
 
     Base64.Encoder enc = Base64.getEncoder();

@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -86,6 +87,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -135,6 +139,9 @@ public class KubernetesNamespaceFactoryTest {
   @Mock private FilterWatchListDeletable<Namespace, NamespaceList> namespaceListResource;
 
   @Mock private NamespaceList namespaceList;
+
+  @Mock private UserProfileConfigurator userProfileConfigurator;
+  @Mock private UserPreferencesConfigurator userPreferencesConfigurator;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -1248,7 +1255,7 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
+    KubernetesNamespaceMeta actual = testProvisioning(context);
 
     // then
     assertEquals(actual.getName(), "jondoe-che");
@@ -1288,7 +1295,7 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    namespaceFactory.provision(context);
+    testProvisioning(context);
 
     // then
     fail("should not reach this point since exception has to be thrown");
@@ -1329,7 +1336,8 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    namespaceFactory.provision(context);
+
+    testProvisioning(context);
 
     // then
     fail("should not reach this point since exception has to be thrown");
@@ -1534,5 +1542,14 @@ public class KubernetesNamespaceFactoryTest {
         .withNewPhase(phase)
         .endStatus()
         .build();
+  }
+
+  private KubernetesNamespaceMeta testProvisioning(NamespaceResolutionContext context)
+      throws InfrastructureException {
+    doNothing().when(userProfileConfigurator).configure(any());
+    doNothing().when(userPreferencesConfigurator).configure(any());
+    return new NamespaceProvisioner(
+            namespaceFactory, userProfileConfigurator, userPreferencesConfigurator)
+        .provision(context);
   }
 }

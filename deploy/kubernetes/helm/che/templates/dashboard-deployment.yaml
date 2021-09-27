@@ -59,3 +59,8 @@ spec:
           initialDelaySeconds: 3
           periodSeconds: 10
           timeoutSeconds: 3
+        env:
+        - name: CHE_HOST
+          value: {{ template "cheHost" . }}
+        - name: CHE_URL
+          value: {{ template "cheHost" . }}

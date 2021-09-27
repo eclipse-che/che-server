@@ -97,7 +97,6 @@
         <jakarta.ws.rs.version>3.0.0</jakarta.ws.rs.version>
         <java.target.version>11</java.target.version>
         <jdk.min.version>${java.target.version}</jdk.min.version>
-        <junit.version>4.13.1</junit.version>
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
@@ -500,11 +499,6 @@
                 <groupId>jakarta.ws.rs</groupId>
                 <artifactId>jakarta.ws.rs-api</artifactId>
                 <version>${jakarta.ws.rs.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>${junit.version}</version>
             </dependency>
             <dependency>
                 <groupId>mysql</groupId>
@@ -913,11 +907,6 @@
             <dependency>
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-commons-tracing</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.core</groupId>
-                <artifactId>che-core-commons-xml</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>

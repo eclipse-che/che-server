@@ -42,7 +42,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 public class UserPreferencesConfigurator implements NamespaceConfigurator {
   private static final String USER_PREFERENCES_SECRET_NAME = "user-preferences";
   private static final String USER_PREFERENCES_SECRET_MOUNT_PATH = "/config/user/preferences";
-  private static final int PREFERNCE_NAME_MAX_LENGTH = 253;
+  private static final int PREFERENCE_NAME_MAX_LENGTH = 253;
 
   private final KubernetesNamespaceFactory namespaceFactory;
   private final KubernetesClientFactory clientFactory;
@@ -129,8 +129,7 @@ public class UserPreferencesConfigurator implements NamespaceConfigurator {
    */
   @VisibleForTesting
   String normalizePreferenceName(String name) {
-    return name.replaceAll("[^-._a-zA-Z0-9]+", "-")
-        .replaceAll("-+", "-")
-        .substring(0, Math.min(name.length(), PREFERNCE_NAME_MAX_LENGTH));
+    name = name.replaceAll("[^-._a-zA-Z0-9]+", "-").replaceAll("-+", "-");
+    return name.substring(0, Math.min(name.length(), PREFERENCE_NAME_MAX_LENGTH));
   }
 }

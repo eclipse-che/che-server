@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 import io.fabric8.kubernetes.api.model.Namespace;
+import java.util.Set;
 import javax.inject.Inject;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -20,8 +21,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.Kubernetes
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 
 /**
  * Provisions the k8s {@link Namespace}. After provisioning, configures the namespace through {@link
@@ -31,17 +30,14 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
  */
 public class NamespaceProvisioner {
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final UserProfileConfigurator userProfileConfigurator;
-  private final UserPreferencesConfigurator userPreferencesConfigurator;
+  private final Set<NamespaceConfigurator> namespaceConfigurators;
 
   @Inject
   public NamespaceProvisioner(
       KubernetesNamespaceFactory namespaceFactory,
-      UserProfileConfigurator userProfileConfigurator,
-      UserPreferencesConfigurator userPreferencesConfigurator) {
+      Set<NamespaceConfigurator> namespaceConfigurators) {
     this.namespaceFactory = namespaceFactory;
-    this.userProfileConfigurator = userProfileConfigurator;
-    this.userPreferencesConfigurator = userPreferencesConfigurator;
+    this.namespaceConfigurators = namespaceConfigurators;
   }
 
   /** Tests for this method are in KubernetesFactoryTest. */
@@ -68,7 +64,8 @@ public class NamespaceProvisioner {
 
   private void configureNamespace(NamespaceResolutionContext namespaceResolutionContext)
       throws InfrastructureException {
-    userProfileConfigurator.configure(namespaceResolutionContext);
-    userPreferencesConfigurator.configure(namespaceResolutionContext);
+    for (NamespaceConfigurator configurator : namespaceConfigurators) {
+      configurator.configure(namespaceResolutionContext);
+    }
   }
 }

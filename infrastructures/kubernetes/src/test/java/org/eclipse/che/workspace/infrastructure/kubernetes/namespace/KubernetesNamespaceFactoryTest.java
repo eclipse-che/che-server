@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
@@ -23,7 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -87,8 +87,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.mockito.ArgumentCaptor;
@@ -139,9 +137,6 @@ public class KubernetesNamespaceFactoryTest {
   @Mock private FilterWatchListDeletable<Namespace, NamespaceList> namespaceListResource;
 
   @Mock private NamespaceList namespaceList;
-
-  @Mock private UserProfileConfigurator userProfileConfigurator;
-  @Mock private UserPreferencesConfigurator userPreferencesConfigurator;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -1546,10 +1541,6 @@ public class KubernetesNamespaceFactoryTest {
 
   private KubernetesNamespaceMeta testProvisioning(NamespaceResolutionContext context)
       throws InfrastructureException {
-    doNothing().when(userProfileConfigurator).configure(any());
-    doNothing().when(userPreferencesConfigurator).configure(any());
-    return new NamespaceProvisioner(
-            namespaceFactory, userProfileConfigurator, userPreferencesConfigurator)
-        .provision(context);
+    return new NamespaceProvisioner(namespaceFactory, emptySet()).provision(context);
   }
 }

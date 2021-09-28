@@ -24,7 +24,8 @@ docker run -i --rm -v "$HOME/.m2:/root/.m2" \
 set -
 # validate that index.d.ts has kind of valid output
 if ! grep "export namespace" index.d.ts; then
-  echo "Invalid output generated for index.d.ts"
+  echo "Invalid output generated for index.d.ts, printing its content:"
+  cat index.d.ts
   exit 1
 fi
 

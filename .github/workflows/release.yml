@@ -21,9 +21,9 @@ on:
         required: false
         default: 'false'
       versionParent:
-        description: 'Specify Che Parent version here, if *releaseParent is true'
+        description: 'Specify Che Parent version here'
         required: false
-        default: ''
+        default: '7.15.0'
       forceRecreateTags:
         description: 'If true, tags will be overriden and regenerated. Use with caution.'
         required: false
@@ -43,7 +43,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         with: 

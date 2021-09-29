@@ -53,7 +53,6 @@ import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -255,7 +254,7 @@ public class KubernetesNamespaceFactory {
    * @return optional with kubernetes namespace meta
    * @throws InfrastructureException when any error occurs during namespace fetching
    */
-  protected Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
+  public Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
       throws InfrastructureException {
     try {
       Namespace namespace = clientFactory.create().namespaces().withName(name).get();
@@ -370,21 +369,6 @@ public class KubernetesNamespaceFactory {
     }
 
     return namespace;
-  }
-
-  public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
-      throws InfrastructureException {
-    KubernetesNamespace namespace =
-        getOrCreate(
-            new RuntimeIdentityImpl(
-                null,
-                null,
-                namespaceResolutionContext.getUserId(),
-                evaluateNamespaceName(namespaceResolutionContext)));
-
-    return fetchNamespace(namespace.getName())
-        .orElseThrow(
-            () -> new InfrastructureException("Not able to find namespace " + namespace.getName()));
   }
 
   public KubernetesNamespace get(RuntimeIdentity identity) throws InfrastructureException {

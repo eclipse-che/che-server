@@ -207,7 +207,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   }
 
   @Override
-  protected Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
+  public Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
       throws InfrastructureException {
     return fetchNamespaceObject(name).map(this::asNamespaceMeta);
   }

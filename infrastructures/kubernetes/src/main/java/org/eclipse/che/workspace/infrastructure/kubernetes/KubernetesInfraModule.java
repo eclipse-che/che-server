@@ -48,6 +48,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesDev
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNamespaceOnWorkspaceRemove;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PerWorkspacePVCStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.UniqueWorkspacePVCStrategy;
@@ -97,6 +100,11 @@ public class KubernetesInfraModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), WorkspaceAttributeValidator.class);
     workspaceAttributeValidators.addBinding().to(K8sInfraNamespaceWsAttributeValidator.class);
     workspaceAttributeValidators.addBinding().to(AsyncStorageModeValidator.class);
+
+    Multibinder<NamespaceConfigurator> namespaceConfigurators =
+        Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
+    namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
+    namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
 
     bind(KubernetesNamespaceService.class);
 

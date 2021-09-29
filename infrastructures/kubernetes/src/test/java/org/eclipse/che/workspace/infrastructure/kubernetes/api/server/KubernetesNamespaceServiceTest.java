@@ -35,6 +35,7 @@ import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.KubernetesNamespaceMetaDto;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.core.Filter;
 import org.everrest.core.GenericContainerRequest;
@@ -67,6 +68,7 @@ public class KubernetesNamespaceServiceTest {
   private CheJsonProvider jsonProvider = new CheJsonProvider(Collections.emptySet());
 
   @Mock private KubernetesNamespaceFactory namespaceFactory;
+  @Mock private NamespaceProvisioner namespaceProvisioner;
 
   @InjectMocks private KubernetesNamespaceService service;
 
@@ -98,7 +100,7 @@ public class KubernetesNamespaceServiceTest {
     KubernetesNamespaceMetaImpl namespaceMeta =
         new KubernetesNamespaceMetaImpl(
             "ws-namespace", ImmutableMap.of("phase", "active", "default", "true"));
-    when(namespaceFactory.provision(any(NamespaceResolutionContext.class)))
+    when(namespaceProvisioner.provision(any(NamespaceResolutionContext.class)))
         .thenReturn(namespaceMeta);
     // when
     final Response response =
@@ -113,7 +115,7 @@ public class KubernetesNamespaceServiceTest {
     KubernetesNamespaceMetaDto actual = unwrapDto(response, KubernetesNamespaceMetaDto.class);
     assertEquals(actual.getName(), namespaceMeta.getName());
     assertEquals(actual.getAttributes(), namespaceMeta.getAttributes());
-    verify(namespaceFactory).provision(any(NamespaceResolutionContext.class));
+    verify(namespaceProvisioner).provision(any(NamespaceResolutionContext.class));
   }
 
   @Test
@@ -122,7 +124,7 @@ public class KubernetesNamespaceServiceTest {
     KubernetesNamespaceMetaImpl namespaceMeta =
         new KubernetesNamespaceMetaImpl(
             "ws-namespace", ImmutableMap.of("phase", "active", "default", "true"));
-    when(namespaceFactory.provision(any(NamespaceResolutionContext.class)))
+    when(namespaceProvisioner.provision(any(NamespaceResolutionContext.class)))
         .thenReturn(namespaceMeta);
     // when
     final Response response =
@@ -136,7 +138,7 @@ public class KubernetesNamespaceServiceTest {
     assertEquals(response.getStatusCode(), 200);
     ArgumentCaptor<NamespaceResolutionContext> captor =
         ArgumentCaptor.forClass(NamespaceResolutionContext.class);
-    verify(namespaceFactory).provision(captor.capture());
+    verify(namespaceProvisioner).provision(captor.capture());
     NamespaceResolutionContext actualContext = captor.getValue();
     assertEquals(actualContext.getUserId(), SUBJECT.getUserId());
     assertEquals(actualContext.getUserName(), SUBJECT.getUserName());

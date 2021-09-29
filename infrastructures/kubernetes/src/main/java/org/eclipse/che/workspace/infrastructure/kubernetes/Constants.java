@@ -46,5 +46,13 @@ public final class Constants {
   public static final String POD_STATUS_PHASE_FAILED = "Failed";
   public static final String POD_STATUS_PHASE_SUCCEEDED = "Succeeded";
 
+  /** DevWorkspace labels and annotations for mounting secrets and configmaps. */
+  public static final String DEV_WORKSPACE_MOUNT_LABEL =
+      "controller.devfile.io/mount-to-devworkspace";
+
+  public static final String DEV_WORKSPACE_MOUNT_PATH_ANNOTATION =
+      "controller.devfile.io/mount-path";
+  public static final String DEV_WORKSPACE_MOUNT_AS_ANNOTATION = "controller.devfile.io/mount-as";
+
   private Constants() {}
 }

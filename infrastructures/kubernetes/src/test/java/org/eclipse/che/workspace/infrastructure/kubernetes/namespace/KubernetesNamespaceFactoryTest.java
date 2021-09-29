@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
@@ -86,6 +87,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -1248,7 +1250,7 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    KubernetesNamespaceMeta actual = namespaceFactory.provision(context);
+    KubernetesNamespaceMeta actual = testProvisioning(context);
 
     // then
     assertEquals(actual.getName(), "jondoe-che");
@@ -1288,7 +1290,7 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    namespaceFactory.provision(context);
+    testProvisioning(context);
 
     // then
     fail("should not reach this point since exception has to be thrown");
@@ -1329,7 +1331,8 @@ public class KubernetesNamespaceFactoryTest {
     // when
     NamespaceResolutionContext context =
         new NamespaceResolutionContext("workspace123", "user123", "jondoe");
-    namespaceFactory.provision(context);
+
+    testProvisioning(context);
 
     // then
     fail("should not reach this point since exception has to be thrown");
@@ -1534,5 +1537,10 @@ public class KubernetesNamespaceFactoryTest {
         .withNewPhase(phase)
         .endStatus()
         .build();
+  }
+
+  private KubernetesNamespaceMeta testProvisioning(NamespaceResolutionContext context)
+      throws InfrastructureException {
+    return new NamespaceProvisioner(namespaceFactory, emptySet()).provision(context);
   }
 }

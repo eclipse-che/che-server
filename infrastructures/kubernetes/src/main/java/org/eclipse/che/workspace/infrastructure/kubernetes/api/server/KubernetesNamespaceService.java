@@ -35,6 +35,7 @@ import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.KubernetesNamespaceMetaDto;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 
 /** @author Sergii Leshchenko */
 @Tag(name = "kubernetes-namespace", description = "Kubernetes REST API for working with Namespaces")
@@ -43,10 +44,13 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 public class KubernetesNamespaceService extends Service {
 
   private final KubernetesNamespaceFactory namespaceFactory;
+  private final NamespaceProvisioner namespaceProvisioner;
 
   @Inject
-  public KubernetesNamespaceService(KubernetesNamespaceFactory namespaceFactory) {
+  public KubernetesNamespaceService(
+      KubernetesNamespaceFactory namespaceFactory, NamespaceProvisioner namespaceProvisioner) {
     this.namespaceFactory = namespaceFactory;
+    this.namespaceProvisioner = namespaceProvisioner;
   }
 
   @GET
@@ -88,7 +92,7 @@ public class KubernetesNamespaceService extends Service {
       })
   public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
     return asDto(
-        namespaceFactory.provision(
+        namespaceProvisioner.provision(
             new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject())));
   }
 

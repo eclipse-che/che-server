@@ -111,7 +111,7 @@ public class KeycloakEnvironmentInitializationFilter
   }
 
   @Override
-  protected String getUserId(String token, Jws<Claims> processedToken) {
+  protected String getUserId(Jws<Claims> processedToken) {
     return processedToken.getBody().getSubject();
   }
 

@@ -124,7 +124,7 @@ public abstract class MultiUserEnvironmentInitializationFilter<T> implements Fil
 
     T processedToken = maybeProcessedToken.get();
 
-    String userId = getUserId(token, processedToken);
+    String userId = getUserId(processedToken);
 
     // retrieve cached session if any or create new
     httpRequest = new SessionCachedHttpRequest(request, userId);
@@ -172,11 +172,10 @@ public abstract class MultiUserEnvironmentInitializationFilter<T> implements Fil
   /**
    * Retrieves the id of the user from given authentication token.
    *
-   * @param token the original authentication token string
    * @param processedToken the processed authentication string
    * @return user id given token belongs to
    */
-  protected abstract String getUserId(String token, T processedToken);
+  protected abstract String getUserId(T processedToken);
 
   /**
    * Calculates user {@link Subject} from given authentication token.

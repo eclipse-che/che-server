@@ -98,7 +98,7 @@ public class OpenshiftTokenInitializationFilter
   }
 
   @Override
-  protected String getUserId(String token, io.fabric8.openshift.api.model.User user) {
+  protected String getUserId(io.fabric8.openshift.api.model.User user) {
     return firstNonNull(user.getMetadata().getUid(), user.getMetadata().getName());
   }
 
@@ -108,7 +108,7 @@ public class OpenshiftTokenInitializationFilter
       ObjectMeta userMeta = osu.getMetadata();
       User user =
           userManager.getOrCreateUser(
-              getUserId(token, osu), openshiftUserEmail(userMeta), userMeta.getName());
+              getUserId(osu), openshiftUserEmail(userMeta), userMeta.getName());
       return new AuthorizedSubject(
           new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
     } catch (ServerException | ConflictException e) {

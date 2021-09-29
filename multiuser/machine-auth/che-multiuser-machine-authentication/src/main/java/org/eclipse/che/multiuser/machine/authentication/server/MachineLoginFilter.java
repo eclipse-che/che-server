@@ -106,7 +106,7 @@ public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter
   }
 
   @Override
-  protected String getUserId(String token, Claims claims) {
+  protected String getUserId(Claims claims) {
     return claims.get(USER_ID_CLAIM, String.class);
   }
 

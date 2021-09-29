@@ -66,7 +66,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
             withSettings()
                 .defaultAnswer(Mockito.CALLS_REAL_METHODS)
                 .useConstructor(sessionStore, tokenExtractor));
-    lenient().when(filter.getUserId(anyString(), any())).thenReturn(userId);
+    lenient().when(filter.getUserId(any())).thenReturn(userId);
     lenient().when(filter.extractSubject(anyString(), any())).thenReturn(subject);
     // pretend like we successfully processed the token unless defined otherwise in the tests
     lenient().when(filter.processToken(anyString())).thenReturn(Optional.of(new Object()));
@@ -84,7 +84,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     verify(tokenExtractor).getToken(eq(request));
     verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
     verifyNoMoreInteractions(request);
-    verify(filter, never()).getUserId(anyString(), any());
+    verify(filter, never()).getUserId(any());
     verify(filter, never()).extractSubject(anyString(), any());
   }
 
@@ -101,7 +101,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     verify(tokenExtractor).getToken(eq(request));
     verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
     verifyNoMoreInteractions(request);
-    verify(filter, never()).getUserId(anyString(), any());
+    verify(filter, never()).getUserId(any());
     verify(filter, never()).extractSubject(anyString(), any());
   }
 
@@ -115,7 +115,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // then
     verify(request).getSession(eq(false));
     verify(tokenExtractor).getToken(eq(request));
-    verify(filter).getUserId(eq(token), any());
+    verify(filter).getUserId(any());
     verify(sessionStore).getSession(eq(userId), any());
   }
 

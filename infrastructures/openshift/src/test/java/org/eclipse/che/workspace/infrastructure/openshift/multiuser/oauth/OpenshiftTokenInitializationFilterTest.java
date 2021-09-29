@@ -80,7 +80,7 @@ public class OpenshiftTokenInitializationFilterTest {
     when(openshiftUserMeta.getUid()).thenReturn(USER_UID);
 
     User u = openshiftTokenInitializationFilter.processToken(TOKEN).get();
-    String userId = openshiftTokenInitializationFilter.getUserId(TOKEN, u);
+    String userId = openshiftTokenInitializationFilter.getUserId(u);
 
     assertEquals(u, openshiftUser);
     assertEquals(userId, USER_UID);

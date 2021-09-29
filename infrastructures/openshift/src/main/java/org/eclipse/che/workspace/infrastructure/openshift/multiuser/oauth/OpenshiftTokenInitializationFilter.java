@@ -85,7 +85,7 @@ public class OpenshiftTokenInitializationFilter
     // be unnecessary. Keeping it as is for now to avoid premature optimization.
     try {
       OpenShiftClient client = clientFactory.createAuthenticatedClient(token);
-      return Optional.of(client.currentUser());
+      return Optional.ofNullable(client.currentUser());
     } catch (KubernetesClientException e) {
       if (e.getCode() == 401) {
         LOG.error(

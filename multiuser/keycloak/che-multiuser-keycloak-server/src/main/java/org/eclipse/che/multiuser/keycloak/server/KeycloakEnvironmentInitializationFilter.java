@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 public class KeycloakEnvironmentInitializationFilter
-    extends MultiUserEnvironmentInitializationFilter {
+    extends MultiUserEnvironmentInitializationFilter<Jws<Claims>> {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(KeycloakEnvironmentInitializationFilter.class);
@@ -106,17 +106,19 @@ public class KeycloakEnvironmentInitializationFilter
   }
 
   @Override
-  protected String getUserId(String token) {
-    Claims claims = jwtParser.parseClaimsJws(token).getBody();
-    return claims.getSubject();
+  protected Optional<Jws<Claims>> processToken(String token) {
+    return Optional.ofNullable(jwtParser.parseClaimsJws(token));
   }
 
   @Override
-  public Subject extractSubject(String token) throws ServletException {
+  protected String getUserId(Jws<Claims> processedToken) {
+    return processedToken.getBody().getSubject();
+  }
 
-    Jws<Claims> jwt = jwtParser.parseClaimsJws(token);
-    Claims claims = jwt.getBody();
-    LOG.debug("JWT = {}", jwt);
+  @Override
+  public Subject extractSubject(String token, Jws<Claims> processedToken) throws ServletException {
+    Claims claims = processedToken.getBody();
+    LOG.debug("JWT = {}", processedToken);
     // OK, we can trust this JWT
 
     try {

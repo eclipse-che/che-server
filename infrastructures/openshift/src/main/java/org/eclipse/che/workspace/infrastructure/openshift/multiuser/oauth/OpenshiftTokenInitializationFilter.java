@@ -25,13 +25,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
@@ -51,7 +51,8 @@ import org.slf4j.LoggerFactory;
  * unauthenticated paths, that are allowed without token.
  */
 @Singleton
-public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInitializationFilter {
+public class OpenshiftTokenInitializationFilter
+    extends MultiUserEnvironmentInitializationFilter<io.fabric8.openshift.api.model.User> {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(OpenshiftTokenInitializationFilter.class);
@@ -78,44 +79,41 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
   }
 
   @Override
-  protected String getUserId(String token) {
+  protected Optional<io.fabric8.openshift.api.model.User> processToken(String token) {
+    // We're effectively creating new client for each request. It might be a good idea to somehow
+    // cache the client or user object. However, it may require non-trivial refactoring which may
+    // be unnecessary. Keeping it as is for now to avoid premature optimization.
     try {
-      io.fabric8.openshift.api.model.User user = getCurrentUser(token);
-      return firstNonNull(user.getMetadata().getUid(), user.getMetadata().getName());
+      OpenShiftClient client = clientFactory.createAuthenticatedClient(token);
+      return Optional.ofNullable(client.currentUser());
     } catch (KubernetesClientException e) {
       if (e.getCode() == 401) {
         LOG.error(
             "Unauthorized when getting current user. Invalid OpenShift token, probably expired. Re-login? Re-request the token?");
+        return Optional.empty();
       }
-      throw new RuntimeException(e);
-    } catch (InfrastructureException e) {
-      throw new RuntimeException(e);
+
+      throw e;
     }
   }
 
   @Override
-  protected Subject extractSubject(String token) {
-    try {
-      ObjectMeta userMeta = getCurrentUser(token).getMetadata();
-      User user =
-          userManager.getOrCreateUser(
-              firstNonNull(userMeta.getUid(), userMeta.getName()),
-              openshiftUserEmail(userMeta),
-              userMeta.getName());
-      return new AuthorizedSubject(
-          new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
-    } catch (InfrastructureException | ServerException | ConflictException e) {
-      throw new RuntimeException(e);
-    }
+  protected String getUserId(io.fabric8.openshift.api.model.User user) {
+    return firstNonNull(user.getMetadata().getUid(), user.getMetadata().getName());
   }
 
-  private io.fabric8.openshift.api.model.User getCurrentUser(String token)
-      throws InfrastructureException {
-    // We're effectively creating new client for each request. It might be a good idea to somehow
-    // cache the client or user object. However, it may require non-trivial refactoring which may
-    // be unnecessary. Keeping it as is for now to avoid premature optimization.
-    OpenShiftClient client = clientFactory.createAuthenticatedClient(token);
-    return client.currentUser();
+  @Override
+  protected Subject extractSubject(String token, io.fabric8.openshift.api.model.User osu) {
+    try {
+      ObjectMeta userMeta = osu.getMetadata();
+      User user =
+          userManager.getOrCreateUser(
+              getUserId(osu), openshiftUserEmail(userMeta), userMeta.getName());
+      return new AuthorizedSubject(
+          new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
+    } catch (ServerException | ConflictException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected String openshiftUserEmail(ObjectMeta userMeta) {
@@ -144,8 +142,8 @@ public class OpenshiftTokenInitializationFilter extends MultiUserEnvironmentInit
       }
     }
 
-    LOG.error("Rejecting the request due to missing token in Authorization header.");
-    sendError(response, 401, "Authorization token is missing");
+    LOG.error("Rejecting the request due to missing/expired token in Authorization header.");
+    sendError(response, 401, "Authorization token is missing or expired");
   }
 
   @Override

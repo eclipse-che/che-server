@@ -26,6 +26,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.NotFoundException;
@@ -45,7 +46,7 @@ import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
  * @author Anton Korneta
  */
 @Singleton
-public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter {
+public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter<Claims> {
 
   private final UserManager userManager;
   private final JwtParser jwtParser;
@@ -84,9 +85,13 @@ public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter
   }
 
   @Override
-  public Subject extractSubject(String token) {
+  protected Optional<Claims> processToken(String token) {
+    return Optional.ofNullable(jwtParser.parseClaimsJws(token).getBody());
+  }
+
+  @Override
+  public Subject extractSubject(String token, Claims claims) {
     try {
-      final Claims claims = jwtParser.parseClaimsJws(token).getBody();
       final String userId = claims.get(USER_ID_CLAIM, String.class);
       // check if user with such id exists
       final String userName = userManager.getById(userId).getName();
@@ -101,8 +106,7 @@ public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter
   }
 
   @Override
-  protected String getUserId(String token) {
-    final Claims claims = jwtParser.parseClaimsJws(token).getBody();
+  protected String getUserId(Claims claims) {
     return claims.get(USER_ID_CLAIM, String.class);
   }
 

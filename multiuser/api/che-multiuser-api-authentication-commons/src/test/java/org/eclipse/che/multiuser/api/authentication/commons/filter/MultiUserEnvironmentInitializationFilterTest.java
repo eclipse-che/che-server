@@ -16,25 +16,26 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -54,25 +55,54 @@ public class MultiUserEnvironmentInitializationFilterTest {
   private final String token = "token-abc123";
   private final Subject subject = new SubjectImpl("user", userId, token, false);
 
-  private MultiUserEnvironmentInitializationFilter filter;
+  private MultiUserEnvironmentInitializationFilter<Object> filter;
 
   @BeforeMethod
+  @SuppressWarnings("unchecked")
   public void setUp() throws Exception {
-    filter = spy(new MockMultiUserEnvironmentInitializationFilter(sessionStore, tokenExtractor));
-    lenient().when(filter.getUserId(anyString())).thenReturn(userId);
-    lenient().when(filter.extractSubject(anyString())).thenReturn(subject);
+    filter =
+        mock(
+            MultiUserEnvironmentInitializationFilter.class,
+            withSettings()
+                .defaultAnswer(Mockito.CALLS_REAL_METHODS)
+                .useConstructor(sessionStore, tokenExtractor));
+    lenient().when(filter.getUserId(any())).thenReturn(userId);
+    lenient().when(filter.extractSubject(anyString(), any())).thenReturn(subject);
+    // pretend like we successfully processed the token unless defined otherwise in the tests
+    lenient().when(filter.processToken(anyString())).thenReturn(Optional.of(new Object()));
   }
 
   @Test
   public void shouldCallHandleMissingTokenIfTokenIsNull() throws Exception {
+    // given
     when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn(null);
+
     // when
     filter.doFilter(request, response, chain);
+
+    // then
     verify(tokenExtractor).getToken(eq(request));
     verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
     verifyNoMoreInteractions(request);
-    verify(filter, never()).getUserId(anyString());
-    verify(filter, never()).extractSubject(anyString());
+    verify(filter, never()).getUserId(any());
+    verify(filter, never()).extractSubject(anyString(), any());
+  }
+
+  @Test
+  public void shouldCallHandleMissingTokenIfTokenCannotBeProcessed() throws Exception {
+    // given
+    when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn("abc");
+    when(filter.processToken(anyString())).thenReturn(Optional.empty());
+
+    // when
+    filter.doFilter(request, response, chain);
+
+    // then
+    verify(tokenExtractor).getToken(eq(request));
+    verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
+    verifyNoMoreInteractions(request);
+    verify(filter, never()).getUserId(any());
+    verify(filter, never()).extractSubject(anyString(), any());
   }
 
   @Test
@@ -85,7 +115,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // then
     verify(request).getSession(eq(false));
     verify(tokenExtractor).getToken(eq(request));
-    verify(filter).getUserId(eq(token));
+    verify(filter).getUserId(any());
     verify(sessionStore).getSession(eq(userId), any());
   }
 
@@ -97,7 +127,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // when
     filter.doFilter(request, response, chain);
     // then
-    verify(filter).extractSubject(eq(token));
+    verify(filter).extractSubject(eq(token), any());
   }
 
   @Test
@@ -110,7 +140,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // when
     filter.doFilter(request, response, chain);
     // then
-    verify(filter).extractSubject(eq(token));
+    verify(filter).extractSubject(eq(token), any());
   }
 
   @Test
@@ -123,7 +153,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     filter.doFilter(request, response, chain);
     // then
     verify(session).invalidate();
-    verify(filter).extractSubject(eq(token));
+    verify(filter).extractSubject(eq(token), any());
   }
 
   @Test
@@ -137,34 +167,5 @@ public class MultiUserEnvironmentInitializationFilterTest {
     filter.doFilter(request, response, chain);
     // then
     verify(context).setSubject(eq(subject));
-  }
-
-  private static class MockMultiUserEnvironmentInitializationFilter
-      extends MultiUserEnvironmentInitializationFilter {
-
-    MockMultiUserEnvironmentInitializationFilter(
-        SessionStore sessionStore, RequestTokenExtractor tokenExtractor) {
-      super(sessionStore, tokenExtractor);
-    }
-
-    @Override
-    protected String getUserId(String token) {
-      return null;
-    }
-
-    @Override
-    protected Subject extractSubject(String token) {
-      return null;
-    }
-
-    @Override
-    protected void handleMissingToken(
-        ServletRequest request, ServletResponse response, FilterChain chain) {}
-
-    @Override
-    public void init(FilterConfig filterConfig) {}
-
-    @Override
-    public void destroy() {}
   }
 }

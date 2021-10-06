@@ -45,4 +45,4 @@ jobs:
         branch=${GITHUB_REF%/}
 
         # invoke action from che-docs repo
-        invokeAction eclipse/che-docs "Update Che variables in the docs" "TODOREPLACE" branch "${branch}"
+        invokeAction eclipse/che-docs "Update Che variables in the docs" "13902929" branch "${branch}"

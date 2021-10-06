@@ -33,6 +33,8 @@ public class OpenshiftComponentToWorkspaceApplier extends KubernetesComponentToW
       @Named("che.infra.kubernetes.pvc.access_mode") String defaultPVCAccessMode,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
+      @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
+          String devfileEndpointsExposure,
       @Named(KUBERNETES_BASED_COMPONENTS_KEY_NAME) Set<String> kubernetesBasedComponentTypes) {
     super(
         objectsParser,
@@ -44,6 +46,7 @@ public class OpenshiftComponentToWorkspaceApplier extends KubernetesComponentToW
         defaultPVCAccessMode,
         pvcStorageClassName,
         imagePullPolicy,
+        devfileEndpointsExposure,
         kubernetesBasedComponentTypes);
   }
 }

@@ -11,8 +11,14 @@
  */
 package org.eclipse.che.api.workspace.server.devfile.convert.component;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
+import org.eclipse.che.api.core.model.workspace.devfile.Endpoint;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
+import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 
@@ -41,4 +47,18 @@ public interface ComponentToWorkspaceApplier {
       ComponentImpl component,
       FileContentProvider contentProvider)
       throws DevfileException;
+
+  static Map<String, ServerConfigImpl> convertEndpointsIntoServers(
+      List<? extends Endpoint> endpoints, boolean requireSubdomain) {
+    return endpoints
+        .stream()
+        .collect(
+            Collectors.toMap(
+                Endpoint::getName,
+                e -> {
+                  var cfg = ServerConfigImpl.createFromEndpoint(e);
+                  ServerConfig.setRequireSubdomain(cfg.getAttributes(), requireSubdomain);
+                  return cfg;
+                }));
+  }
 }

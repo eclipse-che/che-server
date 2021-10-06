@@ -180,7 +180,7 @@ public class ServerConfigImpl implements ServerConfig {
         + '}';
   }
 
-  public static ServerConfigImpl createFromEndpoint(Endpoint endpoint, boolean devfileEndpoint) {
+  public static ServerConfigImpl createFromEndpoint(Endpoint endpoint) {
     HashMap<String, String> attributes = new HashMap<>(endpoint.getAttributes());
     attributes.put(SERVER_NAME_ATTRIBUTE, endpoint.getName());
 
@@ -196,12 +196,6 @@ public class ServerConfigImpl implements ServerConfig {
       ServerConfig.setInternal(attributes, true);
     }
 
-    ServerConfig.setRequireSubdomain(attributes, devfileEndpoint);
-
     return new ServerConfigImpl(Integer.toString(endpoint.getPort()), protocol, path, attributes);
-  }
-
-  public static ServerConfigImpl createFromEndpoint(Endpoint endpoint) {
-    return createFromEndpoint(endpoint, false);
   }
 }

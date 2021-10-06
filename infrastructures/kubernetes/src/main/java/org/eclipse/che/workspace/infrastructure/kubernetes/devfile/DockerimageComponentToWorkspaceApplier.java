@@ -17,7 +17,9 @@ import static java.lang.String.format;
 import static org.eclipse.che.api.core.model.workspace.config.Command.MACHINE_NAME_ATTRIBUTE;
 import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.DEVFILE_COMPONENT_ALIAS_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.DOCKERIMAGE_COMPONENT_TYPE;
+import static org.eclipse.che.api.workspace.server.devfile.convert.component.ComponentToWorkspaceApplier.convertEndpointsIntoServers;
 import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy.SINGLE_HOST_STRATEGY;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -32,13 +34,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
-import org.eclipse.che.api.core.model.workspace.devfile.Endpoint;
 import org.eclipse.che.api.workspace.server.devfile.Constants;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.convert.component.ComponentToWorkspaceApplier;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.VolumeImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
@@ -65,15 +65,19 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
   private final String projectFolderPath;
   private final String imagePullPolicy;
   private final KubernetesEnvironmentProvisioner k8sEnvProvisioner;
+  private final String devfileEndpointsExposure;
 
   @Inject
   public DockerimageComponentToWorkspaceApplier(
       @Named("che.workspace.projects.storage") String projectFolderPath,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
+      @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
+          String devfileEndpointsExposure,
       KubernetesEnvironmentProvisioner k8sEnvProvisioner) {
     this.projectFolderPath = projectFolderPath;
     this.imagePullPolicy = imagePullPolicy;
     this.k8sEnvProvisioner = k8sEnvProvisioner;
+    this.devfileEndpointsExposure = devfileEndpointsExposure;
   }
 
   /**
@@ -137,12 +141,9 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
     machineConfig
         .getServers()
         .putAll(
-            dockerimageComponent
-                .getEndpoints()
-                .stream()
-                .collect(
-                    Collectors.toMap(
-                        Endpoint::getName, e -> ServerConfigImpl.createFromEndpoint(e, true))));
+            convertEndpointsIntoServers(
+                dockerimageComponent.getEndpoints(),
+                !SINGLE_HOST_STRATEGY.equals(devfileEndpointsExposure)));
 
     dockerimageComponent
         .getVolumes()

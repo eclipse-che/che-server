@@ -23,6 +23,8 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.COMPONENT_A
 import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.MultiHostExternalServiceExposureStrategy.MULTI_HOST_STRATEGY;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy.SINGLE_HOST_STRATEGY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -43,6 +46,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +55,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
+import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
@@ -110,6 +115,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             "ReadWriteOnce",
             "",
             "Always",
+            MULTI_HOST_STRATEGY,
             k8sBasedComponents);
 
     workspaceConfig = new WorkspaceConfigImpl();
@@ -560,6 +566,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             "ReadWriteOnce",
             "",
             "Never",
+            MULTI_HOST_STRATEGY,
             k8sBasedComponents);
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
@@ -690,6 +697,110 @@ public class KubernetesComponentToWorkspaceApplierTest {
               assertEquals(
                   serverConfigs.get(endpointName).isInternal(),
                   !Boolean.parseBoolean(endpointPublic));
+            });
+  }
+
+  @Test
+  public void serverCantHaveRequireSubdomainWhenSinglehostDevfileExpose()
+      throws DevfileException, IOException, ValidationException, InfrastructureException {
+    applier =
+        new KubernetesComponentToWorkspaceApplier(
+            k8sRecipeParser,
+            k8sEnvProvisioner,
+            envVars,
+            PROJECT_MOUNT_PATH,
+            "1Gi",
+            "ReadWriteOnce",
+            "",
+            "Always",
+            SINGLE_HOST_STRATEGY,
+            k8sBasedComponents);
+
+    String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
+
+    // given
+    ComponentImpl component = new ComponentImpl();
+    component.setType(KUBERNETES_COMPONENT_TYPE);
+    component.setReference(REFERENCE_FILENAME);
+    component.setAlias(COMPONENT_NAME);
+    component.setEndpoints(
+        Arrays.asList(
+            new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
+
+    // when
+    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+
+    // then
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<Map<String, MachineConfigImpl>> objectsCaptor =
+        ArgumentCaptor.forClass(Map.class);
+    verify(k8sEnvProvisioner).provision(any(), any(), any(), objectsCaptor.capture());
+    Map<String, MachineConfigImpl> machineConfigs = objectsCaptor.getValue();
+    assertEquals(machineConfigs.size(), 4);
+    machineConfigs
+        .values()
+        .forEach(
+            machineConfig -> {
+              assertEquals(machineConfig.getServers().size(), 2);
+              assertFalse(
+                  ServerConfig.isRequireSubdomain(
+                      machineConfig.getServers().get("e1").getAttributes()));
+              assertFalse(
+                  ServerConfig.isRequireSubdomain(
+                      machineConfig.getServers().get("e2").getAttributes()));
+            });
+  }
+
+  @Test
+  public void serverMustHaveRequireSubdomainWhenNonSinglehostDevfileExpose()
+      throws DevfileException, IOException, ValidationException, InfrastructureException {
+    applier =
+        new KubernetesComponentToWorkspaceApplier(
+            k8sRecipeParser,
+            k8sEnvProvisioner,
+            envVars,
+            PROJECT_MOUNT_PATH,
+            "1Gi",
+            "ReadWriteOnce",
+            "",
+            "Always",
+            MULTI_HOST_STRATEGY,
+            k8sBasedComponents);
+
+    String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
+
+    // given
+    ComponentImpl component = new ComponentImpl();
+    component.setType(KUBERNETES_COMPONENT_TYPE);
+    component.setReference(REFERENCE_FILENAME);
+    component.setAlias(COMPONENT_NAME);
+    component.setEndpoints(
+        Arrays.asList(
+            new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
+
+    // when
+    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+
+    // then
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<Map<String, MachineConfigImpl>> objectsCaptor =
+        ArgumentCaptor.forClass(Map.class);
+    verify(k8sEnvProvisioner).provision(any(), any(), any(), objectsCaptor.capture());
+    Map<String, MachineConfigImpl> machineConfigs = objectsCaptor.getValue();
+    assertEquals(machineConfigs.size(), 4);
+    machineConfigs
+        .values()
+        .forEach(
+            machineConfig -> {
+              assertEquals(machineConfig.getServers().size(), 2);
+              assertTrue(
+                  ServerConfig.isRequireSubdomain(
+                      machineConfig.getServers().get("e1").getAttributes()));
+              assertTrue(
+                  ServerConfig.isRequireSubdomain(
+                      machineConfig.getServers().get("e2").getAttributes()));
             });
   }
 

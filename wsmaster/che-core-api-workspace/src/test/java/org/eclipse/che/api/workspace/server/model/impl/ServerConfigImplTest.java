@@ -110,23 +110,6 @@ public class ServerConfigImplTest {
   }
 
   @Test
-  public void testCreateFromEndpointDevfileEndpointAttributeSet() {
-    ServerConfig serverConfig =
-        ServerConfigImpl.createFromEndpoint(new EndpointImpl("name", 123, new HashMap<>()), true);
-
-    assertTrue(serverConfig.getAttributes().containsKey(REQUIRE_SUBDOMAIN));
-    assertTrue(Boolean.parseBoolean(serverConfig.getAttributes().get(REQUIRE_SUBDOMAIN)));
-  }
-
-  @Test
-  public void testCreateFromEndpointDevfileEndpointAttributeNotSet() {
-    ServerConfig serverConfig =
-        ServerConfigImpl.createFromEndpoint(new EndpointImpl("name", 123, new HashMap<>()), false);
-
-    assertFalse(serverConfig.getAttributes().containsKey(REQUIRE_SUBDOMAIN));
-  }
-
-  @Test
   public void testCreateFromEndpointDevfileEndpointAttributeNotSetWhenDefault() {
     ServerConfig serverConfig =
         ServerConfigImpl.createFromEndpoint(new EndpointImpl("name", 123, new HashMap<>()));

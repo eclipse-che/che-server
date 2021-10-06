@@ -18,12 +18,14 @@ import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.api.core.model.workspace.config.Command.MACHINE_NAME_ATTRIBUTE;
 import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.DEVFILE_COMPONENT_ALIAS_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Components.getIdentifiableComponentName;
+import static org.eclipse.che.api.workspace.server.devfile.convert.component.ComponentToWorkspaceApplier.convertEndpointsIntoServers;
 import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Names.machineName;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesDevfileBindings.KUBERNETES_BASED_COMPONENTS_KEY_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newPVC;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolume;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolumeMount;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy.SINGLE_HOST_STRATEGY;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -39,14 +41,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.config.Command;
 import org.eclipse.che.api.core.model.workspace.devfile.Component;
-import org.eclipse.che.api.core.model.workspace.devfile.Endpoint;
 import org.eclipse.che.api.core.model.workspace.devfile.Entrypoint;
 import org.eclipse.che.api.workspace.server.devfile.Constants;
 import org.eclipse.che.api.workspace.server.devfile.DevfileRecipeFormatException;
@@ -54,7 +54,6 @@ import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.convert.component.ComponentToWorkspaceApplier;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.VolumeImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
@@ -80,6 +79,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
   private final String defaultPVCAccessMode;
   private final String pvcStorageClassName;
   private final EnvVars envVars;
+  private final String devfileEndpointsExposure;
 
   @Inject
   public KubernetesComponentToWorkspaceApplier(
@@ -91,6 +91,8 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       @Named("che.infra.kubernetes.pvc.access_mode") String defaultPVCAccessMode,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
+      @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
+          String devfileEndpointsExposure,
       @Named(KUBERNETES_BASED_COMPONENTS_KEY_NAME) Set<String> kubernetesBasedComponentTypes) {
     this(
         objectsParser,
@@ -102,6 +104,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
         defaultPVCAccessMode,
         pvcStorageClassName,
         imagePullPolicy,
+        devfileEndpointsExposure,
         kubernetesBasedComponentTypes);
   }
 
@@ -115,6 +118,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       String defaultPVCAccessMode,
       String pvcStorageClassName,
       String imagePullPolicy,
+      String devfileEndpointsExposure,
       Set<String> kubernetesBasedComponentTypes) {
     this.objectsParser = objectsParser;
     this.k8sEnvProvisioner = k8sEnvProvisioner;
@@ -126,6 +130,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
     this.imagePullPolicy = imagePullPolicy;
     this.kubernetesBasedComponentTypes = kubernetesBasedComponentTypes;
     this.envVars = envVars;
+    this.devfileEndpointsExposure = devfileEndpointsExposure;
   }
 
   /**
@@ -267,12 +272,8 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
     config
         .getServers()
         .putAll(
-            component
-                .getEndpoints()
-                .stream()
-                .collect(
-                    Collectors.toMap(
-                        Endpoint::getName, e -> ServerConfigImpl.createFromEndpoint(e, true))));
+            convertEndpointsIntoServers(
+                component.getEndpoints(), !SINGLE_HOST_STRATEGY.equals(devfileEndpointsExposure)));
   }
 
   private void provisionVolumes(

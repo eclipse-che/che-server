@@ -18,6 +18,7 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.DOCKERIMAGE
 import static org.eclipse.che.api.workspace.server.devfile.Constants.PUBLIC_ENDPOINT_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier.CHE_COMPONENT_NAME_LABEL;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.MultiHostExternalServiceExposureStrategy.MULTI_HOST_STRATEGY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -80,7 +81,7 @@ public class DockerimageComponentToWorkspaceApplierTest {
   public void setUp() throws Exception {
     dockerimageComponentApplier =
         new DockerimageComponentToWorkspaceApplier(
-            PROJECTS_MOUNT_PATH, "Always", k8sEnvProvisioner);
+            PROJECTS_MOUNT_PATH, "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
     workspaceConfig = new WorkspaceConfigImpl();
   }
 
@@ -135,7 +136,8 @@ public class DockerimageComponentToWorkspaceApplierTest {
     dockerimageComponent.setImage("eclipse/ubuntu_jdk8:latest");
     dockerimageComponent.setMemoryLimit("1G");
     dockerimageComponentApplier =
-        new DockerimageComponentToWorkspaceApplier(PROJECTS_MOUNT_PATH, "Never", k8sEnvProvisioner);
+        new DockerimageComponentToWorkspaceApplier(
+            PROJECTS_MOUNT_PATH, "Never", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
 
     // when
     dockerimageComponentApplier.apply(workspaceConfig, dockerimageComponent, null);

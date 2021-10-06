@@ -23,6 +23,7 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.COMPONENT_A
 import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.MultiHostExternalServiceExposureStrategy.MULTI_HOST_STRATEGY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -110,6 +111,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             "ReadWriteOnce",
             "",
             "Always",
+            MULTI_HOST_STRATEGY,
             k8sBasedComponents);
 
     workspaceConfig = new WorkspaceConfigImpl();
@@ -560,6 +562,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             "ReadWriteOnce",
             "",
             "Never",
+            MULTI_HOST_STRATEGY,
             k8sBasedComponents);
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());

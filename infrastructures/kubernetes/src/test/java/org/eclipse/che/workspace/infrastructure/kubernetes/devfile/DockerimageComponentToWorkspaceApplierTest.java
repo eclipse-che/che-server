@@ -19,6 +19,7 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.PUBLIC_ENDP
 import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier.CHE_COMPONENT_NAME_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.MultiHostExternalServiceExposureStrategy.MULTI_HOST_STRATEGY;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy.SINGLE_HOST_STRATEGY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -570,6 +571,79 @@ public class DockerimageComponentToWorkspaceApplierTest {
     Container container = podTemplate.getSpec().getContainers().get(0);
     assertEquals(container.getCommand(), command);
     assertEquals(container.getArgs(), args);
+  }
+
+  @Test
+  public void serverMustHaveRequireSubdomainWhenNonSinglehostDevfileExpose()
+      throws DevfileException {
+    dockerimageComponentApplier =
+        new DockerimageComponentToWorkspaceApplier(
+            PROJECTS_MOUNT_PATH, "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
+
+    // given
+    EndpointImpl endpoint = new EndpointImpl("jdk-ls", 4923, emptyMap());
+    ComponentImpl dockerimageComponent = new ComponentImpl();
+    dockerimageComponent.setAlias("jdk");
+    dockerimageComponent.setType(DOCKERIMAGE_COMPONENT_TYPE);
+    dockerimageComponent.setImage("eclipse/ubuntu_jdk8:latest");
+    dockerimageComponent.setMemoryLimit("100M");
+    dockerimageComponent.setEndpoints(
+        Arrays.asList(
+            new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
+
+    // when
+    dockerimageComponentApplier.apply(workspaceConfig, dockerimageComponent, null);
+
+    // then
+    verify(k8sEnvProvisioner)
+        .provision(
+            eq(workspaceConfig),
+            eq(KubernetesEnvironment.TYPE),
+            objectsCaptor.capture(),
+            machinesCaptor.capture());
+    MachineConfigImpl machineConfig = machinesCaptor.getValue().get("jdk");
+    assertNotNull(machineConfig);
+    assertEquals(machineConfig.getServers().size(), 2);
+    assertTrue(
+        ServerConfig.isRequireSubdomain(machineConfig.getServers().get("e1").getAttributes()));
+    assertTrue(
+        ServerConfig.isRequireSubdomain(machineConfig.getServers().get("e2").getAttributes()));
+  }
+
+  @Test
+  public void serverCantHaveRequireSubdomainWhenSinglehostDevfileExpose() throws DevfileException {
+    dockerimageComponentApplier =
+        new DockerimageComponentToWorkspaceApplier(
+            PROJECTS_MOUNT_PATH, "Always", SINGLE_HOST_STRATEGY, k8sEnvProvisioner);
+
+    // given
+    EndpointImpl endpoint = new EndpointImpl("jdk-ls", 4923, emptyMap());
+    ComponentImpl dockerimageComponent = new ComponentImpl();
+    dockerimageComponent.setAlias("jdk");
+    dockerimageComponent.setType(DOCKERIMAGE_COMPONENT_TYPE);
+    dockerimageComponent.setImage("eclipse/ubuntu_jdk8:latest");
+    dockerimageComponent.setMemoryLimit("100M");
+    dockerimageComponent.setEndpoints(
+        Arrays.asList(
+            new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
+
+    // when
+    dockerimageComponentApplier.apply(workspaceConfig, dockerimageComponent, null);
+
+    // then
+    verify(k8sEnvProvisioner)
+        .provision(
+            eq(workspaceConfig),
+            eq(KubernetesEnvironment.TYPE),
+            objectsCaptor.capture(),
+            machinesCaptor.capture());
+    MachineConfigImpl machineConfig = machinesCaptor.getValue().get("jdk");
+    assertNotNull(machineConfig);
+    assertEquals(machineConfig.getServers().size(), 2);
+    assertFalse(
+        ServerConfig.isRequireSubdomain(machineConfig.getServers().get("e1").getAttributes()));
+    assertFalse(
+        ServerConfig.isRequireSubdomain(machineConfig.getServers().get("e2").getAttributes()));
   }
 
   @Test(dataProvider = "imageNames")

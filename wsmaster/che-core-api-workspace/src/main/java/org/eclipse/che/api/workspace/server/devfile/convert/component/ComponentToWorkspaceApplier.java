@@ -11,8 +11,6 @@
  */
 package org.eclipse.che.api.workspace.server.devfile.convert.component;
 
-import static org.eclipse.che.api.core.model.workspace.config.ServerConfig.SERVER_NAME_ATTRIBUTE;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,8 +52,13 @@ public interface ComponentToWorkspaceApplier {
       List<? extends Endpoint> endpoints, boolean requireSubdomain) {
     return endpoints
         .stream()
-        .map(ServerConfigImpl::createFromEndpoint)
-        .peek(s -> ServerConfig.setRequireSubdomain(s.getAttributes(), requireSubdomain))
-        .collect(Collectors.toMap(s -> s.getAttributes().get(SERVER_NAME_ATTRIBUTE), s -> s));
+        .collect(
+            Collectors.toMap(
+                Endpoint::getName,
+                e -> {
+                  var cfg = ServerConfigImpl.createFromEndpoint(e);
+                  ServerConfig.setRequireSubdomain(cfg.getAttributes(), requireSubdomain);
+                  return cfg;
+                }));
   }
 }

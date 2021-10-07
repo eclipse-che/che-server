@@ -7,14 +7,14 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-name: build-next
+name: Update Che docs variables
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-      - '7.[0-9]+.[0-9]+'
+      - '7.[0-9]+.x'
     paths:
       - 'assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/che.properties'
       - 'assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/multiuser.properties'
@@ -34,15 +34,14 @@ jobs:
             this_val=$5
 
             # can compute using GH API
-            # workflow_id=$(curl -sSL https://api.github.com/repos/${this_repo}/actions/workflows -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" | jq --arg search_field "${this_action_name}" '.workflows[] | select(.name == $search_field).id'); # echo "workflow_id = $workflow_id"
+            # workflow_id=$(curl -sSL https://api.github.com/repos/${this_repo}/actions/workflows -H "Authorization: token ${{ secrets.CHE_BOT_GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" | jq --arg search_field "${this_action_name}" '.workflows[] | select(.name == $search_field).id'); # echo "workflow_id = $workflow_id"
             # or just pass it in
             workflow_id=$this_workflow_id
 
-            curl -sSL https://api.github.com/repos/${this_repo}/actions/workflows/${workflow_id}/dispatches -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" -d "{\"ref\":\"master\",\"inputs\": {\"${this_var}\":\"${this_val}\"} }"
+            curl -sSL https://api.github.com/repos/${this_repo}/actions/workflows/${workflow_id}/dispatches -X POST -H "Authorization: token ${{ secrets.CHE_BOT_GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" -d "{\"ref\":\"master\",\"inputs\": {\"${this_var}\":\"${this_val}\"} }"
             echo "[INFO] Invoked '${this_action_name}' action ($workflow_id) - see https://github.com/${this_repo}/actions?query=workflow%3A%22${this_action_name// /+}%22"
         }
 
         branch=${GITHUB_REF%/}
-
         # invoke action from che-docs repo
         invokeAction eclipse/che-docs "Update Che variables in the docs" "13902929" branch "${branch}"

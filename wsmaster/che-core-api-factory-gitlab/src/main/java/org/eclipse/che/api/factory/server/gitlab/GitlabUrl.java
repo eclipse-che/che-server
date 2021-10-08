@@ -211,7 +211,8 @@ public class GitlabUrl implements RemoteFactoryUrl {
   }
 
   private String geProjectIdentifier() {
-    return repository != null ? encode(username + "/" + project + "/" + repository, Charsets.UTF_8)
+    return repository != null
+        ? encode(username + "/" + project + "/" + repository, Charsets.UTF_8)
         : encode(username + "/" + project, Charsets.UTF_8);
   }
 

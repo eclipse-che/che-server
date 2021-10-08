@@ -82,7 +82,14 @@ public class GitlabUrlParserTest {
       {"https://gitlab1.com/user/project1.git", "user", "project1", null, null, null},
       {"https://gitlab1.com/user/project/test1.git", "user", "project", "test1", null, null},
       {"https://gitlab1.com/user/project/", "user", "project", null, null, null},
-      {"https://gitlab1.com/mikes-sub-group/mikes-sub2-group/mikes-dev2-project.git", "mikes-sub-group", "mikes-sub2-group", "mikes-dev2-project", null, null},
+      {
+        "https://gitlab1.com/mikes-sub-group/mikes-sub2-group/mikes-dev2-project.git",
+        "mikes-sub-group",
+        "mikes-sub2-group",
+        "mikes-dev2-project",
+        null,
+        null
+      },
       {"https://gitlab1.com/user/project/repo/", "user", "project", "repo", null, null},
       {"https://gitlab1.com/user/project/-/tree/master/", "user", "project", null, "master", null},
       {

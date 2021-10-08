@@ -198,7 +198,7 @@ public class GitlabUrl implements RemoteFactoryUrl {
             .add(hostName)
             .add("api/v4/projects")
             // use URL-encoded path to the project as a selector instead of id
-            .add(encode(username + "/" + project, Charsets.UTF_8))
+            .add(geProjectIdentifier())
             .add("repository")
             .add("files")
             .add(fileName)
@@ -208,6 +208,12 @@ public class GitlabUrl implements RemoteFactoryUrl {
       resultUrl = resultUrl + "?ref=" + branch;
     }
     return resultUrl;
+  }
+
+  private String geProjectIdentifier() {
+    return repository != null
+        ? encode(username + "/" + project + "/" + repository, Charsets.UTF_8)
+        : encode(username + "/" + project, Charsets.UTF_8);
   }
 
   /**

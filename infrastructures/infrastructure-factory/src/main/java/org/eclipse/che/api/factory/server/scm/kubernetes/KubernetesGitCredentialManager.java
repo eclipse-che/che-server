@@ -14,9 +14,11 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_AUTOMOUNT;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_DEV_WORKSPACE_MOUNT_PATH;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_GIT_CREDENTIALS;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_MOUNT_AS;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_MOUNT_PATH;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.DEV_WORKSPACE_PREFIX;
 
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -54,18 +56,25 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   public static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
   public static final String ANNOTATION_SCM_USERNAME = "che.eclipse.org/scm-username";
   public static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
+  public static final String CREDENTIALS_MOUNT_PATH = "/home/theia/.git-credentials";
 
   private static final Map<String, String> LABELS =
       ImmutableMap.of(
-          "app.kubernetes.io/part-of", "che.eclipse.org",
-          "app.kubernetes.io/component", "workspace-secret");
+          "app.kubernetes.io/part-of",
+          "che.eclipse.org",
+          "app.kubernetes.io/component",
+          "workspace-secret",
+          DEV_WORKSPACE_PREFIX + "/git-credential",
+          "true");
 
   static final Map<String, String> DEFAULT_SECRET_ANNOTATIONS =
       ImmutableMap.of(
           ANNOTATION_AUTOMOUNT,
           "true",
           ANNOTATION_MOUNT_PATH,
-          "/home/theia/.git-credentials",
+          CREDENTIALS_MOUNT_PATH,
+          ANNOTATION_DEV_WORKSPACE_MOUNT_PATH,
+          CREDENTIALS_MOUNT_PATH,
           ANNOTATION_MOUNT_AS,
           "file",
           ANNOTATION_GIT_CREDENTIALS,

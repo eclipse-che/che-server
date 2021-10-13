@@ -57,23 +57,20 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   public static final String ANNOTATION_SCM_USERNAME = "che.eclipse.org/scm-username";
   public static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
   public static final String CREDENTIALS_MOUNT_PATH = "/home/theia/.git-credentials";
-
+  public static final String LABEL_DEV_WORKSPACE_CREDENTIAL =
+      DEV_WORKSPACE_PREFIX + "/git-credential";
   private static final Map<String, String> LABELS =
       ImmutableMap.of(
           "app.kubernetes.io/part-of",
           "che.eclipse.org",
           "app.kubernetes.io/component",
-          "workspace-secret",
-          DEV_WORKSPACE_PREFIX + "/git-credential",
-          "true");
+          "workspace-secret");
 
   static final Map<String, String> DEFAULT_SECRET_ANNOTATIONS =
       ImmutableMap.of(
           ANNOTATION_AUTOMOUNT,
           "true",
           ANNOTATION_MOUNT_PATH,
-          CREDENTIALS_MOUNT_PATH,
-          ANNOTATION_DEV_WORKSPACE_MOUNT_PATH,
           CREDENTIALS_MOUNT_PATH,
           ANNOTATION_MOUNT_AS,
           "file",
@@ -133,11 +130,16 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                 annotations.put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl());
                 annotations.put(ANNOTATION_SCM_USERNAME, personalAccessToken.getScmUserName());
                 annotations.put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId());
+                annotations.put(ANNOTATION_DEV_WORKSPACE_MOUNT_PATH, CREDENTIALS_MOUNT_PATH);
+                // Adding devworkspace label here and not in the default map,
+                // in case of a secret from previous version that does not have it
+                Map<String, String> labels = new HashMap<>(LABELS);
+                labels.put(LABEL_DEV_WORKSPACE_CREDENTIAL, "true");
                 ObjectMeta meta =
                     new ObjectMetaBuilder()
                         .withName(NameGenerator.generate(NAME_PATTERN, 5))
                         .withAnnotations(annotations)
-                        .withLabels(LABELS)
+                        .withLabels(labels)
                         .build();
                 return new SecretBuilder().withMetadata(meta).build();
               });

@@ -23,6 +23,9 @@ public interface RemoteFactoryUrl {
   /** Provider name for given URL. */
   String getProviderName();
 
+  /** Defines the devfile name */
+  void setDevfileFilename(String devfileName);
+
   /**
    * List of possible filenames and raw locations of devfile.
    *

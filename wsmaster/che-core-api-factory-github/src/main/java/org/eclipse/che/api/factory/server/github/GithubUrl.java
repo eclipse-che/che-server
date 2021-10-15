@@ -94,6 +94,12 @@ public class GithubUrl implements RemoteFactoryUrl {
     return this;
   }
 
+  @Override
+  public void setDevfileFilename(String devfileName) {
+    this.devfileFilenames.clear();
+    this.devfileFilenames.add(devfileName);
+  }
+
   /**
    * Gets branch of this github url
    *

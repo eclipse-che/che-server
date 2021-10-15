@@ -60,6 +60,8 @@ public class URLFactoryBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(URLFactoryBuilder.class);
 
+  public static final String DEVFILE_NAME = "devfileName";
+
   private final String defaultCheEditor;
   private final String defaultChePlugins;
 
@@ -102,6 +104,12 @@ public class URLFactoryBuilder {
       Map<String, String> overrideProperties)
       throws ApiException {
     String devfileYamlContent;
+
+    // Apply the new devfile name to look for
+    if (overrideProperties.containsKey(DEVFILE_NAME)) {
+      remoteFactoryUrl.setDevfileFilename(overrideProperties.get(DEVFILE_NAME));
+    }
+
     for (DevfileLocation location : remoteFactoryUrl.devfileFileLocations()) {
       try {
         devfileYamlContent = fileContentProvider.fetchContent(location.location());

@@ -65,4 +65,9 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
     this.devfileFileLocation = devfileFileLocation;
     return this;
   }
+
+  @Override
+  public void setDevfileFilename(String devfileName) {
+    // do nothing as the devfile location is absolute
+  }
 }

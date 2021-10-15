@@ -211,6 +211,9 @@ public class URLFactoryBuilderTest {
           public String getBranch() {
             return null;
           }
+
+          @Override
+          public void setDevfileFilename(String devfileName) {}
         };
 
     FactoryMetaDto factory =
@@ -220,6 +223,77 @@ public class URLFactoryBuilderTest {
 
     assertNotNull(factory);
     assertEquals(factory.getSource(), "devfile.yaml");
+    assertTrue(factory instanceof FactoryDevfileV2Dto);
+    assertEquals(((FactoryDevfileV2Dto) factory).getDevfile(), devfileAsMap);
+  }
+
+  @Test
+  public void testDevfileSpecifyingFilename() throws ApiException, DevfileException {
+    String myLocation = "http://foo-location/";
+    Map<String, Object> devfileAsMap = Map.of("hello", "there", "how", "are", "you", "?");
+
+    JsonNode devfile = new ObjectNode(JsonNodeFactory.instance);
+    when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
+    when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
+    when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
+
+    RemoteFactoryUrl githubLikeRemoteUrl =
+        new RemoteFactoryUrl() {
+
+          private String devfileName = "default-devfile.yaml";
+
+          @Override
+          public String getProviderName() {
+            return null;
+          }
+
+          @Override
+          public List<DevfileLocation> devfileFileLocations() {
+            return Collections.singletonList(
+                new DevfileLocation() {
+                  @Override
+                  public Optional<String> filename() {
+                    return Optional.of(devfileName);
+                  }
+
+                  @Override
+                  public String location() {
+                    return myLocation;
+                  }
+                });
+          }
+
+          @Override
+          public String rawFileLocation(String filename) {
+            return null;
+          }
+
+          @Override
+          public String getHostName() {
+            return null;
+          }
+
+          @Override
+          public String getBranch() {
+            return null;
+          }
+
+          @Override
+          public void setDevfileFilename(String devfileName) {
+            this.devfileName = devfileName;
+          }
+        };
+
+    String pathToDevfile = "my-custom-devfile-path.yaml";
+    Map<String, String> propertiesMap = singletonMap(URLFactoryBuilder.DEVFILE_NAME, pathToDevfile);
+    FactoryMetaDto factory =
+        urlFactoryBuilder
+            .createFactoryFromDevfile(githubLikeRemoteUrl, s -> myLocation + ".list", propertiesMap)
+            .get();
+
+    assertNotNull(factory);
+    // Check that we didn't fetch from default files but from the parameter
+    assertEquals(factory.getSource(), pathToDevfile);
     assertTrue(factory instanceof FactoryDevfileV2Dto);
     assertEquals(((FactoryDevfileV2Dto) factory).getDevfile(), devfileAsMap);
   }

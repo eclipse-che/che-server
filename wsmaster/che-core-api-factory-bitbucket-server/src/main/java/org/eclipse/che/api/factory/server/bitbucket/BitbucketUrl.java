@@ -92,6 +92,12 @@ public class BitbucketUrl implements RemoteFactoryUrl {
     return this;
   }
 
+  @Override
+  public void setDevfileFilename(String devfileName) {
+    this.devfileFilenames.clear();
+    this.devfileFilenames.add(devfileName);
+  }
+
   protected BitbucketUrl withDevfileFilenames(List<String> devfileFilenames) {
     this.devfileFilenames.addAll(devfileFilenames);
     return this;

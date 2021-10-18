@@ -285,7 +285,8 @@ public class URLFactoryBuilderTest {
         };
 
     String pathToDevfile = "my-custom-devfile-path.yaml";
-    Map<String, String> propertiesMap = singletonMap(URLFactoryBuilder.DEVFILE_NAME, pathToDevfile);
+    Map<String, String> propertiesMap =
+        singletonMap(URLFactoryBuilder.DEVFILE_FILENAME, pathToDevfile);
     FactoryMetaDto factory =
         urlFactoryBuilder
             .createFactoryFromDevfile(githubLikeRemoteUrl, s -> myLocation + ".list", propertiesMap)

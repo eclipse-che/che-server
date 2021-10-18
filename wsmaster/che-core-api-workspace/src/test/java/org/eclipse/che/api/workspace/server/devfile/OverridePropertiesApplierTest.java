@@ -12,6 +12,7 @@
 package org.eclipse.che.api.workspace.server.devfile;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,27 @@ public class OverridePropertiesApplierTest {
     // then
     assertEquals(result.get("apiVersion").textValue(), "2.0.0");
     assertEquals(result.get("metadata").get("generateName").textValue(), "go");
+  }
+
+  @Test
+  public void shouldNotOverrideDevfileFilenameInDevfile() throws Exception {
+    String json =
+        "{"
+            + "\"apiVersion\": \"2.0.0\","
+            + "\"metadata\": {"
+            + "   \"generateName\": \"python\""
+            + "  }"
+            + "}";
+    Map<String, String> overrides = new HashMap<>();
+    overrides.put("devfileFilename", "devfile.v2");
+    overrides.put("metadata.generateName", "go");
+    // when
+    JsonNode result = applier.applyPropertiesOverride(jsonMapper.readTree(json), overrides);
+
+    // then
+    assertEquals(result.get("metadata").get("generateName").textValue(), "go");
+    // this parameter is accepted but not added into the JSON
+    assertNull(result.get("devfileFilename"));
   }
 
   @Test
@@ -197,7 +219,7 @@ public class OverridePropertiesApplierTest {
   @Test(
       expectedExceptions = OverrideParameterException.class,
       expectedExceptionsMessageRegExp =
-          "Override path 'commands.run.foo.bar' starts with an unsupported field pointer. Supported fields are \\{\"apiVersion\",\"metadata\",\"projects\"\\,\"attributes\"\\}.")
+          "Override path 'commands.run.foo.bar' starts with an unsupported field pointer. Supported fields are \\{\"apiVersion\",\"metadata\",\"projects\"\\,\"attributes\"\\,\"devfileFilename\"\\}.")
   public void shouldThrowExceptionIfOverrideReferenceUsesUnsupportedField() throws Exception {
     String json =
         "{"

@@ -42,12 +42,19 @@ import org.eclipse.che.api.workspace.server.devfile.exception.OverrideParameterE
 public class OverridePropertiesApplier {
 
   private final List<String> allowedFirstSegments =
-      asList("apiVersion", "metadata", "projects", "attributes");
+      asList("apiVersion", "metadata", "projects", "attributes", "devfileFilename");
+
+  private final List<String> skipJsonSegments = asList("devfileFilename");
 
   public JsonNode applyPropertiesOverride(
       JsonNode devfileNode, Map<String, String> overrideProperties)
       throws OverrideParameterException {
     for (Map.Entry<String, String> entry : overrideProperties.entrySet()) {
+
+      // skip some segment
+      if (skipJsonSegments.contains(entry.getKey())) {
+        continue;
+      }
       String[] pathSegments = parseSegments(entry.getKey());
       if (pathSegments.length < 1) {
         continue;

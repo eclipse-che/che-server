@@ -60,7 +60,7 @@ public class URLFactoryBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(URLFactoryBuilder.class);
 
-  public static final String DEVFILE_NAME = "devfileName";
+  public static final String DEVFILE_FILENAME = "devfileFilename";
 
   private final String defaultCheEditor;
   private final String defaultChePlugins;
@@ -106,8 +106,8 @@ public class URLFactoryBuilder {
     String devfileYamlContent;
 
     // Apply the new devfile name to look for
-    if (overrideProperties.containsKey(DEVFILE_NAME)) {
-      remoteFactoryUrl.setDevfileFilename(overrideProperties.get(DEVFILE_NAME));
+    if (overrideProperties.containsKey(DEVFILE_FILENAME)) {
+      remoteFactoryUrl.setDevfileFilename(overrideProperties.get(DEVFILE_FILENAME));
     }
 
     for (DevfileLocation location : remoteFactoryUrl.devfileFileLocations()) {

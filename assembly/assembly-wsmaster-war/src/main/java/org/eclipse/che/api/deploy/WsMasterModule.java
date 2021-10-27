@@ -21,8 +21,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.impl.DefaultJwtParser;
 import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -81,10 +79,8 @@ import org.eclipse.che.commons.observability.deploy.ExecutorWrapperModule;
 import org.eclipse.che.core.db.DBTermination;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.tracing.metrics.TracingMetricsModule;
-import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.inject.DynaModule;
 import org.eclipse.che.multiuser.api.authentication.commons.token.ChainedTokenExtractor;
-import org.eclipse.che.multiuser.api.authentication.commons.token.HeaderRequestTokenExtractor;
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.eclipse.che.multiuser.api.permission.server.AdminPermissionInitializer;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
@@ -93,6 +89,7 @@ import org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivi
 import org.eclipse.che.multiuser.keycloak.server.deploy.KeycloakModule;
 import org.eclipse.che.multiuser.keycloak.server.deploy.KeycloakUserRemoverModule;
 import org.eclipse.che.multiuser.machine.authentication.server.MachineAuthModule;
+import org.eclipse.che.multiuser.oidc.deploy.NativeUserModule;
 import org.eclipse.che.multiuser.organization.api.OrganizationApiModule;
 import org.eclipse.che.multiuser.organization.api.OrganizationJpaModule;
 import org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter;
@@ -335,18 +332,10 @@ public class WsMasterModule extends AbstractModule {
           .to(org.eclipse.che.api.workspace.server.DefaultWorkspaceStatusCache.class);
     }
 
-    if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
-      if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-        bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
-      } else {
-        bind(KubernetesClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
-      }
-    }
-
-    if (KubernetesInfrastructure.NAME.equals(infrastructure)
-        && Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      throw new ConfigurationException(
-          "Native user mode is not supported on Kubernetes. It is supported only on OpenShift.");
+    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+      bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
+    } else if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
+      bind(KubernetesClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
     }
 
     persistenceProperties.put(
@@ -395,11 +384,10 @@ public class WsMasterModule extends AbstractModule {
     install(new OrganizationJpaModule());
 
     if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+      install(new NativeUserModule());
       bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
-      bind(JwtParser.class).to(DefaultJwtParser.class);
       bind(ProfileDao.class).to(JpaProfileDao.class);
       bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class);
-      bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
     } else {
       install(new KeycloakModule());
       install(new KeycloakUserRemoverModule());

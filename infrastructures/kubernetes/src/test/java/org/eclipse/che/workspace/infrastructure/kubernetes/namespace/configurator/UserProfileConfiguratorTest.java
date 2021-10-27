@@ -74,7 +74,7 @@ public class UserProfileConfiguratorTest {
 
   @Test
   public void shouldCreateProfileSecret() throws InfrastructureException {
-    userProfileConfigurator.configure(context);
+    userProfileConfigurator.configure(context, USER_NAMESPACE);
     List<Secret> secrets =
         kubernetesServer.getClient().secrets().inNamespace(USER_NAMESPACE).list().getItems();
     assertEquals(secrets.size(), 1);
@@ -87,7 +87,7 @@ public class UserProfileConfiguratorTest {
   public void shouldNotCreateSecretOnException()
       throws NotFoundException, ServerException, InfrastructureException {
     when(userManager.getById(USER_ID)).thenThrow(new ServerException("test exception"));
-    userProfileConfigurator.configure(context);
+    userProfileConfigurator.configure(context, USER_NAMESPACE);
     fail("InfrastructureException should have been thrown.");
   }
 }

@@ -645,7 +645,6 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     assertEquals(toReturnNamespace, namespace);
-    verify(namespaceFactory, never()).doCreateServiceAccount(any(), any());
     verify(toReturnNamespace).prepare(eq(false), any(), any());
   }
 
@@ -679,7 +678,6 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     assertEquals(toReturnNamespace, namespace);
-    verify(namespaceFactory, never()).doCreateServiceAccount(any(), any());
     verify(toReturnNamespace).prepare(eq(false), any(), any());
   }
 
@@ -711,7 +709,6 @@ public class KubernetesNamespaceFactoryTest {
 
     KubernetesWorkspaceServiceAccount serviceAccount =
         mock(KubernetesWorkspaceServiceAccount.class);
-    doReturn(serviceAccount).when(namespaceFactory).doCreateServiceAccount(any(), any());
 
     // when
     RuntimeIdentity identity =
@@ -719,7 +716,6 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
-    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
     verify(serviceAccount).prepare();
   }
 
@@ -770,7 +766,6 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
-    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
 
     ServiceAccountList sas = k8sClient.serviceAccounts().inNamespace("workspace123").list();
     assertEquals(sas.getItems().size(), 1);
@@ -888,7 +883,6 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
-    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
 
     ServiceAccountList sas = k8sClient.serviceAccounts().inNamespace("workspace123").list();
     assertEquals(sas.getItems().size(), 1);

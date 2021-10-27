@@ -20,7 +20,6 @@ import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceNameValidator.METADATA_NAME_MAX_LENGTH;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -31,8 +30,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -257,7 +254,7 @@ public class KubernetesNamespaceFactory {
   public Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
       throws InfrastructureException {
     try {
-      Namespace namespace = clientFactory.create().namespaces().withName(name).get();
+      Namespace namespace = cheClientFactory.create().namespaces().withName(name).get();
       if (namespace == null) {
         return Optional.empty();
       } else {
@@ -342,31 +339,6 @@ public class KubernetesNamespaceFactory {
         canCreateNamespace(identity),
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
-
-    if (namespace
-        .secrets()
-        .get()
-        .stream()
-        .noneMatch(s -> s.getMetadata().getName().equals(CREDENTIALS_SECRET_NAME))) {
-      Secret secret =
-          new SecretBuilder()
-              .withType("opaque")
-              .withNewMetadata()
-              .withName(CREDENTIALS_SECRET_NAME)
-              .endMetadata()
-              .build();
-      clientFactory
-          .create()
-          .secrets()
-          .inNamespace(identity.getInfrastructureNamespace())
-          .create(secret);
-    }
-
-    if (!isNullOrEmpty(serviceAccountName)) {
-      KubernetesWorkspaceServiceAccount workspaceServiceAccount =
-          doCreateServiceAccount(namespace.getWorkspaceId(), namespace.getName());
-      workspaceServiceAccount.prepare();
-    }
 
     return namespace;
   }
@@ -573,7 +545,7 @@ public class KubernetesNamespaceFactory {
       NamespaceResolutionContext namespaceCtx) throws InfrastructureException {
     try {
       List<Namespace> workspaceNamespaces =
-          clientFactory.create().namespaces().withLabels(namespaceLabels).list().getItems();
+          cheClientFactory.create().namespaces().withLabels(namespaceLabels).list().getItems();
       if (!workspaceNamespaces.isEmpty()) {
         Map<String, String> evaluatedAnnotations = evaluateAnnotationPlaceholders(namespaceCtx);
         return workspaceNamespaces
@@ -638,31 +610,6 @@ public class KubernetesNamespaceFactory {
     if (isWorkspaceNamespaceManaged(namespace.getName(), workspace)) {
       namespace.delete();
     }
-  }
-
-  protected boolean checkNamespaceExists(String namespaceName) throws InfrastructureException {
-    try {
-      return clientFactory.create().namespaces().withName(namespaceName).get() != null;
-    } catch (KubernetesClientException e) {
-      if (e.getCode() == 403) {
-        // 403 means that the project does not exist
-        // or a user really is not permitted to access it which is Che Server misconfiguration
-        return false;
-      } else {
-        throw new InfrastructureException(
-            format(
-                "Error occurred while trying to fetch the namespace '%s'. Cause: %s",
-                namespaceName, e.getMessage()),
-            e);
-      }
-    }
-  }
-
-  protected String evalPlaceholders(String namespace, Subject currentUser, String workspaceId) {
-    return evalPlaceholders(
-        namespace,
-        new NamespaceResolutionContext(
-            workspaceId, currentUser.getUserId(), currentUser.getUserName()));
   }
 
   protected String evalPlaceholders(String namespace, NamespaceResolutionContext ctx) {
@@ -737,13 +684,6 @@ public class KubernetesNamespaceFactory {
         Math.min(
             namespaceName.length(),
             METADATA_NAME_MAX_LENGTH)); // limit length to METADATA_NAME_MAX_LENGTH
-  }
-
-  @VisibleForTesting
-  KubernetesWorkspaceServiceAccount doCreateServiceAccount(
-      String workspaceId, String namespaceName) {
-    return new KubernetesWorkspaceServiceAccount(
-        workspaceId, namespaceName, serviceAccountName, getClusterRoleNames(), clientFactory);
   }
 
   protected String getServiceAccountName() {

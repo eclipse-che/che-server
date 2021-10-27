@@ -40,7 +40,7 @@ public class NamespaceProvisioner {
     this.namespaceConfigurators = namespaceConfigurators;
   }
 
-  /** Tests for this method are in KubernetesFactoryTest. */
+  /** Tests for this method are in KubernetesNamespaceFactoryTest. */
   public KubernetesNamespaceMeta provision(NamespaceResolutionContext namespaceResolutionContext)
       throws InfrastructureException {
     KubernetesNamespace namespace =
@@ -58,14 +58,11 @@ public class NamespaceProvisioner {
                 () ->
                     new InfrastructureException(
                         "Not able to find namespace " + namespace.getName()));
-    configureNamespace(namespaceResolutionContext);
-    return namespaceMeta;
-  }
 
-  private void configureNamespace(NamespaceResolutionContext namespaceResolutionContext)
-      throws InfrastructureException {
     for (NamespaceConfigurator configurator : namespaceConfigurators) {
-      configurator.configure(namespaceResolutionContext);
+      configurator.configure(namespaceResolutionContext, namespaceMeta.getName());
     }
+
+    return namespaceMeta;
   }
 }

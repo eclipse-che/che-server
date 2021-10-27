@@ -172,11 +172,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
     }
   }
 
-  @Override
-  protected boolean checkNamespaceExists(String namespaceName) throws InfrastructureException {
-    return fetchNamespaceObject(namespaceName).isPresent();
-  }
-
   /**
    * Creates a kubernetes namespace for the specified workspace.
    *

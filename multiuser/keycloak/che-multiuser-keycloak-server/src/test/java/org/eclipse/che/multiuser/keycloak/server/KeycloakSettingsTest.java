@@ -34,6 +34,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 import java.util.Map;
+import java.util.Optional;
+import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.Listeners;
@@ -185,7 +187,8 @@ public class KeycloakSettingsTest {
   public void shouldBeUsedConfigurationFromExternalOIDCProviderWithoutFixedRedirectLinks() {
     final String SERVER_AUTH_URL = "https://external-keycloak-che.apps-crc.testing/auth";
 
-    when(oidcInfo.getEndSessionPublicEndpoint()).thenReturn(SERVER_AUTH_URL + LOGOUT_URL_PATH);
+    when(oidcInfo.getEndSessionPublicEndpoint())
+        .thenReturn(Optional.of(SERVER_AUTH_URL + LOGOUT_URL_PATH));
     when(oidcInfo.getJwksPublicUri()).thenReturn(SERVER_AUTH_URL + JWKS_ENDPOINT_PATH);
     when(oidcInfo.getUserInfoPublicEndpoint()).thenReturn(SERVER_AUTH_URL + USER_INFO_PATH);
     when(oidcInfo.getTokenPublicEndpoint()).thenReturn(SERVER_AUTH_URL + TOKEN_URL_PATH);
@@ -229,7 +232,8 @@ public class KeycloakSettingsTest {
   public void shouldBeUsedConfigurationFromExternalAuthServer() {
     final String SERVER_AUTH_URL = "https://keycloak-che.apps-crc.testing/auth";
 
-    when(oidcInfo.getEndSessionPublicEndpoint()).thenReturn(SERVER_AUTH_URL + LOGOUT_URL_PATH);
+    when(oidcInfo.getEndSessionPublicEndpoint())
+        .thenReturn(Optional.of(SERVER_AUTH_URL + LOGOUT_URL_PATH));
     when(oidcInfo.getJwksPublicUri()).thenReturn(SERVER_AUTH_URL + JWKS_ENDPOINT_PATH);
     when(oidcInfo.getUserInfoPublicEndpoint()).thenReturn(SERVER_AUTH_URL + USER_INFO_PATH);
     when(oidcInfo.getTokenPublicEndpoint()).thenReturn(SERVER_AUTH_URL + TOKEN_URL_PATH);

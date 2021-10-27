@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.api.infraproxy.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -24,7 +23,6 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +35,8 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * We use this to give our clients the direct access to the underlying infrastructure REST API. This
@@ -47,21 +47,18 @@ import org.eclipse.che.commons.annotation.Nullable;
 @Beta
 @Path(InfrastructureApiService.PATH_PREFIX)
 public class InfrastructureApiService extends Service {
+
+  private static final Logger LOG = LoggerFactory.getLogger(InfrastructureApiService.class);
   static final String PATH_PREFIX = "/unsupported/k8s";
   private static final int PATH_PREFIX_LENGTH = PATH_PREFIX.length();
 
   private final boolean allowed;
   private final RuntimeInfrastructure runtimeInfrastructure;
-  private final ObjectMapper mapper;
-
-  @Context private MediaType mediaType;
 
   private static boolean determineAllowed(
       String infra, String identityProvider, boolean allowedForKubernetes) {
-    if ("openshift".equals(infra)) {
-      return identityProvider != null && identityProvider.startsWith("openshift");
-    }
-    return allowedForKubernetes;
+    LOG.info("determineAllowed({}, {}, {})", identityProvider, infra, allowedForKubernetes);
+    return identityProvider != null;
   }
 
   @Inject
@@ -83,7 +80,6 @@ public class InfrastructureApiService extends Service {
       String identityProvider,
       RuntimeInfrastructure infra) {
     this.runtimeInfrastructure = infra;
-    this.mapper = new ObjectMapper();
     this.allowed = determineAllowed(infraName, identityProvider, allowedForKubernetes);
   }
 

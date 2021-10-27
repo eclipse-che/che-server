@@ -29,7 +29,6 @@ import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
 /**
  * Creates {@link Secret} with user profile information such as his id, name and email. This serves
@@ -41,27 +40,25 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
   private static final String USER_PROFILE_SECRET_NAME = "user-profile";
   private static final String USER_PROFILE_SECRET_MOUNT_PATH = "/config/user/profile";
 
-  private final KubernetesNamespaceFactory namespaceFactory;
   private final KubernetesClientFactory clientFactory;
   private final UserManager userManager;
 
   @Inject
-  public UserProfileConfigurator(
-      KubernetesNamespaceFactory namespaceFactory,
-      KubernetesClientFactory clientFactory,
-      UserManager userManager) {
-    this.namespaceFactory = namespaceFactory;
+  public UserProfileConfigurator(KubernetesClientFactory clientFactory, UserManager userManager) {
     this.clientFactory = clientFactory;
     this.userManager = userManager;
   }
 
   @Override
-  public void configure(NamespaceResolutionContext namespaceResolutionContext)
+  public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {
     Secret userProfileSecret = prepareProfileSecret(namespaceResolutionContext);
-    String namespace = namespaceFactory.evaluateNamespaceName(namespaceResolutionContext);
     try {
-      clientFactory.create().secrets().inNamespace(namespace).createOrReplace(userProfileSecret);
+      clientFactory
+          .create()
+          .secrets()
+          .inNamespace(namespaceName)
+          .createOrReplace(userProfileSecret);
     } catch (KubernetesClientException e) {
       throw new InfrastructureException(
           "Error occurred while trying to create user profile secret.", e);

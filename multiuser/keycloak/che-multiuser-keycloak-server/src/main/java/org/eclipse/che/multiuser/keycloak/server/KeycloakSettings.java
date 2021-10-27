@@ -37,6 +37,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.multiuser.oidc.OIDCInfo;
 
 /** @author Max Shaposhnik (mshaposh@redhat.com) */
 @Singleton
@@ -80,9 +81,8 @@ public class KeycloakSettings {
           serverURL + "/realms/" + realm + "/protocol/openid-connect/token");
     }
 
-    if (oidcInfo.getEndSessionPublicEndpoint() != null) {
-      settings.put(LOGOUT_ENDPOINT_SETTING, oidcInfo.getEndSessionPublicEndpoint());
-    }
+    oidcInfo.getEndSessionPublicEndpoint().ifPresent(e -> settings.put(LOGOUT_ENDPOINT_SETTING, e));
+
     if (oidcInfo.getTokenPublicEndpoint() != null) {
       settings.put(TOKEN_ENDPOINT_SETTING, oidcInfo.getTokenPublicEndpoint());
     }

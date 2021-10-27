@@ -16,13 +16,6 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.client.OpenShiftClient;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -120,39 +113,5 @@ public class OpenshiftTokenInitializationFilter
     // OpenShift User does not have data about user's email. However, we need some email. For now,
     // we can use fake email, but probably we will need to find better solution.
     return userMeta.getName() + "@che";
-  }
-
-  /**
-   * If request path is in {@link OpenshiftTokenInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS},
-   * the request is allowed. All other requests are rejected with error code 401.
-   */
-  @Override
-  protected void handleMissingToken(
-      ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-    // if request path is in unauthorized endpoints, continue
-    if (request instanceof HttpServletRequest) {
-      HttpServletRequest httpRequest = (HttpServletRequest) request;
-      String path = httpRequest.getServletPath();
-      if (UNAUTHORIZED_ENDPOINT_PATHS.contains(path)) {
-        LOG.debug("Allowing request to '{}' without authorization header.", path);
-        chain.doFilter(request, response);
-        return;
-      }
-    }
-
-    LOG.error("Rejecting the request due to missing/expired token in Authorization header.");
-    sendError(response, 401, "Authorization token is missing or expired");
-  }
-
-  @Override
-  public void init(FilterConfig filterConfig) {
-    LOG.trace("OpenshiftTokenInitializationFilter#init({})", filterConfig);
-  }
-
-  @Override
-  public void destroy() {
-    LOG.trace("OpenshiftTokenInitializationFilter#destroy()");
   }
 }

@@ -9,13 +9,9 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.keycloak.server;
+package org.eclipse.che.multiuser.oidc;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.AUTH_SERVER_URL_INTERNAL_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.AUTH_SERVER_URL_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.OIDC_PROVIDER_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -41,25 +37,56 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
 
   private static final Logger LOG = LoggerFactory.getLogger(OIDCInfoProvider.class);
 
-  @Inject
-  @Nullable
-  @Named(AUTH_SERVER_URL_SETTING)
+  private static final String KEYCLOAK_SETTING_PREFIX = "che.keycloak.";
+
+  public static final String AUTH_SERVER_URL_SETTING = KEYCLOAK_SETTING_PREFIX + "auth_server_url";
+  public static final String AUTH_SERVER_URL_INTERNAL_SETTING =
+      KEYCLOAK_SETTING_PREFIX + "auth_internal_server_url";
+
+  public static final String REALM_SETTING = KEYCLOAK_SETTING_PREFIX + "realm";
+  public static final String CLIENT_ID_SETTING = KEYCLOAK_SETTING_PREFIX + "client_id";
+  public static final String OIDC_PROVIDER_SETTING = KEYCLOAK_SETTING_PREFIX + "oidc_provider";
+  public static final String USERNAME_CLAIM_SETTING = KEYCLOAK_SETTING_PREFIX + "username_claim";
+  public static final String USE_NONCE_SETTING = KEYCLOAK_SETTING_PREFIX + "use_nonce";
+  public static final String USE_FIXED_REDIRECT_URLS_SETTING =
+      KEYCLOAK_SETTING_PREFIX + "use_fixed_redirect_urls";
+  public static final String JS_ADAPTER_URL_SETTING = KEYCLOAK_SETTING_PREFIX + "js_adapter_url";
+  public static final String ALLOWED_CLOCK_SKEW_SEC =
+      KEYCLOAK_SETTING_PREFIX + "allowed_clock_skew_sec";
+
+  public static final String OSO_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "oso.endpoint";
+  public static final String PROFILE_ENDPOINT_SETTING =
+      KEYCLOAK_SETTING_PREFIX + "profile.endpoint";
+  public static final String PASSWORD_ENDPOINT_SETTING =
+      KEYCLOAK_SETTING_PREFIX + "password.endpoint";
+  public static final String LOGOUT_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "logout.endpoint";
+  public static final String TOKEN_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "token.endpoint";
+  public static final String JWKS_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "jwks.endpoint";
+  public static final String USERINFO_ENDPOINT_SETTING =
+      KEYCLOAK_SETTING_PREFIX + "userinfo.endpoint";
+  public static final String GITHUB_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "github.endpoint";
+
+  public static final String FIXED_REDIRECT_URL_FOR_DASHBOARD =
+      KEYCLOAK_SETTING_PREFIX + "redirect_url.dashboard";
+  public static final String FIXED_REDIRECT_URL_FOR_IDE =
+      KEYCLOAK_SETTING_PREFIX + "redirect_url.ide";
+
   protected String serverURL;
-
-  @Inject
-  @Nullable
-  @Named(AUTH_SERVER_URL_INTERNAL_SETTING)
   protected String serverInternalURL;
-
-  @Inject
-  @Nullable
-  @Named(OIDC_PROVIDER_SETTING)
   protected String oidcProviderUrl;
+  protected String realm;
 
   @Inject
-  @Nullable
-  @Named(REALM_SETTING)
-  protected String realm;
+  public OIDCInfoProvider(
+      @Nullable @Named(AUTH_SERVER_URL_SETTING) String serverURL,
+      @Nullable @Named(AUTH_SERVER_URL_INTERNAL_SETTING) String serverInternalURL,
+      @Nullable @Named(OIDC_PROVIDER_SETTING) String oidcProviderUrl,
+      @Nullable @Named(REALM_SETTING) String realm) {
+    this.serverURL = serverURL;
+    this.serverInternalURL = serverInternalURL;
+    this.oidcProviderUrl = oidcProviderUrl;
+    this.realm = realm;
+  }
 
   /** @return OIDCInfo with OIDC settings information. */
   @Override
@@ -84,7 +111,9 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
       String userInfoPublicEndpoint =
           setPublicUrl((String) openIdConfiguration.get("userinfo_endpoint"));
       String endSessionPublicEndpoint =
-          setPublicUrl((String) openIdConfiguration.get("end_session_endpoint"));
+          openIdConfiguration.containsKey("end_session_endpoint")
+              ? setPublicUrl((String) openIdConfiguration.get("end_session_endpoint"))
+              : null;
       String jwksPublicUri = setPublicUrl((String) openIdConfiguration.get("jwks_uri"));
       String jwksInternalUri = setInternalUrl(jwksPublicUri);
       String userInfoInternalEndpoint = setInternalUrl(userInfoPublicEndpoint);
@@ -107,7 +136,7 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
   }
 
   private String getWellKnownEndpoint(String serverAuthUrl) {
-    String wellKnownEndpoint = firstNonNull(oidcProviderUrl, serverAuthUrl + "/realms/" + realm);
+    String wellKnownEndpoint = firstNonNull(oidcProviderUrl, constructServerAuthUrl(serverAuthUrl));
     if (!wellKnownEndpoint.endsWith("/")) {
       wellKnownEndpoint = wellKnownEndpoint + "/";
     }
@@ -115,7 +144,11 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
     return wellKnownEndpoint;
   }
 
-  private void validate() {
+  protected String constructServerAuthUrl(String serverAuthUrl) {
+    return serverAuthUrl;
+  }
+
+  protected void validate() {
     if (serverURL == null && serverInternalURL == null && oidcProviderUrl == null) {
       throw new RuntimeException(
           "Either the '"
@@ -125,10 +158,6 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
               + "' or '"
               + OIDC_PROVIDER_SETTING
               + "' property should be set");
-    }
-
-    if (oidcProviderUrl == null && realm == null) {
-      throw new RuntimeException("The '" + REALM_SETTING + "' property should be set");
     }
   }
 

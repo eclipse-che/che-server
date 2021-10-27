@@ -40,7 +40,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
  * @author Pavol Baran
  */
 public class UserPreferencesConfigurator implements NamespaceConfigurator {
-  private static final String USER_PREFERENCES_SECRET_NAME = "user-preferences";
+  public static final String USER_PREFERENCES_SECRET_NAME = "user-preferences";
   private static final String USER_PREFERENCES_SECRET_MOUNT_PATH = "/config/user/preferences";
   private static final int PREFERENCE_NAME_MAX_LENGTH = 253;
 

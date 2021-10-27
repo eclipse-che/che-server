@@ -13,6 +13,8 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator.USER_PREFERENCES_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator.USER_PROFILE_SECRET_NAME;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
@@ -153,13 +155,14 @@ public abstract class AbstractWorkspaceServiceAccount<
       }
     }
 
-    // credentials-secret role
+    // workspace-secrets role
     ensureRoleWithBinding(
         k8sClient,
         buildRole(
             SECRETS_ROLE_NAME,
             singletonList("secrets"),
-            singletonList(CREDENTIALS_SECRET_NAME),
+            Arrays.asList(
+                CREDENTIALS_SECRET_NAME, USER_PREFERENCES_SECRET_NAME, USER_PROFILE_SECRET_NAME),
             singletonList(""),
             Arrays.asList("get", "patch")),
         serviceAccountName + "-secrets");

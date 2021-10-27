@@ -38,7 +38,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
  * @author Pavol Baran
  */
 public class UserProfileConfigurator implements NamespaceConfigurator {
-  private static final String USER_PROFILE_SECRET_NAME = "user-profile";
+  public static final String USER_PROFILE_SECRET_NAME = "user-profile";
   private static final String USER_PROFILE_SECRET_MOUNT_PATH = "/config/user/profile";
 
   private final KubernetesNamespaceFactory namespaceFactory;

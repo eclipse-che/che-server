@@ -20,6 +20,8 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.Kub
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator.USER_PREFERENCES_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator.USER_PROFILE_SECRET_NAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -841,7 +843,10 @@ public class KubernetesNamespaceFactoryTest {
     assertTrue(roleOptional.isPresent());
     PolicyRule rule = roleOptional.get().getRules().get(0);
     assertEquals(rule.getResources(), singletonList("secrets"));
-    assertEquals(rule.getResourceNames(), singletonList(CREDENTIALS_SECRET_NAME));
+    assertEquals(
+        rule.getResourceNames(),
+        Arrays.asList(
+            CREDENTIALS_SECRET_NAME, USER_PREFERENCES_SECRET_NAME, USER_PROFILE_SECRET_NAME));
     assertEquals(rule.getApiGroups(), singletonList(""));
     assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
     assertTrue(

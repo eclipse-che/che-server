@@ -17,6 +17,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.THEIA_SECRET_NAME;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -134,6 +135,26 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
               .withType("opaque")
               .withNewMetadata()
               .withName(CREDENTIALS_SECRET_NAME)
+              .endMetadata()
+              .build();
+      clientFactory
+          .createOC()
+          .secrets()
+          .inNamespace(identity.getInfrastructureNamespace())
+          .create(secret);
+    }
+
+    // create theia secret
+    if (osProject
+        .secrets()
+        .get()
+        .stream()
+        .noneMatch(s -> s.getMetadata().getName().equals(THEIA_SECRET_NAME))) {
+      Secret secret =
+          new SecretBuilder()
+              .withType("opaque")
+              .withNewMetadata()
+              .withName(THEIA_SECRET_NAME)
               .endMetadata()
               .build();
       clientFactory

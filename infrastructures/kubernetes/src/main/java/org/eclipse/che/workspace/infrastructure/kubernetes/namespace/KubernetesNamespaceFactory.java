@@ -21,6 +21,7 @@ import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRU
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.THEIA_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceNameValidator.METADATA_NAME_MAX_LENGTH;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -353,6 +354,24 @@ public class KubernetesNamespaceFactory {
               .withType("opaque")
               .withNewMetadata()
               .withName(CREDENTIALS_SECRET_NAME)
+              .endMetadata()
+              .build();
+      clientFactory
+          .create()
+          .secrets()
+          .inNamespace(identity.getInfrastructureNamespace())
+          .create(secret);
+    }
+    if (namespace
+        .secrets()
+        .get()
+        .stream()
+        .noneMatch(s -> s.getMetadata().getName().equals(THEIA_SECRET_NAME))) {
+      Secret secret =
+          new SecretBuilder()
+              .withType("opaque")
+              .withNewMetadata()
+              .withName(THEIA_SECRET_NAME)
               .endMetadata()
               .build();
       clientFactory

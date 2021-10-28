@@ -51,6 +51,7 @@ public abstract class AbstractWorkspaceServiceAccount<
   public static final String METRICS_ROLE_NAME = "workspace-metrics";
   public static final String SECRETS_ROLE_NAME = "workspace-secrets";
   public static final String CREDENTIALS_SECRET_NAME = "workspace-credentials-secret";
+  public static final String THEIA_SECRET_NAME = "workspace-theia-secret";
 
   protected final String namespace;
   protected final String serviceAccountName;
@@ -159,7 +160,7 @@ public abstract class AbstractWorkspaceServiceAccount<
         buildRole(
             SECRETS_ROLE_NAME,
             singletonList("secrets"),
-            singletonList(CREDENTIALS_SECRET_NAME),
+            Arrays.asList(CREDENTIALS_SECRET_NAME, THEIA_SECRET_NAME),
             singletonList(""),
             Arrays.asList("get", "patch")),
         serviceAccountName + "-secrets");

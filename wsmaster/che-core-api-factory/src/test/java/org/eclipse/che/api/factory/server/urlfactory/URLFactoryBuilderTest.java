@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.core.rest.shared.dto.ExtendedError;
@@ -299,12 +298,8 @@ public class URLFactoryBuilderTest {
     assertEquals(((FactoryDevfileV2Dto) factory).getDevfile(), devfileAsMap);
   }
 
-  @Test(
-      expectedExceptions = BadRequestException.class,
-      expectedExceptionsMessageRegExp =
-          "Error occurred during creation a workspace from devfile located at `http://foo-location/`. Cause: Devfile of version 2.0.1 cannot be used in current deployment, because of DevWorkspaces feature is disabled. Only '1.0.0' version devfiles are supported for such installations.")
-  public void testShouldThrowExceptionOnDevfileV2WithDevworkspacesDisabled()
-      throws ApiException, DevfileException {
+  @Test
+  public void testShouldReturnV2WithDevworkspacesDisabled() throws ApiException, DevfileException {
     String myLocation = "http://foo-location/";
     Map<String, Object> devfileAsMap = Map.of("hello", "there", "how", "are", "you", "?");
 
@@ -312,18 +307,21 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
-    when(devfileVersionDetector.devfileVersion(devfile)).thenReturn("2.0.1");
 
     URLFactoryBuilder localUrlFactoryBuilder =
         new URLFactoryBuilder(
             defaultEditor, defaultPlugin, false, devfileParser, devfileVersionDetector);
 
-    localUrlFactoryBuilder
-        .createFactoryFromDevfile(
-            new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
-            s -> myLocation + ".list",
-            emptyMap())
-        .get();
+    FactoryMetaDto factory =
+        localUrlFactoryBuilder
+            .createFactoryFromDevfile(
+                new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
+                s -> myLocation + ".list",
+                emptyMap())
+            .get();
+    assertNotNull(factory);
+    assertTrue(factory instanceof FactoryDevfileV2Dto);
+    assertEquals(((FactoryDevfileV2Dto) factory).getDevfile(), devfileAsMap);
   }
 
   @DataProvider

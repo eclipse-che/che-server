@@ -34,8 +34,6 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * We use this to give our clients the direct access to the underlying infrastructure REST API. This
@@ -46,8 +44,6 @@ import org.slf4j.LoggerFactory;
 @Beta
 @Path(InfrastructureApiService.PATH_PREFIX)
 public class InfrastructureApiService extends Service {
-
-  private static final Logger LOG = LoggerFactory.getLogger(InfrastructureApiService.class);
   static final String PATH_PREFIX = "/unsupported/k8s";
   private static final int PATH_PREFIX_LENGTH = PATH_PREFIX.length();
 

@@ -11,7 +11,9 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.*;
+import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_INTERNAL_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;

@@ -30,8 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * OIDCInfoProvider retrieves OpenID Connect (OIDC) configuration for well-known endpoint. These
- * information is useful to provide access to the Keycloak api.
+ * OIDCInfoProvider retrieves OpenID Connect (OIDC) configuration for well-known endpoint. This
+ * information is useful to provide access to the OIDC api.
  */
 public class OIDCInfoProvider implements Provider<OIDCInfo> {
   private static final Logger LOG = LoggerFactory.getLogger(OIDCInfoProvider.class);

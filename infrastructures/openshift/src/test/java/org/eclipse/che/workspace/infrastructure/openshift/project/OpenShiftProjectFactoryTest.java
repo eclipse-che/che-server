@@ -17,7 +17,7 @@ import static java.util.Collections.singletonList;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.THEIA_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.openshift.Constants.PROJECT_DESCRIPTION_ANNOTATION;
 import static org.eclipse.che.workspace.infrastructure.openshift.Constants.PROJECT_DESCRIPTION_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.openshift.Constants.PROJECT_DISPLAY_NAME_ANNOTATION;
@@ -601,7 +601,7 @@ public class OpenShiftProjectFactoryTest {
   }
 
   @Test
-  public void shouldCreateTheiaPreferencesSecretIfNotExists() throws Exception {
+  public void shouldCreatePreferencesSecretIfNotExists() throws Exception {
     // given
     projectFactory =
         spy(
@@ -642,7 +642,7 @@ public class OpenShiftProjectFactoryTest {
     ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
     verify(namespaceOperation, times(2)).create(secretsCaptor.capture());
     Secret secret = secretsCaptor.getAllValues().get(1);
-    Assert.assertEquals(secret.getMetadata().getName(), THEIA_SECRET_NAME);
+    Assert.assertEquals(secret.getMetadata().getName(), PREFERENCES_SECRET_NAME);
     Assert.assertEquals(secret.getType(), "opaque");
   }
 
@@ -959,7 +959,7 @@ public class OpenShiftProjectFactoryTest {
     when(project.secrets()).thenReturn(secrets);
     Secret secretMock = mock(Secret.class);
     ObjectMeta objectMeta = mock(ObjectMeta.class);
-    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME, THEIA_SECRET_NAME);
+    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME, PREFERENCES_SECRET_NAME);
     when(secretMock.getMetadata()).thenReturn(objectMeta);
     when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
   }

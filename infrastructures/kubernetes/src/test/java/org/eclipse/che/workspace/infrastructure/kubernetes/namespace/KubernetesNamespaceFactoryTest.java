@@ -18,8 +18,8 @@ import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRU
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.THEIA_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -526,7 +526,7 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void shouldCreateTheiaSecretIfNotExists() throws Exception {
+  public void shouldCreatePreferencesSecretIfNotExists() throws Exception {
     // given
     namespaceFactory =
         spy(
@@ -562,7 +562,7 @@ public class KubernetesNamespaceFactoryTest {
     ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
     verify(namespaceOperation, times(2)).create(secretsCaptor.capture());
     Secret secret = secretsCaptor.getAllValues().get(1);
-    Assert.assertEquals(secret.getMetadata().getName(), THEIA_SECRET_NAME);
+    Assert.assertEquals(secret.getMetadata().getName(), PREFERENCES_SECRET_NAME);
     Assert.assertEquals(secret.getType(), "opaque");
   }
 
@@ -840,7 +840,7 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void shouldCreateAndBindCredentialsAndTheiaSecretsRole() throws Exception {
+  public void shouldCreateAndBindCredentialsAndPreferencesSecretsRole() throws Exception {
     // given
     namespaceFactory =
         spy(
@@ -885,7 +885,7 @@ public class KubernetesNamespaceFactoryTest {
     PolicyRule rule = roleOptional.get().getRules().get(0);
     assertEquals(rule.getResources(), singletonList("secrets"));
     assertEquals(
-        rule.getResourceNames(), Arrays.asList(CREDENTIALS_SECRET_NAME, THEIA_SECRET_NAME));
+        rule.getResourceNames(), Arrays.asList(CREDENTIALS_SECRET_NAME, PREFERENCES_SECRET_NAME));
     assertEquals(rule.getApiGroups(), singletonList(""));
     assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
     assertTrue(
@@ -1567,7 +1567,7 @@ public class KubernetesNamespaceFactoryTest {
     when(namespace.secrets()).thenReturn(secrets);
     Secret secretMock = mock(Secret.class);
     ObjectMeta objectMeta = mock(ObjectMeta.class);
-    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME, THEIA_SECRET_NAME);
+    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME, PREFERENCES_SECRET_NAME);
     when(secretMock.getMetadata()).thenReturn(objectMeta);
     when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
   }

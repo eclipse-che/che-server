@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.multiuser.oidc.filter;
 
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_USERNAME_CLAIM_SETTING;
+
 import com.google.common.base.Strings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -23,6 +25,7 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.UserManager;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
@@ -48,7 +51,7 @@ public class OidcTokenInitializationFilter
       SessionStore sessionStore,
       RequestTokenExtractor tokenExtractor,
       UserManager userManager,
-      @Named("che.keycloak.username_claim") String usernameClaim) {
+      @Nullable @Named(OIDC_USERNAME_CLAIM_SETTING) String usernameClaim) {
     super(sessionStore, tokenExtractor);
     this.permissionChecker = permissionChecker;
     this.jwtParser = jwtParser;

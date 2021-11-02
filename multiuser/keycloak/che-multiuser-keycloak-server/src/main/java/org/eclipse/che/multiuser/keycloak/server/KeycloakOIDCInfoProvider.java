@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
+import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -21,6 +23,7 @@ import org.eclipse.che.multiuser.oidc.OIDCInfoProvider;
  * These information is useful to provide access to the Keycloak api.
  */
 public class KeycloakOIDCInfoProvider extends OIDCInfoProvider {
+  public final String realm;
 
   @Inject
   public KeycloakOIDCInfoProvider(
@@ -28,7 +31,8 @@ public class KeycloakOIDCInfoProvider extends OIDCInfoProvider {
       @Nullable @Named(AUTH_SERVER_URL_INTERNAL_SETTING) String serverInternalURL,
       @Nullable @Named(OIDC_PROVIDER_SETTING) String oidcProviderUrl,
       @Nullable @Named(REALM_SETTING) String realm) {
-    super(serverURL, serverInternalURL, oidcProviderUrl, realm);
+    super(serverURL, serverInternalURL, oidcProviderUrl);
+    this.realm = realm;
   }
 
   @Override

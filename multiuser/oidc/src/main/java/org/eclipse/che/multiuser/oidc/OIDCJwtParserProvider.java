@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.multiuser.oidc;
 
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_ALLOWED_CLOCK_SKEW_SEC;
+
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolver;
@@ -26,7 +28,7 @@ public class OIDCJwtParserProvider implements Provider<JwtParser> {
 
   @Inject
   public OIDCJwtParserProvider(
-      @Named("che.keycloak.allowed_clock_skew_sec") long allowedClockSkewSec,
+      @Named(OIDC_ALLOWED_CLOCK_SKEW_SEC) long allowedClockSkewSec,
       SigningKeyResolver signingKeyResolver) {
     this.jwtParser =
         Jwts.parserBuilder()

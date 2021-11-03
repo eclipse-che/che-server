@@ -640,7 +640,7 @@ public class KubernetesNamespaceFactory {
       preferences.put(NAMESPACE_TEMPLATE_ATTRIBUTE, defaultNamespaceName);
       preferenceManager.update(owner, preferences);
     } catch (ServerException e) {
-      LOG.error(e.getMessage(), e);
+      LOG.error("Failed storing namespace name in user properties.", e);
     }
   }
 
@@ -673,6 +673,7 @@ public class KubernetesNamespaceFactory {
   String normalizeNamespaceName(String namespaceName) {
     namespaceName =
         namespaceName
+            .toLowerCase()
             .replaceAll("[^-a-zA-Z0-9]", "-") // replace invalid chars with '-'
             .replaceAll("-+", "-") // replace multiple '-' with single ones
             .replaceAll("^-|-$", ""); // trim dashes at beginning/end of the string

@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -23,7 +24,7 @@ public class UserPermissionConfigurator implements NamespaceConfigurator {
 
   @Inject
   public UserPermissionConfigurator(
-      @Named("che.infra.kubernetes.user_cluster_roles") String userClusterRoles,
+      @Nullable @Named("che.infra.kubernetes.user_cluster_roles") String userClusterRoles,
       CheServerKubernetesClientFactory cheClientFactory) {
     this.clientFactory = cheClientFactory;
     if (!isNullOrEmpty(userClusterRoles)) {

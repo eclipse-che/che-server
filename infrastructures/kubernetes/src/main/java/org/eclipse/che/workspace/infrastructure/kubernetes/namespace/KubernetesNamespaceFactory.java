@@ -26,13 +26,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -99,8 +97,6 @@ public class KubernetesNamespaceFactory {
   protected final Map<String, String> namespaceLabels;
   protected final Map<String, String> namespaceAnnotations;
 
-  private final String serviceAccountName;
-  private final Set<String> clusterRoleNames;
   private final KubernetesClientFactory clientFactory;
   private final KubernetesClientFactory cheClientFactory;
   private final boolean namespaceCreationAllowed;
@@ -111,8 +107,6 @@ public class KubernetesNamespaceFactory {
 
   @Inject
   public KubernetesNamespaceFactory(
-      @Nullable @Named("che.infra.kubernetes.service_account_name") String serviceAccountName,
-      @Nullable @Named("che.infra.kubernetes.workspace_sa_cluster_roles") String clusterRoleNames,
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelNamespaces,
@@ -128,7 +122,6 @@ public class KubernetesNamespaceFactory {
       throws ConfigurationException {
     this.namespaceCreationAllowed = namespaceCreationAllowed;
     this.userManager = userManager;
-    this.serviceAccountName = serviceAccountName;
     this.clientFactory = clientFactory;
     this.cheClientFactory = cheClientFactory;
     this.defaultNamespaceName = defaultNamespaceName;
@@ -160,14 +153,6 @@ public class KubernetesNamespaceFactory {
                   + "Using the %s placeholder is required in the 'che.infra.kubernetes.namespace.default' parameter."
                   + " The current value is: `%s`.",
               Joiner.on(" or ").join(REQUIRED_NAMESPACE_NAME_PLACEHOLDERS), defaultNamespaceName));
-    }
-
-    if (!isNullOrEmpty(clusterRoleNames)) {
-      this.clusterRoleNames =
-          Sets.newHashSet(
-              Splitter.on(",").trimResults().omitEmptyStrings().split(clusterRoleNames));
-    } else {
-      this.clusterRoleNames = Collections.emptySet();
     }
   }
 
@@ -700,13 +685,5 @@ public class KubernetesNamespaceFactory {
         Math.min(
             namespaceName.length(),
             METADATA_NAME_MAX_LENGTH)); // limit length to METADATA_NAME_MAX_LENGTH
-  }
-
-  protected String getServiceAccountName() {
-    return serviceAccountName;
-  }
-
-  protected Set<String> getClusterRoleNames() {
-    return clusterRoleNames;
   }
 }

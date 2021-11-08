@@ -158,8 +158,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             "<username>-che",
             true,
             true,
@@ -191,8 +189,6 @@ public class OpenShiftProjectFactoryTest {
     System.out.println("2--------");
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             "<username>-che",
             true,
             true,
@@ -224,8 +220,6 @@ public class OpenShiftProjectFactoryTest {
           throws Exception {
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             null,
             true,
             true,
@@ -262,8 +256,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            "",
             "<userid>-che",
             true,
             true,
@@ -301,8 +293,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            "",
             "<userid>-che",
             true,
             true,
@@ -336,8 +326,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            "",
             "<userid>-che",
             true,
             true,
@@ -381,8 +369,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             "<username>-che",
             true,
             true,
@@ -420,8 +406,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             "<username>-che",
             true,
             true,
@@ -459,8 +443,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             "<username>-che",
             true,
             true,
@@ -488,8 +470,6 @@ public class OpenShiftProjectFactoryTest {
     throwOnTryToGetProjectsList(new KubernetesClientException("connection refused"));
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             "<username>-che",
             true,
             true,
@@ -522,8 +502,6 @@ public class OpenShiftProjectFactoryTest {
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
-                "",
-                null,
                 "<userid>-che",
                 true,
                 true,
@@ -559,8 +537,6 @@ public class OpenShiftProjectFactoryTest {
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
-                "",
-                null,
                 "<userid>-che",
                 true,
                 true,
@@ -605,8 +581,6 @@ public class OpenShiftProjectFactoryTest {
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
-                "",
-                null,
                 "<userid>-che",
                 true,
                 true,
@@ -644,8 +618,6 @@ public class OpenShiftProjectFactoryTest {
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
-                "serviceAccount",
-                null,
                 "<userid>-che",
                 true,
                 true,
@@ -684,8 +656,6 @@ public class OpenShiftProjectFactoryTest {
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
-                "serviceAccount",
-                null,
                 "<userid>-che",
                 true,
                 true,
@@ -736,8 +706,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            "",
             "<userid>-che",
             true,
             true,
@@ -771,8 +739,6 @@ public class OpenShiftProjectFactoryTest {
 
     projectFactory =
         new OpenShiftProjectFactory(
-            "",
-            null,
             "<userid>-che",
             true,
             true,
@@ -800,8 +766,6 @@ public class OpenShiftProjectFactoryTest {
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
-                "",
-                null,
                 "<userid>-che",
                 true,
                 true,
@@ -843,8 +807,6 @@ public class OpenShiftProjectFactoryTest {
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
-                "",
-                null,
                 "<username>-che",
                 true,
                 true,

@@ -67,8 +67,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
 
   @Inject
   public OpenShiftProjectFactory(
-      @Nullable @Named("che.infra.kubernetes.service_account_name") String serviceAccountName,
-      @Nullable @Named("che.infra.kubernetes.workspace_sa_cluster_roles") String clusterRoleNames,
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelProjects,
@@ -86,8 +84,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       @Nullable @Named("che.infra.openshift.oauth_identity_provider")
           String oAuthIdentityProvider) {
     super(
-        serviceAccountName,
-        clusterRoleNames,
         defaultNamespaceName,
         namespaceCreationAllowed,
         labelProjects,

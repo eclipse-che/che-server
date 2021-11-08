@@ -130,18 +130,15 @@ public class KubernetesNamespaceFactoryTest {
 
   @Mock private NonNamespaceOperation namespaceOperation;
 
-  @Mock
-  private Resource<Namespace> namespaceResource;
+  @Mock private Resource<Namespace> namespaceResource;
 
   private KubernetesServer serverMock;
 
   private KubernetesNamespaceFactory namespaceFactory;
 
-  @Mock
-  private FilterWatchListDeletable<Namespace, NamespaceList> namespaceListResource;
+  @Mock private FilterWatchListDeletable<Namespace, NamespaceList> namespaceListResource;
 
-  @Mock
-  private NamespaceList namespaceList;
+  @Mock private NamespaceList namespaceList;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -676,6 +673,8 @@ public class KubernetesNamespaceFactoryTest {
   public void shouldPrepareWorkspaceServiceAccountIfItIsConfiguredAndNamespaceIsNotPredefined()
       throws Exception {
     // given
+    var serviceAccountCfg =
+        spy(new WorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory));
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
@@ -685,7 +684,7 @@ public class KubernetesNamespaceFactoryTest {
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
-                Set.of(new WorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory)),
+                Set.of(serviceAccountCfg),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -696,9 +695,11 @@ public class KubernetesNamespaceFactoryTest {
     when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    when(clientFactory.create(any())).thenReturn(k8sClient);
 
     KubernetesWorkspaceServiceAccount serviceAccount =
         mock(KubernetesWorkspaceServiceAccount.class);
+    doReturn(serviceAccount).when(serviceAccountCfg).doCreateServiceAccount(any(), any());
 
     // when
     RuntimeIdentity identity =
@@ -706,6 +707,7 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
+    verify(serviceAccountCfg).doCreateServiceAccount("workspace123", "workspace123");
     verify(serviceAccount).prepare();
   }
 
@@ -854,7 +856,8 @@ public class KubernetesNamespaceFactoryTest {
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
-                Set.of(new WorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory)),
+                Set.of(
+                    new WorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 userManager,

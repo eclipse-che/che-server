@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurat
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import java.util.Collections;
@@ -58,7 +59,8 @@ public class WorkspaceServiceAccountConfigurator implements NamespaceConfigurato
     }
   }
 
-  KubernetesWorkspaceServiceAccount doCreateServiceAccount(
+  @VisibleForTesting
+  public KubernetesWorkspaceServiceAccount doCreateServiceAccount(
       String workspaceId, String namespaceName) {
     return new KubernetesWorkspaceServiceAccount(
         workspaceId, namespaceName, serviceAccountName, clusterRoleNames, clientFactory);

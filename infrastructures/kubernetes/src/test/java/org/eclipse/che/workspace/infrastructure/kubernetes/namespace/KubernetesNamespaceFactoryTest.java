@@ -692,10 +692,8 @@ public class KubernetesNamespaceFactoryTest {
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     prepareNamespace(toReturnNamespace);
-    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
-    when(clientFactory.create(any())).thenReturn(k8sClient);
 
     KubernetesWorkspaceServiceAccount serviceAccount =
         mock(KubernetesWorkspaceServiceAccount.class);

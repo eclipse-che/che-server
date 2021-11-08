@@ -320,8 +320,10 @@ public class KubernetesNamespaceFactory {
   public KubernetesNamespace getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     KubernetesNamespace namespace = get(identity);
 
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
     NamespaceResolutionContext resolutionCtx =
-        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+        new NamespaceResolutionContext(
+            identity.getWorkspaceId(), subject.getUserId(), subject.getUserName());
     Map<String, String> namespaceAnnotationsEvaluated =
         evaluateAnnotationPlaceholders(resolutionCtx);
 

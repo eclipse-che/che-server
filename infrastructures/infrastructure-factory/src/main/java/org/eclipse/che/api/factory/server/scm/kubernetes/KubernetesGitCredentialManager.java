@@ -14,9 +14,11 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_AUTOMOUNT;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_DEV_WORKSPACE_MOUNT_PATH;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_GIT_CREDENTIALS;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_MOUNT_AS;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_MOUNT_PATH;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.DEV_WORKSPACE_PREFIX;
 
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -54,22 +56,29 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   public static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
   public static final String ANNOTATION_SCM_USERNAME = "che.eclipse.org/scm-username";
   public static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
+  public static final String CREDENTIALS_MOUNT_PATH = "/home/theia/.git-credentials";
+  public static final String LABEL_DEV_WORKSPACE_CREDENTIAL =
+      DEV_WORKSPACE_PREFIX + "/git-credential";
 
-  private static final Map<String, String> LABELS =
+  // Labels that that are use to search for already existing secret.
+  private static final Map<String, String> SEARCH_LABELS =
       ImmutableMap.of(
           "app.kubernetes.io/part-of", "che.eclipse.org",
           "app.kubernetes.io/component", "workspace-secret");
+  // Labels that will be added to newly created secret.
+  private static final Map<String, String> NEW_SECRET_LABELS =
+      ImmutableMap.<String, String>builder()
+          .putAll(SEARCH_LABELS)
+          .put(LABEL_DEV_WORKSPACE_CREDENTIAL, "true")
+          .build();
 
   static final Map<String, String> DEFAULT_SECRET_ANNOTATIONS =
       ImmutableMap.of(
-          ANNOTATION_AUTOMOUNT,
-          "true",
-          ANNOTATION_MOUNT_PATH,
-          "/home/theia/.git-credentials",
-          ANNOTATION_MOUNT_AS,
-          "file",
-          ANNOTATION_GIT_CREDENTIALS,
-          "true");
+          ANNOTATION_AUTOMOUNT, "true",
+          ANNOTATION_MOUNT_PATH, CREDENTIALS_MOUNT_PATH,
+          ANNOTATION_MOUNT_AS, "file",
+          ANNOTATION_GIT_CREDENTIALS, "true",
+          ANNOTATION_DEV_WORKSPACE_MOUNT_PATH, CREDENTIALS_MOUNT_PATH);
 
   private final KubernetesNamespaceFactory namespaceFactory;
   private final KubernetesClientFactory clientFactory;
@@ -93,7 +102,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
           client
               .secrets()
               .inNamespace(namespace)
-              .withLabels(LABELS)
+              .withLabels(SEARCH_LABELS)
               .list()
               .getItems()
               .stream()
@@ -128,7 +137,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                     new ObjectMetaBuilder()
                         .withName(NameGenerator.generate(NAME_PATTERN, 5))
                         .withAnnotations(annotations)
-                        .withLabels(LABELS)
+                        .withLabels(NEW_SECRET_LABELS)
                         .build();
                 return new SecretBuilder().withMetadata(meta).build();
               });

@@ -42,5 +42,12 @@ public class KubernetesSecretAnnotationNames {
   /** For 'env' type secrets defines the environment variable name template to mount secret with */
   public static final String ANNOTATION_ENV_NAME_TEMPLATE = ANNOTATION_PREFIX + "/%s_" + "env-name";
 
+  /** Common prefix for annotations associated with devworkspaces */
+  public static final String DEV_WORKSPACE_PREFIX = "controller.devfile.io";
+
+  /** For 'file' type secrets defines the path where ih should be mount */
+  public static final String ANNOTATION_DEV_WORKSPACE_MOUNT_PATH =
+      DEV_WORKSPACE_PREFIX + "/" + "mount-path";
+
   private KubernetesSecretAnnotationNames() {}
 }

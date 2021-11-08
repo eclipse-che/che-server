@@ -25,6 +25,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Name
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -62,6 +63,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +106,7 @@ public class KubernetesNamespaceFactory {
   private final boolean namespaceCreationAllowed;
   private final UserManager userManager;
   private final PreferenceManager preferenceManager;
+  protected final Set<NamespaceConfigurator> namespaceConfigurators;
   protected final KubernetesSharedPool sharedPool;
 
   @Inject
@@ -116,6 +119,7 @@ public class KubernetesNamespaceFactory {
       @Named("che.infra.kubernetes.namespace.annotate") boolean annotateNamespaces,
       @Named("che.infra.kubernetes.namespace.labels") String namespaceLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String namespaceAnnotations,
+      Set<NamespaceConfigurator> namespaceConfigurators,
       KubernetesClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
       UserManager userManager,
@@ -132,6 +136,7 @@ public class KubernetesNamespaceFactory {
     this.sharedPool = sharedPool;
     this.labelNamespaces = labelNamespaces;
     this.annotateNamespaces = annotateNamespaces;
+    this.namespaceConfigurators = ImmutableSet.copyOf(namespaceConfigurators);
 
     //noinspection UnstableApiUsage
     Splitter.MapSplitter csvMapSplitter = Splitter.on(",").withKeyValueSeparator("=");
@@ -339,6 +344,8 @@ public class KubernetesNamespaceFactory {
         canCreateNamespace(identity),
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
+
+    configureNamespace(resolutionCtx, namespace.getName());
 
     return namespace;
   }
@@ -569,6 +576,14 @@ public class KubernetesNamespaceFactory {
                 + kce.getMessage(),
             kce);
       }
+    }
+  }
+
+  protected void configureNamespace(
+      NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
+      throws InfrastructureException {
+    for (NamespaceConfigurator configurator : namespaceConfigurators) {
+      configurator.configure(namespaceResolutionContext, namespaceName);
     }
   }
 

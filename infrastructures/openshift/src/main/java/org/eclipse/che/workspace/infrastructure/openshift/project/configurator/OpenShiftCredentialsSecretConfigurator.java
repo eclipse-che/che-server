@@ -1,15 +1,4 @@
-/*
- * Copyright (c) 2012-2021 Red Hat, Inc.
- * This program and the accompanying materials are made
- * available under the terms of the Eclipse Public License 2.0
- * which is available at https://www.eclipse.org/legal/epl-2.0/
- *
- * SPDX-License-Identifier: EPL-2.0
- *
- * Contributors:
- *   Red Hat, Inc. - initial API and implementation
- */
-package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
+package org.eclipse.che.workspace.infrastructure.openshift.project.configurator;
 
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 
@@ -18,22 +7,23 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import javax.inject.Inject;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 
-public class CredentialsSecretConfigurator implements NamespaceConfigurator {
-
-  private final KubernetesClientFactory clientFactory;
+public class OpenShiftCredentialsSecretConfigurator implements NamespaceConfigurator {
+  private final OpenShiftClientFactory clientFactory;
 
   @Inject
-  public CredentialsSecretConfigurator(KubernetesClientFactory clientFactory) {
+  public OpenShiftCredentialsSecretConfigurator(OpenShiftClientFactory clientFactory) {
     this.clientFactory = clientFactory;
   }
 
   @Override
   public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {
+    // create credentials secret
     if (clientFactory
-            .create()
+            .createOC()
             .secrets()
             .inNamespace(namespaceName)
             .withName(CREDENTIALS_SECRET_NAME)
@@ -46,7 +36,7 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
               .withName(CREDENTIALS_SECRET_NAME)
               .endMetadata()
               .build();
-      clientFactory.create().secrets().inNamespace(namespaceName).create(secret);
+      clientFactory.createOC().secrets().inNamespace(namespaceName).create(secret);
     }
   }
 }

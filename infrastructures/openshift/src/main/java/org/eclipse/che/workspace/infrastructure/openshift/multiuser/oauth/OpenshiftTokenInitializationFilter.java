@@ -16,8 +16,6 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.client.OpenShiftClient;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,9 +37,6 @@ import org.slf4j.LoggerFactory;
 /**
  * This filter uses given token directly. It's used for native OpenShift user authentication.
  * Requests without token or with invalid token are rejected.
- *
- * <p>{@link OpenshiftTokenInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS} is list of
- * unauthenticated paths, that are allowed without token.
  */
 @Singleton
 public class OpenshiftTokenInitializationFilter
@@ -49,9 +44,6 @@ public class OpenshiftTokenInitializationFilter
 
   private static final Logger LOG =
       LoggerFactory.getLogger(OpenshiftTokenInitializationFilter.class);
-
-  private static final List<String> UNAUTHORIZED_ENDPOINT_PATHS =
-      Collections.singletonList("/system/state");
 
   private final PermissionChecker permissionChecker;
   private final OpenShiftClientFactory clientFactory;

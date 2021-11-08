@@ -45,6 +45,9 @@ import org.slf4j.LoggerFactory;
  *   <li>Set subject for current request into {@link EnvironmentContext}
  * </ul>
  *
+ * <p>{@link MultiUserEnvironmentInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS} is list of
+ * unauthenticated paths, that are allowed without token.
+ *
  * @param <T> the type of intermediary type used for conversion from a string token to a Subject
  * @author Max Shaposhnyk (mshaposh@redhat.com)
  */

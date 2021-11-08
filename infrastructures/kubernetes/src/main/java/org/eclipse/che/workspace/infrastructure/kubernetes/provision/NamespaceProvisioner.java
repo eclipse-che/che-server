@@ -12,7 +12,6 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 import io.fabric8.kubernetes.api.model.Namespace;
-import java.util.Set;
 import javax.inject.Inject;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -30,14 +29,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
  */
 public class NamespaceProvisioner {
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final Set<NamespaceConfigurator> namespaceConfigurators;
 
   @Inject
-  public NamespaceProvisioner(
-      KubernetesNamespaceFactory namespaceFactory,
-      Set<NamespaceConfigurator> namespaceConfigurators) {
+  public NamespaceProvisioner(KubernetesNamespaceFactory namespaceFactory) {
     this.namespaceFactory = namespaceFactory;
-    this.namespaceConfigurators = namespaceConfigurators;
   }
 
   /** Tests for this method are in KubernetesNamespaceFactoryTest. */
@@ -51,18 +46,9 @@ public class NamespaceProvisioner {
                 namespaceResolutionContext.getUserId(),
                 namespaceFactory.evaluateNamespaceName(namespaceResolutionContext)));
 
-    KubernetesNamespaceMeta namespaceMeta =
-        namespaceFactory
-            .fetchNamespace(namespace.getName())
-            .orElseThrow(
-                () ->
-                    new InfrastructureException(
-                        "Not able to find namespace " + namespace.getName()));
-
-    for (NamespaceConfigurator configurator : namespaceConfigurators) {
-      configurator.configure(namespaceResolutionContext, namespaceMeta.getName());
-    }
-
-    return namespaceMeta;
+    return namespaceFactory
+        .fetchNamespace(namespace.getName())
+        .orElseThrow(
+            () -> new InfrastructureException("Not able to find namespace " + namespace.getName()));
   }
 }

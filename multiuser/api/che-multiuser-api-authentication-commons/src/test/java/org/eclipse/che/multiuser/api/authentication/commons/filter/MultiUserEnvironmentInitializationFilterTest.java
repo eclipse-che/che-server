@@ -83,6 +83,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // then
     verify(tokenExtractor).getToken(eq(request));
     verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
+    verify(request).getServletPath();
     verifyNoMoreInteractions(request);
     verify(filter, never()).getUserId(any());
     verify(filter, never()).extractSubject(anyString(), any());
@@ -100,6 +101,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // then
     verify(tokenExtractor).getToken(eq(request));
     verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
+    verify(request).getServletPath();
     verifyNoMoreInteractions(request);
     verify(filter, never()).getUserId(any());
     verify(filter, never()).extractSubject(anyString(), any());

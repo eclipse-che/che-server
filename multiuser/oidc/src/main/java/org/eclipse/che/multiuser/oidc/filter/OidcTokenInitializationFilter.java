@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.multiuser.oidc.filter;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_USERNAME_CLAIM_SETTING;
 
-import com.google.common.base.Strings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtParser;
@@ -37,7 +37,8 @@ import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 @Singleton
 public class OidcTokenInitializationFilter
     extends MultiUserEnvironmentInitializationFilter<Jws<Claims>> {
-  private static final String DEFAULT_USERNAME_CLAIM = "email";
+  private static final String EMAIL_CLAIM = "email";
+  private static final String DEFAULT_USERNAME_CLAIM = EMAIL_CLAIM;
 
   private final JwtParser jwtParser;
   private final PermissionChecker permissionChecker;
@@ -56,8 +57,7 @@ public class OidcTokenInitializationFilter
     this.permissionChecker = permissionChecker;
     this.jwtParser = jwtParser;
     this.userManager = userManager;
-    this.usernameClaim =
-        Strings.isNullOrEmpty(usernameClaim) ? DEFAULT_USERNAME_CLAIM : usernameClaim;
+    this.usernameClaim = isNullOrEmpty(usernameClaim) ? DEFAULT_USERNAME_CLAIM : usernameClaim;
   }
 
   @Override
@@ -77,7 +77,7 @@ public class OidcTokenInitializationFilter
       User user =
           userManager.getOrCreateUser(
               claims.getSubject(),
-              claims.get("email", String.class),
+              claims.get(EMAIL_CLAIM, String.class),
               claims.get(usernameClaim, String.class));
       return new AuthorizedSubject(
           new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);

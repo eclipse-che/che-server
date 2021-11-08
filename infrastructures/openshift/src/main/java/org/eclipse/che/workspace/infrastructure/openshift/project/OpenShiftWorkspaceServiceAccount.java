@@ -33,10 +33,10 @@ import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory
  * @see
  *     org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesWorkspaceServiceAccount
  */
-class OpenShiftWorkspaceServiceAccount
+public class OpenShiftWorkspaceServiceAccount
     extends AbstractWorkspaceServiceAccount<OpenShiftClient, Role, RoleBinding> {
 
-  OpenShiftWorkspaceServiceAccount(
+  public OpenShiftWorkspaceServiceAccount(
       String workspaceId,
       String projectName,
       String serviceAccountName,

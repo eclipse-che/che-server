@@ -277,10 +277,10 @@ public class OIDCInfoProviderTest {
 
   @Test(
       expectedExceptions = RuntimeException.class,
-      expectedExceptionsMessageRegExp = "The '.*' property should be set")
+      expectedExceptionsMessageRegExp = "The '.*' property must be set")
   public void shouldThrowErrorWhenRealmPropertyWasNotSet() {
     KeycloakOIDCInfoProvider oidcInfoProvider =
-        new KeycloakOIDCInfoProvider(null, null, null, CHE_REALM);
+        new KeycloakOIDCInfoProvider(null, null, null, null);
     oidcInfoProvider.get();
   }
 }

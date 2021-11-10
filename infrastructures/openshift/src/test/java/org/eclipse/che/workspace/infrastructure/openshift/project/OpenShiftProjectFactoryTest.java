@@ -31,6 +31,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -76,6 +77,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
+import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftCredentialsSecretConfigurator;
+import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftStopWorkspaceRoleconfigurator;
+import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftWorkspaceServiceAccountConfigurator;
+import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -544,7 +549,7 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                emptySet(),
+                Set.of(new OpenShiftCredentialsSecretConfigurator(clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
@@ -554,17 +559,18 @@ public class OpenShiftProjectFactoryTest {
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+    when(toReturnProject.getName()).thenReturn("namespace123");
     NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
     MixedOperation mixedOperation = mock(MixedOperation.class);
-    KubernetesSecrets secrets = mock(KubernetesSecrets.class);
-    when(toReturnProject.secrets()).thenReturn(secrets);
-    when(secrets.get()).thenReturn(Collections.emptyList());
-    lenient().when(osClient.secrets()).thenReturn(mixedOperation);
-    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(osClient.secrets()).thenReturn(mixedOperation);
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    Resource<Secret> nullSecret = mock(Resource.class);
+    when(namespaceOperation.withName(CREDENTIALS_SECRET_NAME)).thenReturn(nullSecret);
+    when(nullSecret.get()).thenReturn(null);
 
     // when
     RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "namespace123");
     projectFactory.getOrCreate(identity);
 
     // then
@@ -615,6 +621,8 @@ public class OpenShiftProjectFactoryTest {
 
   @Test
   public void shouldCallStopWorkspaceRoleProvisionWhenIdentityProviderIsDefined() throws Exception {
+    var saConf =
+        spy(new OpenShiftWorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory));
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
@@ -625,7 +633,7 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                emptySet(),
+                Set.of(saConf),
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
@@ -634,12 +642,12 @@ public class OpenShiftProjectFactoryTest {
                 pool,
                 OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
-    when(toReturnProject.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnProject.getName()).thenReturn("workspace123");
     prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
 
     OpenShiftWorkspaceServiceAccount serviceAccount = mock(OpenShiftWorkspaceServiceAccount.class);
+    doReturn(serviceAccount).when(saConf).createServiceAccount("workspace123", "workspace123");
 
     // when
     RuntimeIdentity identity =
@@ -653,6 +661,12 @@ public class OpenShiftProjectFactoryTest {
   @Test
   public void shouldNotCallStopWorkspaceRoleProvisionWhenIdentityProviderIsDefined()
       throws Exception {
+    var stopWorkspaceProvisioner = mock(OpenShiftStopWorkspaceRoleProvisioner.class);
+    var wsStopConf =
+        new OpenShiftStopWorkspaceRoleconfigurator(
+            stopWorkspaceProvisioner, NO_OAUTH_IDENTITY_PROVIDER);
+    var saConf =
+        spy(new OpenShiftWorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory));
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
@@ -663,7 +677,7 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                emptySet(),
+                Set.of(saConf, wsStopConf),
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
@@ -673,11 +687,11 @@ public class OpenShiftProjectFactoryTest {
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
-    when(toReturnProject.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnProject.getName()).thenReturn("workspace123");
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
 
     OpenShiftWorkspaceServiceAccount serviceAccount = mock(OpenShiftWorkspaceServiceAccount.class);
+    doReturn(serviceAccount).when(saConf).createServiceAccount("workspace123", "workspace123");
 
     // when
     RuntimeIdentity identity =
@@ -686,6 +700,7 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     verify(serviceAccount).prepare();
+    verify(stopWorkspaceProvisioner, times(0)).provision(any());
   }
 
   @Test
@@ -835,7 +850,7 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     NamespaceResolutionContext resolutionCtx =
-        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+        new NamespaceResolutionContext("workspace123", "123", "jondoe");
     verify(configurator1).configure(resolutionCtx, projectName);
     verify(configurator2).configure(resolutionCtx, projectName);
     assertEquals(project, toReturnProject);
@@ -868,12 +883,12 @@ public class OpenShiftProjectFactoryTest {
 
   private void prepareProject(OpenShiftProject project) throws InfrastructureException {
     KubernetesSecrets secrets = mock(KubernetesSecrets.class);
-    when(project.secrets()).thenReturn(secrets);
+    lenient().when(project.secrets()).thenReturn(secrets);
     Secret secretMock = mock(Secret.class);
     ObjectMeta objectMeta = mock(ObjectMeta.class);
-    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);
-    when(secretMock.getMetadata()).thenReturn(objectMeta);
-    when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
+    lenient().when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);
+    lenient().when(secretMock.getMetadata()).thenReturn(objectMeta);
+    lenient().when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
   }
 
   private void throwOnTryToGetProjectsList(Throwable e) throws Exception {

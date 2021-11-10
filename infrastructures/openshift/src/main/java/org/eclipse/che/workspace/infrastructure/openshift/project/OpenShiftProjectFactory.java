@@ -105,8 +105,10 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   public OpenShiftProject getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     OpenShiftProject osProject = get(identity);
 
+    var subject = EnvironmentContext.getCurrent().getSubject();
     NamespaceResolutionContext resolutionCtx =
-        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+        new NamespaceResolutionContext(
+            identity.getWorkspaceId(), subject.getUserId(), subject.getUserName());
     Map<String, String> namespaceAnnotationsEvaluated =
         evaluateAnnotationPlaceholders(resolutionCtx);
 

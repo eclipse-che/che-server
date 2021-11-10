@@ -41,10 +41,9 @@ public class KeycloakOIDCInfoProvider extends OIDCInfoProvider {
   }
 
   protected void validate() {
-    super.validate();
-
     if (oidcProviderUrl == null && realm == null) {
       throw new RuntimeException("The '" + REALM_SETTING + "' property must be set");
     }
+    super.validate();
   }
 }

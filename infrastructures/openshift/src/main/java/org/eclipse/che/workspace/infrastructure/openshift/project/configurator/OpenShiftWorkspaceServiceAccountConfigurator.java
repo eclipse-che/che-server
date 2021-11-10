@@ -61,7 +61,7 @@ public class OpenShiftWorkspaceServiceAccountConfigurator implements NamespaceCo
   }
 
   @VisibleForTesting
-  OpenShiftWorkspaceServiceAccount createServiceAccount(String wsId, String namespaceName) {
+  public OpenShiftWorkspaceServiceAccount createServiceAccount(String wsId, String namespaceName) {
     return new OpenShiftWorkspaceServiceAccount(
         wsId, namespaceName, serviceAccountName, clusterRoleNames, clientFactory);
   }

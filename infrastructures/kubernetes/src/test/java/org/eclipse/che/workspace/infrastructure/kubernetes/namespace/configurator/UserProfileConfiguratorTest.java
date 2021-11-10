@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -63,7 +62,6 @@ public class UserProfileConfiguratorTest {
     kubernetesServer.before();
 
     when(userManager.getById(USER_ID)).thenReturn(new UserImpl(USER_ID, USER_EMAIL, USER_NAME));
-    when(namespaceFactory.evaluateNamespaceName(any())).thenReturn(USER_NAMESPACE);
     when(clientFactory.create()).thenReturn(kubernetesServer.getClient());
   }
 

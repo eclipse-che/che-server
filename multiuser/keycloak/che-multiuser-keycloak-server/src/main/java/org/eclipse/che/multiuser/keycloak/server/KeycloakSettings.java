@@ -18,17 +18,17 @@ import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.GITHUB
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.JS_ADAPTER_URL_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.JWKS_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.LOGOUT_ENDPOINT_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.OIDC_PROVIDER_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.OSO_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.PASSWORD_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.PROFILE_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.TOKEN_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USERINFO_ENDPOINT_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USERNAME_CLAIM_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USE_FIXED_REDIRECT_URLS_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USE_NONCE_SETTING;
 import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_PROVIDER_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_USERNAME_CLAIM_SETTING;
 
 import com.google.common.collect.Maps;
 import java.util.Collections;
@@ -55,7 +55,7 @@ public class KeycloakSettings {
       @Nullable @Named(REALM_SETTING) String realm,
       @Named(CLIENT_ID_SETTING) String clientId,
       @Nullable @Named(OIDC_PROVIDER_SETTING) String oidcProviderUrl,
-      @Nullable @Named(USERNAME_CLAIM_SETTING) String usernameClaim,
+      @Nullable @Named(OIDC_USERNAME_CLAIM_SETTING) String usernameClaim,
       @Named(USE_NONCE_SETTING) boolean useNonce,
       @Nullable @Named(OSO_ENDPOINT_SETTING) String osoEndpoint,
       @Nullable @Named(GITHUB_ENDPOINT_SETTING) String gitHubEndpoint,
@@ -65,7 +65,8 @@ public class KeycloakSettings {
 
     Map<String, String> settings = Maps.newHashMap();
     settings.put(
-        USERNAME_CLAIM_SETTING, usernameClaim == null ? DEFAULT_USERNAME_CLAIM : usernameClaim);
+        OIDC_USERNAME_CLAIM_SETTING,
+        usernameClaim == null ? DEFAULT_USERNAME_CLAIM : usernameClaim);
     settings.put(CLIENT_ID_SETTING, clientId);
     settings.put(REALM_SETTING, realm);
 

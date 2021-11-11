@@ -19,16 +19,16 @@ import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.GITHUB
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.JS_ADAPTER_URL_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.JWKS_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.LOGOUT_ENDPOINT_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.OIDC_PROVIDER_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.OSO_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.PASSWORD_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.PROFILE_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.TOKEN_ENDPOINT_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USERINFO_ENDPOINT_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USERNAME_CLAIM_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USE_NONCE_SETTING;
 import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_PROVIDER_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_USERNAME_CLAIM_SETTING;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
@@ -209,7 +209,7 @@ public class KeycloakSettingsTest {
             oidcInfo);
 
     Map<String, String> publicSettings = settings.get();
-    assertEquals(publicSettings.get(USERNAME_CLAIM_SETTING), DEFAULT_USERNAME_CLAIM);
+    assertEquals(publicSettings.get(OIDC_USERNAME_CLAIM_SETTING), DEFAULT_USERNAME_CLAIM);
     assertEquals(publicSettings.get(CLIENT_ID_SETTING), CLIENT_ID);
     assertEquals(publicSettings.get(REALM_SETTING), CHE_REALM);
     assertNull(publicSettings.get(AUTH_SERVER_URL_SETTING));
@@ -254,7 +254,7 @@ public class KeycloakSettingsTest {
             oidcInfo);
 
     Map<String, String> publicSettings = settings.get();
-    assertEquals(publicSettings.get(USERNAME_CLAIM_SETTING), DEFAULT_USERNAME_CLAIM);
+    assertEquals(publicSettings.get(OIDC_USERNAME_CLAIM_SETTING), DEFAULT_USERNAME_CLAIM);
     assertEquals(publicSettings.get(CLIENT_ID_SETTING), CLIENT_ID);
     assertEquals(publicSettings.get(REALM_SETTING), CHE_REALM);
     assertEquals(publicSettings.get(AUTH_SERVER_URL_SETTING), SERVER_AUTH_URL);

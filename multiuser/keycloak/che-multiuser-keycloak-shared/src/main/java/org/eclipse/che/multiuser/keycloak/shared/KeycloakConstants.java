@@ -19,8 +19,6 @@ public class KeycloakConstants {
 
   public static final String REALM_SETTING = KEYCLOAK_SETTING_PREFIX + "realm";
   public static final String CLIENT_ID_SETTING = KEYCLOAK_SETTING_PREFIX + "client_id";
-  public static final String OIDC_PROVIDER_SETTING = KEYCLOAK_SETTING_PREFIX + "oidc_provider";
-  public static final String USERNAME_CLAIM_SETTING = KEYCLOAK_SETTING_PREFIX + "username_claim";
   public static final String USE_NONCE_SETTING = KEYCLOAK_SETTING_PREFIX + "use_nonce";
   public static final String USE_FIXED_REDIRECT_URLS_SETTING =
       KEYCLOAK_SETTING_PREFIX + "use_fixed_redirect_urls";

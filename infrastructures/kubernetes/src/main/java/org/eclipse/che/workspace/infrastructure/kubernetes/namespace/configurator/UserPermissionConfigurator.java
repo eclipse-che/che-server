@@ -24,7 +24,6 @@ import javax.inject.Named;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 
@@ -54,7 +53,7 @@ public class UserPermissionConfigurator implements NamespaceConfigurator {
       bindRoles(
           clientFactory.create(),
           namespaceName,
-          EnvironmentContext.getCurrent().getSubject().getUserName(),
+          namespaceResolutionContext.getUserName(),
           userClusterRoles);
     }
   }

@@ -25,7 +25,6 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -46,7 +45,6 @@ public class UserProfileConfiguratorTest {
   private static final String USER_EMAIL = "user-email";
   private static final String USER_NAMESPACE = "user-namespace";
 
-  @Mock private KubernetesNamespaceFactory namespaceFactory;
   @Mock private KubernetesClientFactory clientFactory;
   @Mock private UserManager userManager;
 

@@ -15,7 +15,6 @@ package org.eclipse.che.multiuser.keycloak.shared;
 public class KeycloakConstants {
 
   private static final String KEYCLOAK_SETTING_PREFIX = "che.keycloak.";
-  private static final String KEYCLOAK_SETTINGS_ENDPOINT_PATH = "/keycloak/settings";
 
   public static final String REALM_SETTING = KEYCLOAK_SETTING_PREFIX + "realm";
   public static final String CLIENT_ID_SETTING = KEYCLOAK_SETTING_PREFIX + "client_id";
@@ -40,8 +39,4 @@ public class KeycloakConstants {
       KEYCLOAK_SETTING_PREFIX + "redirect_url.dashboard";
   public static final String FIXED_REDIRECT_URL_FOR_IDE =
       KEYCLOAK_SETTING_PREFIX + "redirect_url.ide";
-
-  public static String getEndpoint(String apiEndpoint) {
-    return apiEndpoint + KEYCLOAK_SETTINGS_ENDPOINT_PATH;
-  }
 }

@@ -1394,6 +1394,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>openshift-server-mock</artifactId>
+                <version>${io.fabric8.kubernetes-client}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.maven.plugin-testing</groupId>
                 <artifactId>maven-plugin-testing-harness</artifactId>
                 <version>${org.apache.maven.plugin-testing.maven-plugin-testing-harness.version}</version>

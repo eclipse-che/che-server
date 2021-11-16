@@ -313,6 +313,11 @@
                 <version>${commons-lang.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>openshift-server-mock</artifactId>
+                <version>${io.fabric8.kubernetes-client}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.github.mweirauch</groupId>
                 <artifactId>micrometer-jvm-extras</artifactId>
                 <version>${io.github.mweirauch.micrometer-jvm-extras.version}</version>
@@ -1391,12 +1396,6 @@
                 <groupId>com.github.kirviq</groupId>
                 <artifactId>dumbster</artifactId>
                 <version>${com.github.kirviq.dumbster.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.fabric8</groupId>
-                <artifactId>openshift-server-mock</artifactId>
-                <version>${io.fabric8.kubernetes-client}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

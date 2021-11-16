@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
+package org.eclipse.che.workspace.infrastructure.openshift.project.configurator;
 
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.mockito.Mockito.spy;
@@ -22,8 +22,8 @@ import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.server.mock.OpenShiftServer;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
-import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftCredentialsSecretConfigurator;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
@@ -52,7 +52,7 @@ public class OpenShiftCredentialsSecretConfiguratorTest {
     serverMock = new OpenShiftServer(true, true);
     serverMock.before();
     OpenShiftClient client = spy(serverMock.getOpenshiftClient());
-    when(clientFactory.create()).thenReturn(client);
+    when(clientFactory.createOC()).thenReturn(client);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);
@@ -75,7 +75,7 @@ public class OpenShiftCredentialsSecretConfiguratorTest {
             .inNamespace(TEST_NAMESPACE_NAME)
             .withName(CREDENTIALS_SECRET_NAME)
             .get());
-    verify(clientFactory, times(2)).create();
+    verify(clientFactory, times(2)).createOC();
   }
 
   @Test
@@ -98,6 +98,6 @@ public class OpenShiftCredentialsSecretConfiguratorTest {
 
     // then - don't create the secret
     Assert.assertEquals(serverMock.getLastRequest().getMethod(), "GET");
-    verify(clientFactory, times(1)).create();
+    verify(clientFactory, times(1)).createOC();
   }
 }

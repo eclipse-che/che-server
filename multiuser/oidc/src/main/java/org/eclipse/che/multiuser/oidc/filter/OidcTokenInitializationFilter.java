@@ -38,7 +38,8 @@ import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 public class OidcTokenInitializationFilter
     extends MultiUserEnvironmentInitializationFilter<Jws<Claims>> {
   private static final String EMAIL_CLAIM = "email";
-  private static final String DEFAULT_USERNAME_CLAIM = EMAIL_CLAIM;
+  private static final String NAME_CLAIM = "name";
+  private static final String DEFAULT_USERNAME_CLAIM = NAME_CLAIM;
 
   private final JwtParser jwtParser;
   private final PermissionChecker permissionChecker;

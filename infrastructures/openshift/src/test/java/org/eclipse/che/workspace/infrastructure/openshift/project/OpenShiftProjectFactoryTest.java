@@ -31,7 +31,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -78,9 +77,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesShared
 import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftCredentialsSecretConfigurator;
-import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftStopWorkspaceRoleconfigurator;
 import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftWorkspaceServiceAccountConfigurator;
-import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftStopWorkspaceRoleProvisioner;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -656,51 +653,6 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     verify(serviceAccount).prepare();
-  }
-
-  @Test
-  public void shouldNotCallStopWorkspaceRoleProvisionWhenIdentityProviderIsDefined()
-      throws Exception {
-    var stopWorkspaceProvisioner = mock(OpenShiftStopWorkspaceRoleProvisioner.class);
-    var wsStopConf =
-        new OpenShiftStopWorkspaceRoleconfigurator(
-            stopWorkspaceProvisioner, NO_OAUTH_IDENTITY_PROVIDER);
-    var saConf =
-        spy(new OpenShiftWorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory));
-    projectFactory =
-        spy(
-            new OpenShiftProjectFactory(
-                "<userid>-che",
-                true,
-                true,
-                true,
-                NAMESPACE_LABELS,
-                NAMESPACE_ANNOTATIONS,
-                true,
-                Set.of(saConf, wsStopConf),
-                clientFactory,
-                cheClientFactory,
-                cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
-                pool,
-                NO_OAUTH_IDENTITY_PROVIDER));
-    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
-    prepareProject(toReturnProject);
-    when(toReturnProject.getName()).thenReturn("workspace123");
-    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
-
-    OpenShiftWorkspaceServiceAccount serviceAccount = mock(OpenShiftWorkspaceServiceAccount.class);
-    doReturn(serviceAccount).when(saConf).createServiceAccount("workspace123", "workspace123");
-
-    // when
-    RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
-    projectFactory.getOrCreate(identity);
-
-    // then
-    verify(serviceAccount).prepare();
-    verify(stopWorkspaceProvisioner, times(0)).provision(any());
   }
 
   @Test

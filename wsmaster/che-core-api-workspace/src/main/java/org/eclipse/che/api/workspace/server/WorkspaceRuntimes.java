@@ -23,6 +23,7 @@ import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.RUNNING;
 import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STARTING;
 import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STOPPED;
 import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STOPPING;
+import static org.eclipse.che.api.workspace.shared.Constants.CHE_DEVWORKSPACES_ENABLED_PROPERTY;
 import static org.eclipse.che.api.workspace.shared.Constants.ERROR_MESSAGE_ATTRIBUTE_NAME;
 import static org.eclipse.che.api.workspace.shared.Constants.STOPPED_ABNORMALLY_ATTRIBUTE_NAME;
 import static org.eclipse.che.api.workspace.shared.Constants.STOPPED_ATTRIBUTE_NAME;
@@ -50,6 +51,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -121,6 +123,7 @@ public class WorkspaceRuntimes {
   private final DevfileConverter devfileConverter;
   // Unique identifier for this workspace runtimes
   private final String workspaceRuntimesId;
+  private final boolean cheDevWorkspacesEnabled;
 
   @VisibleForTesting
   WorkspaceRuntimes(
@@ -134,7 +137,8 @@ public class WorkspaceRuntimes {
       ProbeScheduler probeScheduler,
       WorkspaceStatusCache statuses,
       WorkspaceLockService lockService,
-      DevfileConverter devfileConverter) {
+      DevfileConverter devfileConverter,
+      boolean cheDevWorkspacesEnabled) {
     this(
         eventService,
         envFactories,
@@ -145,7 +149,8 @@ public class WorkspaceRuntimes {
         probeScheduler,
         statuses,
         lockService,
-        devfileConverter);
+        devfileConverter,
+        cheDevWorkspacesEnabled);
     this.runtimes = runtimes;
   }
 
@@ -160,7 +165,8 @@ public class WorkspaceRuntimes {
       ProbeScheduler probeScheduler,
       WorkspaceStatusCache statuses,
       WorkspaceLockService lockService,
-      DevfileConverter devfileConverter) {
+      DevfileConverter devfileConverter,
+      @Named(CHE_DEVWORKSPACES_ENABLED_PROPERTY) boolean cheDevWorkspacesEnabled) {
     this.probeScheduler = probeScheduler;
     this.runtimes = new ConcurrentHashMap<>();
     this.statuses = statuses;
@@ -172,6 +178,7 @@ public class WorkspaceRuntimes {
     this.environmentFactories = ImmutableMap.copyOf(envFactories);
     this.lockService = lockService;
     this.devfileConverter = devfileConverter;
+    this.cheDevWorkspacesEnabled = cheDevWorkspacesEnabled;
     LOG.info("Configured factories for environments: '{}'", envFactories.keySet());
     LOG.info("Registered infrastructure '{}'", infra.getName());
     SetView<String> notSupportedByInfra =
@@ -187,7 +194,13 @@ public class WorkspaceRuntimes {
   @PostConstruct
   void init() {
     subscribeAbnormalRuntimeStopListener();
-    recover();
+    // When 'DevWorskpace' engine is enabled all che-server based workspaces should be stopped -
+    // https://github.com/eclipse/che/issues/20631
+    if (cheDevWorkspacesEnabled) {
+      stop();
+    } else {
+      recover();
+    }
   }
 
   private static RuntimeImpl asRuntime(InternalRuntime<?> runtime) throws ServerException {
@@ -672,6 +685,56 @@ public class WorkspaceRuntimes {
 
   public Set<String> getSupportedRecipes() {
     return environmentFactories.keySet();
+  }
+
+  void stop() {
+    Set<RuntimeIdentity> identities;
+    try {
+      identities = infrastructure.getIdentities();
+    } catch (UnsupportedOperationException e) {
+      LOG.warn("Not recoverable infrastructure: '{}'", infrastructure.getName());
+      return;
+    } catch (InfrastructureException e) {
+      LOG.error(
+          "An error occurred while attempting to get runtime identities for infrastructure '{}'. Reason: '{}'",
+          infrastructure.getName(),
+          e.getMessage());
+      return;
+    }
+
+    LOG.info(
+        "Infrastructure is tracking {} active runtimes that need to be stopped", identities.size());
+
+    if (identities.isEmpty()) {
+      return;
+    }
+
+    for (RuntimeIdentity identity : identities) {
+      try {
+        String workspaceId = identity.getWorkspaceId();
+        WorkspaceImpl workspace = workspaceDao.get(workspaceId);
+        try (Unlocker ignored = lockService.writeLock(workspaceId)) {
+          statuses.putIfAbsent(workspaceId, STARTING);
+        }
+        String namespace =
+            workspace.getAttributes().get(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE);
+        stopAsync(workspace, emptyMap())
+            .whenComplete(
+                (aVoid, throwable) -> {
+                  LOG.info(
+                      "Workspace '{}' owned by '{}' has been stopped in namespace '{}'",
+                      workspaceId,
+                      namespace);
+                });
+      } catch (Exception e) {
+        LOG.error(
+            "An error occurred while attempting to stop runtime '{}' using infrastructure '{}'. Reason: '{}'",
+            workspaceRuntimesId,
+            infrastructure.getName(),
+            e.getMessage(),
+            e);
+      }
+    }
   }
 
   @VisibleForTesting

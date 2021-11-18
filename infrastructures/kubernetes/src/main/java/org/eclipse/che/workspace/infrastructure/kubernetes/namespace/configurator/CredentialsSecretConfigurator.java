@@ -20,6 +20,11 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 
+/**
+ * This {@link NamespaceConfigurator} ensures that Secret {@link
+ * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount#CREDENTIALS_SECRET_NAME}
+ * is present in the Workspace namespace.
+ */
 public class CredentialsSecretConfigurator implements NamespaceConfigurator {
 
   private final KubernetesClientFactory clientFactory;

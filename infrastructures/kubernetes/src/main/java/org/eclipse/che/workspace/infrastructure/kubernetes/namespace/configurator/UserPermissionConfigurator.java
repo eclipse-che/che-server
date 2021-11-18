@@ -27,6 +27,11 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 
+/**
+ * This {@link NamespaceConfigurator} ensures that User has assigned configured ClusterRoles from
+ * `che.infra.kubernetes.user_cluster_roles` property. These are assigned with RoleBindings in
+ * user's namespace.
+ */
 public class UserPermissionConfigurator implements NamespaceConfigurator {
 
   private final Set<String> userClusterRoles;

@@ -26,6 +26,10 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesWorkspaceServiceAccount;
 
+/**
+ * This {@link NamespaceConfigurator} ensures that workspace ServiceAccount with proper ClusterRole
+ * is set in Workspace namespace.
+ */
 public class WorkspaceServiceAccountConfigurator implements NamespaceConfigurator {
 
   private final KubernetesClientFactory clientFactory;

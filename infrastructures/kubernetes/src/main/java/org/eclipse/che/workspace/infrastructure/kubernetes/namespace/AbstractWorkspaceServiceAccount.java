@@ -50,8 +50,9 @@ public abstract class AbstractWorkspaceServiceAccount<
   public static final String VIEW_ROLE_NAME = "workspace-view";
   public static final String METRICS_ROLE_NAME = "workspace-metrics";
   public static final String SECRETS_ROLE_NAME = "workspace-secrets";
+  public static final String CONFIGMAPS_ROLE_NAME = "workspace-configmaps";
   public static final String CREDENTIALS_SECRET_NAME = "workspace-credentials-secret";
-  public static final String PREFERENCES_SECRET_NAME = "workspace-preferences-secret";
+  public static final String PREFERENCES_CONFIGMAP_NAME = "workspace-preferences-configmap";
 
   protected final String namespace;
   protected final String serviceAccountName;
@@ -160,10 +161,21 @@ public abstract class AbstractWorkspaceServiceAccount<
         buildRole(
             SECRETS_ROLE_NAME,
             singletonList("secrets"),
-            Arrays.asList(CREDENTIALS_SECRET_NAME, PREFERENCES_SECRET_NAME),
+            singletonList(CREDENTIALS_SECRET_NAME),
             singletonList(""),
             Arrays.asList("get", "patch")),
         serviceAccountName + "-secrets");
+
+    // preferences-configmap role
+    ensureRoleWithBinding(
+        k8sClient,
+        buildRole(
+            CONFIGMAPS_ROLE_NAME,
+            singletonList("configmaps"),
+            singletonList(PREFERENCES_CONFIGMAP_NAME),
+            singletonList(""),
+            Arrays.asList("get", "patch")),
+        serviceAccountName + "-configmaps");
   }
 
   private void ensureRoleWithBinding(Client k8sClient, R role, String bindingName) {

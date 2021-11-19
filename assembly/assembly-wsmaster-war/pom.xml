@@ -73,10 +73,6 @@
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
         </dependency>
         <dependency>
@@ -389,6 +385,11 @@
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-catalina</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>

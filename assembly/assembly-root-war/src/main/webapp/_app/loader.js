@@ -137,7 +137,14 @@ class Loader {
               .map(machine => Object.values(machine.servers))
               .reduce((servers, machineServers) => servers.concat(...machineServers), []);
 
-            var server = servers.find(_server => _server.url && redirectUrl.startsWith(_server.url));
+            const server = servers.find(_server => {
+                if (!_server.url) {
+                    return false;
+                }
+                const url = new URL(_server.url);
+                url.search = '';
+                return redirectUrl.startsWith(url.href);
+            });
 
             if (server) {
                 resolve(server);
@@ -235,5 +242,5 @@ class Loader {
         console.error(errorMessage);
         loader.hideLoader();
         loader.error(errorMessage);
-    };
+    }
 })();

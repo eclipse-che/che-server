@@ -33,7 +33,7 @@ public class OIDCSigningKeyResolver extends SigningKeyResolverAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(OIDCSigningKeyResolver.class);
 
   @Inject
-  OIDCSigningKeyResolver(JwkProvider jwkProvider) {
+  protected OIDCSigningKeyResolver(JwkProvider jwkProvider) {
     this.jwkProvider = jwkProvider;
   }
 
@@ -47,7 +47,7 @@ public class OIDCSigningKeyResolver extends SigningKeyResolverAdapter {
     return getJwtPublicKey(header);
   }
 
-  private synchronized PublicKey getJwtPublicKey(JwsHeader<?> header) {
+  protected synchronized PublicKey getJwtPublicKey(JwsHeader<?> header) {
     String kid = header.getKeyId();
     if (kid == null) {
       LOG.warn(

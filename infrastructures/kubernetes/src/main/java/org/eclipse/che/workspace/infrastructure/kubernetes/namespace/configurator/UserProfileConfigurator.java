@@ -22,6 +22,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
@@ -36,6 +37,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
  *
  * @author Pavol Baran
  */
+@Singleton
 public class UserProfileConfigurator implements NamespaceConfigurator {
   private static final String USER_PROFILE_SECRET_NAME = "user-profile";
   private static final String USER_PROFILE_SECRET_MOUNT_PATH = "/config/user/profile";

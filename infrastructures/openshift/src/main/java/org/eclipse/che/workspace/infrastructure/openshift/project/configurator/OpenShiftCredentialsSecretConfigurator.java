@@ -16,11 +16,18 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Abst
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 
+/**
+ * This {@link NamespaceConfigurator} ensures that Secret {@link
+ * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount#CREDENTIALS_SECRET_NAME}
+ * is present in the Workspace project.
+ */
+@Singleton
 public class OpenShiftCredentialsSecretConfigurator implements NamespaceConfigurator {
   private final OpenShiftClientFactory clientFactory;
 

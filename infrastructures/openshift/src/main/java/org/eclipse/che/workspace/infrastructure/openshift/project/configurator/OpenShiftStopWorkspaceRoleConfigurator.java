@@ -22,6 +22,7 @@ import io.fabric8.openshift.api.model.RoleBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Tom George
  */
+@Singleton
 public class OpenShiftStopWorkspaceRoleConfigurator implements NamespaceConfigurator {
 
   private final OpenShiftClientFactory clientFactory;

@@ -16,6 +16,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Abst
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -25,6 +26,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
  * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount#CREDENTIALS_SECRET_NAME}
  * is present in the Workspace namespace.
  */
+@Singleton
 public class CredentialsSecretConfigurator implements NamespaceConfigurator {
 
   private final KubernetesClientFactory clientFactory;

@@ -49,7 +49,7 @@ public class OIDCSigningKeyResolver extends SigningKeyResolverAdapter {
 
   private synchronized PublicKey getJwtPublicKey(JwsHeader<?> header) {
     String kid = header.getKeyId();
-    if (header.getKeyId() == null) {
+    if (kid == null) {
       LOG.warn(
           "'kid' is missing in the JWT token header. This is not possible to validate the token with OIDC provider keys");
       throw new JwtException("'kid' is missing in the JWT token header.");

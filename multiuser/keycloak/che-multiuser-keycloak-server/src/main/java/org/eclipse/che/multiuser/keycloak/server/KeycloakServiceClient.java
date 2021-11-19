@@ -76,7 +76,7 @@ public class KeycloakServiceClient {
       Pattern.compile("<div id=\"kc-error-message\">(\\s*)<p class=\"instruction\">(.+?)</p>");
 
   private static final Gson gson = new Gson();
-  private JwtParser jwtParser;
+  private final JwtParser jwtParser;
 
   @Inject
   public KeycloakServiceClient(

@@ -34,6 +34,14 @@ import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenEx
 import org.eclipse.che.multiuser.api.permission.server.AuthorizedSubject;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 
+/**
+ * This filter uses given token directly. It's used for native Kubernetes user authentication.
+ * Requests without token or with invalid token are rejected.
+ *
+ * <p>It also makes sure that User is present in Che database. If not, it will create the User from
+ * JWT token claims. The username claim is configured with {@link
+ * org.eclipse.che.multiuser.oidc.OIDCInfoProvider#OIDC_USERNAME_CLAIM_SETTING}.
+ */
 @Singleton
 public class OidcTokenInitializationFilter
     extends MultiUserEnvironmentInitializationFilter<Jws<Claims>> {

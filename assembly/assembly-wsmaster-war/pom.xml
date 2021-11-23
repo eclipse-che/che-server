@@ -73,6 +73,10 @@
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
         </dependency>
         <dependency>
@@ -387,11 +391,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-commons-test</artifactId>
             <scope>test</scope>
@@ -463,6 +462,7 @@
                                 <dep>com.google.guava:guava</dep>
                                 <dep>org.everrest:everrest-core</dep>
                                 <dep>io.jsonwebtoken:jjwt-jackson</dep>
+                                <dep>io.jsonwebtoken.jjwt-impl</dep>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>

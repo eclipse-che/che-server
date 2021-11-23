@@ -462,7 +462,7 @@
                                 <dep>com.google.guava:guava</dep>
                                 <dep>org.everrest:everrest-core</dep>
                                 <dep>io.jsonwebtoken:jjwt-jackson</dep>
-                                <dep>io.jsonwebtoken.jjwt-impl</dep>
+                                <dep>io.jsonwebtoken:jjwt-impl</dep>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>

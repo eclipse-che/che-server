@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.PodSpec;
+import io.fabric8.kubernetes.api.model.Quantity;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -377,6 +378,34 @@ public class BrokerEnvironmentFactoryTest {
         actual,
         expected,
         String.format("Should generate name '%s' from image '%s'.", expected, image));
+  }
+
+  @Test
+  public void testQuotasBroker() throws Exception {
+    // given
+    Collection<PluginFQN> pluginFQNs = singletonList(new PluginFQN(null, "id"));
+    ArgumentCaptor<BrokersConfigs> captor = ArgumentCaptor.forClass(BrokersConfigs.class);
+
+    // when
+    factory.createForMetadataBroker(pluginFQNs, runtimeId, false);
+
+    // then
+    verify(factory).doCreate(captor.capture());
+    BrokersConfigs brokersConfigs = captor.getValue();
+
+    List<Container> containers =
+        brokersConfigs
+            .pods
+            .values()
+            .stream()
+            .flatMap(p -> p.getSpec().getContainers().stream())
+            .collect(Collectors.toList());
+    assertEquals(containers.size(), 1);
+    Container container = containers.get(0);
+    assertEquals(container.getResources().getRequests().get("memory"), new Quantity("250Mi"));
+    assertEquals(container.getResources().getLimits().get("memory"), new Quantity("250Mi"));
+    assertEquals(container.getResources().getRequests().get("cpu"), new Quantity("300m"));
+    assertEquals(container.getResources().getLimits().get("cpu"), new Quantity("300m"));
   }
 
   @DataProvider(name = "imageRefs")

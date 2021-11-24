@@ -209,6 +209,8 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
     Container container = cb.build();
     Containers.addRamLimit(container, "250Mi");
     Containers.addRamRequest(container, "250Mi");
+    Containers.addCpuLimit(container, "300m");
+    Containers.addCpuRequest(container, "300m");
     return container;
   }
 

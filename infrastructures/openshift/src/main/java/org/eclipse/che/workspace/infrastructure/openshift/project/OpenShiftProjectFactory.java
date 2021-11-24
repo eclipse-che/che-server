@@ -16,10 +16,13 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.Project;
@@ -117,6 +120,21 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
+
+    // create preferences configmap
+    if (osProject.configMaps().get(PREFERENCES_CONFIGMAP_NAME).isEmpty()) {
+      ConfigMap configMap =
+          new ConfigMapBuilder()
+              .withNewMetadata()
+              .withName(PREFERENCES_CONFIGMAP_NAME)
+              .endMetadata()
+              .build();
+      clientFactory
+          .createOC()
+          .configMaps()
+          .inNamespace(identity.getInfrastructureNamespace())
+          .create(configMap);
+    }
 
     configureNamespace(resolutionCtx, osProject.getName());
 

@@ -18,17 +18,6 @@ export class KeycloakLoader {
 
         return new Promise((resolve, reject) => {
             try {
-                if (window.parent && window.parent['_keycloak']) {
-                    window['_keycloak'] = window.parent['_keycloak'];
-                    resolve(window['_keycloak']);
-                    return;
-                }
-            } catch (e) {
-                // parent frame has different origin, so access to parent frame is forbidden
-                console.error(msg, e);
-            }
-
-            try {
                 const request = new XMLHttpRequest();
 
                 request.onerror = request.onabort = function() {
@@ -111,7 +100,7 @@ export class KeycloakLoader {
                     checkLoginIframe: false,
                     useNonce: useNonce,
                     scope: 'openid',
-                    redirectUri: decodeURIComponent(location.href)
+                    redirectUri: location.href
                 })
                 .success(() => {
                     resolve(keycloak);

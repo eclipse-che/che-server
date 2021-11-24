@@ -250,6 +250,8 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
     return apiEndpoint
         + "/oauth/authenticate?oauth_provider="
         + OAUTH_PROVIDER_NAME
+        + "&scope="
+        + DEFAULT_TOKEN_SCOPES.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")
         + "&request_method=POST&signature_method=rsa";
   }
 }

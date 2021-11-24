@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.security.oauth.shared.OAuthTokenProvider;
@@ -213,8 +214,7 @@ public abstract class OAuthAuthenticator {
               .execute();
       String userId = getUserFromUrl(authorizationCodeResponseUrl);
       if (userId == null) {
-        userId =
-            getUser(newDto(OAuthToken.class).withToken(tokenResponse.getAccessToken())).getId();
+        userId = EnvironmentContext.getCurrent().getSubject().getUserId();
       }
       flow.createAndStoreCredential(tokenResponse, userId);
       return userId;
@@ -254,13 +254,14 @@ public abstract class OAuthAuthenticator {
     return null;
   }
 
-  protected <O> O getJson(String getUserUrl, Class<O> userClass)
+  protected <O> O getJson(String getUserUrl, String accessToken, Class<O> userClass)
       throws OAuthAuthenticationException {
     HttpURLConnection urlConnection = null;
     InputStream urlInputStream = null;
 
     try {
       urlConnection = (HttpURLConnection) new URL(getUserUrl).openConnection();
+      urlConnection.setRequestProperty("Authorization", "token " + accessToken);
       urlInputStream = urlConnection.getInputStream();
       return JsonHelper.fromJson(urlInputStream, userClass, null);
     } catch (JsonParseException | IOException e) {

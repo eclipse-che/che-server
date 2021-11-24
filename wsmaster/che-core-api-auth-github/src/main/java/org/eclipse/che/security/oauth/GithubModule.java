@@ -26,6 +26,6 @@ public class GithubModule extends AbstractModule {
   protected void configure() {
     Multibinder<OAuthAuthenticator> oAuthAuthenticators =
         Multibinder.newSetBinder(binder(), OAuthAuthenticator.class);
-    oAuthAuthenticators.addBinding().to(GitHubOAuthAuthenticator.class);
+    oAuthAuthenticators.addBinding().toProvider(GitHubOAuthAuthenticatorProvider.class);
   }
 }

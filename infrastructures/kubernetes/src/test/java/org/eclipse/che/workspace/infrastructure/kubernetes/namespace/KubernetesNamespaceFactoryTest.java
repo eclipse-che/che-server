@@ -14,11 +14,12 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
+import static java.util.Optional.empty;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -41,6 +42,7 @@ import static org.testng.Assert.fail;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.google.common.collect.ImmutableMap;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.NamespaceList;
@@ -49,7 +51,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceAccountList;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBuilder;
-import io.fabric8.kubernetes.api.model.rbac.PolicyRule;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingList;
 import io.fabric8.kubernetes.api.model.rbac.RoleList;
@@ -504,6 +505,7 @@ public class KubernetesNamespaceFactoryTest {
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     KubernetesSecrets secrets = mock(KubernetesSecrets.class);
     when(toReturnNamespace.secrets()).thenReturn(secrets);
+    when(toReturnNamespace.configMaps()).thenReturn(mock(KubernetesConfigsMaps.class));
     when(secrets.get()).thenReturn(Collections.emptyList());
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     MixedOperation mixedOperation = mock(MixedOperation.class);
@@ -521,6 +523,47 @@ public class KubernetesNamespaceFactoryTest {
     Secret secret = secretsCaptor.getValue();
     Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
     Assert.assertEquals(secret.getType(), "opaque");
+  }
+
+  @Test
+  public void shouldCreatePreferencesConfigmapIfNotExists() throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    KubernetesConfigsMaps configsMaps = mock(KubernetesConfigsMaps.class);
+    when(toReturnNamespace.secrets()).thenReturn(mock(KubernetesSecrets.class));
+    when(toReturnNamespace.configMaps()).thenReturn(configsMaps);
+    when(configsMaps.get(eq(PREFERENCES_CONFIGMAP_NAME))).thenReturn(empty());
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    MixedOperation mixedOperation = mock(MixedOperation.class);
+    lenient().when(k8sClient.configMaps()).thenReturn(mixedOperation);
+    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    namespaceFactory.getOrCreate(identity);
+
+    // then
+    ArgumentCaptor<ConfigMap> configMapCaptor = ArgumentCaptor.forClass(ConfigMap.class);
+    verify(namespaceOperation).create(configMapCaptor.capture());
+    ConfigMap configmap = configMapCaptor.getValue();
+    Assert.assertEquals(configmap.getMetadata().getName(), PREFERENCES_CONFIGMAP_NAME);
   }
 
   @Test
@@ -547,6 +590,41 @@ public class KubernetesNamespaceFactoryTest {
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     MixedOperation mixedOperation = mock(MixedOperation.class);
     lenient().when(k8sClient.secrets()).thenReturn(mixedOperation);
+    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    namespaceFactory.getOrCreate(identity);
+
+    // then
+    verify(namespaceOperation, never()).create(any());
+  }
+
+  @Test
+  public void shouldNotCreatePreferencesConfigmapIfExists() throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "",
+                "",
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    MixedOperation mixedOperation = mock(MixedOperation.class);
+    lenient().when(k8sClient.configMaps()).thenReturn(mixedOperation);
     lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
 
     // when
@@ -779,7 +857,12 @@ public class KubernetesNamespaceFactoryTest {
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()),
-        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"));
+        Sets.newHashSet(
+            "workspace-configmaps",
+            "workspace-view",
+            "workspace-metrics",
+            "workspace-secrets",
+            "exec"));
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
         bindings
@@ -791,68 +874,10 @@ public class KubernetesNamespaceFactoryTest {
             "serviceAccount-metrics",
             "serviceAccount-cluster0",
             "serviceAccount-cluster1",
+            "serviceAccount-configmaps",
             "serviceAccount-view",
             "serviceAccount-exec",
             "serviceAccount-secrets"));
-  }
-
-  @Test
-  public void shouldCreateAndBindCredentialsSecretRole() throws Exception {
-    // given
-    namespaceFactory =
-        spy(
-            new KubernetesNamespaceFactory(
-                "serviceAccount",
-                "cr2, cr3",
-                "<username>-che",
-                true,
-                true,
-                true,
-                NAMESPACE_LABELS,
-                NAMESPACE_ANNOTATIONS,
-                clientFactory,
-                cheClientFactory,
-                userManager,
-                preferenceManager,
-                pool));
-    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
-    prepareNamespace(toReturnNamespace);
-    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
-    when(toReturnNamespace.getName()).thenReturn("workspace123");
-    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
-    when(clientFactory.create(any())).thenReturn(k8sClient);
-
-    // when
-    RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
-    namespaceFactory.getOrCreate(identity);
-
-    // then
-    Optional<Role> roleOptional =
-        k8sClient
-            .rbac()
-            .roles()
-            .inNamespace("workspace123")
-            .list()
-            .getItems()
-            .stream()
-            .filter(r -> r.getMetadata().getName().equals(SECRETS_ROLE_NAME))
-            .findAny();
-    assertTrue(roleOptional.isPresent());
-    PolicyRule rule = roleOptional.get().getRules().get(0);
-    assertEquals(rule.getResources(), singletonList("secrets"));
-    assertEquals(rule.getResourceNames(), singletonList(CREDENTIALS_SECRET_NAME));
-    assertEquals(rule.getApiGroups(), singletonList(""));
-    assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
-    assertTrue(
-        k8sClient
-            .rbac()
-            .roleBindings()
-            .inNamespace("workspace123")
-            .list()
-            .getItems()
-            .stream()
-            .anyMatch(rb -> rb.getMetadata().getName().equals("serviceAccount-secrets")));
   }
 
   @Test
@@ -897,7 +922,12 @@ public class KubernetesNamespaceFactoryTest {
     RoleList roles = k8sClient.rbac().roles().inNamespace("workspace123").list();
     assertEquals(
         roles.getItems().stream().map(r -> r.getMetadata().getName()).collect(Collectors.toSet()),
-        Sets.newHashSet("workspace-view", "workspace-metrics", "workspace-secrets", "exec"));
+        Sets.newHashSet(
+            "workspace-configmaps",
+            "workspace-view",
+            "workspace-metrics",
+            "workspace-secrets",
+            "exec"));
     Role role1 = roles.getItems().get(0);
     Role role2 = roles.getItems().get(1);
 
@@ -917,6 +947,7 @@ public class KubernetesNamespaceFactoryTest {
             "serviceAccount-metrics",
             "serviceAccount-view",
             "serviceAccount-exec",
+            "serviceAccount-configmaps",
             "serviceAccount-secrets"));
   }
 
@@ -1102,7 +1133,7 @@ public class KubernetesNamespaceFactoryTest {
                 userManager,
                 preferenceManager,
                 pool));
-    doReturn(Optional.empty()).when(namespaceFactory).fetchNamespace(anyString());
+    doReturn(empty()).when(namespaceFactory).fetchNamespace(anyString());
 
     String namespace =
         namespaceFactory.evaluateNamespaceName(
@@ -1285,7 +1316,7 @@ public class KubernetesNamespaceFactoryTest {
     KubernetesNamespaceMetaImpl namespaceMeta =
         new KubernetesNamespaceMetaImpl(
             "jondoe-cha-cha-cha", ImmutableMap.of("phase", "active", "default", "true"));
-    doReturn(Optional.empty()).when(namespaceFactory).fetchNamespace(eq("jondoe-cha-cha-cha"));
+    doReturn(empty()).when(namespaceFactory).fetchNamespace(eq("jondoe-cha-cha-cha"));
 
     // when
     NamespaceResolutionContext context =
@@ -1520,7 +1551,9 @@ public class KubernetesNamespaceFactoryTest {
 
   private void prepareNamespace(KubernetesNamespace namespace) throws InfrastructureException {
     KubernetesSecrets secrets = mock(KubernetesSecrets.class);
+    KubernetesConfigsMaps configmaps = mock(KubernetesConfigsMaps.class);
     when(namespace.secrets()).thenReturn(secrets);
+    when(namespace.configMaps()).thenReturn(configmaps);
     Secret secretMock = mock(Secret.class);
     ObjectMeta objectMeta = mock(ObjectMeta.class);
     when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);

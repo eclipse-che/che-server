@@ -17,10 +17,13 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -141,6 +144,21 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
           .secrets()
           .inNamespace(identity.getInfrastructureNamespace())
           .create(secret);
+    }
+
+    // create preferences configmap
+    if (osProject.configMaps().get(PREFERENCES_CONFIGMAP_NAME).isEmpty()) {
+      ConfigMap configMap =
+          new ConfigMapBuilder()
+              .withNewMetadata()
+              .withName(PREFERENCES_CONFIGMAP_NAME)
+              .endMetadata()
+              .build();
+      clientFactory
+          .createOC()
+          .configMaps()
+          .inNamespace(identity.getInfrastructureNamespace())
+          .create(configMap);
     }
 
     if (!isNullOrEmpty(getServiceAccountName())) {

@@ -11,28 +11,26 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
 
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 
 /**
- * This {@link NamespaceConfigurator} ensures that Secret {@link
- * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount#CREDENTIALS_SECRET_NAME}
+ * This {@link NamespaceConfigurator} ensures that ConfigMap {@link
+ * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount#PREFERENCES_CONFIGMAP_NAME}
  * is present in the Workspace namespace.
  */
-@Singleton
-public class CredentialsSecretConfigurator implements NamespaceConfigurator {
+public class PreferencesConfigMapConfigurator implements NamespaceConfigurator {
 
   private final KubernetesClientFactory clientFactory;
 
   @Inject
-  public CredentialsSecretConfigurator(KubernetesClientFactory clientFactory) {
+  public PreferencesConfigMapConfigurator(KubernetesClientFactory clientFactory) {
     this.clientFactory = clientFactory;
   }
 
@@ -40,16 +38,15 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
   public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {
     var client = clientFactory.create();
-    if (client.secrets().inNamespace(namespaceName).withName(CREDENTIALS_SECRET_NAME).get()
+    if (client.configMaps().inNamespace(namespaceName).withName(PREFERENCES_CONFIGMAP_NAME).get()
         == null) {
-      Secret secret =
-          new SecretBuilder()
-              .withType("opaque")
+      ConfigMap configMap =
+          new ConfigMapBuilder()
               .withNewMetadata()
-              .withName(CREDENTIALS_SECRET_NAME)
+              .withName(PREFERENCES_CONFIGMAP_NAME)
               .endMetadata()
               .build();
-      client.secrets().inNamespace(namespaceName).create(secret);
+      client.configMaps().inNamespace(namespaceName).create(configMap);
     }
   }
 }

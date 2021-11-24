@@ -55,6 +55,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.environment.Kubernete
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy;
@@ -121,6 +122,7 @@ public class OpenShiftInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
     namespaceConfigurators.addBinding().to(CredentialsSecretConfigurator.class);
+    namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
     namespaceConfigurators.addBinding().to(OpenShiftWorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(OpenShiftStopWorkspaceRoleConfigurator.class);
 

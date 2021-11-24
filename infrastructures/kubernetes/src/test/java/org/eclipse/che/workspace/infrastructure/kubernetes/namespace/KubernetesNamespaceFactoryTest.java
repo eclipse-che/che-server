@@ -91,6 +91,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.WorkspaceServiceAccountConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
@@ -498,7 +500,6 @@ public class KubernetesNamespaceFactoryTest {
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     when(toReturnNamespace.getName()).thenReturn("namespaceName");
-    when(toReturnNamespace.configMaps()).thenReturn(mock(KubernetesConfigsMaps.class));
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     MixedOperation mixedOperation = mock(MixedOperation.class);
     when(k8sClient.secrets()).thenReturn(mixedOperation);
@@ -532,20 +533,19 @@ public class KubernetesNamespaceFactoryTest {
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
-                Set.of(),
+                Set.of(new PreferencesConfigMapConfigurator(clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 userManager,
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
-    KubernetesConfigsMaps configsMaps = mock(KubernetesConfigsMaps.class);
-    when(toReturnNamespace.configMaps()).thenReturn(configsMaps);
-    when(configsMaps.get(eq(PREFERENCES_CONFIGMAP_NAME))).thenReturn(empty());
+    when(toReturnNamespace.getName()).thenReturn("namespaceName");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     MixedOperation mixedOperation = mock(MixedOperation.class);
-    lenient().when(k8sClient.configMaps()).thenReturn(mixedOperation);
-    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(k8sClient.configMaps()).thenReturn(mixedOperation);
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(namespaceResource.get()).thenReturn(null);
 
     // when
     RuntimeIdentity identity =
@@ -557,6 +557,48 @@ public class KubernetesNamespaceFactoryTest {
     verify(namespaceOperation).create(configMapCaptor.capture());
     ConfigMap configmap = configMapCaptor.getValue();
     Assert.assertEquals(configmap.getMetadata().getName(), PREFERENCES_CONFIGMAP_NAME);
+  }
+
+  @Test
+  public void testAllConfiguratorsAreCalledWhenCreatingNamespace() throws InfrastructureException {
+    // given
+    String namespaceName = "testNamespaceName";
+    NamespaceConfigurator configurator1 = Mockito.mock(NamespaceConfigurator.class);
+    NamespaceConfigurator configurator2 = Mockito.mock(NamespaceConfigurator.class);
+    Set<NamespaceConfigurator> namespaceConfigurators = Set.of(configurator1, configurator2);
+
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                namespaceConfigurators,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.getName()).thenReturn(namespaceName);
+
+    RuntimeIdentity identity = new RuntimeIdentityImpl("workspace123", null, USER_ID, "old-che");
+    doReturn(toReturnNamespace).when(namespaceFactory).get(identity);
+
+    // when
+    KubernetesNamespace namespace = namespaceFactory.getOrCreate(identity);
+
+    // then
+    NamespaceResolutionContext resolutionCtx =
+        new NamespaceResolutionContext("workspace123", "123", "jondoe");
+    verify(configurator1).configure(resolutionCtx, namespaceName);
+    verify(configurator2).configure(resolutionCtx, namespaceName);
+    assertEquals(namespace, toReturnNamespace);
   }
 
   @Test

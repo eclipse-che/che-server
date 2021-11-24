@@ -11,11 +11,13 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.Map;
@@ -30,8 +32,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(MockitoTestNGListener.class)
-public class CredentialsSecretConfiguratorTest {
-
+public class PreferencesConfigMapConfiguratorTest {
   private NamespaceConfigurator configurator;
 
   @Mock private KubernetesClientFactory clientFactory;
@@ -45,7 +46,7 @@ public class CredentialsSecretConfiguratorTest {
 
   @BeforeMethod
   public void setUp() throws InfrastructureException {
-    configurator = new CredentialsSecretConfigurator(clientFactory);
+    configurator = new PreferencesConfigMapConfigurator(clientFactory);
 
     serverMock = new KubernetesServer(true, true);
     serverMock.before();
@@ -57,36 +58,36 @@ public class CredentialsSecretConfiguratorTest {
   }
 
   @Test
-  public void createCredentialsSecretWhenDoesNotExist()
+  public void createConfigmapWhenDoesntExist()
       throws InfrastructureException, InterruptedException {
     // given - clean env
 
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
 
-    // then create a secret
+    // then configmap created
     Assert.assertEquals(serverMock.getLastRequest().getMethod(), "POST");
     Assert.assertNotNull(
         serverMock
             .getClient()
-            .secrets()
+            .configMaps()
             .inNamespace(TEST_NAMESPACE_NAME)
-            .withName(CREDENTIALS_SECRET_NAME)
+            .withName(PREFERENCES_CONFIGMAP_NAME)
             .get());
+    verify(clientFactory, times(1)).create();
   }
 
   @Test
-  public void doNothingWhenSecretAlreadyExists()
-      throws InfrastructureException, InterruptedException {
-    // given - secret already exists
+  public void doNothingWhenConfigmapExists() throws InfrastructureException, InterruptedException {
+    // given - configmap already exists
     serverMock
         .getClient()
-        .secrets()
+        .configMaps()
         .inNamespace(TEST_NAMESPACE_NAME)
         .create(
-            new SecretBuilder()
+            new ConfigMapBuilder()
                 .withNewMetadata()
-                .withName(CREDENTIALS_SECRET_NAME)
+                .withName(PREFERENCES_CONFIGMAP_NAME)
                 .withAnnotations(Map.of("already", "created"))
                 .endMetadata()
                 .build());
@@ -94,11 +95,11 @@ public class CredentialsSecretConfiguratorTest {
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
 
-    // then - don't create the secret
+    // then - don't create the configmap
     Assert.assertEquals(serverMock.getLastRequest().getMethod(), "GET");
-    var secrets =
-        serverMock.getClient().secrets().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
-    Assert.assertEquals(secrets.size(), 1);
-    Assert.assertEquals(secrets.get(0).getMetadata().getAnnotations().get("already"), "created");
+    var configmaps =
+        serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
+    Assert.assertEquals(configmaps.size(), 1);
+    Assert.assertEquals(configmaps.get(0).getMetadata().getAnnotations().get("already"), "created");
   }
 }

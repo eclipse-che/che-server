@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
+import static java.util.stream.Collectors.joining;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
@@ -95,7 +96,13 @@ public class WorkspaceServiceAccountConfiguratorTest {
 
     var roleBindings =
         client.rbac().roleBindings().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
-    assertEquals(roleBindings.size(), 5); // exec, secrets, view bindings + cr1, cr2
+    assertEquals(
+        roleBindings.size(),
+        6,
+        roleBindings
+            .stream()
+            .map(r -> r.getMetadata().getName())
+            .collect(joining(", "))); // exec, secrets, configmaps, view bindings + cr1, cr2
   }
 
   @Test
@@ -119,6 +126,12 @@ public class WorkspaceServiceAccountConfiguratorTest {
 
     var roleBindings =
         client.rbac().roleBindings().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
-    assertEquals(roleBindings.size(), 3); // exec, secrets, view bindings
+    assertEquals(
+        roleBindings.size(),
+        4,
+        roleBindings
+            .stream()
+            .map(r -> r.getMetadata().getName())
+            .collect(joining(", "))); // exec, secrets, configmaps, view bindings
   }
 }

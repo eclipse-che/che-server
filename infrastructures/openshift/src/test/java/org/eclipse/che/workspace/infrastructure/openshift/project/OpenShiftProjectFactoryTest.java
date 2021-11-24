@@ -15,7 +15,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
-import static java.util.Optional.empty;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
@@ -58,7 +57,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
@@ -79,6 +77,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesC
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesSecrets;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
@@ -134,6 +133,7 @@ public class OpenShiftProjectFactoryTest {
   @BeforeMethod
   public void setUp() throws Exception {
     lenient().when(clientFactory.createOC()).thenReturn(osClient);
+    lenient().when(clientFactory.create()).thenReturn(osClient);
     lenient().when(osClient.projects()).thenReturn(projectOperation);
 
     lenient()
@@ -569,11 +569,6 @@ public class OpenShiftProjectFactoryTest {
     Resource<Secret> nullSecret = mock(Resource.class);
     when(namespaceOperation.withName(CREDENTIALS_SECRET_NAME)).thenReturn(nullSecret);
     when(nullSecret.get()).thenReturn(null);
-    KubernetesConfigsMaps configsMaps = mock(KubernetesConfigsMaps.class);
-    when(toReturnProject.configMaps()).thenReturn(configsMaps);
-    when(configsMaps.get(anyString())).thenReturn(Optional.of(mock(ConfigMap.class)));
-    when(osClient.secrets()).thenReturn(mixedOperation);
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
 
     // when
     RuntimeIdentity identity =
@@ -601,7 +596,7 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                Set.of(),
+                Set.of(new PreferencesConfigMapConfigurator(clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
@@ -611,13 +606,13 @@ public class OpenShiftProjectFactoryTest {
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+    when(toReturnProject.getName()).thenReturn("namespace123");
     NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
     MixedOperation mixedOperation = mock(MixedOperation.class);
-    KubernetesConfigsMaps configsMaps = mock(KubernetesConfigsMaps.class);
-    when(toReturnProject.configMaps()).thenReturn(configsMaps);
-    when(configsMaps.get(eq(PREFERENCES_CONFIGMAP_NAME))).thenReturn(empty());
     when(osClient.configMaps()).thenReturn(mixedOperation);
     when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    Resource<ConfigMap> nullCm = mock(Resource.class);
+    when(namespaceOperation.withName(PREFERENCES_CONFIGMAP_NAME)).thenReturn(nullCm);
 
     // when
     RuntimeIdentity identity =
@@ -644,7 +639,7 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                emptySet(),
+                Set.of(new CredentialsSecretConfigurator(clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
@@ -655,10 +650,14 @@ public class OpenShiftProjectFactoryTest {
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+    when(toReturnProject.getName()).thenReturn("namespace123");
     NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
     MixedOperation mixedOperation = mock(MixedOperation.class);
-    lenient().when(osClient.secrets()).thenReturn(mixedOperation);
-    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(osClient.secrets()).thenReturn(mixedOperation);
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    Resource<Secret> secretResource = mock(Resource.class);
+    when(namespaceOperation.withName(CREDENTIALS_SECRET_NAME)).thenReturn(secretResource);
+    when(secretResource.get()).thenReturn(mock(Secret.class));
 
     // when
     RuntimeIdentity identity =
@@ -682,7 +681,7 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                emptySet(),
+                Set.of(new PreferencesConfigMapConfigurator(clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
@@ -693,7 +692,14 @@ public class OpenShiftProjectFactoryTest {
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+    when(toReturnProject.getName()).thenReturn("namespace123");
     NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
+    MixedOperation mixedOperation = mock(MixedOperation.class);
+    when(osClient.configMaps()).thenReturn(mixedOperation);
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    Resource<ConfigMap> cmResource = mock(Resource.class);
+    when(namespaceOperation.withName(PREFERENCES_CONFIGMAP_NAME)).thenReturn(cmResource);
+    when(cmResource.get()).thenReturn(mock(ConfigMap.class));
 
     // when
     RuntimeIdentity identity =
@@ -925,8 +931,6 @@ public class OpenShiftProjectFactoryTest {
     KubernetesSecrets secrets = mock(KubernetesSecrets.class);
     lenient().when(project.secrets()).thenReturn(secrets);
     KubernetesConfigsMaps configsMaps = mock(KubernetesConfigsMaps.class);
-    when(project.configMaps()).thenReturn(configsMaps);
-    when(configsMaps.get(anyString())).thenReturn(Optional.of(mock(ConfigMap.class)));
     Secret secretMock = mock(Secret.class);
     ObjectMeta objectMeta = mock(ObjectMeta.class);
     lenient().when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);

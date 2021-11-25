@@ -16,8 +16,6 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Check all properties have description
         run: ./check_properties_description.sh
       - name: Cache local Maven repository
@@ -34,5 +32,5 @@ jobs:
           java-version: '11.0.11+9'
       - name: Build with Maven
         run: mvn -B clean install -U -Pintegration
-      - name: Build with Maven
-        run: cd assembly/assembly-wsmaster-war && docker run --rm -t  -v ~/.m2:/root/.m2  -v ${PWD}/:/workspace/project  quay.io/che-incubator/dash-licenses:next --check && pwd && ls -la && git status
+      - name: Check dependecies licenses
+        run: cd assembly/assembly-wsmaster-war && docker run --rm -t  -v ~/.m2:/root/.m2  -v ${PWD}/:/workspace/project  quay.io/che-incubator/dash-licenses:next --check && pwd && ls -la && git status && git diff

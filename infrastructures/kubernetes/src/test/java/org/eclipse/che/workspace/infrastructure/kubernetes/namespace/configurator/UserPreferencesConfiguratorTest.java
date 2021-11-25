@@ -86,7 +86,7 @@ public class UserPreferencesConfiguratorTest {
 
   @Test
   public void shouldCreatePreferencesSecret() throws InfrastructureException {
-    userPreferencesConfigurator.configure(context);
+    userPreferencesConfigurator.configure(context, USER_NAMESPACE);
     List<Secret> secrets =
         kubernetesServer.getClient().secrets().inNamespace(USER_NAMESPACE).list().getItems();
     assertEquals(secrets.size(), 1);
@@ -99,7 +99,7 @@ public class UserPreferencesConfiguratorTest {
           "Preferences of user with id:" + USER_ID + " cannot be retrieved.")
   public void shouldNotCreateSecretOnException() throws ServerException, InfrastructureException {
     when(preferenceManager.find(USER_ID)).thenThrow(new ServerException("test exception"));
-    userPreferencesConfigurator.configure(context);
+    userPreferencesConfigurator.configure(context, USER_NAMESPACE);
     fail("InfrastructureException should have been thrown.");
   }
 

@@ -49,6 +49,7 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakErrorResponse;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
+import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.everrest.assured.EverrestJetty;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;

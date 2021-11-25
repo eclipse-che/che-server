@@ -30,6 +30,6 @@ public interface NamespaceConfigurator {
    * @param namespaceResolutionContext users namespace context
    * @throws InfrastructureException when any error occurs
    */
-  public void configure(NamespaceResolutionContext namespaceResolutionContext)
+  void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException;
 }

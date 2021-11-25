@@ -20,6 +20,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.Kub
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -51,6 +52,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.ServiceAccountList;
 import io.fabric8.kubernetes.api.model.Status;
 import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBuilder;
+import io.fabric8.kubernetes.api.model.rbac.PolicyRule;
 import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingList;
 import io.fabric8.kubernetes.api.model.rbac.RoleList;
@@ -88,6 +90,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.WorkspaceServiceAccountConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.mockito.ArgumentCaptor;
@@ -145,6 +151,7 @@ public class KubernetesNamespaceFactoryTest {
     serverMock.before();
     k8sClient = spy(serverMock.getClient());
     lenient().when(clientFactory.create()).thenReturn(k8sClient);
+    lenient().when(cheClientFactory.create()).thenReturn(k8sClient);
     lenient().when(k8sClient.namespaces()).thenReturn(namespaceOperation);
 
     lenient().when(namespaceOperation.withName(any())).thenReturn(namespaceResource);
@@ -171,14 +178,13 @@ public class KubernetesNamespaceFactoryTest {
       throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -199,14 +205,13 @@ public class KubernetesNamespaceFactoryTest {
 
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -220,14 +225,13 @@ public class KubernetesNamespaceFactoryTest {
   public void shouldNormaliseNamespaceWhenUserNameStartsWithKube() {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -246,14 +250,13 @@ public class KubernetesNamespaceFactoryTest {
           throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -269,14 +272,13 @@ public class KubernetesNamespaceFactoryTest {
   public void shouldThrowExceptionIfNoDefaultNamespaceIsConfigured() {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             null,
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -320,14 +322,13 @@ public class KubernetesNamespaceFactoryTest {
 
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -364,14 +365,13 @@ public class KubernetesNamespaceFactoryTest {
 
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -395,14 +395,13 @@ public class KubernetesNamespaceFactoryTest {
 
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -429,14 +428,13 @@ public class KubernetesNamespaceFactoryTest {
             .build());
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -458,14 +456,13 @@ public class KubernetesNamespaceFactoryTest {
 
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -489,28 +486,27 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                Set.of(new CredentialsSecretConfigurator(clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 userManager,
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
-    KubernetesSecrets secrets = mock(KubernetesSecrets.class);
-    when(toReturnNamespace.secrets()).thenReturn(secrets);
-    when(toReturnNamespace.configMaps()).thenReturn(mock(KubernetesConfigsMaps.class));
-    when(secrets.get()).thenReturn(Collections.emptyList());
+    when(toReturnNamespace.getName()).thenReturn("namespaceName");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     MixedOperation mixedOperation = mock(MixedOperation.class);
-    lenient().when(k8sClient.secrets()).thenReturn(mixedOperation);
-    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(k8sClient.secrets()).thenReturn(mixedOperation);
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(namespaceResource.get()).thenReturn(null);
+    when(cheClientFactory.create()).thenReturn(k8sClient);
+    when(clientFactory.create()).thenReturn(k8sClient);
 
     // when
     RuntimeIdentity identity =
@@ -531,28 +527,25 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                Set.of(new PreferencesConfigMapConfigurator(clientFactory)),
                 clientFactory,
                 cheClientFactory,
                 userManager,
                 preferenceManager,
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
-    KubernetesConfigsMaps configsMaps = mock(KubernetesConfigsMaps.class);
-    when(toReturnNamespace.secrets()).thenReturn(mock(KubernetesSecrets.class));
-    when(toReturnNamespace.configMaps()).thenReturn(configsMaps);
-    when(configsMaps.get(eq(PREFERENCES_CONFIGMAP_NAME))).thenReturn(empty());
+    when(toReturnNamespace.getName()).thenReturn("namespaceName");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     MixedOperation mixedOperation = mock(MixedOperation.class);
-    lenient().when(k8sClient.configMaps()).thenReturn(mixedOperation);
-    lenient().when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(k8sClient.configMaps()).thenReturn(mixedOperation);
+    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
+    when(namespaceResource.get()).thenReturn(null);
 
     // when
     RuntimeIdentity identity =
@@ -567,19 +560,60 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void shouldNotCreateCredentialsSecretIfExists() throws Exception {
+  public void testAllConfiguratorsAreCalledWhenCreatingNamespace() throws InfrastructureException {
     // given
+    String namespaceName = "testNamespaceName";
+    NamespaceConfigurator configurator1 = Mockito.mock(NamespaceConfigurator.class);
+    NamespaceConfigurator configurator2 = Mockito.mock(NamespaceConfigurator.class);
+    Set<NamespaceConfigurator> namespaceConfigurators = Set.of(configurator1, configurator2);
+
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                namespaceConfigurators,
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    when(toReturnNamespace.getName()).thenReturn(namespaceName);
+
+    RuntimeIdentity identity = new RuntimeIdentityImpl("workspace123", null, USER_ID, "old-che");
+    doReturn(toReturnNamespace).when(namespaceFactory).get(identity);
+
+    // when
+    KubernetesNamespace namespace = namespaceFactory.getOrCreate(identity);
+
+    // then
+    NamespaceResolutionContext resolutionCtx =
+        new NamespaceResolutionContext("workspace123", "123", "jondoe");
+    verify(configurator1).configure(resolutionCtx, namespaceName);
+    verify(configurator2).configure(resolutionCtx, namespaceName);
+    assertEquals(namespace, toReturnNamespace);
+  }
+
+  @Test
+  public void shouldNotCreateCredentialsSecretIfExists() throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -607,14 +641,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -643,14 +676,13 @@ public class KubernetesNamespaceFactoryTest {
   public void shouldThrowExceptionWhenFailedToGetInfoAboutDefaultNamespace() throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -669,14 +701,13 @@ public class KubernetesNamespaceFactoryTest {
   public void shouldThrowExceptionWhenFailedToGetNamespaces() throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -700,14 +731,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -723,7 +753,6 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     assertEquals(toReturnNamespace, namespace);
-    verify(namespaceFactory, never()).doCreateServiceAccount(any(), any());
     verify(toReturnNamespace).prepare(eq(false), any(), any());
   }
 
@@ -733,14 +762,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 false,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -757,7 +785,6 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     assertEquals(toReturnNamespace, namespace);
-    verify(namespaceFactory, never()).doCreateServiceAccount(any(), any());
     verify(toReturnNamespace).prepare(eq(false), any(), any());
   }
 
@@ -765,17 +792,18 @@ public class KubernetesNamespaceFactoryTest {
   public void shouldPrepareWorkspaceServiceAccountIfItIsConfiguredAndNamespaceIsNotPredefined()
       throws Exception {
     // given
+    var serviceAccountCfg =
+        spy(new WorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory));
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "serviceAccount",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                Set.of(serviceAccountCfg),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -783,13 +811,12 @@ public class KubernetesNamespaceFactoryTest {
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     prepareNamespace(toReturnNamespace);
-    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
 
     KubernetesWorkspaceServiceAccount serviceAccount =
         mock(KubernetesWorkspaceServiceAccount.class);
-    doReturn(serviceAccount).when(namespaceFactory).doCreateServiceAccount(any(), any());
+    doReturn(serviceAccount).when(serviceAccountCfg).doCreateServiceAccount(any(), any());
 
     // when
     RuntimeIdentity identity =
@@ -797,24 +824,25 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
-    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
+    verify(serviceAccountCfg).doCreateServiceAccount("workspace123", "workspace123");
     verify(serviceAccount).prepare();
   }
 
   @Test
   public void shouldBindToAllConfiguredClusterRoles() throws Exception {
     // given
+    var serviceAccountConfigurator =
+        new WorkspaceServiceAccountConfigurator("serviceAccount", "cr2, cr3", clientFactory);
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "serviceAccount",
-                "cr2, cr3",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                Set.of(serviceAccountConfigurator),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -822,10 +850,10 @@ public class KubernetesNamespaceFactoryTest {
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     prepareNamespace(toReturnNamespace);
-    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
+    when(cheClientFactory.create()).thenReturn(k8sClient);
     when(clientFactory.create(any())).thenReturn(k8sClient);
 
     // pre-create the cluster roles
@@ -848,7 +876,6 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
-    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
 
     ServiceAccountList sas = k8sClient.serviceAccounts().inNamespace("workspace123").list();
     assertEquals(sas.getItems().size(), 1);
@@ -881,19 +908,20 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void shouldCreateExecAndViewRolesAndBindings() throws Exception {
+  public void shouldCreateAndBindCredentialsSecretRole() throws Exception {
     // given
+    var serviceAccountConfigurator =
+        new WorkspaceServiceAccountConfigurator("serviceAccount", "cr2, cr3", clientFactory);
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "serviceAccount",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                Set.of(serviceAccountConfigurator),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -901,11 +929,10 @@ public class KubernetesNamespaceFactoryTest {
                 pool));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     prepareNamespace(toReturnNamespace);
-    when(toReturnNamespace.getWorkspaceId()).thenReturn("workspace123");
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
-    when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
     when(clientFactory.create(any())).thenReturn(k8sClient);
+    when(cheClientFactory.create()).thenReturn(k8sClient);
 
     // when
     RuntimeIdentity identity =
@@ -913,7 +940,66 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.getOrCreate(identity);
 
     // then
-    verify(namespaceFactory).doCreateServiceAccount("workspace123", "workspace123");
+    Optional<Role> roleOptional =
+        k8sClient
+            .rbac()
+            .roles()
+            .inNamespace("workspace123")
+            .list()
+            .getItems()
+            .stream()
+            .filter(r -> r.getMetadata().getName().equals(SECRETS_ROLE_NAME))
+            .findAny();
+    assertTrue(roleOptional.isPresent());
+    PolicyRule rule = roleOptional.get().getRules().get(0);
+    assertEquals(rule.getResources(), singletonList("secrets"));
+    assertEquals(rule.getResourceNames(), singletonList(CREDENTIALS_SECRET_NAME));
+    assertEquals(rule.getApiGroups(), singletonList(""));
+    assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
+    assertTrue(
+        k8sClient
+            .rbac()
+            .roleBindings()
+            .inNamespace("workspace123")
+            .list()
+            .getItems()
+            .stream()
+            .anyMatch(rb -> rb.getMetadata().getName().equals("serviceAccount-secrets")));
+  }
+
+  @Test
+  public void shouldCreateExecAndViewRolesAndBindings() throws Exception {
+    // given
+    namespaceFactory =
+        spy(
+            new KubernetesNamespaceFactory(
+                "<username>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                Set.of(
+                    new WorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory)),
+                clientFactory,
+                cheClientFactory,
+                userManager,
+                preferenceManager,
+                pool));
+    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
+    prepareNamespace(toReturnNamespace);
+    when(toReturnNamespace.getName()).thenReturn("workspace123");
+    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
+    when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
+    when(clientFactory.create(any())).thenReturn(k8sClient);
+    when(cheClientFactory.create()).thenReturn(k8sClient);
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    namespaceFactory.getOrCreate(identity);
+
+    // then
 
     ServiceAccountList sas = k8sClient.serviceAccounts().inNamespace("workspace123").list();
     assertEquals(sas.getItems().size(), 1);
@@ -952,61 +1038,18 @@ public class KubernetesNamespaceFactoryTest {
   }
 
   @Test
-  public void testNullClusterRolesResultsInEmptySet() {
-    namespaceFactory =
-        new KubernetesNamespaceFactory(
-            "",
-            null,
-            "che-<userid>",
-            true,
-            true,
-            true,
-            NAMESPACE_LABELS,
-            NAMESPACE_ANNOTATIONS,
-            clientFactory,
-            cheClientFactory,
-            userManager,
-            preferenceManager,
-            pool);
-    assertTrue(namespaceFactory.getClusterRoleNames().isEmpty());
-  }
-
-  @Test
-  public void testClusterRolesProperlyParsed() {
-    namespaceFactory =
-        new KubernetesNamespaceFactory(
-            "",
-            "  one,two, three ,,five  ",
-            "che-<userid>",
-            true,
-            true,
-            true,
-            NAMESPACE_LABELS,
-            NAMESPACE_ANNOTATIONS,
-            clientFactory,
-            cheClientFactory,
-            userManager,
-            preferenceManager,
-            pool);
-    Set<String> expected = Sets.newHashSet("one", "two", "three", "five");
-    assertTrue(namespaceFactory.getClusterRoleNames().containsAll(expected));
-    assertTrue(expected.containsAll(namespaceFactory.getClusterRoleNames()));
-  }
-
-  @Test
   public void
       testEvalNamespaceUsesNamespaceDefaultIfWorkspaceDoesntRecordNamespaceAndLegacyNamespaceDoesntExist()
           throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1025,14 +1068,13 @@ public class KubernetesNamespaceFactoryTest {
   public void testEvalNamespaceUsesNamespaceFromUserPreferencesIfExist() throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1056,14 +1098,13 @@ public class KubernetesNamespaceFactoryTest {
       throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>-<username>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1088,14 +1129,13 @@ public class KubernetesNamespaceFactoryTest {
       throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>-<username>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1120,14 +1160,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "che-<username>",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -1148,14 +1187,13 @@ public class KubernetesNamespaceFactoryTest {
       throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1178,14 +1216,13 @@ public class KubernetesNamespaceFactoryTest {
   public void testEvalNamespaceTreatsWorkspaceRecordedNamespaceLiterally() throws Exception {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1229,14 +1266,13 @@ public class KubernetesNamespaceFactoryTest {
 
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1256,14 +1292,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 false,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -1296,14 +1331,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-cha-cha-cha",
                 false,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -1335,14 +1369,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-cha-cha-cha",
                 false,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -1386,14 +1419,13 @@ public class KubernetesNamespaceFactoryTest {
 
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             "try_placeholder_here=<username>",
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1412,14 +1444,13 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory =
         spy(
             new KubernetesNamespaceFactory(
-                "",
-                "",
                 "<username>-che",
                 true,
                 true,
                 true,
                 NAMESPACE_LABELS,
                 "try_placeholder_here=<username>",
+                emptySet(),
                 clientFactory,
                 cheClientFactory,
                 userManager,
@@ -1444,14 +1475,13 @@ public class KubernetesNamespaceFactoryTest {
   public void normalizeTest(String raw, String expected) {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "<username>-che",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1464,14 +1494,13 @@ public class KubernetesNamespaceFactoryTest {
   public void normalizeLengthTest() {
     namespaceFactory =
         new KubernetesNamespaceFactory(
-            "",
-            "",
             "che-<userid>",
             true,
             true,
             true,
             NAMESPACE_LABELS,
             NAMESPACE_ANNOTATIONS,
+            emptySet(),
             clientFactory,
             cheClientFactory,
             userManager,
@@ -1551,14 +1580,15 @@ public class KubernetesNamespaceFactoryTest {
 
   private void prepareNamespace(KubernetesNamespace namespace) throws InfrastructureException {
     KubernetesSecrets secrets = mock(KubernetesSecrets.class);
+    lenient().when(namespace.secrets()).thenReturn(secrets);
     KubernetesConfigsMaps configmaps = mock(KubernetesConfigsMaps.class);
-    when(namespace.secrets()).thenReturn(secrets);
-    when(namespace.configMaps()).thenReturn(configmaps);
+    lenient().when(namespace.secrets()).thenReturn(secrets);
+    lenient().when(namespace.configMaps()).thenReturn(configmaps);
     Secret secretMock = mock(Secret.class);
     ObjectMeta objectMeta = mock(ObjectMeta.class);
-    when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);
-    when(secretMock.getMetadata()).thenReturn(objectMeta);
-    when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
+    lenient().when(objectMeta.getName()).thenReturn(CREDENTIALS_SECRET_NAME);
+    lenient().when(secretMock.getMetadata()).thenReturn(objectMeta);
+    lenient().when(secrets.get()).thenReturn(Collections.singletonList(secretMock));
   }
 
   private Namespace createNamespace(String name, String phase) {
@@ -1574,6 +1604,6 @@ public class KubernetesNamespaceFactoryTest {
 
   private KubernetesNamespaceMeta testProvisioning(NamespaceResolutionContext context)
       throws InfrastructureException {
-    return new NamespaceProvisioner(namespaceFactory, emptySet()).provision(context);
+    return new NamespaceProvisioner(namespaceFactory).provision(context);
   }
 }

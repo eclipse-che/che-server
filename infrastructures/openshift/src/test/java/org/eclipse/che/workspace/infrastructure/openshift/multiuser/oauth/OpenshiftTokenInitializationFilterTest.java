@@ -11,8 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
@@ -21,11 +19,6 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.User;
 import io.fabric8.openshift.client.OpenShiftClient;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Optional;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
@@ -54,10 +47,6 @@ public class OpenshiftTokenInitializationFilterTest {
   @Mock private OpenShiftClient openShiftClient;
   @Mock private User openshiftUser;
   @Mock private ObjectMeta openshiftUserMeta;
-
-  @Mock private HttpServletRequest servletRequest;
-  @Mock private HttpServletResponse servletResponse;
-  @Mock private FilterChain filterChain;
 
   private static final String TOKEN = "touken";
   private static final String USER_UID = "almost-certainly-unique-id";
@@ -111,7 +100,7 @@ public class OpenshiftTokenInitializationFilterTest {
 
   @Test
   public void extractSubjectCreatesSubjectWithCurrentlyAuthenticatedUser()
-      throws InfrastructureException, ServerException, ConflictException {
+      throws ServerException, ConflictException {
     when(openShiftClientFactory.createAuthenticatedClient(TOKEN)).thenReturn(openShiftClient);
     when(openShiftClient.currentUser()).thenReturn(openshiftUser);
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
@@ -126,27 +115,6 @@ public class OpenshiftTokenInitializationFilterTest {
     assertEquals(u, openshiftUser);
     assertEquals(subject.getUserId(), USER_UID);
     assertEquals(subject.getUserName(), USERNAME);
-  }
-
-  @Test
-  public void handleMissingTokenShouldAllowUnauthorizedEndpoint()
-      throws ServletException, IOException {
-    when(servletRequest.getServletPath()).thenReturn("/system/state");
-
-    openshiftTokenInitializationFilter.handleMissingToken(
-        servletRequest, servletResponse, filterChain);
-
-    verify(filterChain).doFilter(servletRequest, servletResponse);
-  }
-
-  @Test
-  public void handleMissingTokenShouldRejectRequest() throws ServletException, IOException {
-    when(servletRequest.getServletPath()).thenReturn("blabol");
-
-    openshiftTokenInitializationFilter.handleMissingToken(
-        servletRequest, servletResponse, filterChain);
-
-    verify(servletResponse).sendError(eq(401), anyString());
   }
 
   @Test

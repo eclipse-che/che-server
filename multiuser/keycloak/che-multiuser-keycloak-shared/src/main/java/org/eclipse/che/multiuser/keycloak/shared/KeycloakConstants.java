@@ -15,22 +15,13 @@ package org.eclipse.che.multiuser.keycloak.shared;
 public class KeycloakConstants {
 
   private static final String KEYCLOAK_SETTING_PREFIX = "che.keycloak.";
-  private static final String KEYCLOAK_SETTINGS_ENDPOINT_PATH = "/keycloak/settings";
-
-  public static final String AUTH_SERVER_URL_SETTING = KEYCLOAK_SETTING_PREFIX + "auth_server_url";
-  public static final String AUTH_SERVER_URL_INTERNAL_SETTING =
-      KEYCLOAK_SETTING_PREFIX + "auth_internal_server_url";
 
   public static final String REALM_SETTING = KEYCLOAK_SETTING_PREFIX + "realm";
   public static final String CLIENT_ID_SETTING = KEYCLOAK_SETTING_PREFIX + "client_id";
-  public static final String OIDC_PROVIDER_SETTING = KEYCLOAK_SETTING_PREFIX + "oidc_provider";
-  public static final String USERNAME_CLAIM_SETTING = KEYCLOAK_SETTING_PREFIX + "username_claim";
   public static final String USE_NONCE_SETTING = KEYCLOAK_SETTING_PREFIX + "use_nonce";
   public static final String USE_FIXED_REDIRECT_URLS_SETTING =
       KEYCLOAK_SETTING_PREFIX + "use_fixed_redirect_urls";
   public static final String JS_ADAPTER_URL_SETTING = KEYCLOAK_SETTING_PREFIX + "js_adapter_url";
-  public static final String ALLOWED_CLOCK_SKEW_SEC =
-      KEYCLOAK_SETTING_PREFIX + "allowed_clock_skew_sec";
 
   public static final String OSO_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "oso.endpoint";
   public static final String PROFILE_ENDPOINT_SETTING =
@@ -48,8 +39,4 @@ public class KeycloakConstants {
       KEYCLOAK_SETTING_PREFIX + "redirect_url.dashboard";
   public static final String FIXED_REDIRECT_URL_FOR_IDE =
       KEYCLOAK_SETTING_PREFIX + "redirect_url.ide";
-
-  public static String getEndpoint(String apiEndpoint) {
-    return apiEndpoint + KEYCLOAK_SETTINGS_ENDPOINT_PATH;
-  }
 }

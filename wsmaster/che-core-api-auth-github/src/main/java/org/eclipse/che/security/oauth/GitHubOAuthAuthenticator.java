@@ -17,8 +17,6 @@ import com.google.api.client.util.store.MemoryDataStoreFactory;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.security.oauth.shared.User;
@@ -60,29 +58,19 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
   @Override
   public OAuthToken getToken(String userId) throws IOException {
     final OAuthToken token = super.getToken(userId);
-    if (!(token == null || token.getToken() == null || token.getToken().isEmpty())) {
-      // Need to check if token which stored is valid for requests, then if valid - we returns it to
-      // caller
-      String tokenVerifyUrl = "https://api.github.com/user";
-      HttpURLConnection http = null;
-      try {
-        http = (HttpURLConnection) new URL(tokenVerifyUrl).openConnection();
-        http.setInstanceFollowRedirects(false);
-        http.setRequestMethod("GET");
-        http.setRequestProperty("Accept", "application/json");
-        http.setRequestProperty("Authorization", "token " + token.getToken());
-
-        if (http.getResponseCode() == 401) {
-          return null;
-        }
-      } finally {
-        if (http != null) {
-          http.disconnect();
-        }
+    // Need to check if token which is stored is valid for requests, then if valid - we returns it
+    // to
+    // caller
+    try {
+      if (token == null
+          || token.getToken() == null
+          || token.getToken().isEmpty()
+          || getJson("https://api.github.com/user", token.getToken(), GitHubUser.class) == null) {
+        return null;
       }
-
-      return token;
+    } catch (OAuthAuthenticationException e) {
+      return null;
     }
-    return null;
+    return token;
   }
 }

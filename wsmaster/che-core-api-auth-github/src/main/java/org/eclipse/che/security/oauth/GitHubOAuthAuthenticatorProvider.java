@@ -65,6 +65,8 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
         || isNullOrEmpty(tokenUri)
         || Objects.isNull(redirectUris)
         || redirectUris.length == 0) {
+      LOG.debug(
+          "URIs for GitHub OAuth authentication are missing or empty. Make sure your configuration is correct.");
       return new NoopOAuthAuthenticator();
     }
 
@@ -74,7 +76,8 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
       clientSecret = Files.readString(Path.of(clientSecretPath));
     } catch (IOException e) {
       LOG.debug(
-          "Files with GitHub credentials cannot be accessed. NoopOAuthAuthenticator will be used.");
+          "NoopOAuthAuthenticator will be used, because files containing GitHub credentials cannot be accessed. Cause: {}",
+          e.getMessage());
       return new NoopOAuthAuthenticator();
     }
 

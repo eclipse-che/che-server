@@ -47,7 +47,7 @@ public class OidcTokenInitializationFilter
     extends MultiUserEnvironmentInitializationFilter<Jws<Claims>> {
   private static final String EMAIL_CLAIM = "email";
   private static final String NAME_CLAIM = "name";
-  private static final String DEFAULT_USERNAME_CLAIM = NAME_CLAIM;
+  protected static final String DEFAULT_USERNAME_CLAIM = NAME_CLAIM;
 
   private final JwtParser jwtParser;
   private final PermissionChecker permissionChecker;

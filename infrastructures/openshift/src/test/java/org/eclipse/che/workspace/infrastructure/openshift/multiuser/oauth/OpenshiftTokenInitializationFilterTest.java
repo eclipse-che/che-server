@@ -19,9 +19,6 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.User;
 import io.fabric8.openshift.client.OpenShiftClient;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
@@ -50,10 +47,6 @@ public class OpenshiftTokenInitializationFilterTest {
   @Mock private OpenShiftClient openShiftClient;
   @Mock private User openshiftUser;
   @Mock private ObjectMeta openshiftUserMeta;
-
-  @Mock private HttpServletRequest servletRequest;
-  @Mock private HttpServletResponse servletResponse;
-  @Mock private FilterChain filterChain;
 
   private static final String TOKEN = "touken";
   private static final String USER_UID = "almost-certainly-unique-id";
@@ -123,28 +116,6 @@ public class OpenshiftTokenInitializationFilterTest {
     assertEquals(subject.getUserId(), USER_UID);
     assertEquals(subject.getUserName(), USERNAME);
   }
-
-  // TODO: move to abstract class test
-  //  @Test
-  //  public void handleMissingTokenShouldAllowUnauthorizedEndpoint()
-  //      throws ServletException, IOException {
-  //    when(servletRequest.getServletPath()).thenReturn("/system/state");
-  //
-  //    openshiftTokenInitializationFilter.handleMissingToken(
-  //        servletRequest, servletResponse, filterChain);
-  //
-  //    verify(filterChain).doFilter(servletRequest, servletResponse);
-  //  }
-  //
-  //  @Test
-  //  public void handleMissingTokenShouldRejectRequest() throws ServletException, IOException {
-  //    when(servletRequest.getServletPath()).thenReturn("blabol");
-  //
-  //    openshiftTokenInitializationFilter.handleMissingToken(
-  //        servletRequest, servletResponse, filterChain);
-  //
-  //    verify(servletResponse).sendError(eq(401), anyString());
-  //  }
 
   @Test
   public void invalidTokenShouldBeHandledAsMissing() throws Exception {

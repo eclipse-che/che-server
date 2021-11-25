@@ -35,4 +35,4 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean install -U -Pintegration
       - name: Build with Maven
-        run: cd assembly/assembly-wsmaster-war && docker run --rm -t  -v ~/.m2:/root/.m2  -v ${PWD}/:/workspace/project  quay.io/che-incubator/dash-licenses:next --check
+        run: cd assembly/assembly-wsmaster-war && docker run --rm -t  -v ~/.m2:/root/.m2  -v ${PWD}/:/workspace/project  quay.io/che-incubator/dash-licenses:next --check && pwd && ls -la && git status

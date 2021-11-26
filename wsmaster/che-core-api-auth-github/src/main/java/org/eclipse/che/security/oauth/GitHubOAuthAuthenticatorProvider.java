@@ -50,6 +50,7 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
     authenticator =
         getOAuthAuthenticator(
             redirectUris, authUri, tokenUri, GITHUB_CLIENT_ID_PATH, GITHUB_CLIENT_SECRET_PATH);
+    LOG.debug("{} GitHub OAuth Authenticator is used.", authenticator);
   }
 
   @Override
@@ -66,33 +67,18 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
       String clientSecretPath)
       throws IOException {
 
-    if (isNullOrEmpty(authUri)
-        || isNullOrEmpty(tokenUri)
-        || Objects.isNull(redirectUris)
-        || redirectUris.length == 0) {
-      LOG.debug(
-          "URIs for GitHub OAuth authentication are missing or empty. Make sure your configuration is correct.");
-      return new NoopOAuthAuthenticator();
+    if (!isNullOrEmpty(authUri)
+        && !isNullOrEmpty(tokenUri)
+        && Objects.nonNull(redirectUris)
+        && redirectUris.length != 0) {
+      String clientId = Files.readString(Path.of(clientIdPath));
+      String clientSecret = Files.readString(Path.of(clientSecretPath));
+      if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {
+        return new GitHubOAuthAuthenticator(
+            clientId, clientSecret, redirectUris, authUri, tokenUri);
+      }
     }
-
-    String clientId, clientSecret;
-    try {
-      clientId = Files.readString(Path.of(clientIdPath));
-      clientSecret = Files.readString(Path.of(clientSecretPath));
-    } catch (IOException e) {
-      LOG.debug(
-          "NoopOAuthAuthenticator will be used, because files containing GitHub credentials cannot be accessed. Cause: {}",
-          e.getMessage());
-      return new NoopOAuthAuthenticator();
-    }
-
-    if (isNullOrEmpty(clientId) || isNullOrEmpty(clientSecret)) {
-      LOG.debug(
-          "A file containing GitHub credentials is empty. NoopOAuthAuthenticator will be used.");
-      return new NoopOAuthAuthenticator();
-    }
-
-    return new GitHubOAuthAuthenticator(clientId, clientSecret, redirectUris, authUri, tokenUri);
+    return new NoopOAuthAuthenticator();
   }
 
   static class NoopOAuthAuthenticator extends OAuthAuthenticator {

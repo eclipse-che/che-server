@@ -28,6 +28,11 @@ import org.eclipse.che.security.oauth.shared.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provides implementation of GitHub {@link OAuthAuthenticator} based on available configuration.
+ *
+ * @author Pavol Baran
+ */
 @Singleton
 public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthenticator> {
   private static final Logger LOG = LoggerFactory.getLogger(GitHubOAuthAuthenticatorProvider.class);

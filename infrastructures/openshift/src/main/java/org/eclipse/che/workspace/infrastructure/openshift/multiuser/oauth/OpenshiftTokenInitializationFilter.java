@@ -16,15 +16,6 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.client.OpenShiftClient;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -46,9 +37,6 @@ import org.slf4j.LoggerFactory;
 /**
  * This filter uses given token directly. It's used for native OpenShift user authentication.
  * Requests without token or with invalid token are rejected.
- *
- * <p>{@link OpenshiftTokenInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS} is list of
- * unauthenticated paths, that are allowed without token.
  */
 @Singleton
 public class OpenshiftTokenInitializationFilter
@@ -56,9 +44,6 @@ public class OpenshiftTokenInitializationFilter
 
   private static final Logger LOG =
       LoggerFactory.getLogger(OpenshiftTokenInitializationFilter.class);
-
-  private static final List<String> UNAUTHORIZED_ENDPOINT_PATHS =
-      Collections.singletonList("/system/state");
 
   private final PermissionChecker permissionChecker;
   private final OpenShiftClientFactory clientFactory;
@@ -120,39 +105,5 @@ public class OpenshiftTokenInitializationFilter
     // OpenShift User does not have data about user's email. However, we need some email. For now,
     // we can use fake email, but probably we will need to find better solution.
     return userMeta.getName() + "@che";
-  }
-
-  /**
-   * If request path is in {@link OpenshiftTokenInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS},
-   * the request is allowed. All other requests are rejected with error code 401.
-   */
-  @Override
-  protected void handleMissingToken(
-      ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-    // if request path is in unauthorized endpoints, continue
-    if (request instanceof HttpServletRequest) {
-      HttpServletRequest httpRequest = (HttpServletRequest) request;
-      String path = httpRequest.getServletPath();
-      if (UNAUTHORIZED_ENDPOINT_PATHS.contains(path)) {
-        LOG.debug("Allowing request to '{}' without authorization header.", path);
-        chain.doFilter(request, response);
-        return;
-      }
-    }
-
-    LOG.error("Rejecting the request due to missing/expired token in Authorization header.");
-    sendError(response, 401, "Authorization token is missing or expired");
-  }
-
-  @Override
-  public void init(FilterConfig filterConfig) {
-    LOG.trace("OpenshiftTokenInitializationFilter#init({})", filterConfig);
-  }
-
-  @Override
-  public void destroy() {
-    LOG.trace("OpenshiftTokenInitializationFilter#destroy()");
   }
 }

@@ -50,7 +50,6 @@ public class OpenShiftProject extends KubernetesNamespace {
 
   private final OpenShiftRoutes routes;
   private final OpenShiftClientFactory clientFactory;
-  private final KubernetesClientFactory cheClientFactory;
   private final CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
 
   @VisibleForTesting
@@ -78,7 +77,6 @@ public class OpenShiftProject extends KubernetesNamespace {
         ingresses,
         secrets,
         configMaps);
-    this.cheClientFactory = cheClientFactory;
     this.clientFactory = clientFactory;
     this.routes = routes;
     this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
@@ -93,7 +91,6 @@ public class OpenShiftProject extends KubernetesNamespace {
       String workspaceId) {
     super(clientFactory, cheClientFactory, executor, name, workspaceId);
     this.clientFactory = clientFactory;
-    this.cheClientFactory = cheClientFactory;
     this.routes = new OpenShiftRoutes(name, workspaceId, clientFactory);
     this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
   }

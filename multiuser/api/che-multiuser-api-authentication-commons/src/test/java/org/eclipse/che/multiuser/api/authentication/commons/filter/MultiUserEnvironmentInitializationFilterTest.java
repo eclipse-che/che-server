@@ -25,9 +25,11 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.Optional;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -83,6 +85,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // then
     verify(tokenExtractor).getToken(eq(request));
     verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
+    verify(request).getServletPath();
     verifyNoMoreInteractions(request);
     verify(filter, never()).getUserId(any());
     verify(filter, never()).extractSubject(anyString(), any());
@@ -100,6 +103,7 @@ public class MultiUserEnvironmentInitializationFilterTest {
     // then
     verify(tokenExtractor).getToken(eq(request));
     verify(filter).handleMissingToken(eq(request), eq(response), eq(chain));
+    verify(request).getServletPath();
     verifyNoMoreInteractions(request);
     verify(filter, never()).getUserId(any());
     verify(filter, never()).extractSubject(anyString(), any());
@@ -167,5 +171,24 @@ public class MultiUserEnvironmentInitializationFilterTest {
     filter.doFilter(request, response, chain);
     // then
     verify(context).setSubject(eq(subject));
+  }
+
+  @Test
+  public void handleMissingTokenShouldAllowUnauthorizedEndpoint()
+      throws ServletException, IOException {
+    when(request.getServletPath()).thenReturn("/system/state");
+
+    filter.handleMissingToken(request, response, chain);
+
+    verify(chain).doFilter(request, response);
+  }
+
+  @Test
+  public void handleMissingTokenShouldRejectRequest() throws ServletException, IOException {
+    when(request.getServletPath()).thenReturn("blabol");
+
+    filter.handleMissingToken(request, response, chain);
+
+    verify(response).sendError(eq(401), anyString());
   }
 }

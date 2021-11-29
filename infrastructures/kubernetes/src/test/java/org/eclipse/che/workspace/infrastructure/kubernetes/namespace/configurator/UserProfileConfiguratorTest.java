@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -26,7 +25,6 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -47,7 +45,6 @@ public class UserProfileConfiguratorTest {
   private static final String USER_EMAIL = "user-email";
   private static final String USER_NAMESPACE = "user-namespace";
 
-  @Mock private KubernetesNamespaceFactory namespaceFactory;
   @Mock private KubernetesClientFactory clientFactory;
   @Mock private UserManager userManager;
 
@@ -63,7 +60,6 @@ public class UserProfileConfiguratorTest {
     kubernetesServer.before();
 
     when(userManager.getById(USER_ID)).thenReturn(new UserImpl(USER_ID, USER_EMAIL, USER_NAME));
-    when(namespaceFactory.evaluateNamespaceName(any())).thenReturn(USER_NAMESPACE);
     when(clientFactory.create()).thenReturn(kubernetesServer.getClient());
   }
 
@@ -74,7 +70,7 @@ public class UserProfileConfiguratorTest {
 
   @Test
   public void shouldCreateProfileSecret() throws InfrastructureException {
-    userProfileConfigurator.configure(context);
+    userProfileConfigurator.configure(context, USER_NAMESPACE);
     List<Secret> secrets =
         kubernetesServer.getClient().secrets().inNamespace(USER_NAMESPACE).list().getItems();
     assertEquals(secrets.size(), 1);
@@ -87,7 +83,7 @@ public class UserProfileConfiguratorTest {
   public void shouldNotCreateSecretOnException()
       throws NotFoundException, ServerException, InfrastructureException {
     when(userManager.getById(USER_ID)).thenThrow(new ServerException("test exception"));
-    userProfileConfigurator.configure(context);
+    userProfileConfigurator.configure(context, USER_NAMESPACE);
     fail("InfrastructureException should have been thrown.");
   }
 }

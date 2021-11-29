@@ -9,9 +9,12 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.keycloak.server;
+package org.eclipse.che.multiuser.oidc;
 
-/** OIDCInfo - POJO object to store information about Keycloak api. */
+import java.util.Optional;
+import java.util.StringJoiner;
+
+/** OIDCInfo - POJO object to store information about OIDC api. */
 public class OIDCInfo {
 
   private final String tokenPublicEndpoint;
@@ -38,7 +41,6 @@ public class OIDCInfo {
     this.userInfoInternalEndpoint = userInfoInternalEndpoint;
     this.jwksPublicUri = jwksPublicUri;
     this.jwksInternalUri = jwksInternalUri;
-
     this.authServerURL = authServerURL;
     this.authServerPublicURL = authServerPublicURL;
   }
@@ -46,11 +48,6 @@ public class OIDCInfo {
   /** @return public url to retrieve token */
   public String getTokenPublicEndpoint() {
     return tokenPublicEndpoint;
-  }
-
-  /** @return public log out url. */
-  public String getEndSessionPublicEndpoint() {
-    return endSessionPublicEndpoint;
   }
 
   /** @return public url to get user profile information. */
@@ -84,5 +81,22 @@ public class OIDCInfo {
   /** @return public OIDC auth endpoint url. */
   public String getAuthServerPublicURL() {
     return authServerPublicURL;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", OIDCInfo.class.getSimpleName() + "[", "]")
+        .add("tokenPublicEndpoint='" + tokenPublicEndpoint + "'")
+        .add("userInfoPublicEndpoint='" + userInfoPublicEndpoint + "'")
+        .add("userInfoInternalEndpoint='" + userInfoInternalEndpoint + "'")
+        .add("jwksPublicUri='" + jwksPublicUri + "'")
+        .add("jwksInternalUri='" + jwksInternalUri + "'")
+        .add("authServerURL='" + authServerURL + "'")
+        .add("authServerPublicURL='" + authServerPublicURL + "'")
+        .toString();
+  }
+
+  public Optional<String> getEndSessionPublicEndpoint() {
+    return Optional.ofNullable(endSessionPublicEndpoint);
   }
 }

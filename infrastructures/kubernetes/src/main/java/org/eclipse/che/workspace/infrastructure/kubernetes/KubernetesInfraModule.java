@@ -48,9 +48,13 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesDev
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNamespaceOnWorkspaceRemove;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPermissionConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.WorkspaceServiceAccountConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.PerWorkspacePVCStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.UniqueWorkspacePVCStrategy;
@@ -101,8 +105,15 @@ public class KubernetesInfraModule extends AbstractModule {
     workspaceAttributeValidators.addBinding().to(K8sInfraNamespaceWsAttributeValidator.class);
     workspaceAttributeValidators.addBinding().to(AsyncStorageModeValidator.class);
 
+    // order matters here!
+    // We first need to grant permissions to user, only then we can run other configurators with
+    // user's client.
     Multibinder<NamespaceConfigurator> namespaceConfigurators =
         Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
+    namespaceConfigurators.addBinding().to(UserPermissionConfigurator.class);
+    namespaceConfigurators.addBinding().to(CredentialsSecretConfigurator.class);
+    namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
+    namespaceConfigurators.addBinding().to(WorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
 

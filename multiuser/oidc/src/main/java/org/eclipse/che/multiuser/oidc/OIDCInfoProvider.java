@@ -9,13 +9,9 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.keycloak.server;
+package org.eclipse.che.multiuser.oidc;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.AUTH_SERVER_URL_INTERNAL_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.AUTH_SERVER_URL_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.OIDC_PROVIDER_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -34,32 +30,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * OIDCInfoProvider retrieves OpenID Connect (OIDC) configuration for well-known endpoint. These
- * information is useful to provide access to the Keycloak api.
+ * OIDCInfoProvider retrieves OpenID Connect (OIDC) configuration for well-known endpoint. This
+ * information is useful to provide access to the OIDC api.
  */
 public class OIDCInfoProvider implements Provider<OIDCInfo> {
-
   private static final Logger LOG = LoggerFactory.getLogger(OIDCInfoProvider.class);
 
-  @Inject
-  @Nullable
-  @Named(AUTH_SERVER_URL_SETTING)
+  private static final String OIDC_SETTING_PREFIX = "che.oidc.";
+
+  public static final String AUTH_SERVER_URL_SETTING = OIDC_SETTING_PREFIX + "auth_server_url";
+  public static final String AUTH_SERVER_URL_INTERNAL_SETTING =
+      OIDC_SETTING_PREFIX + "auth_internal_server_url";
+  public static final String OIDC_PROVIDER_SETTING = OIDC_SETTING_PREFIX + "oidc_provider";
+  public static final String OIDC_USERNAME_CLAIM_SETTING = OIDC_SETTING_PREFIX + "username_claim";
+  public static final String OIDC_ALLOWED_CLOCK_SKEW_SEC =
+      OIDC_SETTING_PREFIX + "allowed_clock_skew_sec";
+
   protected String serverURL;
-
-  @Inject
-  @Nullable
-  @Named(AUTH_SERVER_URL_INTERNAL_SETTING)
   protected String serverInternalURL;
-
-  @Inject
-  @Nullable
-  @Named(OIDC_PROVIDER_SETTING)
   protected String oidcProviderUrl;
 
   @Inject
-  @Nullable
-  @Named(REALM_SETTING)
-  protected String realm;
+  public OIDCInfoProvider(
+      @Nullable @Named(AUTH_SERVER_URL_SETTING) String serverURL,
+      @Nullable @Named(AUTH_SERVER_URL_INTERNAL_SETTING) String serverInternalURL,
+      @Nullable @Named(OIDC_PROVIDER_SETTING) String oidcProviderUrl) {
+    this.serverURL = serverURL;
+    this.serverInternalURL = serverInternalURL;
+    this.oidcProviderUrl = oidcProviderUrl;
+  }
 
   /** @return OIDCInfo with OIDC settings information. */
   @Override
@@ -84,7 +83,9 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
       String userInfoPublicEndpoint =
           setPublicUrl((String) openIdConfiguration.get("userinfo_endpoint"));
       String endSessionPublicEndpoint =
-          setPublicUrl((String) openIdConfiguration.get("end_session_endpoint"));
+          openIdConfiguration.containsKey("end_session_endpoint")
+              ? setPublicUrl((String) openIdConfiguration.get("end_session_endpoint"))
+              : null;
       String jwksPublicUri = setPublicUrl((String) openIdConfiguration.get("jwks_uri"));
       String jwksInternalUri = setInternalUrl(jwksPublicUri);
       String userInfoInternalEndpoint = setInternalUrl(userInfoPublicEndpoint);
@@ -107,7 +108,7 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
   }
 
   private String getWellKnownEndpoint(String serverAuthUrl) {
-    String wellKnownEndpoint = firstNonNull(oidcProviderUrl, serverAuthUrl + "/realms/" + realm);
+    String wellKnownEndpoint = firstNonNull(oidcProviderUrl, constructServerAuthUrl(serverAuthUrl));
     if (!wellKnownEndpoint.endsWith("/")) {
       wellKnownEndpoint = wellKnownEndpoint + "/";
     }
@@ -115,7 +116,11 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
     return wellKnownEndpoint;
   }
 
-  private void validate() {
+  protected String constructServerAuthUrl(String serverAuthUrl) {
+    return serverAuthUrl;
+  }
+
+  protected void validate() {
     if (serverURL == null && serverInternalURL == null && oidcProviderUrl == null) {
       throw new RuntimeException(
           "Either the '"
@@ -125,10 +130,6 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
               + "' or '"
               + OIDC_PROVIDER_SETTING
               + "' property should be set");
-    }
-
-    if (oidcProviderUrl == null && realm == null) {
-      throw new RuntimeException("The '" + REALM_SETTING + "' property should be set");
     }
   }
 

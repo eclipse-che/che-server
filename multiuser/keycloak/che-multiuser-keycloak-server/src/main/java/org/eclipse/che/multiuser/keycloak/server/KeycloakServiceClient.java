@@ -52,6 +52,7 @@ import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakErrorResponse;
 import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
+import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +76,7 @@ public class KeycloakServiceClient {
       Pattern.compile("<div id=\"kc-error-message\">(\\s*)<p class=\"instruction\">(.+?)</p>");
 
   private static final Gson gson = new Gson();
-  private JwtParser jwtParser;
+  private final JwtParser jwtParser;
 
   @Inject
   public KeycloakServiceClient(

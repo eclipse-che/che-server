@@ -11,7 +11,9 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.*;
+import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_INTERNAL_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
@@ -30,6 +32,7 @@ import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.inject.ConfigurationException;
+import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

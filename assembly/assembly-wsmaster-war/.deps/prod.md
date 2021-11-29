@@ -193,6 +193,7 @@
 | `org.eclipse.che.multiuser/che-multiuser-keycloak-user-remover@7.40.0-SNAPSHOT` | - | eclipse |
 | `org.eclipse.che.multiuser/che-multiuser-machine-authentication-shared@7.40.0-SNAPSHOT` | - | eclipse |
 | `org.eclipse.che.multiuser/che-multiuser-machine-authentication@7.40.0-SNAPSHOT` | - | eclipse |
+| `org.eclipse.che.multiuser/che-multiuser-oidc@7.40.0-SNAPSHOT` | - | eclipse |
 | `org.eclipse.che.multiuser/che-multiuser-permission-devfile@7.40.0-SNAPSHOT` | - | eclipse |
 | `org.eclipse.che.multiuser/che-multiuser-permission-logger@7.40.0-SNAPSHOT` | - | eclipse |
 | `org.eclipse.che.multiuser/che-multiuser-permission-resource@7.40.0-SNAPSHOT` | - | eclipse |

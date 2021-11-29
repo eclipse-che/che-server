@@ -13,7 +13,6 @@ package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,20 +35,19 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthenticator> {
   private static final Logger LOG = LoggerFactory.getLogger(GitHubOAuthAuthenticatorProvider.class);
-  public static final String GITHUB_CLIENT_ID_PATH = "/che-conf/oauth/github/id";
-  public static final String GITHUB_CLIENT_SECRET_PATH = "/che-conf/oauth/github/secret";
-
   private final OAuthAuthenticator authenticator;
 
   @Inject
   public GitHubOAuthAuthenticatorProvider(
+      @Nullable @Named("che.oauth2.github.clientid_filepath") String gitHubClientIdPath,
+      @Nullable @Named("che.oauth2.github.clientsecret_filepath") String gitHubClientSecretPath,
       @Nullable @Named("che.oauth.github.redirecturis") String[] redirectUris,
       @Nullable @Named("che.oauth.github.authuri") String authUri,
       @Nullable @Named("che.oauth.github.tokenuri") String tokenUri)
       throws IOException {
     authenticator =
         getOAuthAuthenticator(
-            redirectUris, authUri, tokenUri, GITHUB_CLIENT_ID_PATH, GITHUB_CLIENT_SECRET_PATH);
+            gitHubClientIdPath, gitHubClientSecretPath, redirectUris, authUri, tokenUri);
     LOG.debug("{} GitHub OAuth Authenticator is used.", authenticator);
   }
 
@@ -58,16 +56,17 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
     return authenticator;
   }
 
-  @VisibleForTesting
-  OAuthAuthenticator getOAuthAuthenticator(
+  private OAuthAuthenticator getOAuthAuthenticator(
+      String clientIdPath,
+      String clientSecretPath,
       String[] redirectUris,
       String authUri,
-      String tokenUri,
-      String clientIdPath,
-      String clientSecretPath)
+      String tokenUri)
       throws IOException {
 
-    if (!isNullOrEmpty(authUri)
+    if (!isNullOrEmpty(clientIdPath)
+        && !isNullOrEmpty(clientSecretPath)
+        && !isNullOrEmpty(authUri)
         && !isNullOrEmpty(tokenUri)
         && Objects.nonNull(redirectUris)
         && redirectUris.length != 0) {

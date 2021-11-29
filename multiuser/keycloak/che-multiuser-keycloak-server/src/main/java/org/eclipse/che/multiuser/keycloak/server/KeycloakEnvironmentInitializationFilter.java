@@ -13,6 +13,7 @@ package org.eclipse.che.multiuser.keycloak.server;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_USERNAME_CLAIM_SETTING;
 
 import com.google.common.base.Splitter;
 import io.jsonwebtoken.Claims;
@@ -43,7 +44,6 @@ import org.eclipse.che.multiuser.api.authentication.commons.filter.MultiUserEnvi
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.eclipse.che.multiuser.api.permission.server.AuthorizedSubject;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
-import org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,8 +123,7 @@ public class KeycloakEnvironmentInitializationFilter
 
     try {
       String username =
-          claims.get(
-              keycloakSettings.get().get(KeycloakConstants.USERNAME_CLAIM_SETTING), String.class);
+          claims.get(keycloakSettings.get().get(OIDC_USERNAME_CLAIM_SETTING), String.class);
       if (username == null) { // fallback to unique id promised by spec
         // https://openid.net/specs/openid-connect-basic-1_0.html#ClaimStability
         username = claims.getIssuer() + ":" + claims.getSubject();

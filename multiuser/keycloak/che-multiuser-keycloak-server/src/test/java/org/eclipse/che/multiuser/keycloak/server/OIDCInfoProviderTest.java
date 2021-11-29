@@ -21,6 +21,7 @@ import static org.testng.Assert.assertNull;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -86,9 +87,8 @@ public class OIDCInfoProviderTest {
             .willReturn(
                 aResponse().withHeader("Content-Type", "text/html").withBody("broken json")));
 
-    OIDCInfoProvider oidcInfoProvider = new OIDCInfoProvider();
-    oidcInfoProvider.oidcProviderUrl = serverUrl;
-    oidcInfoProvider.realm = CHE_REALM;
+    KeycloakOIDCInfoProvider oidcInfoProvider =
+        new KeycloakOIDCInfoProvider(null, null, serverUrl, CHE_REALM);
 
     oidcInfoProvider.get();
   }
@@ -100,9 +100,8 @@ public class OIDCInfoProviderTest {
             .willReturn(
                 aResponse().withHeader("Content-Type", "text/html").withBody(openIdConfig)));
 
-    OIDCInfoProvider oidcInfoProvider = new OIDCInfoProvider();
-    oidcInfoProvider.serverURL = serverUrl;
-    oidcInfoProvider.realm = CHE_REALM;
+    KeycloakOIDCInfoProvider oidcInfoProvider =
+        new KeycloakOIDCInfoProvider(serverUrl, null, null, CHE_REALM);
     OIDCInfo oidcInfo = oidcInfoProvider.get();
 
     assertEquals(
@@ -110,7 +109,7 @@ public class OIDCInfoProviderTest {
         oidcInfo.getTokenPublicEndpoint());
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/logout",
-        oidcInfo.getEndSessionPublicEndpoint());
+        oidcInfo.getEndSessionPublicEndpoint().get());
     assertNull(oidcInfo.getUserInfoInternalEndpoint());
     assertNull(oidcInfo.getJwksInternalUri());
   }
@@ -150,10 +149,8 @@ public class OIDCInfoProviderTest {
                     .withHeader("Content-Type", "text/html")
                     .withBody(OPEN_ID_CONF_TEMPLATE)));
 
-    OIDCInfoProvider oidcInfoProvider = new OIDCInfoProvider();
-    oidcInfoProvider.serverURL = serverPublicUrl;
-    oidcInfoProvider.serverInternalURL = serverUrl;
-    oidcInfoProvider.realm = CHE_REALM;
+    KeycloakOIDCInfoProvider oidcInfoProvider =
+        new KeycloakOIDCInfoProvider(serverPublicUrl, serverUrl, null, CHE_REALM);
     OIDCInfo oidcInfo = oidcInfoProvider.get();
 
     assertEquals(
@@ -161,7 +158,7 @@ public class OIDCInfoProviderTest {
         oidcInfo.getTokenPublicEndpoint());
     assertEquals(
         serverPublicUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/logout",
-        oidcInfo.getEndSessionPublicEndpoint());
+        oidcInfo.getEndSessionPublicEndpoint().get());
     assertEquals(
         serverPublicUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/userinfo",
         oidcInfo.getUserInfoPublicEndpoint());
@@ -215,10 +212,8 @@ public class OIDCInfoProviderTest {
                     .withHeader("Content-Type", "text/html")
                     .withBody(OPEN_ID_CONF_TEMPLATE)));
 
-    OIDCInfoProvider oidcInfoProvider = new OIDCInfoProvider();
-    oidcInfoProvider.serverURL = serverPublicUrl;
-    oidcInfoProvider.serverInternalURL = serverInternalUrl;
-    oidcInfoProvider.realm = CHE_REALM;
+    KeycloakOIDCInfoProvider oidcInfoProvider =
+        new KeycloakOIDCInfoProvider(serverPublicUrl, serverInternalUrl, null, CHE_REALM);
     OIDCInfo oidcInfo = oidcInfoProvider.get();
 
     assertEquals(
@@ -226,7 +221,7 @@ public class OIDCInfoProviderTest {
         oidcInfo.getTokenPublicEndpoint());
     assertEquals(
         serverPublicUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/logout",
-        oidcInfo.getEndSessionPublicEndpoint());
+        oidcInfo.getEndSessionPublicEndpoint().get());
     assertEquals(
         serverPublicUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/userinfo",
         oidcInfo.getUserInfoPublicEndpoint());
@@ -253,11 +248,8 @@ public class OIDCInfoProviderTest {
             .willReturn(
                 aResponse().withHeader("Content-Type", "text/html").withBody(openIdConfig)));
 
-    OIDCInfoProvider oidcInfoProvider = new OIDCInfoProvider();
-    oidcInfoProvider.serverURL = TEST_URL;
-    oidcInfoProvider.serverInternalURL = TEST_URL;
-    oidcInfoProvider.oidcProviderUrl = OIDCProviderUrl;
-    oidcInfoProvider.realm = CHE_REALM;
+    KeycloakOIDCInfoProvider oidcInfoProvider =
+        new KeycloakOIDCInfoProvider(TEST_URL, TEST_URL, OIDCProviderUrl, CHE_REALM);
     OIDCInfo oidcInfo = oidcInfoProvider.get();
 
     assertEquals(
@@ -265,7 +257,7 @@ public class OIDCInfoProviderTest {
         oidcInfo.getTokenPublicEndpoint());
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/logout",
-        oidcInfo.getEndSessionPublicEndpoint());
+        oidcInfo.getEndSessionPublicEndpoint().get());
     assertEquals(
         serverUrl + "/realms/" + CHE_REALM + "/protocol/openid-connect/userinfo",
         oidcInfo.getUserInfoInternalEndpoint());
@@ -278,17 +270,17 @@ public class OIDCInfoProviderTest {
       expectedExceptions = RuntimeException.class,
       expectedExceptionsMessageRegExp = "Either the '.*' or '.*' or '.*' property should be set")
   public void shouldThrowErrorWhenAuthServerWasNotSet() {
-    OIDCInfoProvider oidcInfoProvider = new OIDCInfoProvider();
-    oidcInfoProvider.realm = CHE_REALM;
+    KeycloakOIDCInfoProvider oidcInfoProvider =
+        new KeycloakOIDCInfoProvider(null, null, null, CHE_REALM);
     oidcInfoProvider.get();
   }
 
   @Test(
       expectedExceptions = RuntimeException.class,
-      expectedExceptionsMessageRegExp = "The '.*' property should be set")
+      expectedExceptionsMessageRegExp = "The '.*' property must be set")
   public void shouldThrowErrorWhenRealmPropertyWasNotSet() {
-    OIDCInfoProvider oidcInfoProvider = new OIDCInfoProvider();
-    oidcInfoProvider.serverURL = TEST_URL;
+    KeycloakOIDCInfoProvider oidcInfoProvider =
+        new KeycloakOIDCInfoProvider(null, null, null, null);
     oidcInfoProvider.get();
   }
 }

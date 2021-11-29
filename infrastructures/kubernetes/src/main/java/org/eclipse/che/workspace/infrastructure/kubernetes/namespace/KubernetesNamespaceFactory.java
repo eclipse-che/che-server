@@ -20,21 +20,17 @@ import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceNameValidator.METADATA_NAME_MAX_LENGTH;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +61,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,25 +97,23 @@ public class KubernetesNamespaceFactory {
   protected final Map<String, String> namespaceLabels;
   protected final Map<String, String> namespaceAnnotations;
 
-  private final String serviceAccountName;
-  private final Set<String> clusterRoleNames;
   private final KubernetesClientFactory clientFactory;
   private final KubernetesClientFactory cheClientFactory;
   private final boolean namespaceCreationAllowed;
   private final UserManager userManager;
   private final PreferenceManager preferenceManager;
+  protected final Set<NamespaceConfigurator> namespaceConfigurators;
   protected final KubernetesSharedPool sharedPool;
 
   @Inject
   public KubernetesNamespaceFactory(
-      @Nullable @Named("che.infra.kubernetes.service_account_name") String serviceAccountName,
-      @Nullable @Named("che.infra.kubernetes.workspace_sa_cluster_roles") String clusterRoleNames,
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.infra.kubernetes.namespace.creation_allowed") boolean namespaceCreationAllowed,
       @Named("che.infra.kubernetes.namespace.label") boolean labelNamespaces,
       @Named("che.infra.kubernetes.namespace.annotate") boolean annotateNamespaces,
       @Named("che.infra.kubernetes.namespace.labels") String namespaceLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String namespaceAnnotations,
+      Set<NamespaceConfigurator> namespaceConfigurators,
       KubernetesClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
       UserManager userManager,
@@ -127,7 +122,6 @@ public class KubernetesNamespaceFactory {
       throws ConfigurationException {
     this.namespaceCreationAllowed = namespaceCreationAllowed;
     this.userManager = userManager;
-    this.serviceAccountName = serviceAccountName;
     this.clientFactory = clientFactory;
     this.cheClientFactory = cheClientFactory;
     this.defaultNamespaceName = defaultNamespaceName;
@@ -135,6 +129,7 @@ public class KubernetesNamespaceFactory {
     this.sharedPool = sharedPool;
     this.labelNamespaces = labelNamespaces;
     this.annotateNamespaces = annotateNamespaces;
+    this.namespaceConfigurators = ImmutableSet.copyOf(namespaceConfigurators);
 
     //noinspection UnstableApiUsage
     Splitter.MapSplitter csvMapSplitter = Splitter.on(",").withKeyValueSeparator("=");
@@ -158,14 +153,6 @@ public class KubernetesNamespaceFactory {
                   + "Using the %s placeholder is required in the 'che.infra.kubernetes.namespace.default' parameter."
                   + " The current value is: `%s`.",
               Joiner.on(" or ").join(REQUIRED_NAMESPACE_NAME_PLACEHOLDERS), defaultNamespaceName));
-    }
-
-    if (!isNullOrEmpty(clusterRoleNames)) {
-      this.clusterRoleNames =
-          Sets.newHashSet(
-              Splitter.on(",").trimResults().omitEmptyStrings().split(clusterRoleNames));
-    } else {
-      this.clusterRoleNames = Collections.emptySet();
     }
   }
 
@@ -257,7 +244,7 @@ public class KubernetesNamespaceFactory {
   public Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
       throws InfrastructureException {
     try {
-      Namespace namespace = clientFactory.create().namespaces().withName(name).get();
+      Namespace namespace = cheClientFactory.create().namespaces().withName(name).get();
       if (namespace == null) {
         return Optional.empty();
       } else {
@@ -333,8 +320,10 @@ public class KubernetesNamespaceFactory {
   public KubernetesNamespace getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     KubernetesNamespace namespace = get(identity);
 
+    var subject = EnvironmentContext.getCurrent().getSubject();
     NamespaceResolutionContext resolutionCtx =
-        new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject());
+        new NamespaceResolutionContext(
+            identity.getWorkspaceId(), subject.getUserId(), subject.getUserName());
     Map<String, String> namespaceAnnotationsEvaluated =
         evaluateAnnotationPlaceholders(resolutionCtx);
 
@@ -343,30 +332,7 @@ public class KubernetesNamespaceFactory {
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
 
-    if (namespace
-        .secrets()
-        .get()
-        .stream()
-        .noneMatch(s -> s.getMetadata().getName().equals(CREDENTIALS_SECRET_NAME))) {
-      Secret secret =
-          new SecretBuilder()
-              .withType("opaque")
-              .withNewMetadata()
-              .withName(CREDENTIALS_SECRET_NAME)
-              .endMetadata()
-              .build();
-      clientFactory
-          .create()
-          .secrets()
-          .inNamespace(identity.getInfrastructureNamespace())
-          .create(secret);
-    }
-
-    if (!isNullOrEmpty(serviceAccountName)) {
-      KubernetesWorkspaceServiceAccount workspaceServiceAccount =
-          doCreateServiceAccount(namespace.getWorkspaceId(), namespace.getName());
-      workspaceServiceAccount.prepare();
-    }
+    configureNamespace(resolutionCtx, namespace.getName());
 
     return namespace;
   }
@@ -573,7 +539,7 @@ public class KubernetesNamespaceFactory {
       NamespaceResolutionContext namespaceCtx) throws InfrastructureException {
     try {
       List<Namespace> workspaceNamespaces =
-          clientFactory.create().namespaces().withLabels(namespaceLabels).list().getItems();
+          cheClientFactory.create().namespaces().withLabels(namespaceLabels).list().getItems();
       if (!workspaceNamespaces.isEmpty()) {
         Map<String, String> evaluatedAnnotations = evaluateAnnotationPlaceholders(namespaceCtx);
         return workspaceNamespaces
@@ -597,6 +563,14 @@ public class KubernetesNamespaceFactory {
                 + kce.getMessage(),
             kce);
       }
+    }
+  }
+
+  protected void configureNamespace(
+      NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
+      throws InfrastructureException {
+    for (NamespaceConfigurator configurator : namespaceConfigurators) {
+      configurator.configure(namespaceResolutionContext, namespaceName);
     }
   }
 
@@ -640,31 +614,6 @@ public class KubernetesNamespaceFactory {
     }
   }
 
-  protected boolean checkNamespaceExists(String namespaceName) throws InfrastructureException {
-    try {
-      return clientFactory.create().namespaces().withName(namespaceName).get() != null;
-    } catch (KubernetesClientException e) {
-      if (e.getCode() == 403) {
-        // 403 means that the project does not exist
-        // or a user really is not permitted to access it which is Che Server misconfiguration
-        return false;
-      } else {
-        throw new InfrastructureException(
-            format(
-                "Error occurred while trying to fetch the namespace '%s'. Cause: %s",
-                namespaceName, e.getMessage()),
-            e);
-      }
-    }
-  }
-
-  protected String evalPlaceholders(String namespace, Subject currentUser, String workspaceId) {
-    return evalPlaceholders(
-        namespace,
-        new NamespaceResolutionContext(
-            workspaceId, currentUser.getUserId(), currentUser.getUserName()));
-  }
-
   protected String evalPlaceholders(String namespace, NamespaceResolutionContext ctx) {
     checkArgument(!isNullOrEmpty(namespace));
     String evaluated = namespace;
@@ -693,7 +642,7 @@ public class KubernetesNamespaceFactory {
       preferences.put(NAMESPACE_TEMPLATE_ATTRIBUTE, defaultNamespaceName);
       preferenceManager.update(owner, preferences);
     } catch (ServerException e) {
-      LOG.error(e.getMessage(), e);
+      LOG.error("Failed storing namespace name in user properties.", e);
     }
   }
 
@@ -726,6 +675,7 @@ public class KubernetesNamespaceFactory {
   String normalizeNamespaceName(String namespaceName) {
     namespaceName =
         namespaceName
+            .toLowerCase()
             .replaceAll("[^-a-zA-Z0-9]", "-") // replace invalid chars with '-'
             .replaceAll("-+", "-") // replace multiple '-' with single ones
             .replaceAll("^-|-$", ""); // trim dashes at beginning/end of the string
@@ -737,20 +687,5 @@ public class KubernetesNamespaceFactory {
         Math.min(
             namespaceName.length(),
             METADATA_NAME_MAX_LENGTH)); // limit length to METADATA_NAME_MAX_LENGTH
-  }
-
-  @VisibleForTesting
-  KubernetesWorkspaceServiceAccount doCreateServiceAccount(
-      String workspaceId, String namespaceName) {
-    return new KubernetesWorkspaceServiceAccount(
-        workspaceId, namespaceName, serviceAccountName, getClusterRoleNames(), clientFactory);
-  }
-
-  protected String getServiceAccountName() {
-    return serviceAccountName;
-  }
-
-  protected Set<String> getClusterRoleNames() {
-    return clusterRoleNames;
   }
 }

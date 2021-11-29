@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.AUTH_SERVER_URL_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.CLIENT_ID_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;

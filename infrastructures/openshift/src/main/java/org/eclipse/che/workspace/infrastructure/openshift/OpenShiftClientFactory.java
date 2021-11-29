@@ -57,8 +57,6 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
   private static final String BEFORE_TOKEN = "access_token=";
   private static final String AFTER_TOKEN = "&expires";
 
-  private final KubernetesClientConfigFactory configBuilder;
-
   @Inject
   public OpenShiftClientFactory(
       KubernetesClientConfigFactory configBuilder,
@@ -72,6 +70,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
           int connectionPoolKeepAlive,
       EventListener eventListener) {
     super(
+        configBuilder,
         masterUrl,
         doTrustCerts,
         maxConcurrentRequests,
@@ -79,7 +78,6 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
         maxIdleConnections,
         connectionPoolKeepAlive,
         eventListener);
-    this.configBuilder = configBuilder;
   }
 
   /**
@@ -96,7 +94,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    */
   public OpenShiftClient createOC(String workspaceId) throws InfrastructureException {
     Config configForWorkspace = buildConfig(getDefaultConfig(), workspaceId);
-    return createOC(configForWorkspace);
+    return create(configForWorkspace);
   }
 
   /**
@@ -114,23 +112,13 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
    * @throws InfrastructureException if any error occurs on client instance creation.
    */
   public OpenShiftClient createOC() throws InfrastructureException {
-    return createOC(buildConfig(getDefaultConfig(), null));
+    return create(buildConfig(getDefaultConfig(), null));
   }
 
   public OpenShiftClient createAuthenticatedClient(String token) {
     Config config = getDefaultConfig();
     config.setOauthToken(token);
-    return createOC(config);
-  }
-
-  @Override
-  public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
-    if (!configBuilder.isPersonalized()) {
-      throw new InfrastructureException(
-          "Not able to construct impersonating openshift API client.");
-    }
-    // Ensure to get OkHttpClient with all necessary interceptors.
-    return createOC(buildConfig(getDefaultConfig(), null)).getHttpClient();
+    return create(config);
   }
 
   @Override
@@ -145,19 +133,6 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
     }
 
     return configBuilder.build();
-  }
-
-  /**
-   * Builds the Openshift {@link Config} object based on a provided {@link Config} object and an
-   * optional workspace ID.
-   *
-   * <p>This method overrides the one in the Kubernetes infrastructure to introduce an additional
-   * extension level by delegating to an {@link KubernetesClientConfigFactory}
-   */
-  @Override
-  protected Config buildConfig(Config config, @Nullable String workspaceId)
-      throws InfrastructureException {
-    return configBuilder.buildConfig(config, workspaceId);
   }
 
   @Override
@@ -223,7 +198,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
     };
   }
 
-  private DefaultOpenShiftClient createOC(Config config) {
+  protected DefaultOpenShiftClient create(Config config) {
     return new UnclosableOpenShiftClient(
         clientForConfig(config), config, this::initializeRequestTracing);
   }

@@ -36,6 +36,10 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>jwks-rsa</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
@@ -277,6 +281,10 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.multiuser</groupId>
+            <artifactId>che-multiuser-oidc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.multiuser</groupId>
             <artifactId>che-multiuser-permission-devfile</artifactId>
         </dependency>
         <dependency>
@@ -454,6 +462,7 @@
                                 <dep>com.google.guava:guava</dep>
                                 <dep>org.everrest:everrest-core</dep>
                                 <dep>io.jsonwebtoken:jjwt-jackson</dep>
+                                <dep>io.jsonwebtoken:jjwt-impl</dep>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>

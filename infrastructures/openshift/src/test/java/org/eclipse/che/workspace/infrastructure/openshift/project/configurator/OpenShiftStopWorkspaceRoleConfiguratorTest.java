@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.openshift.provision;
+package org.eclipse.che.workspace.infrastructure.openshift.project.configurator;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -17,6 +17,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
@@ -42,15 +43,16 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
- * Test for {@link OpenShiftStopWorkspaceRoleProvisioner}
+ * Test for {@link
+ * org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftStopWorkspaceRoleConfigurator}
  *
  * <p>#author Tom George
  */
 @Listeners(MockitoTestNGListener.class)
-public class OpenShiftStopWorkspaceRoleProvisionerTest {
+public class OpenShiftStopWorkspaceRoleConfiguratorTest {
 
   @Mock private CheInstallationLocation cheInstallationLocation;
-  private OpenShiftStopWorkspaceRoleProvisioner stopWorkspaceRoleProvisioner;
+  private OpenShiftStopWorkspaceRoleConfigurator stopWorkspaceRoleProvisioner;
 
   @Mock private OpenShiftClientFactory clientFactory;
   @Mock private OpenShiftClient osClient;
@@ -123,7 +125,8 @@ public class OpenShiftStopWorkspaceRoleProvisionerTest {
   public void setUp() throws Exception {
     lenient().when(cheInstallationLocation.getInstallationLocationNamespace()).thenReturn("che");
     stopWorkspaceRoleProvisioner =
-        new OpenShiftStopWorkspaceRoleProvisioner(clientFactory, cheInstallationLocation, true);
+        new OpenShiftStopWorkspaceRoleConfigurator(
+            clientFactory, cheInstallationLocation, true, "yes");
     lenient().when(clientFactory.createOC()).thenReturn(osClient);
     lenient().when(osClient.roles()).thenReturn(mixedRoleOperation);
     lenient().when(osClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
@@ -160,7 +163,7 @@ public class OpenShiftStopWorkspaceRoleProvisionerTest {
   @Test
   public void shouldCreateRoleAndRoleBindingWhenRoleDoesNotYetExist()
       throws InfrastructureException {
-    stopWorkspaceRoleProvisioner.provision("developer-che");
+    stopWorkspaceRoleProvisioner.configure(null, "developer-che");
     verify(osClient, times(2)).roles();
     verify(osClient.roles(), times(2)).inNamespace("developer-che");
     verify(osClient.roles().inNamespace("developer-che")).withName("workspace-stop");
@@ -174,7 +177,7 @@ public class OpenShiftStopWorkspaceRoleProvisionerTest {
   @Test
   public void shouldCreateRoleBindingWhenRoleAlreadyExists() throws InfrastructureException {
     lenient().when(roleResource.get()).thenReturn(expectedRole);
-    stopWorkspaceRoleProvisioner.provision("developer-che");
+    stopWorkspaceRoleProvisioner.configure(null, "developer-che");
     verify(osClient, times(1)).roles();
     verify(osClient).roleBindings();
     verify(osClient.roleBindings()).inNamespace("developer-che");
@@ -185,9 +188,10 @@ public class OpenShiftStopWorkspaceRoleProvisionerTest {
   @Test
   public void shouldNotCreateRoleBindingWhenStopWorkspaceRolePropertyIsDisabled()
       throws InfrastructureException {
-    OpenShiftStopWorkspaceRoleProvisioner disabledStopWorkspaceRoleProvisioner =
-        new OpenShiftStopWorkspaceRoleProvisioner(clientFactory, cheInstallationLocation, false);
-    disabledStopWorkspaceRoleProvisioner.provision("developer-che");
+    OpenShiftStopWorkspaceRoleConfigurator disabledStopWorkspaceRoleProvisioner =
+        new OpenShiftStopWorkspaceRoleConfigurator(
+            clientFactory, cheInstallationLocation, false, "yes");
+    disabledStopWorkspaceRoleProvisioner.configure(null, "developer-che");
     verify(osClient, never()).roles();
     verify(osClient, never()).roleBindings();
     verify(osClient.roleBindings(), never()).inNamespace("developer-che");
@@ -197,12 +201,26 @@ public class OpenShiftStopWorkspaceRoleProvisionerTest {
   public void shouldNotCreateRoleBindingWhenInstallationLocationIsNull()
       throws InfrastructureException {
     lenient().when(cheInstallationLocation.getInstallationLocationNamespace()).thenReturn(null);
-    OpenShiftStopWorkspaceRoleProvisioner
+    OpenShiftStopWorkspaceRoleConfigurator
         stopWorkspaceRoleProvisionerWithoutValidInstallationLocation =
-            new OpenShiftStopWorkspaceRoleProvisioner(clientFactory, cheInstallationLocation, true);
-    stopWorkspaceRoleProvisionerWithoutValidInstallationLocation.provision("developer-che");
+            new OpenShiftStopWorkspaceRoleConfigurator(
+                clientFactory, cheInstallationLocation, true, "yes");
+    stopWorkspaceRoleProvisionerWithoutValidInstallationLocation.configure(null, "developer-che");
     verify(osClient, never()).roles();
     verify(osClient, never()).roleBindings();
     verify(osClient.roleBindings(), never()).inNamespace("developer-che");
+  }
+
+  @Test
+  public void shouldNotCallStopWorkspaceRoleProvisionWhenIdentityProviderIsDefined()
+      throws Exception {
+    when(cheInstallationLocation.getInstallationLocationNamespace()).thenReturn("something");
+    OpenShiftStopWorkspaceRoleConfigurator configurator =
+        new OpenShiftStopWorkspaceRoleConfigurator(
+            clientFactory, cheInstallationLocation, true, null);
+
+    configurator.configure(null, "something");
+
+    verify(clientFactory, times(0)).createOC();
   }
 }

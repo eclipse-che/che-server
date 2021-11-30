@@ -84,6 +84,7 @@ public class KubernetesNamespaceTest {
   @BeforeMethod
   public void setUp() throws Exception {
     lenient().when(clientFactory.create(anyString())).thenReturn(kubernetesClient);
+    lenient().when(cheClientFactory.create(anyString())).thenReturn(kubernetesClient);
 
     lenient().doReturn(namespaceOperation).when(kubernetesClient).namespaces();
 

@@ -12,7 +12,7 @@
 package org.eclipse.che.multiuser.keycloak.server;
 
 import static org.eclipse.che.multiuser.api.authentication.commons.Constants.CHE_SUBJECT_ATTRIBUTE;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.USERNAME_CLAIM_SETTING;
+import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.OIDC_USERNAME_CLAIM_SETTING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -50,7 +50,6 @@ import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.eclipse.che.multiuser.api.permission.server.AuthorizedSubject;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
-import org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.SignatureKeyManager;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -119,7 +118,7 @@ public class KeycloakEnvironmentInitializationFilterTest {
     DefaultJws<Claims> jws = new DefaultJws<>(new DefaultJwsHeader(), claims, "");
     when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn("token");
     when(jwtParser.parseClaimsJws(anyString())).thenReturn(jws);
-    keycloakSettingsMap.put(USERNAME_CLAIM_SETTING, "preferred_username");
+    keycloakSettingsMap.put(OIDC_USERNAME_CLAIM_SETTING, "preferred_username");
     when(userManager.getOrCreateUser(anyString(), anyString(), anyString()))
         .thenReturn(mock(UserImpl.class, RETURNS_DEEP_STUBS));
     filter =
@@ -149,7 +148,7 @@ public class KeycloakEnvironmentInitializationFilterTest {
     DefaultJws<Claims> jws = new DefaultJws<>(new DefaultJwsHeader(), claims, "");
     when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn("token");
     when(jwtParser.parseClaimsJws(anyString())).thenReturn(jws);
-    keycloakSettingsMap.put(USERNAME_CLAIM_SETTING, "preferred_username");
+    keycloakSettingsMap.put(OIDC_USERNAME_CLAIM_SETTING, "preferred_username");
     when(userManager.getOrCreateUser(anyString(), anyString(), anyString()))
         .thenReturn(mock(UserImpl.class, RETURNS_DEEP_STUBS));
     filter =
@@ -210,7 +209,7 @@ public class KeycloakEnvironmentInitializationFilterTest {
     Claims claims = new DefaultClaims(claimParams).setSubject("id");
     DefaultJws<Claims> jws = new DefaultJws<>(new DefaultJwsHeader(), claims, "");
     UserImpl user = new UserImpl("id", "test@test.com", "username");
-    keycloakSettingsMap.put(KeycloakConstants.USERNAME_CLAIM_SETTING, "preferred_username");
+    keycloakSettingsMap.put(OIDC_USERNAME_CLAIM_SETTING, "preferred_username");
     // given
     when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn("token");
     when(jwtParser.parseClaimsJws(anyString())).thenReturn(jws);

@@ -23,6 +23,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
@@ -31,7 +32,6 @@ import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
 /**
  * Creates {@link Secret} with user preferences. This serves as a way for DevWorkspaces to acquire
@@ -39,39 +39,36 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
  *
  * @author Pavol Baran
  */
+@Singleton
 public class UserPreferencesConfigurator implements NamespaceConfigurator {
   private static final String USER_PREFERENCES_SECRET_NAME = "user-preferences";
   private static final String USER_PREFERENCES_SECRET_MOUNT_PATH = "/config/user/preferences";
   private static final int PREFERENCE_NAME_MAX_LENGTH = 253;
 
-  private final KubernetesNamespaceFactory namespaceFactory;
   private final KubernetesClientFactory clientFactory;
   private final UserManager userManager;
   private final PreferenceManager preferenceManager;
 
   @Inject
   public UserPreferencesConfigurator(
-      KubernetesNamespaceFactory namespaceFactory,
       KubernetesClientFactory clientFactory,
       UserManager userManager,
       PreferenceManager preferenceManager) {
-    this.namespaceFactory = namespaceFactory;
     this.clientFactory = clientFactory;
     this.userManager = userManager;
     this.preferenceManager = preferenceManager;
   }
 
   @Override
-  public void configure(NamespaceResolutionContext namespaceResolutionContext)
+  public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {
     Secret userPreferencesSecret = preparePreferencesSecret(namespaceResolutionContext);
-    String namespace = namespaceFactory.evaluateNamespaceName(namespaceResolutionContext);
 
     try {
       clientFactory
           .create()
           .secrets()
-          .inNamespace(namespace)
+          .inNamespace(namespaceName)
           .createOrReplace(userPreferencesSecret);
     } catch (KubernetesClientException e) {
       throw new InfrastructureException(

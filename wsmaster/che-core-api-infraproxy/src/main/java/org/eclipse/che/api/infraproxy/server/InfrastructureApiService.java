@@ -11,9 +11,7 @@
  */
 package org.eclipse.che.api.infraproxy.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.Beta;
-import com.google.common.annotations.VisibleForTesting;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -24,7 +22,6 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,39 +49,17 @@ public class InfrastructureApiService extends Service {
 
   private final boolean allowed;
   private final RuntimeInfrastructure runtimeInfrastructure;
-  private final ObjectMapper mapper;
 
-  @Context private MediaType mediaType;
-
-  private static boolean determineAllowed(
-      String infra, String identityProvider, boolean allowedForKubernetes) {
-    if ("openshift".equals(infra)) {
-      return identityProvider != null && identityProvider.startsWith("openshift");
-    }
-    return allowedForKubernetes;
+  private static boolean determineAllowed(String identityProvider) {
+    return identityProvider != null;
   }
 
   @Inject
   public InfrastructureApiService(
       @Nullable @Named("che.infra.openshift.oauth_identity_provider") String identityProvider,
-      @Named("che.infra.kubernetes.enable_unsupported_k8s") boolean allowedForKubernetes,
       RuntimeInfrastructure runtimeInfrastructure) {
-    this(
-        System.getenv("CHE_INFRASTRUCTURE_ACTIVE"),
-        allowedForKubernetes,
-        identityProvider,
-        runtimeInfrastructure);
-  }
-
-  @VisibleForTesting
-  InfrastructureApiService(
-      String infraName,
-      boolean allowedForKubernetes,
-      String identityProvider,
-      RuntimeInfrastructure infra) {
-    this.runtimeInfrastructure = infra;
-    this.mapper = new ObjectMapper();
-    this.allowed = determineAllowed(infraName, identityProvider, allowedForKubernetes);
+    this.runtimeInfrastructure = runtimeInfrastructure;
+    this.allowed = determineAllowed(identityProvider);
   }
 
   @GET

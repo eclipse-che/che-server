@@ -145,7 +145,7 @@ public class KubernetesNamespace {
    */
   void prepare(boolean canCreate, Map<String, String> labels, Map<String, String> annotations)
       throws InfrastructureException {
-    KubernetesClient client = clientFactory.create(workspaceId);
+    KubernetesClient client = cheSAClientFactory.create(workspaceId);
     Namespace namespace = get(name, client);
 
     if (namespace == null) {

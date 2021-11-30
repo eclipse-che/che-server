@@ -25,6 +25,7 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.DefaultHttpJsonRequest;
 import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
+import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

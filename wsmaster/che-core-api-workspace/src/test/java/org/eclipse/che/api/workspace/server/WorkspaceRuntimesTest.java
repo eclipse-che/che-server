@@ -153,7 +153,8 @@ public class WorkspaceRuntimesTest {
             probeScheduler,
             statuses,
             lockService,
-            devfileConverter);
+            devfileConverter,
+            false);
 
     lenient().when(sharedPool.getExecutor()).thenReturn(executorService);
   }
@@ -231,7 +232,8 @@ public class WorkspaceRuntimesTest {
             probeScheduler,
             statuses,
             lockService,
-            devfileConverter);
+            devfileConverter,
+            false);
     InternalEnvironment expectedEnvironment = mock(InternalEnvironment.class);
     when(noEnvFactory.create(eq(null))).thenReturn(expectedEnvironment);
 
@@ -579,7 +581,8 @@ public class WorkspaceRuntimesTest {
             probeScheduler,
             statuses,
             lockService,
-            devfileConverter);
+            devfileConverter,
+            false);
     localRuntimes.init();
     RuntimeIdentityDto identity =
         DtoFactory.newDto(RuntimeIdentityDto.class)
@@ -621,7 +624,8 @@ public class WorkspaceRuntimesTest {
             probeScheduler,
             statuses,
             lockService,
-            devfileConverter);
+            devfileConverter,
+            false);
     localRuntimes.init();
     RuntimeIdentityDto identity =
         DtoFactory.newDto(RuntimeIdentityDto.class)
@@ -671,7 +675,8 @@ public class WorkspaceRuntimesTest {
             probeScheduler,
             statuses,
             lockService,
-            devfileConverter);
+            devfileConverter,
+            false);
 
     // when
     localRuntimes.injectRuntime(workspace);

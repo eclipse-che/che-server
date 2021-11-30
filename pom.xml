@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.che</groupId>
     <artifactId>che-server</artifactId>
-    <version>7.39.0-SNAPSHOT</version>
+    <version>7.40.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
     <description>Eclipse Che Server</description>
@@ -100,7 +100,7 @@
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
-        <che.version>7.39.0-SNAPSHOT</che.version>
+        <che.version>7.40.0-SNAPSHOT</che.version>
         <specification.version>1.0-beta2</specification.version>
         <?SORTPOM RESUME?>
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>
@@ -273,6 +273,11 @@
             </dependency>
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>mockwebserver</artifactId>
+                <version>${com.squareup.okhttp3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
                 <version>${com.squareup.okhttp3.version}</version>
             </dependency>
@@ -306,6 +311,11 @@
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>openshift-server-mock</artifactId>
+                <version>${io.fabric8.kubernetes-client}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.mweirauch</groupId>
@@ -1113,6 +1123,11 @@
             <dependency>
                 <groupId>org.eclipse.che.multiuser</groupId>
                 <artifactId>che-multiuser-machine-authentication-shared</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.multiuser</groupId>
+                <artifactId>che-multiuser-oidc</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>

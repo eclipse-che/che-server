@@ -53,7 +53,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesDev
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy;
@@ -94,6 +96,8 @@ import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftE
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProjectFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.project.RemoveProjectOnWorkspaceRemove;
+import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftStopWorkspaceRoleConfigurator;
+import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftWorkspaceServiceAccountConfigurator;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftPreviewUrlCommandProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenshiftTrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.RouteTlsProvisioner;
@@ -117,6 +121,10 @@ public class OpenShiftInfraModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
+    namespaceConfigurators.addBinding().to(CredentialsSecretConfigurator.class);
+    namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
+    namespaceConfigurators.addBinding().to(OpenShiftWorkspaceServiceAccountConfigurator.class);
+    namespaceConfigurators.addBinding().to(OpenShiftStopWorkspaceRoleConfigurator.class);
 
     bind(KubernetesNamespaceService.class);
 

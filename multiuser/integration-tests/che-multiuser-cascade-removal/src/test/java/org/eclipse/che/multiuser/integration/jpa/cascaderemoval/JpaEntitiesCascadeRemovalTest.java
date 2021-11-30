@@ -258,6 +258,9 @@ public class JpaEntitiesCascadeRemovalTest {
                 bind(Boolean.class)
                     .annotatedWith(Names.named("che.workspace.auto_restore"))
                     .toInstance(false);
+                bind(Boolean.class)
+                    .annotatedWith(Names.named("che.devworkspaces.enabled"))
+                    .toInstance(false);
                 bind(WorkspaceSharedPool.class)
                     .toInstance(
                         new WorkspaceSharedPool(

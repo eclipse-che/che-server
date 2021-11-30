@@ -23,6 +23,8 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -43,6 +45,9 @@ import org.slf4j.LoggerFactory;
  *   <li>Set subject for current request into {@link EnvironmentContext}
  * </ul>
  *
+ * <p>{@link MultiUserEnvironmentInitializationFilter#UNAUTHORIZED_ENDPOINT_PATHS} is list of
+ * unauthenticated paths, that are allowed without token.
+ *
  * @param <T> the type of intermediary type used for conversion from a string token to a Subject
  * @author Max Shaposhnyk (mshaposh@redhat.com)
  */
@@ -50,6 +55,9 @@ public abstract class MultiUserEnvironmentInitializationFilter<T> implements Fil
 
   private static final Logger LOG =
       LoggerFactory.getLogger(MultiUserEnvironmentInitializationFilter.class);
+
+  private static final List<String> UNAUTHORIZED_ENDPOINT_PATHS =
+      Collections.singletonList("/system/state");
 
   private final SessionStore sessionStore;
   private final RequestTokenExtractor tokenExtractor;
@@ -197,9 +205,23 @@ public abstract class MultiUserEnvironmentInitializationFilter<T> implements Fil
    * @throws IOException inherited from {@link FilterChain#doFilter}
    * @throws ServletException inherited from {@link FilterChain#doFilter}
    */
-  protected abstract void handleMissingToken(
+  protected void handleMissingToken(
       ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException;
+      throws IOException, ServletException {
+    // if request path is in unauthorized endpoints, continue
+    if (request instanceof HttpServletRequest) {
+      HttpServletRequest httpRequest = (HttpServletRequest) request;
+      String path = httpRequest.getServletPath();
+      if (UNAUTHORIZED_ENDPOINT_PATHS.contains(path)) {
+        LOG.debug("Allowing request to '{}' without authorization header.", path);
+        chain.doFilter(request, response);
+        return;
+      }
+    }
+
+    LOG.error("Rejecting the request due to missing/expired token in Authorization header.");
+    sendError(response, 401, "Authorization token is missing or expired");
+  }
 
   /**
    * Sends appropriate error status code and message into response.

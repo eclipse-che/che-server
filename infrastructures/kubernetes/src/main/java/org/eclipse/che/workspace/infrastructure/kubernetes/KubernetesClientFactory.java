@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.fabric8.kubernetes.client.utils.Utils.isNotNullOrEmpty;
 
+import io.fabric8.kubernetes.client.BaseKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -55,10 +56,13 @@ public class KubernetesClientFactory {
    * Default Kubernetes {@link Config} that will be the base configuration to create per-workspace
    * configurations.
    */
-  private Config defaultConfig;
+  private final Config defaultConfig;
+
+  protected final KubernetesClientConfigFactory configBuilder;
 
   @Inject
   public KubernetesClientFactory(
+      KubernetesClientConfigFactory configBuilder,
       @Nullable @Named("che.infra.kubernetes.master_url") String masterUrl,
       @Nullable @Named("che.infra.kubernetes.trust_certs") Boolean doTrustCerts,
       @Named("che.infra.kubernetes.client.http.async_requests.max") int maxConcurrentRequests,
@@ -68,6 +72,7 @@ public class KubernetesClientFactory {
       @Named("che.infra.kubernetes.client.http.connection_pool.keep_alive_min")
           int connectionPoolKeepAlive,
       EventListener eventListener) {
+    this.configBuilder = configBuilder;
     this.defaultConfig = buildDefaultConfig(masterUrl, doTrustCerts);
     OkHttpClient temporary = HttpClientUtils.createHttpClient(defaultConfig);
     OkHttpClient.Builder builder = temporary.newBuilder();
@@ -166,7 +171,12 @@ public class KubernetesClientFactory {
    *     infromation
    */
   public OkHttpClient getAuthenticatedHttpClient() throws InfrastructureException {
-    return create(getDefaultConfig()).getHttpClient();
+    if (!configBuilder.isPersonalized()) {
+      throw new InfrastructureException(
+          "Not able to construct impersonating Kubernetes API client.");
+    }
+    // Ensure to get OkHttpClient with all necessary interceptors.
+    return create(buildConfig(getDefaultConfig(), null)).getHttpClient();
   }
 
   /**
@@ -200,7 +210,7 @@ public class KubernetesClientFactory {
    */
   protected Config buildConfig(Config config, @Nullable String workspaceId)
       throws InfrastructureException {
-    return config;
+    return configBuilder.buildConfig(config, workspaceId);
   }
 
   protected Interceptor buildKubernetesInterceptor(Config config) {
@@ -234,7 +244,7 @@ public class KubernetesClientFactory {
    * authenticate with the credentials (user/password or Oauth token) contained in the {@code
    * config} parameter.
    */
-  private DefaultKubernetesClient create(Config config) {
+  protected BaseKubernetesClient<?> create(Config config) {
     OkHttpClient clientHttpClient =
         httpClient.newBuilder().authenticator(Authenticator.NONE).build();
     OkHttpClient.Builder builder = clientHttpClient.newBuilder();

@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_AUTOMOUNT;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_DEV_WORKSPACE_MOUNT_PATH;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_GIT_CREDENTIALS;
@@ -150,7 +151,9 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                       format(
                               "%s://%s:%s@%s%s",
                               scmUrl.getProtocol(),
-                              personalAccessToken.getScmUserName(),
+                              personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
+                                  ? "oauth2"
+                                  : personalAccessToken.getScmUserName(),
                               URLEncoder.encode(personalAccessToken.getToken(), UTF_8),
                               scmUrl.getHost(),
                               scmUrl.getPort() != 80 && scmUrl.getPort() != -1

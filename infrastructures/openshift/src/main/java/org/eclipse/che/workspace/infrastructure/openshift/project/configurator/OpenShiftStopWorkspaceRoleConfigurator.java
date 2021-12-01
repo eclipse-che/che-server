@@ -9,7 +9,9 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.workspace.infrastructure.openshift.provision;
+package org.eclipse.che.workspace.infrastructure.openshift.project.configurator;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.openshift.api.model.PolicyRuleBuilder;
@@ -20,8 +22,12 @@ import io.fabric8.openshift.api.model.RoleBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.CheInstallationLocation;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,27 +38,37 @@ import org.slf4j.LoggerFactory;
  *
  * @author Tom George
  */
-public class OpenShiftStopWorkspaceRoleProvisioner {
+@Singleton
+public class OpenShiftStopWorkspaceRoleConfigurator implements NamespaceConfigurator {
 
   private final OpenShiftClientFactory clientFactory;
   private final String installationLocation;
   private final boolean stopWorkspaceRoleEnabled;
+  private final String oAuthIdentityProvider;
 
   private static final Logger LOG =
-      LoggerFactory.getLogger(OpenShiftStopWorkspaceRoleProvisioner.class);
+      LoggerFactory.getLogger(OpenShiftStopWorkspaceRoleConfigurator.class);
 
   @Inject
-  public OpenShiftStopWorkspaceRoleProvisioner(
+  public OpenShiftStopWorkspaceRoleConfigurator(
       OpenShiftClientFactory clientFactory,
       CheInstallationLocation installationLocation,
-      @Named("che.workspace.stop.role.enabled") boolean stopWorkspaceRoleEnabled)
+      @Named("che.workspace.stop.role.enabled") boolean stopWorkspaceRoleEnabled,
+      @Nullable @Named("che.infra.openshift.oauth_identity_provider") String oAuthIdentityProvider)
       throws InfrastructureException {
     this.clientFactory = clientFactory;
     this.installationLocation = installationLocation.getInstallationLocationNamespace();
     this.stopWorkspaceRoleEnabled = stopWorkspaceRoleEnabled;
+    this.oAuthIdentityProvider = oAuthIdentityProvider;
   }
 
-  public void provision(String projectName) throws InfrastructureException {
+  @Override
+  public void configure(NamespaceResolutionContext namespaceResolutionContext, String projectName)
+      throws InfrastructureException {
+    if (isNullOrEmpty(oAuthIdentityProvider)) {
+      return;
+    }
+
     if (stopWorkspaceRoleEnabled && installationLocation != null) {
       OpenShiftClient osClient = clientFactory.createOC();
       String stopWorkspacesRoleName = "workspace-stop";

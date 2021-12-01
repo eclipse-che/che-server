@@ -9,13 +9,12 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.keycloak.server;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
+package org.eclipse.che.multiuser.oidc;
 
 import com.auth0.jwk.GuavaCachedJwkProvider;
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.UrlJwkProvider;
+import com.google.common.base.Strings;
 import java.net.MalformedURLException;
 import java.net.URL;
 import javax.inject.Inject;
@@ -23,14 +22,14 @@ import javax.inject.Provider;
 import org.eclipse.che.inject.ConfigurationException;
 
 /** Constructs {@link UrlJwkProvider} based on Jwk endpoint from keycloak settings */
-public class KeycloakJwkProvider implements Provider<JwkProvider> {
+public class OIDCJwkProvider implements Provider<JwkProvider> {
 
   private final JwkProvider jwkProvider;
 
   @Inject
-  public KeycloakJwkProvider(OIDCInfo oidcInfo) throws MalformedURLException {
+  public OIDCJwkProvider(OIDCInfo oidcInfo) throws MalformedURLException {
     final String jwksUrl =
-        isNullOrEmpty(oidcInfo.getJwksInternalUri())
+        Strings.isNullOrEmpty(oidcInfo.getJwksInternalUri())
             ? oidcInfo.getJwksPublicUri()
             : oidcInfo.getJwksInternalUri();
 

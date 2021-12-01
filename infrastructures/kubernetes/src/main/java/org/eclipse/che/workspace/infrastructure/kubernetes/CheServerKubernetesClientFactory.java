@@ -31,6 +31,7 @@ public class CheServerKubernetesClientFactory extends KubernetesClientFactory {
 
   @Inject
   public CheServerKubernetesClientFactory(
+      KubernetesClientConfigFactory configBuilder,
       @Nullable @Named("che.infra.kubernetes.master_url") String masterUrl,
       @Nullable @Named("che.infra.kubernetes.trust_certs") Boolean doTrustCerts,
       @Named("che.infra.kubernetes.client.http.async_requests.max") int maxConcurrentRequests,
@@ -41,6 +42,7 @@ public class CheServerKubernetesClientFactory extends KubernetesClientFactory {
           int connectionPoolKeepAlive,
       EventListener eventListener) {
     super(
+        configBuilder,
         masterUrl,
         doTrustCerts,
         maxConcurrentRequests,

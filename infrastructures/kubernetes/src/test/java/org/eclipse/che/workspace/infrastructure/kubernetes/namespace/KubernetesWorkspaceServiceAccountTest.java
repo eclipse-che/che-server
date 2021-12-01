@@ -11,21 +11,31 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
+import static java.util.Collections.singletonList;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CONFIGMAPS_ROLE_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.METRICS_ROLE_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
+import io.fabric8.kubernetes.api.model.rbac.PolicyRule;
+import io.fabric8.kubernetes.api.model.rbac.Role;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingList;
 import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.mockito.Mock;
@@ -130,5 +140,63 @@ public class KubernetesWorkspaceServiceAccountTest {
         rbl.getItems()
             .stream()
             .noneMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-metrics")));
+  }
+
+  @Test
+  public void shouldCreateCredentialsSecretRole() throws Exception {
+    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    when(clientFactory.create(anyString())).thenReturn(localK8sClient);
+
+    // when
+    serviceAccount.prepare();
+
+    // then
+    RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
+    Optional<Role> roleOptional =
+        rl.getItems()
+            .stream()
+            .filter(r -> r.getMetadata().getName().equals(SECRETS_ROLE_NAME))
+            .findFirst();
+    assertTrue(roleOptional.isPresent());
+    PolicyRule rule = roleOptional.get().getRules().get(0);
+    assertEquals(rule.getResources(), singletonList("secrets"));
+    assertEquals(rule.getResourceNames(), singletonList(CREDENTIALS_SECRET_NAME));
+    assertEquals(rule.getApiGroups(), singletonList(""));
+    assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
+
+    RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
+    assertTrue(
+        rbl.getItems()
+            .stream()
+            .anyMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-secrets")));
+  }
+
+  @Test
+  public void shouldCreatePreferencesConfigmapRole() throws Exception {
+    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    when(clientFactory.create(anyString())).thenReturn(localK8sClient);
+
+    // when
+    serviceAccount.prepare();
+
+    // then
+    RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
+    Optional<Role> roleOptional =
+        rl.getItems()
+            .stream()
+            .filter(r -> r.getMetadata().getName().equals(CONFIGMAPS_ROLE_NAME))
+            .findFirst();
+    assertTrue(roleOptional.isPresent());
+    PolicyRule rule = roleOptional.get().getRules().get(0);
+    assertEquals(rule.getResources(), singletonList("configmaps"));
+    assertEquals(rule.getResourceNames(), singletonList(PREFERENCES_CONFIGMAP_NAME));
+    assertEquals(rule.getApiGroups(), singletonList(""));
+    assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
+
+    RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
+    assertTrue(
+        rbl.getItems()
+            .stream()
+            .anyMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-configmaps")));
   }
 }

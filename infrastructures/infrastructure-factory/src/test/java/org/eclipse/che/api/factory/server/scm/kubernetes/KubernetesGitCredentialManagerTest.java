@@ -79,7 +79,7 @@ public class KubernetesGitCredentialManagerTest {
   }
 
   @Test
-  public void testCreateAndSaveNewGitCredential() throws Exception {
+  public void testCreateAndSaveNewPATGitCredential() throws Exception {
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
 
@@ -110,6 +110,42 @@ public class KubernetesGitCredentialManagerTest {
     assertEquals(
         new String(Base64.getDecoder().decode(createdSecret.getData().get("credentials"))),
         "https://username:token123@bitbucket.com");
+    assertTrue(createdSecret.getMetadata().getName().startsWith(NAME_PATTERN));
+    assertFalse(createdSecret.getMetadata().getName().contains(token.getScmUserName()));
+  }
+
+  @Test
+  public void testCreateAndSaveNewOAuthGitCredential() throws Exception {
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+
+    when(clientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    when(nonNamespaceOperation.withLabels(anyMap())).thenReturn(filterWatchDeletable);
+    when(filterWatchDeletable.list()).thenReturn(secretList);
+    when(secretList.getItems()).thenReturn(emptyList());
+    ArgumentCaptor<Secret> captor = ArgumentCaptor.forClass(Secret.class);
+
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://bitbucket.com",
+            "cheUser",
+            "username",
+            "userId",
+            "oauth2-token-name",
+            "tid-23434",
+            "token123");
+
+    // when
+    kubernetesGitCredentialManager.createOrReplace(token);
+    // then
+    verify(nonNamespaceOperation).createOrReplace(captor.capture());
+    Secret createdSecret = captor.getValue();
+    assertNotNull(createdSecret);
+    assertEquals(
+        new String(Base64.getDecoder().decode(createdSecret.getData().get("credentials"))),
+        "https://oauth2:token123@bitbucket.com");
     assertTrue(createdSecret.getMetadata().getName().startsWith(NAME_PATTERN));
     assertFalse(createdSecret.getMetadata().getName().contains(token.getScmUserName()));
   }

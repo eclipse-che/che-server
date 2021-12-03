@@ -87,6 +87,7 @@ public class DevfileSchemaValidatorTest {
       {"devfile/devfile_v2-1-0_just_schemaVersion.yaml"},
       {"devfile/devfile_v2-1-0_simple-devfile.yaml"},
       {"devfile/devfile_v2-2-0-simple-devfile.yaml"},
+      {"devfile/devfile_v2-2-0-quarkus.yaml"},
     };
   }
 

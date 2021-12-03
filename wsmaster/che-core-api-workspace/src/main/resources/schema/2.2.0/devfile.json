@@ -66,7 +66,8 @@
                       "build",
                       "run",
                       "test",
-                      "debug"
+                      "debug",
+                      "deploy"
                     ]
                   }
                 },
@@ -113,7 +114,8 @@
                       "build",
                       "run",
                       "test",
-                      "debug"
+                      "debug",
+                      "deploy"
                     ]
                   }
                 },
@@ -184,7 +186,8 @@
                       "build",
                       "run",
                       "test",
-                      "debug"
+                      "debug",
+                      "deploy"
                     ]
                   }
                 },
@@ -243,6 +246,11 @@
             "required": [
               "volume"
             ]
+          },
+          {
+            "required": [
+              "image"
+            ]
           }
         ],
         "properties": {
@@ -258,6 +266,27 @@
               "image"
             ],
             "properties": {
+              "annotation": {
+                "description": "Annotations that should be added to specific resources for this container",
+                "type": "object",
+                "properties": {
+                  "deployment": {
+                    "description": "Annotations to be added to deployment",
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "service": {
+                    "description": "Annotations to be added to service",
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
               "args": {
                 "description": "The arguments to supply to the command running the dockerimage component. The arguments are supplied either to the default command provided in the image or to the overridden command.\n\nDefaults to an empty array, meaning use whatever is defined in the image.",
                 "type": "array",
@@ -291,6 +320,13 @@
                     "targetPort"
                   ],
                   "properties": {
+                    "annotation": {
+                      "description": "Annotations to be added to Kubernetes Ingress or Openshift Route",
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "attributes": {
                       "description": "Map of implementation-dependant string-based free-form attributes.\n\nExamples of Che-specific attributes:\n- cookiesAuthEnabled: \"true\" / \"false\",\n- type: \"terminal\" / \"ide\" / \"ide-dev\",",
                       "type": "object",
@@ -404,6 +440,124 @@
             },
             "additionalProperties": false
           },
+          "image": {
+            "description": "Allows specifying the definition of an image for outer loop builds",
+            "type": "object",
+            "required": [
+              "imageName"
+            ],
+            "oneOf": [
+              {
+                "required": [
+                  "dockerfile"
+                ]
+              }
+            ],
+            "properties": {
+              "dockerfile": {
+                "description": "Allows specifying dockerfile type build",
+                "type": "object",
+                "oneOf": [
+                  {
+                    "required": [
+                      "uri"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "devfileRegistry"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "git"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "args": {
+                    "description": "The arguments to supply to the dockerfile build.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "buildContext": {
+                    "description": "Path of source directory to establish build context. Defaults to ${PROJECT_ROOT} in the container",
+                    "type": "string"
+                  },
+                  "devfileRegistry": {
+                    "description": "Dockerfile's Devfile Registry source",
+                    "type": "object",
+                    "required": [
+                      "id"
+                    ],
+                    "properties": {
+                      "id": {
+                        "description": "Id in a devfile registry that contains a Dockerfile. The src in the OCI registry required for the Dockerfile build will be downloaded for building the image.",
+                        "type": "string"
+                      },
+                      "registryUrl": {
+                        "description": "Devfile Registry URL to pull the Dockerfile from when using the Devfile Registry as Dockerfile src. To ensure the Dockerfile gets resolved consistently in different environments, it is recommended to always specify the `devfileRegistryUrl` when `Id` is used.",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "git": {
+                    "description": "Dockerfile's Git source",
+                    "type": "object",
+                    "required": [
+                      "remotes"
+                    ],
+                    "properties": {
+                      "checkoutFrom": {
+                        "description": "Defines from what the project should be checked out. Required if there are more than one remote configured",
+                        "type": "object",
+                        "properties": {
+                          "remote": {
+                            "description": "The remote name should be used as init. Required if there are more than one remote configured",
+                            "type": "string"
+                          },
+                          "revision": {
+                            "description": "The revision to checkout from. Should be branch name, tag or commit id. Default branch is used if missing or specified revision is not found.",
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "fileLocation": {
+                        "description": "Location of the Dockerfile in the Git repository when using git as Dockerfile src. Defaults to Dockerfile.",
+                        "type": "string"
+                      },
+                      "remotes": {
+                        "description": "The remotes map which should be initialized in the git project. Projects must have at least one remote configured while StarterProjects \u0026 Image Component's Git source can only have at most one remote configured.",
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "rootRequired": {
+                    "description": "Specify if a privileged builder pod is required.\n\nDefault value is `false`",
+                    "type": "boolean"
+                  },
+                  "uri": {
+                    "description": "URI Reference of a Dockerfile. It can be a full URL or a relative URI from the current devfile as the base URI.",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "imageName": {
+                "description": "Name of the image for the resulting outerloop build",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
           "kubernetes": {
             "description": "Allows importing into the devworkspace the Kubernetes resources defined in a given manifest. For example this allows reusing the Kubernetes definitions used to deploy some runtime components in production.",
             "type": "object",
@@ -429,6 +583,13 @@
                     "targetPort"
                   ],
                   "properties": {
+                    "annotation": {
+                      "description": "Annotations to be added to Kubernetes Ingress or Openshift Route",
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "attributes": {
                       "description": "Map of implementation-dependant string-based free-form attributes.\n\nExamples of Che-specific attributes:\n- cookiesAuthEnabled: \"true\" / \"false\",\n- type: \"terminal\" / \"ide\" / \"ide-dev\",",
                       "type": "object",
@@ -519,6 +680,13 @@
                     "targetPort"
                   ],
                   "properties": {
+                    "annotation": {
+                      "description": "Annotations to be added to Kubernetes Ingress or Openshift Route",
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "attributes": {
                       "description": "Map of implementation-dependant string-based free-form attributes.\n\nExamples of Che-specific attributes:\n- cookiesAuthEnabled: \"true\" / \"false\",\n- type: \"terminal\" / \"ide\" / \"ide-dev\",",
                       "type": "object",
@@ -636,6 +804,21 @@
       "description": "Optional metadata",
       "type": "object",
       "properties": {
+        "architectures": {
+          "description": "Optional list of processor architectures that the devfile supports, empty list suggests that the devfile can be used on any architecture",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "description": "Architecture describes the architecture type",
+            "type": "string",
+            "enum": [
+              "amd64",
+              "arm64",
+              "ppc64le",
+              "s390x"
+            ]
+          }
+        },
         "attributes": {
           "description": "Map of implementation-dependant free-form YAML attributes. Deprecated, use the top-level attributes field instead.",
           "type": "object",
@@ -667,6 +850,14 @@
         },
         "projectType": {
           "description": "Optional devfile project type",
+          "type": "string"
+        },
+        "provider": {
+          "description": "Optional devfile provider information",
+          "type": "string"
+        },
+        "supportUrl": {
+          "description": "Optional link to a page that provides support information",
           "type": "string"
         },
         "tags": {
@@ -763,7 +954,8 @@
                           "build",
                           "run",
                           "test",
-                          "debug"
+                          "debug",
+                          "deploy"
                         ]
                       }
                     },
@@ -807,7 +999,8 @@
                           "build",
                           "run",
                           "test",
-                          "debug"
+                          "debug",
+                          "deploy"
                         ]
                       }
                     },
@@ -870,7 +1063,8 @@
                           "build",
                           "run",
                           "test",
-                          "debug"
+                          "debug",
+                          "deploy"
                         ]
                       }
                     },
@@ -929,6 +1123,11 @@
                 "required": [
                   "volume"
                 ]
+              },
+              {
+                "required": [
+                  "image"
+                ]
               }
             ],
             "properties": {
@@ -941,6 +1140,27 @@
                 "description": "Allows adding and configuring devworkspace-related containers",
                 "type": "object",
                 "properties": {
+                  "annotation": {
+                    "description": "Annotations that should be added to specific resources for this container",
+                    "type": "object",
+                    "properties": {
+                      "deployment": {
+                        "description": "Annotations to be added to deployment",
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "service": {
+                        "description": "Annotations to be added to service",
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
                   "args": {
                     "description": "The arguments to supply to the command running the dockerimage component. The arguments are supplied either to the default command provided in the image or to the overridden command.\n\nDefaults to an empty array, meaning use whatever is defined in the image.",
                     "type": "array",
@@ -973,6 +1193,13 @@
                         "name"
                       ],
                       "properties": {
+                        "annotation": {
+                          "description": "Annotations to be added to Kubernetes Ingress or Openshift Route",
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
                         "attributes": {
                           "description": "Map of implementation-dependant string-based free-form attributes.\n\nExamples of Che-specific attributes:\n- cookiesAuthEnabled: \"true\" / \"false\",\n- type: \"terminal\" / \"ide\" / \"ide-dev\",",
                           "type": "object",
@@ -1082,6 +1309,115 @@
                 },
                 "additionalProperties": false
               },
+              "image": {
+                "description": "Allows specifying the definition of an image for outer loop builds",
+                "type": "object",
+                "oneOf": [
+                  {
+                    "required": [
+                      "dockerfile"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "dockerfile": {
+                    "description": "Allows specifying dockerfile type build",
+                    "type": "object",
+                    "oneOf": [
+                      {
+                        "required": [
+                          "uri"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "devfileRegistry"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "git"
+                        ]
+                      }
+                    ],
+                    "properties": {
+                      "args": {
+                        "description": "The arguments to supply to the dockerfile build.",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "buildContext": {
+                        "description": "Path of source directory to establish build context. Defaults to ${PROJECT_ROOT} in the container",
+                        "type": "string"
+                      },
+                      "devfileRegistry": {
+                        "description": "Dockerfile's Devfile Registry source",
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "description": "Id in a devfile registry that contains a Dockerfile. The src in the OCI registry required for the Dockerfile build will be downloaded for building the image.",
+                            "type": "string"
+                          },
+                          "registryUrl": {
+                            "description": "Devfile Registry URL to pull the Dockerfile from when using the Devfile Registry as Dockerfile src. To ensure the Dockerfile gets resolved consistently in different environments, it is recommended to always specify the `devfileRegistryUrl` when `Id` is used.",
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "git": {
+                        "description": "Dockerfile's Git source",
+                        "type": "object",
+                        "properties": {
+                          "checkoutFrom": {
+                            "description": "Defines from what the project should be checked out. Required if there are more than one remote configured",
+                            "type": "object",
+                            "properties": {
+                              "remote": {
+                                "description": "The remote name should be used as init. Required if there are more than one remote configured",
+                                "type": "string"
+                              },
+                              "revision": {
+                                "description": "The revision to checkout from. Should be branch name, tag or commit id. Default branch is used if missing or specified revision is not found.",
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "fileLocation": {
+                            "description": "Location of the Dockerfile in the Git repository when using git as Dockerfile src. Defaults to Dockerfile.",
+                            "type": "string"
+                          },
+                          "remotes": {
+                            "description": "The remotes map which should be initialized in the git project. Projects must have at least one remote configured while StarterProjects \u0026 Image Component's Git source can only have at most one remote configured.",
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "rootRequired": {
+                        "description": "Specify if a privileged builder pod is required.\n\nDefault value is `false`",
+                        "type": "boolean"
+                      },
+                      "uri": {
+                        "description": "URI Reference of a Dockerfile. It can be a full URL or a relative URI from the current devfile as the base URI.",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "imageName": {
+                    "description": "Name of the image for the resulting outerloop build",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
               "kubernetes": {
                 "description": "Allows importing into the devworkspace the Kubernetes resources defined in a given manifest. For example this allows reusing the Kubernetes definitions used to deploy some runtime components in production.",
                 "type": "object",
@@ -1106,6 +1442,13 @@
                         "name"
                       ],
                       "properties": {
+                        "annotation": {
+                          "description": "Annotations to be added to Kubernetes Ingress or Openshift Route",
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
                         "attributes": {
                           "description": "Map of implementation-dependant string-based free-form attributes.\n\nExamples of Che-specific attributes:\n- cookiesAuthEnabled: \"true\" / \"false\",\n- type: \"terminal\" / \"ide\" / \"ide-dev\",",
                           "type": "object",
@@ -1193,6 +1536,13 @@
                         "name"
                       ],
                       "properties": {
+                        "annotation": {
+                          "description": "Annotations to be added to Kubernetes Ingress or Openshift Route",
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
                         "attributes": {
                           "description": "Map of implementation-dependant string-based free-form attributes.\n\nExamples of Che-specific attributes:\n- cookiesAuthEnabled: \"true\" / \"false\",\n- type: \"terminal\" / \"ide\" / \"ide-dev\",",
                           "type": "object",
@@ -1339,7 +1689,7 @@
                     "additionalProperties": false
                   },
                   "remotes": {
-                    "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured",
+                    "description": "The remotes map which should be initialized in the git project. Projects must have at least one remote configured while StarterProjects \u0026 Image Component's Git source can only have at most one remote configured.",
                     "type": "object",
                     "additionalProperties": {
                       "type": "string"
@@ -1370,7 +1720,7 @@
           }
         },
         "registryUrl": {
-          "description": "Registry URL to pull the parent devfile from when using id in the parent reference. To ensure the parent devfile gets resolved consistently in different environments, it is recommended to always specify the `regsitryURL` when `Id` is used.",
+          "description": "Registry URL to pull the parent devfile from when using id in the parent reference. To ensure the parent devfile gets resolved consistently in different environments, it is recommended to always specify the `registryUrl` when `id` is used.",
           "type": "string"
         },
         "starterProjects": {
@@ -1423,7 +1773,7 @@
                     "additionalProperties": false
                   },
                   "remotes": {
-                    "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured",
+                    "description": "The remotes map which should be initialized in the git project. Projects must have at least one remote configured while StarterProjects \u0026 Image Component's Git source can only have at most one remote configured.",
                     "type": "object",
                     "additionalProperties": {
                       "type": "string"
@@ -1524,7 +1874,7 @@
                 "additionalProperties": false
               },
               "remotes": {
-                "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured",
+                "description": "The remotes map which should be initialized in the git project. Projects must have at least one remote configured while StarterProjects \u0026 Image Component's Git source can only have at most one remote configured.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -1557,7 +1907,7 @@
     "schemaVersion": {
       "description": "Devfile schema version",
       "type": "string",
-      "pattern": "^2\\.2\\.0$"
+      "pattern": "^([2-9])\\.([0-9]+)\\.([0-9]+)(\\-[0-9a-z-]+(\\.[0-9a-z-]+)*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
     },
     "starterProjects": {
       "description": "StarterProjects is a project that can be used as a starting point when bootstrapping new projects",
@@ -1612,7 +1962,7 @@
                 "additionalProperties": false
               },
               "remotes": {
-                "description": "The remotes map which should be initialized in the git project. Must have at least one remote configured",
+                "description": "The remotes map which should be initialized in the git project. Projects must have at least one remote configured while StarterProjects \u0026 Image Component's Git source can only have at most one remote configured.",
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
@@ -1647,7 +1997,7 @@
       }
     },
     "variables": {
-      "description": "Map of key-value variables used for string replacement in the devfile. Values can can be referenced via {{variable-key}} to replace the corresponding value in string fields in the devfile. Replacement cannot be used for\n\n - schemaVersion, metadata, parent source  - element identifiers, e.g. command id, component name, endpoint name, project name  - references to identifiers, e.g. in events, a command's component, container's volume mount name  - string enums, e.g. command group kind, endpoint exposure",
+      "description": "Map of key-value variables used for string replacement in the devfile. Values can be referenced via {{variable-key}} to replace the corresponding value in string fields in the devfile. Replacement cannot be used for\n\n - schemaVersion, metadata, parent source\n\n - element identifiers, e.g. command id, component name, endpoint name, project name\n\n - references to identifiers, e.g. in events, a command's component, container's volume mount name\n\n - string enums, e.g. command group kind, endpoint exposure",
       "type": "object",
       "additionalProperties": {
         "type": "string"

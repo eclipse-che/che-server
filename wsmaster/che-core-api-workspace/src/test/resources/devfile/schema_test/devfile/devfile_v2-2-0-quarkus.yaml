@@ -1,0 +1,99 @@
+#
+# Copyright (c) 2012-2021 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+
+schemaVersion: 2.2.0
+metadata:
+  name: java-quarkus
+  version: 1.1.0
+  provider: Red Hat
+  supportUrl: https://github.com/devfile-samples/devfile-support#support-information
+  website: https://quarkus.io
+  displayName: Quarkus Java
+  description: Upstream Quarkus with Java+GraalVM
+  tags: ["Java", "Quarkus"]
+  projectType: "quarkus"
+  language: "java"
+  attributes:
+    alpha.dockerimage-port: 8081
+starterProjects:
+  - name: community
+    zip:
+      location: https://code.quarkus.io/d?e=io.quarkus%3Aquarkus-resteasy&e=io.quarkus%3Aquarkus-micrometer&e=io.quarkus%3Aquarkus-smallrye-health&e=io.quarkus%3Aquarkus-openshift&cn=devfile
+  - name: redhat-product
+    zip:
+      location: https://code.quarkus.redhat.com/d?e=io.quarkus%3Aquarkus-resteasy&e=io.quarkus%3Aquarkus-smallrye-health&e=io.quarkus%3Aquarkus-openshift
+components:
+  - name: outerloop-build
+    image:
+      imageName: java-quarkus-image:latest
+      dockerfile:
+        uri: src/main/docker/Dockerfile.jvm.staged
+        buildContext: .
+        rootRequired: false
+  - name: outerloop-deploy
+    kubernetes:
+      uri: outerloop-deploy.yaml
+  - name: tools
+    container:
+      image: quay.io/eclipse/che-quarkus:7.36.0
+      memoryLimit: 1512Mi
+      mountSources: true
+      volumeMounts:
+        - name: m2
+          path: /home/user/.m2
+      endpoints:
+        - name: '8080-http'
+          targetPort: 8080
+  - name: m2
+    volume:
+      size: 3Gi
+commands:
+  - id: init-compile
+    exec:
+      component: tools
+      commandLine: "mvn -Dmaven.repo.local=/home/user/.m2/repository compile"
+      workingDir: $PROJECTS_ROOT
+  - id: dev-run
+    exec:
+      component: tools
+      commandLine: "mvn -Dmaven.repo.local=/home/user/.m2/repository quarkus:dev -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+      hotReloadCapable: true
+      group:
+        kind: run
+        isDefault: true
+      workingDir: $PROJECTS_ROOT
+  - id: dev-debug
+    exec:
+      component: tools
+      commandLine: "mvn -Dmaven.repo.local=/home/user/.m2/repository quarkus:dev -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Ddebug=${DEBUG_PORT}"
+      hotReloadCapable: true
+      group:
+        kind: debug
+        isDefault: true
+      workingDir: $PROJECTS_ROOT
+  - id: build-image
+    apply:
+      component: outerloop-build
+  - id: deployk8s
+    apply:
+      component: outerloop-deploy
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deployk8s
+      group:
+        kind: deploy
+        isDefault: true
+events:
+  postStart:
+    - init-compile

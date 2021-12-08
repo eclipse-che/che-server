@@ -43,8 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class mounts existing user SSH Keys into a special Kubernetes Secret on
- * user-s namespace.
+ * This class mounts existing user SSH Keys into a special Kubernetes Secret on user-s namespace.
  */
 public class SshKeysConfigurator implements NamespaceConfigurator {
 

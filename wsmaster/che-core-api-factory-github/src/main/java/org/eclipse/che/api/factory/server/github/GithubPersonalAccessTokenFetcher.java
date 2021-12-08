@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
@@ -250,6 +251,8 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
     return apiEndpoint
         + "/oauth/authenticate?oauth_provider="
         + OAUTH_PROVIDER_NAME
+        + "&scope="
+        + Joiner.on(',').join(DEFAULT_TOKEN_SCOPES)
         + "&request_method=POST&signature_method=rsa";
   }
 }

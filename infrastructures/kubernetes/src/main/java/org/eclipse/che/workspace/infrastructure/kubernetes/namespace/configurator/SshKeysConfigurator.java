@@ -42,6 +42,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class mounts existing user SSH Keys into a special Kubernetes Secret on
+ * user-s namespace.
+ */
 public class SshKeysConfigurator implements NamespaceConfigurator {
 
   private static final String SSH_KEYS_WILL_NOT_BE_MOUNTED_MESSAGE =

@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SshKeysConfigurator implements NamespaceConfigurator {
 
+  public static final String SSH_KEY_SECRET_NAME = "che-git-ssh-key";
   private static final String SSH_KEYS_WILL_NOT_BE_MOUNTED_MESSAGE =
       "Ssh keys %s have invalid names and can't be mounted to namespace %s.";
 
@@ -116,20 +117,6 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
       LOG.warn(message);
       throw new InfrastructureException(e);
     }
-    //    Q: do we need that generation for devworkspaces ?
-    //    if (sshPairs.isEmpty()) {
-    //      try {
-    //        sshPairs =
-    //            singletonList(
-    //                sshManager.generatePair(
-    //                    context.getUserId(), "vcs", "default-" + new Date().getTime()));
-    //      } catch (ServerException | ConflictException e) {
-    //        String message =
-    //            format("Unable to generate the initial SSH key. Cause: %s", e.getMessage());
-    //        LOG.warn(message);
-    //        throw new InfrastructureException(e);
-    //      }
-    //  }
     return sshPairs;
   }
 
@@ -169,7 +156,7 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
 
   private ObjectMeta buildMetadata() {
     return new ObjectMetaBuilder()
-        .withName("git-ssh-key")
+        .withName(SSH_KEY_SECRET_NAME)
         .withLabels(
             Map.of(
                 DEV_WORKSPACE_MOUNT_LABEL, "true",

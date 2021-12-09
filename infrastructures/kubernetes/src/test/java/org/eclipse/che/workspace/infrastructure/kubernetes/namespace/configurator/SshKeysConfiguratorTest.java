@@ -86,7 +86,7 @@ public class SshKeysConfiguratorTest {
             .list()
             .getItems();
     assertEquals(secrets.size(), 1);
-    assertEquals(secrets.get(0).getMetadata().getName(), "git-ssh-key");
+    assertEquals(secrets.get(0).getMetadata().getName(), "che-git-ssh-key");
     assertEquals(secrets.get(0).getData().size(), 3);
     assertEquals(
         new String(Base64.getDecoder().decode(secrets.get(0).getData().get("github.com"))),

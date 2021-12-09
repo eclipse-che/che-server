@@ -51,9 +51,7 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
   private static final String SSH_KEYS_WILL_NOT_BE_MOUNTED_MESSAGE =
       "Ssh keys %s have invalid names and can't be mounted to namespace %s.";
 
-  private static final String SSH_BASE_CONFIG_PATH = "/.ssh/";
-  private static final String SSH_PRIVATE_KEYS = "private";
-  private static final String SSH_PRIVATE_KEYS_PATH = SSH_BASE_CONFIG_PATH + SSH_PRIVATE_KEYS;
+  private static final String SSH_BASE_CONFIG_PATH = "/etc/ssh/";
 
   private final SshManager sshManager;
 
@@ -143,7 +141,7 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
             Base64.getEncoder().encodeToString(sshPair.getPublicKey().getBytes()));
       }
     }
-    data.put("config", Base64.getEncoder().encodeToString(sshConfigData.toString().getBytes()));
+    data.put("ssh_config", Base64.getEncoder().encodeToString(sshConfigData.toString().getBytes()));
     Secret secret =
         new SecretBuilder()
             .addToData(data)
@@ -200,8 +198,7 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
     return "host "
         + host
         + "\nIdentityFile "
-        + SSH_PRIVATE_KEYS_PATH
-        + "/"
+        + SSH_BASE_CONFIG_PATH
         + name
         + "\nStrictHostKeyChecking = no"
         + "\n\n";

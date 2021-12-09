@@ -95,9 +95,9 @@ public class SshKeysConfiguratorTest {
         new String(Base64.getDecoder().decode(secrets.get(0).getData().get("github.com.pub"))),
         "public-key");
     assertEquals(
-        new String(Base64.getDecoder().decode(secrets.get(0).getData().get("config"))),
+        new String(Base64.getDecoder().decode(secrets.get(0).getData().get("ssh_config"))),
         "host github.com\n"
-            + "IdentityFile /.ssh/private/github.com\n"
+            + "IdentityFile /etc/ssh/github.com\n"
             + "StrictHostKeyChecking = no\n\n");
   }
 

@@ -51,6 +51,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNames
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.SshKeysConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPermissionConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
@@ -116,6 +117,7 @@ public class KubernetesInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(WorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
+    namespaceConfigurators.addBinding().to(SshKeysConfigurator.class);
 
     bind(KubernetesNamespaceService.class);
 

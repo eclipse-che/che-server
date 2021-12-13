@@ -50,6 +50,9 @@ public final class Constants {
   public static final String DEV_WORKSPACE_MOUNT_LABEL =
       "controller.devfile.io/mount-to-devworkspace";
 
+  public static final String DEV_WORKSPACE_WATCH_SECRET_LABEL =
+      "controller.devfile.io/watch-secret";
+
   public static final String DEV_WORKSPACE_MOUNT_PATH_ANNOTATION =
       "controller.devfile.io/mount-path";
   public static final String DEV_WORKSPACE_MOUNT_AS_ANNOTATION = "controller.devfile.io/mount-as";

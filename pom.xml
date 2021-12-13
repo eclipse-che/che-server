@@ -1885,6 +1885,8 @@
                                         <exclude>com.google.inject.extensions:guice-servlet</exclude>
                                         <exclude>commons-fileupload:commons-fileupload</exclude>
                                         <exclude>com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider</exclude>
+                                        <exclude>org.apache.logging.log4j:log4j</exclude>
+                                        <exclude>log4j:log4j</exclude>
                                     </excludes>
                                 </bannedDependencies>
                             </rules>

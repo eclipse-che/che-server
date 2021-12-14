@@ -298,11 +298,19 @@ public class UserManager {
       synchronized (this) {
         userById = getUserById(id);
         if (!userById.isPresent()) {
-          Optional<User> userByEmail = getUserByEmail(email);
-          if (userByEmail.isPresent()) {
-            remove(userByEmail.get().getId());
+          if (!isNullOrEmpty(email)) {
+            Optional<User> userByEmail = getUserByEmail(email);
+            if (userByEmail.isPresent()) {
+              remove(userByEmail.get().getId());
+            }
           }
-          final UserImpl cheUser = new UserImpl(id, email, username, generate("", 12), emptyList());
+          final UserImpl cheUser =
+              new UserImpl(
+                  id,
+                  firstNonNull(email, username + "@che"),
+                  username,
+                  generate("", 12),
+                  emptyList());
           try {
             return create(cheUser, false);
           } catch (ConflictException ex) {

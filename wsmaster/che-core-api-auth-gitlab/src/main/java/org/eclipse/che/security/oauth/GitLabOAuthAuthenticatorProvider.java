@@ -37,8 +37,8 @@ public class GitLabOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
   private final OAuthAuthenticator authenticator;
 
   public GitLabOAuthAuthenticatorProvider(
-      @Nullable @Named("che.oauth.gitlab.clientid_filepath") String clientIdPath,
-      @Nullable @Named("che.oauth.gitlab.clientsecret_filepath") String clientSecretPath,
+      @Nullable @Named("che.oauth2.gitlab.clientid_filepath") String clientIdPath,
+      @Nullable @Named("che.oauth2.gitlab.clientsecret_filepath") String clientSecretPath,
       @Nullable @Named("che.integration.gitlab.oauth_endpoint") String gitlabEndpoint,
       @Nullable @Named("che.oauth.github.redirecturis") String[] redirectUris)
       throws IOException {

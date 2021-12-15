@@ -91,7 +91,7 @@ public class OpenshiftTokenInitializationFilter
   protected Subject extractSubject(String token, io.fabric8.openshift.api.model.User osu) {
     try {
       ObjectMeta userMeta = osu.getMetadata();
-      User user = userManager.getOrCreateUser(getUserId(osu), null, userMeta.getName());
+      User user = userManager.getOrCreateUser(getUserId(osu), userMeta.getName());
       return new AuthorizedSubject(
           new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
     } catch (ServerException | ConflictException e) {

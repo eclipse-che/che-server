@@ -298,19 +298,11 @@ public class UserManager {
       synchronized (this) {
         userById = getUserById(id);
         if (!userById.isPresent()) {
-          if (!isNullOrEmpty(email)) {
-            Optional<User> userByEmail = getUserByEmail(email);
-            if (userByEmail.isPresent()) {
-              remove(userByEmail.get().getId());
-            }
+          Optional<User> userByEmail = getUserByEmail(email);
+          if (userByEmail.isPresent()) {
+            remove(userByEmail.get().getId());
           }
-          final UserImpl cheUser =
-              new UserImpl(
-                  id,
-                  firstNonNull(email, username + "@che"),
-                  username,
-                  generate("", 12),
-                  emptyList());
+          final UserImpl cheUser = new UserImpl(id, email, username, generate("", 12), emptyList());
           try {
             return create(cheUser, false);
           } catch (ConflictException ex) {
@@ -321,6 +313,44 @@ public class UserManager {
       }
     }
     return actualizeUserEmail(userById.get(), email);
+  }
+
+  /**
+   * Method is used to retrieve user object from Che DB for given user {@code id} and {@code
+   * username}
+   *
+   * <p>- if user is found in Che DB by the given {@code id}, then it will update it in DB if
+   * necessary.
+   *
+   * <p>- if user is not found in Che DB by the given {@code id} , then attempt to create one. In
+   * case of conflict with user name, it may be prepended randomized symbols
+   *
+   * @param id - user id from
+   * @param username - user name
+   * @return user object from Che Database, with all needed actualization operations performed on
+   *     him
+   * @throws ServerException if this exception during user creation, removal, or retrieval
+   * @throws ConflictException if this exception occurs during user creation or removal
+   */
+  public User getOrCreateUser(String id, String username)
+      throws ServerException, ConflictException {
+    Optional<User> userById = getUserById(id);
+    if (!userById.isPresent()) {
+      synchronized (this) {
+        userById = getUserById(id);
+        if (!userById.isPresent()) {
+          final UserImpl cheUser =
+              new UserImpl(id, username + "@che", username, generate("", 12), emptyList());
+          try {
+            return create(cheUser, false);
+          } catch (ConflictException ex) {
+            cheUser.setName(generate(cheUser.getName(), 4));
+            return create(cheUser, false);
+          }
+        }
+      }
+    }
+    return userById.get();
   }
 
   @Transactional(

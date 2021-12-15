@@ -449,22 +449,63 @@ public class UserManagerTest {
     when(manager.getById(user.getId())).thenReturn(user);
 
     // when
-    User actual = manager.getOrCreateUser("identifier", null, "testName");
+    User actual = manager.getOrCreateUser("identifier", "testName@che", "testName");
 
     // then
     assertNotNull(actual);
-    assertEquals(actual.getEmail(), user.getEmail());
+    assertEquals(actual.getEmail(), "testName@che");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
   }
 
   @Test
   public void shouldBeAbleToGetOrCreate_nonexisted() throws Exception {
     // given
     when(manager.getById("identifier")).thenThrow(NotFoundException.class);
+    when(manager.getByEmail("testName@che")).thenThrow(NotFoundException.class);
 
     // when
-    User actual = manager.getOrCreateUser("identifier", null, "testName");
+    User actual = manager.getOrCreateUser("identifier", "testName@che", "testName");
     // then
     assertNotNull(actual);
     assertEquals(actual.getEmail(), "testName@che");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
+  }
+
+  @Test
+  public void shouldBeAbleToGetOrCreateWithoutEmail_existed() throws Exception {
+    // given
+    final User user =
+        new UserImpl(
+            "identifier",
+            "test@email.com",
+            "testName",
+            "password",
+            Collections.singletonList("alias"));
+    when(manager.getById(user.getId())).thenReturn(user);
+
+    // when
+    User actual = manager.getOrCreateUser("identifier", "testName");
+
+    // then
+    assertNotNull(actual);
+    assertEquals(actual.getEmail(), "test@email.com");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
+  }
+
+  @Test
+  public void shouldBeAbleToGetOrCreateWithoutEmail_nonexisted() throws Exception {
+    // given
+    when(manager.getById("identifier")).thenThrow(NotFoundException.class);
+
+    // when
+    User actual = manager.getOrCreateUser("identifier", "testName");
+    // then
+    assertNotNull(actual);
+    assertEquals(actual.getEmail(), "testName@che");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
   }
 }

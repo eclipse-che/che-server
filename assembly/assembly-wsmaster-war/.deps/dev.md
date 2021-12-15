@@ -10,7 +10,7 @@
 | `org.antlr/ST4@4.0.7` | NOASSERTION | [CQ14504](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=14504) |
 | `org.antlr/antlr-runtime@3.5` | BSD-3-Clause | clearlydefined |
 | `org.antlr/stringtemplate@3.2.1` | BSD-2-Clause | [CQ6759](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=6759) |
-| `org.eclipse.che.core/che-core-commons-test@7.40.0-SNAPSHOT` | - | eclipse |
+| `org.eclipse.che.core/che-core-commons-test@7.41.0-SNAPSHOT` | EPL-2.0 | ecd.che |
 | `org.mockito/mockito-core@3.11.2` | MIT | clearlydefined |
 | `org.objenesis/objenesis@3.2` | Apache-2.0 | clearlydefined |
 | `org.reflections/reflections@0.9.9` | MIT | [CQ10054](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=10054) |

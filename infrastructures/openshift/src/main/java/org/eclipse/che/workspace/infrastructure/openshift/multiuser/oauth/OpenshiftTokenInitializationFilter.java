@@ -91,19 +91,11 @@ public class OpenshiftTokenInitializationFilter
   protected Subject extractSubject(String token, io.fabric8.openshift.api.model.User osu) {
     try {
       ObjectMeta userMeta = osu.getMetadata();
-      User user =
-          userManager.getOrCreateUser(
-              getUserId(osu), openshiftUserEmail(userMeta), userMeta.getName());
+      User user = userManager.getOrCreateUser(getUserId(osu), userMeta.getName());
       return new AuthorizedSubject(
           new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
     } catch (ServerException | ConflictException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  protected String openshiftUserEmail(ObjectMeta userMeta) {
-    // OpenShift User does not have data about user's email. However, we need some email. For now,
-    // we can use fake email, but probably we will need to find better solution.
-    return userMeta.getName() + "@che";
   }
 }

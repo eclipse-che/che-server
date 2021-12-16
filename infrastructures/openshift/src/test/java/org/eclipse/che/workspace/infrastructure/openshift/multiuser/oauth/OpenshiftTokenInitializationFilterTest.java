@@ -86,8 +86,7 @@ public class OpenshiftTokenInitializationFilterTest {
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
     when(openshiftUserMeta.getUid()).thenReturn(null);
     when(openshiftUserMeta.getName()).thenReturn(KUBE_ADMIN_USERNAME);
-    when(userManager.getOrCreateUser(
-            KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME))
+    when(userManager.getOrCreateUser(KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME))
         .thenReturn(
             new UserImpl(KUBE_ADMIN_USERNAME, KUBE_ADMIN_USERNAME + "@che", KUBE_ADMIN_USERNAME));
 
@@ -106,7 +105,7 @@ public class OpenshiftTokenInitializationFilterTest {
     when(openshiftUser.getMetadata()).thenReturn(openshiftUserMeta);
     when(openshiftUserMeta.getUid()).thenReturn(USER_UID);
     when(openshiftUserMeta.getName()).thenReturn(USERNAME);
-    when(userManager.getOrCreateUser(USER_UID, USERNAME + "@che", USERNAME))
+    when(userManager.getOrCreateUser(USER_UID, USERNAME))
         .thenReturn(new UserImpl(USER_UID, USERNAME + "@che", USERNAME));
 
     User u = openshiftTokenInitializationFilter.processToken(TOKEN).get();

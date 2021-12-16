@@ -27,6 +27,7 @@ import static org.testng.Assert.fail;
 import java.util.Arrays;
 import java.util.Collections;
 import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.User;
@@ -433,5 +434,78 @@ public class UserManagerTest {
 
     assertTrue(
         firedEvents.getValue() instanceof PostUserPersistedEvent, "Not a PostUserPersistedEvent");
+  }
+
+  @Test
+  public void shouldBeAbleToGetOrCreate_existed() throws Exception {
+    // given
+    final User user =
+        new UserImpl(
+            "identifier",
+            "test@email.com",
+            "testName",
+            "password",
+            Collections.singletonList("alias"));
+    when(manager.getById(user.getId())).thenReturn(user);
+
+    // when
+    User actual = manager.getOrCreateUser("identifier", "testName@che", "testName");
+
+    // then
+    assertNotNull(actual);
+    assertEquals(actual.getEmail(), "testName@che");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
+  }
+
+  @Test
+  public void shouldBeAbleToGetOrCreate_nonexisted() throws Exception {
+    // given
+    when(manager.getById("identifier")).thenThrow(NotFoundException.class);
+    when(manager.getByEmail("testName@che")).thenThrow(NotFoundException.class);
+
+    // when
+    User actual = manager.getOrCreateUser("identifier", "testName@che", "testName");
+    // then
+    assertNotNull(actual);
+    assertEquals(actual.getEmail(), "testName@che");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
+  }
+
+  @Test
+  public void shouldBeAbleToGetOrCreateWithoutEmail_existed() throws Exception {
+    // given
+    final User user =
+        new UserImpl(
+            "identifier",
+            "test@email.com",
+            "testName",
+            "password",
+            Collections.singletonList("alias"));
+    when(manager.getById(user.getId())).thenReturn(user);
+
+    // when
+    User actual = manager.getOrCreateUser("identifier", "testName");
+
+    // then
+    assertNotNull(actual);
+    assertEquals(actual.getEmail(), "test@email.com");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
+  }
+
+  @Test
+  public void shouldBeAbleToGetOrCreateWithoutEmail_nonexisted() throws Exception {
+    // given
+    when(manager.getById("identifier")).thenThrow(NotFoundException.class);
+
+    // when
+    User actual = manager.getOrCreateUser("identifier", "testName");
+    // then
+    assertNotNull(actual);
+    assertEquals(actual.getEmail(), "testName@che");
+    assertEquals(actual.getId(), "identifier");
+    assertEquals(actual.getName(), "testName");
   }
 }

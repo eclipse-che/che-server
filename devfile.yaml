@@ -8,7 +8,7 @@ components:
     mountSources: true
     memoryLimit: 2Gi
     volumes:
-      - name: maven
+      - name: m2
         containerPath: /home/user/.m2
   - type: chePlugin
     id: redhat/java11/latest

@@ -38,15 +38,12 @@ public class GitLabOAuthAuthenticatorProviderTest {
 
   @Test(dataProvider = "noopConfig")
   public void shouldProvideNoopAuthenticatorWhenInvalidConfigurationSet(
-      String gitHubClientIdPath,
-      String gitHubClientSecretPath,
-      String gitlabEndpoint,
-      String[] redirectUris)
+      String gitHubClientIdPath, String gitHubClientSecretPath, String gitlabEndpoint)
       throws IOException {
     // given
     GitLabOAuthAuthenticatorProvider provider =
         new GitLabOAuthAuthenticatorProvider(
-            gitHubClientIdPath, gitHubClientSecretPath, gitlabEndpoint, redirectUris);
+            gitHubClientIdPath, gitHubClientSecretPath, gitlabEndpoint, "che.api");
     // when
     OAuthAuthenticator authenticator = provider.get();
     // then
@@ -61,7 +58,7 @@ public class GitLabOAuthAuthenticatorProviderTest {
     // given
     GitLabOAuthAuthenticatorProvider provider =
         new GitLabOAuthAuthenticatorProvider(
-            emptyFile.getPath(), emptyFile.getPath(), TEST_URI, new String[] {TEST_URI});
+            emptyFile.getPath(), emptyFile.getPath(), TEST_URI, "che.api");
     // when
     OAuthAuthenticator authenticator = provider.get();
     // then
@@ -76,7 +73,7 @@ public class GitLabOAuthAuthenticatorProviderTest {
     // given
     GitLabOAuthAuthenticatorProvider provider =
         new GitLabOAuthAuthenticatorProvider(
-            credentialFile.getPath(), credentialFile.getPath(), TEST_URI, new String[] {TEST_URI});
+            credentialFile.getPath(), credentialFile.getPath(), TEST_URI, "che.api");
     // when
     OAuthAuthenticator authenticator = provider.get();
 
@@ -88,26 +85,24 @@ public class GitLabOAuthAuthenticatorProviderTest {
   @DataProvider(name = "noopConfig")
   public Object[][] noopConfig() {
     return new Object[][] {
-      {null, null, null, null},
-      {emptyFile.getPath(), emptyFile.getPath(), null, null},
-      {credentialFile.getPath(), credentialFile.getPath(), null, null},
-      {null, null, TEST_URI, new String[] {TEST_URI}},
-      {"", "", TEST_URI, new String[] {TEST_URI}},
-      {emptyFile.getPath(), "", TEST_URI, new String[] {TEST_URI}},
-      {"", emptyFile.getPath(), TEST_URI, new String[] {TEST_URI}},
-      {null, emptyFile.getPath(), TEST_URI, new String[] {TEST_URI}},
-      {emptyFile.getPath(), null, TEST_URI, new String[] {TEST_URI}},
-      {credentialFile.getPath(), null, TEST_URI, new String[] {TEST_URI}},
-      {null, credentialFile.getPath(), TEST_URI, new String[] {TEST_URI}},
-      {credentialFile.getPath(), "", TEST_URI, new String[] {TEST_URI}},
-      {"", credentialFile.getPath(), TEST_URI, new String[] {TEST_URI}},
-      {credentialFile.getPath(), null, null, new String[] {TEST_URI}},
-      {credentialFile.getPath(), credentialFile.getPath(), "", new String[] {TEST_URI}},
-      {credentialFile.getPath(), credentialFile.getPath(), TEST_URI, new String[] {}},
-      {credentialFile.getPath(), credentialFile.getPath(), TEST_URI, null},
-      {credentialFile.getPath(), credentialFile.getPath(), null, new String[] {TEST_URI}},
-      {credentialFile.getPath(), emptyFile.getPath(), TEST_URI, new String[] {TEST_URI}},
-      {emptyFile.getPath(), credentialFile.getPath(), TEST_URI, new String[] {TEST_URI}},
+      {null, null, null},
+      {null, null, TEST_URI},
+      {"", "", TEST_URI},
+      {"", emptyFile.getPath(), TEST_URI},
+      {emptyFile.getPath(), "", TEST_URI},
+      {emptyFile.getPath(), emptyFile.getPath(), null},
+      {credentialFile.getPath(), credentialFile.getPath(), null},
+      {null, emptyFile.getPath(), TEST_URI},
+      {emptyFile.getPath(), null, TEST_URI},
+      {credentialFile.getPath(), null, TEST_URI},
+      {null, credentialFile.getPath(), TEST_URI},
+      {credentialFile.getPath(), "", TEST_URI},
+      {"", credentialFile.getPath(), TEST_URI},
+      {credentialFile.getPath(), null, null},
+      {credentialFile.getPath(), credentialFile.getPath(), ""},
+      {credentialFile.getPath(), credentialFile.getPath(), null},
+      {credentialFile.getPath(), emptyFile.getPath(), TEST_URI},
+      {emptyFile.getPath(), credentialFile.getPath(), TEST_URI},
     };
   }
 }

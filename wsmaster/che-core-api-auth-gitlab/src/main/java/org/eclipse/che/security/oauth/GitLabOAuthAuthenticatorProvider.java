@@ -16,7 +16,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -36,14 +36,15 @@ public class GitLabOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
   private static final Logger LOG = LoggerFactory.getLogger(GitLabOAuthAuthenticatorProvider.class);
   private final OAuthAuthenticator authenticator;
 
+  @Inject
   public GitLabOAuthAuthenticatorProvider(
       @Nullable @Named("che.oauth2.gitlab.clientid_filepath") String clientIdPath,
       @Nullable @Named("che.oauth2.gitlab.clientsecret_filepath") String clientSecretPath,
       @Nullable @Named("che.integration.gitlab.oauth_endpoint") String gitlabEndpoint,
-      @Nullable @Named("che.oauth.github.redirecturis") String[] redirectUris)
+      @Named("che.api") String cheApiEndpoint)
       throws IOException {
     authenticator =
-        getOAuthAuthenticator(clientIdPath, clientSecretPath, gitlabEndpoint, redirectUris);
+        getOAuthAuthenticator(clientIdPath, clientSecretPath, gitlabEndpoint, cheApiEndpoint);
     LOG.debug("{} GitLab OAuth Authenticator is used.", authenticator);
   }
 
@@ -53,17 +54,15 @@ public class GitLabOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
   }
 
   private OAuthAuthenticator getOAuthAuthenticator(
-      String clientIdPath, String clientSecretPath, String gitlabEndpoint, String[] redirectUris)
+      String clientIdPath, String clientSecretPath, String gitlabEndpoint, String cheApiEndpoint)
       throws IOException {
     if (!isNullOrEmpty(clientIdPath)
         && !isNullOrEmpty(clientSecretPath)
-        && !isNullOrEmpty(gitlabEndpoint)
-        && Objects.nonNull(redirectUris)
-        && redirectUris.length != 0) {
+        && !isNullOrEmpty(gitlabEndpoint)) {
       String clientId = Files.readString(Path.of(clientIdPath));
       String clientSecret = Files.readString(Path.of(clientSecretPath));
       if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {
-        return new GitLabOAuthAuthenticator(clientId, clientSecret, gitlabEndpoint, redirectUris);
+        return new GitLabOAuthAuthenticator(clientId, clientSecret, gitlabEndpoint, cheApiEndpoint);
       }
     }
     return new NoopOAuthAuthenticator();

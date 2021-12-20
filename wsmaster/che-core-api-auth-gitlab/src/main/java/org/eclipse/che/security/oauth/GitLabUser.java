@@ -13,6 +13,11 @@ package org.eclipse.che.security.oauth;
 
 import org.eclipse.che.security.oauth.shared.User;
 
+/**
+ * Represents GitLab user.
+ *
+ * @author Pavol Baran
+ */
 public class GitLabUser implements User {
   private String id;
   private String name;

@@ -3,8 +3,8 @@
 | Packages | License | Resolved CQs |
 | --- | --- | --- |
 | `aopalliance/aopalliance@1.0` | LicenseRef-Public-Domain | [CQ2918](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=2918) |
-| `ch.qos.logback/logback-classic@1.2.8` | EPL-1.0 | [CQ13636](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13636) |
-| `ch.qos.logback/logback-core@1.2.8` | EPL-1.0 | [CQ13635](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13635) |
+| `ch.qos.logback/logback-classic@1.2.9` | EPL-1.0 | [CQ13636](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13636) |
+| `ch.qos.logback/logback-core@1.2.9` | EPL-1.0 | [CQ13635](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13635) |
 | `com.auth0/jwks-rsa@0.19.0` | NOASSERTION | [CQ23769](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23769) |
 | `com.fasterxml.jackson.core/jackson-annotations@2.11.2` | Apache-2.0 | [CQ23491](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23491) |
 | `com.fasterxml.jackson.core/jackson-core@2.11.2` | Apache-2.0 | [CQ23092](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23092) |

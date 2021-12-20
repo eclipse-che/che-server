@@ -13,4 +13,5 @@ This file lists dependencies that do not need CQs or auto-detection does not wor
 | `io.swagger.core.v3/swagger-integration-jakarta@2.1.11` | Apache-2.0 clearlydefined |
 | `io.swagger.core.v3/swaqqgger-jaxrs2-jakarta@2.1.11` | Apache-2.0 clearlydefined |
 | `io.swagger.core.v3/swagger-models-jakarta@2.1.11` | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-jaxrs2-jakarta@2.1.11` | Apache-2.0 clearlydefined |
 

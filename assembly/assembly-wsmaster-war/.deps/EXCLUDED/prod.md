@@ -8,5 +8,10 @@ This file lists dependencies that do not need CQs or auto-detection does not wor
 | `org.jgroups.kubernetes/jgroups-kubernetes@1.0.13.Final` | [CQ20984](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=20984) |
 | `org.flywaydb/flyway-core@4.2.0` | [CQ14689](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=14689) |
 | `com.auth0/jwks-rsa@0.19.0` | [CQ23769](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23769) |
-| `org.apache.tomcat/tomcat-jni@10.0.14` |  [CQ23765](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23765) |
-                                            
+| `io.swagger.core.v3/swagger-annotations-jakarta@2.1.11` | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-core-jakarta@2.1.11` | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-integration-jakarta@2.1.11` | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swaqqgger-jaxrs2-jakarta@2.1.11` | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-models-jakarta@2.1.11` | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-jaxrs2-jakarta@2.1.11` | Apache-2.0 clearlydefined |
+

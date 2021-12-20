@@ -3,8 +3,8 @@
 | Packages | License | Resolved CQs |
 | --- | --- | --- |
 | `aopalliance/aopalliance@1.0` | LicenseRef-Public-Domain | [CQ2918](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=2918) |
-| `ch.qos.logback/logback-classic@1.2.8` | EPL-1.0 | [CQ13636](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13636) |
-| `ch.qos.logback/logback-core@1.2.8` | EPL-1.0 | [CQ13635](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13635) |
+| `ch.qos.logback/logback-classic@1.2.9` | EPL-1.0 | [CQ13636](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13636) |
+| `ch.qos.logback/logback-core@1.2.9` | EPL-1.0 | [CQ13635](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=13635) |
 | `com.auth0/jwks-rsa@0.19.0` | NOASSERTION | [CQ23769](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23769) |
 | `com.fasterxml.jackson.core/jackson-annotations@2.11.2` | Apache-2.0 | [CQ23491](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23491) |
 | `com.fasterxml.jackson.core/jackson-core@2.11.2` | Apache-2.0 | [CQ23092](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23092) |
@@ -25,7 +25,7 @@
 | `com.google.j2objc/j2objc-annotations@1.3` | Apache-2.0 | [CQ21195](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=21195) |
 | `com.google.oauth-client/google-oauth-client@1.32.1` | Apache-2.0 | clearlydefined |
 | `com.ibm.icu/icu4j@68.1` | NOASSERTION |  [CQ23669](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23654) |
-| `com.jcraft/jsch@0.1.54` | BSD-2-Clause | [CQ12480](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=12480) |
+| `com.jcraft/jsch@0.1.55` | BSD-3-Clause | [CQ19435](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=19435) |
 | `com.squareup.okhttp3/logging-interceptor@3.12.12` | Apache-2.0 | clearlydefined |
 | `com.squareup.okhttp3/okhttp@3.12.12` | Apache-2.0 | [CQ19549](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=19549) |
 | `com.squareup.okio/okio@1.15.0` | Apache-2.0 | [CQ20187](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=20187) |
@@ -95,21 +95,20 @@
 | `io.prometheus/simpleclient@0.7.0` | Apache-2.0 | clearlydefined |
 | `io.prometheus/simpleclient_common@0.7.0` | Apache-2.0 | clearlydefined |
 | `io.prometheus/simpleclient_httpserver@0.7.0` | Apache-2.0 | clearlydefined |
-| `io.swagger.core.v3/swagger-annotations-jakarta@2.1.10` | Apache-2.0 | clearlydefined |
-| `io.swagger.core.v3/swagger-core-jakarta@2.1.10` | Apache-2.0 | clearlydefined |
-| `io.swagger.core.v3/swagger-integration-jakarta@2.1.10` | Apache-2.0 | clearlydefined |
-| `io.swagger.core.v3/swagger-jaxrs2-jakarta@2.1.10` | Apache-2.0 | clearlydefined |
-| `io.swagger.core.v3/swagger-models-jakarta@2.1.10` | Apache-2.0 | clearlydefined |
+| `io.swagger.core.v3/swagger-annotations-jakarta@2.1.11` | - | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-core-jakarta@2.1.11` | - | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-integration-jakarta@2.1.11` | - | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-jaxrs2-jakarta@2.1.11` | - | Apache-2.0 clearlydefined |
+| `io.swagger.core.v3/swagger-models-jakarta@2.1.11` | - | Apache-2.0 clearlydefined |
 | `jakarta.activation/jakarta.activation-api@2.0.1` | EPL-2.0 OR BSD-3-Clause OR GPL-2.0-with-classpath-exception | ee4j.jaf |
 | `jakarta.annotation/jakarta.annotation-api@2.0.0` | EPL-2.0 OR GPL-2.0-with-classpath-exception | ee4j.ca |
-| `jakarta.inject/jakarta.inject-api@1.0.3` | - | eclipse |
+| `jakarta.inject/jakarta.inject-api@1.0.5` | - | eclipse |
 | `jakarta.servlet/jakarta.servlet-api@5.0.0` | EPL-2.0 OR GPL-2.0-with-classpath-exception | ee4j.servlet |
 | `jakarta.validation/jakarta.validation-api@3.0.0` | EPL-1.0 | modeling.emf.validation |
 | `jakarta.websocket/jakarta.websocket-api@2.0.0` | EPL-2.0 OR GPL-2.0-with-classpath-exception | ee4j.websocket |
 | `jakarta.ws.rs/jakarta.ws.rs-api@3.0.0` | EPL-2.0 OR GPL-2.0-with-classpath-exception | ee4j.jaxrs |
 | `jakarta.xml.bind/jakarta.xml.bind-api@3.0.0` | BSD-3-Clause | ee4j.jaxb |
-| `net.java.dev.jna/jna@4.1.0` | Apache-2.0 | [CQ9291](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=9291) |
-| `net.logstash.logback/logstash-logback-encoder@6.6` | Apache-2.0 | clearlydefined |
+| `net.logstash.logback/logstash-logback-encoder@7.0.1` | Apache-2.0 | clearlydefined |
 | `org.apache.commons/commons-lang3@3.12.0` | Apache-2.0 | clearlydefined |
 | `org.apache.httpcomponents/httpcore@4.4.14` | Apache-2.0 | [CQ23528](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23528) |
 | `org.apache.thrift/libthrift@0.12.0` | Apache-2.0 | clearlydefined |
@@ -120,7 +119,7 @@
 | `org.apache.tomcat/tomcat-dbcp@10.0.14` | Apache-2.0 | clearlydefined |
 | `org.apache.tomcat/tomcat-el-api@10.0.14` | Apache-2.0 | clearlydefined |
 | `org.apache.tomcat/tomcat-jaspic-api@10.0.14` | Apache-2.0 | clearlydefined |
-| `org.apache.tomcat/tomcat-jni@10.0.14` | - |  [CQ23765](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23765) |
+| `org.apache.tomcat/tomcat-jni@10.0.14` | Apache-2.0 | clearlydefined |
 | `org.apache.tomcat/tomcat-jsp-api@10.0.14` | Apache-2.0 | clearlydefined |
 | `org.apache.tomcat/tomcat-juli@10.0.14` | Apache-2.0 | clearlydefined |
 | `org.apache.tomcat/tomcat-servlet-api@10.0.14` | Apache-2.0 AND (EPL-2.0 OR GPL-2.0-with-classpath-exception) | #921 |

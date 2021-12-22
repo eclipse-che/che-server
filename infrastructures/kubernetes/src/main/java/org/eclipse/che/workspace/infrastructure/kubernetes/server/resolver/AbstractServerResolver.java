@@ -83,9 +83,7 @@ public abstract class AbstractServerResolver implements ServerResolver {
   }
 
   private Map<String, ServerImpl> resolveInternalServers(String machineName) {
-    return services
-        .get(machineName)
-        .stream()
+    return services.get(machineName).stream()
         .map(this::resolveServiceServers)
         .flatMap(s -> s.entrySet().stream())
         .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (s1, s2) -> s2));

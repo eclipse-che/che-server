@@ -55,18 +55,14 @@ public class WebSocketSessionRegistry {
   }
 
   public Set<Session> getByPartialMatch(String partialEndpointId) {
-    return sessionsMap
-        .entrySet()
-        .stream()
+    return sessionsMap.entrySet().stream()
         .filter(it -> it.getKey().contains(partialEndpointId))
         .map(Map.Entry::getValue)
         .collect(toSet());
   }
 
   public Optional<String> get(Session session) {
-    return sessionsMap
-        .entrySet()
-        .stream()
+    return sessionsMap.entrySet().stream()
         .filter(entry -> entry.getValue().equals(session))
         .map(Map.Entry::getKey)
         .findAny();

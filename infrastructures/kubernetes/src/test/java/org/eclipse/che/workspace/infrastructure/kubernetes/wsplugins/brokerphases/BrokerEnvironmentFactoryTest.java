@@ -118,10 +118,7 @@ public class BrokerEnvironmentFactoryTest {
     BrokersConfigs brokersConfigs = captor.getValue();
 
     List<Container> containers =
-        brokersConfigs
-            .pods
-            .values()
-            .stream()
+        brokersConfigs.pods.values().stream()
             .flatMap(p -> p.getSpec().getContainers().stream())
             .collect(Collectors.toList());
     assertEquals(containers.size(), 1);
@@ -160,10 +157,7 @@ public class BrokerEnvironmentFactoryTest {
     BrokersConfigs brokersConfigs = captor.getValue();
 
     List<Container> containers =
-        brokersConfigs
-            .pods
-            .values()
-            .stream()
+        brokersConfigs.pods.values().stream()
             .flatMap(p -> p.getSpec().getContainers().stream())
             .collect(Collectors.toList());
     assertEquals(containers.size(), 1);
@@ -200,10 +194,7 @@ public class BrokerEnvironmentFactoryTest {
     BrokersConfigs brokersConfigs = captor.getValue();
 
     List<Container> containers =
-        brokersConfigs
-            .pods
-            .values()
-            .stream()
+        brokersConfigs.pods.values().stream()
             .flatMap(p -> p.getSpec().getContainers().stream())
             .collect(Collectors.toList());
     assertEquals(containers.size(), 1);
@@ -225,10 +216,7 @@ public class BrokerEnvironmentFactoryTest {
     BrokersConfigs brokersConfigs = captor.getValue();
 
     List<Container> containers =
-        brokersConfigs
-            .pods
-            .values()
-            .stream()
+        brokersConfigs.pods.values().stream()
             .flatMap(p -> p.getSpec().getContainers().stream())
             .collect(Collectors.toList());
     assertEquals(containers.size(), 1);
@@ -394,10 +382,7 @@ public class BrokerEnvironmentFactoryTest {
     BrokersConfigs brokersConfigs = captor.getValue();
 
     List<Container> containers =
-        brokersConfigs
-            .pods
-            .values()
-            .stream()
+        brokersConfigs.pods.values().stream()
             .flatMap(p -> p.getSpec().getContainers().stream())
             .collect(Collectors.toList());
     assertEquals(containers.size(), 1);

@@ -40,9 +40,7 @@ public class OpenShiftEnvironmentValidator extends KubernetesEnvironmentValidato
 
   private void validateRoutesMatchServices(OpenShiftEnvironment env) throws ValidationException {
     Set<String> recipeServices =
-        env.getServices()
-            .values()
-            .stream()
+        env.getServices().values().stream()
             .map(s -> s.getMetadata().getName())
             .collect(Collectors.toSet());
     for (Route route : env.getRoutes().values()) {

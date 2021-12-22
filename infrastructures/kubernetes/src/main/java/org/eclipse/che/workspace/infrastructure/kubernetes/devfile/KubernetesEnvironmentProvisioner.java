@@ -134,8 +134,7 @@ public class KubernetesEnvironmentProvisioner {
         co ->
             co instanceof PersistentVolumeClaim
                 && co.getMetadata().getName().equals(PROJECTS_VOLUME_NAME)
-                && envObjects
-                    .stream()
+                && envObjects.stream()
                     .filter(envObject -> envObject instanceof PersistentVolumeClaim)
                     .anyMatch(pvc -> pvc.equals(co)));
   }

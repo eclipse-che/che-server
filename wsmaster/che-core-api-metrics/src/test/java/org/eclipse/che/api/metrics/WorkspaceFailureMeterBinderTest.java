@@ -72,8 +72,7 @@ public class WorkspaceFailureMeterBinderTest {
     List<Counter> restOfCounters = new ArrayList<>(failureCounters);
 
     Counter counter =
-        failureCounters
-            .stream()
+        failureCounters.stream()
             .filter(c -> failureStatus.name().equals(c.getId().getTag("while")))
             .findAny()
             .orElseThrow(

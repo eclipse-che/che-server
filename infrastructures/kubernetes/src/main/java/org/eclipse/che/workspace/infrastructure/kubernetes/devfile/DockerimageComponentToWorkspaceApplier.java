@@ -124,9 +124,7 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
         componentObjects,
         ImmutableMap.of(machineName, machineConfig));
 
-    workspaceConfig
-        .getCommands()
-        .stream()
+    workspaceConfig.getCommands().stream()
         .filter(
             c ->
                 componentAlias != null
@@ -177,9 +175,7 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
             dockerimageComponent.getMemoryLimit(),
             dockerimageComponent.getCpuRequest(),
             dockerimageComponent.getCpuLimit(),
-            dockerimageComponent
-                .getEnv()
-                .stream()
+            dockerimageComponent.getEnv().stream()
                 .map(e -> new EnvVar(e.getName(), e.getValue(), null))
                 .collect(Collectors.toCollection(ArrayList::new)),
             dockerimageComponent.getCommand(),

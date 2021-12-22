@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -182,9 +182,7 @@ public class OrganizationResourcesDistributor {
       String suborganizationId, List<? extends Resource> newResourcesCap)
       throws NotFoundException, ConflictException, ServerException {
     Map<String, Resource> usedResources =
-        resourceManager
-            .getUsedResources(suborganizationId)
-            .stream()
+        resourceManager.getUsedResources(suborganizationId).stream()
             .collect(Collectors.toMap(Resource::getType, Function.identity()));
     for (Resource resourceToCheck : newResourcesCap) {
       Resource usedResource = usedResources.get(resourceToCheck.getType());

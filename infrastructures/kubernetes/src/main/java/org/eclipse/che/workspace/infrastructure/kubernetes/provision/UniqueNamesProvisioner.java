@@ -108,9 +108,7 @@ public class UniqueNamesProvisioner<T extends KubernetesEnvironment>
     for (Container container : pod.getSpec().getContainers()) {
       // Can set env vars to key/value pairs in configmap
       if (container.getEnv() != null) {
-        container
-            .getEnv()
-            .stream()
+        container.getEnv().stream()
             .filter(
                 env ->
                     env.getValueFrom() != null && env.getValueFrom().getConfigMapKeyRef() != null)
@@ -128,9 +126,7 @@ public class UniqueNamesProvisioner<T extends KubernetesEnvironment>
       }
       if (container.getEnvFrom() != null) {
         // Can use all entries in configMap as env vars
-        container
-            .getEnvFrom()
-            .stream()
+        container.getEnvFrom().stream()
             .filter(envFrom -> envFrom.getConfigMapRef() != null)
             .forEach(
                 envFrom -> {
@@ -145,8 +141,7 @@ public class UniqueNamesProvisioner<T extends KubernetesEnvironment>
     // Next update any mounted configMaps
     List<Volume> volumes = pod.getSpec().getVolumes();
     if (pod.getSpec().getVolumes() != null) {
-      volumes
-          .stream()
+      volumes.stream()
           .filter(vol -> vol.getConfigMap() != null)
           .forEach(
               volume -> {

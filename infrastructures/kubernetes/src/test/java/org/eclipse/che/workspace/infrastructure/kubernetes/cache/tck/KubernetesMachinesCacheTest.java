@@ -241,10 +241,7 @@ public class KubernetesMachinesCacheTest {
 
     // then
     Optional<KubernetesMachineImpl> machineOpt =
-        machineCache
-            .getMachines(runtimeId)
-            .entrySet()
-            .stream()
+        machineCache.getMachines(runtimeId).entrySet().stream()
             .filter(e -> e.getKey().equals(machineName))
             .map(Map.Entry::getValue)
             .findAny();

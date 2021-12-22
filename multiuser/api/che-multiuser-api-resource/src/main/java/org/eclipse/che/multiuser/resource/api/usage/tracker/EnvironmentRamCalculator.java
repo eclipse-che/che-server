@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -52,10 +52,7 @@ public class EnvironmentRamCalculator {
       return 0;
     }
     try {
-      return getInternalEnvironment(environment)
-              .getMachines()
-              .values()
-              .stream()
+      return getInternalEnvironment(environment).getMachines().values().stream()
               .mapToLong(
                   m -> parseMemoryAttributeValue(m.getAttributes().get(MEMORY_LIMIT_ATTRIBUTE)))
               .sum()
@@ -71,10 +68,7 @@ public class EnvironmentRamCalculator {
    * @return summary RAM of all machines in runtime in megabytes
    */
   public long calculate(Runtime runtime) {
-    return runtime
-            .getMachines()
-            .values()
-            .stream()
+    return runtime.getMachines().values().stream()
             .mapToLong(
                 m -> parseMemoryAttributeValue(m.getAttributes().get(MEMORY_LIMIT_ATTRIBUTE)))
             .sum()

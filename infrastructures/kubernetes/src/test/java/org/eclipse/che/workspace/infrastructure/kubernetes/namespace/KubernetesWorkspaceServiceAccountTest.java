@@ -115,8 +115,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
     RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
     assertTrue(
-        rbl.getItems()
-            .stream()
+        rbl.getItems().stream()
             .anyMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-metrics")));
   }
 
@@ -137,8 +136,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
     RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
     assertTrue(
-        rbl.getItems()
-            .stream()
+        rbl.getItems().stream()
             .noneMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-metrics")));
   }
 
@@ -153,8 +151,7 @@ public class KubernetesWorkspaceServiceAccountTest {
     // then
     RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
     Optional<Role> roleOptional =
-        rl.getItems()
-            .stream()
+        rl.getItems().stream()
             .filter(r -> r.getMetadata().getName().equals(SECRETS_ROLE_NAME))
             .findFirst();
     assertTrue(roleOptional.isPresent());
@@ -166,8 +163,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
     RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
     assertTrue(
-        rbl.getItems()
-            .stream()
+        rbl.getItems().stream()
             .anyMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-secrets")));
   }
 
@@ -182,8 +178,7 @@ public class KubernetesWorkspaceServiceAccountTest {
     // then
     RoleList rl = k8sClient.rbac().roles().inNamespace(NAMESPACE).list();
     Optional<Role> roleOptional =
-        rl.getItems()
-            .stream()
+        rl.getItems().stream()
             .filter(r -> r.getMetadata().getName().equals(CONFIGMAPS_ROLE_NAME))
             .findFirst();
     assertTrue(roleOptional.isPresent());
@@ -195,8 +190,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
     RoleBindingList rbl = k8sClient.rbac().roleBindings().inNamespace(NAMESPACE).list();
     assertTrue(
-        rbl.getItems()
-            .stream()
+        rbl.getItems().stream()
             .anyMatch(rb -> rb.getMetadata().getName().equals(SA_NAME + "-configmaps")));
   }
 }

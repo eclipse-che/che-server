@@ -140,9 +140,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/api/1.0/users/response_s9_l25.json")));
 
     List<String> page =
-        bitbucketServer
-            .getUsers()
-            .stream()
+        bitbucketServer.getUsers().stream()
             .map(BitbucketUser::getSlug)
             .collect(Collectors.toList());
     assertEquals(
@@ -174,9 +172,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     List<String> page =
-        bitbucketServer
-            .getUsers("ksmster")
-            .stream()
+        bitbucketServer.getUsers("ksmster").stream()
             .map(BitbucketUser::getSlug)
             .collect(Collectors.toList());
     assertEquals(page, ImmutableList.of("admin", "ksmster"));
@@ -197,9 +193,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/response.json")));
 
     List<String> page =
-        bitbucketServer
-            .getPersonalAccessTokens("ksmster")
-            .stream()
+        bitbucketServer.getPersonalAccessTokens("ksmster").stream()
             .map(BitbucketPersonalAccessToken::getName)
             .collect(Collectors.toList());
     assertEquals(page, ImmutableList.of("che", "t2"));

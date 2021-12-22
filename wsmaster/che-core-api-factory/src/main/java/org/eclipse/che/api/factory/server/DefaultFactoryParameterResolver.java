@@ -100,9 +100,7 @@ public class DefaultFactoryParameterResolver implements FactoryParametersResolve
    * @return filtered devfile values override map
    */
   protected Map<String, String> extractOverrideParams(Map<String, String> factoryParameters) {
-    return factoryParameters
-        .entrySet()
-        .stream()
+    return factoryParameters.entrySet().stream()
         .filter(e -> e.getKey().startsWith(OVERRIDE_PREFIX))
         .collect(toMap(e -> e.getKey().substring(OVERRIDE_PREFIX.length()), Entry::getValue));
   }

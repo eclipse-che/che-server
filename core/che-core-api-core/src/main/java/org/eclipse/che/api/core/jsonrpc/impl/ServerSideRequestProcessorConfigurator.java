@@ -29,8 +29,7 @@ public class ServerSideRequestProcessorConfigurator
   public ServerSideRequestProcessorConfigurator(
       Set<RequestProcessorConfigurationProvider.Configuration> configurations) {
     this.configurations =
-        configurations
-            .stream()
+        configurations.stream()
             .collect(Collectors.toMap(Configuration::getEndpointId, Function.identity()));
   }
 

@@ -966,8 +966,7 @@ public class KubernetesPluginsToolingApplierTest {
       Collection<InternalMachineConfig> machineConfigs, int numberOfMachines, int numberOfVolumes) {
 
     long numberOfMatchingMachines =
-        machineConfigs
-            .stream()
+        machineConfigs.stream()
             .filter(machineConfig -> machineConfig.getVolumes().size() == numberOfVolumes)
             .count();
     assertEquals(numberOfMatchingMachines, numberOfMachines);
@@ -1002,9 +1001,7 @@ public class KubernetesPluginsToolingApplierTest {
       InternalEnvironment internalEnvironment) {
     Map<String, InternalMachineConfig> machines = internalEnvironment.getMachines();
     Map<String, InternalMachineConfig> nonUserMachines =
-        machines
-            .entrySet()
-            .stream()
+        machines.entrySet().stream()
             .filter(entry -> !USER_MACHINE_NAME.equals(entry.getKey()))
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     return nonUserMachines.values();
@@ -1019,9 +1016,7 @@ public class KubernetesPluginsToolingApplierTest {
 
   private List<Container> getNonUserContainers(KubernetesEnvironment kubernetesEnvironment) {
     Pod pod = kubernetesEnvironment.getPodsCopy().values().iterator().next();
-    return pod.getSpec()
-        .getContainers()
-        .stream()
+    return pod.getSpec().getContainers().stream()
         .filter(container -> userContainer != container)
         .collect(Collectors.toList());
   }
@@ -1057,8 +1052,7 @@ public class KubernetesPluginsToolingApplierTest {
             .targetPort(port);
     plugin.getEndpoints().add(endpoint);
     List<CheContainerPort> ports = plugin.getContainers().get(0).getPorts();
-    if (ports
-        .stream()
+    if (ports.stream()
         .map(CheContainerPort::getExposedPort)
         .noneMatch(integer -> integer == port)) {
       ports.add(new CheContainerPort().exposedPort(port));

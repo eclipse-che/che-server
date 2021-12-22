@@ -80,9 +80,7 @@ public class EditorComponentToWorkspaceApplier implements ComponentToWorkspaceAp
               componentFQNParser.getCompositeId(registryUrl, editorId));
     }
 
-    workspaceConfig
-        .getCommands()
-        .stream()
+    workspaceConfig.getCommands().stream()
         .filter(
             c ->
                 editorComponentAlias != null

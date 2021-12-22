@@ -53,9 +53,7 @@ public abstract class KubernetesSecretApplier<E extends KubernetesEnvironment> {
       String componentName =
           internalMachineConfig.getAttributes().get(DEVFILE_COMPONENT_ALIAS_ATTRIBUTE);
       if (componentName != null) {
-        return env.getDevfile()
-            .getComponents()
-            .stream()
+        return env.getDevfile().getComponents().stream()
             .filter(c -> componentName.equals(c.getAlias()))
             .findFirst();
       }

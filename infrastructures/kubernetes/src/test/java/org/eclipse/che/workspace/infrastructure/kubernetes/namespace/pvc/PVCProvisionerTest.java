@@ -323,9 +323,7 @@ public class PVCProvisionerTest {
 
   private PersistentVolumeClaim findPvc(
       String volumeName, Map<String, PersistentVolumeClaim> claims) {
-    return claims
-        .values()
-        .stream()
+    return claims.values().stream()
         .filter(c -> volumeName.equals(c.getMetadata().getLabels().get(CHE_VOLUME_NAME_LABEL)))
         .findAny()
         .orElse(null);

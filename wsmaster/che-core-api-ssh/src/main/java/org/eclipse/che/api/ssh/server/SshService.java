@@ -251,9 +251,7 @@ public class SshService extends Service {
   public List<SshPairDto> getPairs(
       @Parameter(description = "Name of service") @PathParam("service") String service)
       throws ServerException {
-    return sshManager
-        .getPairs(getCurrentUserId(), service)
-        .stream()
+    return sshManager.getPairs(getCurrentUserId(), service).stream()
         .map(sshPair -> injectLinks(asDto(sshPair)))
         .collect(Collectors.toList());
   }

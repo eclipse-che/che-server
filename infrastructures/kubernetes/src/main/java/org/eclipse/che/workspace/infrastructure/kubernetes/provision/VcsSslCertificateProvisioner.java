@@ -104,9 +104,7 @@ public class VcsSslCertificateProvisioner
 
     for (PodData pod : k8sEnv.getPodsData().values()) {
       if (pod.getRole() != PodRole.INJECTABLE) {
-        if (pod.getSpec()
-            .getVolumes()
-            .stream()
+        if (pod.getSpec().getVolumes().stream()
             .noneMatch(v -> v.getName().equals(CHE_GIT_SELF_SIGNED_VOLUME))) {
           pod.getSpec().getVolumes().add(buildCertVolume(selfSignedCertConfigMapName));
         }
@@ -122,9 +120,7 @@ public class VcsSslCertificateProvisioner
   }
 
   private void provisionCertVolumeMountIfNeeded(Container container) {
-    if (container
-        .getVolumeMounts()
-        .stream()
+    if (container.getVolumeMounts().stream()
         .noneMatch(vm -> vm.getName().equals(CHE_GIT_SELF_SIGNED_VOLUME))) {
       container.getVolumeMounts().add(buildCertVolumeMount());
     }

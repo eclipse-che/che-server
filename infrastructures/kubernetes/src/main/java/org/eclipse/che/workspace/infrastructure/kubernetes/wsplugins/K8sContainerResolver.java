@@ -180,8 +180,7 @@ public class K8sContainerResolver {
   }
 
   private List<ContainerPort> getContainerPorts() {
-    return containerEndpoints
-        .stream()
+    return containerEndpoints.stream()
         .map(
             endpoint ->
                 new ContainerPortBuilder()

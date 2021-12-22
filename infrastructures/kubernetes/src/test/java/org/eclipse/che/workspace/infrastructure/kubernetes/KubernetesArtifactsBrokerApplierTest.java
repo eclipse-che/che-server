@@ -145,10 +145,7 @@ public class KubernetesArtifactsBrokerApplierTest {
     assertNotNull(workspaceConfigMap);
     assertFalse(workspaceConfigMap.getData().isEmpty());
     assertTrue(
-        workspaceConfigMap
-            .getData()
-            .entrySet()
-            .stream()
+        workspaceConfigMap.getData().entrySet().stream()
             .allMatch(e -> brokerConfigMap.getData().get(e.getKey()).equals(e.getValue())));
   }
 

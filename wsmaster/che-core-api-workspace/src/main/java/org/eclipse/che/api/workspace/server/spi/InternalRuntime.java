@@ -87,9 +87,7 @@ public abstract class InternalRuntime<T extends RuntimeContext> {
    * @throws InfrastructureException when any error occurs
    */
   public Map<String, ? extends Machine> getMachines() throws InfrastructureException {
-    return getInternalMachines()
-        .entrySet()
-        .stream()
+    return getInternalMachines().entrySet().stream()
         .collect(
             toMap(
                 Map.Entry::getKey,

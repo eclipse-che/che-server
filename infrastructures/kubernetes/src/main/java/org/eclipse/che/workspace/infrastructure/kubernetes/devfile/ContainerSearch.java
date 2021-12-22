@@ -98,13 +98,7 @@ public class ContainerSearch {
       return ((StatefulSet) o).getSpec().getTemplate().getSpec().getContainers().stream();
     } else if (o instanceof CronJob) {
       return ((CronJob) o)
-          .getSpec()
-          .getJobTemplate()
-          .getSpec()
-          .getTemplate()
-          .getSpec()
-          .getContainers()
-          .stream();
+          .getSpec().getJobTemplate().getSpec().getTemplate().getSpec().getContainers().stream();
     } else if (o instanceof DeploymentConfig) {
       return ((DeploymentConfig) o).getSpec().getTemplate().getSpec().getContainers().stream();
     } else if (o instanceof Template) {

@@ -360,10 +360,7 @@ public class KubernetesEnvironmentFactoryTest {
     PodData mergedPodData = k8sEnv.getPodsData().get("merged");
     assertEquals(mergedPodData.getMetadata().getLabels().get(DEPLOYMENT_NAME_LABEL), "merged");
     assertTrue(
-        k8sEnv
-            .getServices()
-            .values()
-            .stream()
+        k8sEnv.getServices().values().stream()
             .allMatch(
                 s ->
                     ImmutableMap.of(DEPLOYMENT_NAME_LABEL, "merged")

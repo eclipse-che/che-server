@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -58,10 +58,7 @@ public class RuntimeImpl implements Runtime {
   public RuntimeImpl(Runtime runtime) {
     this.activeEnv = runtime.getActiveEnv();
     this.machines =
-        runtime
-            .getMachines()
-            .entrySet()
-            .stream()
+        runtime.getMachines().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> new MachineImpl(e.getValue())));
     this.owner = runtime.getOwner();
     this.warnings =

@@ -59,9 +59,7 @@ public class IngressServerResolver extends AbstractServerResolver {
 
   @Override
   public Map<String, ServerImpl> resolveExternalServers(String machineName) {
-    return ingresses
-        .get(machineName)
-        .stream()
+    return ingresses.get(machineName).stream()
         .map(this::fillIngressServers)
         .flatMap(m -> m.entrySet().stream())
         .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1, v2) -> v2));

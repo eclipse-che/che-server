@@ -96,8 +96,7 @@ public class ServersChecker {
     // should be completed with an exception if a server considered unavailable
     CompletableFuture<Void> firstNonAvailable = new CompletableFuture<>();
     CompletableFuture[] checkTasks =
-        serverCheckers
-            .stream()
+        serverCheckers.stream()
             .map(ServerChecker::getReportCompFuture)
             .map(
                 compFut ->

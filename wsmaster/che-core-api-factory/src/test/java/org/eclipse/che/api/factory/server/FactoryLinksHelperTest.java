@@ -59,8 +59,7 @@ public class FactoryLinksHelperTest {
             "user1",
             testRepo);
     assertTrue(
-        links
-            .stream()
+        links.stream()
             .anyMatch(
                 l ->
                     l.getMethod().equals("GET")
@@ -84,8 +83,7 @@ public class FactoryLinksHelperTest {
             "user1",
             TEST_REPO);
     assertTrue(
-        links
-            .stream()
+        links.stream()
             .anyMatch(
                 l ->
                     l.getMethod().equals("GET")
@@ -109,8 +107,7 @@ public class FactoryLinksHelperTest {
             "user1",
             testRepo);
     assertTrue(
-        links
-            .stream()
+        links.stream()
             .noneMatch(
                 l -> l.getMethod().equals("GET") && l.getRel().equals("myfile.ext content")));
   }

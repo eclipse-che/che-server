@@ -136,10 +136,7 @@ public class KubernetesPluginsToolingApplier implements ChePluginsApplier {
     CommandsResolver commandsResolver = new CommandsResolver(k8sEnv);
     for (ChePlugin chePlugin : chePlugins) {
       Map<String, ComponentImpl> devfilePlugins =
-          k8sEnv
-              .getDevfile()
-              .getComponents()
-              .stream()
+          k8sEnv.getDevfile().getComponents().stream()
               .filter(c -> c.getType().equals("cheEditor") || c.getType().equals("chePlugin"))
               .collect(Collectors.toMap(ComponentImpl::getId, Function.identity()));
       if (!devfilePlugins.containsKey(chePlugin.getId())) {
@@ -192,10 +189,7 @@ public class KubernetesPluginsToolingApplier implements ChePluginsApplier {
       ChePlugin chePlugin, KubernetesEnvironment kubernetesEnvironment) {
 
     List<EnvVar> workspaceEnv = toK8sEnvVars(chePlugin.getWorkspaceEnv());
-    kubernetesEnvironment
-        .getPodsData()
-        .values()
-        .stream()
+    kubernetesEnvironment.getPodsData().values().stream()
         .flatMap(pod -> pod.getSpec().getContainers().stream())
         .forEach(container -> container.getEnv().addAll(workspaceEnv));
   }
@@ -205,8 +199,7 @@ public class KubernetesPluginsToolingApplier implements ChePluginsApplier {
     if (workspaceEnv == null) {
       return emptyList();
     }
-    return workspaceEnv
-        .stream()
+    return workspaceEnv.stream()
         .map(e -> new EnvVar(e.getName(), e.getValue(), null))
         .collect(Collectors.toList());
   }
@@ -280,9 +273,7 @@ public class KubernetesPluginsToolingApplier implements ChePluginsApplier {
                     org.eclipse.che.api.core.model.workspace.config.Command.MACHINE_NAME_ATTRIBUTE,
                     machineName));
 
-    container
-        .getCommands()
-        .stream()
+    container.getCommands().stream()
         .map(c -> asCommand(machineName, c))
         .forEach(c -> k8sEnv.getCommands().add(c));
 

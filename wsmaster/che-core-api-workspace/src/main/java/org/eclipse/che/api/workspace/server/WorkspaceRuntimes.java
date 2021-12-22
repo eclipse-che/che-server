@@ -364,9 +364,7 @@ public class WorkspaceRuntimes {
       if (runtime == null) {
         try {
           final Optional<RuntimeIdentity> runtimeIdentity =
-              infrastructure
-                  .getIdentities()
-                  .stream()
+              infrastructure.getIdentities().stream()
                   .filter(id -> id.getWorkspaceId().equals(workspaceId))
                   .findAny();
 
@@ -573,10 +571,7 @@ public class WorkspaceRuntimes {
 
   /** Returns workspace ids which has {@link WorkspaceStatus#RUNNING} runtimes. */
   public Set<String> getRunning() {
-    return statuses
-        .asMap()
-        .entrySet()
-        .stream()
+    return statuses.asMap().entrySet().stream()
         .filter(e -> RUNNING == e.getValue())
         .map(Entry::getKey)
         .collect(toSet());
@@ -628,10 +623,7 @@ public class WorkspaceRuntimes {
    * status is {@link WorkspaceStatus#STARTING} or {@link WorkspaceStatus#STOPPING})
    */
   public Set<String> getInProgress() {
-    return statuses
-        .asMap()
-        .entrySet()
-        .stream()
+    return statuses.asMap().entrySet().stream()
         .filter(e -> STARTING == e.getValue() || STOPPING == e.getValue())
         .map(Entry::getKey)
         .filter(this::containsThisRuntimesId)
@@ -660,10 +652,7 @@ public class WorkspaceRuntimes {
    * {@link WorkspaceStatus#STARTING} or {@link WorkspaceStatus#STOPPING}), otherwise returns false.
    */
   public boolean isAnyInProgress() {
-    return statuses
-        .asMap()
-        .entrySet()
-        .stream()
+    return statuses.asMap().entrySet().stream()
         .filter(e -> STARTING == e.getValue() || STOPPING == e.getValue())
         .map(Entry::getKey)
         .anyMatch(this::containsThisRuntimesId);

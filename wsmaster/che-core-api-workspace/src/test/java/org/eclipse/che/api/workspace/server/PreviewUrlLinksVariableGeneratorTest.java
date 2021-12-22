@@ -92,9 +92,7 @@ public class PreviewUrlLinksVariableGeneratorTest {
     assertTrue(varKey.startsWith("previewurl/"));
 
     Command aCommand =
-        w.getRuntime()
-            .getCommands()
-            .stream()
+        w.getRuntime().getCommands().stream()
             .filter(c -> c.getName().equals("a"))
             .findFirst()
             .get();

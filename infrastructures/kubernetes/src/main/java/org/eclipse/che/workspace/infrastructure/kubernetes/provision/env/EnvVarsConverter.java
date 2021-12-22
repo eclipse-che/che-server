@@ -58,10 +58,7 @@ public class EnvVarsConverter implements ConfigurationProvisioner {
         // we need to combine the env vars from the machine config with the variables already
         // present in the container. Let's key the variables by name and use the map for merging
         Map<String, EnvVar> envVars =
-            machineConf
-                .getEnv()
-                .entrySet()
-                .stream()
+            machineConf.getEnv().entrySet().stream()
                 .map(e -> new EnvVar(e.getKey(), e.getValue(), null))
                 .collect(toMap(EnvVar::getName, identity()));
 

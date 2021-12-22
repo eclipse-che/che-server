@@ -65,8 +65,7 @@ public class JpaUserDevfilePermissionDao
   @Override
   public List<UserDevfilePermissionImpl> getByUser(String userId) throws ServerException {
     requireNonNull(userId, "User identifier required");
-    return doGetByUser(wildcardToNull(userId))
-        .stream()
+    return doGetByUser(wildcardToNull(userId)).stream()
         .map(UserDevfilePermissionImpl::new)
         .collect(toList());
   }

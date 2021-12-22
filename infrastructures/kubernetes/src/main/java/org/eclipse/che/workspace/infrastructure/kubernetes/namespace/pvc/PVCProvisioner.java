@@ -195,9 +195,7 @@ public class PVCProvisioner {
       String pvcName = pvc.getMetadata().getName();
       PodSpec podSpec = pod.getSpec();
       Optional<io.fabric8.kubernetes.api.model.Volume> volumeOpt =
-          podSpec
-              .getVolumes()
-              .stream()
+          podSpec.getVolumes().stream()
               .filter(
                   volume ->
                       volume.getPersistentVolumeClaim() != null

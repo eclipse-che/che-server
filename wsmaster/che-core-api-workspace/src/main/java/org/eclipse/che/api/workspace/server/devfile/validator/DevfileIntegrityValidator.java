@@ -115,9 +115,7 @@ public class DevfileIntegrityValidator {
             format("Duplicate component alias found:'%s'", component.getAlias()));
       }
       Optional<Map.Entry<String, Long>> duplicatedEndpoint =
-          component
-              .getEndpoints()
-              .stream()
+          component.getEndpoints().stream()
               .map(Endpoint::getName)
               .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
               .entrySet()

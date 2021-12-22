@@ -124,8 +124,7 @@ public class SshKeysProvisioner implements ConfigurationProvisioner<KubernetesEn
     allSshPairs.addAll(systemSshPairs);
 
     List<String> invalidSshKeyNames =
-        allSshPairs
-            .stream()
+        allSshPairs.stream()
             .filter(keyPair -> !isValidSshKeyPair(keyPair))
             .map(SshPairImpl::getName)
             .collect(toList());
@@ -220,8 +219,7 @@ public class SshKeysProvisioner implements ConfigurationProvisioner<KubernetesEn
       List<SshPairImpl> sshPairs, KubernetesEnvironment k8sEnv, String wsId) {
 
     Map<String, String> data =
-        sshPairs
-            .stream()
+        sshPairs.stream()
             .filter(sshPair -> !isNullOrEmpty(sshPair.getPrivateKey()))
             .collect(
                 toMap(

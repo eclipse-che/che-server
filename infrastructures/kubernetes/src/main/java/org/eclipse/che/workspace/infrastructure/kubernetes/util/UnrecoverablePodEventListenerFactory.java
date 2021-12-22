@@ -62,10 +62,7 @@ public class UnrecoverablePodEventListenerFactory {
     }
 
     Set<String> toWatch =
-        environment
-            .getPodsData()
-            .values()
-            .stream()
+        environment.getPodsData().values().stream()
             .map(podData -> podData.getMetadata().getName())
             .collect(Collectors.toSet());
 

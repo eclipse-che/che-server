@@ -892,9 +892,7 @@ public class KubernetesNamespaceFactoryTest {
             "exec"));
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
-        bindings
-            .getItems()
-            .stream()
+        bindings.getItems().stream()
             .map(r -> r.getMetadata().getName())
             .collect(Collectors.toSet()),
         Sets.newHashSet(
@@ -941,13 +939,7 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     Optional<Role> roleOptional =
-        k8sClient
-            .rbac()
-            .roles()
-            .inNamespace("workspace123")
-            .list()
-            .getItems()
-            .stream()
+        k8sClient.rbac().roles().inNamespace("workspace123").list().getItems().stream()
             .filter(r -> r.getMetadata().getName().equals(SECRETS_ROLE_NAME))
             .findAny();
     assertTrue(roleOptional.isPresent());
@@ -957,13 +949,7 @@ public class KubernetesNamespaceFactoryTest {
     assertEquals(rule.getApiGroups(), singletonList(""));
     assertEquals(rule.getVerbs(), Arrays.asList("get", "patch"));
     assertTrue(
-        k8sClient
-            .rbac()
-            .roleBindings()
-            .inNamespace("workspace123")
-            .list()
-            .getItems()
-            .stream()
+        k8sClient.rbac().roleBindings().inNamespace("workspace123").list().getItems().stream()
             .anyMatch(rb -> rb.getMetadata().getName().equals("serviceAccount-secrets")));
   }
 
@@ -1024,9 +1010,7 @@ public class KubernetesNamespaceFactoryTest {
 
     RoleBindingList bindings = k8sClient.rbac().roleBindings().inNamespace("workspace123").list();
     assertEquals(
-        bindings
-            .getItems()
-            .stream()
+        bindings.getItems().stream()
             .map(r -> r.getMetadata().getName())
             .collect(Collectors.toSet()),
         Sets.newHashSet(

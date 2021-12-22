@@ -65,8 +65,7 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
     this.workspaceManager = workspaceManager;
     this.accountManager = accountManager;
     this.accountTypeToPermissionsChecker =
-        accountPermissionsCheckers
-            .stream()
+        accountPermissionsCheckers.stream()
             .collect(toMap(AccountPermissionsChecker::getAccountType, identity()));
     this.superPrivilegesChecker = superPrivilegesChecker;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -106,8 +106,7 @@ public class SuborganizationResourcesProvider implements ResourcesProvider {
       Collection<? extends Resource> source, List<? extends Resource> caps) {
     final Map<String, Resource> resourcesCaps =
         caps.stream().collect(toMap(Resource::getType, Function.identity()));
-    return source
-        .stream()
+    return source.stream()
         .map(
             resource -> {
               Resource resourceCap = resourcesCaps.get(resource.getType());

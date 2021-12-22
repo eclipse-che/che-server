@@ -66,8 +66,7 @@ public final class PagingUtil {
       pageRefs.add(Pair.of("next", page.getNextPageRef()));
     }
     final UriBuilder ub = UriBuilder.fromUri(uri);
-    return pageRefs
-        .stream()
+    return pageRefs.stream()
         .map(
             refPair ->
                 format(

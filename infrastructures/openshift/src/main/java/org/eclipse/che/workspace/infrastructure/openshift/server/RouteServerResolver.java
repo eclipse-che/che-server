@@ -52,9 +52,7 @@ public class RouteServerResolver extends AbstractServerResolver {
 
   @Override
   public Map<String, ServerImpl> resolveExternalServers(String machineName) {
-    return routes
-        .get(machineName)
-        .stream()
+    return routes.get(machineName).stream()
         .map(r -> resolveRouteServers(machineName, r))
         .flatMap(m -> m.entrySet().stream())
         .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1, v2) -> v2));

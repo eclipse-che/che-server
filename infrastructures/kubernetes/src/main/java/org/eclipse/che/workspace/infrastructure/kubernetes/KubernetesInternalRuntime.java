@@ -656,10 +656,7 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
           getContext().getIdentity().getWorkspaceId());
       // get all the pods we care about
       Set<String> podNames =
-          machines
-              .getMachines(getContext().getIdentity())
-              .values()
-              .stream()
+          machines.getMachines(getContext().getIdentity()).values().stream()
               .filter(Objects::nonNull)
               .map(KubernetesMachineImpl::getPodName)
               .filter(Objects::nonNull)
@@ -810,8 +807,7 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
       ObjectMeta toCreateMeta,
       List<Container> toCreateContainers,
       Map<String, Map<String, Pod>> injectables) {
-    return toCreateContainers
-        .stream()
+    return toCreateContainers.stream()
         .map(c -> Names.machineName(toCreateMeta, c))
         .map(injectables::get)
         // we're only interested in pods for which we require injection
@@ -1035,9 +1031,7 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
    */
   public boolean isConsistent() throws InfrastructureException {
     Set<String> podNames =
-        getInternalMachines()
-            .values()
-            .stream()
+        getInternalMachines().values().stream()
             .map(KubernetesMachineImpl::getPodName)
             .collect(Collectors.toSet());
     for (String podName : podNames) {

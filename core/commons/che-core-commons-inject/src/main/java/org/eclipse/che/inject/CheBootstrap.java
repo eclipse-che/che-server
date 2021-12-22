@@ -257,9 +257,7 @@ public class CheBootstrap extends EverrestGuiceContextListener {
     @Override
     protected void configure() {
       Iterable<Map.Entry<Object, Object>> cheProperties =
-          System.getProperties()
-              .entrySet()
-              .stream()
+          System.getProperties().entrySet().stream()
               .filter(new PropertyNamePrefixPredicate<>("che.", "codenvy."))
               .collect(toList());
       bindProperties(null, cheProperties);
@@ -274,9 +272,7 @@ public class CheBootstrap extends EverrestGuiceContextListener {
     @Override
     protected void configure() {
       Iterable<Map.Entry<String, String>> cheProperties =
-          System.getenv()
-              .entrySet()
-              .stream()
+          System.getenv().entrySet().stream()
               .filter(new PropertyNamePrefixPredicate<>("CHE_", "CODENVY_"))
               .map(new EnvironmentVariableToSystemPropertyFormatNameConverter())
               .collect(toList());

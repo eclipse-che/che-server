@@ -70,9 +70,7 @@ public class ResourceService extends Service {
   public List<ResourceDto> getTotalResources(
       @Parameter(description = "Account id") @PathParam("accountId") String accountId)
       throws NotFoundException, ServerException, ConflictException {
-    return resourceManager
-        .getTotalResources(accountId)
-        .stream()
+    return resourceManager.getTotalResources(accountId).stream()
         .map(DtoConverter::asDto)
         .collect(Collectors.toList());
   }
@@ -94,9 +92,7 @@ public class ResourceService extends Service {
       })
   public List<ResourceDto> getAvailableResources(@PathParam("accountId") String accountId)
       throws NotFoundException, ServerException {
-    return resourceManager
-        .getAvailableResources(accountId)
-        .stream()
+    return resourceManager.getAvailableResources(accountId).stream()
         .map(DtoConverter::asDto)
         .collect(Collectors.toList());
   }
@@ -118,9 +114,7 @@ public class ResourceService extends Service {
       })
   public List<ResourceDto> getUsedResources(@PathParam("accountId") String accountId)
       throws NotFoundException, ServerException {
-    return resourceManager
-        .getUsedResources(accountId)
-        .stream()
+    return resourceManager.getUsedResources(accountId).stream()
         .map(DtoConverter::asDto)
         .collect(Collectors.toList());
   }

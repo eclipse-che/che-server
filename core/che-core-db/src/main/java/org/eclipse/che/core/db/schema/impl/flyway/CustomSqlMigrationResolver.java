@@ -187,9 +187,7 @@ public class CustomSqlMigrationResolver extends BaseMigrationResolver {
 
     final Map<MigrationVersion, ResolvedMigration> migrations = new HashMap<>();
     for (SqlScript script :
-        scriptsInDir
-            .values()
-            .stream()
+        scriptsInDir.values().stream()
             .flatMap(scripts -> scripts.values().stream())
             .collect(toList())) {
       final ResolvedMigrationImpl migration = new ResolvedMigrationImpl();

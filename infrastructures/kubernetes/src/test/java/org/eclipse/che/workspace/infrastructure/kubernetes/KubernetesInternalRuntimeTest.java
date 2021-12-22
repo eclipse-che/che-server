@@ -1003,12 +1003,7 @@ public class KubernetesInternalRuntimeTest {
     assertEquals(depls.size(), 1);
     Deployment deployedPod = depls.get(0);
     List<String> containerNames =
-        deployedPod
-            .getSpec()
-            .getTemplate()
-            .getSpec()
-            .getContainers()
-            .stream()
+        deployedPod.getSpec().getTemplate().getSpec().getContainers().stream()
             .map(Container::getName)
             .collect(toList());
 
@@ -1060,12 +1055,7 @@ public class KubernetesInternalRuntimeTest {
     assertEquals(depls.size(), 1);
     Deployment deployedPod = depls.get(0);
     List<String> containerNames =
-        deployedPod
-            .getSpec()
-            .getTemplate()
-            .getSpec()
-            .getContainers()
-            .stream()
+        deployedPod.getSpec().getTemplate().getSpec().getContainers().stream()
             .map(Container::getName)
             .collect(toList());
 
@@ -1155,12 +1145,7 @@ public class KubernetesInternalRuntimeTest {
     assertEquals(depls.size(), 1);
     Deployment deployedPod = depls.get(0);
     List<String> containerNames =
-        deployedPod
-            .getSpec()
-            .getTemplate()
-            .getSpec()
-            .getContainers()
-            .stream()
+        deployedPod.getSpec().getTemplate().getSpec().getContainers().stream()
             .map(Container::getName)
             .collect(toList());
 
@@ -1528,9 +1513,7 @@ public class KubernetesInternalRuntimeTest {
 
     @Override
     public Map<String, KubernetesMachineImpl> getMachines(RuntimeIdentity runtimeIdentity) {
-      return machines
-          .entrySet()
-          .stream()
+      return machines.entrySet().stream()
           .filter(e -> e.getKey().getWorkspaceId().equals(runtimeIdentity.getWorkspaceId()))
           .collect(toMap(e -> e.getValue().getName(), Entry::getValue));
     }

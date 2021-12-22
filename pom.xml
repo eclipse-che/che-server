@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.che</groupId>
     <artifactId>che-server</artifactId>
-    <version>7.41.0-SNAPSHOT</version>
+    <version>7.42.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
     <description>Eclipse Che Server</description>
@@ -63,7 +63,7 @@
         <com.jcraft.jsch.version>0.1.55</com.jcraft.jsch.version>
         <com.squareup.okhttp3.version>3.12.12</com.squareup.okhttp3.version>
         <com.squareup.okio.version>1.15.0</com.squareup.okio.version>
-        <commons-codec.version>1.11</commons-codec.version>
+        <commons-codec.version>1.15</commons-codec.version>
         <commons-fileupload.version>1.3.3</commons-fileupload.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
@@ -100,7 +100,7 @@
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
-        <che.version>7.41.0-SNAPSHOT</che.version>
+        <che.version>7.42.0-SNAPSHOT</che.version>
         <specification.version>1.0-beta2</specification.version>
         <?SORTPOM RESUME?>
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>

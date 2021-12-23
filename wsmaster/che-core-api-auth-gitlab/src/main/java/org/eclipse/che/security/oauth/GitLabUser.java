@@ -55,7 +55,7 @@ public class GitLabUser implements User {
 
   @Override
   public String toString() {
-    return "GitHubUser{"
+    return "GitLabUser{"
         + "id='"
         + id
         + '\''

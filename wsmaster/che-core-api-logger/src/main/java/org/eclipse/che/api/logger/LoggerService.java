@@ -91,9 +91,7 @@ public class LoggerService extends Service {
           Integer maxItems) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-    return loggerContext
-        .getLoggerList()
-        .stream()
+    return loggerContext.getLoggerList().stream()
         .filter(log -> log.getLevel() != null || log.iteratorForAppenders().hasNext())
         .skip(skipCount)
         .limit(maxItems)

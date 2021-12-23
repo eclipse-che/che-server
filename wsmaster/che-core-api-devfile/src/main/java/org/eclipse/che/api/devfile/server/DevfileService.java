@@ -254,9 +254,7 @@ public class DevfileService extends Service {
     final Set<String> skip = ImmutableSet.of("token", "skipCount", "maxItems", "order");
     Map<String, Set<String>> queryParams = URLEncodedUtils.parse(uriInfo.getRequestUri());
     final List<Pair<String, String>> query =
-        queryParams
-            .entrySet()
-            .stream()
+        queryParams.entrySet().stream()
             .filter(param -> !param.getValue().isEmpty())
             .filter(param -> !skip.contains(param.getKey()))
             .map(entry -> Pair.of(entry.getKey(), entry.getValue().iterator().next()))
@@ -282,9 +280,7 @@ public class DevfileService extends Service {
         userDevfileManager.getUserDevfiles(maxItems, skipCount, query, searchOrder);
 
     List<UserDevfileDto> list =
-        userDevfilesPage
-            .getItems()
-            .stream()
+        userDevfilesPage.getItems().stream()
             .map(DtoConverter::asDto)
             .map(dto -> linksInjector.injectLinks(asDto(dto), getServiceContext()))
             .collect(toList());

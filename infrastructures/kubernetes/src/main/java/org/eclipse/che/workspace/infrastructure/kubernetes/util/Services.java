@@ -29,10 +29,7 @@ public class Services {
     if (service == null || service.getSpec() == null || service.getSpec().getPorts() == null) {
       return Optional.empty();
     }
-    return service
-        .getSpec()
-        .getPorts()
-        .stream()
+    return service.getSpec().getPorts().stream()
         .filter(p -> p.getPort() != null && p.getPort() == port)
         .findFirst();
   }

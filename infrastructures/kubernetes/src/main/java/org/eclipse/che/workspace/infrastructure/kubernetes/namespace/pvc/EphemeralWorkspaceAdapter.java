@@ -70,9 +70,7 @@ public class EphemeralWorkspaceAdapter {
   private void replacePVCsWithEmptyDir(KubernetesEnvironment k8sEnv) {
     for (PodData pod : k8sEnv.getPodsData().values()) {
       PodSpec podSpec = pod.getSpec();
-      podSpec
-          .getVolumes()
-          .stream()
+      podSpec.getVolumes().stream()
           .filter(v -> v.getPersistentVolumeClaim() != null)
           .forEach(
               v -> {

@@ -72,8 +72,7 @@ public class BitbucketURLParser {
     }
 
     Matcher matcher =
-        bitbucketUrlPatterns
-            .stream()
+        bitbucketUrlPatterns.stream()
             .map(pattern -> pattern.matcher(url))
             .filter(Matcher::matches)
             .findFirst()

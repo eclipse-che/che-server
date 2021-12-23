@@ -166,9 +166,7 @@ public class OpenshiftTrustedCAProvisionerTest {
     assertEquals(podSpec.getVolumes().size(), 1);
     assertEquals(podSpec.getVolumes().get(0).getConfigMap().getName(), CONFIGMAP_NAME);
     assertTrue(
-        podSpec
-            .getContainers()
-            .stream()
+        podSpec.getContainers().stream()
             .allMatch(
                 c -> c.getVolumeMounts().get(0).getMountPath().equals(CERTIFICATE_MOUNT_PATH)));
   }

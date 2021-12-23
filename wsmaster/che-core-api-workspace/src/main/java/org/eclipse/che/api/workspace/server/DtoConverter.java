@@ -238,10 +238,7 @@ public final class DtoConverter {
     List<ProjectConfigDto> projects =
         workspace.getProjects().stream().map(DtoConverter::asDto).collect(toList());
     Map<String, EnvironmentDto> environments =
-        workspace
-            .getEnvironments()
-            .entrySet()
-            .stream()
+        workspace.getEnvironments().entrySet().stream()
             .collect(toMap(Map.Entry::getKey, entry -> asDto(entry.getValue())));
 
     return newDto(WorkspaceConfigDto.class)
@@ -289,9 +286,7 @@ public final class DtoConverter {
     final EnvironmentDto envDto = newDto(EnvironmentDto.class);
     if (env.getMachines() != null) {
       envDto.withMachines(
-          env.getMachines()
-              .entrySet()
-              .stream()
+          env.getMachines().entrySet().stream()
               .collect(toMap(Map.Entry::getKey, entry -> asDto(entry.getValue()))));
     }
     if (env.getRecipe() != null) {
@@ -310,10 +305,7 @@ public final class DtoConverter {
     MachineConfigDto machineDto = newDto(MachineConfigDto.class);
     if (machine.getServers() != null) {
       machineDto.setServers(
-          machine
-              .getServers()
-              .entrySet()
-              .stream()
+          machine.getServers().entrySet().stream()
               .collect(toMap(Map.Entry::getKey, entry -> asDto(entry.getValue()))));
     }
     if (machine.getAttributes() != null) {
@@ -321,10 +313,7 @@ public final class DtoConverter {
     }
     if (machine.getVolumes() != null) {
       machineDto.setVolumes(
-          machine
-              .getVolumes()
-              .entrySet()
-              .stream()
+          machine.getVolumes().entrySet().stream()
               .collect(toMap(Map.Entry::getKey, entry -> asDto(entry.getValue()))));
     }
     if (machine.getEnv() != null) {
@@ -350,10 +339,7 @@ public final class DtoConverter {
     RuntimeDto runtimeDto = newDto(RuntimeDto.class).withActiveEnv(runtime.getActiveEnv());
     if (runtime.getMachines() != null) {
       runtimeDto.setMachines(
-          runtime
-              .getMachines()
-              .entrySet()
-              .stream()
+          runtime.getMachines().entrySet().stream()
               .collect(toMap(Map.Entry::getKey, entry -> asDto(entry.getValue()))));
     }
     if (runtime.getWarnings() != null) {
@@ -402,10 +388,7 @@ public final class DtoConverter {
             .withStatus(machine.getStatus());
     if (machine.getServers() != null) {
       machineDto.withServers(
-          machine
-              .getServers()
-              .entrySet()
-              .stream()
+          machine.getServers().entrySet().stream()
               .collect(toMap(Map.Entry::getKey, entry -> asDto(entry.getValue()))));
     }
     return machineDto;

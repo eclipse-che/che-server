@@ -76,9 +76,7 @@ public class MachineConfigImpl implements MachineConfig {
       Map<String, ? extends Volume> volumes) {
     if (servers != null) {
       this.servers =
-          servers
-              .entrySet()
-              .stream()
+          servers.entrySet().stream()
               .collect(
                   Collectors.toMap(
                       Map.Entry::getKey, entry -> new ServerConfigImpl(entry.getValue())));
@@ -91,9 +89,7 @@ public class MachineConfigImpl implements MachineConfig {
     }
     if (volumes != null) {
       this.volumes =
-          volumes
-              .entrySet()
-              .stream()
+          volumes.entrySet().stream()
               .collect(
                   Collectors.toMap(Map.Entry::getKey, entry -> new VolumeImpl(entry.getValue())));
     }

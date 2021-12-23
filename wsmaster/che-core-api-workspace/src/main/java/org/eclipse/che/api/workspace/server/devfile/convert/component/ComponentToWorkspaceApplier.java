@@ -50,8 +50,7 @@ public interface ComponentToWorkspaceApplier {
 
   static Map<String, ServerConfigImpl> convertEndpointsIntoServers(
       List<? extends Endpoint> endpoints, boolean requireSubdomain) {
-    return endpoints
-        .stream()
+    return endpoints.stream()
         .collect(
             Collectors.toMap(
                 Endpoint::getName,

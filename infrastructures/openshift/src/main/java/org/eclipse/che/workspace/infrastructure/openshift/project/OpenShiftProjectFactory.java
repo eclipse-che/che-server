@@ -193,8 +193,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
           clientFactory.createOC().projects().withLabels(namespaceLabels).list().getItems();
       if (!workspaceProjects.isEmpty()) {
         Map<String, String> evaluatedAnnotations = evaluateAnnotationPlaceholders(namespaceCtx);
-        return workspaceProjects
-            .stream()
+        return workspaceProjects.stream()
             .filter(p -> matchesAnnotations(p, evaluatedAnnotations))
             .map(this::asNamespaceMeta)
             .collect(Collectors.toList());

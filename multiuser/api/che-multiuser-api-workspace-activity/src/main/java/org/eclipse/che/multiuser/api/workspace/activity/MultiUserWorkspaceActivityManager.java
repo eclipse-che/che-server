@@ -77,8 +77,7 @@ public class MultiUserWorkspaceActivityManager extends WorkspaceActivityManager 
       return defaultTimeout;
     }
     Optional<? extends Resource> timeoutOpt =
-        availableResources
-            .stream()
+        availableResources.stream()
             .filter(resource -> TimeoutResourceType.ID.equals(resource.getType()))
             .findAny();
 

@@ -74,8 +74,7 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
                 + "` value");
       } else {
         Optional<OAuthAuthenticator> authenticator =
-            authenticators
-                .stream()
+            authenticators.stream()
                 .filter(
                     a ->
                         a.getOAuthProvider()
@@ -92,9 +91,7 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
   }
 
   private static List<String> sanitizedEndpoints(String rawBitbucketEndpoints) {
-    return Splitter.on(",")
-        .splitToList(rawBitbucketEndpoints)
-        .stream()
+    return Splitter.on(",").splitToList(rawBitbucketEndpoints).stream()
         .map(s -> StringUtils.trimEnd(s, '/'))
         .collect(Collectors.toList());
   }

@@ -75,9 +75,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       LOG.debug("Current bitbucket user {} ", user);
       // cleanup existed
       List<BitbucketPersonalAccessToken> existingTokens =
-          bitbucketServerApiClient
-              .getPersonalAccessTokens(user.getSlug())
-              .stream()
+          bitbucketServerApiClient.getPersonalAccessTokens(user.getSlug()).stream()
               .filter(p -> p.getName().equals(tokenName))
               .collect(Collectors.toList());
       for (BitbucketPersonalAccessToken existedToken : existingTokens) {

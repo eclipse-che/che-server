@@ -165,8 +165,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
         prepareComponentObjects(k8sComponent, componentContent);
 
     List<PodData> podsData = getPodDatas(componentObjects);
-    podsData
-        .stream()
+    podsData.stream()
         .flatMap(
             e ->
                 Stream.concat(
@@ -205,8 +204,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
   }
 
   private void applyProjectsVolumes(List<PodData> podsData, List<HasMetadata> componentObjects) {
-    if (componentObjects
-        .stream()
+    if (componentObjects.stream()
         .noneMatch(
             hasMeta ->
                 hasMeta instanceof PersistentVolumeClaim
@@ -221,18 +219,13 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
     }
 
     for (PodData podData : podsData) {
-      if (podData
-          .getSpec()
-          .getVolumes()
-          .stream()
+      if (podData.getSpec().getVolumes().stream()
           .noneMatch(volume -> volume.getName().equals(PROJECTS_VOLUME_NAME))) {
         Volume volume = newVolume(PROJECTS_VOLUME_NAME, PROJECTS_VOLUME_NAME);
         podData.getSpec().getVolumes().add(volume);
       }
       for (Container container : podData.getSpec().getContainers()) {
-        if (container
-            .getVolumeMounts()
-            .stream()
+        if (container.getVolumeMounts().stream()
             .noneMatch(mount -> mount.getName().equals(PROJECTS_VOLUME_NAME))) {
           VolumeMount volumeMount = newVolumeMount(PROJECTS_VOLUME_NAME, projectFolderPath, null);
           container.getVolumeMounts().add(volumeMount);
@@ -282,9 +275,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
     for (org.eclipse.che.api.workspace.server.model.impl.devfile.VolumeImpl componentVolume :
         component.getVolumes()) {
       Optional<VolumeMount> sameNameMount =
-          container
-              .getVolumeMounts()
-              .stream()
+          container.getVolumeMounts().stream()
               .filter(vm -> vm.getName().equals(componentVolume.getName()))
               .findFirst();
       if (sameNameMount.isPresent()
@@ -299,9 +290,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
                 getIdentifiableComponentName(component),
                 container.getName()));
       }
-      if (container
-          .getVolumeMounts()
-          .stream()
+      if (container.getVolumeMounts().stream()
           .anyMatch(vm -> vm.getMountPath().equals(componentVolume.getContainerPath()))) {
         throw new DevfileException(
             format(
@@ -365,9 +354,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
   private void linkCommandsToMachineName(
       WorkspaceConfig workspaceConfig, Component component, Set<String> machinesNames) {
     List<? extends Command> componentCommands =
-        workspaceConfig
-            .getCommands()
-            .stream()
+        workspaceConfig.getCommands().stream()
             .filter(
                 c ->
                     component.getAlias() != null
@@ -392,14 +379,12 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
   private List<PodData> getPodDatas(List<HasMetadata> componentsObjects) {
     List<PodData> podsData = new ArrayList<>();
 
-    componentsObjects
-        .stream()
+    componentsObjects.stream()
         .filter(hasMetadata -> hasMetadata instanceof Pod)
         .map(hasMetadata -> (Pod) hasMetadata)
         .forEach(p -> podsData.add(new PodData(p)));
 
-    componentsObjects
-        .stream()
+    componentsObjects.stream()
         .filter(hasMetadata -> hasMetadata instanceof Deployment)
         .map(hasMetadata -> (Deployment) hasMetadata)
         .forEach(d -> podsData.add(new PodData(d)));

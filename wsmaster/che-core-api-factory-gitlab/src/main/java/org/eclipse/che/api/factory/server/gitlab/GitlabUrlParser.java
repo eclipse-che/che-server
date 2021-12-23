@@ -75,8 +75,7 @@ public class GitlabUrlParser {
     }
 
     Matcher matcher =
-        gitlabUrlPatterns
-            .stream()
+        gitlabUrlPatterns.stream()
             .map(pattern -> pattern.matcher(url))
             .filter(Matcher::matches)
             .findFirst()

@@ -97,8 +97,7 @@ public class KubernetesRecipeParser {
           clientFactory.create().load(new ByteArrayInputStream(recipeContent.getBytes())).get();
 
       // needed because Che master namespace is set by K8s API during list loading
-      parsed
-          .stream()
+      parsed.stream()
           .filter(o -> o.getMetadata() != null)
           .forEach(o -> o.getMetadata().setNamespace(null));
 

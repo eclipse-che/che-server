@@ -113,8 +113,7 @@ public class PluginFQNParser {
       PluginFQN pFQN = parsePluginFQN(plugin);
 
       String pluginKey = firstNonNull(pFQN.getReference(), pFQN.getId());
-      if (collectedFQNs
-          .stream()
+      if (collectedFQNs.stream()
           .anyMatch(p -> pluginKey.equals(p.getId()) || pluginKey.equals(p.getReference()))) {
         throw new InfrastructureException(
             format(

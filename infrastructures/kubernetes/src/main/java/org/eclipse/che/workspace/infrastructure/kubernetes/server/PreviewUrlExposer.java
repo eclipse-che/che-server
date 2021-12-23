@@ -59,8 +59,7 @@ public class PreviewUrlExposer<T extends KubernetesEnvironment> {
 
   public void expose(T env) throws InternalInfrastructureException {
     List<CommandImpl> previewUrlCommands =
-        env.getCommands()
-            .stream()
+        env.getCommands().stream()
             .filter(c -> c.getPreviewUrl() != null)
             .collect(Collectors.toList());
 

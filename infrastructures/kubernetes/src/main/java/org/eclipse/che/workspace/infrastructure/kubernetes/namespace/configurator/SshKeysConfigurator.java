@@ -76,8 +76,7 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
     List<SshPairImpl> vcsSshPairs = getVcsSshPairs(namespaceResolutionContext);
 
     List<String> invalidSshKeyNames =
-        vcsSshPairs
-            .stream()
+        vcsSshPairs.stream()
             .filter(keyPair -> !isValidSshKeyPair(keyPair))
             .map(SshPairImpl::getName)
             .collect(toList());

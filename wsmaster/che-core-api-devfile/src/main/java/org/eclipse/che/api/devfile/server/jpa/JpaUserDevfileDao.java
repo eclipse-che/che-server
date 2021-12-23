@@ -198,8 +198,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
       throws ServerException {
     if (filter != null && !filter.isEmpty()) {
       List<Pair<String, String>> invalidFilter =
-          filter
-              .stream()
+          filter.stream()
               .filter(p -> !VALID_SEARCH_FIELDS.contains(p.first.toLowerCase()))
               .collect(toList());
       if (!invalidFilter.isEmpty()) {
@@ -210,8 +209,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     List<Pair<String, String>> effectiveOrder = DEFAULT_ORDER;
     if (order != null && !order.isEmpty()) {
       List<Pair<String, String>> invalidOrder =
-          order
-              .stream()
+          order.stream()
               .filter(p -> !VALID_ORDER_FIELDS.contains(p.first.toLowerCase()))
               .collect(toList());
       if (!invalidOrder.isEmpty()) {
@@ -220,8 +218,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
       }
 
       List<Pair<String, String>> invalidSortOrder =
-          order
-              .stream()
+          order.stream()
               .filter(p -> !p.second.equalsIgnoreCase("asc") && !p.second.equalsIgnoreCase("desc"))
               .collect(Collectors.toList());
       if (!invalidSortOrder.isEmpty()) {

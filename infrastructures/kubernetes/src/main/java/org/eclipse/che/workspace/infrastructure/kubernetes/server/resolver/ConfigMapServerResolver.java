@@ -54,9 +54,7 @@ public class ConfigMapServerResolver extends AbstractServerResolver {
     Map<String, ServerImpl> serverMap = new HashMap<>();
     serverMap.putAll(nativeServerResolver.resolveExternalServers(machineName));
     serverMap.putAll(
-        configMaps
-            .get(machineName)
-            .stream()
+        configMaps.get(machineName).stream()
             .map(this::fillGatewayServers)
             .flatMap(m -> m.entrySet().stream())
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (s1, s2) -> s2)));

@@ -92,9 +92,7 @@ public class KubernetesMachineImpl implements Machine {
     this.status = status;
     this.attributes = attributes;
     this.servers =
-        servers
-            .entrySet()
-            .stream()
+        servers.entrySet().stream()
             .collect(
                 Collectors.toMap(
                     Map.Entry::getKey,

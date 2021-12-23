@@ -133,9 +133,7 @@ public abstract class InternalEnvironmentFactory<T extends InternalEnvironment> 
 
   @VisibleForTesting
   Map<String, ServerConfig> normalizeServers(Map<String, ? extends ServerConfig> servers) {
-    return servers
-        .entrySet()
-        .stream()
+    return servers.entrySet().stream()
         .collect(Collectors.toMap(Entry::getKey, e -> normalizeServer(e.getValue())));
   }
 

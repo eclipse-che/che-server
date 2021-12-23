@@ -606,8 +606,7 @@ public class WorkspaceServiceTest {
     assertEquals(response.getStatusCode(), 200);
     assertNotNull(response.getHeader("Link"));
     assertEquals(
-        unwrapDtoList(response, WorkspaceDto.class)
-            .stream()
+        unwrapDtoList(response, WorkspaceDto.class).stream()
             .map(ws -> new WorkspaceImpl(ws, TEST_ACCOUNT))
             .collect(toList()),
         asList(workspace1, workspace2));
@@ -629,8 +628,7 @@ public class WorkspaceServiceTest {
 
     assertEquals(response.getStatusCode(), 200);
     assertEquals(
-        unwrapDtoList(response, WorkspaceDto.class)
-            .stream()
+        unwrapDtoList(response, WorkspaceDto.class).stream()
             .map(ws -> new WorkspaceImpl(ws, TEST_ACCOUNT))
             .collect(toList()),
         asList(workspace1, workspace2));
@@ -652,8 +650,7 @@ public class WorkspaceServiceTest {
 
     assertEquals(response.getStatusCode(), 200);
     assertEquals(
-        unwrapDtoList(response, WorkspaceDto.class)
-            .stream()
+        unwrapDtoList(response, WorkspaceDto.class).stream()
             .map(ws -> new WorkspaceImpl(ws, TEST_ACCOUNT))
             .collect(toList()),
         singletonList(workspace2));

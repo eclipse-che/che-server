@@ -277,8 +277,7 @@ public class PodMergerTest {
   public void shouldBeAbleToMergeTerminationGracePeriodS(
       List<Long> terminationGracePeriods, Long expectedResultLong) throws ValidationException {
     List<PodData> podData =
-        terminationGracePeriods
-            .stream()
+        terminationGracePeriods.stream()
             .map(
                 p ->
                     new PodData(

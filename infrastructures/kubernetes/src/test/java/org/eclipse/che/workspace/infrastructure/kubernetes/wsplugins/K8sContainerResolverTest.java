@@ -167,17 +167,13 @@ public class K8sContainerResolverTest {
   }
 
   private List<EnvVar> toSidecarEnvVars(Map<String, String> envVars) {
-    return envVars
-        .entrySet()
-        .stream()
+    return envVars.entrySet().stream()
         .map(entry -> new EnvVar().name(entry.getKey()).value(entry.getValue()))
         .collect(Collectors.toList());
   }
 
   private List<io.fabric8.kubernetes.api.model.EnvVar> toK8sEnvVars(Map<String, String> envVars) {
-    return envVars
-        .entrySet()
-        .stream()
+    return envVars.entrySet().stream()
         .map(
             entry ->
                 new io.fabric8.kubernetes.api.model.EnvVar(entry.getKey(), entry.getValue(), null))

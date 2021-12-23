@@ -54,9 +54,7 @@ public class InmemoryWorkspaceActivityDao implements WorkspaceActivityDao {
    */
   @Override
   public List<String> findExpiredRunTimeout(long timestamp, long runTimeout) {
-    return workspaceActivities
-        .values()
-        .stream()
+    return workspaceActivities.values().stream()
         .filter(
             a ->
                 (a.getExpiration() != null && a.getExpiration() < timestamp)
@@ -69,9 +67,7 @@ public class InmemoryWorkspaceActivityDao implements WorkspaceActivityDao {
 
   @Override
   public List<String> findExpiredIdle(long timestamp) {
-    return workspaceActivities
-        .values()
-        .stream()
+    return workspaceActivities.values().stream()
         .filter(a -> a.getExpiration() != null && a.getExpiration() < timestamp)
         .map(WorkspaceActivity::getWorkspaceId)
         .collect(toList());
@@ -113,9 +109,7 @@ public class InmemoryWorkspaceActivityDao implements WorkspaceActivityDao {
   public Page<String> findInStatusSince(
       long timestamp, WorkspaceStatus status, int maxItems, long skipCount) {
     List<String> all =
-        workspaceActivities
-            .values()
-            .stream()
+        workspaceActivities.values().stream()
             .filter(a -> a.getStatus() == status && isGreater(a.getLastStopped(), timestamp))
             .map(WorkspaceActivity::getWorkspaceId)
             .collect(toList());

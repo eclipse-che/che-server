@@ -303,9 +303,7 @@ public class WorkspaceService extends Service {
             EnvironmentContext.getCurrent().getSubject().getUserId(), false, maxItems, skipCount);
     return Response.ok()
         .entity(
-            workspacesPage
-                .getItems()
-                .stream()
+            workspacesPage.getItems().stream()
                 .filter(ws -> status == null || status.equalsIgnoreCase(ws.getStatus().toString()))
                 .map(DtoConverter::asDto)
                 .collect(toList()))

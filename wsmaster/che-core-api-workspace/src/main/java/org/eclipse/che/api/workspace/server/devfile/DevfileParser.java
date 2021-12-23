@@ -176,9 +176,7 @@ public class DevfileParser {
   public void resolveReference(DevfileImpl devfile, FileContentProvider fileContentProvider)
       throws DevfileException {
     List<ComponentImpl> toResolve =
-        devfile
-            .getComponents()
-            .stream()
+        devfile.getComponents().stream()
             .filter(
                 c ->
                     c.getType().equals(KUBERNETES_COMPONENT_TYPE)

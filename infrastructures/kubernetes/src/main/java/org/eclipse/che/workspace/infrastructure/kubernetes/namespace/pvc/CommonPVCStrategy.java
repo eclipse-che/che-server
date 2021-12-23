@@ -264,10 +264,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
   }
 
   private Set<String> combineVolumeMountsSubpaths(KubernetesEnvironment k8sEnv) {
-    return k8sEnv
-        .getPodsData()
-        .values()
-        .stream()
+    return k8sEnv.getPodsData().values().stream()
         .flatMap(p -> p.getSpec().getContainers().stream())
         .flatMap(c -> c.getVolumeMounts().stream())
         .map(VolumeMount::getSubPath)

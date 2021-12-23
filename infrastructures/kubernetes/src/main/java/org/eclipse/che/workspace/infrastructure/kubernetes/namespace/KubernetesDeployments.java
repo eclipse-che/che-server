@@ -452,9 +452,7 @@ public class KubernetesDeployments {
 
           errorMessage.append("The following containers have terminated:\n");
           errorMessage.append(
-              terminatedContainers
-                  .entrySet()
-                  .stream()
+              terminatedContainers.entrySet().stream()
                   .map(e -> e.getKey() + ": " + e.getValue())
                   .collect(Collectors.joining("" + "\n")));
         }

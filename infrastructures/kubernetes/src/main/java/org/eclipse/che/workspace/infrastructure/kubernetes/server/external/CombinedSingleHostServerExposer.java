@@ -87,9 +87,7 @@ public class CombinedSingleHostServerExposer<T extends KubernetesEnvironment>
   @Override
   public Map<String, ServerConfig> getStrategyConformingServers(
       Map<String, ServerConfig> externalServers) {
-    return externalServers
-        .entrySet()
-        .stream()
+    return externalServers.entrySet().stream()
         .filter(e -> !e.getValue().isRequireSubdomain())
         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
@@ -97,9 +95,7 @@ public class CombinedSingleHostServerExposer<T extends KubernetesEnvironment>
   @Override
   public Map<String, ServerConfig> getServersRequiringSubdomain(
       Map<String, ServerConfig> externalServers) {
-    return externalServers
-        .entrySet()
-        .stream()
+    return externalServers.entrySet().stream()
         .filter(e -> e.getValue().isRequireSubdomain())
         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
   }

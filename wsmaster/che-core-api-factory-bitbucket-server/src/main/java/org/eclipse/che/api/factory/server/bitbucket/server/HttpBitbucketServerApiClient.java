@@ -101,8 +101,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       // entity) Che's user username. At the second step, we will search against all visible(to the
       // current Che's user) bitbucket users that are not included in the first list.
       Set<String> usersByName =
-          getUsers(cheUser.getUserName())
-              .stream()
+          getUsers(cheUser.getUserName()).stream()
               .map(BitbucketUser::getSlug)
               .collect(Collectors.toSet());
 
@@ -111,8 +110,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
         return currentUser.get();
       }
       Set<String> usersAllExceptByName =
-          getUsers()
-              .stream()
+          getUsers().stream()
               .map(BitbucketUser::getSlug)
               .filter(s -> !usersByName.contains(s))
               .collect(Collectors.toSet());

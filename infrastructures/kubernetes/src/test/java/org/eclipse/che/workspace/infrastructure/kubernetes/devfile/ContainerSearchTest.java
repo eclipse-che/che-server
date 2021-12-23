@@ -355,8 +355,7 @@ public class ContainerSearchTest {
   }
 
   private static void assertContainsContainer(Collection<Container> containers, String name) {
-    containers
-        .stream()
+    containers.stream()
         .filter(c -> name.equals(c.getName()))
         .findAny()
         .orElseThrow(

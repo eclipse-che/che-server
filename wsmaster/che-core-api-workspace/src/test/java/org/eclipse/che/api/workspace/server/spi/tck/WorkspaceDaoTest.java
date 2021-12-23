@@ -522,11 +522,7 @@ public class WorkspaceDaoTest {
 
     // Remove an existing environment
     final Optional<String> nonDefaultEnv =
-        workspace
-            .getConfig()
-            .getEnvironments()
-            .keySet()
-            .stream()
+        workspace.getConfig().getEnvironments().keySet().stream()
             .filter(key -> !key.equals(workspace.getConfig().getDefaultEnv()))
             .findAny();
     assertTrue(nonDefaultEnv.isPresent());

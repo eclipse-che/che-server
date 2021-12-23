@@ -46,9 +46,7 @@ public class ApiInfoService {
   public RootResourcesList listJSON(@Context ServletContext context) {
     ResourceBinder binder = (ResourceBinder) context.getAttribute(ResourceBinder.class.getName());
     return new RootResourcesList(
-        binder
-            .getResources()
-            .stream()
+        binder.getResources().stream()
             .map(
                 new Function<ObjectFactory<ResourceDescriptor>, RootResource>() {
                   @Nullable

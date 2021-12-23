@@ -144,8 +144,7 @@ public class KubernetesNamespaceFactory {
 
     if (isNullOrEmpty(defaultNamespaceName)) {
       throw new ConfigurationException("che.infra.kubernetes.namespace.default must be configured");
-    } else if (REQUIRED_NAMESPACE_NAME_PLACEHOLDERS
-        .stream()
+    } else if (REQUIRED_NAMESPACE_NAME_PLACEHOLDERS.stream()
         .noneMatch(defaultNamespaceName::contains)) {
       throw new ConfigurationException(
           format(
@@ -450,8 +449,7 @@ public class KubernetesNamespaceFactory {
     List<KubernetesNamespaceMeta> labeledNamespaces = findPreparedNamespaces(resolutionCtx);
     if (!labeledNamespaces.isEmpty()) {
       String foundNamespace =
-          labeledNamespaces
-              .stream()
+          labeledNamespaces.stream()
               .findFirst()
               .map(KubernetesNamespaceMeta::getName)
               .orElseThrow(
@@ -542,8 +540,7 @@ public class KubernetesNamespaceFactory {
           cheClientFactory.create().namespaces().withLabels(namespaceLabels).list().getItems();
       if (!workspaceNamespaces.isEmpty()) {
         Map<String, String> evaluatedAnnotations = evaluateAnnotationPlaceholders(namespaceCtx);
-        return workspaceNamespaces
-            .stream()
+        return workspaceNamespaces.stream()
             .filter(p -> matchesAnnotations(p, evaluatedAnnotations))
             .map(this::asNamespaceMeta)
             .collect(Collectors.toList());

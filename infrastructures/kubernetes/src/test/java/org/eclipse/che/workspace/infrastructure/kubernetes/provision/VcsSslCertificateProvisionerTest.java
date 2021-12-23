@@ -158,10 +158,7 @@ public class VcsSslCertificateProvisionerTest {
     }
 
     for (Pod pod :
-        k8sEnv
-            .getInjectablePodsCopy()
-            .values()
-            .stream()
+        k8sEnv.getInjectablePodsCopy().values().stream()
             .flatMap(v -> v.values().stream())
             .toArray(Pod[]::new)) {
       assertTrue(pod.getSpec().getVolumes().isEmpty());

@@ -262,9 +262,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
         }
         // Make sure volume is created
         assertTrue(
-            p.getSpec()
-                .getVolumes()
-                .stream()
+            p.getSpec().getVolumes().stream()
                 .anyMatch(
                     v ->
                         v.getName().equals(PROJECTS_VOLUME_NAME)
@@ -274,8 +272,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
         for (Container c : p.getSpec().getContainers()) {
           assertEquals(c.getImagePullPolicy(), "Always");
           assertTrue(
-              c.getVolumeMounts()
-                  .stream()
+              c.getVolumeMounts().stream()
                   .anyMatch(
                       vm ->
                           vm.getName().equals(PROJECTS_VOLUME_NAME)
@@ -308,18 +305,12 @@ public class KubernetesComponentToWorkspaceApplierTest {
     for (MachineConfig config : configMaps.values()) {
       assertEquals(config.getVolumes().size(), 2);
       assertTrue(
-          config
-              .getVolumes()
-              .entrySet()
-              .stream()
+          config.getVolumes().entrySet().stream()
               .anyMatch(
                   entry ->
                       entry.getKey().equals("foo") && entry.getValue().getPath().equals("/foo1")));
       assertTrue(
-          config
-              .getVolumes()
-              .entrySet()
-              .stream()
+          config.getVolumes().entrySet().stream()
               .anyMatch(
                   entry ->
                       entry.getKey().equals("bar") && entry.getValue().getPath().equals("/bar1")));
@@ -423,9 +414,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     verify(k8sEnvProvisioner).provision(any(), any(), any(), mapCaptor.capture());
     Map<String, MachineConfigImpl> machines = mapCaptor.getValue();
     assertTrue(
-        machines
-            .values()
-            .stream()
+        machines.values().stream()
             .allMatch(
                 config ->
                     config
@@ -809,8 +798,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   }
 
   private void replaceImagePullPolicy(KubernetesList list, String imagePullPolicy) {
-    list.getItems()
-        .stream()
+    list.getItems().stream()
         .filter(item -> item instanceof Pod)
         .map(item -> (Pod) item)
         .filter(pod -> pod.getSpec() != null)

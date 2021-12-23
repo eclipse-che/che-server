@@ -177,9 +177,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   private String getFirstNamespace()
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
-      return namespaceFactory
-          .list()
-          .stream()
+      return namespaceFactory.list().stream()
           .map(KubernetesNamespaceMeta::getName)
           .findFirst()
           .orElseThrow(

@@ -514,10 +514,7 @@ public class KubernetesServerExposerTest {
     assertEquals(serviceAnnotations.machineName(), machineName);
     // check that we did not create servers for public endpoints
     assertFalse(
-        serviceAnnotations
-            .servers()
-            .keySet()
-            .stream()
+        serviceAnnotations.servers().keySet().stream()
             .anyMatch(key -> expectedServers.containsKey(key)));
 
     verify(externalServerExposer)
@@ -547,10 +544,7 @@ public class KubernetesServerExposerTest {
 
     // ensure that no service port is exposed
     assertTrue(
-        service
-            .getSpec()
-            .getPorts()
-            .stream()
+        service.getSpec().getPorts().stream()
             .noneMatch(p -> p.getTargetPort().getIntVal().equals(port)));
 
     ServicePort servicePort =
@@ -600,9 +594,7 @@ public class KubernetesServerExposerTest {
 
   private void assertThatContainerPortIsExposed(String portProtocol, Integer port) {
     assertTrue(
-        container
-            .getPorts()
-            .stream()
+        container.getPorts().stream()
             .anyMatch(
                 p ->
                     p.getContainerPort().equals(port)
@@ -622,10 +614,7 @@ public class KubernetesServerExposerTest {
 
   private ServicePort assertThatServicePortIsExposed(Integer port, Service service) {
     Optional<ServicePort> servicePortOpt =
-        service
-            .getSpec()
-            .getPorts()
-            .stream()
+        service.getSpec().getPorts().stream()
             .filter(p -> p.getTargetPort().getIntVal().equals(port))
             .findAny();
     assertTrue(servicePortOpt.isPresent());

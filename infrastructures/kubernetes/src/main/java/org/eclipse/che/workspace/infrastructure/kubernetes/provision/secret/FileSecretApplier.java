@@ -94,10 +94,7 @@ public class FileSecretApplier extends KubernetesSecretApplier<KubernetesEnviron
       if (!podData.getRole().equals(PodRole.DEPLOYMENT)) {
         continue;
       }
-      if (podData
-          .getSpec()
-          .getVolumes()
-          .stream()
+      if (podData.getSpec().getVolumes().stream()
           .anyMatch(v -> v.getName().equals(volumeFromSecret.getName()))) {
         volumeFromSecret.setName(volumeFromSecret.getName() + "_" + NameGenerator.generate("", 6));
       }
@@ -135,10 +132,7 @@ public class FileSecretApplier extends KubernetesSecretApplier<KubernetesEnviron
         container
             .getVolumeMounts()
             .addAll(
-                secret
-                    .getData()
-                    .keySet()
-                    .stream()
+                secret.getData().keySet().stream()
                     .map(
                         secretFile ->
                             buildVolumeMount(volumeFromSecret, componentMountPath, secretFile))

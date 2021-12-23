@@ -134,9 +134,7 @@ public class OrganizationResourcesDistributionService extends Service {
       @Parameter(description = "Suborganization id") @PathParam("suborganizationId")
           String suborganization)
       throws NotFoundException, ConflictException, ServerException {
-    return resourcesDistributor
-        .getResourcesCaps(suborganization)
-        .stream()
+    return resourcesDistributor.getResourcesCaps(suborganization).stream()
         .map(org.eclipse.che.multiuser.resource.api.DtoConverter::asDto)
         .collect(toList());
   }

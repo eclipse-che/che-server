@@ -68,10 +68,7 @@ public class ProxySettingsProvisionerTest {
     provisioner.provision(k8sEnv, runtimeId);
 
     assertTrue(
-        k8sEnv
-            .getPodsData()
-            .values()
-            .stream()
+        k8sEnv.getPodsData().values().stream()
             .flatMap(pod -> pod.getSpec().getContainers().stream())
             .allMatch(
                 container ->
@@ -94,10 +91,7 @@ public class ProxySettingsProvisionerTest {
     provisioner.provision(k8sEnv, runtimeId);
 
     assertTrue(
-        k8sEnv
-            .getPodsData()
-            .values()
-            .stream()
+        k8sEnv.getPodsData().values().stream()
             .filter(pod -> pod.getMetadata().getName().equals(JWT_PROXY_POD_NAME))
             .flatMap(pod -> pod.getSpec().getContainers().stream())
             .noneMatch(
@@ -122,10 +116,7 @@ public class ProxySettingsProvisionerTest {
     provisioner.provision(k8sEnv, runtimeId);
 
     assertTrue(
-        k8sEnv
-            .getPodsData()
-            .values()
-            .stream()
+        k8sEnv.getPodsData().values().stream()
             .flatMap(
                 pod ->
                     Stream.concat(

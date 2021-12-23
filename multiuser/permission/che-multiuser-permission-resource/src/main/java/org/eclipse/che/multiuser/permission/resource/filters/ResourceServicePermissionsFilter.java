@@ -56,8 +56,7 @@ public class ResourceServicePermissionsFilter extends CheMethodInvokerFilter {
       AccountManager accountManager, Set<AccountPermissionsChecker> permissionsCheckers) {
     this.accountManager = accountManager;
     this.permissionsCheckers =
-        permissionsCheckers
-            .stream()
+        permissionsCheckers.stream()
             .collect(toMap(AccountPermissionsChecker::getAccountType, identity()));
   }
 

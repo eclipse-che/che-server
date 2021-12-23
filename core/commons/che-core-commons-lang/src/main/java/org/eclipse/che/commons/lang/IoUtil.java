@@ -516,7 +516,8 @@ public class IoUtil {
   public static String countFileHash(File file, MessageDigest digest) throws IOException {
     byte[] b = new byte[8192];
     try (DigestInputStream dis = new DigestInputStream(new FileInputStream(file), digest)) {
-      while (dis.read(b) != -1) ;
+      while (dis.read(b) != -1)
+        ;
       return toHex(digest.digest());
     }
   }

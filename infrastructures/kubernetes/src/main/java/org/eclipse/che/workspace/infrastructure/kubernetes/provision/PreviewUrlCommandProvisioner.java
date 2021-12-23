@@ -67,8 +67,7 @@ public abstract class PreviewUrlCommandProvisioner<
     List<T> exposureObjects = loadExposureObjects(namespace);
     List<Service> services = namespace.services().get();
     for (CommandImpl command :
-        env.getCommands()
-            .stream()
+        env.getCommands().stream()
             .filter(c -> c.getPreviewUrl() != null)
             .collect(Collectors.toList())) {
       Optional<Service> foundService =

@@ -99,8 +99,7 @@ public class WorkspaceServiceAccountConfiguratorTest {
     assertEquals(
         roleBindings.size(),
         6,
-        roleBindings
-            .stream()
+        roleBindings.stream()
             .map(r -> r.getMetadata().getName())
             .collect(joining(", "))); // exec, secrets, configmaps, view bindings + cr1, cr2
   }
@@ -129,8 +128,7 @@ public class WorkspaceServiceAccountConfiguratorTest {
     assertEquals(
         roleBindings.size(),
         4,
-        roleBindings
-            .stream()
+        roleBindings.stream()
             .map(r -> r.getMetadata().getName())
             .collect(joining(", "))); // exec, secrets, configmaps, view bindings
   }

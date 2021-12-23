@@ -82,9 +82,7 @@ public class ChePluginsVolumeApplier {
 
     PodSpec podSpec = pod.getSpec();
     Optional<io.fabric8.kubernetes.api.model.Volume> volumeOpt =
-        podSpec
-            .getVolumes()
-            .stream()
+        podSpec.getVolumes().stream()
             .filter(
                 vm ->
                     vm.getPersistentVolumeClaim() != null
@@ -101,9 +99,7 @@ public class ChePluginsVolumeApplier {
   }
 
   private void addEmptyDirVolumeIfAbsent(PodSpec podSpec, String uniqueVolumeName) {
-    if (podSpec
-        .getVolumes()
-        .stream()
+    if (podSpec.getVolumes().stream()
         .noneMatch(volume -> volume.getName().equals(uniqueVolumeName))) {
       podSpec
           .getVolumes()

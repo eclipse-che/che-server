@@ -336,9 +336,7 @@ public class KubernetesServerExposer<T extends KubernetesEnvironment> {
   private Map<String, ServerConfig> match(
       Map<String, ServerConfig> servers, ServicePort servicePort) {
     int port = servicePort.getTargetPort().getIntVal();
-    return servers
-        .entrySet()
-        .stream()
+    return servers.entrySet().stream()
         .filter(e -> parseInt(e.getValue().getPort().split("/")[0]) == port)
         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
@@ -356,9 +354,7 @@ public class KubernetesServerExposer<T extends KubernetesEnvironment> {
   }
 
   private void exposeInContainerIfNeeded(ServicePort servicePort) {
-    if (container
-        .getPorts()
-        .stream()
+    if (container.getPorts().stream()
         .noneMatch(
             p ->
                 p.getContainerPort().equals(servicePort.getPort())

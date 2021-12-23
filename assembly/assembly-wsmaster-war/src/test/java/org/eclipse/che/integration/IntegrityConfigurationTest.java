@@ -134,41 +134,31 @@ public class IntegrityConfigurationTest {
             new MethodAnnotationsScanner());
     Set<String> parameters = new HashSet<>();
     parameters.addAll(
-        reflections
-            .getConstructorsWithAnyParamAnnotated(Named.class)
-            .stream()
+        reflections.getConstructorsWithAnyParamAnnotated(Named.class).stream()
             .flatMap(c -> Stream.of(c.getParameters()))
             .filter(p -> p.isAnnotationPresent(Named.class))
             .map(p -> p.getAnnotation(Named.class).value())
             .collect(Collectors.toSet()));
 
     parameters.addAll(
-        reflections
-            .getFieldsAnnotatedWith(Named.class)
-            .stream()
+        reflections.getFieldsAnnotatedWith(Named.class).stream()
             .filter(f -> f.isAnnotationPresent(Named.class))
             .map(f -> f.getAnnotation(Named.class).value())
             .collect(Collectors.toSet()));
 
     parameters.addAll(
-        reflections
-            .getMethodsAnnotatedWith(ScheduleDelay.class)
-            .stream()
+        reflections.getMethodsAnnotatedWith(ScheduleDelay.class).stream()
             .filter(m -> m.isAnnotationPresent(ScheduleDelay.class))
             .map(m -> m.getAnnotation(ScheduleDelay.class).delayParameterName())
             .collect(Collectors.toSet()));
     parameters.addAll(
-        reflections
-            .getMethodsAnnotatedWith(ScheduleDelay.class)
-            .stream()
+        reflections.getMethodsAnnotatedWith(ScheduleDelay.class).stream()
             .filter(m -> m.isAnnotationPresent(ScheduleDelay.class))
             .map(m -> m.getAnnotation(ScheduleDelay.class).initialDelayParameterName())
             .collect(Collectors.toSet()));
 
     Set<String> unusedDeclaredConfigurationParameters =
-        getProperties(new File(Resources.getResource("che").getPath()))
-            .keySet()
-            .stream()
+        getProperties(new File(Resources.getResource("che").getPath())).keySet().stream()
             .filter(k -> !parameters.contains(k))
             .collect(Collectors.toSet());
     Assert.assertTrue(

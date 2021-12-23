@@ -84,9 +84,7 @@ public class CertificateProvisioner implements ConfigurationProvisioner<Kubernet
 
     for (PodData pod : k8sEnv.getPodsData().values()) {
       if (pod.getRole() == PodRole.DEPLOYMENT) {
-        if (pod.getSpec()
-            .getVolumes()
-            .stream()
+        if (pod.getSpec().getVolumes().stream()
             .noneMatch(v -> v.getName().equals(CHE_SELF_SIGNED_CERT_VOLUME))) {
           pod.getSpec().getVolumes().add(buildCertSecretVolume(selfSignedCertSecretName));
         }
@@ -102,9 +100,7 @@ public class CertificateProvisioner implements ConfigurationProvisioner<Kubernet
   }
 
   private void provisionCertVolumeMountIfNeeded(Container container) {
-    if (container
-        .getVolumeMounts()
-        .stream()
+    if (container.getVolumeMounts().stream()
         .noneMatch(vm -> vm.getName().equals(CHE_SELF_SIGNED_CERT_VOLUME))) {
       container.getVolumeMounts().add(buildCertVolumeMount());
     }

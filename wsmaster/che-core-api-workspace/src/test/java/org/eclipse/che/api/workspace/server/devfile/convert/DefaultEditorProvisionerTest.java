@@ -464,8 +464,7 @@ public class DefaultEditorProvisionerTest {
   }
 
   private ComponentImpl findById(List<ComponentImpl> components, String id) {
-    return components
-        .stream()
+    return components.stream()
         .filter(c -> c.getId() != null && c.getId().startsWith(id + ':'))
         .findAny()
         .orElse(null);

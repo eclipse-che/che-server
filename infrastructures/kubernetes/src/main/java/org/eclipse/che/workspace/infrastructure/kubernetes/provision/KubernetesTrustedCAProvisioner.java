@@ -127,9 +127,7 @@ public class KubernetesTrustedCAProvisioner implements TrustedCAProvisioner {
 
     for (PodData pod : k8sEnv.getPodsData().values()) {
       if (pod.getRole() == PodRole.DEPLOYMENT) {
-        if (pod.getSpec()
-            .getVolumes()
-            .stream()
+        if (pod.getSpec().getVolumes().stream()
             .noneMatch(v -> v.getName().equals(CHE_TRUST_STORE_VOLUME))) {
           pod.getSpec()
               .getVolumes()
@@ -151,9 +149,7 @@ public class KubernetesTrustedCAProvisioner implements TrustedCAProvisioner {
   }
 
   private void provisionTrustStoreVolumeMountIfNeeded(Container container) {
-    if (container
-        .getVolumeMounts()
-        .stream()
+    if (container.getVolumeMounts().stream()
         .noneMatch(vm -> vm.getName().equals(CHE_TRUST_STORE_VOLUME))) {
       container
           .getVolumeMounts()

@@ -62,10 +62,7 @@ public class ProxySettingsProvisioner implements ConfigurationProvisioner {
     TracingTags.WORKSPACE_ID.set(identity::getWorkspaceId);
 
     if (!proxyEnvVars.isEmpty()) {
-      k8sEnv
-          .getPodsData()
-          .entrySet()
-          .stream()
+      k8sEnv.getPodsData().entrySet().stream()
           // JWTProxy container doesn't need proxy settings since it never does any outbound
           // requests, and setting of it may fail accessing internal addresses.
           .filter(entry -> !entry.getKey().equals(JWT_PROXY_POD_NAME))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2021 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -52,8 +52,7 @@ public class ResourcesLocks {
     this.accountManager = accountManager;
     this.stripedLocks = new StripedLocks(16);
     this.accountTypeToLockProvider =
-        resourceLockKeyProviders
-            .stream()
+        resourceLockKeyProviders.stream()
             .collect(
                 Collectors.toMap(ResourceLockKeyProvider::getAccountType, Function.identity()));
   }

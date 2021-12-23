@@ -121,9 +121,7 @@ public class WorkspaceConfigImpl implements WorkspaceConfig {
     this.description = description;
     if (environments != null) {
       this.environments =
-          environments
-              .entrySet()
-              .stream()
+          environments.entrySet().stream()
               .collect(toMap(Map.Entry::getKey, entry -> new EnvironmentImpl(entry.getValue())));
     }
     if (commands != null) {

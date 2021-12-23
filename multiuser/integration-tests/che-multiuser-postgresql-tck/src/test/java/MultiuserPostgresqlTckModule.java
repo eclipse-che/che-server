@@ -223,8 +223,7 @@ public class MultiuserPostgresqlTckModule extends TckModule {
     @Override
     public void createAll(Collection<? extends UserImpl> entities) throws TckRepositoryException {
       final EntityManager manager = managerProvider.get();
-      entities
-          .stream()
+      entities.stream()
           .map(
               user ->
                   new UserImpl(

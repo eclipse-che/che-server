@@ -55,8 +55,7 @@ public class K8sContainerResolverBuilder {
     if (ports == null || ports.isEmpty()) {
       return Collections.emptyList();
     }
-    return ports
-        .stream()
+    return ports.stream()
         .map(CheContainerPort::getExposedPort)
         .flatMap(port -> endpoints.stream().filter(e -> e.getTargetPort() == port))
         .collect(Collectors.toList());

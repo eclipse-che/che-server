@@ -48,7 +48,7 @@
     </scm>
     <properties>
         <aopalliance.version>1.0</aopalliance.version>
-        <ch.qos.logback.version>1.2.9</ch.qos.logback.version>
+        <ch.qos.logback.version>1.2.10</ch.qos.logback.version>
         <com.auth0.jwks-rsa.version>0.20.0</com.auth0.jwks-rsa.version>
         <com.fasterxml.jackson.version>2.11.2</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
@@ -120,7 +120,7 @@
         <maven.jacoco.plugin.version>0.8.7</maven.jacoco.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <maven.mycila.license.plugin.version>4.1</maven.mycila.license.plugin.version>
-        <maven.plugin.plugin.version>3.6.1</maven.plugin.plugin.version>
+        <maven.plugin.plugin.version>3.6.2</maven.plugin.plugin.version>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
         <maven.sonar.plugin.version>3.9.1.2184</maven.sonar.plugin.version>
         <maven.sortpom.plugin.version>2.3.1</maven.sortpom.plugin.version>

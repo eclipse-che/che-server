@@ -122,7 +122,7 @@
         <maven.mycila.license.plugin.version>4.1</maven.mycila.license.plugin.version>
         <maven.plugin.plugin.version>3.6.1</maven.plugin.plugin.version>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
-        <maven.sonar.plugin.version>3.9.0.2155</maven.sonar.plugin.version>
+        <maven.sonar.plugin.version>3.9.1.2184</maven.sonar.plugin.version>
         <maven.sortpom.plugin.version>2.3.1</maven.sortpom.plugin.version>
         <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
         <maven.supported-versions>[3.6.2,)</maven.supported-versions>

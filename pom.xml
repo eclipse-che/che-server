@@ -52,7 +52,7 @@
         <com.auth0.jwks-rsa.version>0.20.0</com.auth0.jwks-rsa.version>
         <com.fasterxml.jackson.version>2.11.2</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
-        <com.github.tomakehurst.wiremock-jre8-standalone.version>2.31.0</com.github.tomakehurst.wiremock-jre8-standalone.version>
+        <com.github.tomakehurst.wiremock-jre8-standalone.version>2.32.0</com.github.tomakehurst.wiremock-jre8-standalone.version>
         <com.google.code.guice.version>5.0.1</com.google.code.guice.version>
         <com.google.errorprone>2.3.4</com.google.errorprone>
         <com.google.guava.version>30.1.1-jre</com.google.guava.version>

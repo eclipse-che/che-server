@@ -224,6 +224,8 @@ prepareRelease() {
             ./set_tag_version_images.sh ${CHE_VERSION}
             echo "[INFO] Tag versions of images have been set in che-server"
         popd >/dev/null
+        # run mvn license format, in case some files that have old license headers have been updated
+        mvn license:format
     popd >/dev/null
 }
 
@@ -360,6 +362,8 @@ bumpVersion() {
         mvn clean install
         mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${CHE_VERSION}
         mvn clean install
+        # run mvn license format, in case some files that have old license headers have been updated
+        mvn license:format
         commitChangeOrCreatePR ${CHE_VERSION} $2 "pr-${2}-to-${1}"
         popd >/dev/null
     fi
@@ -375,7 +379,8 @@ bumpVersion() {
             sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${1}<\/che.version>#" dto-pom.xml
             sed -i -e "/<groupId>org.eclipse.che.parent<\/groupId>/ { n; s#<version>.*<\/version>#<version>${VERSION_CHE_PARENT}<\/version>#}" dto-pom.xml
         popd >/dev/null
-
+        # run mvn license format, in case some files that have old license headers have been updated
+        mvn license:format
         commitChangeOrCreatePR $1 $2 "pr-${2}-to-${1}"
     popd >/dev/null
     set +x

@@ -70,8 +70,8 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
         && !isNullOrEmpty(tokenUri)
         && Objects.nonNull(redirectUris)
         && redirectUris.length != 0) {
-      String clientId = Files.readString(Path.of(clientIdPath));
-      String clientSecret = Files.readString(Path.of(clientSecretPath));
+      final String clientId = Files.readString(Path.of(clientIdPath)).trim();
+      final String clientSecret = Files.readString(Path.of(clientSecretPath)).trim();
       if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {
         return new GitHubOAuthAuthenticator(
             clientId, clientSecret, redirectUris, authUri, tokenUri);

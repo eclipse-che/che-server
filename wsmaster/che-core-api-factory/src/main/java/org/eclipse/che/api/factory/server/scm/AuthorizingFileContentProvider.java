@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.scm;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,9 +36,9 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     implements FileContentProvider {
 
   private final T remoteFactoryUrl;
-  private final URLFetcher urlFetcher;
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private final GitCredentialManager gitCredentialManager;
+  protected final URLFetcher urlFetcher;
 
   public AuthorizingFileContentProvider(
       T remoteFactoryUrl,
@@ -74,6 +75,11 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
                         "Failed to fetch a content from URL %s due to TLS key misconfiguration. Please refer to the docs about how to correctly import it. ",
                         requestURL));
             throw new DevfileException(exception.getMessage(), cause);
+          } else if (exception instanceof FileNotFoundException) {
+            if (isPublicRepository(remoteFactoryUrl)) {
+              // for public repo-s return 404 as-is
+              throw exception;
+            }
           }
           // unable to determine exact cause, so let's just try to authorize...
           try {
@@ -107,6 +113,10 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         | ScmCommunicationException e) {
       throw new DevfileException(e.getMessage(), e);
     }
+  }
+
+  protected boolean isPublicRepository(T remoteFactoryUrl) {
+    return false;
   }
 
   private String formatUrl(String fileURL) throws DevfileException {

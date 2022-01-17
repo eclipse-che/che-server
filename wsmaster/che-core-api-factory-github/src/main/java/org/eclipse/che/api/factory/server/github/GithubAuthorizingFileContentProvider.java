@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import java.io.IOException;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
@@ -36,5 +37,20 @@ class GithubAuthorizingFileContentProvider extends AuthorizingFileContentProvide
   @Override
   protected String formatAuthorization(String token) {
     return "token " + token;
+  }
+
+  @Override
+  protected boolean isPublicRepository(GithubUrl remoteFactoryUrl) {
+    try {
+      urlFetcher.fetch(
+          GithubApiClient.GITHUB_API_SERVER
+              + "/repos/"
+              + remoteFactoryUrl.getUsername()
+              + "/"
+              + remoteFactoryUrl.getRepository());
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
   }
 }

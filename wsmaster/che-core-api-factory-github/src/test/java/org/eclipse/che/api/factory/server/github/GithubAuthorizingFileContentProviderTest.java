@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,7 +13,9 @@ package org.eclipse.che.api.factory.server.github;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.FileNotFoundException;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
@@ -52,5 +54,18 @@ public class GithubAuthorizingFileContentProviderTest {
     String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
     fileContentProvider.fetchContent(url);
     verify(urlFetcher).fetch(eq(url));
+  }
+
+  @Test(expectedExceptions = FileNotFoundException.class)
+  public void shouldThrowNotFoundForPublicRepos() throws Exception {
+    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
+    String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
+    when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
+    when(urlFetcher.fetch(eq("https://api.github.com/repos/eclipse/che"))).thenReturn("OK");
+    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(
+            githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+    fileContentProvider.fetchContent(url);
   }
 }

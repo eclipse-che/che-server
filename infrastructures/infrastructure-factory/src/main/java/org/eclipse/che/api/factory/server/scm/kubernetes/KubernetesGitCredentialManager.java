@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -61,6 +61,9 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   public static final String LABEL_DEV_WORKSPACE_CREDENTIAL =
       DEV_WORKSPACE_PREFIX + "/git-credential";
 
+  public static final String LABEL_DEV_WORKSPACE_WATCH_SECRET =
+      "controller.devfile.io/watch-secret";
+
   // Labels that that are use to search for already existing secret.
   private static final Map<String, String> SEARCH_LABELS =
       ImmutableMap.of(
@@ -71,6 +74,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
       ImmutableMap.<String, String>builder()
           .putAll(SEARCH_LABELS)
           .put(LABEL_DEV_WORKSPACE_CREDENTIAL, "true")
+          .put(LABEL_DEV_WORKSPACE_WATCH_SECRET, "true")
           .build();
 
   static final Map<String, String> DEFAULT_SECRET_ANNOTATIONS =

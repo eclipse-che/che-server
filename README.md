@@ -34,6 +34,7 @@ There are several [GitHub Actions](https://github.com/eclipse-che/che-server/act
 - [`release-changelog`](https://github.com/eclipse-che/che-server/actions/workflows/release-changelog.yml) - create GitHub release and generate, which will include a generated changelog
 - [`build-pr-check`](https://github.com/eclipse-che/che-server/actions/workflows/build-pr-check.yml) - builds Maven artifacts and container images. This workflow is used as a pull request check for all pull requests, that are submitted to this project 
 - [`sonar`](https://github.com/eclipse-che/che-server/actions/workflows/sonar.yml) - This check runs Sonar against the main branch. The result can be seen here https://sonarcloud.io/dashboard?id=org.eclipse.che%3Ache-server
+
 # License
 
 - [Eclipse Public License 2.0](LICENSE)

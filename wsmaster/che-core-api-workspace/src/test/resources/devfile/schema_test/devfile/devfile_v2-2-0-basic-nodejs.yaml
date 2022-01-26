@@ -1,0 +1,54 @@
+#
+# Copyright (c) 2012-2022 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+
+schemaVersion: 2.2.0
+metadata:
+  name: nodejs
+  version: 1.0.1
+  displayName: Node.js Runtime
+  description: Stack with Node.js 14
+  tags: ["NodeJS", "Express", "ubi8"]
+  projectType: "nodejs"
+  language: "nodejs"
+  attributes:
+    alpha.dockerimage-port: 3001
+  provider: Red Hat
+  supportUrl: https://github.com/devfile-samples/devfile-support#support-information
+parent:
+  id: nodejs
+  registryUrl: "https://registry.devfile.io"
+components:
+  - name: outerloop-build
+    image:
+      imageName: nodejs-image:latest
+      dockerfile:
+        uri: Dockerfile
+        buildContext: .
+        rootRequired: false
+  - name: outerloop-deploy
+    kubernetes:
+      uri: outerloop-deploy.yaml
+commands:
+  - id: build-image
+    apply:
+      component: outerloop-build
+  - id: deployk8s
+    apply:
+      component: outerloop-deploy
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deployk8s
+      group:
+        kind: deploy
+        isDefault: true

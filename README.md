@@ -24,7 +24,7 @@ Che Server is mostly a Java web application deployed on a Apache Tomcat server i
 # Build and debug
 Run `mvn clean install` to build 
 Activate a faster profile build by adding `-Pfast`
-To debug, run `mvn clean install -X` and connect your IDE to the debug port
+To debug, run `mvn clean install -X` and connect your IDE to the debug port.
 
 # CI
 There are several [GitHub Actions](https://github.com/eclipse-che/che-server/actions) workflows implemented for this repository:

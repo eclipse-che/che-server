@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,11 +13,13 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurat
 
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.List;
+import java.util.Map;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.UserManager;
@@ -75,6 +77,15 @@ public class UserProfileConfiguratorTest {
         kubernetesServer.getClient().secrets().inNamespace(USER_NAMESPACE).list().getItems();
     assertEquals(secrets.size(), 1);
     assertEquals(secrets.get(0).getMetadata().getName(), "user-profile");
+
+    Map<String, String> labels = secrets.get(0).getMetadata().getLabels();
+    String expectedMountLabel = "controller.devfile.io/mount-to-devworkspace";
+    assertTrue(labels.containsKey(expectedMountLabel));
+    assertEquals(labels.get(expectedMountLabel), "true");
+
+    String expectedWatchLabel = "controller.devfile.io/watch-secret";
+    assertTrue(labels.containsKey(expectedWatchLabel));
+    assertEquals(labels.get(expectedWatchLabel), "true");
   }
 
   @Test(

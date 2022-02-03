@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurat
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_MOUNT_AS_ANNOTATION;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_MOUNT_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_MOUNT_PATH_ANNOTATION;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_WATCH_SECRET_LABEL;
 
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -90,6 +91,7 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
         .withNewMetadata()
         .withName(USER_PROFILE_SECRET_NAME)
         .addToLabels(DEV_WORKSPACE_MOUNT_LABEL, "true")
+        .addToLabels(DEV_WORKSPACE_WATCH_SECRET_LABEL, "true")
         .addToAnnotations(DEV_WORKSPACE_MOUNT_AS_ANNOTATION, "file")
         .addToAnnotations(DEV_WORKSPACE_MOUNT_PATH_ANNOTATION, USER_PROFILE_SECRET_MOUNT_PATH)
         .endMetadata()

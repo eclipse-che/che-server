@@ -19,7 +19,7 @@
     <version>7.44.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
-    <description>Eclipse Che Server</description>
+    <description>Eclipse Che Server 1</description>
     <inceptionYear>2012</inceptionYear>
     <organization>
         <name>Red Hat, Inc.</name>

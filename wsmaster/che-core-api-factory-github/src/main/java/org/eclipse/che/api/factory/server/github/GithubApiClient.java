@@ -85,6 +85,7 @@ public class GithubApiClient {
                         .setDaemon(true)
                         .build()))
             .connectTimeout(DEFAULT_HTTP_TIMEOUT)
+            .version(HttpClient.Version.HTTP_1_1)
             .build();
   }
 

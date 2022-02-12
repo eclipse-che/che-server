@@ -33,7 +33,7 @@ jobs:
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: '11.0.11+9'
+        java-version: '11'
     - name: Login to docker.io
       uses: docker/login-action@v1
       with:
@@ -67,14 +67,6 @@ jobs:
 
         docker push quay.io/eclipse/che-server:next
         docker push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
-    - name: Build ubi8 Che Server image
-      run: |
-        ./dockerfiles/che/build.sh --dockerfile:"rhel.Dockerfile" --tag:"rhel-next"
-        docker tag quay.io/eclipse/che-server:rhel-next quay.io/eclipse/che-server:rhel-${{ steps.build.outputs.short_sha1 }}
-    - name: Push ubi8 Che Server image
-      run: |
-        docker push quay.io/eclipse/che-server:rhel-next
-        docker push quay.io/eclipse/che-server:rhel-${{ steps.build.outputs.short_sha1 }}
     - name: Create failure MM message
       if: ${{ failure() }}
       run: |

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,10 +14,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes;
 import static java.lang.String.format;
 
 import com.google.common.collect.ImmutableSet;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
-import java.io.InputStream;
-import java.net.URI;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -31,7 +27,6 @@ import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironment;
 import org.eclipse.che.api.workspace.server.spi.provision.InternalEnvironmentProvisioner;
 import org.eclipse.che.api.workspace.shared.Constants;
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
@@ -81,19 +76,6 @@ public class KubernetesInfrastructure extends RuntimeInfrastructure {
   @Override
   public boolean isNamespaceValid(String name) {
     return NamespaceNameValidator.isValid(name);
-  }
-
-  @Override
-  public Response sendDirectInfrastructureRequest(
-      String httpMethod, URI relativeUri, @Nullable HttpHeaders headers, @Nullable InputStream body)
-      throws InfrastructureException {
-    return DirectKubernetesAPIAccessHelper.call(
-        kubernetesClientFactory.getDefaultConfig().getMasterUrl(),
-        kubernetesClientFactory.getAuthenticatedHttpClient(),
-        httpMethod,
-        relativeUri,
-        headers,
-        body);
   }
 
   @Override

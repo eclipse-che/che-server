@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,6 +26,7 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ConfigMapList;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.EditReplacePatchDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Arrays;
@@ -69,9 +70,7 @@ public class CheNamespaceTest {
   @Mock
   private MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>> kubeConfigMapsWithLabel;
 
-  @Mock
-  private MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>>
-      kubeConfigMapsWithPropagationPolicy;
+  @Mock private EditReplacePatchDeletable<ConfigMap> kubeConfigMapsWithPropagationPolicy;
 
   @Mock private InternalRuntime internalRuntime;
 

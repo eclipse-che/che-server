@@ -44,7 +44,6 @@ import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver
 import org.eclipse.che.api.factory.server.github.GithubScmFileResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabScmFileResolver;
-import org.eclipse.che.api.infraproxy.server.InfraProxyModule;
 import org.eclipse.che.api.metrics.WsMasterMetricsModule;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.system.server.SystemModule;
@@ -420,8 +419,6 @@ public class WsMasterModule extends AbstractModule {
     bind(PermissionChecker.class).to(PermissionCheckerImpl.class);
 
     bindConstant().annotatedWith(Names.named("che.agents.auth_enabled")).to(true);
-
-    install(new InfraProxyModule());
   }
 
   private void configureJwtProxySecureProvisioner(String infrastructure) {

@@ -10,11 +10,11 @@
 #
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi8-minimal
-FROM registry.access.redhat.com/ubi8-minimal:8.5-230
+FROM registry.access.redhat.com/ubi8-minimal:8.5-230.1645809059
 USER root
 ENV CHE_HOME=/home/user/eclipse-che
 ENV JAVA_HOME=/usr/lib/jvm/jre
-RUN microdnf install java-11-openjdk-headless-1:11.0.14.0.9-2.el8_5.x86_64 tar gzip shadow-utils findutils && \
+RUN microdnf install java-11-openjdk-headless tar gzip shadow-utils findutils && \
     microdnf update -y gnutls && \
     microdnf -y clean all && rm -rf /var/cache/yum && echo "Installed Packages" && rpm -qa | sort -V && echo "End Of Installed Packages" && \
     adduser -G root user && mkdir -p /home/user/eclipse-che

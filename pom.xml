@@ -69,7 +69,7 @@
         <enforcer.skip>false</enforcer.skip>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client>5.7.3</io.fabric8.kubernetes-client>
+        <io.fabric8.kubernetes-client>5.12.1</io.fabric8.kubernetes-client>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.0.0</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.0.0</io.jaegertracing.version>
@@ -752,11 +752,6 @@
             <dependency>
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-git-shared</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.core</groupId>
-                <artifactId>che-core-api-infraproxy</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>

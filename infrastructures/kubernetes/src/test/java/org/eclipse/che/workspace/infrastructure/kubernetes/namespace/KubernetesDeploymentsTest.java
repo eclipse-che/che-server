@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -60,6 +60,7 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.AppsAPIGroupDSL;
+import io.fabric8.kubernetes.client.dsl.EditReplacePatchDeletable;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
@@ -118,6 +119,7 @@ public class KubernetesDeploymentsTest {
   @Mock private Deployment deployment;
   @Mock private ObjectMeta deploymentMetadata;
   @Mock private DeploymentSpec deploymentSpec;
+  @Mock private EditReplacePatchDeletable<Deployment> deploymentEditReplacePatchDeletable;
 
   // Pod Mocks
   @Mock private Pod pod;
@@ -578,12 +580,17 @@ public class KubernetesDeploymentsTest {
     }
   }
 
-  @Test
+  @Test(
+      expectedExceptions = RuntimeException.class,
+      expectedExceptionsMessageRegExp =
+          "testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch msg")
   public void testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
     when(deploymentResource.withPropagationPolicy(eq(BACKGROUND)))
-        .thenReturn(deploymentsMixedOperation);
-    doThrow(RuntimeException.class).when(deploymentsMixedOperation).delete();
+        .thenReturn(deploymentEditReplacePatchDeletable);
+    doThrow(new RuntimeException("testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch msg"))
+        .when(deploymentEditReplacePatchDeletable)
+        .delete();
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
 
@@ -594,7 +601,7 @@ public class KubernetesDeploymentsTest {
       fail("The exception should have been rethrown");
     } catch (RuntimeException e) {
       verify(watch).close();
-      return;
+      throw e;
     }
   }
 

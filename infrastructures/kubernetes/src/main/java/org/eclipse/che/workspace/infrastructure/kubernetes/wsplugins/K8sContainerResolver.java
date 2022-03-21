@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -83,14 +83,15 @@ public class K8sContainerResolver {
     if (lifecycle == null) {
       return null;
     }
-    io.fabric8.kubernetes.api.model.Handler postStart = toK8sHandler(lifecycle.getPostStart());
-    io.fabric8.kubernetes.api.model.Handler preStop = toK8sHandler(lifecycle.getPreStop());
+    io.fabric8.kubernetes.api.model.LifecycleHandler postStart =
+        toK8sHandler(lifecycle.getPostStart());
+    io.fabric8.kubernetes.api.model.LifecycleHandler preStop = toK8sHandler(lifecycle.getPreStop());
     io.fabric8.kubernetes.api.model.Lifecycle k8sLifecycle =
         new io.fabric8.kubernetes.api.model.Lifecycle(postStart, preStop);
     return k8sLifecycle;
   }
 
-  private io.fabric8.kubernetes.api.model.Handler toK8sHandler(Handler handler) {
+  private io.fabric8.kubernetes.api.model.LifecycleHandler toK8sHandler(Handler handler) {
     if (handler == null || handler.getExec() == null) {
       return null;
     }
@@ -99,8 +100,8 @@ public class K8sContainerResolver {
       return null;
     }
     // TODO: add 'httpGetAction' and 'tcpSocketAction' support
-    io.fabric8.kubernetes.api.model.Handler k8SHandler =
-        new io.fabric8.kubernetes.api.model.Handler(exec, null, null);
+    io.fabric8.kubernetes.api.model.LifecycleHandler k8SHandler =
+        new io.fabric8.kubernetes.api.model.LifecycleHandler(exec, null, null);
     return k8SHandler;
   }
 

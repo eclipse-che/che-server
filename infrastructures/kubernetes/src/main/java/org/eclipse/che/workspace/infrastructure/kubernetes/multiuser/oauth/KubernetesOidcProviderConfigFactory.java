@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,8 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -29,6 +31,13 @@ import org.slf4j.LoggerFactory;
 public class KubernetesOidcProviderConfigFactory extends KubernetesClientConfigFactory {
   private static final Logger LOG =
       LoggerFactory.getLogger(KubernetesOidcProviderConfigFactory.class);
+
+  @Inject
+  public KubernetesOidcProviderConfigFactory(
+      @Nullable @Named("che.infra.kubernetes.master_url") String masterUrl,
+      @Nullable @Named("che.infra.kubernetes.trust_certs") Boolean doTrustCerts) {
+    super(masterUrl, doTrustCerts);
+  }
 
   @Override
   public boolean isPersonalized() {

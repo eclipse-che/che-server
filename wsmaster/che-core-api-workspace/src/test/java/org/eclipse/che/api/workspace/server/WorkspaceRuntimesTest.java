@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -42,10 +42,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
-import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1050,12 +1046,6 @@ public class WorkspaceRuntimesTest {
 
     @Override
     public RuntimeContext internalPrepare(RuntimeIdentity id, InternalEnvironment environment) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Response sendDirectInfrastructureRequest(
-        String httpMethod, URI relativeUri, HttpHeaders headers, InputStream body) {
       throw new UnsupportedOperationException();
     }
   }

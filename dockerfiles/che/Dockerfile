@@ -10,7 +10,7 @@
 #
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi8-minimal
-FROM registry.access.redhat.com/ubi8-minimal:8.5-230.1645809059
+FROM registry.access.redhat.com/ubi8-minimal:8.5-240.1648458092
 USER root
 ENV CHE_HOME=/home/user/eclipse-che
 ENV JAVA_HOME=/usr/lib/jvm/jre

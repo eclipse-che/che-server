@@ -406,10 +406,10 @@ public class WsMasterModule extends AbstractModule {
     } else {
       install(new KeycloakModule());
       install(new KeycloakUserRemoverModule());
-      bind(AdminPermissionInitializer.class).asEagerSingleton();
       bind(RequestTokenExtractor.class).to(ChainedTokenExtractor.class);
     }
 
+    bind(AdminPermissionInitializer.class).asEagerSingleton();
     install(new MachineAuthModule());
 
     // User and profile - use profile from keycloak and other stuff is JPA

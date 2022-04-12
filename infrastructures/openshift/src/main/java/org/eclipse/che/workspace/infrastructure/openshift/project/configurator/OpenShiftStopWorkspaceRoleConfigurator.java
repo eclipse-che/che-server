@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.openshift.project.configurator;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.PolicyRuleBuilder;
 import io.fabric8.openshift.api.model.Role;
 import io.fabric8.openshift.api.model.RoleBinding;
@@ -69,25 +70,28 @@ public class OpenShiftStopWorkspaceRoleConfigurator implements NamespaceConfigur
       return;
     }
 
-    if (stopWorkspaceRoleEnabled && installationLocation != null) {
-      OpenShiftClient osClient = clientFactory.createOC();
-      String stopWorkspacesRoleName = "workspace-stop";
-      if (osClient.roles().inNamespace(projectName).withName(stopWorkspacesRoleName).get()
-          == null) {
+    try {
+      if (stopWorkspaceRoleEnabled && installationLocation != null) {
+        OpenShiftClient osClient = clientFactory.createOC();
+        String stopWorkspacesRoleName = "workspace-stop";
+        if (osClient.roles().inNamespace(projectName).withName(stopWorkspacesRoleName).get()
+            == null) {
+          osClient
+              .roles()
+              .inNamespace(projectName)
+              .createOrReplace(createStopWorkspacesRole(stopWorkspacesRoleName));
+        }
         osClient
-            .roles()
+            .roleBindings()
             .inNamespace(projectName)
-            .createOrReplace(createStopWorkspacesRole(stopWorkspacesRoleName));
+            .createOrReplace(createStopWorkspacesRoleBinding(projectName));
       }
-      osClient
-          .roleBindings()
-          .inNamespace(projectName)
-          .createOrReplace(createStopWorkspacesRoleBinding(projectName));
-    } else {
+    } catch (KubernetesClientException e) {
       LOG.warn(
-          "Stop workspace Role and RoleBinding will not be provisioned to the '{}' namespace. 'che.workspace.stop.role.enabled' property is set to '{}'",
+          "Stop workspace Role and RoleBinding will not be provisioned to the '{}' namespace. 'che.workspace.stop.role.enabled' property is set to '{}', {}",
           installationLocation,
-          stopWorkspaceRoleEnabled);
+          stopWorkspaceRoleEnabled,
+          e.getMessage());
     }
   }
 

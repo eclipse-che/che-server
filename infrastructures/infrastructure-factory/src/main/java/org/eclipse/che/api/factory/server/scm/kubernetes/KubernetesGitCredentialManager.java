@@ -57,7 +57,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   public static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
   public static final String ANNOTATION_SCM_USERNAME = "che.eclipse.org/scm-username";
   public static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
-  public static final String CREDENTIALS_MOUNT_PATH = "/home/theia/.git-credentials";
+  public static final String CREDENTIALS_MOUNT_PATH = "/.git-credentials";
   public static final String LABEL_DEV_WORKSPACE_CREDENTIAL =
       DEV_WORKSPACE_PREFIX + "/git-credential";
 

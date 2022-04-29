@@ -55,10 +55,7 @@ jobs:
 
         docker push quay.io/eclipse/che-keycloak:next
         docker push quay.io/eclipse/che-keycloak:${{ steps.build.outputs.short_sha1 }}
-
-        docker push quay.io/eclipse/che-postgres:next
-        docker push quay.io/eclipse/che-postgres:${{ steps.build.outputs.short_sha1 }}
-
+        
         docker push quay.io/eclipse/che-server:next
         docker push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
     - name: Create failure MM message

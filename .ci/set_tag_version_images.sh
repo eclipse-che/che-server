@@ -23,7 +23,6 @@ sed_in_place -r -e "s#che.workspace.devfile.default_editor=eclipse/che-theia/.*#
 image_version="$1"
 sed_in_place -r -e "s#che-plugin-registry:.*#che-plugin-registry:$image_version#g" ../deploy/kubernetes/helm/che/custom-charts/che-plugin-registry/values.yaml
 sed_in_place -r -e "s#che-devfile-registry:.*#che-devfile-registry:$image_version#g" ../deploy/kubernetes/helm/che/custom-charts/che-devfile-registry/values.yaml
-sed_in_place -r -e "s#che-postgres:.*#che-postgres:$image_version#g" ../deploy/kubernetes/helm/che/custom-charts/che-postgres/values.yaml
 sed_in_place -r -e "s#che-keycloak:.*#che-keycloak:$image_version#g" ../deploy/kubernetes/helm/che/custom-charts/che-keycloak/values.yaml
 sed_in_place -r -e "s#eclipse/che-server:.*#eclipse/che-server:$image_version#g" ../deploy/kubernetes/helm/che/values.yaml
 sed_in_place -r -e "s#eclipse/che-dashboard:.*#eclipse/che-dashboard:$image_version#g" ../deploy/kubernetes/helm/che/values.yaml

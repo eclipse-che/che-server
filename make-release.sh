@@ -17,7 +17,6 @@ DOCKER_FILES_LOCATIONS=(
 IMAGES_LIST=(
     quay.io/eclipse/che-endpoint-watcher
     quay.io/eclipse/che-keycloak
-    quay.io/eclipse/che-postgres
     quay.io/eclipse/che-server
 )
 

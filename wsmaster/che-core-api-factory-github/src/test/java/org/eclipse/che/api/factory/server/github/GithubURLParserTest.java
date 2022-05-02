@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -146,154 +146,177 @@ public class GithubURLParserTest {
   @Test
   public void checkPullRequestFromRepository() {
 
-    String url = "https://github.com/eclipse/che/pull/11103";
+    String url = "https://github.com/eclipse/che/pull/21276";
     when(urlFetcher.fetchSafely(url))
         .thenReturn(
-            "<div class=\"TableObject gh-header-meta\">\n"
-                + "    <div class=\"TableObject-item\">\n"
-                + "        <div class=\"State State--green\">\n"
-                + "    <svg class=\"octicon octicon-git-pull-request\" viewBox=\"0 0 12 16\" version=\"1.1\" width=\"12\" height=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M11 11.28V5c-.03-.78-.34-1.47-.94-2.06C9.46 2.35 8.78 2.03 8 2H7V0L4 3l3 3V4h1c.27.02.48.11.69.31.21.2.3.42.31.69v6.28A1.993 1.993 0 0 0 10 15a1.993 1.993 0 0 0 1-3.72zm-1 2.92c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zM4 3c0-1.11-.89-2-2-2a1.993 1.993 0 0 0-1 3.72v6.56A1.993 1.993 0 0 0 2 15a1.993 1.993 0 0 0 1-3.72V4.72c.59-.34 1-.98 1-1.72zm-.8 10c0 .66-.55 1.2-1.2 1.2-.65 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2z\"/></svg>\n"
-                + "      Open\n"
-                + "  </div>\n"
-                + "\n"
+            "    </div>\n"
+                + "  <div class=\"d-flex flex-items-center flex-wrap mt-0 gh-header-meta\">\n"
+                + "    <div class=\"flex-shrink-0 mb-2 flex-self-start flex-md-self-center\">\n"
+                + "        <span reviewable_state=\"ready\" title=\"Status: Open\" data-view-component=\"true\" class=\"State State--open\">\n"
+                + "  <svg height=\"16\" class=\"octicon octicon-git-pull-request\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z\"></path></svg> Open\n"
+                + "</span>\n"
                 + "    </div>\n"
-                + "    <div class=\"TableObject-item TableObject-item--primary\">\n"
-                + "          <a class=\"author pull-header-username css-truncate css-truncate-target expandable\" data-hovercard-type=\"user\" data-hovercard-url=\"/hovercards?user_id=1651062\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/mshaposhnik\">mshaposhnik</a>\n"
-                + "   wants to merge 1 commit into\n"
                 + "\n"
                 + "\n"
                 + "\n"
-                + "  <span title=\"eclipse/che:cleanup-e2e-theia\" class=\"commit-ref css-truncate user-select-contain expandable \"><span class=\"css-truncate-target\">master</span></span>\n"
+                + "    <div class=\"flex-auto min-width-0 mb-2\">\n"
+                + "          <a class=\"author Link--secondary text-bold css-truncate css-truncate-target expandable\" data-hovercard-type=\"user\" data-hovercard-url=\"/users/che-bot/hovercard\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/che-bot\">che-bot</a>\n"
                 + "\n"
-                + "from\n"
+                + "  wants to merge\n"
+                + "  <span class=\"js-updating-pull-request-commits-count\">1</span>\n"
+                + "  commit into\n"
                 + "\n"
-                + "<span title=\"eclipse/che:cleanup-e2e-theia\" class=\"commit-ref css-truncate user-select-contain expandable head-ref\"><span class=\"css-truncate-target\">cleanup-e2e-theia</span></span>\n"
                 + "\n"
                 + "\n"
-                + "  <relative-time datetime=\"2018-09-07T08:00:49Z\">Sep 7, 2018</relative-time>\n"
+                + "  <span title=\"eclipse/che:main\" class=\"commit-ref css-truncate user-select-contain expandable base-ref\"><a title=\"eclipse/che:main\" class=\"no-underline \" href=\"/eclipse/che\"><span class=\"css-truncate-target\">main</span></a></span><span></span>\n"
                 + "\n"
-                + "    </div>\n"
-                + "  </div>\n"
-                + "</div>");
+                + "  <div class=\"commit-ref-dropdown\">\n"
+                + "    <details class=\"details-reset details-overlay select-menu commitish-suggester\" id=\"branch-select-menu\">\n"
+                + "      <summary class=\"btn btn-sm select-menu-button branch\" title=\"Choose a base branch\">\n"
+                + "        <i>base:</i>\n"
+                + "        <span class=\"css-truncate css-truncate-target\" title=\"main\">main</span>\n"
+                + "      </summary>\n"
+                + "      <input-demux-context-wrapper data-context-type=\"baseChange\">");
     GithubUrl githubUrl = githubUrlParser.parse(url);
 
     assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");
-    assertEquals(githubUrl.getBranch(), "cleanup-e2e-theia");
+    assertEquals(githubUrl.getBranch(), "main");
   }
 
   /** Check Pull Request with data outside the repository (fork) */
   @Test
   public void checkPullRequestFromForkedRepository() {
 
-    String url = "https://github.com/eclipse/che/pull/11103";
+    String url = "https://github.com/eclipse/che/pull/20189";
     when(urlFetcher.fetchSafely(url))
         .thenReturn(
-            "<div class=\"TableObject gh-header-meta\">\n"
-                + "    <div class=\"TableObject-item\">\n"
-                + "        <div class=\"State State--green\">\n"
-                + "          <svg class=\"octicon octicon-git-pull-request\" viewBox=\"0 0 12 16\" version=\"1.1\" width=\"12\" height=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M11 11.28V5c-.03-.78-.34-1.47-.94-2.06C9.46 2.35 8.78 2.03 8 2H7V0L4 3l3 3V4h1c.27.02.48.11.69.31.21.2.3.42.31.69v6.28A1.993 1.993 0 0 0 10 15a1.993 1.993 0 0 0 1-3.72zm-1 2.92c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zM4 3c0-1.11-.89-2-2-2a1.993 1.993 0 0 0-1 3.72v6.56A1.993 1.993 0 0 0 2 15a1.993 1.993 0 0 0 1-3.72V4.72c.59-.34 1-.98 1-1.72zm-.8 10c0 .66-.55 1.2-1.2 1.2-.65 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2z\"/></svg>\n"
-                + "          Open\n"
-                + "        </div>\n"
-                + "    </div>"
-                + "    <div class=\"TableObject-item TableObject-item--primary\">\n"
-                + "          <a class=\"author pull-header-username css-truncate css-truncate-target expandable\" data-hovercard-user-id=\"436777\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/benoitf\">benoitf</a>\n"
-                + "  merged 1 commit into\n"
-                + "from\n"
+            " <div class=\"d-flex flex-items-center flex-wrap mt-0 gh-header-meta\">\n"
+                + "    <div class=\"flex-shrink-0 mb-2 flex-self-start flex-md-self-center\">\n"
+                + "        <span reviewable_state=\"ready\" title=\"Status: Open\" data-view-component=\"true\" class=\"State State--open\">\n"
+                + "  <svg height=\"16\" class=\"octicon octicon-git-pull-request\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z\"></path></svg> Open\n"
+                + "</span>\n"
+                + "    </div>\n"
                 + "\n"
-                + "<span title=\"garagatyi/che:fixDeployment\" class=\"commit-ref css-truncate user-select-contain expandable head-ref\"><span class=\"css-truncate-target user\">garagatyi</span>:<span class=\"css-truncate-target\">fixDeployment</span></span>\n"
-                + "\n");
+                + "\n"
+                + "\n"
+                + "    <div class=\"flex-auto min-width-0 mb-2\">\n"
+                + "          <a class=\"author Link--secondary text-bold css-truncate css-truncate-target expandable\" data-hovercard-type=\"user\" data-hovercard-url=\"/users/apupier/hovercard\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/apupier\">apupier</a>\n"
+                + "\n"
+                + "  wants to merge\n"
+                + "  <span class=\"js-updating-pull-request-commits-count\">1</span>\n"
+                + "  commit into\n"
+                + "\n"
+                + "\n"
+                + "\n"
+                + "  <span title=\"eclipse/che:main\" class=\"commit-ref css-truncate user-select-contain expandable base-ref\"><a title=\"eclipse/che:main\" class=\"no-underline \" href=\"/eclipse/che\"><span class=\"css-truncate-target\">eclipse</span>:<span class=\"css-truncate-target\">main</span></a></span><span></span>\n"
+                + "\n"
+                + "  <div class=\"commit-ref-dropdown\">\n"
+                + "    <details class=\"details-reset details-overlay select-menu commitish-suggester\" id=\"branch-select-menu\">\n"
+                + "      <summary class=\"btn btn-sm select-menu-button branch\" title=\"Choose a base branch\">\n"
+                + "        <i>base:</i>\n"
+                + "        <span class=\"css-truncate css-truncate-target\" title=\"main\">main</span>\n"
+                + "      </summary>\n"
+                + "      <input-demux-context-wrapper data-context-type=\"baseChange\">");
     GithubUrl githubUrl = githubUrlParser.parse(url);
 
-    assertEquals(githubUrl.getUsername(), "garagatyi");
+    assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");
-    assertEquals(githubUrl.getBranch(), "fixDeployment");
+    assertEquals(githubUrl.getBranch(), "main");
   }
 
   /** Check Pull Request is failing with Merged state */
   @Test(
       expectedExceptions = IllegalArgumentException.class,
-      expectedExceptionsMessageRegExp = ".*found Merged.*")
+      expectedExceptionsMessageRegExp = ".*found merged.*")
   public void checkPullRequestMergedState() {
 
     String url = "https://github.com/eclipse/che/pull/11103";
     when(urlFetcher.fetchSafely(url))
         .thenReturn(
-            "\n"
-                + "  <div class=\"TableObject gh-header-meta\">\n"
-                + "    <div class=\"TableObject-item\">\n"
-                + "        <div class=\"State State--purple\">\n"
-                + "          <svg class=\"octicon octicon-git-merge\" viewBox=\"0 0 12 16\" version=\"1.1\" width=\"12\" height=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M10 7c-.73 0-1.38.41-1.73 1.02V8C7.22 7.98 6 7.64 5.14 6.98c-.75-.58-1.5-1.61-1.89-2.44A1.993 1.993 0 0 0 2 .99C.89.99 0 1.89 0 3a2 2 0 0 0 1 1.72v6.56c-.59.35-1 .99-1 1.72 0 1.11.89 2 2 2a1.993 1.993 0 0 0 1-3.72V7.67c.67.7 1.44 1.27 2.3 1.69.86.42 2.03.63 2.97.64v-.02c.36.61 1 1.02 1.73 1.02 1.11 0 2-.89 2-2 0-1.11-.89-2-2-2zm-6.8 6c0 .66-.55 1.2-1.2 1.2-.65 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zm8 6c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2z\"/></svg>\n"
-                + "          Merged\n"
-                + "        </div>\n"
+            "  <div class=\"d-flex flex-items-center flex-wrap mt-0 gh-header-meta\">\n"
+                + "    <div class=\"flex-shrink-0 mb-2 flex-self-start flex-md-self-center\">\n"
+                + "        <span reviewable_state=\"ready\" title=\"Status: Merged\" data-view-component=\"true\" class=\"State State--merged\">\n"
+                + "  <svg height=\"16\" class=\"octicon octicon-git-merge\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M5 3.254V3.25v.005a.75.75 0 110-.005v.004zm.45 1.9a2.25 2.25 0 10-1.95.218v5.256a2.25 2.25 0 101.5 0V7.123A5.735 5.735 0 009.25 9h1.378a2.251 2.251 0 100-1.5H9.25a4.25 4.25 0 01-3.8-2.346zM12.75 9a.75.75 0 100-1.5.75.75 0 000 1.5zm-8.5 4.5a.75.75 0 100-1.5.75.75 0 000 1.5z\"></path></svg> Merged\n"
+                + "</span>\n"
                 + "    </div>\n"
-                + "    <div class=\"TableObject-item TableObject-item--primary\">\n"
-                + "          <a class=\"author pull-header-username css-truncate css-truncate-target expandable\" data-hovercard-user-id=\"436777\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/benoitf\">benoitf</a>\n"
+                + "\n"
+                + "\n"
+                + "\n"
+                + "    <div class=\"flex-auto min-width-0 mb-2\">\n"
+                + "          <a class=\"author Link--secondary text-bold css-truncate css-truncate-target expandable\" data-hovercard-type=\"user\" data-hovercard-url=\"/users/benoitf/hovercard\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/benoitf\">benoitf</a>\n"
                 + "  merged 1 commit into\n"
                 + "\n"
                 + "\n"
                 + "\n"
-                + "  <span title=\"eclipse/che:master\" class=\"commit-ref css-truncate user-select-contain expandable \"><span class=\"css-truncate-target\">master</span></span>\n"
+                + "  <span title=\"eclipse/che:master\" class=\"commit-ref css-truncate user-select-contain expandable \"><a title=\"eclipse/che:master\" class=\"no-underline \" href=\"/eclipse/che/tree/master\"><span class=\"css-truncate-target\">master</span></a></span><span></span>\n"
                 + "\n"
                 + "from\n"
                 + "\n"
-                + "<span title=\"eclipse/che:stack-theia\" class=\"commit-ref css-truncate user-select-contain expandable head-ref\"><span class=\"css-truncate-target\">stack-theia</span></span>\n"
+                + "<span title=\"eclipse/che:cleanup-e2e-theia\" class=\"commit-ref css-truncate user-select-contain expandable head-ref\"><a title=\"eclipse/che:cleanup-e2e-theia\" class=\"no-underline \" href=\"/eclipse/che/tree/cleanup-e2e-theia\"><span class=\"css-truncate-target\">cleanup-e2e-theia</span></a></span><span><clipboard-copy aria-label=\"Copy\" data-copy-feedback=\"Copied!\" value=\"cleanup-e2e-theia\" data-view-component=\"true\" class=\"Link--onHover js-copy-branch color-fg-muted d-inline-block ml-1\">\n"
+                + "    <svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-copy\">\n"
+                + "    <path fill-rule=\"evenodd\" d=\"M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z\"></path><path fill-rule=\"evenodd\" d=\"M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z\"></path>\n"
+                + "</svg>\n"
+                + "    <svg style=\"display: none;\" aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-check color-fg-success\">\n"
+                + "    <path fill-rule=\"evenodd\" d=\"M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z\"></path>\n"
+                + "</svg>\n"
+                + "</clipboard-copy></span>\n"
                 + "\n"
                 + "\n"
-                + "  <relative-time datetime=\"2018-09-06T09:29:33Z\">Sep 6, 2018</relative-time>\n"
+                + "  <relative-time datetime=\"2018-09-07T08:00:49Z\" class=\"no-wrap\">Sep 7, 2018</relative-time>\n"
                 + "\n"
                 + "    </div>\n"
                 + "  </div>\n"
-                + "</div>\n");
+                + "");
     githubUrlParser.parse(url);
   }
 
   /** Check Pull Request is failing with Closed state */
   @Test(
       expectedExceptions = IllegalArgumentException.class,
-      expectedExceptionsMessageRegExp = ".*found Closed.*")
+      expectedExceptionsMessageRegExp = ".*found closed.*")
   public void checkPullRequestClosedState() {
 
-    String url = "https://github.com/eclipse/che/pull/11103";
+    String url = "https://github.com/eclipse/che/pull/20754";
     when(urlFetcher.fetchSafely(url))
         .thenReturn(
-            "  <div class=\"TableObject gh-header-meta\">\n"
-                + "    <div class=\"TableObject-item\">\n"
-                + "        <div class=\"State State--red\">\n"
-                + "          <svg class=\"octicon octicon-git-pull-request\" viewBox=\"0 0 12 16\" version=\"1.1\" width=\"12\" height=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M11 11.28V5c-.03-.78-.34-1.47-.94-2.06C9.46 2.35 8.78 2.03 8 2H7V0L4 3l3 3V4h1c.27.02.48.11.69.31.21.2.3.42.31.69v6.28A1.993 1.993 0 0 0 10 15a1.993 1.993 0 0 0 1-3.72zm-1 2.92c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zM4 3c0-1.11-.89-2-2-2a1.993 1.993 0 0 0-1 3.72v6.56A1.993 1.993 0 0 0 2 15a1.993 1.993 0 0 0 1-3.72V4.72c.59-.34 1-.98 1-1.72zm-.8 10c0 .66-.55 1.2-1.2 1.2-.65 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2z\"/></svg>\n"
-                + "          Closed\n"
-                + "        </div>\n"
+            "   </div>\n"
+                + "  <div class=\"d-flex flex-items-center flex-wrap mt-0 gh-header-meta\">\n"
+                + "    <div class=\"flex-shrink-0 mb-2 flex-self-start flex-md-self-center\">\n"
+                + "        <span reviewable_state=\"ready\" title=\"Status: Closed\" data-view-component=\"true\" class=\"State State--closed\">\n"
+                + "  <svg height=\"16\" class=\"octicon octicon-git-pull-request-closed\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M10.72 1.227a.75.75 0 011.06 0l.97.97.97-.97a.75.75 0 111.06 1.061l-.97.97.97.97a.75.75 0 01-1.06 1.06l-.97-.97-.97.97a.75.75 0 11-1.06-1.06l.97-.97-.97-.97a.75.75 0 010-1.06zM12.75 6.5a.75.75 0 00-.75.75v3.378a2.251 2.251 0 101.5 0V7.25a.75.75 0 00-.75-.75zm0 5.5a.75.75 0 100 1.5.75.75 0 000-1.5zM2.5 3.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.25 1a2.25 2.25 0 00-.75 4.372v5.256a2.251 2.251 0 101.5 0V5.372A2.25 2.25 0 003.25 1zm0 11a.75.75 0 100 1.5.75.75 0 000-1.5z\"></path></svg> Closed\n"
+                + "</span>\n"
                 + "    </div>\n"
-                + "    <div class=\"TableObject-item TableObject-item--primary\">\n"
-                + "          <a class=\"author pull-header-username css-truncate css-truncate-target expandable\" data-hovercard-user-id=\"436777\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/benoitf\">benoitf</a>\n"
-                + "   wants to merge 1 commit into\n"
                 + "\n"
                 + "\n"
                 + "\n"
-                + "  <span title=\"eclipse/che:che6\" class=\"commit-ref css-truncate user-select-contain expandable base-ref\"><span class=\"css-truncate-target\">che6</span></span>\n"
+                + "    <div class=\"flex-auto min-width-0 mb-2\">\n"
+                + "          <a class=\"author Link--secondary text-bold css-truncate css-truncate-target expandable\" data-hovercard-type=\"user\" data-hovercard-url=\"/users/Ohrimenko1988/hovercard\" data-octo-click=\"hovercard-link-click\" data-octo-dimensions=\"link_type:self\" href=\"/Ohrimenko1988\">Ohrimenko1988</a>\n"
                 + "\n"
-                + "  <div class=\"commit-ref-dropdown\">\n"
-                + "    <details class=\"details-reset details-overlay select-menu js-select-menu commitish-suggester js-load-contents\" data-contents-url=\"/eclipse/che/pull/7923/show_partial?partial=pull_requests%2Fdescription_branches_dropdown\">\n"
-                + "      <summary class=\"btn btn-sm select-menu-button branch\" title=\"Choose a base branch\" aria-haspopup=\"true\">\n"
-                + "        <i>base:</i>\n"
-                + "        <span class=\"js-select-button css-truncate css-truncate-target\" title=\"che6\">che6</span>\n"
-                + "      </summary>\n"
-                + "      <details-menu class=\"select-menu-modal position-absolute\" style=\"z-index: 90;\">\n"
-                + "        <div class=\"js-select-menu-deferred-content\"></div>\n"
-                + "        <div class=\"select-menu-loading-overlay anim-pulse\">\n"
-                + "          <svg height=\"32\" class=\"octicon octicon-octoface\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"32\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M14.7 5.34c.13-.32.55-1.59-.13-3.31 0 0-1.05-.33-3.44 1.3-1-.28-2.07-.32-3.13-.32s-2.13.04-3.13.32c-2.39-1.64-3.44-1.3-3.44-1.3-.68 1.72-.26 2.99-.13 3.31C.49 6.21 0 7.33 0 8.69 0 13.84 3.33 15 7.98 15S16 13.84 16 8.69c0-1.36-.49-2.48-1.3-3.35zM8 14.02c-3.3 0-5.98-.15-5.98-3.35 0-.76.38-1.48 1.02-2.07 1.07-.98 2.9-.46 4.96-.46 2.07 0 3.88-.52 4.96.46.65.59 1.02 1.3 1.02 2.07 0 3.19-2.68 3.35-5.98 3.35zM5.49 9.01c-.66 0-1.2.8-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.54-1.78-1.2-1.78zm5.02 0c-.66 0-1.2.79-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.53-1.78-1.2-1.78z\"/></svg>\n"
-                + "        </div>\n"
-                + "      </details-menu>\n"
-                + "    </details>\n"
-                + "  </div>\n"
+                + "  wants to merge\n"
+                + "  <span class=\"js-updating-pull-request-commits-count\">10</span>\n"
+                + "  commits into\n"
+                + "\n"
+                + "\n"
+                + "\n"
+                + "  <span title=\"eclipse/che:7.38.x\" class=\"commit-ref css-truncate user-select-contain expandable \"><a title=\"eclipse/che:7.38.x\" class=\"no-underline \" href=\"/eclipse/che/tree/7.38.x\"><span class=\"css-truncate-target\">eclipse</span>:<span class=\"css-truncate-target\">7.38.x</span></a></span><span></span>\n"
                 + "\n"
                 + "from\n"
                 + "\n"
-                + "<span title=\"eclipse/che:gwt-mockito\" class=\"commit-ref css-truncate user-select-contain expandable head-ref\"><span class=\"css-truncate-target\">gwt-mockito</span></span>\n"
+                + "<span title=\"Ohrimenko1988/che:iokhrime-chromedriver-7.38.x\" class=\"commit-ref css-truncate user-select-contain expandable head-ref\"><a title=\"Ohrimenko1988/che:iokhrime-chromedriver-7.38.x\" class=\"no-underline \" href=\"/Ohrimenko1988/che/tree/iokhrime-chromedriver-7.38.x\"><span class=\"css-truncate-target\">Ohrimenko1988</span>:<span class=\"css-truncate-target\">iokhrime-chromedriver-7.38.x</span></a></span><span><clipboard-copy aria-label=\"Copy\" data-copy-feedback=\"Copied!\" value=\"Ohrimenko1988:iokhrime-chromedriver-7.38.x\" data-view-component=\"true\" class=\"Link--onHover js-copy-branch color-fg-muted d-inline-block ml-1\">\n"
+                + "    <svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-copy\">\n"
+                + "    <path fill-rule=\"evenodd\" d=\"M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z\"></path><path fill-rule=\"evenodd\" d=\"M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z\"></path>\n"
+                + "</svg>\n"
+                + "    <svg style=\"display: none;\" aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-check color-fg-success\">\n"
+                + "    <path fill-rule=\"evenodd\" d=\"M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z\"></path>\n"
+                + "</svg>\n"
+                + "</clipboard-copy></span>\n"
                 + "\n"
                 + "\n"
                 + "\n"
-                + "    </div>");
+                + "    </div>\n"
+                + "  </div>\n"
+                + "");
     githubUrlParser.parse(url);
   }
 }

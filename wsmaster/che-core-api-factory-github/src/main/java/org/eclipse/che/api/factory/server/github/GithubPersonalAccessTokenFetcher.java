@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -33,6 +33,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
@@ -135,7 +136,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
 
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException {
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
     if (githubApiClient == null || !githubApiClient.isConnected(scmServerUrl)) {
@@ -178,8 +179,9 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
           OAUTH_PROVIDER_NAME,
           "2.0",
           getLocalAuthenticateUrl());
-    } catch (NotFoundException
-        | ServerException
+    } catch (NotFoundException nfe) {
+      throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
+    } catch (ServerException
         | ForbiddenException
         | BadRequestException
         | ScmItemNotFoundException

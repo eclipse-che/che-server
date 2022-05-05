@@ -37,6 +37,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.StringUtils;
@@ -87,7 +88,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
 
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException {
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     scmServerUrl = StringUtils.trimEnd(scmServerUrl, '/');
     GitlabApiClient gitlabApiClient = getApiClient(scmServerUrl);
     if (gitlabApiClient == null || !gitlabApiClient.isConnected(scmServerUrl)) {
@@ -130,8 +131,9 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
           OAUTH_PROVIDER_NAME,
           "2.0",
           getLocalAuthenticateUrl());
-    } catch (NotFoundException
-        | ServerException
+    } catch (NotFoundException nfe) {
+      throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
+    } catch (ServerException
         | ForbiddenException
         | BadRequestException
         | ScmItemNotFoundException

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.scm;
 import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.subject.Subject;
 
 public interface PersonalAccessTokenFetcher {
@@ -34,7 +35,7 @@ public interface PersonalAccessTokenFetcher {
    *     scm provider.
    */
   PersonalAccessToken fetchPersonalAccessToken(Subject cheUser, String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException;
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
 
   /**
    * Checks whether the provided personal access token is valid and has expected scope of

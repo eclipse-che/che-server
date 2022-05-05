@@ -65,46 +65,51 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         gitCredentialManager.createOrReplace(personalAccessToken);
         return content;
       } else {
+        // try to authenticate for the given URL
         try {
-          return urlFetcher.fetch(requestURL);
-        } catch (IOException exception) {
-          if (exception instanceof SSLException) {
-            ScmCommunicationException cause =
-                new ScmCommunicationException(
-                    String.format(
-                        "Failed to fetch a content from URL %s due to TLS key misconfiguration. Please refer to the docs about how to correctly import it. ",
-                        requestURL));
-            throw new DevfileException(exception.getMessage(), cause);
-          } else if (exception instanceof FileNotFoundException) {
-            if (isPublicRepository(remoteFactoryUrl)) {
-              // for public repo-s return 404 as-is
-              throw exception;
-            }
-          }
-          // unable to determine exact cause, so let's just try to authorize...
+          PersonalAccessToken personalAccessToken =
+              personalAccessTokenManager.fetchAndSave(
+                  EnvironmentContext.getCurrent().getSubject(), remoteFactoryUrl.getHostName());
+          String content =
+              urlFetcher.fetch(requestURL, formatAuthorization(personalAccessToken.getToken()));
+          gitCredentialManager.createOrReplace(personalAccessToken);
+          return content;
+        } catch (UnknownScmProviderException e) {
+          // we don't have any provider matching this SCM provider
+          // so try without secrets being configured
           try {
-            PersonalAccessToken personalAccessToken =
-                personalAccessTokenManager.fetchAndSave(
-                    EnvironmentContext.getCurrent().getSubject(), remoteFactoryUrl.getHostName());
-            String content =
-                urlFetcher.fetch(requestURL, formatAuthorization(personalAccessToken.getToken()));
-            gitCredentialManager.createOrReplace(personalAccessToken);
-            return content;
-          } catch (ScmUnauthorizedException | UnknownScmProviderException e) {
-            throw new DevfileException(e.getMessage(), e);
-          } catch (ScmCommunicationException e) {
-            throw new IOException(
-                String.format(
-                    "Failed to fetch a content from URL %s. Make sure the URL"
-                        + " is correct. For private repository, make sure authentication is configured."
-                        + " Additionally, if you're using "
-                        + " relative form, make sure the referenced file are actually stored"
-                        + " relative to the devfile on the same host,"
-                        + " or try to specify URL in absolute form. The current attempt to authenticate"
-                        + " request, failed with the following error message: %s",
-                    fileURL, e.getMessage()),
-                e);
+            return urlFetcher.fetch(requestURL);
+          } catch (IOException exception) {
+            if (exception instanceof SSLException) {
+              ScmCommunicationException cause =
+                  new ScmCommunicationException(
+                      String.format(
+                          "Failed to fetch a content from URL %s due to TLS key misconfiguration. Please refer to the docs about how to correctly import it. ",
+                          requestURL));
+              throw new DevfileException(exception.getMessage(), cause);
+            } else if (exception instanceof FileNotFoundException) {
+              if (isPublicRepository(remoteFactoryUrl)) {
+                // for public repo-s return 404 as-is
+                throw exception;
+              }
+            }
+            throw new DevfileException(
+                String.format("%s: %s", e.getMessage(), exception.getMessage()), exception);
           }
+        } catch (ScmUnauthorizedException e) {
+          throw new DevfileException(e.getMessage(), e);
+        } catch (ScmCommunicationException e) {
+          throw new IOException(
+              String.format(
+                  "Failed to fetch a content from URL %s. Make sure the URL"
+                      + " is correct. For private repository, make sure authentication is configured."
+                      + " Additionally, if you're using "
+                      + " relative form, make sure the referenced file are actually stored"
+                      + " relative to the devfile on the same host,"
+                      + " or try to specify URL in absolute form. The current attempt to authenticate"
+                      + " request, failed with the following error message: %s",
+                  fileURL, e.getMessage()),
+              e);
         }
       }
     } catch (ScmConfigurationPersistenceException

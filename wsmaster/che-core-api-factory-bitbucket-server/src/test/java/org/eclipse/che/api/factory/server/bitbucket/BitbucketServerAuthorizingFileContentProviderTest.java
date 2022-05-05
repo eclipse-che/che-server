@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
@@ -71,7 +70,6 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
         .thenReturn(Optional.empty());
     when(personalAccessTokenManager.fetchAndSave(any(Subject.class), eq(TEST_HOSTNAME)))
         .thenReturn(token);
-    when(urlFetcher.fetch(anyString())).thenThrow(new IOException("unauthorized"));
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
 

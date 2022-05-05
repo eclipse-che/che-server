@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,11 +11,13 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
@@ -56,7 +58,7 @@ public class GithubScmFileResolverTest {
     assertFalse(githubScmFileResolver.accept("http://foobar.com"));
   }
 
-  /** Check Gitlab url will be be accepted by this resolver */
+  /** Check <GitHub> url will be be accepted by this resolver */
   @Test
   public void checkValidAcceptUrl() {
     // should be accepted
@@ -67,7 +69,10 @@ public class GithubScmFileResolverTest {
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(urlFetcher.fetch(anyString())).thenReturn(rawContent);
+    when(urlFetcher.fetch(anyString(), anyString())).thenReturn(rawContent);
+    var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
+    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
+        .thenReturn(personalAccessToken);
 
     String content = githubScmFileResolver.fileContent("http://github.com/test/repo.git", filename);
 

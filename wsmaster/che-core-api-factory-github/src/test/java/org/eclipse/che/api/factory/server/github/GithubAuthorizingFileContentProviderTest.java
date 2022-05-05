@@ -11,12 +11,13 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
@@ -40,8 +41,14 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(
             githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+    var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
+    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
+        .thenReturn(personalAccessToken);
     fileContentProvider.fetchContent("devfile.yaml");
-    verify(urlFetcher).fetch(eq("https://raw.githubusercontent.com/eclipse/che/HEAD/devfile.yaml"));
+    verify(urlFetcher)
+        .fetch(
+            eq("https://raw.githubusercontent.com/eclipse/che/HEAD/devfile.yaml"),
+            eq("token my-token"));
   }
 
   @Test
@@ -52,15 +59,21 @@ public class GithubAuthorizingFileContentProviderTest {
         new GithubAuthorizingFileContentProvider(
             githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
     String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
+    var personalAccessToken = new PersonalAccessToken(url, "che", "my-token");
+    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
+        .thenReturn(personalAccessToken);
     fileContentProvider.fetchContent(url);
-    verify(urlFetcher).fetch(eq(url));
+    verify(urlFetcher).fetch(eq(url), eq("token my-token"));
   }
 
   @Test(expectedExceptions = FileNotFoundException.class)
   public void shouldThrowNotFoundForPublicRepos() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
-    when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
+    when(urlFetcher.fetch(eq(url), anyString())).thenThrow(FileNotFoundException.class);
+    var personalAccessToken = new PersonalAccessToken(url, "che", "token");
+    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
+        .thenReturn(personalAccessToken);
     when(urlFetcher.fetch(eq("https://api.github.com/repos/eclipse/che"))).thenReturn("OK");
     GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -49,7 +49,7 @@ public class GithubURLParser {
   /** Regexp to find repository and branch name from PR link */
   protected static final Pattern PR_DATA_PATTERN =
       Pattern.compile(
-          ".*<div class=\"State[\\s|\\S]+(?<prState>Closed|Open|Merged)[\\s|\\S]+<\\/div>[\\s|\\S]+into[\\s]+(from[\\s]*)*<span title=\"(?<prRepoUser>[^\\\\/]+)\\/(?<prRepoName>[^\\:]+):(?<prBranch>[^\\\"]+).*",
+          ".*class=\"State[\\s]State--(?<prState>closed|open|merged).*<span title=\"(?<prRepoUser>[^\\\\/]+)\\/(?<prRepoName>[^\\:]+):(?<prBranch>[^\\\"]+).*",
           Pattern.DOTALL);
 
   public boolean isValid(@NotNull String url) {

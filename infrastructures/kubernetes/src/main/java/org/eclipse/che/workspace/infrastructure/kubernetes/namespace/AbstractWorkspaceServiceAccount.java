@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -53,6 +53,7 @@ public abstract class AbstractWorkspaceServiceAccount<
   public static final String CONFIGMAPS_ROLE_NAME = "workspace-configmaps";
   public static final String CREDENTIALS_SECRET_NAME = "workspace-credentials-secret";
   public static final String PREFERENCES_CONFIGMAP_NAME = "workspace-preferences-configmap";
+  public static final String GIT_USERDATA_CONFIGMAP_NAME = "workspace-userdata-gitconfig-configmap";
 
   protected final String namespace;
   protected final String serviceAccountName;

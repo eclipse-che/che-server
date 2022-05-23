@@ -57,9 +57,9 @@ public class GitlabUserDataFetcher implements GitUserDataFetcher {
 
   @Inject
   public GitlabUserDataFetcher(
-      @Named("che.api") String apiEndpoint,
       @Nullable @Named("che.integration.gitlab.server_endpoints") String gitlabEndpoints,
       @Nullable @Named("che.integration.gitlab.oauth_endpoint") String oauthEndpoint,
+      @Named("che.api") String apiEndpoint,
       OAuthAPI oAuthAPI) {
     this.apiEndpoint = apiEndpoint;
     if (gitlabEndpoints != null) {

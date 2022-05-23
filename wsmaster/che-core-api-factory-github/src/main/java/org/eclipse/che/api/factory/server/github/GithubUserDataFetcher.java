@@ -49,9 +49,15 @@ public class GithubUserDataFetcher implements GitUserDataFetcher {
 
   @Inject
   public GithubUserDataFetcher(@Named("che.api") String apiEndpoint, OAuthAPI oAuthAPI) {
+    this(apiEndpoint, oAuthAPI, new GithubApiClient());
+  }
+
+  /** Constructor used for testing only. */
+  public GithubUserDataFetcher(
+      String apiEndpoint, OAuthAPI oAuthAPI, GithubApiClient githubApiClient) {
     this.apiEndpoint = apiEndpoint;
     this.oAuthAPI = oAuthAPI;
-    this.githubApiClient = new GithubApiClient();
+    this.githubApiClient = githubApiClient;
   }
 
   @Override

@@ -11,6 +11,9 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
+import static java.util.Collections.singletonMap;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.GIT_USERDATA_CONFIGMAP_NAME;
+
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -31,7 +34,6 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
   private static final Logger LOG = LoggerFactory.getLogger(GitconfigUserDataConfigurator.class);
   private final KubernetesClientFactory clientFactory;
   private final Set<GitUserDataFetcher> gitUserDataFetchers;
-  private static final String CONFIGMAP_NAME = "workspace-userdata-gitconfig";
   private static final String CONFIGMAP_DATA_KEY = "gitconfig";
 
   @Inject
@@ -46,13 +48,13 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
       throws InfrastructureException {
     var client = clientFactory.create();
     GitUserData gitUserData = null;
-    try {
-      for (GitUserDataFetcher fetcher : gitUserDataFetchers) {
+    for (GitUserDataFetcher fetcher : gitUserDataFetchers) {
+      try {
         gitUserData = fetcher.fetchGitUserData();
         break;
+      } catch (ScmUnauthorizedException | ScmCommunicationException e) {
+        LOG.debug("No GitUserDataFetcher is configured. " + e.getMessage());
       }
-    } catch (ScmCommunicationException | ScmUnauthorizedException e) {
-      LOG.debug("No GitUserDataFetcher is configured. " + e.getMessage());
     }
 
     Map<String, String> annotations =
@@ -68,7 +70,12 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
             "controller.devfile.io/watch-configmap",
             "true");
     if (gitUserData != null
-        && client.configMaps().inNamespace(namespaceName).withName(CONFIGMAP_NAME).get() == null
+        && client
+                .configMaps()
+                .inNamespace(namespaceName)
+                .withName(GIT_USERDATA_CONFIGMAP_NAME)
+                .get()
+            == null
         && client
             .configMaps()
             .inNamespace(namespaceName)
@@ -87,13 +94,13 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
       ConfigMap configMap =
           new ConfigMapBuilder()
               .withNewMetadata()
-              .withName(CONFIGMAP_NAME)
+              .withName(GIT_USERDATA_CONFIGMAP_NAME)
               .withLabels(labels)
               .withAnnotations(annotations)
               .endMetadata()
               .build();
       configMap.setData(
-          ImmutableMap.of(
+          singletonMap(
               CONFIGMAP_DATA_KEY,
               String.format(
                   "[user]\n\tname = %1$s\n\temail = %2$s",

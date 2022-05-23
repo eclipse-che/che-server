@@ -24,8 +24,11 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
+  private static final Logger LOG = LoggerFactory.getLogger(GitconfigUserDataConfigurator.class);
   private final KubernetesClientFactory clientFactory;
   private final Set<GitUserDataFetcher> gitUserDataFetchers;
   private static final String CONFIGMAP_NAME = "workspace-userdata-gitconfig";
@@ -43,13 +46,15 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
       throws InfrastructureException {
     var client = clientFactory.create();
     GitUserData gitUserData = null;
-    for (GitUserDataFetcher fetcher : gitUserDataFetchers) {
-      try {
+    try {
+      for (GitUserDataFetcher fetcher : gitUserDataFetchers) {
         gitUserData = fetcher.fetchGitUserData();
         break;
-      } catch (ScmUnauthorizedException | ScmCommunicationException ignored) {
       }
+    } catch (ScmCommunicationException | ScmUnauthorizedException e) {
+      LOG.debug("No GitUserDataFetcher is configured. " + e.getMessage());
     }
+
     Map<String, String> annotations =
         ImmutableMap.of(
             "controller.devfile.io/mount-as",

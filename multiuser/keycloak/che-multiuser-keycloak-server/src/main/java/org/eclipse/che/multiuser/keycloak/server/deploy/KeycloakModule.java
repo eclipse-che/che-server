@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,6 @@ import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
 import org.eclipse.che.multiuser.api.account.personal.PersonalAccountUserManager;
-import org.eclipse.che.multiuser.keycloak.server.KeycloakConfigurationService;
 import org.eclipse.che.multiuser.keycloak.server.KeycloakOIDCInfoProvider;
 import org.eclipse.che.multiuser.keycloak.server.KeycloakSigningKeyResolver;
 import org.eclipse.che.multiuser.keycloak.server.KeycloakTokenValidator;
@@ -37,7 +36,7 @@ public class KeycloakModule extends AbstractModule {
     bind(HttpJsonRequestFactory.class)
         .to(org.eclipse.che.multiuser.keycloak.server.KeycloakHttpJsonRequestFactory.class);
     bind(TokenValidator.class).to(KeycloakTokenValidator.class);
-    bind(KeycloakConfigurationService.class);
+
 
     bind(ProfileDao.class).to(KeycloakProfileDao.class);
     bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);

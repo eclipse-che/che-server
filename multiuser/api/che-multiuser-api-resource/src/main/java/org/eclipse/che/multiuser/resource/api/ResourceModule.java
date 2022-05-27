@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,14 +17,12 @@ import com.google.inject.multibindings.Multibinder;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.multiuser.api.permission.server.account.AccountPermissionsChecker;
 import org.eclipse.che.multiuser.resource.api.free.DefaultResourcesProvider;
-import org.eclipse.che.multiuser.resource.api.free.FreeResourcesLimitService;
 import org.eclipse.che.multiuser.resource.api.free.FreeResourcesProvider;
 import org.eclipse.che.multiuser.resource.api.type.RamResourceType;
 import org.eclipse.che.multiuser.resource.api.type.ResourceType;
 import org.eclipse.che.multiuser.resource.api.type.RuntimeResourceType;
 import org.eclipse.che.multiuser.resource.api.type.TimeoutResourceType;
 import org.eclipse.che.multiuser.resource.api.type.WorkspaceResourceType;
-import org.eclipse.che.multiuser.resource.api.usage.ResourceService;
 import org.eclipse.che.multiuser.resource.api.usage.tracker.RamResourceUsageTracker;
 import org.eclipse.che.multiuser.resource.api.usage.tracker.RuntimeResourceUsageTracker;
 import org.eclipse.che.multiuser.resource.api.usage.tracker.WorkspaceResourceUsageTracker;
@@ -36,9 +34,9 @@ import org.eclipse.che.multiuser.resource.spi.jpa.JpaFreeResourcesLimitDao;
 public class ResourceModule extends AbstractModule {
   @Override
   protected void configure() {
-    bind(ResourceService.class);
+    //  bind(ResourceService.class);
 
-    bind(FreeResourcesLimitService.class);
+
     bind(FreeResourcesLimitDao.class).to(JpaFreeResourcesLimitDao.class);
     bind(JpaFreeResourcesLimitDao.RemoveFreeResourcesLimitSubscriber.class).asEagerSingleton();
 

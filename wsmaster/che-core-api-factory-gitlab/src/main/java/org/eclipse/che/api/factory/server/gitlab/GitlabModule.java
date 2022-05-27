@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.gitlab;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 
 public class GitlabModule extends AbstractModule {
@@ -22,5 +23,8 @@ public class GitlabModule extends AbstractModule {
     Multibinder<PersonalAccessTokenFetcher> tokenFetcherMultibinder =
         Multibinder.newSetBinder(binder(), PersonalAccessTokenFetcher.class);
     tokenFetcherMultibinder.addBinding().to(GitlabOAuthTokenFetcher.class);
+    Multibinder<GitUserDataFetcher> gitUserDataMultibinder =
+        Multibinder.newSetBinder(binder(), GitUserDataFetcher.class);
+    gitUserDataMultibinder.addBinding().to(GitlabUserDataFetcher.class);
   }
 }

@@ -36,7 +36,6 @@ public class ResourceModule extends AbstractModule {
   protected void configure() {
     //  bind(ResourceService.class);
 
-
     bind(FreeResourcesLimitDao.class).to(JpaFreeResourcesLimitDao.class);
     bind(JpaFreeResourcesLimitDao.RemoveFreeResourcesLimitSubscriber.class).asEagerSingleton();
 

@@ -65,7 +65,6 @@ public class OrganizationApiModule extends AbstractModule {
         .addBinding()
         .to(OrganizationalAccountPermissionsChecker.class);
 
-
     bind(OrganizationResourceDistributionServicePermissionsFilter.class);
 
     bind(OrganizationEventsWebsocketBroadcaster.class).asEagerSingleton();

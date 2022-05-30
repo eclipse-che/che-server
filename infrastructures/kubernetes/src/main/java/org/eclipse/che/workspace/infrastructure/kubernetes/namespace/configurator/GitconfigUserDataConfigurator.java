@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.GIT_USERDATA_CONFIGMAP_NAME;
 
@@ -83,7 +84,9 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
       Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
       try {
         User user = userManager.getById(cheSubject.getUserId());
-        gitUserData = new GitUserData(user.getName(), user.getEmail());
+        if (!isNullOrEmpty(user.getName()) && !isNullOrEmpty(user.getEmail())) {
+          gitUserData = new GitUserData(user.getName(), user.getEmail());
+        }
       } catch (NotFoundException | ServerException e) {
         LOG.error(e.getMessage());
       }

@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.GIT_USERDATA_CONFIGMAP_NAME;
 
@@ -20,12 +21,18 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +42,16 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
   private final KubernetesClientFactory clientFactory;
   private final Set<GitUserDataFetcher> gitUserDataFetchers;
   private static final String CONFIGMAP_DATA_KEY = "gitconfig";
+  private final UserManager userManager;
 
   @Inject
   public GitconfigUserDataConfigurator(
-      KubernetesClientFactory clientFactory, Set<GitUserDataFetcher> gitUserDataFetchers) {
+      KubernetesClientFactory clientFactory,
+      Set<GitUserDataFetcher> gitUserDataFetchers,
+      UserManager userManager) {
     this.clientFactory = clientFactory;
     this.gitUserDataFetchers = gitUserDataFetchers;
+    this.userManager = userManager;
   }
 
   @Override
@@ -69,6 +80,17 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
             "true",
             "controller.devfile.io/watch-configmap",
             "true");
+    if (gitUserData == null) {
+      Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
+      try {
+        User user = userManager.getById(cheSubject.getUserId());
+        if (!isNullOrEmpty(user.getName()) && !isNullOrEmpty(user.getEmail())) {
+          gitUserData = new GitUserData(user.getName(), user.getEmail());
+        }
+      } catch (NotFoundException | ServerException e) {
+        LOG.error(e.getMessage());
+      }
+    }
     if (gitUserData != null
         && client
                 .configMaps()

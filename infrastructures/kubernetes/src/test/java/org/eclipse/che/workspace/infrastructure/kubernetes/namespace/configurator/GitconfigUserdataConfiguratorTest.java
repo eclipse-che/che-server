@@ -12,6 +12,8 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.GIT_USERDATA_CONFIGMAP_NAME;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -23,10 +25,14 @@ import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -44,6 +50,7 @@ public class GitconfigUserdataConfiguratorTest {
 
   @Mock private KubernetesClientFactory clientFactory;
   @Mock private GitUserDataFetcher gitUserDataFetcher;
+  @Mock private UserManager userManager;
   private KubernetesServer serverMock;
 
   private NamespaceResolutionContext namespaceResolutionContext;
@@ -55,7 +62,8 @@ public class GitconfigUserdataConfiguratorTest {
   @BeforeMethod
   public void setUp()
       throws InfrastructureException, ScmCommunicationException, ScmUnauthorizedException {
-    configurator = new GitconfigUserDataConfigurator(clientFactory, Set.of(gitUserDataFetcher));
+    configurator =
+        new GitconfigUserDataConfigurator(clientFactory, Set.of(gitUserDataFetcher), userManager);
 
     serverMock = new KubernetesServer(true, true);
     serverMock.before();
@@ -88,9 +96,10 @@ public class GitconfigUserdataConfiguratorTest {
   }
 
   @Test
-  public void doNothingWhenGitUserDataIsNull()
-      throws InfrastructureException, InterruptedException {
+  public void doNothingWhenGitUserDataAndCheUserAreNull()
+      throws InfrastructureException, ServerException, NotFoundException {
     // when
+    when(userManager.getById(anyString())).thenThrow(new NotFoundException("not found"));
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
 
     // then - don't create the configmap
@@ -141,5 +150,31 @@ public class GitconfigUserdataConfiguratorTest {
         serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
     Assert.assertEquals(configMaps.size(), 1);
     Assert.assertEquals(configMaps.get(0).getMetadata().getAnnotations().get("already"), "created");
+  }
+
+  @Test
+  public void createUserdataConfigmapFromCheUserData()
+      throws InfrastructureException, ServerException, NotFoundException, InterruptedException {
+    // given
+    User user = mock(User.class);
+    when(user.getName()).thenReturn("test name");
+    when(user.getEmail()).thenReturn("test@email.com");
+    when(userManager.getById(anyString())).thenReturn(user);
+
+    // when
+    configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
+
+    // then create a secret
+    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "POST");
+    ConfigMap configMap =
+        serverMock
+            .getClient()
+            .configMaps()
+            .inNamespace(TEST_NAMESPACE_NAME)
+            .withName(GIT_USERDATA_CONFIGMAP_NAME)
+            .get();
+    Assert.assertNotNull(configMap);
+    Assert.assertTrue(configMap.getData().get("gitconfig").contains("test name"));
+    Assert.assertTrue(configMap.getData().get("gitconfig").contains("test@email.com"));
   }
 }

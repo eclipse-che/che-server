@@ -105,6 +105,7 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
             .list()
             .getItems()
             .stream()
+            .filter(configMap -> configMap.getMetadata().getAnnotations() != null)
             .noneMatch(
                 configMap ->
                     configMap

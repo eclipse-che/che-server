@@ -83,14 +83,15 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
             .list()
             .getItems()
             .stream()
+            .filter(configMap -> configMap.getMetadata().getAnnotations() != null)
             .noneMatch(
-                configMap -> {
-                  Map<String, String> annotationsMap = configMap.getMetadata().getAnnotations();
-                  if (annotationsMap != null) {
-                    return annotationsMap.entrySet().containsAll(annotations.entrySet());
-                  }
-                  return false;
-                })) {
+                configMap ->
+                    configMap
+                            .getMetadata()
+                            .getAnnotations()
+                            .entrySet()
+                            .containsAll(annotations.entrySet())
+                        && configMap.getData().containsKey(CONFIGMAP_DATA_KEY))) {
       ConfigMap configMap =
           new ConfigMapBuilder()
               .withNewMetadata()

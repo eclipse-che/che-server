@@ -69,17 +69,21 @@ public class BitbucketURLParser {
     } else {
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
-      String trimmedUrl = url.substring(0, url.indexOf("/scm"));
-      try {
-        Optional<PersonalAccessToken> token =
-            personalAccessTokenManager.get(
-                EnvironmentContext.getCurrent().getSubject(), trimmedUrl);
-        return token.isPresent() && token.get().getScmProviderUrl().equals(trimmedUrl);
-      } catch (ScmConfigurationPersistenceException
-          | ScmUnauthorizedException
-          | ScmCommunicationException exception) {
-        return false;
+      String serverUrl =
+          url.substring(0, url.indexOf("/scm") > 0 ? url.indexOf("/scm") : url.length());
+      if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl)).matcher(url).matches()) {
+        try {
+          Optional<PersonalAccessToken> token =
+              personalAccessTokenManager.get(
+                  EnvironmentContext.getCurrent().getSubject(), serverUrl, false);
+          return token.isPresent() && token.get().getScmTokenName().equals("bitbucket-server");
+        } catch (ScmConfigurationPersistenceException
+            | ScmUnauthorizedException
+            | ScmCommunicationException exception) {
+          return false;
+        }
       }
+      return false;
     }
   }
 

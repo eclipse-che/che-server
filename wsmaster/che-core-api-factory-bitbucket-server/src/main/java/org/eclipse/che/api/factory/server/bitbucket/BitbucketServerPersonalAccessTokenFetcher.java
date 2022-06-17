@@ -107,7 +107,8 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
       throws ScmCommunicationException, ScmUnauthorizedException {
     // If BitBucket oAuth is not configured try to find a manually added user namespace token.
-    if (bitbucketServerApiClient instanceof NoopBitbucketServerApiClient) {
+    if (bitbucketServerApiClient instanceof NoopBitbucketServerApiClient
+        && personalAccessToken.getScmTokenName().equals("bitbucket-server")) {
       HttpBitbucketServerApiClient apiClient =
           new HttpBitbucketServerApiClient(
               personalAccessToken.getScmProviderUrl(), new NoopOAuthAuthenticator());

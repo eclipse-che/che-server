@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,9 +11,11 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
+import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -33,7 +35,10 @@ public class GitlabUrlParserTest {
   @BeforeMethod
   public void setUp() {
     gitlabUrlParser =
-        new GitlabUrlParser("https://gitlab1.com,https://gitlab.foo.xxx", devfileFilenamesProvider);
+        new GitlabUrlParser(
+            "https://gitlab1.com,https://gitlab.foo.xxx",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
   }
 
   /** Check URLs are valid with regexp */

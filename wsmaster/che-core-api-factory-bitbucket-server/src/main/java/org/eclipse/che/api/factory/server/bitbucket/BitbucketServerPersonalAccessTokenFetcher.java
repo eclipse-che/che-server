@@ -26,7 +26,6 @@ import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAcce
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
 import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
-import org.eclipse.che.api.factory.server.bitbucket.server.NoopBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
@@ -106,21 +105,20 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   @Override
   public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
       throws ScmCommunicationException, ScmUnauthorizedException {
-    // If BitBucket oAuth is not configured try to find a manually added user namespace token.
-    if (bitbucketServerApiClient instanceof NoopBitbucketServerApiClient
-        && personalAccessToken.getScmTokenName().equals("bitbucket-server")) {
-      HttpBitbucketServerApiClient apiClient =
-          new HttpBitbucketServerApiClient(
-              personalAccessToken.getScmProviderUrl(), new NoopOAuthAuthenticator());
-      try {
-        apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
-        return Optional.of(Boolean.TRUE);
-      } catch (ScmItemNotFoundException exception) {
-        // Even if the user not found, it means the token is valid.
-        return Optional.of(Boolean.TRUE);
-      }
-    }
     if (!bitbucketServerApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
+      // If BitBucket oAuth is not configured check the manually added user namespace token.
+      if (personalAccessToken.getScmTokenName().equals("bitbucket-server")) {
+        HttpBitbucketServerApiClient apiClient =
+            new HttpBitbucketServerApiClient(
+                personalAccessToken.getScmProviderUrl(), new NoopOAuthAuthenticator());
+        try {
+          apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
+          return Optional.of(Boolean.TRUE);
+        } catch (ScmItemNotFoundException exception) {
+          // Even if the user not found, it means that the token is valid.
+          return Optional.of(Boolean.TRUE);
+        }
+      }
       LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
       return Optional.empty();
     }

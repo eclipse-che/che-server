@@ -190,7 +190,6 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
       throws ScmUnauthorizedException, ScmCommunicationException {
     // given
     when(personalAccessToken.getScmProviderUrl()).thenReturn(someNotBitbucketURL);
-    when(personalAccessToken.getScmTokenName()).thenReturn("unknown");
     when(bitbucketServerApiClient.isConnected(eq(someNotBitbucketURL))).thenReturn(false);
     // when
     Optional<Boolean> result = fetcher.isValid(personalAccessToken);

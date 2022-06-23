@@ -67,31 +67,49 @@ public class GitlabUrlParser {
     }
   }
 
+  private boolean userTokenExists(String url) {
+    Matcher serverUrlMatcher = Pattern.compile("[^/|:]/").matcher(url);
+    if (serverUrlMatcher.find()) {
+      String serverUrl = url.substring(0, url.indexOf(serverUrlMatcher.group()) + 1);
+      try {
+        Optional<PersonalAccessToken> token =
+            personalAccessTokenManager.get(
+                EnvironmentContext.getCurrent().getSubject(), serverUrl, false);
+        if (token.isPresent()) {
+          PersonalAccessToken accessToken = token.get();
+          return accessToken.getScmTokenName().equals("gitlab");
+        }
+      } catch (ScmConfigurationPersistenceException
+          | ScmUnauthorizedException
+          | ScmCommunicationException exception) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   public boolean isValid(@NotNull String url) {
     if (!gitlabUrlPatterns.isEmpty()) {
       return gitlabUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches());
     } else {
       // If Gitlab URL is not configured, try to find it in a manually added user namespace
       // token.
-      Matcher matcher = Pattern.compile("[^/|:]/").matcher(url);
-      if (matcher.find()) {
-        String serverUrl = url.substring(0, url.indexOf(matcher.group()) + 1);
-        try {
-          Optional<PersonalAccessToken> token =
-              personalAccessTokenManager.get(
-                  EnvironmentContext.getCurrent().getSubject(), serverUrl, false);
-          if (token.isPresent()) {
-            PersonalAccessToken accessToken = token.get();
-            return accessToken.getScmTokenName().equals("gitlab");
-          }
-        } catch (ScmConfigurationPersistenceException
-            | ScmUnauthorizedException
-            | ScmCommunicationException exception) {
-          return false;
-        }
-      }
+      return userTokenExists(url);
     }
-    return false;
+  }
+
+  private Optional<Matcher> getPatternMatcherByUrl(String url) {
+    String trimmedEndpoint = StringUtils.trimEnd(url, '/');
+    Matcher serverUrlMatcher = Pattern.compile("[^/|:]/").matcher(url);
+    if (serverUrlMatcher.find()) {
+      String serverUrl =
+          trimmedEndpoint.substring(0, trimmedEndpoint.indexOf(serverUrlMatcher.group()) + 1);
+      return gitlabUrlPatternTemplates.stream()
+          .map(t -> Pattern.compile(format(t, serverUrl)).matcher(url))
+          .filter(Matcher::matches)
+          .findAny();
+    }
+    return Optional.empty();
   }
 
   /**
@@ -101,19 +119,9 @@ public class GitlabUrlParser {
   public GitlabUrl parse(String url) {
 
     if (gitlabUrlPatterns.isEmpty()) {
-      String trimmedEndpoint = StringUtils.trimEnd(url, '/');
-      Matcher matcher = Pattern.compile("[^/|:]/").matcher(url);
-      if (matcher.find()) {
-        String serverUrl =
-            trimmedEndpoint.substring(0, trimmedEndpoint.indexOf(matcher.group()) + 1);
-        Optional<Matcher> optional =
-            gitlabUrlPatternTemplates.stream()
-                .map(t -> Pattern.compile(format(t, serverUrl)).matcher(url))
-                .filter(Matcher::matches)
-                .findAny();
-        if (optional.isPresent()) {
-          return parse(optional.get());
-        }
+      Optional<Matcher> optionalMatcher = getPatternMatcherByUrl(url);
+      if (optionalMatcher.isPresent()) {
+        return parse(optionalMatcher.get());
       }
       throw new UnsupportedOperationException(
           "The gitlab integration is not configured properly and cannot be used at this moment."

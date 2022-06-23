@@ -63,28 +63,39 @@ public class BitbucketURLParser {
     }
   }
 
+  private boolean userTokenExists(String url) {
+    String serverUrl = getServerUrl(url);
+    if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl)).matcher(url).matches()) {
+      try {
+        Optional<PersonalAccessToken> token =
+            personalAccessTokenManager.get(
+                EnvironmentContext.getCurrent().getSubject(), serverUrl, false);
+        return token.isPresent() && token.get().getScmTokenName().equals("bitbucket-server");
+      } catch (ScmConfigurationPersistenceException
+          | ScmUnauthorizedException
+          | ScmCommunicationException exception) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   public boolean isValid(@NotNull String url) {
     if (!bitbucketUrlPatterns.isEmpty()) {
       return bitbucketUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches());
     } else {
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
-      String serverUrl =
-          url.substring(0, url.indexOf("/scm") > 0 ? url.indexOf("/scm") : url.length());
-      if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl)).matcher(url).matches()) {
-        try {
-          Optional<PersonalAccessToken> token =
-              personalAccessTokenManager.get(
-                  EnvironmentContext.getCurrent().getSubject(), serverUrl, false);
-          return token.isPresent() && token.get().getScmTokenName().equals("bitbucket-server");
-        } catch (ScmConfigurationPersistenceException
-            | ScmUnauthorizedException
-            | ScmCommunicationException exception) {
-          return false;
-        }
-      }
-      return false;
+      return userTokenExists(url);
     }
+  }
+
+  private String getServerUrl(String url) {
+    return url.substring(0, url.indexOf("/scm") > 0 ? url.indexOf("/scm") : url.length());
+  }
+
+  private Matcher getPatternMatcherByUrl(String url) {
+    return Pattern.compile(format(bitbucketUrlPatternTemplate, getServerUrl(url))).matcher(url);
   }
 
   /**
@@ -93,24 +104,11 @@ public class BitbucketURLParser {
    * BitbucketUrl objects.
    */
   public BitbucketUrl parse(String url) {
+
     if (bitbucketUrlPatterns.isEmpty()) {
-      String trimmedUrl = url.substring(0, url.indexOf("/scm"));
-      try {
-        Optional<PersonalAccessToken> token =
-            personalAccessTokenManager.get(
-                EnvironmentContext.getCurrent().getSubject(), trimmedUrl);
-        if (token.isPresent()) {
-          Pattern pattern =
-              Pattern.compile(format(bitbucketUrlPatternTemplate, token.get().getScmProviderUrl()));
-          Matcher matcher = pattern.matcher(url);
-          if (matcher.matches()) {
-            return parse(matcher);
-          }
-        }
-      } catch (ScmConfigurationPersistenceException
-          | ScmUnauthorizedException
-          | ScmCommunicationException exception) {
-        throw new UnsupportedOperationException("Token is not valid");
+      Matcher patternMatcher = getPatternMatcherByUrl(url);
+      if (patternMatcher.matches()) {
+        return parse(patternMatcher);
       }
       throw new UnsupportedOperationException(
           "The Bitbucket integration is not configured properly and cannot be used at this moment."

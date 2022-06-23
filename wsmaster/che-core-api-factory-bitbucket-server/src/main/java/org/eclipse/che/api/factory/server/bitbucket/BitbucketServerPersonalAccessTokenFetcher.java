@@ -107,20 +107,20 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       throws ScmCommunicationException, ScmUnauthorizedException {
     if (!bitbucketServerApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
       // If BitBucket oAuth is not configured check the manually added user namespace token.
-      if (personalAccessToken.getScmTokenName().equals("bitbucket-server")) {
-        HttpBitbucketServerApiClient apiClient =
-            new HttpBitbucketServerApiClient(
-                personalAccessToken.getScmProviderUrl(), new NoopOAuthAuthenticator());
-        try {
-          apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
-          return Optional.of(Boolean.TRUE);
-        } catch (ScmItemNotFoundException exception) {
-          // Even if the user not found, it means that the token is valid.
-          return Optional.of(Boolean.TRUE);
-        }
+      HttpBitbucketServerApiClient apiClient =
+          new HttpBitbucketServerApiClient(
+              personalAccessToken.getScmProviderUrl(), new NoopOAuthAuthenticator());
+      try {
+        apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
+        return Optional.of(Boolean.TRUE);
+      } catch (ScmItemNotFoundException exception) {
+        // Even if the user not found, it means that the token is valid.
+        return Optional.of(Boolean.TRUE);
+      } catch (ScmUnauthorizedException | ScmCommunicationException exception) {
+        LOG.debug(
+            "not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
+        return Optional.empty();
       }
-      LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
-      return Optional.empty();
     }
     try {
       BitbucketPersonalAccessToken bitbucketPersonalAccessToken =

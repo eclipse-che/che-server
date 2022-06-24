@@ -63,7 +63,7 @@ public class BitbucketURLParser {
     }
   }
 
-  private boolean userTokenExists(String url) {
+  private boolean isUserTokenExists(String repositoryUrl) {
     String serverUrl = getServerUrl(url);
     if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl)).matcher(url).matches()) {
       try {

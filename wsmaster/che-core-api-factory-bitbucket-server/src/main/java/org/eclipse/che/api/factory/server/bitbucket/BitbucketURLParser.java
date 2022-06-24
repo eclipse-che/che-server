@@ -46,6 +46,7 @@ public class BitbucketURLParser {
   private static final String bitbucketUrlPatternTemplate =
       "^(?<host>%s)/scm/(?<project>[^/]++)/(?<repo>[^.]++).git(\\?at=)?(?<branch>[\\w\\d-_]*)";
   private final List<Pattern> bitbucketUrlPatterns = new ArrayList<>();
+  private static final String OAUTH_PROVIDER_NAME = "bitbucket-server";
 
   @Inject
   public BitbucketURLParser(
@@ -64,13 +65,14 @@ public class BitbucketURLParser {
   }
 
   private boolean isUserTokenExists(String repositoryUrl) {
-    String serverUrl = getServerUrl(url);
-    if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl)).matcher(url).matches()) {
+    String serverUrl = getServerUrl(repositoryUrl);
+    if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl))
+        .matcher(repositoryUrl)
+        .matches()) {
       try {
         Optional<PersonalAccessToken> token =
-            personalAccessTokenManager.get(
-                EnvironmentContext.getCurrent().getSubject(), serverUrl, false);
-        return token.isPresent() && token.get().getScmTokenName().equals("bitbucket-server");
+            personalAccessTokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+        return token.isPresent() && token.get().getScmTokenName().equals(OAUTH_PROVIDER_NAME);
       } catch (ScmConfigurationPersistenceException
           | ScmUnauthorizedException
           | ScmCommunicationException exception) {
@@ -86,12 +88,14 @@ public class BitbucketURLParser {
     } else {
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
-      return userTokenExists(url);
+      return isUserTokenExists(url);
     }
   }
 
   private String getServerUrl(String repositoryUrl) {
-    return url.substring(0, url.indexOf("/scm") > 0 ? url.indexOf("/scm") : url.length());
+    return repositoryUrl.substring(
+        0,
+        repositoryUrl.indexOf("/scm") > 0 ? repositoryUrl.indexOf("/scm") : repositoryUrl.length());
   }
 
   private Matcher getPatternMatcherByUrl(String url) {

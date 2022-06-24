@@ -113,10 +113,9 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       try {
         apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
         return Optional.of(Boolean.TRUE);
-      } catch (ScmItemNotFoundException exception) {
-        // Even if the user not found, it means that the token is valid.
-        return Optional.of(Boolean.TRUE);
-      } catch (ScmUnauthorizedException | ScmCommunicationException exception) {
+      } catch (ScmItemNotFoundException
+          | ScmUnauthorizedException
+          | ScmCommunicationException exception) {
         LOG.debug(
             "not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
         return Optional.empty();

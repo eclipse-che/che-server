@@ -51,19 +51,4 @@ public interface PersonalAccessTokenManager {
   Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
           ScmCommunicationException;
-
-  /**
-   * Gets {@link PersonalAccessToken} from permanent storage.
-   *
-   * @param cheUser Che user object
-   * @param scmServerUrl Git provider endpoint
-   * @param validate {@code false} to skip the token validation and avoid API call, otherwise {@code
-   *     true}
-   * @return personal access token
-   * @throws ScmConfigurationPersistenceException - problem occurred during communication with *
-   *     permanent storage.
-   */
-  Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl, boolean validate)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException;
 }

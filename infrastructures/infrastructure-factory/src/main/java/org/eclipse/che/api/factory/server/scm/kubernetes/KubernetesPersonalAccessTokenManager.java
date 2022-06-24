@@ -135,13 +135,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
           ScmCommunicationException {
 
-    return get(cheUser, scmServerUrl, true);
-  }
-
-  @Override
-  public Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl, boolean validate)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
     try {
       for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
         List<Secret> secrets =
@@ -163,7 +156,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                     annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME),
                     annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID),
                     new String(Base64.getDecoder().decode(secret.getData().get("token"))));
-            if (!validate || scmPersonalAccessTokenFetcher.isValid(token)) {
+            if (scmPersonalAccessTokenFetcher.isValid(token)) {
               return Optional.of(token);
             } else {
               // Removing token that is no longer valid. If several tokens exist the next one could

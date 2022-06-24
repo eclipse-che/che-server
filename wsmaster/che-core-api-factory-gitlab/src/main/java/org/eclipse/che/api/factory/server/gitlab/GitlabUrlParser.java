@@ -48,6 +48,7 @@ public class GitlabUrlParser {
           "^(?<host>%s)/(?<user>[^/]++)/(?<project>[^/]++)(/)?(?<repository>[^/]++)?(/)?",
           "^(?<host>%s)/(?<user>[^/]++)/(?<project>[^/]++)(/)?(?<repository>[^/]++)?/-/tree/(?<branch>[^/]++)(/)?(?<subfolder>[^/]++)?");
   private final List<Pattern> gitlabUrlPatterns = new ArrayList<>();
+  private static final String OAUTH_PROVIDER_NAME = "gitlab";
 
   @Inject
   public GitlabUrlParser(
@@ -67,17 +68,16 @@ public class GitlabUrlParser {
     }
   }
 
-  private boolean userTokenExists(String url) {
-    Matcher serverUrlMatcher = Pattern.compile("[^/|:]/").matcher(url);
-    if (serverUrlMatcher.find()) {
-      String serverUrl = url.substring(0, url.indexOf(serverUrlMatcher.group()) + 1);
+  private boolean isUserTokenExists(String repositoryUrl) {
+    Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
+    if (serverUrlOptional.isPresent()) {
+      String serverUrl = serverUrlOptional.get();
       try {
         Optional<PersonalAccessToken> token =
-            personalAccessTokenManager.get(
-                EnvironmentContext.getCurrent().getSubject(), serverUrl, false);
+            personalAccessTokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
         if (token.isPresent()) {
           PersonalAccessToken accessToken = token.get();
-          return accessToken.getScmTokenName().equals("gitlab");
+          return accessToken.getScmTokenName().equals(OAUTH_PROVIDER_NAME);
         }
       } catch (ScmConfigurationPersistenceException
           | ScmUnauthorizedException
@@ -94,20 +94,27 @@ public class GitlabUrlParser {
     } else {
       // If Gitlab URL is not configured, try to find it in a manually added user namespace
       // token.
-      return userTokenExists(url);
+      return isUserTokenExists(url);
     }
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
-    String trimmedEndpoint = StringUtils.trimEnd(url, '/');
-    Matcher serverUrlMatcher = Pattern.compile("[^/|:]/").matcher(url);
-    if (serverUrlMatcher.find()) {
-      String serverUrl =
-          trimmedEndpoint.substring(0, trimmedEndpoint.indexOf(serverUrlMatcher.group()) + 1);
+    Optional<String> serverUrlOptional = getServerUrl(url);
+    if (serverUrlOptional.isPresent()) {
+      String serverUrl = serverUrlOptional.get();
       return gitlabUrlPatternTemplates.stream()
           .map(t -> Pattern.compile(format(t, serverUrl)).matcher(url))
           .filter(Matcher::matches)
           .findAny();
+    }
+    return Optional.empty();
+  }
+
+  private Optional<String> getServerUrl(String repositoryUrl) {
+    Matcher serverUrlMatcher = Pattern.compile("[^/|:]/").matcher(repositoryUrl);
+    if (serverUrlMatcher.find()) {
+      return Optional.of(
+          repositoryUrl.substring(0, repositoryUrl.indexOf(serverUrlMatcher.group()) + 1));
     }
     return Optional.empty();
   }

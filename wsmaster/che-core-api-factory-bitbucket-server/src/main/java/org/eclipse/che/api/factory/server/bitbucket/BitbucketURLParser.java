@@ -90,7 +90,7 @@ public class BitbucketURLParser {
     }
   }
 
-  private String getServerUrl(String url) {
+  private String getServerUrl(String repositoryUrl) {
     return url.substring(0, url.indexOf("/scm") > 0 ? url.indexOf("/scm") : url.length());
   }
 

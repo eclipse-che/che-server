@@ -49,6 +49,6 @@ public class NoopOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public String getLocalAuthenticateUrl() {
-    return "Empty URL";
+    return "Noop URL";
   }
 }

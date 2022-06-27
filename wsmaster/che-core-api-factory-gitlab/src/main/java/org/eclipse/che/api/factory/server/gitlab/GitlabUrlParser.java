@@ -68,7 +68,7 @@ public class GitlabUrlParser {
     }
   }
 
-  private boolean isUserTokenExists(String repositoryUrl) {
+  private boolean isUserTokenPresent(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
       String serverUrl = serverUrlOptional.get();
@@ -94,7 +94,7 @@ public class GitlabUrlParser {
     } else {
       // If Gitlab URL is not configured, try to find it in a manually added user namespace
       // token.
-      return isUserTokenExists(url);
+      return isUserTokenPresent(url);
     }
   }
 

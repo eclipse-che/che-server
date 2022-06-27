@@ -64,7 +64,7 @@ public class BitbucketURLParser {
     }
   }
 
-  private boolean isUserTokenExists(String repositoryUrl) {
+  private boolean isUserTokenPresent(String repositoryUrl) {
     String serverUrl = getServerUrl(repositoryUrl);
     if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl))
         .matcher(repositoryUrl)
@@ -88,7 +88,7 @@ public class BitbucketURLParser {
     } else {
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
-      return isUserTokenExists(url);
+      return isUserTokenPresent(url);
     }
   }
 

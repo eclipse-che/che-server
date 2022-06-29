@@ -46,6 +46,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.eclipse.che.commons.subject.Subject;
@@ -128,12 +129,16 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public BitbucketUser getUser(String slug)
+  public BitbucketUser getUser(String slug, @Nullable String token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     URI uri = serverUri.resolve("/rest/api/1.0/users/" + slug);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
-            .headers("Authorization", computeAuthorizationHeader("GET", uri.toString()))
+            .headers(
+                "Authorization",
+                token != null
+                    ? "Bearer " + token
+                    : computeAuthorizationHeader("GET", uri.toString()))
             .timeout(DEFAULT_HTTP_TIMEOUT)
             .build();
 
@@ -308,7 +313,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
 
     for (String userSlug : userSlugs) {
-      BitbucketUser user = getUser(userSlug);
+      BitbucketUser user = getUser(userSlug, null);
       try {
         getPersonalAccessTokens(userSlug);
         return Optional.of(user);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,9 +11,11 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -34,7 +36,9 @@ public class BitbucketURLParserTest {
   public void setUp() {
     bitbucketURLParser =
         new BitbucketURLParser(
-            "https://bitbucket.2mcl.com,https://bbkt.com", devfileFilenamesProvider);
+            "https://bitbucket.2mcl.com,https://bbkt.com",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
   }
 
   /** Check URLs are valid with regexp */

@@ -149,9 +149,13 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     GitlabApiClient gitlabApiClient = getApiClient(personalAccessToken.getScmProviderUrl());
     if (gitlabApiClient == null
         || !gitlabApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
-      LOG.debug(
-          "not a  valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
-      return Optional.empty();
+      if (personalAccessToken.getScmTokenName().equals(OAUTH_PROVIDER_NAME)) {
+        gitlabApiClient = new GitlabApiClient(personalAccessToken.getScmProviderUrl());
+      } else {
+        LOG.debug(
+            "not a  valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
+        return Optional.empty();
+      }
     }
     if (personalAccessToken.getScmTokenName() != null
         && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {

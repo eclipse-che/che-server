@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,11 +13,13 @@ package org.eclipse.che.api.factory.server.gitlab;
 
 import static java.lang.String.format;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLocation;
 import org.mockito.Mock;
@@ -45,7 +47,9 @@ public class GitlabUrlTest {
   protected void init() {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
-    gitlabUrlParser = new GitlabUrlParser("https://gitlab.net", devfileFilenamesProvider);
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://gitlab.net", devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
   }
 
   /** Check when there is devfile in the repository */

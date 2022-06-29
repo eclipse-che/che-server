@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.subject.Subject;
 
 /** Bitbucket Server API client. */
@@ -36,13 +37,14 @@ public interface BitbucketServerApiClient {
       throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException;
 
   /**
-   * @param slug
+   * @param slug scm username.
+   * @param token token to override. Pass {@code null} to use token from the authentication flow.
    * @return - Retrieve the {@link BitbucketUser} matching the supplied userSlug.
    * @throws ScmItemNotFoundException
    * @throws ScmUnauthorizedException
    * @throws ScmCommunicationException
    */
-  BitbucketUser getUser(String slug)
+  BitbucketUser getUser(String slug, @Nullable String token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 
   /**

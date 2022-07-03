@@ -71,7 +71,7 @@
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
         <io.fabric8.kubernetes-client>5.12.1</io.fabric8.kubernetes-client>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
-        <io.jaegertracing.micrometer.version>1.0.0</io.jaegertracing.micrometer.version>
+        <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.0.0</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.11.2</io.jsonwebtoken.jjwt.version>
         <io.micrometer.version>1.3.1</io.micrometer.version>

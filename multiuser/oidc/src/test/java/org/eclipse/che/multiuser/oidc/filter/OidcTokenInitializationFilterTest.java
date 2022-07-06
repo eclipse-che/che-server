@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.multiuser.oidc.filter;
 
+import static org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter.DEFAULT_EMAIL_CLAIM;
 import static org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter.DEFAULT_USERNAME_CLAIM;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -46,6 +47,7 @@ public class OidcTokenInitializationFilterTest {
   @Mock private RequestTokenExtractor tokenExtractor;
   @Mock private UserManager userManager;
   private final String usernameClaim = "blabolClaim";
+  private final String emailClaim = "pafturClaim";
   private final String TEST_USERNAME = "jondoe";
   private final String TEST_USER_EMAIL = "jon@doe";
   private final String TEST_USERID = "jon1337";
@@ -66,11 +68,12 @@ public class OidcTokenInitializationFilterTest {
             sessionStore,
             tokenExtractor,
             userManager,
-            usernameClaim);
+            usernameClaim,
+            emailClaim);
 
     lenient().when(jwsClaims.getBody()).thenReturn(claims);
     lenient().when(claims.getSubject()).thenReturn(TEST_USERID);
-    lenient().when(claims.get("email", String.class)).thenReturn(TEST_USER_EMAIL);
+    lenient().when(claims.get(emailClaim, String.class)).thenReturn(TEST_USER_EMAIL);
     lenient().when(claims.get(usernameClaim, String.class)).thenReturn(TEST_USERNAME);
   }
 
@@ -124,7 +127,8 @@ public class OidcTokenInitializationFilterTest {
             sessionStore,
             tokenExtractor,
             userManager,
-            customUsernameClaim);
+            customUsernameClaim,
+            emailClaim);
     User createdUser = mock(User.class);
     when(createdUser.getId()).thenReturn(TEST_USERID);
     when(createdUser.getName()).thenReturn(TEST_USERNAME);
@@ -142,8 +146,42 @@ public class OidcTokenInitializationFilterTest {
     verify(claims, never()).get(usernameClaim, String.class);
   }
 
+  @Test(dataProvider = "emailClaims")
+  public void testDefaultEmailClaimWhenEmpty(String customEmailClaim)
+      throws ServerException, ConflictException {
+    tokenInitializationFilter =
+        new OidcTokenInitializationFilter(
+            permissionsChecker,
+            jwtParser,
+            sessionStore,
+            tokenExtractor,
+            userManager,
+            usernameClaim,
+            customEmailClaim);
+    User createdUser = mock(User.class);
+    when(createdUser.getId()).thenReturn(TEST_USERID);
+    when(createdUser.getName()).thenReturn(TEST_USERNAME);
+    when(userManager.getOrCreateUser(TEST_USERID, TEST_USER_EMAIL, TEST_USERNAME))
+        .thenReturn(createdUser);
+    when(claims.get(DEFAULT_EMAIL_CLAIM, String.class)).thenReturn(TEST_USER_EMAIL);
+
+    var subject = tokenInitializationFilter.extractSubject(TEST_TOKEN, jwsClaims);
+
+    assertEquals(subject.getUserId(), TEST_USERID);
+    assertEquals(subject.getUserName(), TEST_USERNAME);
+    assertEquals(subject.getToken(), TEST_TOKEN);
+    verify(userManager).getOrCreateUser(TEST_USERID, TEST_USER_EMAIL, TEST_USERNAME);
+    verify(claims).get(DEFAULT_EMAIL_CLAIM, String.class);
+    verify(claims, never()).get(emailClaim, String.class);
+  }
+
   @DataProvider
   public static Object[][] usernameClaims() {
+    return new Object[][] {{""}, {null}};
+  }
+
+  @DataProvider
+  public static Object[][] emailClaims() {
     return new Object[][] {{""}, {null}};
   }
 }

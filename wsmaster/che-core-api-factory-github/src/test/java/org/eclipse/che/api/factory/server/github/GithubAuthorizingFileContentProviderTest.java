@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.mockito.Mock;
@@ -70,11 +71,10 @@ public class GithubAuthorizingFileContentProviderTest {
   public void shouldThrowNotFoundForPublicRepos() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
-    when(urlFetcher.fetch(eq(url), anyString())).thenThrow(FileNotFoundException.class);
-    var personalAccessToken = new PersonalAccessToken(url, "che", "token");
     when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
-        .thenReturn(personalAccessToken);
-    when(urlFetcher.fetch(eq("https://api.github.com/repos/eclipse/che"))).thenReturn("OK");
+        .thenThrow(UnknownScmProviderException.class);
+    when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
+    when(urlFetcher.fetch(eq("https://github.com/eclipse/che"))).thenReturn("OK");
     GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(

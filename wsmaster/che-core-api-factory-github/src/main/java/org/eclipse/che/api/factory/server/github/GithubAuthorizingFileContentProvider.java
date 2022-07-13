@@ -43,10 +43,10 @@ class GithubAuthorizingFileContentProvider extends AuthorizingFileContentProvide
   protected boolean isPublicRepository(GithubUrl remoteFactoryUrl) {
     try {
       urlFetcher.fetch(
-          GithubApiClient.GITHUB_API_SERVER
-              + "/repos/"
+          remoteFactoryUrl.getHostName()
+              + '/'
               + remoteFactoryUrl.getUsername()
-              + "/"
+              + '/'
               + remoteFactoryUrl.getRepository());
       return true;
     } catch (IOException e) {

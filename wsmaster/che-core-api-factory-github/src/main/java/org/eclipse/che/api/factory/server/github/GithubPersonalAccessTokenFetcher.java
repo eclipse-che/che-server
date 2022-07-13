@@ -200,27 +200,22 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
       return Optional.empty();
     }
 
-    if (personalAccessToken.getScmTokenName() != null
-        && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
-      try {
+    try {
+      if (personalAccessToken.getScmTokenName() != null
+          && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
         String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken());
         return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
-      } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
-        LOG.error(e.getMessage(), e);
-        throw new ScmCommunicationException(e.getMessage(), e);
-      }
-    } else {
-      // No REST API for PAT-s in Github found yet. Just try to do some action.
-      try {
+      } else {
+        // No REST API for PAT-s in Github found yet. Just try to do some action.
         GithubUser user = githubApiClient.getUser(personalAccessToken.getToken());
         if (personalAccessToken.getScmUserId().equals(Long.toString(user.getId()))) {
           return Optional.of(Boolean.TRUE);
         } else {
           return Optional.of(Boolean.FALSE);
         }
-      } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
-        return Optional.of(Boolean.FALSE);
       }
+    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+      return Optional.of(Boolean.FALSE);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -203,5 +205,46 @@ public class GithubPersonalAccessTokenFetcherTest {
             githubOauthToken);
 
     assertTrue(githubPATFetcher.isValid(token).get());
+  }
+
+  @Test
+  public void shouldValidateOauthToken() throws Exception {
+    stubFor(
+        get(urlEqualTo("/user"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo")
+                    .withBodyFile("github/rest/user/response.json")));
+
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://github.com",
+            "cheUser",
+            "username",
+            "123456789",
+            OAUTH_2_PREFIX + "-token-name",
+            "tid-23434",
+            githubOauthToken);
+
+    assertTrue(githubPATFetcher.isValid(token).get());
+  }
+
+  @Test
+  public void shouldNotValidateExpiredOauthToken() throws Exception {
+    stubFor(get(urlEqualTo("/user")).willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://github.com",
+            "cheUser",
+            "username",
+            "123456789",
+            OAUTH_2_PREFIX + "-token-name",
+            "tid-23434",
+            githubOauthToken);
+
+    assertFalse(githubPATFetcher.isValid(token).get());
   }
 }

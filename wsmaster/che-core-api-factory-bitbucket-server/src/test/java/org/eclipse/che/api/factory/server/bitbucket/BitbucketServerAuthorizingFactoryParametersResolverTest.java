@@ -58,7 +58,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
-  BitbucketURLParser bitbucketURLParser;
+  BitbucketServerURLParser bitbucketURLParser;
 
   @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
@@ -69,7 +69,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
   @BeforeMethod
   protected void init() {
     bitbucketURLParser =
-        new BitbucketURLParser(
+        new BitbucketServerURLParser(
             "http://bitbucket.2mcl.com",
             devfileFilenamesProvider,
             mock(PersonalAccessTokenManager.class));

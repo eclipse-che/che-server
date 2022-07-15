@@ -38,6 +38,8 @@ import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
 import org.eclipse.che.api.factory.server.ScmService;
+import org.eclipse.che.api.factory.server.bitbucket.BitbucketFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.bitbucket.BitbucketScmFileResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerAuthorizingFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerScmFileResolver;
 import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver;
@@ -173,10 +175,12 @@ public class WsMasterModule extends AbstractModule {
         .addBinding()
         .to(BitbucketServerAuthorizingFactoryParametersResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(GitlabFactoryParametersResolver.class);
+    factoryParametersResolverMultibinder.addBinding().to(BitbucketFactoryParametersResolver.class);
 
     Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =
         Multibinder.newSetBinder(binder(), ScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GithubScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(BitbucketScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GitlabScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketServerScmFileResolver.class);
 
@@ -184,6 +188,7 @@ public class WsMasterModule extends AbstractModule {
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketServerModule());
     install(new org.eclipse.che.api.factory.server.gitlab.GitlabModule());
     install(new org.eclipse.che.api.factory.server.github.GithubModule());
+    install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketModule());
 
     bind(org.eclipse.che.api.core.rest.ApiInfoService.class);
     bind(org.eclipse.che.api.ssh.server.SshService.class);
@@ -283,7 +288,7 @@ public class WsMasterModule extends AbstractModule {
     install(new FactoryModuleBuilder().build(JwtProxyConfigBuilderFactory.class));
     install(new FactoryModuleBuilder().build(PassThroughProxyProvisionerFactory.class));
     installDefaultSecureServerExposer(infrastructure);
-    install(new org.eclipse.che.security.oauth1.BitbucketModule());
+    install(new org.eclipse.che.security.BitbucketModule());
     install(new GitLabModule());
 
     configureMultiUserMode(persistenceProperties, infrastructure);

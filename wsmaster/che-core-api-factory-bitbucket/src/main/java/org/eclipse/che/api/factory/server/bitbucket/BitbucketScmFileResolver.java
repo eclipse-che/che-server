@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toApiException;
 
+import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
@@ -23,42 +24,42 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
-/** Bitbucket Server specific SCM file resolver. */
-public class BitbucketServerScmFileResolver implements ScmFileResolver {
+/** Bitbucket specific SCM file resolver. */
+public class BitbucketScmFileResolver implements ScmFileResolver {
 
+  private final BitbucketURLParser bitbucketUrlParser;
   private final URLFetcher urlFetcher;
-  private final BitbucketServerURLParser bitbucketURLParser;
   private final GitCredentialManager gitCredentialManager;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
-  public BitbucketServerScmFileResolver(
-      BitbucketServerURLParser bitbucketURLParser,
+  public BitbucketScmFileResolver(
+      BitbucketURLParser bitbucketUrlParser,
       URLFetcher urlFetcher,
       GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
+    this.bitbucketUrlParser = bitbucketUrlParser;
     this.urlFetcher = urlFetcher;
-    this.bitbucketURLParser = bitbucketURLParser;
     this.gitCredentialManager = gitCredentialManager;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
   @Override
-  public boolean accept(String repository) {
-    return bitbucketURLParser.isValid(repository);
+  public boolean accept(@NotNull String repository) {
+    // Check if repository parameter is a bitbucket URL
+    return bitbucketUrlParser.isValid(repository);
   }
 
   @Override
-  public String fileContent(String repository, String filePath) throws ApiException {
-
-    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(repository);
-
+  public String fileContent(@NotNull String repository, @NotNull String filePath)
+      throws ApiException {
+    final BitbucketUrl bitbucketUrl = bitbucketUrlParser.parse(repository);
     try {
-      return new BitbucketServerAuthorizingFileContentProvider(
-              bitbucketServerUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
-          .fetchContent(filePath);
+      return new BitbucketAuthorizingFileContentProvider(
+              bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
+          .fetchContent(bitbucketUrl.rawFileLocation(filePath));
     } catch (IOException e) {
-      throw new NotFoundException("Unable to retrieve file from given location.");
+      throw new NotFoundException(e.getMessage());
     } catch (DevfileException devfileException) {
       throw toApiException(devfileException);
     }

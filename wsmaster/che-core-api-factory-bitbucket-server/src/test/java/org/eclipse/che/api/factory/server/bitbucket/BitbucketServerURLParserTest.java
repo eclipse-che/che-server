@@ -25,17 +25,17 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(MockitoTestNGListener.class)
-public class BitbucketURLParserTest {
+public class BitbucketServerURLParserTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
   /** Instance of component that will be tested. */
-  private BitbucketURLParser bitbucketURLParser;
+  private BitbucketServerURLParser bitbucketURLParser;
 
   @BeforeMethod
   public void setUp() {
     bitbucketURLParser =
-        new BitbucketURLParser(
+        new BitbucketServerURLParser(
             "https://bitbucket.2mcl.com,https://bbkt.com",
             devfileFilenamesProvider,
             mock(PersonalAccessTokenManager.class));
@@ -50,11 +50,11 @@ public class BitbucketURLParserTest {
   /** Compare parsing */
   @Test(dataProvider = "parsing")
   public void checkParsing(String url, String project, String repository, String branch) {
-    BitbucketUrl bitbucketUrl = bitbucketURLParser.parse(url);
+    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url);
 
-    assertEquals(bitbucketUrl.getProject(), project);
-    assertEquals(bitbucketUrl.getRepository(), repository);
-    assertEquals(bitbucketUrl.getBranch(), branch);
+    assertEquals(bitbucketServerUrl.getProject(), project);
+    assertEquals(bitbucketServerUrl.getRepository(), repository);
+    assertEquals(bitbucketServerUrl.getBranch(), branch);
   }
 
   @Test(

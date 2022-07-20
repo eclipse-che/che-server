@@ -24,41 +24,53 @@ import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
-import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 
 /**
- * Provides Factory Parameters resolver for both public and private bitbucket repositories.
+ * Provides Factory Parameters resolver for bitbucket repositories.
  *
- * @author Max Shaposhnyk
+ * @author Florent Benoit
  */
 @Singleton
-public class BitbucketServerAuthorizingFactoryParametersResolver
-    extends DefaultFactoryParameterResolver {
+public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterResolver {
 
   /** Parser which will allow to check validity of URLs and create objects. */
-  private final BitbucketServerURLParser bitbucketURLParser;
+  private final BitbucketURLParser bitbucketURLParser;
 
+  /** Builder allowing to build objects from bitbucket URL. */
+  private final BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder;
+
+  /** ProjectDtoMerger */
+  private final ProjectConfigDtoMerger projectConfigDtoMerger;
+
+  /** Git credential manager. */
   private final GitCredentialManager gitCredentialManager;
+
+  /** Personal Access Token manager used when fetching protected content. */
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
-  public BitbucketServerAuthorizingFactoryParametersResolver(
-      URLFactoryBuilder urlFactoryBuilder,
+  public BitbucketFactoryParametersResolver(
+      BitbucketURLParser bitbucketURLParser,
       URLFetcher urlFetcher,
-      BitbucketServerURLParser bitbucketURLParser,
+      BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder,
+      URLFactoryBuilder urlFactoryBuilder,
+      ProjectConfigDtoMerger projectConfigDtoMerger,
       GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(urlFactoryBuilder, urlFetcher);
     this.bitbucketURLParser = bitbucketURLParser;
+    this.bitbucketSourceStorageBuilder = bitbucketSourceStorageBuilder;
+    this.projectConfigDtoMerger = projectConfigDtoMerger;
     this.gitCredentialManager = gitCredentialManager;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
@@ -72,6 +84,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
    */
   @Override
   public boolean accept(@NotNull final Map<String, String> factoryParameters) {
+    // Check if url parameter is a bitbucket URL
     return factoryParameters.containsKey(URL_PARAMETER_NAME)
         && bitbucketURLParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
   }
@@ -85,21 +98,19 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
   @Override
   public FactoryMetaDto createFactory(@NotNull final Map<String, String> factoryParameters)
       throws ApiException {
-
     // no need to check null value of url parameter as accept() method has performed the check
-    final BitbucketServerUrl bitbucketServerUrl =
+    final BitbucketUrl bitbucketUrl =
         bitbucketURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
-
-    final FileContentProvider fileContentProvider =
-        new BitbucketServerAuthorizingFileContentProvider(
-            bitbucketServerUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
 
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder
         .createFactoryFromDevfile(
-            bitbucketServerUrl, fileContentProvider, extractOverrideParams(factoryParameters))
+            bitbucketUrl,
+            new BitbucketAuthorizingFileContentProvider(
+                bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager),
+            extractOverrideParams(factoryParameters))
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
-        .acceptVisitor(new BitbucketFactoryVisitor(bitbucketServerUrl));
+        .acceptVisitor(new BitbucketFactoryVisitor(bitbucketUrl));
   }
 
   /**
@@ -108,46 +119,52 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
    */
   private class BitbucketFactoryVisitor implements FactoryVisitor {
 
-    private final BitbucketServerUrl bitbucketServerUrl;
+    private final BitbucketUrl bitbucketUrl;
 
-    private BitbucketFactoryVisitor(BitbucketServerUrl bitbucketServerUrl) {
-      this.bitbucketServerUrl = bitbucketServerUrl;
+    private BitbucketFactoryVisitor(BitbucketUrl bitbucketUrl) {
+      this.bitbucketUrl = bitbucketUrl;
     }
 
     @Override
     public FactoryDevfileV2Dto visit(FactoryDevfileV2Dto factoryDto) {
       ScmInfoDto scmInfo =
           newDto(ScmInfoDto.class)
-              .withScmProviderName(bitbucketServerUrl.getProviderName())
-              .withRepositoryUrl(bitbucketServerUrl.repositoryLocation());
-      if (bitbucketServerUrl.getBranch() != null) {
-        scmInfo.withBranch(bitbucketServerUrl.getBranch());
+              .withScmProviderName(bitbucketUrl.getProviderName())
+              .withRepositoryUrl(bitbucketUrl.repositoryLocation());
+      if (bitbucketUrl.getBranch() != null) {
+        scmInfo.withBranch(bitbucketUrl.getBranch());
       }
       return factoryDto.withScmInfo(scmInfo);
     }
 
     @Override
     public FactoryDto visit(FactoryDto factory) {
-      if (factory.getDevfile() == null) {
+      if (factory.getWorkspace() != null) {
+        return projectConfigDtoMerger.merge(
+            factory,
+            () -> {
+              // Compute project configuration
+              return newDto(ProjectConfigDto.class)
+                  .withSource(
+                      bitbucketSourceStorageBuilder.buildWorkspaceConfigSource(bitbucketUrl))
+                  .withName(bitbucketUrl.getRepository())
+                  .withPath("/".concat(bitbucketUrl.getRepository()));
+            });
+      } else if (factory.getDevfile() == null) {
         // initialize default devfile
-        factory.setDevfile(
-            urlFactoryBuilder.buildDefaultDevfile(bitbucketServerUrl.getRepository()));
+        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(bitbucketUrl.getRepository()));
       }
 
       updateProjects(
           factory.getDevfile(),
           () ->
               newDto(ProjectDto.class)
-                  .withSource(
-                      newDto(SourceDto.class)
-                          .withLocation(bitbucketServerUrl.repositoryLocation())
-                          .withType("git")
-                          .withBranch(bitbucketServerUrl.getBranch()))
-                  .withName(bitbucketServerUrl.getRepository()),
+                  .withSource(bitbucketSourceStorageBuilder.buildDevfileSource(bitbucketUrl))
+                  .withName(bitbucketUrl.getRepository()),
           project -> {
             final String location = project.getSource().getLocation();
-            if (location.equals(bitbucketServerUrl.repositoryLocation())) {
-              project.getSource().setBranch(bitbucketServerUrl.getBranch());
+            if (location.equals(bitbucketUrl.repositoryLocation())) {
+              project.getSource().setBranch(bitbucketUrl.getBranch());
             }
           });
 

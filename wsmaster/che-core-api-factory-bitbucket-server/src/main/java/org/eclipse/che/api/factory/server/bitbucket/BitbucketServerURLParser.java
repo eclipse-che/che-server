@@ -34,12 +34,12 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.StringUtils;
 
 /**
- * Parser of String Bitbucket URLs and provide {@link BitbucketUrl} objects.
+ * Parser of String Bitbucket Server URLs and provide {@link BitbucketServerUrl} objects.
  *
  * @author Max Shaposhnyk
  */
 @Singleton
-public class BitbucketURLParser {
+public class BitbucketServerURLParser {
 
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final PersonalAccessTokenManager personalAccessTokenManager;
@@ -49,7 +49,7 @@ public class BitbucketURLParser {
   private static final String OAUTH_PROVIDER_NAME = "bitbucket-server";
 
   @Inject
-  public BitbucketURLParser(
+  public BitbucketServerURLParser(
       @Nullable @Named("che.integration.bitbucket.server_endpoints") String bitbucketEndpoints,
       DevfileFilenamesProvider devfileFilenamesProvider,
       PersonalAccessTokenManager personalAccessTokenManager) {
@@ -107,7 +107,7 @@ public class BitbucketURLParser {
    * https://bitbucket.apps.cluster-cb82.cb82.example.opentlc.com/scm/test/test1.git into
    * BitbucketUrl objects.
    */
-  public BitbucketUrl parse(String url) {
+  public BitbucketServerUrl parse(String url) {
 
     if (bitbucketUrlPatterns.isEmpty()) {
       Matcher patternMatcher = getPatternMatcherByUrl(url);
@@ -133,13 +133,13 @@ public class BitbucketURLParser {
     return parse(matcher);
   }
 
-  private BitbucketUrl parse(Matcher matcher) {
+  private BitbucketServerUrl parse(Matcher matcher) {
     String host = matcher.group("host");
     String project = matcher.group("project");
     String repoName = matcher.group("repo");
     String branch = matcher.group("branch");
 
-    return new BitbucketUrl()
+    return new BitbucketServerUrl()
         .withHostName(host)
         .withProject(project)
         .withRepository(repoName)

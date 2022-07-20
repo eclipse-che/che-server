@@ -40,7 +40,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
 
   @Test
   public void shouldFetchContentWithTokenIfPresent() throws Exception {
-    BitbucketUrl url = new BitbucketUrl().withHostName(TEST_HOSTNAME);
+    BitbucketServerUrl url = new BitbucketServerUrl().withHostName(TEST_HOSTNAME);
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
             url, urlFetcher, gitCredentialManager, personalAccessTokenManager);
@@ -60,7 +60,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
 
   @Test
   public void shouldFetchTokenIfNotYetPresent() throws Exception {
-    BitbucketUrl url = new BitbucketUrl().withHostName(TEST_HOSTNAME);
+    BitbucketServerUrl url = new BitbucketServerUrl().withHostName(TEST_HOSTNAME);
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
             url, urlFetcher, gitCredentialManager, personalAccessTokenManager);
@@ -85,8 +85,8 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
   @Test(dataProvider = "relativePathsProvider")
   public void shouldResolveRelativePaths(String relative, String expected, String branch)
       throws Exception {
-    BitbucketUrl url =
-        new BitbucketUrl()
+    BitbucketServerUrl url =
+        new BitbucketServerUrl()
             .withHostName(TEST_HOSTNAME)
             .withProject("proj")
             .withRepository("repo")

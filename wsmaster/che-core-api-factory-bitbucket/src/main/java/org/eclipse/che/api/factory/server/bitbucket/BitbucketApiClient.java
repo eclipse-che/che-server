@@ -209,7 +209,7 @@ public class BitbucketApiClient {
    * Checks if the provided url belongs to this client (Bitbucket)
    *
    * @param scmServerUrl the SCM url to verify
-   * @return If the provided url is recognized by the current client
+   * @return {@code true} If the provided url is recognized by the current client
    */
   public boolean isConnected(String scmServerUrl) {
     return this.scmServerUrl.equals(URI.create(scmServerUrl));

@@ -21,11 +21,7 @@ import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 
-/**
- * Create {@link ProjectConfigDto} object from objects
- *
- * @author Florent Benoit
- */
+/** Create {@link ProjectConfigDto} object from objects */
 @Singleton
 public class BitbucketSourceStorageBuilder {
 

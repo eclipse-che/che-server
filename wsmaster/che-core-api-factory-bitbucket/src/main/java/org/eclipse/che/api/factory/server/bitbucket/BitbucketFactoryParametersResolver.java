@@ -35,11 +35,7 @@ import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 
-/**
- * Provides Factory Parameters resolver for bitbucket repositories.
- *
- * @author Florent Benoit
- */
+/** Provides Factory Parameters resolver for bitbucket repositories. */
 @Singleton
 public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterResolver {
 

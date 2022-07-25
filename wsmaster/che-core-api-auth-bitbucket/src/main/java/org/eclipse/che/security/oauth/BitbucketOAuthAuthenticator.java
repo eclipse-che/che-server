@@ -32,10 +32,11 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
   }
 
+  private static final String USER_URL = "https://api.bitbucket.org/2.0/user";
+
   @Override
   public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-    BitbucketUser user =
-        getJson("https://api.bitbucket.org/2.0/user", accessToken.getToken(), BitbucketUser.class);
+    BitbucketUser user = getJson(USER_URL, accessToken.getToken(), BitbucketUser.class);
     return user;
   }
 
@@ -52,8 +53,7 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
       if (token == null
           || token.getToken() == null
           || token.getToken().isEmpty()
-          || getJson("https://api.bitbucket.org/2.0/user", token.getToken(), BitbucketUser.class)
-              == null) {
+          || getJson(USER_URL, token.getToken(), BitbucketUser.class) == null) {
         return null;
       }
     } catch (OAuthAuthenticationException e) {

@@ -135,7 +135,7 @@ public class GithubPersonalAccessTokenFetcherTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[repo\\]")
+          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[repo, user:email, read:user]")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");
@@ -166,7 +166,10 @@ public class GithubPersonalAccessTokenFetcherTest {
   @Test
   public void shouldReturnToken() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
-    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("repo");
+    OAuthToken oAuthToken =
+        newDto(OAuthToken.class)
+            .withToken(githubOauthToken)
+            .withScope("read:user, repo, user:email");
     when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
@@ -175,7 +178,8 @@ public class GithubPersonalAccessTokenFetcherTest {
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
-                    .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo")
+                    .withHeader(
+                        GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "read:user, repo, user:email")
                     .withBodyFile("github/rest/user/response.json")));
 
     PersonalAccessToken token =
@@ -215,7 +219,8 @@ public class GithubPersonalAccessTokenFetcherTest {
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
-                    .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo")
+                    .withHeader(
+                        GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "read:user, repo, user:email")
                     .withBodyFile("github/rest/user/response.json")));
 
     PersonalAccessToken token =

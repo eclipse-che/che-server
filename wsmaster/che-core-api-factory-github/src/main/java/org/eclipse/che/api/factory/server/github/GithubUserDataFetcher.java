@@ -45,7 +45,8 @@ public class GithubUserDataFetcher implements GitUserDataFetcher {
   private static final String OAUTH_PROVIDER_NAME = "github";
 
   /** Collection of OAuth scopes required to make integration with GitHub work. */
-  public static final Set<String> DEFAULT_TOKEN_SCOPES = ImmutableSet.of("repo");
+  public static final Set<String> DEFAULT_TOKEN_SCOPES =
+      ImmutableSet.of("repo", "user:email", "read:user");
 
   @Inject
   public GithubUserDataFetcher(@Named("che.api") String apiEndpoint, OAuthAPI oAuthAPI) {

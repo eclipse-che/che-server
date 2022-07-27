@@ -55,12 +55,11 @@ public class PVCProvisioner {
 
   @Inject
   public PVCProvisioner(
-      @Named("che.infra.kubernetes.pvc.access_mode") String pvcAccessMode,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       PodsVolumes podsVolumes) {
     this.pvcNamePrefix = "TEST";
     this.pvcQuantity = "test";
-    this.pvcAccessMode = pvcAccessMode;
+    this.pvcAccessMode = "TEST";
     this.pvcStorageClassName = pvcStorageClassName;
     this.podsVolumes = podsVolumes;
   }

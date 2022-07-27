@@ -52,7 +52,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
 
   @Inject
   public PerWorkspacePVCStrategy(
-      @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
       @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
@@ -62,7 +61,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
       SubPathPrefixes subpathPrefixes,
       WorkspaceManager workspaceManager) {
     super(
-        preCreateDirs,
         waitBound,
         pvcSubPathHelper,
         factory,

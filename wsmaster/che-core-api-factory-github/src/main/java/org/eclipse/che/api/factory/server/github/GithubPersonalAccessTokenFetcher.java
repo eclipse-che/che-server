@@ -193,8 +193,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
   }
 
   @Override
-  public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
-      throws ScmCommunicationException, ScmUnauthorizedException {
+  public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken) {
     if (!githubApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
       return Optional.empty();

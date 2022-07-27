@@ -105,7 +105,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
 
   @Inject
   public CommonPVCStrategy(
-      @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
       @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
@@ -117,7 +116,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
     this.configuredPVCName = "test";
     this.pvcQuantity = "test";
     this.pvcAccessMode = "TEST";
-    this.preCreateDirs = preCreateDirs;
+    this.preCreateDirs = true;
     this.pvcStorageClassName = "TEST";
     this.waitBound = waitBound;
     this.pvcSubPathHelper = pvcSubPathHelper;

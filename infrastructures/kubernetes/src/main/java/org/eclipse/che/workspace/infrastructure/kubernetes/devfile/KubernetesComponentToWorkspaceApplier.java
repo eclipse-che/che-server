@@ -87,7 +87,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       KubernetesEnvironmentProvisioner k8sEnvProvisioner,
       EnvVars envVars,
       @Named("che.workspace.projects.storage") String projectFolderPath,
-      @Named("che.workspace.projects.storage.default.size") String defaultProjectPVCSize,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
           String devfileEndpointsExposure,
@@ -98,7 +97,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
         envVars,
         KubernetesEnvironment.TYPE,
         projectFolderPath,
-        defaultProjectPVCSize,
         imagePullPolicy,
         devfileEndpointsExposure,
         kubernetesBasedComponentTypes);
@@ -110,7 +108,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       EnvVars envVars,
       String environmentType,
       String projectFolderPath,
-      String defaultProjectPVCSize,
       String imagePullPolicy,
       String devfileEndpointsExposure,
       Set<String> kubernetesBasedComponentTypes) {
@@ -118,7 +115,7 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
     this.k8sEnvProvisioner = k8sEnvProvisioner;
     this.environmentType = environmentType;
     this.projectFolderPath = projectFolderPath;
-    this.defaultProjectPVCSize = defaultProjectPVCSize;
+    this.defaultProjectPVCSize = "TEST";
     this.defaultPVCAccessMode = "TEST";
     this.pvcStorageClassName = "TEST";
     this.imagePullPolicy = imagePullPolicy;

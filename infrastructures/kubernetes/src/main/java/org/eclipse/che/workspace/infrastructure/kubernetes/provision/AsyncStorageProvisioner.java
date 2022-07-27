@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -127,20 +127,18 @@ public class AsyncStorageProvisioner {
   @Inject
   public AsyncStorageProvisioner(
       @Named("che.workspace.sidecar.image_pull_policy") String sidecarImagePullPolicy,
-      @Named("che.infra.kubernetes.pvc.quantity") String pvcQuantity,
       @Named("che.infra.kubernetes.async.storage.image") String asyncStorageImage,
       @Named("che.infra.kubernetes.pvc.access_mode") String pvcAccessMode,
       @Named("che.infra.kubernetes.pvc.strategy") String pvcStrategy,
-      @Named("che.infra.kubernetes.pvc.name") String pvcName,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       SshManager sshManager,
       KubernetesClientFactory kubernetesClientFactory) {
     this.sidecarImagePullPolicy = sidecarImagePullPolicy;
-    this.pvcQuantity = pvcQuantity;
+    this.pvcQuantity = "test";
     this.asyncStorageImage = asyncStorageImage;
     this.pvcAccessMode = pvcAccessMode;
     this.pvcStrategy = pvcStrategy;
-    this.pvcName = pvcName;
+    this.pvcName = "TEST";
     this.pvcStorageClassName = pvcStorageClassName;
     this.sshManager = sshManager;
     this.kubernetesClientFactory = kubernetesClientFactory;

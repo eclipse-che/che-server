@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -523,78 +523,6 @@ public class KubernetesPluginsToolingApplierTest {
     verifyPodAndContainersNumber(3);
     List<Container> nonUserContainers = getNonUserContainers(internalEnvironment);
     verifyContainers(nonUserContainers);
-  }
-
-  @Test
-  public void applyPluginContainerWithOneVolume() throws InfrastructureException {
-    lenient().when(podSpec.getContainers()).thenReturn(new ArrayList<>());
-
-    ChePlugin chePlugin = createChePlugin();
-    CheContainer cheContainer = chePlugin.getContainers().get(0);
-
-    applier.apply(runtimeIdentity, internalEnvironment, singletonList(chePlugin));
-
-    verifyPodAndContainersNumber(1);
-    Container container = getOneAndOnlyNonUserContainer(internalEnvironment);
-    verifyContainer(container);
-
-    verify(chePluginsVolumeApplier)
-        .applyVolumes(
-            any(PodData.class),
-            eq(container),
-            eq(cheContainer.getVolumes()),
-            eq(internalEnvironment));
-  }
-
-  @Test
-  public void applyPluginInitContainerWithOneVolume() throws InfrastructureException {
-    lenient().when(podSpec.getInitContainers()).thenReturn(new ArrayList<>());
-
-    ChePlugin chePlugin = createChePlugin();
-    CheContainer initContainer = createContainer();
-    chePlugin.setInitContainers(singletonList(initContainer));
-
-    applier.apply(runtimeIdentity, internalEnvironment, singletonList(chePlugin));
-
-    verifyPodAndInitContainersNumber(1);
-    Container toolingInitContainer = getOnlyOneInitContainerFromPod(internalEnvironment);
-    verifyContainer(toolingInitContainer);
-
-    verify(chePluginsVolumeApplier)
-        .applyVolumes(
-            any(PodData.class),
-            eq(toolingInitContainer),
-            eq(initContainer.getVolumes()),
-            eq(internalEnvironment));
-  }
-
-  @Test
-  public void addsMachinesWithVolumesToAllToolingContainer() throws Exception {
-    // given
-    ChePlugin chePluginWithNonDefaultVolume = createChePlugin();
-    String anotherVolumeName = VOLUME_NAME + "1";
-    String anotherVolumeMountPath = VOLUME_MOUNT_PATH + "/something";
-    List<Volume> volumes =
-        singletonList(new Volume().name(anotherVolumeName).mountPath(anotherVolumeMountPath));
-    CheContainer toolingContainer = chePluginWithNonDefaultVolume.getContainers().get(0);
-    toolingContainer.setVolumes(volumes);
-
-    ChePlugin chePlugin = createChePlugin();
-
-    // when
-    applier.apply(
-        runtimeIdentity, internalEnvironment, asList(chePlugin, chePluginWithNonDefaultVolume));
-
-    // then
-    Collection<InternalMachineConfig> machineConfigs = getNonUserMachines(internalEnvironment);
-    assertEquals(machineConfigs.size(), 2);
-
-    verify(chePluginsVolumeApplier)
-        .applyVolumes(
-            any(PodData.class),
-            any(Container.class),
-            eq(chePlugin.getContainers().get(0).getVolumes()),
-            eq(internalEnvironment));
   }
 
   @Test

@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import javax.inject.Inject;
-import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -85,12 +84,11 @@ public class UniqueWorkspacePVCStrategy implements WorkspaceVolumesStrategy {
 
   @Inject
   public UniqueWorkspacePVCStrategy(
-      @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
       KubernetesNamespaceFactory factory,
       EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter,
       PVCProvisioner pvcProvisioner,
       SubPathPrefixes subpathPrefixes) {
-    this.waitBound = waitBound;
+    this.waitBound = true;
     this.factory = factory;
     this.ephemeralWorkspaceAdapter = ephemeralWorkspaceAdapter;
     this.pvcProvisioner = pvcProvisioner;

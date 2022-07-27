@@ -30,7 +30,6 @@ public class OpenshiftComponentToWorkspaceApplier extends KubernetesComponentToW
       EnvVars envVars,
       @Named("che.workspace.projects.storage") String projectFolderPath,
       @Named("che.workspace.projects.storage.default.size") String defaultProjectPVCSize,
-      @Named("che.infra.kubernetes.pvc.access_mode") String defaultPVCAccessMode,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
@@ -43,7 +42,6 @@ public class OpenshiftComponentToWorkspaceApplier extends KubernetesComponentToW
         OpenShiftEnvironment.TYPE,
         projectFolderPath,
         defaultProjectPVCSize,
-        defaultPVCAccessMode,
         pvcStorageClassName,
         imagePullPolicy,
         devfileEndpointsExposure,

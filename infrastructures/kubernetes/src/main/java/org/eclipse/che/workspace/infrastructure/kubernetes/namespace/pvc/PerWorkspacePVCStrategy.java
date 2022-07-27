@@ -18,7 +18,6 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Kube
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import javax.inject.Inject;
-import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -52,7 +51,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
 
   @Inject
   public PerWorkspacePVCStrategy(
-      @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
       EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter,
@@ -61,7 +59,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
       SubPathPrefixes subpathPrefixes,
       WorkspaceManager workspaceManager) {
     super(
-        waitBound,
         pvcSubPathHelper,
         factory,
         ephemeralWorkspaceAdapter,

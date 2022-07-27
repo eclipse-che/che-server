@@ -24,7 +24,6 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Named;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
@@ -105,7 +104,6 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
 
   @Inject
   public CommonPVCStrategy(
-      @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
       EphemeralWorkspaceAdapter ephemeralWorkspaceAdapter,
@@ -118,7 +116,7 @@ public class CommonPVCStrategy implements WorkspaceVolumesStrategy {
     this.pvcAccessMode = "TEST";
     this.preCreateDirs = true;
     this.pvcStorageClassName = "TEST";
-    this.waitBound = waitBound;
+    this.waitBound = true;
     this.pvcSubPathHelper = pvcSubPathHelper;
     this.factory = factory;
     this.ephemeralWorkspaceAdapter = ephemeralWorkspaceAdapter;

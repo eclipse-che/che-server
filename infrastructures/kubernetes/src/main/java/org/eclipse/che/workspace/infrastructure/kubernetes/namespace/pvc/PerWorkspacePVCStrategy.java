@@ -53,7 +53,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
   @Inject
   public PerWorkspacePVCStrategy(
       @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
-      @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.infra.kubernetes.pvc.wait_bound") boolean waitBound,
       PVCSubPathHelper pvcSubPathHelper,
       KubernetesNamespaceFactory factory,
@@ -64,7 +63,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
       WorkspaceManager workspaceManager) {
     super(
         preCreateDirs,
-        pvcStorageClassName,
         waitBound,
         pvcSubPathHelper,
         factory,
@@ -77,7 +75,7 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
     this.factory = factory;
     this.pvcAccessMode = "TEST";
     this.pvcQuantity = "test";
-    this.pvcStorageClassName = pvcStorageClassName;
+    this.pvcStorageClassName = "TEST";
   }
 
   @Override

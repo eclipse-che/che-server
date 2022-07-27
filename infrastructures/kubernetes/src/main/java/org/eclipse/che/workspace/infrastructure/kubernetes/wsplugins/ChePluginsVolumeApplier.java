@@ -22,7 +22,6 @@ import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import java.util.Collection;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.wsplugins.model.Volume;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
@@ -39,11 +38,10 @@ public class ChePluginsVolumeApplier {
   private final String pvcStorageClassName;
 
   @Inject
-  public ChePluginsVolumeApplier(
-      @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName) {
+  public ChePluginsVolumeApplier() {
     this.pvcQuantity = "test";
     this.pvcAccessMode = "TEST";
-    this.pvcStorageClassName = pvcStorageClassName;
+    this.pvcStorageClassName = "TEST";
   }
 
   public void applyVolumes(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -52,8 +52,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
 
   @Inject
   public PerWorkspacePVCStrategy(
-      @Named("che.infra.kubernetes.pvc.name") String pvcName,
-      @Named("che.infra.kubernetes.pvc.quantity") String pvcQuantity,
       @Named("che.infra.kubernetes.pvc.access_mode") String pvcAccessMode,
       @Named("che.infra.kubernetes.pvc.precreate_subpaths") boolean preCreateDirs,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
@@ -66,8 +64,6 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
       SubPathPrefixes subpathPrefixes,
       WorkspaceManager workspaceManager) {
     super(
-        pvcName,
-        pvcQuantity,
         pvcAccessMode,
         preCreateDirs,
         pvcStorageClassName,
@@ -79,10 +75,10 @@ public class PerWorkspacePVCStrategy extends CommonPVCStrategy {
         podsVolumes,
         subpathPrefixes,
         workspaceManager);
-    this.pvcNamePrefix = pvcName;
+    this.pvcNamePrefix = "TEST";
     this.factory = factory;
     this.pvcAccessMode = pvcAccessMode;
-    this.pvcQuantity = pvcQuantity;
+    this.pvcQuantity = "test";
     this.pvcStorageClassName = pvcStorageClassName;
   }
 

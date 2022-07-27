@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
 import org.eclipse.che.api.core.model.workspace.config.Volume;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalMachineConfig;
@@ -54,13 +53,11 @@ public class PVCProvisioner {
   private final PodsVolumes podsVolumes;
 
   @Inject
-  public PVCProvisioner(
-      @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
-      PodsVolumes podsVolumes) {
+  public PVCProvisioner(PodsVolumes podsVolumes) {
     this.pvcNamePrefix = "TEST";
     this.pvcQuantity = "test";
     this.pvcAccessMode = "TEST";
-    this.pvcStorageClassName = pvcStorageClassName;
+    this.pvcStorageClassName = "TEST";
     this.podsVolumes = podsVolumes;
   }
 

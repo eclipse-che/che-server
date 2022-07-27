@@ -55,7 +55,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
 
   /** Collection of OAuth scopes required to make integration with GitHub work. */
   public static final Set<String> DEFAULT_TOKEN_SCOPES =
-      ImmutableSet.of("repo", "user:email", "read:user");
+      ImmutableSet.of("repo", "user:email", "read:user", "workflow");
 
   /**
    * Map of OAuth GitHub scopes where each key is a scope and its value is the parent scope. The

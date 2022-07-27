@@ -40,10 +40,9 @@ public class ChePluginsVolumeApplier {
 
   @Inject
   public ChePluginsVolumeApplier(
-      @Named("che.infra.kubernetes.pvc.access_mode") String pvcAccessMode,
       @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName) {
     this.pvcQuantity = "test";
-    this.pvcAccessMode = pvcAccessMode;
+    this.pvcAccessMode = "TEST";
     this.pvcStorageClassName = pvcStorageClassName;
   }
 

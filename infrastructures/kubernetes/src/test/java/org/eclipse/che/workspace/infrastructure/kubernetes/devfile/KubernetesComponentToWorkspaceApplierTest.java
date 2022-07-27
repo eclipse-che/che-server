@@ -115,7 +115,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             envVars,
             PROJECT_MOUNT_PATH,
             "1Gi",
-            "",
             "Always",
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);
@@ -558,7 +557,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             envVars,
             PROJECT_MOUNT_PATH,
             "1Gi",
-            "",
             "Never",
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);
@@ -707,7 +705,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             envVars,
             PROJECT_MOUNT_PATH,
             "1Gi",
-            "",
             "Always",
             SINGLE_HOST_STRATEGY,
             k8sBasedComponents);
@@ -759,7 +756,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             envVars,
             PROJECT_MOUNT_PATH,
             "1Gi",
-            "",
             "Always",
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);

@@ -129,7 +129,6 @@ public class AsyncStorageProvisioner {
       @Named("che.workspace.sidecar.image_pull_policy") String sidecarImagePullPolicy,
       @Named("che.infra.kubernetes.async.storage.image") String asyncStorageImage,
       @Named("che.infra.kubernetes.pvc.strategy") String pvcStrategy,
-      @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       SshManager sshManager,
       KubernetesClientFactory kubernetesClientFactory) {
     this.sidecarImagePullPolicy = sidecarImagePullPolicy;
@@ -138,7 +137,7 @@ public class AsyncStorageProvisioner {
     this.pvcAccessMode = "TEST";
     this.pvcStrategy = pvcStrategy;
     this.pvcName = "TEST";
-    this.pvcStorageClassName = pvcStorageClassName;
+    this.pvcStorageClassName = "TEST";
     this.sshManager = sshManager;
     this.kubernetesClientFactory = kubernetesClientFactory;
   }

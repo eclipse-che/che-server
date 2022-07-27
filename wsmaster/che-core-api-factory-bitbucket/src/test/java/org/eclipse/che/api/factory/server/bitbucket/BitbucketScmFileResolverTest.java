@@ -13,18 +13,17 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -32,10 +31,9 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(MockitoTestNGListener.class)
-public class BitbucketServerScmFileResolverTest {
+public class BitbucketScmFileResolverTest {
 
-  public static final String SCM_URL = "https://foo.bar";
-  BitbucketServerURLParser bitbucketURLParser;
+  BitbucketURLParser bitbucketURLParser;
 
   @Mock private URLFetcher urlFetcher;
 
@@ -44,45 +42,43 @@ public class BitbucketServerScmFileResolverTest {
   @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
-  private BitbucketServerScmFileResolver serverScmFileResolver;
+  private BitbucketScmFileResolver bitbucketScmFileResolver;
 
   @BeforeMethod
   protected void init() {
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            SCM_URL, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = new BitbucketURLParser(devfileFilenamesProvider);
     assertNotNull(this.bitbucketURLParser);
-    serverScmFileResolver =
-        new BitbucketServerScmFileResolver(
+    bitbucketScmFileResolver =
+        new BitbucketScmFileResolver(
             bitbucketURLParser, urlFetcher, gitCredentialManager, personalAccessTokenManager);
-    assertNotNull(this.serverScmFileResolver);
+    assertNotNull(this.bitbucketScmFileResolver);
   }
 
-  /** Check url which is not a bitbucket url can't be accepted by this resolver */
+  /** Check url which is not a Gitlab url can't be accepted by this resolver */
   @Test
   public void checkInvalidAcceptUrl() {
     // shouldn't be accepted
-    assertFalse(serverScmFileResolver.accept("http://github.com"));
+    assertFalse(bitbucketScmFileResolver.accept("http://foobar.com"));
   }
 
-  /** Check bitbucket url will be be accepted by this resolver */
+  /** Check <Bitbucket> url will be be accepted by this resolver */
   @Test
   public void checkValidAcceptUrl() {
     // should be accepted
-    assertTrue(serverScmFileResolver.accept("https://foo.bar/scm/test/repo.git"));
+    assertTrue(bitbucketScmFileResolver.accept("http://bitbucket.org/test/repo.git"));
   }
 
   @Test
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
-        .thenReturn(Optional.of(new PersonalAccessToken(SCM_URL, "root", "token123")));
-
-    when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
+    when(urlFetcher.fetch(anyString(), anyString())).thenReturn(rawContent);
+    var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
+    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
+        .thenReturn(personalAccessToken);
 
     String content =
-        serverScmFileResolver.fileContent("https://foo.bar/scm/test/repo.git", filename);
+        bitbucketScmFileResolver.fileContent("http://bitbucket.org/test/repo.git", filename);
 
     assertEquals(content, rawContent);
   }

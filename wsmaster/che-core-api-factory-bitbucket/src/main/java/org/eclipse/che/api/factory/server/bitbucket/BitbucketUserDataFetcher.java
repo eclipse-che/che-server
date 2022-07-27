@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.api.factory.server.github;
+package org.eclipse.che.api.factory.server.bitbucket;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -33,32 +33,31 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 
-/** GitHub user data retriever. */
-public class GithubUserDataFetcher implements GitUserDataFetcher {
+/** Bitbucket user data retriever. */
+public class BitbucketUserDataFetcher implements GitUserDataFetcher {
   private final String apiEndpoint;
   private final OAuthAPI oAuthAPI;
 
-  /** GitHub API client. */
-  private final GithubApiClient githubApiClient;
+  /** Bitbucket API client. */
+  private final BitbucketApiClient bitbucketApiClient;
 
   /** Name of this OAuth provider as found in OAuthAPI. */
-  private static final String OAUTH_PROVIDER_NAME = "github";
+  private static final String OAUTH_PROVIDER_NAME = "bitbucket";
 
-  /** Collection of OAuth scopes required to make integration with GitHub work. */
-  public static final Set<String> DEFAULT_TOKEN_SCOPES =
-      ImmutableSet.of("repo", "user:email", "read:user");
+  /** Collection of OAuth scopes required to make integration with Bitbucket work. */
+  public static final Set<String> DEFAULT_TOKEN_SCOPES = ImmutableSet.of("repo");
 
   @Inject
-  public GithubUserDataFetcher(@Named("che.api") String apiEndpoint, OAuthAPI oAuthAPI) {
-    this(apiEndpoint, oAuthAPI, new GithubApiClient());
+  public BitbucketUserDataFetcher(@Named("che.api") String apiEndpoint, OAuthAPI oAuthAPI) {
+    this(apiEndpoint, oAuthAPI, new BitbucketApiClient());
   }
 
   /** Constructor used for testing only. */
-  public GithubUserDataFetcher(
-      String apiEndpoint, OAuthAPI oAuthAPI, GithubApiClient githubApiClient) {
+  public BitbucketUserDataFetcher(
+      String apiEndpoint, OAuthAPI oAuthAPI, BitbucketApiClient bitbucketApiClient) {
     this.apiEndpoint = apiEndpoint;
     this.oAuthAPI = oAuthAPI;
-    this.githubApiClient = githubApiClient;
+    this.bitbucketApiClient = bitbucketApiClient;
   }
 
   @Override
@@ -66,9 +65,12 @@ public class GithubUserDataFetcher implements GitUserDataFetcher {
     OAuthToken oAuthToken;
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      // Find the user associated to the OAuth token by querying the GitHub API.
-      GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
-      return new GitUserData(user.getName(), user.getEmail());
+      // Find the user associated to the OAuth token by querying the Bitbucket API.
+      BitbucketUser user = bitbucketApiClient.getUser(oAuthToken.getToken());
+      BitbucketUserEmail emailResponse = bitbucketApiClient.getEmail(oAuthToken.getToken());
+      String email =
+          emailResponse.getValues().length > 0 ? emailResponse.getValues()[0].getEmail() : "";
+      return new GitUserData(user.getName(), email);
     } catch (UnauthorizedException e) {
       Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
       throw new ScmUnauthorizedException(

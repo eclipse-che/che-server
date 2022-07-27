@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,17 +17,17 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 
 /**
- * Bitbucket specific file content provider. Files are retrieved using bitbucket REST API and
- * personal access token based authentication is performed during requests.
+ * Bitbucket Server specific file content provider. Files are retrieved using bitbucket Server REST
+ * API and personal access token based authentication is performed during requests.
  */
 public class BitbucketServerAuthorizingFileContentProvider
-    extends AuthorizingFileContentProvider<BitbucketUrl> {
+    extends AuthorizingFileContentProvider<BitbucketServerUrl> {
 
   public BitbucketServerAuthorizingFileContentProvider(
-      BitbucketUrl bitbucketUrl,
+      BitbucketServerUrl bitbucketServerUrl,
       URLFetcher urlFetcher,
       GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(bitbucketUrl, urlFetcher, personalAccessTokenManager, gitCredentialManager);
+    super(bitbucketServerUrl, urlFetcher, personalAccessTokenManager, gitCredentialManager);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
+
 import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,16 +21,22 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 
-/** Representation of a bitbucket URL, allowing to get details from it. */
+/**
+ * Representation of a bitbucket URL, allowing to get details from it.
+ *
+ * <p>like https://<your_username>@bitbucket.org/<workspace_ID>/<repo_name>.git
+ */
 public class BitbucketUrl implements RemoteFactoryUrl {
 
   private final String NAME = "bitbucket";
 
-  /** Hostname of bitbucket URL */
-  private String hostName;
+  private static final String HOSTNAME = "bitbucket.org";
 
-  /** Project part of bitbucket URL */
-  private String project;
+  /** Username part of the bitbucket URL */
+  private String username;
+
+  /** workspace part of the bitbucket URL */
+  private String workspaceId;
 
   /** Repository part of the URL. */
   private String repository;
@@ -51,38 +59,19 @@ public class BitbucketUrl implements RemoteFactoryUrl {
   }
 
   /**
-   * Gets hostname of this bitbucket url
+   * Gets username of this bitbucket url
    *
-   * @return the project part
+   * @return the username part
    */
-  public String getHostName() {
-    return this.hostName;
+  public String getUsername() {
+    return this.username;
   }
 
-  public BitbucketUrl withHostName(String hostName) {
-    this.hostName = hostName;
+  public BitbucketUrl withUsername(String userName) {
+    this.username = userName;
     return this;
   }
 
-  /**
-   * Gets project of this bitbucket url
-   *
-   * @return the project part
-   */
-  public String getProject() {
-    return this.project;
-  }
-
-  public BitbucketUrl withProject(String project) {
-    this.project = project;
-    return this;
-  }
-
-  /**
-   * Gets repository of this bitbucket url
-   *
-   * @return the repository part
-   */
   public String getRepository() {
     return this.repository;
   }
@@ -92,10 +81,13 @@ public class BitbucketUrl implements RemoteFactoryUrl {
     return this;
   }
 
-  @Override
-  public void setDevfileFilename(String devfileName) {
-    this.devfileFilenames.clear();
-    this.devfileFilenames.add(devfileName);
+  public String getWorkspaceId() {
+    return workspaceId;
+  }
+
+  protected BitbucketUrl withWorkspaceId(String workspaceId) {
+    this.workspaceId = workspaceId;
+    return this;
   }
 
   protected BitbucketUrl withDevfileFilenames(List<String> devfileFilenames) {
@@ -103,11 +95,12 @@ public class BitbucketUrl implements RemoteFactoryUrl {
     return this;
   }
 
-  /**
-   * Gets branch of this bitbucket url
-   *
-   * @return the branch part
-   */
+  @Override
+  public void setDevfileFilename(String devfileName) {
+    this.devfileFilenames.clear();
+    this.devfileFilenames.add(devfileName);
+  }
+
   public String getBranch() {
     return this.branch;
   }
@@ -119,11 +112,6 @@ public class BitbucketUrl implements RemoteFactoryUrl {
     return this;
   }
 
-  /**
-   * Provides list of configured devfile filenames with locations
-   *
-   * @return list of devfile filenames and locations
-   */
   @Override
   public List<DevfileLocation> devfileFileLocations() {
     return devfileFilenames.stream().map(this::createDevfileLocation).collect(Collectors.toList());
@@ -143,26 +131,20 @@ public class BitbucketUrl implements RemoteFactoryUrl {
     };
   }
 
-  /**
-   * Provides location to raw content of specified file
-   *
-   * @return location of specified file in a repository
-   */
   public String rawFileLocation(String fileName) {
-    StringJoiner joiner =
-        new StringJoiner("/")
-            .add(hostName)
-            .add("rest/api/1.0/projects")
-            .add(project)
-            .add("repos")
-            .add(repository)
-            .add("raw")
-            .add(fileName);
-    String resultUrl = joiner.toString();
-    if (branch != null) {
-      resultUrl = resultUrl + "?at=" + branch;
-    }
-    return resultUrl;
+    return new StringJoiner("/")
+        .add("https://api.bitbucket.org/2.0/repositories")
+        .add(workspaceId)
+        .add(repository)
+        .add("src")
+        .add(firstNonNull(branch, "HEAD"))
+        .add(fileName)
+        .toString();
+  }
+
+  @Override
+  public String getHostName() {
+    return "https://" + HOSTNAME;
   }
 
   /**
@@ -171,6 +153,13 @@ public class BitbucketUrl implements RemoteFactoryUrl {
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    return hostName + "/scm/" + this.project + "/" + this.repository + ".git";
+    return "https://"
+        + (this.username != null ? this.username + '@' : "")
+        + HOSTNAME
+        + "/"
+        + this.workspaceId
+        + "/"
+        + this.repository
+        + ".git";
   }
 }

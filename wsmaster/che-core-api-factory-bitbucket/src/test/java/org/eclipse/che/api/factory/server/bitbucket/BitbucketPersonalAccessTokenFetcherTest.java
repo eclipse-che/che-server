@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.api.factory.server.github;
+package org.eclipse.che.api.factory.server.bitbucket;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -18,7 +18,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
-import static org.eclipse.che.api.factory.server.github.GithubPersonalAccessTokenFetcher.DEFAULT_TOKEN_SCOPES;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -28,9 +27,7 @@ import static org.testng.Assert.*;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
-import java.util.Collections;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -47,16 +44,16 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(MockitoTestNGListener.class)
-public class GithubPersonalAccessTokenFetcherTest {
+public class BitbucketPersonalAccessTokenFetcherTest {
 
   @Mock OAuthAPI oAuthAPI;
-  GithubPersonalAccessTokenFetcher githubPATFetcher;
+  BitbucketPersonalAccessTokenFetcher bitbucketPersonalAccessTokenFetcher;
 
   final int httpPort = 3301;
   WireMockServer wireMockServer;
   WireMock wireMock;
 
-  final String githubOauthToken = "gho_token1";
+  final String bitbucketOauthToken = "token";
 
   @BeforeMethod
   void start() {
@@ -66,9 +63,9 @@ public class GithubPersonalAccessTokenFetcherTest {
     wireMockServer.start();
     WireMock.configureFor("localhost", httpPort);
     wireMock = new WireMock("localhost", httpPort);
-    githubPATFetcher =
-        new GithubPersonalAccessTokenFetcher(
-            "http://che.api", oAuthAPI, new GithubApiClient(wireMockServer.url("/")));
+    bitbucketPersonalAccessTokenFetcher =
+        new BitbucketPersonalAccessTokenFetcher(
+            "http://che.api", oAuthAPI, new BitbucketApiClient(wireMockServer.url("/")));
   }
 
   @AfterMethod
@@ -80,109 +77,78 @@ public class GithubPersonalAccessTokenFetcherTest {
   public void shouldNotValidateSCMServerWithTrailingSlash() throws Exception {
     stubFor(
         get(urlEqualTo("/user"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + bitbucketOauthToken))
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
-                    .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo")
-                    .withBodyFile("github/rest/user/response.json")));
+                    .withBodyFile("bitbucket/rest/user/response.json")));
     PersonalAccessToken personalAccessToken =
         new PersonalAccessToken(
-            "https://github.com/",
+            "https://bitbucket.org/",
             "cheUserId",
             "scmUserName",
             "scmUserId",
             "scmTokenName",
             "scmTokenId",
-            githubOauthToken);
+            bitbucketOauthToken);
     assertTrue(
-        githubPATFetcher.isValid(personalAccessToken).isEmpty(),
+        bitbucketPersonalAccessTokenFetcher.isValid(personalAccessToken).isEmpty(),
         "Should not validate SCM server with trailing /");
-  }
-
-  @Test
-  public void testContainsScope() {
-    String[] tokenScopes = {"repo", "notifications", "write:org", "admin:gpg_key"};
-    assertTrue(
-        githubPATFetcher.containsScopes(tokenScopes, ImmutableSet.of("repo")),
-        "'repo' scope should have matched directly.");
-    assertTrue(
-        githubPATFetcher.containsScopes(tokenScopes, ImmutableSet.of("public_repo")),
-        "'public_repo' scope should have matched since token has parent scope 'repo'.");
-    assertTrue(
-        githubPATFetcher.containsScopes(
-            tokenScopes, ImmutableSet.of("read:gpg_key", "write:gpg_key")),
-        "'admin:gpg_key' token scope should cover both scope requirement.");
-    assertFalse(
-        githubPATFetcher.containsScopes(tokenScopes, ImmutableSet.of("admin:org")),
-        "'admin:org' scope should not match since token only has scope 'write:org'.");
-    assertFalse(
-        githubPATFetcher.containsScopes(tokenScopes, ImmutableSet.of("gist")),
-        "'gist' shouldn't matche since it is not present in token scope");
-    assertTrue(
-        githubPATFetcher.containsScopes(tokenScopes, ImmutableSet.of("unknown", "repo")),
-        "'unknown' is not even a valid GitHub scope, so it shouldn't have any impact.");
-    assertTrue(
-        githubPATFetcher.containsScopes(tokenScopes, Collections.emptySet()),
-        "No required scope should always return true");
-    assertFalse(
-        githubPATFetcher.containsScopes(new String[0], ImmutableSet.of("repo")),
-        "Token has no scope, so it should not match");
-    assertTrue(
-        githubPATFetcher.containsScopes(new String[0], Collections.emptySet()),
-        "No scope requirement and a token with no scope should match");
   }
 
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[repo, user:email, read:user, workflow]")
+          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: repository:write")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
-    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");
+    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
     when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/user"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + bitbucketOauthToken))
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
-                    .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "")
-                    .withBodyFile("github/rest/user/response.json")));
+                    .withHeader(BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "")
+                    .withBodyFile("bitbucket/rest/user/response.json")));
 
-    githubPATFetcher.fetchPersonalAccessToken(subject, GithubApiClient.GITHUB_SERVER);
+    bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
+        subject, BitbucketApiClient.BITBUCKET_SERVER);
   }
 
   @Test(
       expectedExceptions = ScmUnauthorizedException.class,
-      expectedExceptionsMessageRegExp = "Username is not authorized in github OAuth provider.")
+      expectedExceptionsMessageRegExp = "Username is not authorized in bitbucket OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     when(oAuthAPI.getToken(anyString())).thenThrow(UnauthorizedException.class);
 
-    githubPATFetcher.fetchPersonalAccessToken(subject, GithubApiClient.GITHUB_SERVER);
+    bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
+        subject, BitbucketApiClient.BITBUCKET_SERVER);
   }
 
   @Test
   public void shouldReturnToken() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
-    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken);
+    OAuthToken oAuthToken =
+        newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("repo");
     when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/user"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + bitbucketOauthToken))
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withHeader(
-                        GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER,
-                        DEFAULT_TOKEN_SCOPES.toString().replace("[", "").replace("]", ""))
-                    .withBodyFile("github/rest/user/response.json")));
+                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
+                    .withBodyFile("bitbucket/rest/user/response.json")));
 
     PersonalAccessToken token =
-        githubPATFetcher.fetchPersonalAccessToken(subject, GithubApiClient.GITHUB_SERVER);
+        bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
+            subject, BitbucketApiClient.BITBUCKET_SERVER);
     assertNotNull(token);
   }
 
@@ -190,52 +156,50 @@ public class GithubPersonalAccessTokenFetcherTest {
   public void shouldValidatePersonalToken() throws Exception {
     stubFor(
         get(urlEqualTo("/user"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + bitbucketOauthToken))
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withHeader(
-                        GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER,
-                        DEFAULT_TOKEN_SCOPES.toString().replace("[", "").replace("]", ""))
-                    .withBodyFile("github/rest/user/response.json")));
+                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
+                    .withBodyFile("bitbucket/rest/user/response.json")));
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://github.com",
+            "https://bitbucket.org",
             "cheUser",
             "username",
             "123456789",
             "token-name",
             "tid-23434",
-            githubOauthToken);
+            bitbucketOauthToken);
 
-    assertTrue(githubPATFetcher.isValid(token).get());
+    assertTrue(bitbucketPersonalAccessTokenFetcher.isValid(token).get());
   }
 
   @Test
   public void shouldValidateOauthToken() throws Exception {
     stubFor(
         get(urlEqualTo("/user"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + bitbucketOauthToken))
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withHeader(
-                        GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER,
-                        DEFAULT_TOKEN_SCOPES.toString().replace("[", "").replace("]", ""))
-                    .withBodyFile("github/rest/user/response.json")));
+                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
+                    .withBodyFile("bitbucket/rest/user/response.json")));
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://github.com",
+            "https://bitbucket.org",
             "cheUser",
             "username",
             "123456789",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
-            githubOauthToken);
+            bitbucketOauthToken);
 
-    assertTrue(githubPATFetcher.isValid(token).get());
+    assertTrue(bitbucketPersonalAccessTokenFetcher.isValid(token).get());
   }
 
   @Test
@@ -244,14 +208,14 @@ public class GithubPersonalAccessTokenFetcherTest {
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://github.com",
+            "https://bitbucket.org",
             "cheUser",
             "username",
             "123456789",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
-            githubOauthToken);
+            bitbucketOauthToken);
 
-    assertFalse(githubPATFetcher.isValid(token).get());
+    assertFalse(bitbucketPersonalAccessTokenFetcher.isValid(token).get());
   }
 }

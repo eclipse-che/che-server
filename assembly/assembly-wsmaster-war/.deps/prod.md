@@ -23,7 +23,7 @@
 | `com.google.inject.extensions/guice-persist@5.0.1` | Apache-2.0 | clearlydefined |
 | `com.google.inject/guice@5.0.1` | Apache-2.0 | clearlydefined |
 | `com.google.j2objc/j2objc-annotations@1.3` | Apache-2.0 | [CQ21195](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=21195) |
-| `com.google.oauth-client/google-oauth-client@1.32.1` | Apache-2.0 | clearlydefined |
+| `com.google.oauth-client/google-oauth-client@1.34.1` | Apache-2.0 | clearlydefined |
 | `com.ibm.icu/icu4j@68.1` | NOASSERTION |  [CQ23669](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=23654) |
 | `com.jcraft/jsch@0.1.55` | BSD-3-Clause | [CQ19435](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=19435) |
 | `com.squareup.okhttp3/logging-interceptor@3.12.12` | Apache-2.0 | clearlydefined |

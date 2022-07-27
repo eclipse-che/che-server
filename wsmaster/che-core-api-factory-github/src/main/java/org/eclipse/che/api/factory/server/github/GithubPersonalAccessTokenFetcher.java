@@ -54,7 +54,8 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
   private static final String OAUTH_PROVIDER_NAME = "github";
 
   /** Collection of OAuth scopes required to make integration with GitHub work. */
-  public static final Set<String> DEFAULT_TOKEN_SCOPES = ImmutableSet.of("repo");
+  public static final Set<String> DEFAULT_TOKEN_SCOPES =
+      ImmutableSet.of("repo", "user:email", "read:user", "workflow");
 
   /**
    * Map of OAuth GitHub scopes where each key is a scope and its value is the parent scope. The
@@ -193,8 +194,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
   }
 
   @Override
-  public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
-      throws ScmCommunicationException, ScmUnauthorizedException {
+  public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken) {
     if (!githubApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
       return Optional.empty();

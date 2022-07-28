@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,7 +12,6 @@
 package org.eclipse.che.workspace.infrastructure.openshift;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -91,7 +90,6 @@ public class OpenShiftEnvironmentProvisioner
 
   @Inject
   public OpenShiftEnvironmentProvisioner(
-      @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
       OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner,
       TlsProvisionerProvider<OpenShiftEnvironment> routeTlsProvisionerProvider,
       ServersConverter<OpenShiftEnvironment> serversConverter,
@@ -116,7 +114,7 @@ public class OpenShiftEnvironmentProvisioner
       GatewayRouterProvisioner gatewayRouterProvisioner,
       DeploymentMetadataProvisioner deploymentMetadataProvisioner,
       OpenshiftTrustedCAProvisioner trustedCAProvisioner) {
-    this.pvcEnabled = pvcEnabled;
+    this.pvcEnabled = false;
     this.volumesStrategy = volumesStrategy;
     this.uniqueNamesProvisioner = uniqueNamesProvisioner;
     this.routeTlsProvisioner = routeTlsProvisionerProvider.get();

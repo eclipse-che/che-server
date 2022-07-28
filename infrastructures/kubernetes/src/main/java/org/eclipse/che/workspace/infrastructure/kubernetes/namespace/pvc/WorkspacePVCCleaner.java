@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,7 +13,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -39,10 +38,8 @@ public class WorkspacePVCCleaner {
   private final WorkspaceVolumesStrategy strategy;
 
   @Inject
-  public WorkspacePVCCleaner(
-      @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
-      WorkspaceVolumesStrategy pvcStrategy) {
-    this.pvcEnabled = pvcEnabled;
+  public WorkspacePVCCleaner(WorkspaceVolumesStrategy pvcStrategy) {
+    this.pvcEnabled = false;
     this.strategy = pvcStrategy;
   }
 

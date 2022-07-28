@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner.KubernetesEnvironmentProvisionerImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
@@ -58,7 +57,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesEnvironmentProvisionerTest {
 
-  @Mock private WorkspaceVolumesStrategy volumesStrategy;
   @Mock private UniqueNamesProvisioner<KubernetesEnvironment> uniqueNamesProvisioner;
   @Mock private KubernetesEnvironment k8sEnv;
   @Mock private RuntimeIdentity runtimeIdentity;
@@ -103,7 +101,6 @@ public class KubernetesEnvironmentProvisionerTest {
             serversProvisioner,
             envVarsProvisioner,
             restartPolicyRewriter,
-            volumesStrategy,
             ramLimitProvisioner,
             logsVolumeMachineProvisioner,
             securityContextProvisioner,
@@ -126,7 +123,6 @@ public class KubernetesEnvironmentProvisionerTest {
     provisionOrder =
         inOrder(
             logsVolumeMachineProvisioner,
-            volumesStrategy,
             uniqueNamesProvisioner,
             serversProvisioner,
             envVarsProvisioner,

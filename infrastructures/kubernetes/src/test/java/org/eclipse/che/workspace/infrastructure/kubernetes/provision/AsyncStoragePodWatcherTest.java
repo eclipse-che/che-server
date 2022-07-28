@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,20 +12,13 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
 import static java.time.Instant.now;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.CommonPVCStrategy.COMMON_STRATEGY;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner.ASYNC_STORAGE;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
-import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -99,113 +92,10 @@ public class AsyncStoragePodWatcherTest {
   }
 
   @Test
-  public void shouldDeleteAsyncStorageDeployment() throws Exception {
-    AsyncStoragePodWatcher watcher =
-        new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            1,
-            COMMON_STRATEGY,
-            "<username>",
-            1);
-
-    when(runtimes.getInProgress(USER_ID)).thenReturn(emptySet());
-
-    ObjectMeta meta = new ObjectMeta();
-    meta.setName(ASYNC_STORAGE);
-    Deployment deployment = new Deployment();
-    deployment.setMetadata(meta);
-    when(deploymentResource.get()).thenReturn(deployment);
-
-    watcher.check();
-
-    verify(preferenceManager).find(USER_ID);
-    verify(deploymentResource).delete();
-  }
-
-  @Test
-  public void shouldNotDeleteAsyncStoragePodIfTooEarly() throws Exception {
-    AsyncStoragePodWatcher watcher =
-        new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            10,
-            COMMON_STRATEGY,
-            "<username>",
-            1);
-    long epochSecond = now().getEpochSecond();
-    userPref.put(Constants.LAST_ACTIVITY_TIME, Long.toString(epochSecond));
-
-    watcher.check();
-
-    verify(preferenceManager).find(USER_ID);
-    verifyNoMoreInteractions(kubernetesClientFactory);
-    verifyNoMoreInteractions(deploymentResource);
-  }
-
-  @Test
-  public void shouldNotDeleteAsyncStoragePodIfHasActiveRuntime() throws Exception {
-    AsyncStoragePodWatcher watcher =
-        new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            1,
-            COMMON_STRATEGY,
-            "<username>",
-            1);
-
-    // has active runtime
-    when(runtimes.getInProgress(USER_ID)).thenReturn(singleton(WORKSPACE_ID));
-
-    Page<UserImpl> userPage = new Page<>(Collections.singleton(user), 0, 1, 1);
-    when(userManager.getAll(anyInt(), anyLong())).thenReturn(userPage);
-
-    watcher.check();
-
-    verify(preferenceManager).find(USER_ID);
-    verifyNoMoreInteractions(kubernetesClientFactory);
-    verifyNoMoreInteractions(deploymentResource);
-  }
-
-  @Test
-  public void shouldNotDeleteAsyncStoragePodIfNoRecord() throws Exception {
-    AsyncStoragePodWatcher watcher =
-        new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            1,
-            COMMON_STRATEGY,
-            "<username>",
-            1);
-    when(preferenceManager.find(USER_ID)).thenReturn(emptyMap()); // no records in user preferences
-
-    watcher.check();
-
-    verify(preferenceManager).find(USER_ID);
-    verifyNoMoreInteractions(kubernetesClientFactory);
-    verifyNoMoreInteractions(deploymentResource);
-  }
-
-  @Test
   public void shouldDoNothingIfNotCommonPvcStrategy() throws Exception {
     AsyncStoragePodWatcher watcher =
         new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            1,
-            "my-own-strategy",
-            "<username>",
-            1);
+            kubernetesClientFactory, userManager, preferenceManager, runtimes, 1, "<username>", 1);
 
     watcher.check();
 
@@ -218,14 +108,7 @@ public class AsyncStoragePodWatcherTest {
   public void shouldDoNothingIfAllowedUserDefinedNamespaces() throws Exception {
     AsyncStoragePodWatcher watcher =
         new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            1,
-            "my-own-strategy",
-            "<username>",
-            1);
+            kubernetesClientFactory, userManager, preferenceManager, runtimes, 1, "<username>", 1);
 
     watcher.check();
 
@@ -238,14 +121,7 @@ public class AsyncStoragePodWatcherTest {
   public void shouldDoNothingIfDefaultNamespaceNotCorrect() throws Exception {
     AsyncStoragePodWatcher watcher =
         new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            1,
-            "my-own-strategy",
-            "<foo-bar>",
-            1);
+            kubernetesClientFactory, userManager, preferenceManager, runtimes, 1, "<foo-bar>", 1);
     watcher.check();
 
     verifyNoMoreInteractions(preferenceManager);
@@ -257,14 +133,7 @@ public class AsyncStoragePodWatcherTest {
   public void shouldDoNothingIfAllowMoreThanOneRuntime() throws Exception {
     AsyncStoragePodWatcher watcher =
         new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            1,
-            "my-own-strategy",
-            "<foo-bar>",
-            2);
+            kubernetesClientFactory, userManager, preferenceManager, runtimes, 1, "<foo-bar>", 2);
 
     watcher.check();
 
@@ -277,14 +146,7 @@ public class AsyncStoragePodWatcherTest {
   public void shouldDoNothingIfShutdownTimeSetToZero() throws Exception {
     AsyncStoragePodWatcher watcher =
         new AsyncStoragePodWatcher(
-            kubernetesClientFactory,
-            userManager,
-            preferenceManager,
-            runtimes,
-            0,
-            COMMON_STRATEGY,
-            "<username>",
-            1);
+            kubernetesClientFactory, userManager, preferenceManager, runtimes, 0, "<username>", 1);
 
     watcher.check();
 

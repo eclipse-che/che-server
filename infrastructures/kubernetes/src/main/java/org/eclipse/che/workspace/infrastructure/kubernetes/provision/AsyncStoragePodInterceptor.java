@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -56,10 +55,8 @@ public class AsyncStoragePodInterceptor {
   private final String pvcStrategy;
 
   @Inject
-  public AsyncStoragePodInterceptor(
-      @Named("che.infra.kubernetes.pvc.strategy") String pvcStrategy,
-      KubernetesClientFactory kubernetesClientFactory) {
-    this.pvcStrategy = pvcStrategy;
+  public AsyncStoragePodInterceptor(KubernetesClientFactory kubernetesClientFactory) {
+    this.pvcStrategy = "TEST";
     this.kubernetesClientFactory = kubernetesClientFactory;
   }
 

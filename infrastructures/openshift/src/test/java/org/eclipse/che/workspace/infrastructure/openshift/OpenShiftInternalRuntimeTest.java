@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -77,7 +77,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesC
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesDeployments;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesSecrets;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesServices;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.SecretAsContainerResourceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.WorkspaceExposureType;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ServiceExposureStrategyProvider;
@@ -137,7 +136,6 @@ public class OpenShiftInternalRuntimeTest {
   @Mock private KubernetesConfigsMaps configMaps;
   @Mock private OpenShiftRoutes routes;
   @Mock private KubernetesDeployments deployments;
-  @Mock private WorkspaceVolumesStrategy volumesStrategy;
   @Mock private WorkspaceProbesFactory workspaceProbesFactory;
   @Mock private ProbeScheduler probesScheduler;
   @Mock private KubernetesRuntimeStateCache runtimeStateCache;
@@ -181,7 +179,6 @@ public class OpenShiftInternalRuntimeTest {
             new URLRewriter.NoOpURLRewriter(),
             unrecoverablePodEventListenerFactory,
             serverCheckerFactory,
-            volumesStrategy,
             probesScheduler,
             workspaceProbesFactory,
             new RuntimeEventsPublisher(eventService),

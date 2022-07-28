@@ -18,7 +18,6 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Traced;
 import org.eclipse.che.commons.tracing.TracingTags;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
@@ -64,8 +63,6 @@ public interface KubernetesEnvironmentProvisioner<T extends KubernetesEnvironmen
     private static final Logger LOG =
         LoggerFactory.getLogger(KubernetesEnvironmentProvisionerImpl.class);
 
-    private final boolean pvcEnabled;
-    private final WorkspaceVolumesStrategy volumesStrategy;
     private final UniqueNamesProvisioner<KubernetesEnvironment> uniqueNamesProvisioner;
     private final ServersConverter<KubernetesEnvironment> serversConverter;
     private final EnvVarsConverter envVarsConverter;
@@ -96,7 +93,6 @@ public interface KubernetesEnvironmentProvisioner<T extends KubernetesEnvironmen
         ServersConverter<KubernetesEnvironment> serversConverter,
         EnvVarsConverter envVarsConverter,
         RestartPolicyRewriter restartPolicyRewriter,
-        WorkspaceVolumesStrategy volumesStrategy,
         ContainerResourceProvisioner resourceLimitRequestProvisioner,
         LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
         SecurityContextProvisioner securityContextProvisioner,
@@ -116,8 +112,6 @@ public interface KubernetesEnvironmentProvisioner<T extends KubernetesEnvironmen
         VcsSslCertificateProvisioner vcsSslCertificateProvisioner,
         GatewayRouterProvisioner gatewayRouterProvisioner,
         KubernetesTrustedCAProvisioner trustedCAProvisioner) {
-      this.pvcEnabled = false;
-      this.volumesStrategy = volumesStrategy;
       this.uniqueNamesProvisioner = uniqueNamesProvisioner;
       this.serversConverter = serversConverter;
       this.envVarsConverter = envVarsConverter;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -94,7 +94,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.event.PodEv
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.LogWatchTimeouts;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.LogWatcher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log.PodLogToEventPublisher;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PreviewUrlCommandProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.SecretAsContainerResourceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.resolver.KubernetesServerResolverFactory;
@@ -122,7 +121,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
   private final ProbeScheduler probeScheduler;
   private final WorkspaceProbesFactory probesFactory;
   private final KubernetesNamespace namespace;
-  private final WorkspaceVolumesStrategy volumesStrategy;
   private final RuntimeEventsPublisher eventPublisher;
   private final Executor executor;
   private final KubernetesRuntimeStateCache runtimeStates;
@@ -146,7 +144,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
       NoOpURLRewriter urlRewriter,
       UnrecoverablePodEventListenerFactory unrecoverableEventListenerFactory,
       ServersCheckerFactory serverCheckerFactory,
-      WorkspaceVolumesStrategy volumesStrategy,
       ProbeScheduler probeScheduler,
       WorkspaceProbesFactory probesFactory,
       RuntimeEventsPublisher eventPublisher,
@@ -169,7 +166,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
     super(context, urlRewriter);
     this.unrecoverableEventListenerFactory = unrecoverableEventListenerFactory;
     this.serverCheckerFactory = serverCheckerFactory;
-    this.volumesStrategy = volumesStrategy;
     this.workspaceStartTimeoutMin = workspaceStartTimeoutMin;
     this.ingressStartTimeoutMillis = TimeUnit.MINUTES.toMillis(ingressStartTimeoutMin);
     this.probeScheduler = probeScheduler;
@@ -202,12 +198,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
 
       runtimeCleaner.cleanUp(namespace, workspaceId);
       provisionWorkspace(startOptions, context, workspaceId);
-
-      volumesStrategy.prepare(
-          context.getEnvironment(),
-          context.getIdentity(),
-          startSynchronizer.getStartTimeoutMillis(),
-          startOptions);
 
       startSynchronizer.checkFailure();
 

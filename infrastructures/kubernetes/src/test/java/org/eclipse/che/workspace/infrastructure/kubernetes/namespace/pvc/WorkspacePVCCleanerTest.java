@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,15 +13,12 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.shared.event.WorkspaceRemovedEvent;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -46,46 +43,16 @@ public class WorkspacePVCCleanerTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    workspacePVCCleaner = new WorkspacePVCCleaner(true, pvcStrategy);
+    workspacePVCCleaner = new WorkspacePVCCleaner(pvcStrategy);
     eventService = spy(new EventService());
   }
 
   @Test
   public void testDoNotSubscribesCleanerWhenPVCDisabled() throws Exception {
-    workspacePVCCleaner = spy(new WorkspacePVCCleaner(false, pvcStrategy));
+    workspacePVCCleaner = spy(new WorkspacePVCCleaner(pvcStrategy));
 
     workspacePVCCleaner.subscribe(eventService);
 
     verify(eventService, never()).subscribe(any(), eq(WorkspaceRemovedEvent.class));
-  }
-
-  @Test
-  public void testSubscribesDeleteKubernetesOnWorkspaceRemove() throws Exception {
-    workspacePVCCleaner.subscribe(eventService);
-
-    verify(eventService).subscribe(any(), eq(WorkspaceRemovedEvent.class));
-  }
-
-  @Test
-  public void testInvokeCleanupWhenWorkspaceRemovedEventPublished() throws Exception {
-    when(event.getWorkspace()).thenReturn(workspace);
-    workspacePVCCleaner.subscribe(eventService);
-
-    eventService.publish(event);
-
-    verify(pvcStrategy).cleanup(workspace);
-  }
-
-  @Test
-  public void testDoNotRethrowExceptionWhenErrorOnCleanupOccurs() throws Exception {
-
-    when(workspace.getId()).thenReturn("123");
-    when(event.getWorkspace()).thenReturn(workspace);
-    doThrow(InfrastructureException.class).when(pvcStrategy).cleanup(workspace);
-    workspacePVCCleaner.subscribe(eventService);
-
-    eventService.publish(event);
-
-    verify(pvcStrategy).cleanup(workspace);
   }
 }

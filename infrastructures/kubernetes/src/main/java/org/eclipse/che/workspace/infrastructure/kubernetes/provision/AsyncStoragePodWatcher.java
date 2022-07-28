@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -72,7 +72,6 @@ public class AsyncStoragePodWatcher {
       PreferenceManager preferenceManager,
       WorkspaceRuntimes runtimes,
       @Named("che.infra.kubernetes.async.storage.shutdown_timeout_min") long shutdownTimeoutMin,
-      @Named("che.infra.kubernetes.pvc.strategy") String pvcStrategy,
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
       @Named("che.limits.user.workspaces.run.count") int runtimesPerUser) {
     this.kubernetesClientFactory = kubernetesClientFactory;
@@ -82,7 +81,7 @@ public class AsyncStoragePodWatcher {
     this.shutdownTimeoutSec = MINUTES.toSeconds(shutdownTimeoutMin);
 
     isAsyncStoragePodCanBeRun =
-        isAsyncStoragePodCanBeRun(pvcStrategy, defaultNamespaceName, runtimesPerUser);
+        isAsyncStoragePodCanBeRun("TEST", defaultNamespaceName, runtimesPerUser);
   }
 
   /**

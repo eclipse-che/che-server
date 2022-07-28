@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,7 +12,6 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -93,7 +92,6 @@ public interface KubernetesEnvironmentProvisioner<T extends KubernetesEnvironmen
 
     @Inject
     public KubernetesEnvironmentProvisionerImpl(
-        @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
         UniqueNamesProvisioner<KubernetesEnvironment> uniqueNamesProvisioner,
         ServersConverter<KubernetesEnvironment> serversConverter,
         EnvVarsConverter envVarsConverter,
@@ -118,7 +116,7 @@ public interface KubernetesEnvironmentProvisioner<T extends KubernetesEnvironmen
         VcsSslCertificateProvisioner vcsSslCertificateProvisioner,
         GatewayRouterProvisioner gatewayRouterProvisioner,
         KubernetesTrustedCAProvisioner trustedCAProvisioner) {
-      this.pvcEnabled = pvcEnabled;
+      this.pvcEnabled = false;
       this.volumesStrategy = volumesStrategy;
       this.uniqueNamesProvisioner = uniqueNamesProvisioner;
       this.serversConverter = serversConverter;
@@ -152,21 +150,12 @@ public interface KubernetesEnvironmentProvisioner<T extends KubernetesEnvironmen
       TracingTags.WORKSPACE_ID.set(workspaceId);
 
       LOG.debug("Start provisioning Kubernetes environment for workspace '{}'", workspaceId);
-      // 1 stage - update environment according Infrastructure specific
-      if (pvcEnabled) {
-        asyncStoragePodInterceptor.intercept(k8sEnv, identity);
-        LOG.debug("Provisioning logs volume for workspace '{}'", workspaceId);
-        logsVolumeMachineProvisioner.provision(k8sEnv, identity);
-      }
 
       // 2 stage - converting Che model env to Kubernetes env
       LOG.debug("Provisioning servers & env vars converters for workspace '{}'", workspaceId);
       serversConverter.provision(k8sEnv, identity);
       previewUrlExposer.expose(k8sEnv);
       envVarsConverter.provision(k8sEnv, identity);
-      if (pvcEnabled) {
-        volumesStrategy.provision(k8sEnv, identity);
-      }
 
       // 3 stage - add Kubernetes env items
       LOG.debug("Provisioning environment items for workspace '{}'", workspaceId);

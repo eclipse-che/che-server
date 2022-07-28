@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -94,7 +94,6 @@ public class OpenShiftEnvironmentProvisionerTest {
     when(tlsRouteProvisionerProvider.get()).thenReturn(tlsRouteProvisioner);
     osInfraProvisioner =
         new OpenShiftEnvironmentProvisioner(
-            true,
             uniqueNamesProvisioner,
             tlsRouteProvisionerProvider,
             serversProvisioner,
@@ -149,10 +148,8 @@ public class OpenShiftEnvironmentProvisionerTest {
   public void performsOrderedProvisioning() throws Exception {
     osInfraProvisioner.provision(osEnv, runtimeIdentity);
 
-    provisionOrder.verify(logsVolumeMachineProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(serversProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(envVarsProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
-    provisionOrder.verify(volumesStrategy).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(restartPolicyRewriter).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(tlsRouteProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(ramLimitProvisioner).provision(eq(osEnv), eq(runtimeIdentity));

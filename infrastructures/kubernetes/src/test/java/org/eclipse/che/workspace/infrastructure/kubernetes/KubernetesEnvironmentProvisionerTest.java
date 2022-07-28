@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -99,7 +99,6 @@ public class KubernetesEnvironmentProvisionerTest {
         .thenReturn(externalServerIngressTlsProvisioner);
     k8sInfraProvisioner =
         new KubernetesEnvironmentProvisionerImpl(
-            true,
             uniqueNamesProvisioner,
             serversProvisioner,
             envVarsProvisioner,
@@ -152,10 +151,8 @@ public class KubernetesEnvironmentProvisionerTest {
   public void performsOrderedProvisioning() throws Exception {
     k8sInfraProvisioner.provision(k8sEnv, runtimeIdentity);
 
-    provisionOrder.verify(logsVolumeMachineProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(serversProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(envVarsProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
-    provisionOrder.verify(volumesStrategy).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(restartPolicyRewriter).provision(eq(k8sEnv), eq(runtimeIdentity));
 
     provisionOrder.verify(ramLimitProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));

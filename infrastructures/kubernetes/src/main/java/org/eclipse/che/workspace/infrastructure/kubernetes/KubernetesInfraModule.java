@@ -54,7 +54,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.WorkspaceServiceAccountConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspacePVCCleaner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.IngressTlsProvisioner;
@@ -146,7 +145,6 @@ public class KubernetesInfraModule extends AbstractModule {
             .build(new TypeLiteral<KubernetesRuntimeFactory<KubernetesEnvironment>>() {}));
     install(new FactoryModuleBuilder().build(StartSynchronizerFactory.class));
 
-    bind(WorkspacePVCCleaner.class).asEagerSingleton();
     bind(RemoveNamespaceOnWorkspaceRemove.class).asEagerSingleton();
 
     bind(CheApiInternalEnvVarProvider.class).to(KubernetesCheApiInternalEnvVarProvider.class);

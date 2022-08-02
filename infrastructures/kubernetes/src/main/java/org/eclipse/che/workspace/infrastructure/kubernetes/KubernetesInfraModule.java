@@ -54,7 +54,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.WorkspaceServiceAccountConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.IngressTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiExternalEnvVarProvider;
@@ -96,7 +95,6 @@ public class KubernetesInfraModule extends AbstractModule {
     Multibinder<WorkspaceAttributeValidator> workspaceAttributeValidators =
         Multibinder.newSetBinder(binder(), WorkspaceAttributeValidator.class);
     workspaceAttributeValidators.addBinding().to(K8sInfraNamespaceWsAttributeValidator.class);
-    workspaceAttributeValidators.addBinding().to(AsyncStorageModeValidator.class);
 
     // order matters here!
     // We first need to grant permissions to user, only then we can run other configurators with
@@ -249,6 +247,5 @@ public class KubernetesInfraModule extends AbstractModule {
         binder(), KubernetesEnvironment.TYPE);
 
     bind(NonTlsDistributedClusterModeNotifier.class);
-    bind(AsyncStorageProvisioner.class);
   }
 }

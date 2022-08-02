@@ -34,7 +34,6 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvV
 import org.eclipse.che.api.workspace.server.spi.provision.env.EnvVarProvider;
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
-import org.eclipse.che.workspace.infrastructure.kubernetes.AsyncStorageModeValidator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.InconsistentRuntimesDetector;
 import org.eclipse.che.workspace.infrastructure.kubernetes.K8sInfraNamespaceWsAttributeValidator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -58,9 +57,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspacePVCCleaner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodWatcher;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiExternalEnvVarProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiInternalEnvVarProvider;
@@ -109,7 +105,6 @@ public class OpenShiftInfraModule extends AbstractModule {
     Multibinder<WorkspaceAttributeValidator> workspaceAttributeValidators =
         Multibinder.newSetBinder(binder(), WorkspaceAttributeValidator.class);
     workspaceAttributeValidators.addBinding().to(K8sInfraNamespaceWsAttributeValidator.class);
-    workspaceAttributeValidators.addBinding().to(AsyncStorageModeValidator.class);
 
     Multibinder<NamespaceConfigurator> namespaceConfigurators =
         Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
@@ -251,8 +246,5 @@ public class OpenShiftInfraModule extends AbstractModule {
     bind(ExternalServiceExposureStrategy.class).toProvider(ServiceExposureStrategyProvider.class);
     bind(CookiePathStrategy.class).to(OpenShiftCookiePathStrategy.class);
     bind(NonTlsDistributedClusterModeNotifier.class);
-    bind(AsyncStorageProvisioner.class);
-    bind(AsyncStoragePodInterceptor.class);
-    bind(AsyncStoragePodWatcher.class);
   }
 }

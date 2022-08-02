@@ -18,8 +18,6 @@ import static org.mockito.Mockito.when;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner.KubernetesEnvironmentProvisionerImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
@@ -75,8 +73,6 @@ public class KubernetesEnvironmentProvisionerTest {
   @Mock private ImagePullSecretProvisioner imagePullSecretProvisioner;
   @Mock private ProxySettingsProvisioner proxySettingsProvisioner;
   @Mock private ServiceAccountProvisioner serviceAccountProvisioner;
-  @Mock private AsyncStorageProvisioner asyncStorageProvisioner;
-  @Mock private AsyncStoragePodInterceptor asyncStoragePodObserver;
   @Mock private CertificateProvisioner certificateProvisioner;
   @Mock private SshKeysProvisioner sshKeysProvisioner;
   @Mock private GitConfigProvisioner gitConfigProvisioner;
@@ -102,7 +98,6 @@ public class KubernetesEnvironmentProvisionerTest {
             envVarsProvisioner,
             restartPolicyRewriter,
             ramLimitProvisioner,
-            logsVolumeMachineProvisioner,
             securityContextProvisioner,
             podTerminationGracePeriodProvisioner,
             externalServerIngressTlsProvisionerProvider,
@@ -110,8 +105,6 @@ public class KubernetesEnvironmentProvisionerTest {
             proxySettingsProvisioner,
             nodeSelectorProvisioner,
             tolerationsProvisioner,
-            asyncStorageProvisioner,
-            asyncStoragePodObserver,
             serviceAccountProvisioner,
             certificateProvisioner,
             sshKeysProvisioner,
@@ -122,7 +115,6 @@ public class KubernetesEnvironmentProvisionerTest {
             trustedCAProvisioner);
     provisionOrder =
         inOrder(
-            logsVolumeMachineProvisioner,
             uniqueNamesProvisioner,
             serversProvisioner,
             envVarsProvisioner,

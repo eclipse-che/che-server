@@ -19,8 +19,6 @@ import org.eclipse.che.commons.annotation.Traced;
 import org.eclipse.che.commons.tracing.TracingTags;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentMetadataProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
@@ -76,9 +74,7 @@ public class OpenShiftEnvironmentProvisioner
   private final ProxySettingsProvisioner proxySettingsProvisioner;
   private final NodeSelectorProvisioner nodeSelectorProvisioner;
   private final TolerationsProvisioner tolerationsProvisioner;
-  private final AsyncStoragePodInterceptor asyncStoragePodInterceptor;
   private final ServiceAccountProvisioner serviceAccountProvisioner;
-  private final AsyncStorageProvisioner asyncStorageProvisioner;
   private final CertificateProvisioner certificateProvisioner;
   private final SshKeysProvisioner sshKeysProvisioner;
   private final GitConfigProvisioner gitConfigProvisioner;
@@ -103,8 +99,6 @@ public class OpenShiftEnvironmentProvisioner
       ProxySettingsProvisioner proxySettingsProvisioner,
       NodeSelectorProvisioner nodeSelectorProvisioner,
       TolerationsProvisioner tolerationsProvisioner,
-      AsyncStorageProvisioner asyncStorageProvisioner,
-      AsyncStoragePodInterceptor asyncStoragePodInterceptor,
       ServiceAccountProvisioner serviceAccountProvisioner,
       CertificateProvisioner certificateProvisioner,
       SshKeysProvisioner sshKeysProvisioner,
@@ -128,8 +122,6 @@ public class OpenShiftEnvironmentProvisioner
     this.proxySettingsProvisioner = proxySettingsProvisioner;
     this.nodeSelectorProvisioner = nodeSelectorProvisioner;
     this.tolerationsProvisioner = tolerationsProvisioner;
-    this.asyncStorageProvisioner = asyncStorageProvisioner;
-    this.asyncStoragePodInterceptor = asyncStoragePodInterceptor;
     this.serviceAccountProvisioner = serviceAccountProvisioner;
     this.certificateProvisioner = certificateProvisioner;
     this.sshKeysProvisioner = sshKeysProvisioner;
@@ -151,7 +143,7 @@ public class OpenShiftEnvironmentProvisioner
         "Start provisioning OpenShift environment for workspace '{}'", identity.getWorkspaceId());
     // 1 stage - update environment according Infrastructure specific
     if (pvcEnabled) {
-      asyncStoragePodInterceptor.intercept(osEnv, identity);
+      // TODO: Remove things related to pvcEnabled boolean
       logsVolumeMachineProvisioner.provision(osEnv, identity);
     }
 
@@ -173,7 +165,6 @@ public class OpenShiftEnvironmentProvisioner
     imagePullSecretProvisioner.provision(osEnv, identity);
     proxySettingsProvisioner.provision(osEnv, identity);
     serviceAccountProvisioner.provision(osEnv, identity);
-    asyncStorageProvisioner.provision(osEnv, identity);
     certificateProvisioner.provision(osEnv, identity);
     sshKeysProvisioner.provision(osEnv, identity);
     vcsSslCertificateProvisioner.provision(osEnv, identity);

@@ -29,7 +29,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.EphemeralWorkspaceUtility;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.UnrecoverablePodEventListenerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
@@ -97,7 +96,6 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
       RuntimeIdentity identity,
       StartSynchronizer startSynchronizer,
       Collection<PluginFQN> pluginFQNs,
-      boolean isEphemeral,
       boolean mergePlugins,
       Map<String, String> startOptions)
       throws InfrastructureException {
@@ -108,9 +106,7 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
 
     E brokerEnvironment =
         brokerEnvironmentFactory.createForMetadataBroker(pluginFQNs, identity, mergePlugins);
-    if (isEphemeral) {
-      EphemeralWorkspaceUtility.makeEphemeral(brokerEnvironment.getAttributes());
-    }
+    // TODO: Potentially remove this class
     environmentProvisioner.provision(brokerEnvironment, identity);
 
     ListenBrokerEvents listenBrokerEvents = getListenEventPhase(workspaceId, brokersResult);

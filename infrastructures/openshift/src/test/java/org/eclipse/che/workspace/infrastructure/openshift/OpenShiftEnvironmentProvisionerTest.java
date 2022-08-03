@@ -16,7 +16,6 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
 
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentMetadataProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
@@ -55,7 +54,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class OpenShiftEnvironmentProvisionerTest {
 
-  @Mock private WorkspaceVolumesStrategy volumesStrategy;
   @Mock private OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner;
   @Mock private OpenShiftEnvironment osEnv;
   @Mock private RuntimeIdentity runtimeIdentity;
@@ -95,7 +93,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             serversProvisioner,
             envVarsProvisioner,
             restartPolicyRewriter,
-            volumesStrategy,
             ramLimitProvisioner,
             logsVolumeMachineProvisioner,
             podTerminationGracePeriodProvisioner,
@@ -117,7 +114,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             logsVolumeMachineProvisioner,
             serversProvisioner,
             envVarsProvisioner,
-            volumesStrategy,
             uniqueNamesProvisioner,
             tlsRouteProvisioner,
             restartPolicyRewriter,

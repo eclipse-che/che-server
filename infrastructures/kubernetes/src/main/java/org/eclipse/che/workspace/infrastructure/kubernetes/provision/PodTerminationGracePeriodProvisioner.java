@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,12 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
-import static java.lang.Boolean.parseBoolean;
-import static org.eclipse.che.api.workspace.shared.Constants.ASYNC_PERSIST_ATTRIBUTE;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.EphemeralWorkspaceUtility.isEphemeral;
-
 import io.fabric8.kubernetes.api.model.PodSpec;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
@@ -75,10 +70,7 @@ public class PodTerminationGracePeriodProvisioner implements ConfigurationProvis
   }
 
   private long getGraceTerminationPeriodSec(KubernetesEnvironment k8sEnv) {
-    Map<String, String> attributes = k8sEnv.getAttributes();
-    if (isEphemeral(attributes) && parseBoolean(attributes.get(ASYNC_PERSIST_ATTRIBUTE))) {
-      return GRACE_TERMINATION_PERIOD_ASYNC_STORAGE_WS_SEC;
-    }
+    // TODO: Should probably remove this class
     return graceTerminationPeriodSec;
   }
 }

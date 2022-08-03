@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,7 +31,6 @@ import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.server.wsplugins.PluginFQNParser;
 import org.eclipse.che.api.workspace.server.wsplugins.model.PluginFQN;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.EphemeralWorkspaceUtility;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.KubernetesArtifactsBrokerApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.PluginBrokerManager;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
@@ -75,8 +74,6 @@ public class SidecarToolingProvisionerTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    Map<String, String> ephemeralEnvAttributes = new HashMap<>(environmentAttributesBase);
-    EphemeralWorkspaceUtility.makeEphemeral(ephemeralEnvAttributes);
     Map<String, String> nonEphemeralEnvAttributes = new HashMap<>(environmentAttributesBase);
 
     Map<String, String> mergePluginsEnvAttributes = new HashMap<>(environmentAttributesBase);
@@ -89,7 +86,6 @@ public class SidecarToolingProvisionerTest {
     lenient().doReturn(RECIPE_TYPE).when(mergePluginsEnvironment).getType();
     lenient().doReturn(RECIPE_TYPE).when(noMergePluginsEnvironment).getType();
     lenient().doReturn(nonEphemeralEnvAttributes).when(nonEphemeralEnvironment).getAttributes();
-    lenient().doReturn(ephemeralEnvAttributes).when(ephemeralEnvironment).getAttributes();
     lenient().doReturn(mergePluginsEnvAttributes).when(mergePluginsEnvironment).getAttributes();
     lenient().doReturn(noMergePluginsEnvAttributes).when(noMergePluginsEnvironment).getAttributes();
     doReturn(pluginFQNs).when(pluginFQNParser).parsePlugins(any());
@@ -118,7 +114,7 @@ public class SidecarToolingProvisionerTest {
     provisioner = getSidecarToolingProvisioner("true");
     provisioner.provision(runtimeId, startSynchronizer, nonEphemeralEnvironment, emptyMap());
 
-    verify(brokerManager, times(1)).getTooling(any(), any(), any(), anyBoolean(), eq(true), any());
+    verify(brokerManager, times(1)).getTooling(any(), any(), any(), eq(true), any());
     verify(artifactsBrokerApplier, times(1)).apply(any(), any(), any(), eq(true));
   }
 
@@ -127,7 +123,7 @@ public class SidecarToolingProvisionerTest {
     provisioner = getSidecarToolingProvisioner("false");
     provisioner.provision(runtimeId, startSynchronizer, nonEphemeralEnvironment, emptyMap());
 
-    verify(brokerManager, times(1)).getTooling(any(), any(), any(), anyBoolean(), eq(false), any());
+    verify(brokerManager, times(1)).getTooling(any(), any(), any(), eq(false), any());
     verify(artifactsBrokerApplier, times(1)).apply(any(), any(), any(), eq(false));
   }
 
@@ -136,7 +132,7 @@ public class SidecarToolingProvisionerTest {
     provisioner = getSidecarToolingProvisioner("false");
     provisioner.provision(runtimeId, startSynchronizer, mergePluginsEnvironment, emptyMap());
 
-    verify(brokerManager, times(1)).getTooling(any(), any(), any(), anyBoolean(), eq(true), any());
+    verify(brokerManager, times(1)).getTooling(any(), any(), any(), eq(true), any());
     verify(artifactsBrokerApplier, times(1)).apply(any(), any(), any(), eq(true));
   }
 
@@ -145,7 +141,7 @@ public class SidecarToolingProvisionerTest {
     provisioner = getSidecarToolingProvisioner("true");
     provisioner.provision(runtimeId, startSynchronizer, noMergePluginsEnvironment, emptyMap());
 
-    verify(brokerManager, times(1)).getTooling(any(), any(), any(), anyBoolean(), eq(false), any());
+    verify(brokerManager, times(1)).getTooling(any(), any(), any(), eq(false), any());
     verify(artifactsBrokerApplier, times(1)).apply(any(), any(), any(), eq(false));
   }
 

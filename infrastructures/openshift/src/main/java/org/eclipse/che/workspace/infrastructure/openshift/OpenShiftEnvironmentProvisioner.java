@@ -18,7 +18,6 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Traced;
 import org.eclipse.che.commons.tracing.TracingTags;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentMetadataProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
@@ -60,8 +59,6 @@ public class OpenShiftEnvironmentProvisioner
 
   private static final Logger LOG = LoggerFactory.getLogger(OpenShiftEnvironmentProvisioner.class);
 
-  private final boolean pvcEnabled;
-  private final WorkspaceVolumesStrategy volumesStrategy;
   private final UniqueNamesProvisioner<OpenShiftEnvironment> uniqueNamesProvisioner;
   private final TlsProvisioner<OpenShiftEnvironment> routeTlsProvisioner;
   private final ServersConverter<OpenShiftEnvironment> serversConverter;
@@ -91,7 +88,6 @@ public class OpenShiftEnvironmentProvisioner
       ServersConverter<OpenShiftEnvironment> serversConverter,
       EnvVarsConverter envVarsConverter,
       RestartPolicyRewriter restartPolicyRewriter,
-      WorkspaceVolumesStrategy volumesStrategy,
       ContainerResourceProvisioner resourceLimitRequestProvisioner,
       LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
       PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
@@ -108,8 +104,6 @@ public class OpenShiftEnvironmentProvisioner
       GatewayRouterProvisioner gatewayRouterProvisioner,
       DeploymentMetadataProvisioner deploymentMetadataProvisioner,
       OpenshiftTrustedCAProvisioner trustedCAProvisioner) {
-    this.pvcEnabled = false;
-    this.volumesStrategy = volumesStrategy;
     this.uniqueNamesProvisioner = uniqueNamesProvisioner;
     this.routeTlsProvisioner = routeTlsProvisionerProvider.get();
     this.serversConverter = serversConverter;
@@ -141,21 +135,13 @@ public class OpenShiftEnvironmentProvisioner
 
     LOG.debug(
         "Start provisioning OpenShift environment for workspace '{}'", identity.getWorkspaceId());
-    // 1 stage - update environment according Infrastructure specific
-    if (pvcEnabled) {
-      // TODO: Remove things related to pvcEnabled boolean
-      logsVolumeMachineProvisioner.provision(osEnv, identity);
-    }
 
-    // 2 stage - converting Che model env to OpenShift env
+    // 1st stage - converting Che model env to OpenShift env
     serversConverter.provision(osEnv, identity);
     previewUrlExposer.expose(osEnv);
     envVarsConverter.provision(osEnv, identity);
-    if (pvcEnabled) {
-      volumesStrategy.provision(osEnv, identity);
-    }
 
-    // 3 stage - add OpenShift env items
+    // 2nd stage - add OpenShift env items
     restartPolicyRewriter.provision(osEnv, identity);
     routeTlsProvisioner.provision(osEnv, identity);
     resourceLimitRequestProvisioner.provision(osEnv, identity);

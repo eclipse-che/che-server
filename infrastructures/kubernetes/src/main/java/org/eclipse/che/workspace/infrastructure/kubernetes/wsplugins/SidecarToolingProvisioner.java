@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,7 +29,6 @@ import org.eclipse.che.api.workspace.server.wsplugins.model.PluginFQN;
 import org.eclipse.che.commons.annotation.Traced;
 import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.EphemeralWorkspaceUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,11 +83,10 @@ public class SidecarToolingProvisioner<E extends KubernetesEnvironment> {
           "Sidecar tooling configuration is not supported with environment type " + recipeType);
     }
 
-    boolean isEphemeral = EphemeralWorkspaceUtility.isEphemeral(environment.getAttributes());
     boolean mergePlugins = shouldMergePlugins(environment.getAttributes());
     List<ChePlugin> chePlugins =
         pluginBrokerManager.getTooling(
-            identity, startSynchronizer, pluginFQNs, isEphemeral, mergePlugins, startOptions);
+            identity, startSynchronizer, pluginFQNs, mergePlugins, startOptions);
 
     pluginsApplier.apply(identity, environment, chePlugins);
     artifactsBrokerApplier.apply(environment, identity, pluginFQNs, mergePlugins);

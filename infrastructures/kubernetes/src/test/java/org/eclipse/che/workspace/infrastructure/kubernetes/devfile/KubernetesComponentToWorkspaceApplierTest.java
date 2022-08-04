@@ -22,7 +22,6 @@ import static org.eclipse.che.api.core.model.workspace.config.ServerConfig.REQUI
 import static org.eclipse.che.api.workspace.server.devfile.Constants.COMPONENT_ALIAS_COMMAND_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.MultiHostExternalServiceExposureStrategy.MULTI_HOST_STRATEGY;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy.SINGLE_HOST_STRATEGY;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,7 +41,6 @@ import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesList;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import java.io.IOException;
@@ -219,63 +217,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
     verify(k8sEnvProvisioner)
         .provision(
             eq(workspaceConfig), eq(KubernetesEnvironment.TYPE), eq(list.getItems()), anyMap());
-  }
-
-  @Test
-  public void shouldProvisionProjectVolumesIfSpecifiedIntoK8SList() throws Exception {
-    // given
-    String yamlRecipeContent = getResource("devfile/petclinic.yaml");
-    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
-    List<HasMetadata> k8sList = toK8SList(yamlRecipeContent).getItems();
-    doReturn(k8sList).when(k8sRecipeParser).parse(anyString());
-    ComponentImpl component = new ComponentImpl();
-    component.setType(KUBERNETES_COMPONENT_TYPE);
-    component.setReference(REFERENCE_FILENAME);
-    component.setAlias(COMPONENT_NAME);
-    component.setMountSources(true);
-
-    // when
-    applier.apply(workspaceConfig, component, contentProvider);
-
-    // then
-    verify(k8sEnvProvisioner).provision(any(), any(), objectsCaptor.capture(), any());
-    List<HasMetadata> list = objectsCaptor.getValue();
-
-    // Make sure PVC is created
-    assertTrue(
-        list.stream()
-            .filter(hasMeta -> hasMeta instanceof PersistentVolumeClaim)
-            .map(o -> (PersistentVolumeClaim) o)
-            .anyMatch(claim -> claim.getMetadata().getName().equals(PROJECTS_VOLUME_NAME)));
-
-    for (HasMetadata o : list) {
-      if (o instanceof Pod) {
-        Pod p = (Pod) o;
-
-        // ignore pods that don't have containers
-        if (p.getSpec() == null) {
-          continue;
-        }
-        // Make sure volume is created
-        assertTrue(
-            p.getSpec().getVolumes().stream()
-                .anyMatch(
-                    v ->
-                        v.getName().equals(PROJECTS_VOLUME_NAME)
-                            && v.getPersistentVolumeClaim()
-                                .getClaimName()
-                                .equals(PROJECTS_VOLUME_NAME)));
-        for (Container c : p.getSpec().getContainers()) {
-          assertEquals(c.getImagePullPolicy(), "Always");
-          assertTrue(
-              c.getVolumeMounts().stream()
-                  .anyMatch(
-                      vm ->
-                          vm.getName().equals(PROJECTS_VOLUME_NAME)
-                              && vm.getMountPath().equals(PROJECT_MOUNT_PATH)));
-        }
-      }
-    }
   }
 
   @Test

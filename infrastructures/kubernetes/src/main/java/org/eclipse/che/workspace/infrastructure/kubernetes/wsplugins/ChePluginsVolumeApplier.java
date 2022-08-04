@@ -11,12 +11,10 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins;
 
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newPVC;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolume;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolumeMount;
 
 import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import java.util.Collection;
@@ -33,16 +31,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.environment.Kubernete
 @Singleton
 public class ChePluginsVolumeApplier {
 
-  private final String pvcQuantity;
-  private final String pvcAccessMode;
-  private final String pvcStorageClassName;
-
   @Inject
-  public ChePluginsVolumeApplier() {
-    this.pvcQuantity = "test";
-    this.pvcAccessMode = "TEST";
-    this.pvcStorageClassName = "TEST";
-  }
+  public ChePluginsVolumeApplier() {}
 
   public void applyVolumes(
       KubernetesEnvironment.PodData pod,
@@ -69,12 +59,6 @@ public class ChePluginsVolumeApplier {
   private io.fabric8.kubernetes.api.model.Volume provisionPVCPodVolume(
       Volume volume, KubernetesEnvironment.PodData pod, KubernetesEnvironment k8sEnv) {
     String pvcName = volume.getName();
-
-    if (!k8sEnv.getPersistentVolumeClaims().containsKey(pvcName)) {
-      final PersistentVolumeClaim pvc =
-          newPVC(pvcName, pvcAccessMode, pvcQuantity, pvcStorageClassName);
-      k8sEnv.getPersistentVolumeClaims().put(pvcName, pvc);
-    }
 
     PodSpec podSpec = pod.getSpec();
     Optional<io.fabric8.kubernetes.api.model.Volume> volumeOpt =

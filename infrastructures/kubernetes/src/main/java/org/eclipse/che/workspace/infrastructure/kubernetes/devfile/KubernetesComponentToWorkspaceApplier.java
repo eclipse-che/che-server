@@ -19,19 +19,13 @@ import static org.eclipse.che.api.core.model.workspace.config.Command.MACHINE_NA
 import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.DEVFILE_COMPONENT_ALIAS_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Components.getIdentifiableComponentName;
 import static org.eclipse.che.api.workspace.server.devfile.convert.component.ComponentToWorkspaceApplier.convertEndpointsIntoServers;
-import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Names.machineName;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesDevfileBindings.KUBERNETES_BASED_COMPONENTS_KEY_NAME;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newPVC;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolume;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesObjectUtil.newVolumeMount;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy.SINGLE_HOST_STRATEGY;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.io.IOException;
@@ -72,12 +66,8 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
   private final KubernetesRecipeParser objectsParser;
   private final KubernetesEnvironmentProvisioner k8sEnvProvisioner;
   private final String environmentType;
-  private final String projectFolderPath;
-  private final String defaultProjectPVCSize;
   private final String imagePullPolicy;
   private final Set<String> kubernetesBasedComponentTypes;
-  private final String defaultPVCAccessMode;
-  private final String pvcStorageClassName;
   private final EnvVars envVars;
   private final String devfileEndpointsExposure;
 
@@ -114,10 +104,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
     this.objectsParser = objectsParser;
     this.k8sEnvProvisioner = k8sEnvProvisioner;
     this.environmentType = environmentType;
-    this.projectFolderPath = projectFolderPath;
-    this.defaultProjectPVCSize = "TEST";
-    this.defaultPVCAccessMode = "TEST";
-    this.pvcStorageClassName = "TEST";
     this.imagePullPolicy = imagePullPolicy;
     this.kubernetesBasedComponentTypes = kubernetesBasedComponentTypes;
     this.envVars = envVars;
@@ -163,10 +149,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
                     e.getSpec().getContainers().stream(), e.getSpec().getInitContainers().stream()))
         .forEach(c -> c.setImagePullPolicy(imagePullPolicy));
 
-    if (Boolean.TRUE.equals(k8sComponent.getMountSources())) {
-      applyProjectsVolumes(podsData, componentObjects);
-    }
-
     if (!k8sComponent.getEnv().isEmpty()) {
       podsData.forEach(p -> envVars.apply(p, k8sComponent.getEnv()));
     }
@@ -192,37 +174,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
 
     applyEntrypoints(k8sComponent.getEntrypoints(), componentObjects);
     return componentObjects;
-  }
-
-  private void applyProjectsVolumes(List<PodData> podsData, List<HasMetadata> componentObjects) {
-    if (componentObjects.stream()
-        .noneMatch(
-            hasMeta ->
-                hasMeta instanceof PersistentVolumeClaim
-                    && hasMeta.getMetadata().getName().equals(PROJECTS_VOLUME_NAME))) {
-      PersistentVolumeClaim volumeClaim =
-          newPVC(
-              PROJECTS_VOLUME_NAME,
-              defaultPVCAccessMode,
-              defaultProjectPVCSize,
-              pvcStorageClassName);
-      componentObjects.add(volumeClaim);
-    }
-
-    for (PodData podData : podsData) {
-      if (podData.getSpec().getVolumes().stream()
-          .noneMatch(volume -> volume.getName().equals(PROJECTS_VOLUME_NAME))) {
-        Volume volume = newVolume(PROJECTS_VOLUME_NAME, PROJECTS_VOLUME_NAME);
-        podData.getSpec().getVolumes().add(volume);
-      }
-      for (Container container : podData.getSpec().getContainers()) {
-        if (container.getVolumeMounts().stream()
-            .noneMatch(mount -> mount.getName().equals(PROJECTS_VOLUME_NAME))) {
-          VolumeMount volumeMount = newVolumeMount(PROJECTS_VOLUME_NAME, projectFolderPath, null);
-          container.getVolumeMounts().add(volumeMount);
-        }
-      }
-    }
   }
 
   /**

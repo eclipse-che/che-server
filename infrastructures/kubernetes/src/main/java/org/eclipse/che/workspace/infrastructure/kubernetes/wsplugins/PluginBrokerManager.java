@@ -106,7 +106,6 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
 
     E brokerEnvironment =
         brokerEnvironmentFactory.createForMetadataBroker(pluginFQNs, identity, mergePlugins);
-    // TODO: Potentially remove this class
     environmentProvisioner.provision(brokerEnvironment, identity);
 
     ListenBrokerEvents listenBrokerEvents = getListenEventPhase(workspaceId, brokersResult);

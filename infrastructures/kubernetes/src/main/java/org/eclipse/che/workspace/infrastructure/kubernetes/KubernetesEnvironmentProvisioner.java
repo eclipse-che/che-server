@@ -133,13 +133,13 @@ public interface KubernetesEnvironmentProvisioner<T extends KubernetesEnvironmen
 
       LOG.debug("Start provisioning Kubernetes environment for workspace '{}'", workspaceId);
 
-      // 2 stage - converting Che model env to Kubernetes env
+      // 1st stage - converting Che model env to Kubernetes env
       LOG.debug("Provisioning servers & env vars converters for workspace '{}'", workspaceId);
       serversConverter.provision(k8sEnv, identity);
       previewUrlExposer.expose(k8sEnv);
       envVarsConverter.provision(k8sEnv, identity);
 
-      // 3 stage - add Kubernetes env items
+      // 2nd stage - add Kubernetes env items
       LOG.debug("Provisioning environment items for workspace '{}'", workspaceId);
       restartPolicyRewriter.provision(k8sEnv, identity);
       resourceLimitRequestProvisioner.provision(k8sEnv, identity);

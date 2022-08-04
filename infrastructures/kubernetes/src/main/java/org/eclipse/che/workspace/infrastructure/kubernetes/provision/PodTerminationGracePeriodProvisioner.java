@@ -31,14 +31,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.environment.Kubernete
  */
 public class PodTerminationGracePeriodProvisioner implements ConfigurationProvisioner {
   private final long graceTerminationPeriodSec;
-  /**
-   * This value will activate if workspace configured to use Async Storage. We can't set default
-   * grace termination period because we need to give some time on workspace stop action for backup
-   * changes to the persistent storage. At the moment no way to predict this time because it depends
-   * on amount of files, size of files and network ability. This is some empirical number of seconds
-   * which should be enough for most projects.
-   */
-  private static final long GRACE_TERMINATION_PERIOD_ASYNC_STORAGE_WS_SEC = 60;
 
   @Inject
   public PodTerminationGracePeriodProvisioner(
@@ -70,7 +62,6 @@ public class PodTerminationGracePeriodProvisioner implements ConfigurationProvis
   }
 
   private long getGraceTerminationPeriodSec(KubernetesEnvironment k8sEnv) {
-    // TODO: Should probably remove this class
     return graceTerminationPeriodSec;
   }
 }

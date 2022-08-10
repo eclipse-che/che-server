@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -100,7 +100,8 @@ public class URLFactoryBuilder {
   public Optional<FactoryMetaDto> createFactoryFromDevfile(
       RemoteFactoryUrl remoteFactoryUrl,
       FileContentProvider fileContentProvider,
-      Map<String, String> overrideProperties)
+      Map<String, String> overrideProperties,
+      boolean skipAuthentication)
       throws ApiException {
     String devfileYamlContent;
 
@@ -111,7 +112,10 @@ public class URLFactoryBuilder {
 
     for (DevfileLocation location : remoteFactoryUrl.devfileFileLocations()) {
       try {
-        devfileYamlContent = fileContentProvider.fetchContent(location.location());
+        devfileYamlContent =
+            skipAuthentication
+                ? fileContentProvider.fetchContentWithoutAuthentication(location.location())
+                : fileContentProvider.fetchContent(location.location());
       } catch (IOException ex) {
         // try next location
         LOG.debug(
@@ -178,7 +182,7 @@ public class URLFactoryBuilder {
   /**
    * Creates devfile with only `generateName` and no `name`. We take `generateName` with precedence.
    * See doc of {@link URLFactoryBuilder#createFactoryFromDevfile(RemoteFactoryUrl,
-   * FileContentProvider, Map)} for explanation why.
+   * FileContentProvider, Map, Boolean)} for explanation why.
    */
   private DevfileImpl ensureToUseGenerateName(DevfileImpl devfile) {
     MetadataImpl devfileMetadata = new MetadataImpl(devfile.getMetadata());

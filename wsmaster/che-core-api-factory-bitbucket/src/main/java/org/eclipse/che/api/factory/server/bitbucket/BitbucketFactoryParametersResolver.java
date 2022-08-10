@@ -104,7 +104,8 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
             bitbucketUrl,
             new BitbucketAuthorizingFileContentProvider(
                 bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager),
-            extractOverrideParams(factoryParameters))
+            extractOverrideParams(factoryParameters),
+            false)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new BitbucketFactoryVisitor(bitbucketUrl));
   }

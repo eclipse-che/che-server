@@ -11,13 +11,28 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
+
 import jakarta.validation.constraints.NotNull;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
-import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.commons.env.EnvironmentContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Parser of String Github URLs and provide {@link GithubUrl} objects.
@@ -27,15 +42,19 @@ import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 @Singleton
 public class GithubURLParser {
 
-  /** Fetcher to grab PR data */
-  private final URLFetcher urlFetcher;
-
+  private static final Logger LOG = LoggerFactory.getLogger(GithubURLParser.class);
+  private final PersonalAccessTokenManager tokenManager;
   private final DevfileFilenamesProvider devfileFilenamesProvider;
+  private final GithubApiClient apiClient;
 
   @Inject
-  public GithubURLParser(URLFetcher urlFetcher, DevfileFilenamesProvider devfileFilenamesProvider) {
-    this.urlFetcher = urlFetcher;
+  public GithubURLParser(
+      PersonalAccessTokenManager tokenManager,
+      DevfileFilenamesProvider devfileFilenamesProvider,
+      GithubApiClient apiClient) {
+    this.tokenManager = tokenManager;
     this.devfileFilenamesProvider = devfileFilenamesProvider;
+    this.apiClient = apiClient;
   }
 
   /**
@@ -46,17 +65,11 @@ public class GithubURLParser {
       Pattern.compile(
           "^(?:http)(?:s)?(?:\\:\\/\\/)github.com/(?<repoUser>[^/]++)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>[^/]++)(?:/(?<subFolder>.*))?)|(/pull/(?<pullRequestId>[^/]++)))?$");
 
-  /** Regexp to find repository and branch name from PR link */
-  protected static final Pattern PR_DATA_PATTERN =
-      Pattern.compile(
-          ".*class=\"State[\\s]State--(?<prState>closed|open|merged).*<span title=\"(?<prRepoUser>[^\\\\/]+)\\/(?<prRepoName>[^\\:]+):(?<prBranch>[^\\\"]+).*",
-          Pattern.DOTALL);
-
   public boolean isValid(@NotNull String url) {
     return GITHUB_PATTERN.matcher(url).matches();
   }
 
-  public GithubUrl parse(String url) {
+  public GithubUrl parse(String url) throws ApiException {
     // Apply github url to the regexp
     Matcher matcher = GITHUB_PATTERN.matcher(url);
     if (!matcher.matches()) {
@@ -75,25 +88,40 @@ public class GithubURLParser {
 
     String pullRequestId = matcher.group("pullRequestId");
     if (pullRequestId != null) {
-      // there is a Pull Request ID, analyze content to extract repository and branch to use
-      String prData = this.urlFetcher.fetchSafely(url);
-      Matcher prMatcher = PR_DATA_PATTERN.matcher(prData);
-      if (prMatcher.matches()) {
-        String prState = prMatcher.group("prState");
+      try {
+        String token;
+        Optional<PersonalAccessToken> tokenOptional =
+            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), "https://github.com");
+        if (tokenOptional.isPresent()) {
+          token = tokenOptional.get().getToken();
+        } else {
+          token =
+              tokenManager
+                  .fetchAndSave(EnvironmentContext.getCurrent().getSubject(), "https://github.com")
+                  .getToken();
+        }
+        GithubPullRequest pullRequest =
+            this.apiClient.getPullRequest(pullRequestId, repoUser, repoName, token);
+        String prState = pullRequest.getState();
         if (!"open".equalsIgnoreCase(prState)) {
           throw new IllegalArgumentException(
               String.format(
                   "The given Pull Request url %s is not Opened, (found %s), thus it can't be opened as branch may have been removed.",
                   url, prState));
         }
-        repoUser = prMatcher.group("prRepoUser");
-        repoName = prMatcher.group("prRepoName");
-        branchName = prMatcher.group("prBranch");
-      } else {
-        throw new IllegalArgumentException(
-            String.format(
-                "The given Pull Request github url %s is not a valid Pull Request URL github url. Unable to extract the data",
-                url));
+        GithubHead pullRequestHead = pullRequest.getHead();
+        repoUser = pullRequestHead.getUser().getLogin();
+        repoName = pullRequestHead.getRepo().getName();
+        branchName = pullRequestHead.getRef();
+      } catch (ScmUnauthorizedException e) {
+        throw toApiException(e);
+      } catch (ScmCommunicationException
+          | UnknownScmProviderException
+          | UnsatisfiedScmPreconditionException
+          | ScmConfigurationPersistenceException e) {
+        LOG.error("Failed to authenticate to GitHub", e);
+      } catch (ScmItemNotFoundException | ScmBadRequestException e) {
+        LOG.error("Failed retrieve GitHub Pull Request", e);
       }
     }
 

@@ -97,7 +97,10 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder
         .createFactoryFromDevfile(
-            bitbucketServerUrl, fileContentProvider, extractOverrideParams(factoryParameters))
+            bitbucketServerUrl,
+            fileContentProvider,
+            extractOverrideParams(factoryParameters),
+            false)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new BitbucketFactoryVisitor(bitbucketServerUrl));
   }

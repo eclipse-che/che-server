@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
+import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
@@ -63,6 +65,7 @@ public class OpenshiftComponentToWorkspaceApplierTest {
   private KubernetesComponentToWorkspaceApplier applier;
   @Mock private KubernetesEnvironmentProvisioner k8sEnvProvisioner;
   @Mock private KubernetesRecipeParser k8sRecipeParser;
+  @Mock private FileContentProvider contentProvider;
   @Mock private EnvVars envVars;
 
   @BeforeMethod
@@ -94,9 +97,10 @@ public class OpenshiftComponentToWorkspaceApplierTest {
     component.setType(KUBERNETES_COMPONENT_TYPE);
     component.setReference(REFERENCE_FILENAME);
     component.setAlias(COMPONENT_NAME);
+    when(contentProvider.fetchContent(anyString())).thenReturn("content");
 
     // when
-    applier.apply(workspaceConfig, component, s -> "content");
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     verify(k8sEnvProvisioner)
@@ -122,6 +126,7 @@ public class OpenshiftComponentToWorkspaceApplierTest {
             openshiftBasedComponents);
 
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     // given
@@ -134,7 +139,7 @@ public class OpenshiftComponentToWorkspaceApplierTest {
             new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     @SuppressWarnings("unchecked")
@@ -176,6 +181,7 @@ public class OpenshiftComponentToWorkspaceApplierTest {
             openshiftBasedComponents);
 
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     // given
@@ -188,7 +194,7 @@ public class OpenshiftComponentToWorkspaceApplierTest {
             new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     @SuppressWarnings("unchecked")

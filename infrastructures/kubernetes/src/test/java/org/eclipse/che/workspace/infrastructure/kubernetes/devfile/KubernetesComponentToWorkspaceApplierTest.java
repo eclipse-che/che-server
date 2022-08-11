@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
@@ -56,6 +57,7 @@ import java.util.stream.Stream;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
+import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
@@ -95,6 +97,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   @Mock private KubernetesRecipeParser k8sRecipeParser;
   @Mock private KubernetesEnvironmentProvisioner k8sEnvProvisioner;
   @Mock private EnvVars envVars;
+  @Mock private FileContentProvider contentProvider;
 
   @Captor private ArgumentCaptor<List<HasMetadata>> objectsCaptor;
 
@@ -130,18 +133,15 @@ public class KubernetesComponentToWorkspaceApplierTest {
       shouldThrowExceptionWhenRecipeComponentIsPresentAndContentProviderDoesNotSupportFetching()
           throws Exception {
     // given
+    when(contentProvider.fetchContent(anyString()))
+        .thenThrow(new DevfileException("fetch is not supported"));
     ComponentImpl component = new ComponentImpl();
     component.setType(KUBERNETES_COMPONENT_TYPE);
     component.setReference(REFERENCE_FILENAME);
     component.setAlias(COMPONENT_NAME);
 
     // when
-    applier.apply(
-        workspaceConfig,
-        component,
-        e -> {
-          throw new DevfileException("fetch is not supported");
-        });
+    applier.apply(workspaceConfig, component, contentProvider);
   }
 
   @Test(
@@ -159,9 +159,10 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setType(KUBERNETES_COMPONENT_TYPE);
     component.setReference(REFERENCE_FILENAME);
     component.setAlias(COMPONENT_NAME);
+    when(contentProvider.fetchContent(anyString())).thenReturn("some_non_yaml_content");
 
     // when
-    applier.apply(workspaceConfig, component, s -> "some_non_yaml_content");
+    applier.apply(workspaceConfig, component, contentProvider);
   }
 
   @Test(
@@ -170,18 +171,14 @@ public class KubernetesComponentToWorkspaceApplierTest {
           "Error during recipe content retrieval for component 'foo' with type 'kubernetes': fetch failed")
   public void shouldThrowExceptionWhenExceptionHappensOnContentProvider() throws Exception {
     // given
+    when(contentProvider.fetchContent(anyString())).thenThrow(new IOException("fetch failed"));
     ComponentImpl component = new ComponentImpl();
     component.setType(KUBERNETES_COMPONENT_TYPE);
     component.setReference(REFERENCE_FILENAME);
     component.setAlias(COMPONENT_NAME);
 
     // when
-    applier.apply(
-        workspaceConfig,
-        component,
-        e -> {
-          throw new IOException("fetch failed");
-        });
+    applier.apply(workspaceConfig, component, contentProvider);
   }
 
   @Test
@@ -189,6 +186,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
       throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
     ComponentImpl component = new ComponentImpl();
     component.setType(KUBERNETES_COMPONENT_TYPE);
@@ -196,7 +194,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setAlias(COMPONENT_NAME);
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     KubernetesList list = toK8SList(yamlRecipeContent);
@@ -230,6 +228,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   public void shouldProvisionProjectVolumesIfSpecifiedIntoK8SList() throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     List<HasMetadata> k8sList = toK8SList(yamlRecipeContent).getItems();
     doReturn(k8sList).when(k8sRecipeParser).parse(anyString());
     ComponentImpl component = new ComponentImpl();
@@ -239,7 +238,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setMountSources(true);
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     verify(k8sEnvProvisioner).provision(any(), any(), objectsCaptor.capture(), any());
@@ -286,6 +285,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   public void shouldProvisionDevfileVolumesIfSpecifiedIntoMachineConfig() throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     List<HasMetadata> k8sList = toK8SList(yamlRecipeContent).getItems();
     doReturn(k8sList).when(k8sRecipeParser).parse(anyString());
     ComponentImpl component = new ComponentImpl();
@@ -296,7 +296,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     ArgumentCaptor<Map<String, MachineConfigImpl>> mapCaptor = ArgumentCaptor.forClass(Map.class);
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     verify(k8sEnvProvisioner).provision(any(), any(), any(), mapCaptor.capture());
@@ -324,6 +324,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   public void shouldThrowExceptionWhenDevfileVolumeNameExists() throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     List<HasMetadata> k8sList = toK8SList(yamlRecipeContent).getItems();
     doReturn(k8sList).when(k8sRecipeParser).parse(anyString());
     ComponentImpl component = new ComponentImpl();
@@ -333,7 +334,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setVolumes(Collections.singletonList(new VolumeImpl("foo_volume", "/foo1")));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
   }
 
   @Test(
@@ -343,6 +344,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   public void shouldThrowExceptionWhenDevfileVolumePathExists() throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     List<HasMetadata> k8sList = toK8SList(yamlRecipeContent).getItems();
     doReturn(k8sList).when(k8sRecipeParser).parse(anyString());
     ComponentImpl component = new ComponentImpl();
@@ -352,7 +354,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setVolumes(Collections.singletonList(new VolumeImpl("foo", "/foo/bar")));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
   }
 
   @Test
@@ -384,9 +386,10 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setAlias(COMPONENT_NAME);
     List<EnvImpl> envToApply = singletonList(new EnvImpl("TEST_ENV", "anyValue"));
     component.setEnv(envToApply);
+    when(contentProvider.fetchContent(anyString())).thenReturn("content");
 
     // when
-    applier.apply(workspaceConfig, component, s -> "content");
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     envVars.apply(new PodData(pod1), envToApply);
@@ -399,6 +402,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     ArgumentCaptor<Map<String, MachineConfigImpl>> mapCaptor = ArgumentCaptor.forClass(Map.class);
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     List<HasMetadata> k8sList = toK8SList(yamlRecipeContent).getItems();
     doReturn(k8sList).when(k8sRecipeParser).parse(anyString());
     ComponentImpl component = new ComponentImpl();
@@ -408,7 +412,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setMountSources(true);
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     verify(k8sEnvProvisioner).provision(any(), any(), any(), mapCaptor.capture());
@@ -427,6 +431,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   public void shouldFilterRecipeWithGivenSelectors() throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
 
     final Map<String, String> selector = singletonMap("app.kubernetes.io/component", "webapp");
     ComponentImpl component = new ComponentImpl();
@@ -437,7 +442,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     verify(k8sEnvProvisioner)
@@ -468,7 +473,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     workspaceConfig.getCommands().add(command);
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     CommandImpl actualCommand = workspaceConfig.getCommands().get(0);
@@ -481,6 +486,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
           throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     ComponentImpl component = new ComponentImpl();
@@ -493,7 +499,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     workspaceConfig.getCommands().add(command);
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     CommandImpl actualCommand = workspaceConfig.getCommands().get(0);
@@ -504,6 +510,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
   public void shouldChangeEntrypointsOnMatchingContainers() throws Exception {
     // given
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     List<String> command = asList("teh", "command");
@@ -518,7 +525,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setEntrypoints(singletonList(entrypoint));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     verify(k8sEnvProvisioner).provision(any(), any(), objectsCaptor.capture(), any());
@@ -558,6 +565,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
     ComponentImpl component = new ComponentImpl();
     component.setType(KUBERNETES_COMPONENT_TYPE);
@@ -565,7 +573,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setAlias(COMPONENT_NAME);
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     verify(k8sEnvProvisioner).provision(any(), any(), objectsCaptor.capture(), any());
@@ -596,6 +604,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     Integer endpointPort = 8081;
 
     String yamlRecipeContent = getResource("devfile/petclinicPods.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     ComponentImpl component = new ComponentImpl();
@@ -605,7 +614,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     component.setEndpoints(singletonList(new EndpointImpl(endpointName, endpointPort, emptyMap())));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     @SuppressWarnings("unchecked")
@@ -638,6 +647,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     String endpointSecure = "false";
 
     String yamlRecipeContent = getResource("devfile/petclinicPods.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     ComponentImpl component = new ComponentImpl();
@@ -660,7 +670,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
                     endpointSecure))));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     @SuppressWarnings("unchecked")
@@ -709,6 +719,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     // given
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     ComponentImpl component = new ComponentImpl();
     component.setType(KUBERNETES_COMPONENT_TYPE);
     component.setReference(REFERENCE_FILENAME);
@@ -718,7 +729,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     @SuppressWarnings("unchecked")
@@ -758,6 +769,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             k8sBasedComponents);
 
     String yamlRecipeContent = getResource("devfile/petclinic.yaml");
+    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
     doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
 
     // given
@@ -770,7 +782,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
             new EndpointImpl("e1", 1111, emptyMap()), new EndpointImpl("e2", 2222, emptyMap())));
 
     // when
-    applier.apply(workspaceConfig, component, s -> yamlRecipeContent);
+    applier.apply(workspaceConfig, component, contentProvider);
 
     // then
     @SuppressWarnings("unchecked")

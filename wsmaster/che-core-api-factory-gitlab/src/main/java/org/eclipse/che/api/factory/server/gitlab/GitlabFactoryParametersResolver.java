@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -91,7 +91,8 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
             gitlabUrl,
             new GitlabAuthorizingFileContentProvider(
                 gitlabUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager),
-            extractOverrideParams(factoryParameters))
+            extractOverrideParams(factoryParameters),
+            false)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new GitlabFactoryVisitor(gitlabUrl));
   }

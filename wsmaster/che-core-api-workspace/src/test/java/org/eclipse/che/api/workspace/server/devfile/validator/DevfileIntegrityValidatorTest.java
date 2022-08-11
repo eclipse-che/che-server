@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,6 +16,7 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.EDITOR_COMP
 import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.PLUGIN_COMPONENT_TYPE;
+import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl;
@@ -221,7 +223,7 @@ public class DevfileIntegrityValidatorTest {
     }
 
     // when
-    integrityValidator.validateContentReferences(devfile, __ -> "");
+    integrityValidator.validateContentReferences(devfile, mock(FileContentProvider.class));
 
     // then
     // no exception is thrown

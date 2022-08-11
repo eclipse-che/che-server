@@ -17,6 +17,7 @@ import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -145,7 +146,8 @@ public class BitbucketFactoryParametersResolverTest {
 
     when(urlFactoryBuilder.buildDefaultDevfile(any())).thenReturn(computedFactory.getDevfile());
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.empty());
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
     // when
@@ -168,7 +170,8 @@ public class BitbucketFactoryParametersResolverTest {
 
     FactoryDto computedFactory = generateDevfileFactory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
@@ -180,7 +183,8 @@ public class BitbucketFactoryParametersResolverTest {
 
     // check we called the builder with the following devfile file
     verify(urlFactoryBuilder)
-        .createFactoryFromDevfile(factoryUrlArgumentCaptor.capture(), any(), anyMap());
+        .createFactoryFromDevfile(
+            factoryUrlArgumentCaptor.capture(), any(), anyMap(), anyBoolean());
     verify(urlFactoryBuilder, never()).buildDefaultDevfile(eq("che"));
     assertEquals(
         factoryUrlArgumentCaptor.getValue().devfileFileLocations().iterator().next().location(),
@@ -194,7 +198,8 @@ public class BitbucketFactoryParametersResolverTest {
 
     FactoryDto computedFactory = generateDevfileFactory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
@@ -221,7 +226,8 @@ public class BitbucketFactoryParametersResolverTest {
                 .withSource(
                     newDto(SourceDto.class).withLocation("https://bitbucket.org/eclipse/che.git")));
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
@@ -240,7 +246,8 @@ public class BitbucketFactoryParametersResolverTest {
 
     FactoryDevfileV2Dto computedFactory = generateDevfileV2Factory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);

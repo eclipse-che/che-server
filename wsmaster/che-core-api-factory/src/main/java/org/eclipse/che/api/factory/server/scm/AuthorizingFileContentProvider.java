@@ -53,6 +53,17 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
 
   @Override
   public String fetchContent(String fileURL) throws IOException, DevfileException {
+    return fetchContent(fileURL, false);
+  }
+
+  @Override
+  public String fetchContentWithoutAuthentication(String fileURL)
+      throws IOException, DevfileException {
+    return fetchContent(fileURL, true);
+  }
+
+  private String fetchContent(String fileURL, boolean skipAuthentication)
+      throws IOException, DevfileException {
     final String requestURL = formatUrl(fileURL);
     try {
       Optional<PersonalAccessToken> token =
@@ -65,15 +76,19 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         gitCredentialManager.createOrReplace(personalAccessToken);
         return content;
       } else {
-        // try to authenticate for the given URL
         try {
-          PersonalAccessToken personalAccessToken =
-              personalAccessTokenManager.fetchAndSave(
-                  EnvironmentContext.getCurrent().getSubject(), remoteFactoryUrl.getHostName());
-          String content =
-              urlFetcher.fetch(requestURL, formatAuthorization(personalAccessToken.getToken()));
-          gitCredentialManager.createOrReplace(personalAccessToken);
-          return content;
+          if (skipAuthentication) {
+            return urlFetcher.fetch(requestURL);
+          } else {
+            // try to authenticate for the given URL
+            PersonalAccessToken personalAccessToken =
+                personalAccessTokenManager.fetchAndSave(
+                    EnvironmentContext.getCurrent().getSubject(), remoteFactoryUrl.getHostName());
+            String content =
+                urlFetcher.fetch(requestURL, formatAuthorization(personalAccessToken.getToken()));
+            gitCredentialManager.createOrReplace(personalAccessToken);
+            return content;
+          }
         } catch (UnknownScmProviderException e) {
           // we don't have any provider matching this SCM provider
           // so try without secrets being configured

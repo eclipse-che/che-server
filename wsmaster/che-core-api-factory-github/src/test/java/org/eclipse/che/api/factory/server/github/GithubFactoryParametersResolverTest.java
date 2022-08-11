@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,9 @@ import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -88,7 +90,8 @@ public class GithubFactoryParametersResolverTest {
 
   /**
    * Capturing the location parameter when calling {@link
-   * URLFactoryBuilder#createFactoryFromDevfile(RemoteFactoryUrl, FileContentProvider, Map)}
+   * URLFactoryBuilder#createFactoryFromDevfile(RemoteFactoryUrl, FileContentProvider, Map,
+   * Boolean)}
    */
   @Captor private ArgumentCaptor<RemoteFactoryUrl> factoryUrlArgumentCaptor;
 
@@ -148,7 +151,8 @@ public class GithubFactoryParametersResolverTest {
 
     when(urlFactoryBuilder.buildDefaultDevfile(any())).thenReturn(computedFactory.getDevfile());
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.empty());
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
@@ -162,6 +166,39 @@ public class GithubFactoryParametersResolverTest {
   }
 
   @Test
+  public void shouldSkipAuthenticationWhenAccessDenied() throws Exception {
+    // given
+    when(urlFactoryBuilder.buildDefaultDevfile(any()))
+        .thenReturn(generateDevfileFactory().getDevfile());
+    // when
+    Map<String, String> params =
+        ImmutableMap.of(
+            URL_PARAMETER_NAME,
+            "https://github.com/eclipse/che",
+            ERROR_QUERY_NAME,
+            "access_denied");
+    githubFactoryParametersResolver.createFactory(params);
+    // then
+    verify(urlFactoryBuilder)
+        .createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(FileContentProvider.class), anyMap(), eq(true));
+  }
+
+  @Test
+  public void shouldNotSkipAuthenticationWhenNoErrorParameterPassed() throws Exception {
+    // given
+    when(urlFactoryBuilder.buildDefaultDevfile(any()))
+        .thenReturn(generateDevfileFactory().getDevfile());
+    // when
+    githubFactoryParametersResolver.createFactory(
+        ImmutableMap.of(URL_PARAMETER_NAME, "https://github.com/eclipse/che"));
+    // then
+    verify(urlFactoryBuilder)
+        .createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(FileContentProvider.class), anyMap(), eq(false));
+  }
+
+  @Test
   public void shouldReturnFactoryFromRepositoryWithDevfile() throws Exception {
 
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
@@ -171,7 +208,8 @@ public class GithubFactoryParametersResolverTest {
 
     FactoryDto computedFactory = generateDevfileFactory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
@@ -183,7 +221,8 @@ public class GithubFactoryParametersResolverTest {
 
     // check we called the builder with the following devfile file
     verify(urlFactoryBuilder)
-        .createFactoryFromDevfile(factoryUrlArgumentCaptor.capture(), any(), anyMap());
+        .createFactoryFromDevfile(
+            factoryUrlArgumentCaptor.capture(), any(), anyMap(), anyBoolean());
     verify(urlFactoryBuilder, never()).buildDefaultDevfile(eq("che"));
     assertEquals(
         factoryUrlArgumentCaptor.getValue().devfileFileLocations().iterator().next().location(),
@@ -197,7 +236,8 @@ public class GithubFactoryParametersResolverTest {
 
     FactoryDto computedFactory = generateDevfileFactory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
@@ -224,7 +264,8 @@ public class GithubFactoryParametersResolverTest {
                 .withSource(
                     newDto(SourceDto.class).withLocation("https://github.com/eclipse/che.git")));
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
@@ -243,7 +284,8 @@ public class GithubFactoryParametersResolverTest {
 
     FactoryDevfileV2Dto computedFactory = generateDevfileV2Factory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);

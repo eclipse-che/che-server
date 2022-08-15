@@ -14,6 +14,8 @@ package org.eclipse.che.api.factory.server.github;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -187,6 +189,16 @@ public class GithubURLParserTest {
     assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");
     assertEquals(githubUrl.getBranch(), "main");
+  }
+
+  @Test
+  public void checkPullRequestFromForkedRepositoryWithoutAuthentication() throws Exception {
+    String url = "https://github.com/eclipse/che/pull/21276";
+    GithubUrl githubUrl = githubUrlParser.parseWithoutAuthentication(url);
+
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+    verify(personalAccessTokenManager, never()).fetchAndSave(any(Subject.class), anyString());
   }
 
   /** Check Pull Request is failing with Merged state */

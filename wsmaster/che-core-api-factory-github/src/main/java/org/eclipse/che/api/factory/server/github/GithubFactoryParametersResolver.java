@@ -99,11 +99,17 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
   @Override
   public FactoryMetaDto createFactory(@NotNull final Map<String, String> factoryParameters)
       throws ApiException {
-    // no need to check null value of url parameter as accept() method has performed the check
-    final GithubUrl githubUrl = githubUrlParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
     boolean skipAuthentication =
         factoryParameters.get(ERROR_QUERY_NAME) != null
             && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
+    // no need to check null value of url parameter as accept() method has performed the check
+    final GithubUrl githubUrl;
+    if (skipAuthentication) {
+      githubUrl =
+          githubUrlParser.parseWithoutAuthentication(factoryParameters.get(URL_PARAMETER_NAME));
+    } else {
+      githubUrl = githubUrlParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+    }
 
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder

@@ -31,6 +31,7 @@ import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderExcept
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,15 @@ public class GithubURLParser {
     return GITHUB_PATTERN.matcher(url).matches();
   }
 
+  public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
+    return parse(url, false);
+  }
+
   public GithubUrl parse(String url) throws ApiException {
+    return parse(url, true);
+  }
+
+  private GithubUrl parse(String url, boolean authenticationRequired) throws ApiException {
     // Apply github url to the regexp
     Matcher matcher = GITHUB_PATTERN.matcher(url);
     if (!matcher.matches()) {
@@ -89,39 +98,41 @@ public class GithubURLParser {
     String pullRequestId = matcher.group("pullRequestId");
     if (pullRequestId != null) {
       try {
-        String token;
-        Optional<PersonalAccessToken> tokenOptional =
-            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), "https://github.com");
+        String githubEndpoint = "https://github.com";
+        Subject subject = EnvironmentContext.getCurrent().getSubject();
+        PersonalAccessToken personalAccessToken = null;
+        Optional<PersonalAccessToken> tokenOptional = tokenManager.get(subject, githubEndpoint);
         if (tokenOptional.isPresent()) {
-          token = tokenOptional.get().getToken();
-        } else {
-          token =
-              tokenManager
-                  .fetchAndSave(EnvironmentContext.getCurrent().getSubject(), "https://github.com")
-                  .getToken();
+          personalAccessToken = tokenOptional.get();
+        } else if (authenticationRequired) {
+          personalAccessToken = tokenManager.fetchAndSave(subject, githubEndpoint);
         }
-        GithubPullRequest pullRequest =
-            this.apiClient.getPullRequest(pullRequestId, repoUser, repoName, token);
-        String prState = pullRequest.getState();
-        if (!"open".equalsIgnoreCase(prState)) {
-          throw new IllegalArgumentException(
-              String.format(
-                  "The given Pull Request url %s is not Opened, (found %s), thus it can't be opened as branch may have been removed.",
-                  url, prState));
+        if (personalAccessToken != null) {
+          GithubPullRequest pullRequest =
+              this.apiClient.getPullRequest(
+                  pullRequestId, repoUser, repoName, personalAccessToken.getToken());
+          String prState = pullRequest.getState();
+          if (!"open".equalsIgnoreCase(prState)) {
+            throw new IllegalArgumentException(
+                String.format(
+                    "The given Pull Request url %s is not Opened, (found %s), thus it can't be opened as branch may have been removed.",
+                    url, prState));
+          }
+          GithubHead pullRequestHead = pullRequest.getHead();
+          repoUser = pullRequestHead.getUser().getLogin();
+          repoName = pullRequestHead.getRepo().getName();
+          branchName = pullRequestHead.getRef();
         }
-        GithubHead pullRequestHead = pullRequest.getHead();
-        repoUser = pullRequestHead.getUser().getLogin();
-        repoName = pullRequestHead.getRepo().getName();
-        branchName = pullRequestHead.getRef();
       } catch (ScmUnauthorizedException e) {
         throw toApiException(e);
       } catch (ScmCommunicationException
-          | UnknownScmProviderException
           | UnsatisfiedScmPreconditionException
           | ScmConfigurationPersistenceException e) {
         LOG.error("Failed to authenticate to GitHub", e);
       } catch (ScmItemNotFoundException | ScmBadRequestException e) {
         LOG.error("Failed retrieve GitHub Pull Request", e);
+      } catch (UnknownScmProviderException e) {
+        LOG.warn(e.getMessage());
       }
     }
 

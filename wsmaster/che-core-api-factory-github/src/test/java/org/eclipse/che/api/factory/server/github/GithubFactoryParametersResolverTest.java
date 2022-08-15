@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -100,7 +101,9 @@ public class GithubFactoryParametersResolverTest {
 
   @BeforeMethod
   protected void init() {
-    githubUrlParser = new GithubURLParser(urlFetcher, devfileFilenamesProvider);
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager, devfileFilenamesProvider, mock(GithubApiClient.class));
     assertNotNull(this.githubUrlParser);
     githubFactoryParametersResolver =
         new GithubFactoryParametersResolver(

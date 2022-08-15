@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.github;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
@@ -43,7 +44,9 @@ public class GithubScmFileResolverTest {
 
   @BeforeMethod
   protected void init() {
-    githubURLParser = new GithubURLParser(urlFetcher, devfileFilenamesProvider);
+    githubURLParser =
+        new GithubURLParser(
+            personalAccessTokenManager, devfileFilenamesProvider, mock(GithubApiClient.class));
     assertNotNull(this.githubURLParser);
     githubScmFileResolver =
         new GithubScmFileResolver(

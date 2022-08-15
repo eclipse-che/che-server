@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
-import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toApiException;
+import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 
 import java.io.IOException;
 import javax.inject.Inject;

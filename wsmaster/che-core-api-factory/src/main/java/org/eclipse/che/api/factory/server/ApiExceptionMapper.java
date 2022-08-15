@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,24 +23,34 @@ import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLoc
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
 /**
- * Helps to convert {@link DevfileException}s with some specific causes into REST-friendly {@link
+ * Helps to convert {@link Exception}s with some specific causes into REST-friendly {@link
  * ApiException}
  */
-public class DevfileToApiExceptionMapper {
+public class ApiExceptionMapper {
 
   public static ApiException toApiException(DevfileException devfileException) {
-    ApiException cause = getApiException(devfileException);
-    return (cause != null)
-        ? cause
+    ApiException apiException = getApiException(devfileException.getCause());
+    return (apiException != null)
+        ? apiException
         : new BadRequestException(
             "Error occurred during file content retrieval."
                 + "Cause: "
                 + devfileException.getMessage());
   }
 
+  public static ApiException toApiException(ScmUnauthorizedException scmUnauthorizedException) {
+    ApiException apiException = getApiException(scmUnauthorizedException);
+    return (apiException != null)
+        ? apiException
+        : new BadRequestException(
+            "Error occurred during SCM authorisation."
+                + "Cause: "
+                + scmUnauthorizedException.getMessage());
+  }
+
   public static ApiException toApiException(
       DevfileException devfileException, DevfileLocation location) {
-    ApiException cause = getApiException(devfileException);
+    ApiException cause = getApiException(devfileException.getCause());
     return (cause != null)
         ? cause
         : new BadRequestException(
@@ -50,10 +60,9 @@ public class DevfileToApiExceptionMapper {
                 + devfileException.getMessage());
   }
 
-  private static ApiException getApiException(DevfileException devfileException) {
-    Throwable cause = devfileException.getCause();
-    if (cause instanceof ScmUnauthorizedException) {
-      ScmUnauthorizedException scmCause = (ScmUnauthorizedException) cause;
+  private static ApiException getApiException(Throwable throwable) {
+    if (throwable instanceof ScmUnauthorizedException) {
+      ScmUnauthorizedException scmCause = (ScmUnauthorizedException) throwable;
       return new UnauthorizedException(
           "SCM Authentication required",
           401,
@@ -61,14 +70,14 @@ public class DevfileToApiExceptionMapper {
               "oauth_version", scmCause.getOauthVersion(),
               "oauth_provider", scmCause.getOauthProvider(),
               "oauth_authentication_url", scmCause.getAuthenticateUrl()));
-    } else if (cause instanceof UnknownScmProviderException) {
+    } else if (throwable instanceof UnknownScmProviderException) {
       return new ServerException(
           "Provided location is unknown or misconfigured on the server side. Error message: "
-              + cause.getMessage());
-    } else if (cause instanceof ScmCommunicationException) {
+              + throwable.getMessage());
+    } else if (throwable instanceof ScmCommunicationException) {
       return new ServerException(
           "There is an error happened when communicate with SCM server. Error message: "
-              + cause.getMessage());
+              + throwable.getMessage());
     }
     return null;
   }

@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
-import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toApiException;
+import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;

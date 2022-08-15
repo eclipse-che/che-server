@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -25,7 +25,7 @@ import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderExcept
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.testng.annotations.Test;
 
-public class DevfileToApiExceptionMapperTest {
+public class ApiExceptionMapperTest {
 
   @Test
   public void shouldReturnUnauthorizedExceptionIfCauseIsScmUnauthorized() {
@@ -35,8 +35,7 @@ public class DevfileToApiExceptionMapperTest {
             "msg", "gitlab", "2.0", "http://gitlab.com/oauth/authenticate");
 
     ApiException exception =
-        DevfileToApiExceptionMapper.toApiException(
-            new DevfileException("text", scmUnauthorizedException));
+        ApiExceptionMapper.toApiException(new DevfileException("text", scmUnauthorizedException));
     assertTrue(exception instanceof UnauthorizedException);
     assertEquals(((ExtendedError) exception.getServiceError()).getErrorCode(), 401);
     assertEquals(((ExtendedError) exception.getServiceError()).getAttributes().size(), 3);
@@ -55,8 +54,7 @@ public class DevfileToApiExceptionMapperTest {
     UnknownScmProviderException scmProviderException =
         new UnknownScmProviderException("unknown", "http://gitlab.com/oauth/authenticate");
     ApiException exception =
-        DevfileToApiExceptionMapper.toApiException(
-            new DevfileException("text", scmProviderException));
+        ApiExceptionMapper.toApiException(new DevfileException("text", scmProviderException));
     assertTrue(exception instanceof ServerException);
   }
 
@@ -65,8 +63,7 @@ public class DevfileToApiExceptionMapperTest {
 
     ScmCommunicationException communicationException = new ScmCommunicationException("unknown");
     ApiException exception =
-        DevfileToApiExceptionMapper.toApiException(
-            new DevfileException("text", communicationException));
+        ApiExceptionMapper.toApiException(new DevfileException("text", communicationException));
     assertTrue(exception instanceof ServerException);
   }
 
@@ -75,8 +72,7 @@ public class DevfileToApiExceptionMapperTest {
 
     ScmItemNotFoundException itemNotFoundException = new ScmItemNotFoundException("unknown");
     ApiException exception =
-        DevfileToApiExceptionMapper.toApiException(
-            new DevfileException("text", itemNotFoundException));
+        ApiExceptionMapper.toApiException(new DevfileException("text", itemNotFoundException));
     assertTrue(exception instanceof BadRequestException);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,6 +15,7 @@ import static java.util.Collections.emptyList;
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.HttpMethod;
@@ -70,8 +71,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   }
 
   @Override
-  public Response callback(UriInfo uriInfo, List<String> errorValues)
-      throws NotFoundException, OAuthAuthenticationException {
+  public Response callback(UriInfo uriInfo, List<String> errorValues) throws NotFoundException {
     URL requestUrl = getRequestUrl(uriInfo);
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
     if (errorValues != null && errorValues.contains("access_denied")) {
@@ -82,7 +82,15 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);
     final List<String> scopes = params.get("scope");
-    oauth.callback(requestUrl, scopes == null ? Collections.<String>emptyList() : scopes);
+    try {
+      oauth.callback(requestUrl, scopes == null ? emptyList() : scopes);
+    } catch (OAuthAuthenticationException e) {
+      return Response.temporaryRedirect(
+              URI.create(
+                  getParameter(params, "redirect_after_login")
+                      + String.format("&%s=access_denied", ERROR_QUERY_NAME)))
+          .build();
+    }
     final String redirectAfterLogin = getParameter(params, "redirect_after_login");
     return Response.temporaryRedirect(URI.create(redirectAfterLogin)).build();
   }

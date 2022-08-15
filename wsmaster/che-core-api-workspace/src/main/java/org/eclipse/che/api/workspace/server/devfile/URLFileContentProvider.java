@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -33,8 +33,8 @@ public class URLFileContentProvider implements FileContentProvider {
     this.urlFetcher = urlFetcher;
   }
 
-  @Override
-  public String fetchContent(String fileURL) throws IOException, DevfileException {
+  private String fetchContent(String fileURL, boolean skipAuthentication)
+      throws IOException, DevfileException {
     URI fileURI;
     String requestURL;
     try {
@@ -70,5 +70,16 @@ public class URLFileContentProvider implements FileContentProvider {
               fileURL, e.getMessage()),
           e);
     }
+  }
+
+  @Override
+  public String fetchContent(String fileURL) throws IOException, DevfileException {
+    return fetchContent(fileURL, false);
+  }
+
+  @Override
+  public String fetchContentWithoutAuthentication(String fileURL)
+      throws IOException, DevfileException {
+    return fetchContent(fileURL, true);
   }
 }

@@ -17,6 +17,7 @@ import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -114,7 +115,8 @@ public class GitlabFactoryParametersResolverTest {
 
     when(urlFactoryBuilder.buildDefaultDevfile(any())).thenReturn(computedFactory.getDevfile());
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.empty());
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, gitlabUrl);
     // when
@@ -134,7 +136,8 @@ public class GitlabFactoryParametersResolverTest {
 
     FactoryDto computedFactory = generateDevfileFactory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, gitlabUrl);
@@ -154,7 +157,8 @@ public class GitlabFactoryParametersResolverTest {
 
     FactoryDevfileV2Dto computedFactory = generateDevfileV2Factory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, gitlabUrl);

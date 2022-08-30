@@ -70,7 +70,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   private final HttpClient httpClient;
 
   public HttpBitbucketServerApiClient(String serverUrl, OAuthAuthenticator authenticator) {
-    this.serverUri = URI.create(serverUrl);
+    this.serverUri = URI.create(serverUrl.endsWith("/") ? serverUrl : serverUrl + "/");
     this.authenticator = authenticator;
     this.httpClient =
         HttpClient.newBuilder()
@@ -131,7 +131,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketUser getUser(String slug, @Nullable String token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("/rest/api/1.0/users/" + slug);
+    URI uri = serverUri.resolve("./rest/api/1.0/users/" + slug);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers(
@@ -163,7 +163,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   public List<BitbucketUser> getUsers()
       throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException {
     try {
-      return doGetItems(BitbucketUser.class, "/rest/api/1.0/users", null);
+      return doGetItems(BitbucketUser.class, "./rest/api/1.0/users", null);
     } catch (ScmItemNotFoundException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
@@ -173,7 +173,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   public List<BitbucketUser> getUsers(String filter)
       throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException {
     try {
-      return doGetItems(BitbucketUser.class, "/rest/api/1.0/users", filter);
+      return doGetItems(BitbucketUser.class, "./rest/api/1.0/users", filter);
     } catch (ScmItemNotFoundException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
@@ -182,7 +182,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public void deletePersonalAccessTokens(String userSlug, Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("/rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .DELETE()
@@ -217,7 +217,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   public BitbucketPersonalAccessToken createPersonalAccessTokens(
       String userSlug, String tokenName, Set<String> permissions)
       throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("/rest/access-tokens/1.0/users/" + userSlug);
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + userSlug);
 
     try {
       HttpRequest request =
@@ -256,7 +256,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     try {
       return doGetItems(
-          BitbucketPersonalAccessToken.class, "/rest/access-tokens/1.0/users/" + userSlug, null);
+          BitbucketPersonalAccessToken.class, "./rest/access-tokens/1.0/users/" + userSlug, null);
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
@@ -265,7 +265,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketPersonalAccessToken getPersonalAccessToken(String userSlug, Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("/rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers(

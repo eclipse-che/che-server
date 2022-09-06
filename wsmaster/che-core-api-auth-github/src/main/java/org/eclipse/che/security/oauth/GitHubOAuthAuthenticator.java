@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.api.client.util.store.MemoryDataStoreFactory;
 import jakarta.mail.internet.AddressException;
@@ -35,9 +36,9 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
       String tokenUri)
       throws IOException {
     userRequestUrl =
-        isNullOrEmpty(authEndpoint) || authEndpoint.equals("https://github.com")
+        isNullOrEmpty(authEndpoint) || trimEnd(authEndpoint, '/').equals("https://github.com")
             ? "https://api.github.com/user"
-            : authEndpoint + "/api/v3/user";
+            : trimEnd(authEndpoint, '/') + "/api/v3/user";
     configure(
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
   }

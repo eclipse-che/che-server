@@ -13,7 +13,6 @@ package org.eclipse.che.api.factory.server.github;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
@@ -45,8 +44,7 @@ public class GithubScmFileResolverTest {
   @BeforeMethod
   protected void init() {
     githubURLParser =
-        new GithubURLParser(
-            personalAccessTokenManager, devfileFilenamesProvider, mock(GithubApiClient.class));
+        new GithubURLParser(personalAccessTokenManager, devfileFilenamesProvider, null);
     assertNotNull(this.githubURLParser);
     githubScmFileResolver =
         new GithubScmFileResolver(
@@ -65,7 +63,7 @@ public class GithubScmFileResolverTest {
   @Test
   public void checkValidAcceptUrl() {
     // should be accepted
-    assertTrue(githubScmFileResolver.accept("http://github.com/test/repo.git"));
+    assertTrue(githubScmFileResolver.accept("https://github.com/test/repo.git"));
   }
 
   @Test
@@ -77,7 +75,8 @@ public class GithubScmFileResolverTest {
     when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
         .thenReturn(personalAccessToken);
 
-    String content = githubScmFileResolver.fileContent("http://github.com/test/repo.git", filename);
+    String content =
+        githubScmFileResolver.fileContent("https://github.com/test/repo.git", filename);
 
     assertEquals(content, rawContent);
   }

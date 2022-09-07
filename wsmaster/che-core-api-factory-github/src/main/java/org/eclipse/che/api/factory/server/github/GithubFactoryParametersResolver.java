@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.github;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -98,8 +99,17 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
   @Override
   public FactoryMetaDto createFactory(@NotNull final Map<String, String> factoryParameters)
       throws ApiException {
+    boolean skipAuthentication =
+        factoryParameters.get(ERROR_QUERY_NAME) != null
+            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
     // no need to check null value of url parameter as accept() method has performed the check
-    final GithubUrl githubUrl = githubUrlParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+    final GithubUrl githubUrl;
+    if (skipAuthentication) {
+      githubUrl =
+          githubUrlParser.parseWithoutAuthentication(factoryParameters.get(URL_PARAMETER_NAME));
+    } else {
+      githubUrl = githubUrlParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+    }
 
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder
@@ -107,7 +117,8 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
             githubUrl,
             new GithubAuthorizingFileContentProvider(
                 githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager),
-            extractOverrideParams(factoryParameters))
+            extractOverrideParams(factoryParameters),
+            skipAuthentication)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new GithubFactoryVisitor(githubUrl));
   }

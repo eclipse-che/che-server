@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.EntrypointImpl;
@@ -36,6 +37,7 @@ import org.testng.annotations.Test;
 public class KubernetesComponentIntegrityValidatorTest {
 
   @Mock private KubernetesRecipeParser kubernetesRecipeParser;
+  @Mock private FileContentProvider contentProvider;
 
   private KubernetesComponentValidator validator;
 
@@ -69,7 +71,7 @@ public class KubernetesComponentIntegrityValidatorTest {
     component.setReferenceContent("content");
 
     // when
-    validator.validateComponent(component, __ -> "");
+    validator.validateComponent(component, contentProvider);
 
     // then no exception is thrown
   }
@@ -105,7 +107,7 @@ public class KubernetesComponentIntegrityValidatorTest {
     component.setEntrypoints(Collections.singletonList(entrypoint));
 
     // when
-    validator.validateComponent(component, __ -> "");
+    validator.validateComponent(component, contentProvider);
 
     // then no exception is thrown
   }
@@ -151,7 +153,7 @@ public class KubernetesComponentIntegrityValidatorTest {
     component.setEntrypoints(Collections.singletonList(entrypoint));
 
     // when
-    validator.validateComponent(component, __ -> "");
+    validator.validateComponent(component, contentProvider);
 
     // then no exception is thrown
   }
@@ -181,7 +183,7 @@ public class KubernetesComponentIntegrityValidatorTest {
     component.setReferenceContent("content");
 
     // when
-    validator.validateComponent(component, __ -> "");
+    validator.validateComponent(component, contentProvider);
 
     // then exception is thrown
   }
@@ -213,7 +215,7 @@ public class KubernetesComponentIntegrityValidatorTest {
     component.setEntrypoints(Collections.singletonList(entrypoint));
 
     // when
-    validator.validateComponent(component, __ -> "");
+    validator.validateComponent(component, contentProvider);
 
     // then exception is thrown
   }
@@ -263,7 +265,7 @@ public class KubernetesComponentIntegrityValidatorTest {
     component.setEntrypoints(Collections.singletonList(entrypoint));
 
     // when
-    validator.validateComponent(component, __ -> "");
+    validator.validateComponent(component, contentProvider);
 
     // then exception is thrown
   }

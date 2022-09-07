@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,9 +16,6 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
 
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentMetadataProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
@@ -57,7 +54,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class OpenShiftEnvironmentProvisionerTest {
 
-  @Mock private WorkspaceVolumesStrategy volumesStrategy;
   @Mock private OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner;
   @Mock private OpenShiftEnvironment osEnv;
   @Mock private RuntimeIdentity runtimeIdentity;
@@ -72,8 +68,6 @@ public class OpenShiftEnvironmentProvisionerTest {
   @Mock private ImagePullSecretProvisioner imagePullSecretProvisioner;
   @Mock private ProxySettingsProvisioner proxySettingsProvisioner;
   @Mock private ServiceAccountProvisioner serviceAccountProvisioner;
-  @Mock private AsyncStorageProvisioner asyncStorageProvisioner;
-  @Mock private AsyncStoragePodInterceptor asyncStoragePodObserver;
   @Mock private CertificateProvisioner certificateProvisioner;
   @Mock private SshKeysProvisioner sshKeysProvisioner;
   @Mock private GitConfigProvisioner gitConfigProvisioner;
@@ -94,13 +88,11 @@ public class OpenShiftEnvironmentProvisionerTest {
     when(tlsRouteProvisionerProvider.get()).thenReturn(tlsRouteProvisioner);
     osInfraProvisioner =
         new OpenShiftEnvironmentProvisioner(
-            true,
             uniqueNamesProvisioner,
             tlsRouteProvisionerProvider,
             serversProvisioner,
             envVarsProvisioner,
             restartPolicyRewriter,
-            volumesStrategy,
             ramLimitProvisioner,
             logsVolumeMachineProvisioner,
             podTerminationGracePeriodProvisioner,
@@ -108,8 +100,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             proxySettingsProvisioner,
             nodeSelectorProvisioner,
             tolerationsProvisioner,
-            asyncStorageProvisioner,
-            asyncStoragePodObserver,
             serviceAccountProvisioner,
             certificateProvisioner,
             sshKeysProvisioner,
@@ -124,7 +114,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             logsVolumeMachineProvisioner,
             serversProvisioner,
             envVarsProvisioner,
-            volumesStrategy,
             uniqueNamesProvisioner,
             tlsRouteProvisioner,
             restartPolicyRewriter,
@@ -149,10 +138,8 @@ public class OpenShiftEnvironmentProvisionerTest {
   public void performsOrderedProvisioning() throws Exception {
     osInfraProvisioner.provision(osEnv, runtimeIdentity);
 
-    provisionOrder.verify(logsVolumeMachineProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(serversProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(envVarsProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
-    provisionOrder.verify(volumesStrategy).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(restartPolicyRewriter).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(tlsRouteProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(ramLimitProvisioner).provision(eq(osEnv), eq(runtimeIdentity));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,9 +29,6 @@ public class OpenshiftComponentToWorkspaceApplier extends KubernetesComponentToW
       KubernetesEnvironmentProvisioner k8sEnvProvisioner,
       EnvVars envVars,
       @Named("che.workspace.projects.storage") String projectFolderPath,
-      @Named("che.workspace.projects.storage.default.size") String defaultProjectPVCSize,
-      @Named("che.infra.kubernetes.pvc.access_mode") String defaultPVCAccessMode,
-      @Named("che.infra.kubernetes.pvc.storage_class_name") String pvcStorageClassName,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
           String devfileEndpointsExposure,
@@ -42,9 +39,6 @@ public class OpenshiftComponentToWorkspaceApplier extends KubernetesComponentToW
         envVars,
         OpenShiftEnvironment.TYPE,
         projectFolderPath,
-        defaultProjectPVCSize,
-        defaultPVCAccessMode,
-        pvcStorageClassName,
         imagePullPolicy,
         devfileEndpointsExposure,
         kubernetesBasedComponentTypes);

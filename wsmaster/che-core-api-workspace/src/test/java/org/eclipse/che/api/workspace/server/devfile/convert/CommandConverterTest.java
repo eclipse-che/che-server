@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,9 @@ package org.eclipse.che.api.workspace.server.devfile.convert;
 import static org.eclipse.che.api.core.model.workspace.config.Command.WORKING_DIRECTORY_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.COMPONENT_ALIAS_COMMAND_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.EXEC_ACTION_TYPE;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
@@ -21,6 +24,7 @@ import static org.testng.Assert.assertNull;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import org.eclipse.che.api.core.model.workspace.config.Command;
+import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.devfile.exception.WorkspaceExportException;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl;
@@ -171,9 +175,11 @@ public class CommandConverterTest {
     action.setReference("blah");
 
     devfileCommand.getActions().add(action);
+    FileContentProvider fileContentProvider = mock(FileContentProvider.class);
+    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     // when
-    Command command = commandConverter.toWorkspaceCommand(devfileCommand, fileURL -> "content");
+    Command command = commandConverter.toWorkspaceCommand(devfileCommand, fileContentProvider);
 
     // then
     assertNull(command.getCommandLine());

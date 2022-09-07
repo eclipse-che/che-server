@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,9 +18,6 @@ import static org.mockito.Mockito.when;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner.KubernetesEnvironmentProvisionerImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
@@ -58,7 +55,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesEnvironmentProvisionerTest {
 
-  @Mock private WorkspaceVolumesStrategy volumesStrategy;
   @Mock private UniqueNamesProvisioner<KubernetesEnvironment> uniqueNamesProvisioner;
   @Mock private KubernetesEnvironment k8sEnv;
   @Mock private RuntimeIdentity runtimeIdentity;
@@ -77,8 +73,6 @@ public class KubernetesEnvironmentProvisionerTest {
   @Mock private ImagePullSecretProvisioner imagePullSecretProvisioner;
   @Mock private ProxySettingsProvisioner proxySettingsProvisioner;
   @Mock private ServiceAccountProvisioner serviceAccountProvisioner;
-  @Mock private AsyncStorageProvisioner asyncStorageProvisioner;
-  @Mock private AsyncStoragePodInterceptor asyncStoragePodObserver;
   @Mock private CertificateProvisioner certificateProvisioner;
   @Mock private SshKeysProvisioner sshKeysProvisioner;
   @Mock private GitConfigProvisioner gitConfigProvisioner;
@@ -99,14 +93,11 @@ public class KubernetesEnvironmentProvisionerTest {
         .thenReturn(externalServerIngressTlsProvisioner);
     k8sInfraProvisioner =
         new KubernetesEnvironmentProvisionerImpl(
-            true,
             uniqueNamesProvisioner,
             serversProvisioner,
             envVarsProvisioner,
             restartPolicyRewriter,
-            volumesStrategy,
             ramLimitProvisioner,
-            logsVolumeMachineProvisioner,
             securityContextProvisioner,
             podTerminationGracePeriodProvisioner,
             externalServerIngressTlsProvisionerProvider,
@@ -114,8 +105,6 @@ public class KubernetesEnvironmentProvisionerTest {
             proxySettingsProvisioner,
             nodeSelectorProvisioner,
             tolerationsProvisioner,
-            asyncStorageProvisioner,
-            asyncStoragePodObserver,
             serviceAccountProvisioner,
             certificateProvisioner,
             sshKeysProvisioner,
@@ -126,8 +115,6 @@ public class KubernetesEnvironmentProvisionerTest {
             trustedCAProvisioner);
     provisionOrder =
         inOrder(
-            logsVolumeMachineProvisioner,
-            volumesStrategy,
             uniqueNamesProvisioner,
             serversProvisioner,
             envVarsProvisioner,
@@ -152,10 +139,8 @@ public class KubernetesEnvironmentProvisionerTest {
   public void performsOrderedProvisioning() throws Exception {
     k8sInfraProvisioner.provision(k8sEnv, runtimeIdentity);
 
-    provisionOrder.verify(logsVolumeMachineProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(serversProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(envVarsProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
-    provisionOrder.verify(volumesStrategy).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(restartPolicyRewriter).provision(eq(k8sEnv), eq(runtimeIdentity));
 
     provisionOrder.verify(ramLimitProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));

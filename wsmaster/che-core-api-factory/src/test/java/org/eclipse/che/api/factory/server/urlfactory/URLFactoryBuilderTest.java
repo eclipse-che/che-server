@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -85,11 +85,13 @@ public class URLFactoryBuilderTest {
 
   @Mock private DevfileVersionDetector devfileVersionDetector;
 
+  @Mock private FileContentProvider fileContentProvider;
+
   /** Tested instance. */
   private URLFactoryBuilder urlFactoryBuilder;
 
   @BeforeMethod
-  public void setUp() {
+  public void setUp() throws IOException, DevfileException {
     this.urlFactoryBuilder =
         new URLFactoryBuilder(
             defaultEditor, defaultPlugin, true, devfileParser, devfileVersionDetector);
@@ -125,13 +127,15 @@ public class URLFactoryBuilderTest {
         .thenReturn(new ObjectNode(JsonNodeFactory.instance));
     when(devfileParser.parseJsonNode(any(JsonNode.class), anyMap())).thenReturn(devfile);
     when(devfileVersionDetector.devfileMajorVersion(any(JsonNode.class))).thenReturn(1);
+    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     FactoryMetaDto factory =
         urlFactoryBuilder
             .createFactoryFromDevfile(
                 new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
-                s -> myLocation + ".list",
-                emptyMap())
+                fileContentProvider,
+                emptyMap(),
+                false)
             .get();
 
     assertNotNull(factory);
@@ -140,7 +144,7 @@ public class URLFactoryBuilderTest {
   }
 
   @Test
-  public void testDevfileV2() throws ApiException, DevfileException {
+  public void testDevfileV2() throws ApiException, DevfileException, IOException {
     String myLocation = "http://foo-location/";
     Map<String, Object> devfileAsMap = Map.of("hello", "there", "how", "are", "you", "?");
 
@@ -148,13 +152,15 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
+    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     FactoryMetaDto factory =
         urlFactoryBuilder
             .createFactoryFromDevfile(
                 new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
-                s -> myLocation + ".list",
-                emptyMap())
+                fileContentProvider,
+                emptyMap(),
+                false)
             .get();
 
     assertNotNull(factory);
@@ -164,7 +170,7 @@ public class URLFactoryBuilderTest {
   }
 
   @Test
-  public void testDevfileV2WithFilename() throws ApiException, DevfileException {
+  public void testDevfileV2WithFilename() throws ApiException, DevfileException, IOException {
     String myLocation = "http://foo-location/";
     Map<String, Object> devfileAsMap = Map.of("hello", "there", "how", "are", "you", "?");
 
@@ -172,6 +178,7 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
+    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     RemoteFactoryUrl githubLikeRemoteUrl =
         new RemoteFactoryUrl() {
@@ -217,7 +224,7 @@ public class URLFactoryBuilderTest {
 
     FactoryMetaDto factory =
         urlFactoryBuilder
-            .createFactoryFromDevfile(githubLikeRemoteUrl, s -> myLocation + ".list", emptyMap())
+            .createFactoryFromDevfile(githubLikeRemoteUrl, fileContentProvider, emptyMap(), false)
             .get();
 
     assertNotNull(factory);
@@ -227,7 +234,7 @@ public class URLFactoryBuilderTest {
   }
 
   @Test
-  public void testDevfileSpecifyingFilename() throws ApiException, DevfileException {
+  public void testDevfileSpecifyingFilename() throws ApiException, DevfileException, IOException {
     String myLocation = "http://foo-location/";
     Map<String, Object> devfileAsMap = Map.of("hello", "there", "how", "are", "you", "?");
 
@@ -235,6 +242,7 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
+    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     RemoteFactoryUrl githubLikeRemoteUrl =
         new RemoteFactoryUrl() {
@@ -288,7 +296,8 @@ public class URLFactoryBuilderTest {
         singletonMap(URLFactoryBuilder.DEVFILE_FILENAME, pathToDevfile);
     FactoryMetaDto factory =
         urlFactoryBuilder
-            .createFactoryFromDevfile(githubLikeRemoteUrl, s -> myLocation + ".list", propertiesMap)
+            .createFactoryFromDevfile(
+                githubLikeRemoteUrl, fileContentProvider, propertiesMap, false)
             .get();
 
     assertNotNull(factory);
@@ -299,7 +308,8 @@ public class URLFactoryBuilderTest {
   }
 
   @Test
-  public void testShouldReturnV2WithDevworkspacesDisabled() throws ApiException, DevfileException {
+  public void testShouldReturnV2WithDevworkspacesDisabled()
+      throws ApiException, DevfileException, IOException {
     String myLocation = "http://foo-location/";
     Map<String, Object> devfileAsMap = Map.of("hello", "there", "how", "are", "you", "?");
 
@@ -307,6 +317,7 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
+    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     URLFactoryBuilder localUrlFactoryBuilder =
         new URLFactoryBuilder(
@@ -316,8 +327,9 @@ public class URLFactoryBuilderTest {
         localUrlFactoryBuilder
             .createFactoryFromDevfile(
                 new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
-                s -> myLocation + ".list",
-                emptyMap())
+                fileContentProvider,
+                emptyMap(),
+                false)
             .get();
     assertNotNull(factory);
     assertTrue(factory instanceof FactoryDevfileV2Dto);
@@ -377,7 +389,7 @@ public class URLFactoryBuilderTest {
     FactoryDto factory =
         (FactoryDto)
             urlFactoryBuilder
-                .createFactoryFromDevfile(defaultFactoryUrl, fileContentProvider, emptyMap())
+                .createFactoryFromDevfile(defaultFactoryUrl, fileContentProvider, emptyMap(), false)
                 .get();
 
     assertNull(factory.getDevfile().getMetadata().getName());
@@ -413,7 +425,7 @@ public class URLFactoryBuilderTest {
     // when
     try {
       urlFactoryBuilder.createFactoryFromDevfile(
-          defaultFactoryUrl, fileContentProvider, emptyMap());
+          defaultFactoryUrl, fileContentProvider, emptyMap(), false);
     } catch (ApiException e) {
       assertTrue(e.getClass().isAssignableFrom(expectedClass));
       assertEquals(e.getMessage(), expectedMessage);

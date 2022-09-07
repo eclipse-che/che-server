@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,8 +29,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.EphemeralWorkspaceUtility;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.UnrecoverablePodEventListenerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
@@ -58,7 +56,6 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
   private final KubernetesNamespaceFactory factory;
   private final EventService eventService;
   private final KubernetesPluginsToolingValidator pluginsValidator;
-  private final WorkspaceVolumesStrategy volumesStrategy;
   private final BrokerEnvironmentFactory<E> brokerEnvironmentFactory;
   private final KubernetesEnvironmentProvisioner<E> environmentProvisioner;
   private final UnrecoverablePodEventListenerFactory unrecoverablePodEventListenerFactory;
@@ -71,7 +68,6 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
       EventService eventService,
       KubernetesPluginsToolingValidator pluginsValidator,
       KubernetesEnvironmentProvisioner<E> environmentProvisioner,
-      WorkspaceVolumesStrategy volumesStrategy,
       BrokerEnvironmentFactory<E> brokerEnvironmentFactory,
       UnrecoverablePodEventListenerFactory unrecoverablePodEventListenerFactory,
       @Named("che.workspace.plugin_broker.wait_timeout_min") int pluginBrokerWaitingTimeout,
@@ -80,7 +76,6 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
     this.factory = factory;
     this.eventService = eventService;
     this.pluginsValidator = pluginsValidator;
-    this.volumesStrategy = volumesStrategy;
     this.brokerEnvironmentFactory = brokerEnvironmentFactory;
     this.environmentProvisioner = environmentProvisioner;
     this.pluginBrokerWaitingTimeout = pluginBrokerWaitingTimeout;
@@ -101,7 +96,6 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
       RuntimeIdentity identity,
       StartSynchronizer startSynchronizer,
       Collection<PluginFQN> pluginFQNs,
-      boolean isEphemeral,
       boolean mergePlugins,
       Map<String, String> startOptions)
       throws InfrastructureException {
@@ -112,14 +106,11 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
 
     E brokerEnvironment =
         brokerEnvironmentFactory.createForMetadataBroker(pluginFQNs, identity, mergePlugins);
-    if (isEphemeral) {
-      EphemeralWorkspaceUtility.makeEphemeral(brokerEnvironment.getAttributes());
-    }
     environmentProvisioner.provision(brokerEnvironment, identity);
 
     ListenBrokerEvents listenBrokerEvents = getListenEventPhase(workspaceId, brokersResult);
     PrepareStorage prepareStorage =
-        getPrepareStoragePhase(identity, startSynchronizer, brokerEnvironment, startOptions);
+        getPrepareStoragePhase(identity, startSynchronizer, brokerEnvironment);
     WaitBrokerResult waitBrokerResult = getWaitBrokerPhase(workspaceId, brokersResult);
     DeployBroker deployBroker =
         getDeployBrokerPhase(
@@ -136,10 +127,8 @@ public class PluginBrokerManager<E extends KubernetesEnvironment> {
   private PrepareStorage getPrepareStoragePhase(
       RuntimeIdentity identity,
       StartSynchronizer startSynchronizer,
-      KubernetesEnvironment brokerEnvironment,
-      Map<String, String> startOptions) {
-    return new PrepareStorage(
-        identity, brokerEnvironment, volumesStrategy, startSynchronizer, tracer, startOptions);
+      KubernetesEnvironment brokerEnvironment) {
+    return new PrepareStorage(identity, brokerEnvironment, startSynchronizer, tracer);
   }
 
   private DeployBroker getDeployBrokerPhase(

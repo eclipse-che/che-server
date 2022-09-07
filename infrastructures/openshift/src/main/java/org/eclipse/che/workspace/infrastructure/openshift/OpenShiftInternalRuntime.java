@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,7 +38,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizerFact
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesMachineCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.CheNamespace;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.SecretAsContainerResourceProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
@@ -65,7 +64,6 @@ public class OpenShiftInternalRuntime extends KubernetesInternalRuntime<OpenShif
       NoOpURLRewriter urlRewriter,
       UnrecoverablePodEventListenerFactory unrecoverablePodEventListenerFactory,
       ServersCheckerFactory serverCheckerFactory,
-      WorkspaceVolumesStrategy volumesStrategy,
       ProbeScheduler probeScheduler,
       WorkspaceProbesFactory probesFactory,
       RuntimeEventsPublisher eventPublisher,
@@ -92,7 +90,6 @@ public class OpenShiftInternalRuntime extends KubernetesInternalRuntime<OpenShif
         urlRewriter,
         unrecoverablePodEventListenerFactory,
         serverCheckerFactory,
-        volumesStrategy,
         probeScheduler,
         probesFactory,
         eventPublisher,

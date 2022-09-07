@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,6 +38,17 @@ public interface FileContentProvider {
   String fetchContent(String fileURL) throws IOException, DevfileException;
 
   /**
+   * Fetches content of the specified file without the authentication step.
+   *
+   * @param fileURL absolute or devfile-relative file URL to fetch content
+   * @return content of the specified file
+   * @throws IOException when there is an error during content retrieval
+   * @throws DevfileException when implementation does not support fetching of additional files
+   *     content
+   */
+  String fetchContentWithoutAuthentication(String fileURL) throws IOException, DevfileException;
+
+  /**
    * Short for {@code new CachingProvider(contentProvider);}. If the {@code contentProvider} is
    * itself an instance of the {@link CachingProvider}, no new instance is produced.
    *
@@ -67,8 +78,8 @@ public interface FileContentProvider {
       this.provider = provider;
     }
 
-    @Override
-    public String fetchContent(String fileURL) throws IOException, DevfileException {
+    private String fetchContent(String fileURL, boolean skipAuthentication)
+        throws IOException, DevfileException {
       SoftReference<String> ref = cache.get(fileURL);
       String ret = ref == null ? null : ref.get();
 
@@ -78,6 +89,17 @@ public interface FileContentProvider {
       }
 
       return ret;
+    }
+
+    @Override
+    public String fetchContent(String fileURL) throws IOException, DevfileException {
+      return fetchContent(fileURL, false);
+    }
+
+    @Override
+    public String fetchContentWithoutAuthentication(String fileURL)
+        throws IOException, DevfileException {
+      return fetchContent(fileURL, true);
     }
   }
 }

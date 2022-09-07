@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
-import static org.eclipse.che.api.factory.server.DevfileToApiExceptionMapper.toApiException;
+import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
@@ -55,13 +55,29 @@ public class GithubScmFileResolver implements ScmFileResolver {
       throws ApiException {
     final GithubUrl githubUrl = githubUrlParser.parse(repository);
     try {
-      return new GithubAuthorizingFileContentProvider(
-              githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
-          .fetchContent(githubUrl.rawFileLocation(filePath));
+      return fetchContent(githubUrl, filePath, false);
+    } catch (DevfileException exception) {
+      // This catch might mean that the authentication was rejected by user, try to repeat the fetch
+      // without authentication flow.
+      try {
+        return fetchContent(githubUrl, filePath, true);
+      } catch (DevfileException devfileException) {
+        throw toApiException(devfileException);
+      }
+    }
+  }
+
+  private String fetchContent(GithubUrl githubUrl, String filePath, boolean skipAuthentication)
+      throws DevfileException, NotFoundException {
+    try {
+      GithubAuthorizingFileContentProvider contentProvider =
+          new GithubAuthorizingFileContentProvider(
+              githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+      return skipAuthentication
+          ? contentProvider.fetchContentWithoutAuthentication(filePath)
+          : contentProvider.fetchContent(filePath);
     } catch (IOException e) {
       throw new NotFoundException(e.getMessage());
-    } catch (DevfileException devfileException) {
-      throw toApiException(devfileException);
     }
   }
 }

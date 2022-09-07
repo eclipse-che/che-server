@@ -116,6 +116,25 @@ public class GithubApiClient {
         });
   }
 
+  public GithubPullRequest getPullRequest(
+      String id, String username, String repoName, String authenticationToken)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+    final URI uri =
+        apiServerUrl.resolve(String.format("/repos/%1s/%2s/pulls/%3s", username, repoName, id));
+    HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
+    LOG.trace("executeRequest={}", request);
+    return executeRequest(
+        httpClient,
+        request,
+        response -> {
+          try {
+            return OBJECT_MAPPER.readValue(response.body(), GithubPullRequest.class);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        });
+  }
+
   /**
    * Returns the scopes of the OAuth token.
    *

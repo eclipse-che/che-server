@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -25,6 +25,7 @@ import javax.inject.Named;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
+import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
@@ -33,6 +34,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,8 +106,20 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
       throws ScmCommunicationException, ScmUnauthorizedException {
     if (!bitbucketServerApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
-      LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
-      return Optional.empty();
+      // If BitBucket oAuth is not configured check the manually added user namespace token.
+      HttpBitbucketServerApiClient apiClient =
+          new HttpBitbucketServerApiClient(
+              personalAccessToken.getScmProviderUrl(), new NoopOAuthAuthenticator());
+      try {
+        apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
+        return Optional.of(Boolean.TRUE);
+      } catch (ScmItemNotFoundException
+          | ScmUnauthorizedException
+          | ScmCommunicationException exception) {
+        LOG.debug(
+            "not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
+        return Optional.empty();
+      }
     }
     try {
       BitbucketPersonalAccessToken bitbucketPersonalAccessToken =

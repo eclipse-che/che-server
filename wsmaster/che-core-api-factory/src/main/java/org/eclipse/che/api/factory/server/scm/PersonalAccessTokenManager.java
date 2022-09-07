@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -42,8 +42,8 @@ public interface PersonalAccessTokenManager {
   /**
    * Gets {@link PersonalAccessToken} from permanent storage.
    *
-   * @param cheUser
-   * @param scmServerUrl
+   * @param cheUser Che user object
+   * @param scmServerUrl Git provider endpoint
    * @return personal access token
    * @throws ScmConfigurationPersistenceException - problem occurred during communication with *
    *     permanent storage.

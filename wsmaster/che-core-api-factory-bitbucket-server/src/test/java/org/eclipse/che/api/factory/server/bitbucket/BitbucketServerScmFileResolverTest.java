@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
@@ -34,7 +35,7 @@ import org.testng.annotations.Test;
 public class BitbucketServerScmFileResolverTest {
 
   public static final String SCM_URL = "https://foo.bar";
-  BitbucketURLParser bitbucketURLParser;
+  BitbucketServerURLParser bitbucketURLParser;
 
   @Mock private URLFetcher urlFetcher;
 
@@ -47,7 +48,9 @@ public class BitbucketServerScmFileResolverTest {
 
   @BeforeMethod
   protected void init() {
-    bitbucketURLParser = new BitbucketURLParser(SCM_URL, devfileFilenamesProvider);
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            SCM_URL, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
     assertNotNull(this.bitbucketURLParser);
     serverScmFileResolver =
         new BitbucketServerScmFileResolver(

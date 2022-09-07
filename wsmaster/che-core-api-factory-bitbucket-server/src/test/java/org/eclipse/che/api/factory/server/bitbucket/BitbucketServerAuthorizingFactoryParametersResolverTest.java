@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,8 +17,10 @@ import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -57,7 +59,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
-  BitbucketURLParser bitbucketURLParser;
+  BitbucketServerURLParser bitbucketURLParser;
 
   @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
@@ -68,7 +70,10 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
   @BeforeMethod
   protected void init() {
     bitbucketURLParser =
-        new BitbucketURLParser("http://bitbucket.2mcl.com", devfileFilenamesProvider);
+        new BitbucketServerURLParser(
+            "http://bitbucket.2mcl.com",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
     assertNotNull(this.bitbucketURLParser);
     bitbucketServerFactoryParametersResolver =
         new BitbucketServerAuthorizingFactoryParametersResolver(
@@ -106,7 +111,8 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
 
     when(urlFactoryBuilder.buildDefaultDevfile(any())).thenReturn(computedFactory.getDevfile());
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.empty());
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
     // when
@@ -127,7 +133,8 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
 
     FactoryDto computedFactory = generateDevfileFactory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
@@ -148,7 +155,8 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
 
     FactoryDevfileV2Dto computedFactory = generateDevfileV2Factory();
 
-    when(urlFactoryBuilder.createFactoryFromDevfile(any(RemoteFactoryUrl.class), any(), anyMap()))
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);

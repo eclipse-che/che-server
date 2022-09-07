@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,7 @@ import java.net.URL;
 
 /**
  * Dummy implementation of @{@link OAuthAuthenticator} used in the case if no Bitbucket Server
- * integration is configured.
+ * integration is configured to register an empty @{@link BitbucketServerApiClient}.
  */
 public class NoopOAuthAuthenticator extends OAuthAuthenticator {
   public NoopOAuthAuthenticator() {
@@ -49,7 +49,6 @@ public class NoopOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public String getLocalAuthenticateUrl() {
-    throw new RuntimeException(
-        "The fallback noop authenticator cannot be used for authentication. Make sure OAuth is properly configured.");
+    return "Noop URL";
   }
 }

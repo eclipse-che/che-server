@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,6 +18,7 @@ import static org.testng.Assert.assertNotNull;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLocation;
 import org.mockito.InjectMocks;
@@ -45,7 +46,7 @@ public class GithubUrlTest {
 
   /** Setup objects/ */
   @BeforeMethod
-  protected void init() {
+  protected void init() throws ApiException {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
     this.githubUrl = this.githubUrlParser.parse("https://github.com/eclipse/che");

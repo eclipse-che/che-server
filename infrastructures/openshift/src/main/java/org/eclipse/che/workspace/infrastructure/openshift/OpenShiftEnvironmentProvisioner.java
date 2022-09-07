@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,16 +12,12 @@
 package org.eclipse.che.workspace.infrastructure.openshift;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Traced;
 import org.eclipse.che.commons.tracing.TracingTags;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStoragePodInterceptor;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.AsyncStorageProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentMetadataProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
@@ -63,8 +59,6 @@ public class OpenShiftEnvironmentProvisioner
 
   private static final Logger LOG = LoggerFactory.getLogger(OpenShiftEnvironmentProvisioner.class);
 
-  private final boolean pvcEnabled;
-  private final WorkspaceVolumesStrategy volumesStrategy;
   private final UniqueNamesProvisioner<OpenShiftEnvironment> uniqueNamesProvisioner;
   private final TlsProvisioner<OpenShiftEnvironment> routeTlsProvisioner;
   private final ServersConverter<OpenShiftEnvironment> serversConverter;
@@ -77,9 +71,7 @@ public class OpenShiftEnvironmentProvisioner
   private final ProxySettingsProvisioner proxySettingsProvisioner;
   private final NodeSelectorProvisioner nodeSelectorProvisioner;
   private final TolerationsProvisioner tolerationsProvisioner;
-  private final AsyncStoragePodInterceptor asyncStoragePodInterceptor;
   private final ServiceAccountProvisioner serviceAccountProvisioner;
-  private final AsyncStorageProvisioner asyncStorageProvisioner;
   private final CertificateProvisioner certificateProvisioner;
   private final SshKeysProvisioner sshKeysProvisioner;
   private final GitConfigProvisioner gitConfigProvisioner;
@@ -91,13 +83,11 @@ public class OpenShiftEnvironmentProvisioner
 
   @Inject
   public OpenShiftEnvironmentProvisioner(
-      @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
       OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner,
       TlsProvisionerProvider<OpenShiftEnvironment> routeTlsProvisionerProvider,
       ServersConverter<OpenShiftEnvironment> serversConverter,
       EnvVarsConverter envVarsConverter,
       RestartPolicyRewriter restartPolicyRewriter,
-      WorkspaceVolumesStrategy volumesStrategy,
       ContainerResourceProvisioner resourceLimitRequestProvisioner,
       LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
       PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
@@ -105,8 +95,6 @@ public class OpenShiftEnvironmentProvisioner
       ProxySettingsProvisioner proxySettingsProvisioner,
       NodeSelectorProvisioner nodeSelectorProvisioner,
       TolerationsProvisioner tolerationsProvisioner,
-      AsyncStorageProvisioner asyncStorageProvisioner,
-      AsyncStoragePodInterceptor asyncStoragePodInterceptor,
       ServiceAccountProvisioner serviceAccountProvisioner,
       CertificateProvisioner certificateProvisioner,
       SshKeysProvisioner sshKeysProvisioner,
@@ -116,8 +104,6 @@ public class OpenShiftEnvironmentProvisioner
       GatewayRouterProvisioner gatewayRouterProvisioner,
       DeploymentMetadataProvisioner deploymentMetadataProvisioner,
       OpenshiftTrustedCAProvisioner trustedCAProvisioner) {
-    this.pvcEnabled = pvcEnabled;
-    this.volumesStrategy = volumesStrategy;
     this.uniqueNamesProvisioner = uniqueNamesProvisioner;
     this.routeTlsProvisioner = routeTlsProvisionerProvider.get();
     this.serversConverter = serversConverter;
@@ -130,8 +116,6 @@ public class OpenShiftEnvironmentProvisioner
     this.proxySettingsProvisioner = proxySettingsProvisioner;
     this.nodeSelectorProvisioner = nodeSelectorProvisioner;
     this.tolerationsProvisioner = tolerationsProvisioner;
-    this.asyncStorageProvisioner = asyncStorageProvisioner;
-    this.asyncStoragePodInterceptor = asyncStoragePodInterceptor;
     this.serviceAccountProvisioner = serviceAccountProvisioner;
     this.certificateProvisioner = certificateProvisioner;
     this.sshKeysProvisioner = sshKeysProvisioner;
@@ -151,21 +135,13 @@ public class OpenShiftEnvironmentProvisioner
 
     LOG.debug(
         "Start provisioning OpenShift environment for workspace '{}'", identity.getWorkspaceId());
-    // 1 stage - update environment according Infrastructure specific
-    if (pvcEnabled) {
-      asyncStoragePodInterceptor.intercept(osEnv, identity);
-      logsVolumeMachineProvisioner.provision(osEnv, identity);
-    }
 
-    // 2 stage - converting Che model env to OpenShift env
+    // 1st stage - converting Che model env to OpenShift env
     serversConverter.provision(osEnv, identity);
     previewUrlExposer.expose(osEnv);
     envVarsConverter.provision(osEnv, identity);
-    if (pvcEnabled) {
-      volumesStrategy.provision(osEnv, identity);
-    }
 
-    // 3 stage - add OpenShift env items
+    // 2nd stage - add OpenShift env items
     restartPolicyRewriter.provision(osEnv, identity);
     routeTlsProvisioner.provision(osEnv, identity);
     resourceLimitRequestProvisioner.provision(osEnv, identity);
@@ -175,7 +151,6 @@ public class OpenShiftEnvironmentProvisioner
     imagePullSecretProvisioner.provision(osEnv, identity);
     proxySettingsProvisioner.provision(osEnv, identity);
     serviceAccountProvisioner.provision(osEnv, identity);
-    asyncStorageProvisioner.provision(osEnv, identity);
     certificateProvisioner.provision(osEnv, identity);
     sshKeysProvisioner.provision(osEnv, identity);
     vcsSslCertificateProvisioner.provision(osEnv, identity);

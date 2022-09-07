@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -45,7 +45,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
     extends DefaultFactoryParameterResolver {
 
   /** Parser which will allow to check validity of URLs and create objects. */
-  private final BitbucketURLParser bitbucketURLParser;
+  private final BitbucketServerURLParser bitbucketURLParser;
 
   private final GitCredentialManager gitCredentialManager;
   private final PersonalAccessTokenManager personalAccessTokenManager;
@@ -54,7 +54,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
   public BitbucketServerAuthorizingFactoryParametersResolver(
       URLFactoryBuilder urlFactoryBuilder,
       URLFetcher urlFetcher,
-      BitbucketURLParser bitbucketURLParser,
+      BitbucketServerURLParser bitbucketURLParser,
       GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(urlFactoryBuilder, urlFetcher);
@@ -87,19 +87,22 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
       throws ApiException {
 
     // no need to check null value of url parameter as accept() method has performed the check
-    final BitbucketUrl bitbucketUrl =
+    final BitbucketServerUrl bitbucketServerUrl =
         bitbucketURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
 
     final FileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
-            bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            bitbucketServerUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
 
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder
         .createFactoryFromDevfile(
-            bitbucketUrl, fileContentProvider, extractOverrideParams(factoryParameters))
+            bitbucketServerUrl,
+            fileContentProvider,
+            extractOverrideParams(factoryParameters),
+            false)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
-        .acceptVisitor(new BitbucketFactoryVisitor(bitbucketUrl));
+        .acceptVisitor(new BitbucketFactoryVisitor(bitbucketServerUrl));
   }
 
   /**
@@ -108,20 +111,20 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
    */
   private class BitbucketFactoryVisitor implements FactoryVisitor {
 
-    private final BitbucketUrl bitbucketUrl;
+    private final BitbucketServerUrl bitbucketServerUrl;
 
-    private BitbucketFactoryVisitor(BitbucketUrl bitbucketUrl) {
-      this.bitbucketUrl = bitbucketUrl;
+    private BitbucketFactoryVisitor(BitbucketServerUrl bitbucketServerUrl) {
+      this.bitbucketServerUrl = bitbucketServerUrl;
     }
 
     @Override
     public FactoryDevfileV2Dto visit(FactoryDevfileV2Dto factoryDto) {
       ScmInfoDto scmInfo =
           newDto(ScmInfoDto.class)
-              .withScmProviderName(bitbucketUrl.getProviderName())
-              .withRepositoryUrl(bitbucketUrl.repositoryLocation());
-      if (bitbucketUrl.getBranch() != null) {
-        scmInfo.withBranch(bitbucketUrl.getBranch());
+              .withScmProviderName(bitbucketServerUrl.getProviderName())
+              .withRepositoryUrl(bitbucketServerUrl.repositoryLocation());
+      if (bitbucketServerUrl.getBranch() != null) {
+        scmInfo.withBranch(bitbucketServerUrl.getBranch());
       }
       return factoryDto.withScmInfo(scmInfo);
     }
@@ -130,7 +133,8 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
     public FactoryDto visit(FactoryDto factory) {
       if (factory.getDevfile() == null) {
         // initialize default devfile
-        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(bitbucketUrl.getRepository()));
+        factory.setDevfile(
+            urlFactoryBuilder.buildDefaultDevfile(bitbucketServerUrl.getRepository()));
       }
 
       updateProjects(
@@ -139,14 +143,14 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
               newDto(ProjectDto.class)
                   .withSource(
                       newDto(SourceDto.class)
-                          .withLocation(bitbucketUrl.repositoryLocation())
+                          .withLocation(bitbucketServerUrl.repositoryLocation())
                           .withType("git")
-                          .withBranch(bitbucketUrl.getBranch()))
-                  .withName(bitbucketUrl.getRepository()),
+                          .withBranch(bitbucketServerUrl.getBranch()))
+                  .withName(bitbucketServerUrl.getRepository()),
           project -> {
             final String location = project.getSource().getLocation();
-            if (location.equals(bitbucketUrl.repositoryLocation())) {
-              project.getSource().setBranch(bitbucketUrl.getBranch());
+            if (location.equals(bitbucketServerUrl.repositoryLocation())) {
+              project.getSource().setBranch(bitbucketServerUrl.getBranch());
             }
           });
 

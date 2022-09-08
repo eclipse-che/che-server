@@ -143,7 +143,7 @@ public class GithubPersonalAccessTokenFetcherTest {
     when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
-        get(urlEqualTo("/user"))
+        get(urlEqualTo("/api/v3/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
             .willReturn(
                 aResponse()
@@ -151,7 +151,7 @@ public class GithubPersonalAccessTokenFetcherTest {
                     .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "")
                     .withBodyFile("github/rest/user/response.json")));
 
-    githubPATFetcher.fetchPersonalAccessToken(subject, GithubApiClient.GITHUB_SERVER);
+    githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
 
   @Test(
@@ -161,7 +161,7 @@ public class GithubPersonalAccessTokenFetcherTest {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     when(oAuthAPI.getToken(anyString())).thenThrow(UnauthorizedException.class);
 
-    githubPATFetcher.fetchPersonalAccessToken(subject, GithubApiClient.GITHUB_SERVER);
+    githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
 
   @Test
@@ -171,7 +171,7 @@ public class GithubPersonalAccessTokenFetcherTest {
     when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
-        get(urlEqualTo("/user"))
+        get(urlEqualTo("/api/v3/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
             .willReturn(
                 aResponse()
@@ -182,14 +182,14 @@ public class GithubPersonalAccessTokenFetcherTest {
                     .withBodyFile("github/rest/user/response.json")));
 
     PersonalAccessToken token =
-        githubPATFetcher.fetchPersonalAccessToken(subject, GithubApiClient.GITHUB_SERVER);
+        githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
     assertNotNull(token);
   }
 
   @Test
   public void shouldValidatePersonalToken() throws Exception {
     stubFor(
-        get(urlEqualTo("/user"))
+        get(urlEqualTo("/api/v3/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
             .willReturn(
                 aResponse()
@@ -201,7 +201,7 @@ public class GithubPersonalAccessTokenFetcherTest {
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://github.com",
+            wireMockServer.url("/"),
             "cheUser",
             "username",
             "123456789",
@@ -215,7 +215,7 @@ public class GithubPersonalAccessTokenFetcherTest {
   @Test
   public void shouldValidateOauthToken() throws Exception {
     stubFor(
-        get(urlEqualTo("/user"))
+        get(urlEqualTo("/api/v3/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
             .willReturn(
                 aResponse()
@@ -227,7 +227,7 @@ public class GithubPersonalAccessTokenFetcherTest {
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://github.com",
+            wireMockServer.url("/"),
             "cheUser",
             "username",
             "123456789",
@@ -240,11 +240,11 @@ public class GithubPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldNotValidateExpiredOauthToken() throws Exception {
-    stubFor(get(urlEqualTo("/user")).willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+    stubFor(get(urlEqualTo("/api/v3/user")).willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://github.com",
+            wireMockServer.url("/"),
             "cheUser",
             "username",
             "123456789",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -41,13 +41,19 @@ public class GitHubOAuthAuthenticatorProviderTest {
       String gitHubClientIdPath,
       String gitHubClientSecretPath,
       String[] redirectUris,
+      String oauthEndpoint,
       String authUri,
       String tokenUri)
       throws IOException {
     // given
     GitHubOAuthAuthenticatorProvider provider =
         new GitHubOAuthAuthenticatorProvider(
-            gitHubClientIdPath, gitHubClientSecretPath, redirectUris, authUri, tokenUri);
+            gitHubClientIdPath,
+            gitHubClientSecretPath,
+            redirectUris,
+            oauthEndpoint,
+            authUri,
+            tokenUri);
     // when
     OAuthAuthenticator authenticator = provider.get();
     // then
@@ -62,7 +68,12 @@ public class GitHubOAuthAuthenticatorProviderTest {
     // given
     GitHubOAuthAuthenticatorProvider provider =
         new GitHubOAuthAuthenticatorProvider(
-            emptyFile.getPath(), emptyFile.getPath(), new String[] {TEST_URI}, TEST_URI, TEST_URI);
+            emptyFile.getPath(),
+            emptyFile.getPath(),
+            new String[] {TEST_URI},
+            null,
+            TEST_URI,
+            TEST_URI);
     // when
     OAuthAuthenticator authenticator = provider.get();
     // then
@@ -80,6 +91,27 @@ public class GitHubOAuthAuthenticatorProviderTest {
             credentialFile.getPath(),
             credentialFile.getPath(),
             new String[] {TEST_URI},
+            null,
+            TEST_URI,
+            TEST_URI);
+    // when
+    OAuthAuthenticator authenticator = provider.get();
+
+    // then
+    assertNotNull(authenticator);
+    assertTrue(GitHubOAuthAuthenticator.class.isAssignableFrom(authenticator.getClass()));
+  }
+
+  @Test
+  public void shouldProvideValidGitHubOAuthAuthenticatorWithConfiguredOAuthEndpoint()
+      throws IOException {
+    // given
+    GitHubOAuthAuthenticatorProvider provider =
+        new GitHubOAuthAuthenticatorProvider(
+            credentialFile.getPath(),
+            credentialFile.getPath(),
+            new String[] {TEST_URI},
+            "https://custom.github.com/",
             TEST_URI,
             TEST_URI);
     // when
@@ -93,22 +125,40 @@ public class GitHubOAuthAuthenticatorProviderTest {
   @DataProvider(name = "noopConfig")
   public Object[][] noopConfig() {
     return new Object[][] {
-      {null, null, null, null, null},
-      {credentialFile.getPath(), emptyFile.getPath(), null, TEST_URI, null},
-      {emptyFile.getPath(), emptyFile.getPath(), null, null, TEST_URI},
-      {null, emptyFile.getPath(), null, TEST_URI, TEST_URI},
-      {null, credentialFile.getPath(), new String[] {}, null, null},
-      {emptyFile.getPath(), null, new String[] {}, "", ""},
-      {credentialFile.getPath(), null, new String[] {}, "", null},
-      {null, emptyFile.getPath(), new String[] {}, null, ""},
-      {credentialFile.getPath(), null, new String[] {}, TEST_URI, null},
-      {null, emptyFile.getPath(), new String[] {}, TEST_URI, TEST_URI},
-      {emptyFile.getPath(), null, new String[] {TEST_URI}, null, null},
-      {credentialFile.getPath(), null, new String[] {TEST_URI}, "", ""},
-      {credentialFile.getPath(), credentialFile.getPath(), new String[] {TEST_URI}, null, TEST_URI},
-      {credentialFile.getPath(), emptyFile.getPath(), new String[] {TEST_URI}, TEST_URI, null},
-      {credentialFile.getPath(), credentialFile.getPath(), new String[] {TEST_URI}, TEST_URI, ""},
-      {emptyFile.getPath(), emptyFile.getPath(), new String[] {TEST_URI}, "", TEST_URI}
+      {null, null, null, null, null, null},
+      {null, null, null, "", null, null},
+      {null, null, null, TEST_URI, null, null},
+      {credentialFile.getPath(), emptyFile.getPath(), null, null, TEST_URI, null},
+      {emptyFile.getPath(), emptyFile.getPath(), null, null, null, TEST_URI},
+      {null, emptyFile.getPath(), null, null, TEST_URI, TEST_URI},
+      {null, credentialFile.getPath(), new String[] {}, null, null, null},
+      {emptyFile.getPath(), null, new String[] {}, null, "", ""},
+      {credentialFile.getPath(), null, new String[] {}, null, "", null},
+      {null, emptyFile.getPath(), new String[] {}, null, null, ""},
+      {credentialFile.getPath(), null, new String[] {}, null, TEST_URI, null},
+      {null, emptyFile.getPath(), new String[] {}, null, TEST_URI, TEST_URI},
+      {emptyFile.getPath(), null, new String[] {TEST_URI}, null, null, null},
+      {credentialFile.getPath(), null, new String[] {TEST_URI}, null, "", ""},
+      {
+        credentialFile.getPath(),
+        credentialFile.getPath(),
+        new String[] {TEST_URI},
+        null,
+        null,
+        TEST_URI
+      },
+      {
+        credentialFile.getPath(), emptyFile.getPath(), new String[] {TEST_URI}, null, TEST_URI, null
+      },
+      {
+        credentialFile.getPath(),
+        credentialFile.getPath(),
+        new String[] {TEST_URI},
+        null,
+        TEST_URI,
+        ""
+      },
+      {emptyFile.getPath(), emptyFile.getPath(), new String[] {TEST_URI}, null, "", TEST_URI}
     };
   }
 }

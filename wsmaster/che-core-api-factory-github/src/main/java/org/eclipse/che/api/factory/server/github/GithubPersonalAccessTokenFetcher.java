@@ -34,6 +34,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationExceptio
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
@@ -117,8 +118,11 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
           .build();
 
   @Inject
-  public GithubPersonalAccessTokenFetcher(@Named("che.api") String apiEndpoint, OAuthAPI oAuthAPI) {
-    this(apiEndpoint, oAuthAPI, new GithubApiClient());
+  public GithubPersonalAccessTokenFetcher(
+      @Named("che.api") String apiEndpoint,
+      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
+      OAuthAPI oAuthAPI) {
+    this(apiEndpoint, oAuthAPI, new GithubApiClient(oauthEndpoint));
   }
 
   /**
@@ -161,7 +165,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
       if (valid.isEmpty()) {
         throw new ScmCommunicationException(
             "Unable to verify if current token is a valid GitHub token.  Token's scm-url needs to be '"
-                + GithubApiClient.GITHUB_SERVER
+                + GithubApiClient.GITHUB_SAAS_ENDPOINT
                 + "' and was '"
                 + token.getScmProviderUrl()
                 + "'");

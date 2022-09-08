@@ -59,7 +59,7 @@ public class GithubGitUserDataFetcherTest {
         new GithubUserDataFetcher(
             "http://che.api", oAuthAPI, new GithubApiClient(wireMockServer.url("/")));
     stubFor(
-        get(urlEqualTo("/user"))
+        get(urlEqualTo("/api/v3/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
             .willReturn(
                 aResponse()

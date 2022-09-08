@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,12 +43,18 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
       @Nullable @Named("che.oauth2.github.clientid_filepath") String gitHubClientIdPath,
       @Nullable @Named("che.oauth2.github.clientsecret_filepath") String gitHubClientSecretPath,
       @Nullable @Named("che.oauth.github.redirecturis") String[] redirectUris,
+      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
       @Nullable @Named("che.oauth.github.authuri") String authUri,
       @Nullable @Named("che.oauth.github.tokenuri") String tokenUri)
       throws IOException {
     authenticator =
         getOAuthAuthenticator(
-            gitHubClientIdPath, gitHubClientSecretPath, redirectUris, authUri, tokenUri);
+            gitHubClientIdPath,
+            gitHubClientSecretPath,
+            redirectUris,
+            oauthEndpoint,
+            authUri,
+            tokenUri);
     LOG.debug("{} GitHub OAuth Authenticator is used.", authenticator);
   }
 
@@ -60,10 +67,20 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
       String clientIdPath,
       String clientSecretPath,
       String[] redirectUris,
+      String oauthEndpoint,
       String authUri,
       String tokenUri)
       throws IOException {
 
+    String trimmedOauthEndpoint = isNullOrEmpty(oauthEndpoint) ? null : trimEnd(oauthEndpoint, '/');
+    authUri =
+        isNullOrEmpty(trimmedOauthEndpoint)
+            ? authUri
+            : trimmedOauthEndpoint + "/login/oauth/authorize";
+    tokenUri =
+        isNullOrEmpty(trimmedOauthEndpoint)
+            ? tokenUri
+            : trimmedOauthEndpoint + "/login/oauth/access_token";
     if (!isNullOrEmpty(clientIdPath)
         && !isNullOrEmpty(clientSecretPath)
         && !isNullOrEmpty(authUri)
@@ -74,7 +91,7 @@ public class GitHubOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
       final String clientSecret = Files.readString(Path.of(clientSecretPath)).trim();
       if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {
         return new GitHubOAuthAuthenticator(
-            clientId, clientSecret, redirectUris, authUri, tokenUri);
+            clientId, clientSecret, redirectUris, trimmedOauthEndpoint, authUri, tokenUri);
       }
     }
     return new NoopOAuthAuthenticator();

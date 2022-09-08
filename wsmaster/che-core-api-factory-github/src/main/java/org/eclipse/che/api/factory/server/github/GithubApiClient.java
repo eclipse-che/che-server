@@ -11,11 +11,13 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.Duration.ofSeconds;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -37,6 +39,7 @@ import java.util.function.Function;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +49,8 @@ public class GithubApiClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(GithubApiClient.class);
 
-  /** GitHub API endpoint URL. */
-  public static final String GITHUB_API_SERVER = "https://api.github.com";
-
   /** GitHub endpoint URL. */
-  public static final String GITHUB_SERVER = "https://github.com";
+  public static final String GITHUB_SAAS_ENDPOINT = "https://github.com";
 
   /** GitHub HTTP header containing OAuth scopes. */
   public static final String GITHUB_OAUTH_SCOPES_HEADER = "X-OAuth-Scopes";
@@ -62,19 +62,16 @@ public class GithubApiClient {
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-  /** Default constructor, binds http client to https://api.github.com */
-  public GithubApiClient() {
-    this(GITHUB_API_SERVER);
-  }
-
-  /**
-   * Used for URL injection in testing.
-   *
-   * @param apiServerUrl the GitHub API url
-   */
-  GithubApiClient(final String apiServerUrl) {
-    this.apiServerUrl = URI.create(apiServerUrl);
-    this.scmServerUrl = URI.create(GITHUB_SERVER);
+  /** Default constructor, binds http client to GitHub API url */
+  public GithubApiClient(@Nullable String serverUrl) {
+    String trimmedServerUrl = !isNullOrEmpty(serverUrl) ? trimEnd(serverUrl, '/') : null;
+    this.apiServerUrl =
+        URI.create(
+            isNullOrEmpty(trimmedServerUrl) || trimmedServerUrl.equals(GITHUB_SAAS_ENDPOINT)
+                ? "https://api.github.com/"
+                : trimmedServerUrl + "/api/v3/");
+    this.scmServerUrl =
+        URI.create(isNullOrEmpty(trimmedServerUrl) ? GITHUB_SAAS_ENDPOINT : trimmedServerUrl);
     this.httpClient =
         HttpClient.newBuilder()
             .executor(
@@ -101,7 +98,7 @@ public class GithubApiClient {
    */
   public GithubUser getUser(String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    final URI uri = apiServerUrl.resolve("/user");
+    final URI uri = apiServerUrl.resolve("./user");
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
     LOG.trace("executeRequest={}", request);
     return executeRequest(
@@ -120,7 +117,7 @@ public class GithubApiClient {
       String id, String username, String repoName, String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
     final URI uri =
-        apiServerUrl.resolve(String.format("/repos/%1s/%2s/pulls/%3s", username, repoName, id));
+        apiServerUrl.resolve(String.format("./repos/%1s/%2s/pulls/%3s", username, repoName, id));
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
     LOG.trace("executeRequest={}", request);
     return executeRequest(
@@ -149,7 +146,7 @@ public class GithubApiClient {
    */
   public String[] getTokenScopes(String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    final URI uri = apiServerUrl.resolve("/user");
+    final URI uri = apiServerUrl.resolve("./user");
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
     LOG.trace("executeRequest={}", request);
     return executeRequest(
@@ -213,6 +210,6 @@ public class GithubApiClient {
    * @return If the provided url is recognized by the current client
    */
   public boolean isConnected(String scmServerUrl) {
-    return this.scmServerUrl.equals(URI.create(scmServerUrl));
+    return this.scmServerUrl.equals(URI.create(trimEnd(scmServerUrl, '/')));
   }
 }

@@ -11,13 +11,19 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.String.format;
+import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
+import static org.eclipse.che.api.factory.server.github.GithubApiClient.GITHUB_SAAS_ENDPOINT;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -30,6 +36,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.slf4j.Logger;
@@ -47,27 +54,42 @@ public class GithubURLParser {
   private final PersonalAccessTokenManager tokenManager;
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final GithubApiClient apiClient;
+  private final String oauthEndpoint;
+  /**
+   * Regexp to find repository details (repository name, project name and branch and subfolder)
+   * Examples of valid URLs are in the test class.
+   */
+  private final Pattern githubPattern;
 
   @Inject
   public GithubURLParser(
       PersonalAccessTokenManager tokenManager,
       DevfileFilenamesProvider devfileFilenamesProvider,
-      GithubApiClient apiClient) {
-    this.tokenManager = tokenManager;
-    this.devfileFilenamesProvider = devfileFilenamesProvider;
-    this.apiClient = apiClient;
+      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint) {
+    this(tokenManager, devfileFilenamesProvider, new GithubApiClient(oauthEndpoint), oauthEndpoint);
   }
 
-  /**
-   * Regexp to find repository details (repository name, project name and branch and subfolder)
-   * Examples of valid URLs are in the test class.
-   */
-  protected static final Pattern GITHUB_PATTERN =
-      Pattern.compile(
-          "^(?:http)(?:s)?(?:\\:\\/\\/)github.com/(?<repoUser>[^/]++)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>[^/]++)(?:/(?<subFolder>.*))?)|(/pull/(?<pullRequestId>[^/]++)))?$");
+  /** Constructor used for testing only. */
+  GithubURLParser(
+      PersonalAccessTokenManager tokenManager,
+      DevfileFilenamesProvider devfileFilenamesProvider,
+      GithubApiClient githubApiClient,
+      String oauthEndpoint) {
+    this.tokenManager = tokenManager;
+    this.devfileFilenamesProvider = devfileFilenamesProvider;
+    this.apiClient = githubApiClient;
+    this.oauthEndpoint = oauthEndpoint;
+    String endpoint =
+        isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
+    this.githubPattern =
+        compile(
+            format(
+                "^%s/(?<repoUser>[^/]++)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>[^/]++)(?:/(?<subFolder>.*))?)|(/pull/(?<pullRequestId>[^/]++)))?$",
+                endpoint));
+  }
 
   public boolean isValid(@NotNull String url) {
-    return GITHUB_PATTERN.matcher(url).matches();
+    return githubPattern.matcher(url).matches();
   }
 
   public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
@@ -80,14 +102,18 @@ public class GithubURLParser {
 
   private GithubUrl parse(String url, boolean authenticationRequired) throws ApiException {
     // Apply github url to the regexp
-    Matcher matcher = GITHUB_PATTERN.matcher(url);
+    Matcher matcher = githubPattern.matcher(url);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
-          String.format(
+          format(
               "The given github url %s is not a valid URL github url. It should start with https://github.com/<user>/<repo>",
               url));
     }
 
+    String serverUrl =
+        isNullOrEmpty(oauthEndpoint) || trimEnd(oauthEndpoint, '/').equals(GITHUB_SAAS_ENDPOINT)
+            ? null
+            : trimEnd(oauthEndpoint, '/');
     String repoUser = matcher.group("repoUser");
     String repoName = matcher.group("repoName");
     if (repoName.matches("^[\\w-][\\w.-]*?\\.git$")) {
@@ -98,7 +124,8 @@ public class GithubURLParser {
     String pullRequestId = matcher.group("pullRequestId");
     if (pullRequestId != null) {
       try {
-        String githubEndpoint = "https://github.com";
+        String githubEndpoint =
+            isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
         Subject subject = EnvironmentContext.getCurrent().getSubject();
         PersonalAccessToken personalAccessToken = null;
         Optional<PersonalAccessToken> tokenOptional = tokenManager.get(subject, githubEndpoint);
@@ -114,7 +141,7 @@ public class GithubURLParser {
           String prState = pullRequest.getState();
           if (!"open".equalsIgnoreCase(prState)) {
             throw new IllegalArgumentException(
-                String.format(
+                format(
                     "The given Pull Request url %s is not Opened, (found %s), thus it can't be opened as branch may have been removed.",
                     url, prState));
           }
@@ -139,6 +166,7 @@ public class GithubURLParser {
     return new GithubUrl()
         .withUsername(repoUser)
         .withRepository(repoName)
+        .withServerUrl(serverUrl)
         .withBranch(branchName)
         .withSubfolder(matcher.group("subFolder"))
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());

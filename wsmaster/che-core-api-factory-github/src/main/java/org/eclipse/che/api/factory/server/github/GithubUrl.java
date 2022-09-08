@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,8 +12,8 @@
 package org.eclipse.che.api.factory.server.github;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
-import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +46,8 @@ public class GithubUrl implements RemoteFactoryUrl {
 
   /** Subfolder if any */
   private String subfolder;
+
+  private String serverUrl;
 
   /** Devfile filenames list */
   private final List<String> devfileFilenames = new ArrayList<>();
@@ -110,7 +112,7 @@ public class GithubUrl implements RemoteFactoryUrl {
   }
 
   protected GithubUrl withBranch(String branch) {
-    if (!Strings.isNullOrEmpty(branch)) {
+    if (!isNullOrEmpty(branch)) {
       this.branch = branch;
     }
     return this;
@@ -133,6 +135,11 @@ public class GithubUrl implements RemoteFactoryUrl {
    */
   protected GithubUrl withSubfolder(String subfolder) {
     this.subfolder = subfolder;
+    return this;
+  }
+
+  public GithubUrl withServerUrl(String serverUrl) {
+    this.serverUrl = serverUrl;
     return this;
   }
 
@@ -167,7 +174,7 @@ public class GithubUrl implements RemoteFactoryUrl {
    */
   public String rawFileLocation(String fileName) {
     return new StringJoiner("/")
-        .add("https://raw.githubusercontent.com")
+        .add(isNullOrEmpty(serverUrl) ? "https://raw.githubusercontent.com" : serverUrl + "/raw")
         .add(username)
         .add(repository)
         .add(firstNonNull(branch, "HEAD"))
@@ -177,7 +184,7 @@ public class GithubUrl implements RemoteFactoryUrl {
 
   @Override
   public String getHostName() {
-    return HOSTNAME;
+    return isNullOrEmpty(serverUrl) ? HOSTNAME : serverUrl;
   }
 
   /**
@@ -186,6 +193,11 @@ public class GithubUrl implements RemoteFactoryUrl {
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    return HOSTNAME + "/" + this.username + "/" + this.repository + ".git";
+    return (isNullOrEmpty(serverUrl) ? HOSTNAME : serverUrl)
+        + "/"
+        + this.username
+        + "/"
+        + this.repository
+        + ".git";
   }
 }

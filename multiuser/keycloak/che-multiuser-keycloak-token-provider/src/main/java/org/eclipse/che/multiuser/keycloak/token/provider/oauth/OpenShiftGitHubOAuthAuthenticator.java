@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -33,7 +33,7 @@ public class OpenShiftGitHubOAuthAuthenticator extends GitHubOAuthAuthenticator 
       @Nullable @Named("che.oauth.github.tokenuri") String tokenUri)
       throws IOException {
 
-    super("NULL", "NULL", redirectUris, authUri, tokenUri);
+    super("NULL", "NULL", redirectUris, null, authUri, tokenUri);
 
     if (!isNullOrEmpty(authUri)
         && !isNullOrEmpty(tokenUri)

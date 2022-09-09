@@ -11,11 +11,13 @@
  */
 package org.eclipse.che.api.factory.server.scm;
 
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
@@ -34,20 +36,20 @@ public class AuthorizingFactoryParameterResolverTest {
   @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessToken personalAccessToken;
 
-  private AuthorizingFileContentProvider provider;
+  private AuthorizingFileContentProvider<?> provider;
 
   @BeforeMethod
   public void setUp() throws Exception {
     provider =
-        new AuthorizingFileContentProvider(
+        new AuthorizingFileContentProvider<>(
             remoteFactoryUrl, urlFetcher, personalAccessTokenManager, gitCredentialManager);
-    when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
-    when(remoteFactoryUrl.rawFileLocation(anyString())).thenReturn("rawFileLocation");
+    when(remoteFactoryUrl.rawFileLocation(anyString())).thenAnswer(returnsFirstArg());
   }
 
   @Test
   public void shouldFetchContentWithAuthentication() throws Exception {
     // given
+    when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
     when(urlFetcher.fetch(anyString(), anyString())).thenReturn("content");
     when(personalAccessTokenManager.fetchAndSave(any(Subject.class), anyString()))
         .thenReturn(personalAccessToken);
@@ -62,6 +64,7 @@ public class AuthorizingFactoryParameterResolverTest {
   @Test
   public void shouldFetchContentWithoutAuthentication() throws Exception {
     // given
+    when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
     when(urlFetcher.fetch(anyString())).thenReturn("content");
 
     // when
@@ -69,5 +72,15 @@ public class AuthorizingFactoryParameterResolverTest {
 
     // then
     verify(personalAccessTokenManager, never()).fetchAndSave(any(Subject.class), anyString());
+  }
+
+  @Test
+  public void shouldOmitDotInTheResourceName() throws Exception {
+    assertEquals(provider.formatUrl("./pom.xml"), "pom.xml");
+  }
+
+  @Test
+  public void shouldKeepResourceNameUnchanged() throws Exception {
+    assertEquals(provider.formatUrl(".gitconfig"), ".gitconfig");
   }
 }

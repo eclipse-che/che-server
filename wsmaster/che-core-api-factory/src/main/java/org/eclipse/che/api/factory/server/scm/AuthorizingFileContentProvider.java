@@ -139,14 +139,16 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     return false;
   }
 
-  private String formatUrl(String fileURL) throws DevfileException {
+  protected String formatUrl(String fileURL) throws DevfileException {
     String requestURL;
     try {
       if (new URI(fileURL).isAbsolute()) {
         requestURL = fileURL;
       } else {
-        // since files retrieved via REST, we cannot use path symbols like . ./ so cut them off
-        requestURL = remoteFactoryUrl.rawFileLocation(fileURL.replaceAll("^[/.]+", ""));
+        // since files retrieved via REST, we cannot use path like '.' or one that starts with './'
+        // so cut them off
+        requestURL =
+            remoteFactoryUrl.rawFileLocation(fileURL.replaceAll("^(?:\\.?\\/)|(?:\\.$)", ""));
       }
     } catch (URISyntaxException e) {
       throw new DevfileException(e.getMessage(), e);

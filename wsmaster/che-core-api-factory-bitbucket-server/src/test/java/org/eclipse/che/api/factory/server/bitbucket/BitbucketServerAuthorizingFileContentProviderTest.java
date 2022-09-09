@@ -112,7 +112,6 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
   public static Object[][] relativePathsProvider() {
     return new Object[][] {
       {"./file.txt", "https://foo.bar/rest/api/1.0/projects/proj/repos/repo/raw/file.txt", null},
-      {"../file.txt", "https://foo.bar/rest/api/1.0/projects/proj/repos/repo/raw/file.txt", null},
       {"/file.txt", "https://foo.bar/rest/api/1.0/projects/proj/repos/repo/raw/file.txt", null},
       {"file.txt", "https://foo.bar/rest/api/1.0/projects/proj/repos/repo/raw/file.txt", null},
       {

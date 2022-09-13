@@ -2,7 +2,7 @@
 * @nickboldt @sparkoo
 
 # dockerfiles
-dockerfiles/** @benoitf @nickboldt
+dockerfiles/** @nickboldt
 
 # assembly
 assembly/** @skabashnyuk @nickboldt

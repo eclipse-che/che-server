@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
-import com.google.common.collect.ImmutableList;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
@@ -42,7 +41,6 @@ import io.fabric8.openshift.api.model.ProjectRequest;
 import io.fabric8.openshift.api.model.ProjectRequestFluent.MetadataNested;
 import io.fabric8.openshift.api.model.RoleBinding;
 import io.fabric8.openshift.api.model.RoleBindingList;
-import io.fabric8.openshift.api.model.UserBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.dsl.ProjectOperation;
 import io.fabric8.openshift.client.dsl.ProjectRequestOperation;
@@ -112,6 +110,9 @@ public class OpenShiftProjectTest {
     lenient().when(clientFactory.createOC(anyString())).thenReturn(openShiftClient);
 
     lenient().when(cheServerOpenshiftClientFactory.createOC()).thenReturn(openShiftCheServerClient);
+    lenient()
+        .when(cheServerOpenshiftClientFactory.createOC(anyString()))
+        .thenReturn(openShiftCheServerClient);
 
     lenient().when(openShiftClient.adapt(OpenShiftClient.class)).thenReturn(openShiftClient);
 
@@ -202,13 +203,6 @@ public class OpenShiftProjectTest {
     when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
     when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
     doReturn(projectRequestOperation).when(openShiftCheServerClient).projectrequests();
-    // doReturn(metadataNested).when(metadataNested).withName(anyString());
-    when(openShiftCheServerClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
-    lenient()
-        .when(mixedRoleBindingOperation.inNamespace(anyString()))
-        .thenReturn(nonNamespaceRoleBindingOperation);
-    when(openShiftClient.currentUser())
-        .thenReturn(new UserBuilder().withNewMetadata().withName("user").endMetadata().build());
     // when
     openShiftProject.prepare(true, true, Map.of(), Map.of());
 
@@ -218,46 +212,6 @@ public class OpenShiftProjectTest {
     Assert.assertEquals(captor.getValue().getMetadata().getName(), PROJECT_NAME);
     verifyNoMoreInteractions(openShiftCheServerClient);
     verifyNoMoreInteractions(kubernetesClient);
-    ArgumentCaptor<RoleBinding> roleBindingArgumentCaptor =
-        ArgumentCaptor.forClass(RoleBinding.class);
-    verify(nonNamespaceRoleBindingOperation).createOrReplace(roleBindingArgumentCaptor.capture());
-    assertNotNull(roleBindingArgumentCaptor.getValue());
-  }
-
-  @Test(dependsOnMethods = "testOpenShiftProjectPreparingWhenProjectDoesNotExistWithCheServerSA")
-  public void testOpenShiftProjectPreparingRoleBindingWhenProjectDoesNotExistWithCheServerSA()
-      throws Exception {
-    // given
-    prepareNamespaceGet(PROJECT_NAME);
-
-    Resource resource = prepareProjectResource(PROJECT_NAME);
-    doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
-    final MixedOperation mixedOperation = mock(MixedOperation.class);
-    final NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
-    doReturn(mixedOperation).when(openShiftCheServerClient).serviceAccounts();
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
-    when(namespaceOperation.withName(anyString())).thenReturn(serviceAccountResource);
-    when(serviceAccountResource.get()).thenReturn(mock(ServiceAccount.class));
-    doReturn(projectRequestOperation).when(openShiftCheServerClient).projectrequests();
-    // doReturn(metadataNested).when(metadataNested).withName(anyString());
-    when(openShiftCheServerClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
-    lenient()
-        .when(mixedRoleBindingOperation.inNamespace(anyString()))
-        .thenReturn(nonNamespaceRoleBindingOperation);
-    when(openShiftClient.currentUser())
-        .thenReturn(new UserBuilder().withNewMetadata().withName("jdoe").endMetadata().build());
-    // when
-    openShiftProject.prepare(true, true, Map.of(), Map.of());
-
-    // then
-    ArgumentCaptor<RoleBinding> roleBindingArgumentCaptor =
-        ArgumentCaptor.forClass(RoleBinding.class);
-    verify(nonNamespaceRoleBindingOperation).createOrReplace(roleBindingArgumentCaptor.capture());
-    RoleBinding roleBinding = roleBindingArgumentCaptor.getValue();
-    assertNotNull(roleBinding);
-    assertEquals(roleBinding.getMetadata().getName(), "admin");
-    assertEquals(roleBinding.getRoleRef().getName(), "admin");
-    assertEquals(roleBinding.getUserNames(), ImmutableList.of("jdoe"));
   }
 
   @Test(expectedExceptions = InfrastructureException.class)
@@ -596,13 +550,13 @@ public class OpenShiftProjectTest {
 
     ProjectOperation projectOperation = mock(ProjectOperation.class);
     doReturn(projectResource).when(projectOperation).withName(projectName);
-    doReturn(projectOperation).when(openShiftClient).projects();
+    doReturn(projectOperation).when(openShiftCheServerClient).projects();
 
     when(projectResource.get())
         .thenReturn(
             new ProjectBuilder().withNewMetadata().withName(projectName).endMetadata().build());
 
-    openShiftClient.projects().withName(projectName).get();
+    openShiftCheServerClient.projects().withName(projectName).get();
     return projectResource;
   }
 
@@ -611,7 +565,7 @@ public class OpenShiftProjectTest {
         new NamespaceBuilder().withNewMetadata().withName(namespaceName).endMetadata().build();
 
     NonNamespaceOperation nsOperation = mock(NonNamespaceOperation.class);
-    doReturn(nsOperation).when(openShiftClient).namespaces();
+    doReturn(nsOperation).when(openShiftCheServerClient).namespaces();
 
     Resource nsResource = mock(Resource.class);
     doReturn(nsResource).when(nsOperation).withName(namespaceName);

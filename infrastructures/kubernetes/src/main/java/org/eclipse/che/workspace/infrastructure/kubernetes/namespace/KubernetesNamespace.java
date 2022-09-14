@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -153,10 +153,10 @@ public class KubernetesNamespace {
         throw new InfrastructureException(
             format("Creating the namespace '%s' is not allowed, yet it was not found.", name));
       }
-      namespace = create(name, client);
+      create(name, client);
     }
-    label(namespace, labels);
-    annotate(namespace, annotations);
+    label(client.namespaces().withName(name).get(), labels);
+    annotate(client.namespaces().withName(name).get(), annotations);
   }
 
   /**

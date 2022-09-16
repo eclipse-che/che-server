@@ -18,13 +18,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
-import java.util.Optional;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -40,8 +37,6 @@ public class GitlabScmFileResolverTest {
   @Mock private URLFetcher urlFetcher;
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
-
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   private GitlabScmFileResolver gitlabScmFileResolver;
@@ -53,8 +48,7 @@ public class GitlabScmFileResolverTest {
             SCM_URL, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
     assertNotNull(this.gitlabUrlParser);
     gitlabScmFileResolver =
-        new GitlabScmFileResolver(
-            gitlabUrlParser, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+        new GitlabScmFileResolver(gitlabUrlParser, urlFetcher, personalAccessTokenManager);
     assertNotNull(this.gitlabScmFileResolver);
   }
 
@@ -76,8 +70,8 @@ public class GitlabScmFileResolverTest {
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
-        .thenReturn(Optional.of(new PersonalAccessToken(SCM_URL, "root", "token123")));
+    when(personalAccessTokenManager.getAndStore(any(String.class)))
+        .thenReturn(new PersonalAccessToken(SCM_URL, "root", "token123"));
 
     when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
 

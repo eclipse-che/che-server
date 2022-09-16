@@ -12,7 +12,6 @@
 package org.eclipse.che.api.factory.server.scm;
 
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -21,7 +20,6 @@ import static org.testng.Assert.assertEquals;
 
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -33,7 +31,6 @@ public class AuthorizingFactoryParameterResolverTest {
   @Mock private RemoteFactoryUrl remoteFactoryUrl;
   @Mock private URLFetcher urlFetcher;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessToken personalAccessToken;
 
   private AuthorizingFileContentProvider<?> provider;
@@ -42,7 +39,7 @@ public class AuthorizingFactoryParameterResolverTest {
   public void setUp() throws Exception {
     provider =
         new AuthorizingFileContentProvider<>(
-            remoteFactoryUrl, urlFetcher, personalAccessTokenManager, gitCredentialManager);
+            remoteFactoryUrl, urlFetcher, personalAccessTokenManager);
     when(remoteFactoryUrl.rawFileLocation(anyString())).thenAnswer(returnsFirstArg());
   }
 
@@ -51,27 +48,25 @@ public class AuthorizingFactoryParameterResolverTest {
     // given
     when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
     when(urlFetcher.fetch(anyString(), anyString())).thenReturn("content");
-    when(personalAccessTokenManager.fetchAndSave(any(Subject.class), anyString()))
-        .thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     // when
     provider.fetchContent("url");
 
     // then
-    verify(personalAccessTokenManager).fetchAndSave(any(Subject.class), anyString());
+    verify(personalAccessTokenManager).getAndStore(anyString());
   }
 
   @Test
   public void shouldFetchContentWithoutAuthentication() throws Exception {
     // given
-    when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
     when(urlFetcher.fetch(anyString())).thenReturn("content");
 
     // when
     provider.fetchContentWithoutAuthentication("url");
 
     // then
-    verify(personalAccessTokenManager, never()).fetchAndSave(any(Subject.class), anyString());
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
   }
 
   @Test

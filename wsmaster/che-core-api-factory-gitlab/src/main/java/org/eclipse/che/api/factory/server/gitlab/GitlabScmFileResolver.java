@@ -18,7 +18,6 @@ import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
@@ -28,18 +27,15 @@ public class GitlabScmFileResolver implements ScmFileResolver {
 
   private final GitlabUrlParser gitlabUrlParser;
   private final URLFetcher urlFetcher;
-  private final GitCredentialManager gitCredentialManager;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
   public GitlabScmFileResolver(
       GitlabUrlParser gitlabUrlParser,
       URLFetcher urlFetcher,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     this.gitlabUrlParser = gitlabUrlParser;
     this.urlFetcher = urlFetcher;
-    this.gitCredentialManager = gitCredentialManager;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -54,7 +50,7 @@ public class GitlabScmFileResolver implements ScmFileResolver {
 
     try {
       return new GitlabAuthorizingFileContentProvider(
-              gitlabUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager)
+              gitlabUrl, urlFetcher, personalAccessTokenManager)
           .fetchContent(gitlabUrl.rawFileLocation(filePath));
     } catch (IOException e) {
       throw new NotFoundException(e.getMessage());

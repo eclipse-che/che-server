@@ -11,12 +11,10 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
@@ -36,7 +34,6 @@ public class GithubScmFileResolverTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   private GithubScmFileResolver githubScmFileResolver;
@@ -47,8 +44,7 @@ public class GithubScmFileResolverTest {
         new GithubURLParser(personalAccessTokenManager, devfileFilenamesProvider, null);
     assertNotNull(this.githubURLParser);
     githubScmFileResolver =
-        new GithubScmFileResolver(
-            githubURLParser, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+        new GithubScmFileResolver(githubURLParser, urlFetcher, personalAccessTokenManager);
     assertNotNull(this.githubScmFileResolver);
   }
 
@@ -72,8 +68,7 @@ public class GithubScmFileResolverTest {
     final String filename = "devfile.yaml";
     when(urlFetcher.fetch(anyString(), anyString())).thenReturn(rawContent);
     var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
-    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
-        .thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     String content =
         githubScmFileResolver.fileContent("https://github.com/test/repo.git", filename);

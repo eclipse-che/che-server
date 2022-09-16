@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.core.model.factory.ScmInfo;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
@@ -60,8 +59,6 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
   BitbucketServerURLParser bitbucketURLParser;
-
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   private BitbucketServerAuthorizingFactoryParametersResolver
@@ -77,11 +74,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
     assertNotNull(this.bitbucketURLParser);
     bitbucketServerFactoryParametersResolver =
         new BitbucketServerAuthorizingFactoryParametersResolver(
-            urlFactoryBuilder,
-            urlFetcher,
-            bitbucketURLParser,
-            gitCredentialManager,
-            personalAccessTokenManager);
+            urlFactoryBuilder, urlFetcher, bitbucketURLParser, personalAccessTokenManager);
     assertNotNull(this.bitbucketServerFactoryParametersResolver);
   }
 

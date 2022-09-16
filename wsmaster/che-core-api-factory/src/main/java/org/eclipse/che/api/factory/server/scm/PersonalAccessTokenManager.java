@@ -51,4 +51,15 @@ public interface PersonalAccessTokenManager {
   Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
           ScmCommunicationException;
+
+  /**
+   * Gets {@link PersonalAccessToken} from permanent storage. If the token is not found try to fetch
+   * it from scm provider and save it in a permanent storage and set (update) git-credentials.
+   *
+   * @param scmServerUrl Git provider endpoint
+   */
+  PersonalAccessToken getAndStore(String scmServerUrl)
+      throws ScmCommunicationException, ScmConfigurationPersistenceException,
+          UnknownScmProviderException, UnsatisfiedScmPreconditionException,
+          ScmUnauthorizedException;
 }

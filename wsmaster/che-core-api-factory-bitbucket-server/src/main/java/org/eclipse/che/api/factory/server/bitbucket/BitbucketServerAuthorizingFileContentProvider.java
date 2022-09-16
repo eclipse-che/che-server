@@ -12,7 +12,6 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 
@@ -26,8 +25,7 @@ public class BitbucketServerAuthorizingFileContentProvider
   public BitbucketServerAuthorizingFileContentProvider(
       BitbucketServerUrl bitbucketServerUrl,
       URLFetcher urlFetcher,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(bitbucketServerUrl, urlFetcher, personalAccessTokenManager, gitCredentialManager);
+    super(bitbucketServerUrl, urlFetcher, personalAccessTokenManager);
   }
 }

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
@@ -36,6 +37,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.commons.subject.Subject;
@@ -68,15 +70,18 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   private final KubernetesNamespaceFactory namespaceFactory;
   private final KubernetesClientFactory clientFactory;
   private final ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher;
+  private final GitCredentialManager gitCredentialManager;
 
   @Inject
   public KubernetesPersonalAccessTokenManager(
       KubernetesNamespaceFactory namespaceFactory,
       KubernetesClientFactory clientFactory,
-      ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher) {
+      ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher,
+      GitCredentialManager gitCredentialManager) {
     this.namespaceFactory = namespaceFactory;
     this.clientFactory = clientFactory;
     this.scmPersonalAccessTokenFetcher = scmPersonalAccessTokenFetcher;
+    this.gitCredentialManager = gitCredentialManager;
   }
 
   @VisibleForTesting
@@ -172,6 +177,23 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
     return Optional.empty();
+  }
+
+  @Override
+  public PersonalAccessToken getAndStore(String scmServerUrl)
+      throws ScmCommunicationException, ScmConfigurationPersistenceException,
+          UnknownScmProviderException, UnsatisfiedScmPreconditionException,
+          ScmUnauthorizedException {
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    Optional<PersonalAccessToken> token = get(subject, scmServerUrl);
+    if (token.isPresent()) {
+      return token.get();
+    } else {
+      // try to authenticate for the given URL
+      PersonalAccessToken personalAccessToken = fetchAndSave(subject, scmServerUrl);
+      gitCredentialManager.createOrReplace(personalAccessToken);
+      return personalAccessToken;
+    }
   }
 
   private String getFirstNamespace()

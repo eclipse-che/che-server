@@ -19,7 +19,6 @@ import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
@@ -29,18 +28,15 @@ public class GithubScmFileResolver implements ScmFileResolver {
 
   private final GithubURLParser githubUrlParser;
   private final URLFetcher urlFetcher;
-  private final GitCredentialManager gitCredentialManager;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
   public GithubScmFileResolver(
       GithubURLParser githubUrlParser,
       URLFetcher urlFetcher,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     this.githubUrlParser = githubUrlParser;
     this.urlFetcher = urlFetcher;
-    this.gitCredentialManager = gitCredentialManager;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -72,7 +68,7 @@ public class GithubScmFileResolver implements ScmFileResolver {
     try {
       GithubAuthorizingFileContentProvider contentProvider =
           new GithubAuthorizingFileContentProvider(
-              githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+              githubUrl, urlFetcher, personalAccessTokenManager);
       return skipAuthentication
           ? contentProvider.fetchContentWithoutAuthentication(filePath)
           : contentProvider.fetchContent(filePath);

@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
@@ -19,7 +18,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
@@ -38,8 +36,6 @@ public class BitbucketScmFileResolverTest {
   @Mock private URLFetcher urlFetcher;
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
-
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   private BitbucketScmFileResolver bitbucketScmFileResolver;
@@ -49,8 +45,7 @@ public class BitbucketScmFileResolverTest {
     bitbucketURLParser = new BitbucketURLParser(devfileFilenamesProvider);
     assertNotNull(this.bitbucketURLParser);
     bitbucketScmFileResolver =
-        new BitbucketScmFileResolver(
-            bitbucketURLParser, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+        new BitbucketScmFileResolver(bitbucketURLParser, urlFetcher, personalAccessTokenManager);
     assertNotNull(this.bitbucketScmFileResolver);
   }
 
@@ -74,8 +69,7 @@ public class BitbucketScmFileResolverTest {
     final String filename = "devfile.yaml";
     when(urlFetcher.fetch(anyString(), anyString())).thenReturn(rawContent);
     var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
-    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
-        .thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     String content =
         bitbucketScmFileResolver.fileContent("http://bitbucket.org/test/repo.git", filename);

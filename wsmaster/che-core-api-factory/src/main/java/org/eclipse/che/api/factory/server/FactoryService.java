@@ -124,7 +124,7 @@ public class FactoryService extends Service {
   }
 
   @POST
-  @Path("/refresh_token")
+  @Path("/token/refresh")
   @Operation(
       summary = "Create factory by providing map of parameters. Get JSON with factory information",
       responses = {

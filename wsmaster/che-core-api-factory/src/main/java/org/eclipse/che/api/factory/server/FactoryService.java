@@ -126,12 +126,15 @@ public class FactoryService extends Service {
   @POST
   @Path("/token/refresh")
   @Operation(
-      summary = "Create factory by providing map of parameters. Get JSON with factory information",
+      summary = "Validate the the factory related OAuth token and update/create it if needed",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "Factory token is valid or has been updated successfully"),
-        @ApiResponse(responseCode = "401", description = "Failed to update the factory token"),
+            description =
+                "The factory related OAuth token is valid or has been updated successfully"),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Failed to update the factory related OAuth token"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   public void refreshToken(@Parameter(description = "Factory url") @QueryParam("url") String url)

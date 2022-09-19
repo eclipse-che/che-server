@@ -247,7 +247,7 @@ public class FactoryServiceTest {
         .contentType(ContentType.JSON)
         .when()
         .queryParam("url", "someUrl")
-        .post(SERVICE_PATH + "/refresh_token");
+        .post(SERVICE_PATH + "/token/refresh");
 
     // then
     verify(personalAccessTokenManager).getAndStore(eq("someUrl"));
@@ -265,7 +265,7 @@ public class FactoryServiceTest {
 
     // when
     final Response response =
-        given().contentType(ContentType.JSON).when().post(SERVICE_PATH + "/refresh_token");
+        given().contentType(ContentType.JSON).when().post(SERVICE_PATH + "/token/refresh");
 
     assertEquals(response.getStatusCode(), 400);
     assertEquals(

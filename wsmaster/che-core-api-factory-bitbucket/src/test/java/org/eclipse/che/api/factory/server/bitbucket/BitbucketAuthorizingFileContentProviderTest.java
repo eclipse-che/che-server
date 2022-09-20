@@ -16,7 +16,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
@@ -31,8 +30,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class BitbucketAuthorizingFileContentProviderTest {
 
-  @Mock private GitCredentialManager gitCredentialManager;
-
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   @Test
@@ -41,10 +38,9 @@ public class BitbucketAuthorizingFileContentProviderTest {
     BitbucketUrl bitbucketUrl = new BitbucketUrl().withWorkspaceId("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new BitbucketAuthorizingFileContentProvider(
-            bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            bitbucketUrl, urlFetcher, personalAccessTokenManager);
     var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
-    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
-        .thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
     fileContentProvider.fetchContent("devfile.yaml");
     verify(urlFetcher)
         .fetch(
@@ -58,11 +54,10 @@ public class BitbucketAuthorizingFileContentProviderTest {
     BitbucketUrl bitbucketUrl = new BitbucketUrl().withUsername("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new BitbucketAuthorizingFileContentProvider(
-            bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            bitbucketUrl, urlFetcher, personalAccessTokenManager);
     String url = "https://api.bitbucket.org/2.0/repositories/foo/bar/devfile.yaml";
     var personalAccessToken = new PersonalAccessToken(url, "che", "my-token");
-    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
-        .thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
     fileContentProvider.fetchContent(url);
     verify(urlFetcher).fetch(eq(url), eq("Bearer my-token"));
   }
@@ -71,7 +66,7 @@ public class BitbucketAuthorizingFileContentProviderTest {
   public void shouldThrowNotFoundForPublicRepos() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     String url = "https://api.bitbucket.org/2.0/repositories/foo/bar/devfile.yaml";
-    when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
+    when(personalAccessTokenManager.getAndStore(anyString()))
         .thenThrow(UnknownScmProviderException.class);
     when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
     when(urlFetcher.fetch(eq("https://api.bitbucket.org/2.0/repos/eclipse/che"))).thenReturn("OK");
@@ -79,7 +74,7 @@ public class BitbucketAuthorizingFileContentProviderTest {
         new BitbucketUrl().withUsername("eclipse").withWorkspaceId("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new BitbucketAuthorizingFileContentProvider(
-            bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            bitbucketUrl, urlFetcher, personalAccessTokenManager);
     fileContentProvider.fetchContent(url);
   }
 }

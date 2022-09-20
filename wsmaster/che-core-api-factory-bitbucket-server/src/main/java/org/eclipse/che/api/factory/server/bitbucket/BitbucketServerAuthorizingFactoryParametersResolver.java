@@ -22,7 +22,6 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
@@ -47,7 +46,6 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
   /** Parser which will allow to check validity of URLs and create objects. */
   private final BitbucketServerURLParser bitbucketURLParser;
 
-  private final GitCredentialManager gitCredentialManager;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
@@ -55,11 +53,9 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
       URLFactoryBuilder urlFactoryBuilder,
       URLFetcher urlFetcher,
       BitbucketServerURLParser bitbucketURLParser,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(urlFactoryBuilder, urlFetcher);
     this.bitbucketURLParser = bitbucketURLParser;
-    this.gitCredentialManager = gitCredentialManager;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -92,7 +88,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
 
     final FileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
-            bitbucketServerUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            bitbucketServerUrl, urlFetcher, personalAccessTokenManager);
 
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder

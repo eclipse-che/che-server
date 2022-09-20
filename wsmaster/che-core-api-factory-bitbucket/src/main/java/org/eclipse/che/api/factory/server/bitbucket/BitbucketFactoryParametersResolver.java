@@ -22,7 +22,6 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -48,9 +47,6 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
   /** ProjectDtoMerger */
   private final ProjectConfigDtoMerger projectConfigDtoMerger;
 
-  /** Git credential manager. */
-  private final GitCredentialManager gitCredentialManager;
-
   /** Personal Access Token manager used when fetching protected content. */
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
@@ -61,13 +57,11 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
       BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder,
       URLFactoryBuilder urlFactoryBuilder,
       ProjectConfigDtoMerger projectConfigDtoMerger,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(urlFactoryBuilder, urlFetcher);
     this.bitbucketURLParser = bitbucketURLParser;
     this.bitbucketSourceStorageBuilder = bitbucketSourceStorageBuilder;
     this.projectConfigDtoMerger = projectConfigDtoMerger;
-    this.gitCredentialManager = gitCredentialManager;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -103,7 +97,7 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
         .createFactoryFromDevfile(
             bitbucketUrl,
             new BitbucketAuthorizingFileContentProvider(
-                bitbucketUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager),
+                bitbucketUrl, urlFetcher, personalAccessTokenManager),
             extractOverrideParams(factoryParameters),
             false)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))

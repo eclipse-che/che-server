@@ -11,20 +11,16 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
-import java.util.Optional;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -40,8 +36,6 @@ public class BitbucketServerScmFileResolverTest {
   @Mock private URLFetcher urlFetcher;
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
-
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   private BitbucketServerScmFileResolver serverScmFileResolver;
@@ -54,7 +48,7 @@ public class BitbucketServerScmFileResolverTest {
     assertNotNull(this.bitbucketURLParser);
     serverScmFileResolver =
         new BitbucketServerScmFileResolver(
-            bitbucketURLParser, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            bitbucketURLParser, urlFetcher, personalAccessTokenManager);
     assertNotNull(this.serverScmFileResolver);
   }
 
@@ -76,8 +70,8 @@ public class BitbucketServerScmFileResolverTest {
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
-        .thenReturn(Optional.of(new PersonalAccessToken(SCM_URL, "root", "token123")));
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenReturn(new PersonalAccessToken(SCM_URL, "root", "token123"));
 
     when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
 

@@ -11,19 +11,15 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
-import java.util.Optional;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.DataProvider;
@@ -35,7 +31,6 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
 
   public static final String TEST_HOSTNAME = "https://foo.bar";
   @Mock private URLFetcher urlFetcher;
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   @Test
@@ -43,11 +38,10 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     BitbucketServerUrl url = new BitbucketServerUrl().withHostName(TEST_HOSTNAME);
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
-            url, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            url, urlFetcher, personalAccessTokenManager);
 
     PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
-        .thenReturn(Optional.of(token));
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
 
@@ -63,13 +57,10 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     BitbucketServerUrl url = new BitbucketServerUrl().withHostName(TEST_HOSTNAME);
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
-            url, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            url, urlFetcher, personalAccessTokenManager);
 
     PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
-        .thenReturn(Optional.empty());
-    when(personalAccessTokenManager.fetchAndSave(any(Subject.class), eq(TEST_HOSTNAME)))
-        .thenReturn(token);
+    when(personalAccessTokenManager.getAndStore(eq(TEST_HOSTNAME))).thenReturn(token);
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
 
@@ -77,9 +68,8 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     fileContentProvider.fetchContent(fileURL);
 
     // then
-    verify(personalAccessTokenManager).fetchAndSave(any(Subject.class), eq(TEST_HOSTNAME));
+    verify(personalAccessTokenManager).getAndStore(eq(TEST_HOSTNAME));
     verify(urlFetcher).fetch(eq(fileURL), eq("Bearer token"));
-    verify(gitCredentialManager).createOrReplace(eq(token));
   }
 
   @Test(dataProvider = "relativePathsProvider")
@@ -96,10 +86,9 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     }
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
-            url, urlFetcher, gitCredentialManager, personalAccessTokenManager);
+            url, urlFetcher, personalAccessTokenManager);
     PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
-        .thenReturn(Optional.of(token));
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
 
     // when
     fileContentProvider.fetchContent(relative);

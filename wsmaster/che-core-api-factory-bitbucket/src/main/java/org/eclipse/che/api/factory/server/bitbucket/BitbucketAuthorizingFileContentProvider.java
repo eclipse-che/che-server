@@ -13,7 +13,6 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import java.io.IOException;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 
@@ -23,9 +22,8 @@ class BitbucketAuthorizingFileContentProvider extends AuthorizingFileContentProv
   BitbucketAuthorizingFileContentProvider(
       BitbucketUrl bitbucketUrl,
       URLFetcher urlFetcher,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(bitbucketUrl, urlFetcher, personalAccessTokenManager, gitCredentialManager);
+    super(bitbucketUrl, urlFetcher, personalAccessTokenManager);
   }
 
   /** Formats OAuth token as HTTP Authorization header. */

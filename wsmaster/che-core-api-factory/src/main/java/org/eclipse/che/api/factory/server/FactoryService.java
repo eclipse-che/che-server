@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,6 +31,12 @@ import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.user.server.UserManager;
 
@@ -55,17 +61,20 @@ public class FactoryService extends Service {
   private final FactoryAcceptValidator acceptValidator;
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
   private final AdditionalFilenamesProvider additionalFilenamesProvider;
+  private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
   public FactoryService(
       UserManager userManager,
       FactoryAcceptValidator acceptValidator,
       FactoryParametersResolverHolder factoryParametersResolverHolder,
-      AdditionalFilenamesProvider additionalFilenamesProvider) {
+      AdditionalFilenamesProvider additionalFilenamesProvider,
+      PersonalAccessTokenManager personalAccessTokenManager) {
     this.userManager = userManager;
     this.acceptValidator = acceptValidator;
     this.factoryParametersResolverHolder = factoryParametersResolverHolder;
     this.additionalFilenamesProvider = additionalFilenamesProvider;
+    this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
   @POST
@@ -112,6 +121,37 @@ public class FactoryService extends Service {
     resolvedFactory = injectLinks(resolvedFactory, parameters);
 
     return resolvedFactory;
+  }
+
+  @POST
+  @Path("/token/refresh")
+  @Operation(
+      summary = "Validate the the factory related OAuth token and update/create it if needed",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description =
+                "The factory related OAuth token is valid or has been updated successfully"),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Failed to update the factory related OAuth token"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+      })
+  public void refreshToken(@Parameter(description = "Factory url") @QueryParam("url") String url)
+      throws ApiException {
+
+    // check parameter
+    requiredNotNull(url, "Factory url");
+
+    try {
+      personalAccessTokenManager.getAndStore(url);
+    } catch (ScmCommunicationException
+        | ScmConfigurationPersistenceException
+        | UnknownScmProviderException
+        | UnsatisfiedScmPreconditionException
+        | ScmUnauthorizedException e) {
+      throw new ApiException(e);
+    }
   }
 
   /** Injects factory links. If factory is named then accept named link will be injected. */

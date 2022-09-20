@@ -13,7 +13,6 @@ package org.eclipse.che.api.factory.server.github;
 
 import java.io.IOException;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 
@@ -23,9 +22,8 @@ class GithubAuthorizingFileContentProvider extends AuthorizingFileContentProvide
   GithubAuthorizingFileContentProvider(
       GithubUrl githubUrl,
       URLFetcher urlFetcher,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(githubUrl, urlFetcher, personalAccessTokenManager, gitCredentialManager);
+    super(githubUrl, urlFetcher, personalAccessTokenManager);
   }
 
   /**

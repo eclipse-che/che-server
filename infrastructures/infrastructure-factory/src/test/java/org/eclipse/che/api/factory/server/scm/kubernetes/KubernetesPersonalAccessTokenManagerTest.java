@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -40,6 +40,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
 import org.eclipse.che.commons.subject.SubjectImpl;
@@ -66,6 +67,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   @Mock private ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher;
 
   @Mock private KubernetesClient kubeClient;
+  @Mock private GitCredentialManager gitCredentialManager;
 
   @Mock private MixedOperation<Secret, SecretList, Resource<Secret>> secretsMixedOperation;
 
@@ -77,7 +79,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   protected void init() {
     personalAccessTokenManager =
         new KubernetesPersonalAccessTokenManager(
-            namespaceFactory, clientFactory, scmPersonalAccessTokenFetcher);
+            namespaceFactory, clientFactory, scmPersonalAccessTokenFetcher, gitCredentialManager);
     assertNotNull(this.personalAccessTokenManager);
   }
 

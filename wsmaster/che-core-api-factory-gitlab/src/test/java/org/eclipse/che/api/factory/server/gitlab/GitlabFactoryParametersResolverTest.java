@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.core.model.factory.ScmInfo;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
@@ -65,8 +64,6 @@ public class GitlabFactoryParametersResolverTest {
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
   GitlabUrlParser gitlabUrlParser;
-
-  @Mock private GitCredentialManager gitCredentialManager;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   private GitlabFactoryParametersResolver gitlabFactoryParametersResolver;
@@ -81,11 +78,7 @@ public class GitlabFactoryParametersResolverTest {
     assertNotNull(this.gitlabUrlParser);
     gitlabFactoryParametersResolver =
         new GitlabFactoryParametersResolver(
-            urlFactoryBuilder,
-            urlFetcher,
-            gitlabUrlParser,
-            gitCredentialManager,
-            personalAccessTokenManager);
+            urlFactoryBuilder, urlFetcher, gitlabUrlParser, personalAccessTokenManager);
     assertNotNull(this.gitlabFactoryParametersResolver);
   }
 

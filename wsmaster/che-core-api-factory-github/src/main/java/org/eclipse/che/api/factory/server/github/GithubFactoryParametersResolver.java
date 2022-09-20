@@ -23,7 +23,6 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -53,10 +52,6 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
   /** ProjectDtoMerger */
   private final ProjectConfigDtoMerger projectConfigDtoMerger;
 
-  /** Git credential manager. */
-  private final GitCredentialManager gitCredentialManager;
-
-  /** Personal Access Token manager used when fetching protected content. */
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
@@ -66,13 +61,11 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
       GithubSourceStorageBuilder githubSourceStorageBuilder,
       URLFactoryBuilder urlFactoryBuilder,
       ProjectConfigDtoMerger projectConfigDtoMerger,
-      GitCredentialManager gitCredentialManager,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(urlFactoryBuilder, urlFetcher);
     this.githubUrlParser = githubUrlParser;
     this.githubSourceStorageBuilder = githubSourceStorageBuilder;
     this.projectConfigDtoMerger = projectConfigDtoMerger;
-    this.gitCredentialManager = gitCredentialManager;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -116,7 +109,7 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
         .createFactoryFromDevfile(
             githubUrl,
             new GithubAuthorizingFileContentProvider(
-                githubUrl, urlFetcher, gitCredentialManager, personalAccessTokenManager),
+                githubUrl, urlFetcher, personalAccessTokenManager),
             extractOverrideParams(factoryParameters),
             skipAuthentication)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))

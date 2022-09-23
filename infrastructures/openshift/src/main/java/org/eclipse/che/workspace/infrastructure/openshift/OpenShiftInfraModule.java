@@ -31,7 +31,6 @@ import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironmentFactory;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
-import org.eclipse.che.api.workspace.server.spi.provision.env.EnvVarProvider;
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.InconsistentRuntimesDetector;
@@ -62,7 +61,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesC
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PreviewUrlCommandProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TrustedCAProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.env.LogsRootEnvVariableProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.server.ServersConverter;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.PreviewUrlExposer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.WorkspaceExposureType;
@@ -162,10 +160,6 @@ public class OpenShiftInfraModule extends AbstractModule {
     bind(PreviewUrlExposer.class).to(new TypeLiteral<OpenShiftPreviewUrlExposer>() {});
     bind(PreviewUrlCommandProvisioner.class)
         .to(new TypeLiteral<OpenShiftPreviewUrlCommandProvisioner>() {});
-
-    Multibinder<EnvVarProvider> envVarProviders =
-        Multibinder.newSetBinder(binder(), EnvVarProvider.class);
-    envVarProviders.addBinding().to(LogsRootEnvVariableProvider.class);
 
     install(new JpaKubernetesRuntimeCacheModule());
 

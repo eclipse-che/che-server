@@ -76,7 +76,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       KubernetesRecipeParser objectsParser,
       KubernetesEnvironmentProvisioner k8sEnvProvisioner,
       EnvVars envVars,
-      @Named("che.workspace.projects.storage") String projectFolderPath,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
           String devfileEndpointsExposure,
@@ -86,7 +85,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
         k8sEnvProvisioner,
         envVars,
         KubernetesEnvironment.TYPE,
-        projectFolderPath,
         imagePullPolicy,
         devfileEndpointsExposure,
         kubernetesBasedComponentTypes);
@@ -97,7 +95,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       KubernetesEnvironmentProvisioner k8sEnvProvisioner,
       EnvVars envVars,
       String environmentType,
-      String projectFolderPath,
       String imagePullPolicy,
       String devfileEndpointsExposure,
       Set<String> kubernetesBasedComponentTypes) {

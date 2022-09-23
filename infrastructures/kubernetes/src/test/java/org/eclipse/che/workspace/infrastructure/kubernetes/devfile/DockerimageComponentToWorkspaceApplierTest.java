@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -67,8 +67,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class DockerimageComponentToWorkspaceApplierTest {
 
-  private static final String PROJECTS_MOUNT_PATH = "/projects";
-
   private WorkspaceConfigImpl workspaceConfig;
 
   private DockerimageComponentToWorkspaceApplier dockerimageComponentApplier;
@@ -82,7 +80,7 @@ public class DockerimageComponentToWorkspaceApplierTest {
   public void setUp() throws Exception {
     dockerimageComponentApplier =
         new DockerimageComponentToWorkspaceApplier(
-            PROJECTS_MOUNT_PATH, "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
+            "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
     workspaceConfig = new WorkspaceConfigImpl();
   }
 
@@ -137,8 +135,7 @@ public class DockerimageComponentToWorkspaceApplierTest {
     dockerimageComponent.setImage("eclipse/ubuntu_jdk8:latest");
     dockerimageComponent.setMemoryLimit("1G");
     dockerimageComponentApplier =
-        new DockerimageComponentToWorkspaceApplier(
-            PROJECTS_MOUNT_PATH, "Never", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
+        new DockerimageComponentToWorkspaceApplier("Never", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
 
     // when
     dockerimageComponentApplier.apply(workspaceConfig, dockerimageComponent, null);
@@ -484,10 +481,6 @@ public class DockerimageComponentToWorkspaceApplierTest {
             machinesCaptor.capture());
     MachineConfigImpl machineConfig = machinesCaptor.getValue().get("jdk");
     assertNotNull(machineConfig);
-    org.eclipse.che.api.workspace.server.model.impl.VolumeImpl projectsVolume =
-        machineConfig.getVolumes().get(PROJECTS_VOLUME_NAME);
-    assertNotNull(projectsVolume);
-    assertEquals(projectsVolume.getPath(), PROJECTS_MOUNT_PATH);
   }
 
   @Test
@@ -578,7 +571,7 @@ public class DockerimageComponentToWorkspaceApplierTest {
       throws DevfileException {
     dockerimageComponentApplier =
         new DockerimageComponentToWorkspaceApplier(
-            PROJECTS_MOUNT_PATH, "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
+            "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
 
     // given
     EndpointImpl endpoint = new EndpointImpl("jdk-ls", 4923, emptyMap());
@@ -614,7 +607,7 @@ public class DockerimageComponentToWorkspaceApplierTest {
   public void serverCantHaveRequireSubdomainWhenSinglehostDevfileExpose() throws DevfileException {
     dockerimageComponentApplier =
         new DockerimageComponentToWorkspaceApplier(
-            PROJECTS_MOUNT_PATH, "Always", SINGLE_HOST_STRATEGY, k8sEnvProvisioner);
+            "Always", SINGLE_HOST_STRATEGY, k8sEnvProvisioner);
 
     // given
     EndpointImpl endpoint = new EndpointImpl("jdk-ls", 4923, emptyMap());

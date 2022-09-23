@@ -77,7 +77,6 @@ public class OpenshiftComponentToWorkspaceApplierTest {
             k8sRecipeParser,
             k8sEnvProvisioner,
             envVars,
-            "/projects",
             "Always",
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);
@@ -114,7 +113,6 @@ public class OpenshiftComponentToWorkspaceApplierTest {
             k8sRecipeParser,
             k8sEnvProvisioner,
             envVars,
-            "/projects",
             "Always",
             SINGLE_HOST_STRATEGY,
             openshiftBasedComponents);
@@ -166,7 +164,6 @@ public class OpenshiftComponentToWorkspaceApplierTest {
             k8sRecipeParser,
             k8sEnvProvisioner,
             envVars,
-            "/projects",
             "Always",
             MULTI_HOST_STRATEGY,
             openshiftBasedComponents);

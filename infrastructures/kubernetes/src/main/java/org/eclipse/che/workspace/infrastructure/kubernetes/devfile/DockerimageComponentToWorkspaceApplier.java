@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,7 +18,6 @@ import static org.eclipse.che.api.core.model.workspace.config.Command.MACHINE_NA
 import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.DEVFILE_COMPONENT_ALIAS_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.DOCKERIMAGE_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.convert.component.ComponentToWorkspaceApplier.convertEndpointsIntoServers;
-import static org.eclipse.che.api.workspace.shared.Constants.PROJECTS_VOLUME_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy.SINGLE_HOST_STRATEGY;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -62,19 +61,16 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
    */
   static final String CHE_COMPONENT_NAME_LABEL = "che.component.name";
 
-  private final String projectFolderPath;
   private final String imagePullPolicy;
   private final KubernetesEnvironmentProvisioner k8sEnvProvisioner;
   private final String devfileEndpointsExposure;
 
   @Inject
   public DockerimageComponentToWorkspaceApplier(
-      @Named("che.workspace.projects.storage") String projectFolderPath,
       @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
           String devfileEndpointsExposure,
       KubernetesEnvironmentProvisioner k8sEnvProvisioner) {
-    this.projectFolderPath = projectFolderPath;
     this.imagePullPolicy = imagePullPolicy;
     this.k8sEnvProvisioner = k8sEnvProvisioner;
     this.devfileEndpointsExposure = devfileEndpointsExposure;
@@ -150,12 +146,6 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
                 machineConfig
                     .getVolumes()
                     .put(v.getName(), new VolumeImpl().withPath(v.getContainerPath())));
-
-    if (Boolean.TRUE.equals(dockerimageComponent.getMountSources())) {
-      machineConfig
-          .getVolumes()
-          .put(PROJECTS_VOLUME_NAME, new VolumeImpl().withPath(projectFolderPath));
-    }
 
     if (!isNullOrEmpty(componentAlias)) {
       machineConfig.getAttributes().put(DEVFILE_COMPONENT_ALIAS_ATTRIBUTE, componentAlias);

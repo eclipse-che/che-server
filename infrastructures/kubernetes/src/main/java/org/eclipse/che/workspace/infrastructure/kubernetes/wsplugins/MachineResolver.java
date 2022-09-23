@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -37,7 +37,6 @@ import org.eclipse.che.api.workspace.server.spi.environment.InternalMachineConfi
 import org.eclipse.che.api.workspace.server.wsplugins.model.CheContainer;
 import org.eclipse.che.api.workspace.server.wsplugins.model.ChePluginEndpoint;
 import org.eclipse.che.api.workspace.server.wsplugins.model.Volume;
-import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.Containers;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSize;
 
@@ -51,11 +50,9 @@ public class MachineResolver {
   private final String defaultSidecarCpuLimitCores;
   private final String defaultSidecarCpuRequestCores;
   private final List<ChePluginEndpoint> containerEndpoints;
-  private final Pair<String, String> projectsRootPathEnvVar;
   private final Component component;
 
   public MachineResolver(
-      Pair<String, String> projectsRootPathEnvVar,
       Container container,
       CheContainer cheContainer,
       String defaultSidecarMemoryLimitBytes,
@@ -71,7 +68,6 @@ public class MachineResolver {
     this.defaultSidecarCpuLimitCores = defaultSidecarCpuLimitCores;
     this.defaultSidecarCpuRequestCores = defaultSidecarCpuRequestCores;
     this.containerEndpoints = containerEndpoints;
-    this.projectsRootPathEnvVar = projectsRootPathEnvVar;
     this.component = component;
   }
 
@@ -193,26 +189,13 @@ public class MachineResolver {
 
     Map<String, VolumeImpl> result = new HashMap<>();
 
-    if (container.isMountSources()) {
-      result.put(PROJECTS_VOLUME_NAME, new VolumeImpl().withPath(projectsRootPathEnvVar.second));
-    }
-
     for (Volume volume : container.getVolumes()) {
-      if (volume.getName().equals(PROJECTS_VOLUME_NAME)
-          && !projectsRootPathEnvVar.second.equals(volume.getMountPath())) {
+      if (volume.getName().equals(PROJECTS_VOLUME_NAME)) {
         throw new InfrastructureException(
-            format(
-                "Plugin '%s' tried to manually mount the '%s' volume into its container '%s' on"
-                    + " path '%s'. This is illegal because sources need to be mounted to '%s'. Set"
-                    + " the mountSources attribute to true instead and remove the manual volume"
-                    + " mount in the plugin. After that the mount path of the sources will be"
-                    + " available automatically in the '%s' environment variable.",
-                component.getId(),
-                PROJECTS_VOLUME_NAME,
-                container.getName(),
-                volume.getMountPath(),
-                projectsRootPathEnvVar.second,
-                projectsRootPathEnvVar.first));
+            "Plugin '%s' tried to manually mount the '%s' volume into its container '%s' on"
+                + " path '%s'. This is illegal because sources need to be mounted to '%s'. Set"
+                + " the mountSources attribute to true instead and remove the manual volume"
+                + " mount in the plugin.");
       }
     }
     return result;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -37,7 +37,6 @@ import org.eclipse.che.api.workspace.server.wsplugins.model.CheContainer;
 import org.eclipse.che.api.workspace.server.wsplugins.model.ChePluginEndpoint;
 import org.eclipse.che.api.workspace.server.wsplugins.model.Volume;
 import org.eclipse.che.api.workspace.shared.Constants;
-import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.Containers;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSize;
 import org.mockito.testng.MockitoTestNGListener;
@@ -75,7 +74,6 @@ public class MachineResolverTest {
     component = new ComponentImpl("chePlugin", PLUGIN_ID);
     resolver =
         new MachineResolver(
-            new Pair<>(PROJECTS_ENV_VAR, PROJECTS_MOUNT_PATH),
             container,
             cheContainer,
             DEFAULT_MEM_LIMIT,
@@ -267,17 +265,6 @@ public class MachineResolverTest {
     cheContainer.getVolumes().add(volume);
 
     resolver.resolve();
-  }
-
-  @Test
-  public void shouldAddProjectMountPointWhenMountSources() throws InfrastructureException {
-    cheContainer.setMountSources(true);
-
-    InternalMachineConfig config = resolver.resolve();
-
-    assertEquals(1, config.getVolumes().size());
-    assertEquals(
-        PROJECTS_MOUNT_PATH, config.getVolumes().get(Constants.PROJECTS_VOLUME_NAME).getPath());
   }
 
   @Test

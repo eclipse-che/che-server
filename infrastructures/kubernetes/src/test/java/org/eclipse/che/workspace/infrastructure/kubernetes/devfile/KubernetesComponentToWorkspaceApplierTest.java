@@ -87,7 +87,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
 
   public static final String REFERENCE_FILENAME = "reference.yaml";
   public static final String COMPONENT_NAME = "foo";
-  public static final String PROJECT_MOUNT_PATH = "/projects";
 
   private WorkspaceConfigImpl workspaceConfig;
 
@@ -111,7 +110,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             k8sRecipeParser,
             k8sEnvProvisioner,
             envVars,
-            PROJECT_MOUNT_PATH,
             "Always",
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);
@@ -495,7 +493,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             k8sRecipeParser,
             k8sEnvProvisioner,
             envVars,
-            PROJECT_MOUNT_PATH,
             "Never",
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);
@@ -642,7 +639,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             k8sRecipeParser,
             k8sEnvProvisioner,
             envVars,
-            PROJECT_MOUNT_PATH,
             "Always",
             SINGLE_HOST_STRATEGY,
             k8sBasedComponents);
@@ -692,7 +688,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
             k8sRecipeParser,
             k8sEnvProvisioner,
             envVars,
-            PROJECT_MOUNT_PATH,
             "Always",
             MULTI_HOST_STRATEGY,
             k8sBasedComponents);

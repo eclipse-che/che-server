@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,6 +56,7 @@ import org.eclipse.che.api.factory.server.impl.SourceStorageParametersValidator;
 import org.eclipse.che.api.factory.server.model.impl.AuthorImpl;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
@@ -234,11 +236,17 @@ public class FactoryServiceTest {
   @Test
   public void checkRefreshToken() throws Exception {
     // given
+    final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
+    FactoryParametersResolver factoryParametersResolver = mock(FactoryParametersResolver.class);
+    RemoteFactoryUrl remoteFactoryUrl = mock(RemoteFactoryUrl.class);
+    when(factoryParametersResolver.parseFactoryUrl(eq("someUrl"))).thenReturn(remoteFactoryUrl);
+    when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
+    doReturn(factoryParametersResolver).when(dummyHolder).getFactoryParametersResolver(anyMap());
     service =
         new FactoryService(
             userManager,
             acceptValidator,
-            factoryParametersResolverHolder,
+            dummyHolder,
             additionalFilenamesProvider,
             personalAccessTokenManager);
 
@@ -250,7 +258,7 @@ public class FactoryServiceTest {
         .post(SERVICE_PATH + "/token/refresh");
 
     // then
-    verify(personalAccessTokenManager).getAndStore(eq("someUrl"));
+    verify(personalAccessTokenManager).getAndStore(eq("hostName"));
   }
 
   @Test

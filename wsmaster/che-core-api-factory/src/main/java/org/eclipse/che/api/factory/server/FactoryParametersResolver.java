@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 
 /**
@@ -40,4 +41,13 @@ public interface FactoryParametersResolver {
    * @throws BadRequestException when data are invalid
    */
   FactoryMetaDto createFactory(@NotNull Map<String, String> factoryParameters) throws ApiException;
+
+  /**
+   * Parses a factory Url String to a {@link RemoteFactoryUrl} object
+   *
+   * @param factoryUrl the factory Url string
+   * @return {@link RemoteFactoryUrl} representation of the factory URL
+   * @throws ApiException when authentication required operations fail
+   */
+  RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException;
 }

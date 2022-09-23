@@ -21,7 +21,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentM
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ProxySettingsProvisioner;
@@ -63,7 +62,6 @@ public class OpenShiftEnvironmentProvisionerTest {
   @Mock private ServersConverter<OpenShiftEnvironment> serversProvisioner;
   @Mock private RestartPolicyRewriter restartPolicyRewriter;
   @Mock private ContainerResourceProvisioner ramLimitProvisioner;
-  @Mock private LogsVolumeMachineProvisioner logsVolumeMachineProvisioner;
   @Mock private PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   @Mock private ImagePullSecretProvisioner imagePullSecretProvisioner;
   @Mock private ProxySettingsProvisioner proxySettingsProvisioner;
@@ -94,7 +92,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             envVarsProvisioner,
             restartPolicyRewriter,
             ramLimitProvisioner,
-            logsVolumeMachineProvisioner,
             podTerminationGracePeriodProvisioner,
             imagePullSecretProvisioner,
             proxySettingsProvisioner,
@@ -111,7 +108,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             trustedCAProvisioner);
     provisionOrder =
         inOrder(
-            logsVolumeMachineProvisioner,
             serversProvisioner,
             envVarsProvisioner,
             uniqueNamesProvisioner,

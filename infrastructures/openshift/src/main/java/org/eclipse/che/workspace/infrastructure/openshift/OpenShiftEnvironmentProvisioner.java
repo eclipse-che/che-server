@@ -23,7 +23,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentM
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ProxySettingsProvisioner;
@@ -65,7 +64,6 @@ public class OpenShiftEnvironmentProvisioner
   private final EnvVarsConverter envVarsConverter;
   private final RestartPolicyRewriter restartPolicyRewriter;
   private final ContainerResourceProvisioner resourceLimitRequestProvisioner;
-  private final LogsVolumeMachineProvisioner logsVolumeMachineProvisioner;
   private final PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   private final ImagePullSecretProvisioner imagePullSecretProvisioner;
   private final ProxySettingsProvisioner proxySettingsProvisioner;
@@ -89,7 +87,6 @@ public class OpenShiftEnvironmentProvisioner
       EnvVarsConverter envVarsConverter,
       RestartPolicyRewriter restartPolicyRewriter,
       ContainerResourceProvisioner resourceLimitRequestProvisioner,
-      LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
       PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
       ImagePullSecretProvisioner imagePullSecretProvisioner,
       ProxySettingsProvisioner proxySettingsProvisioner,
@@ -110,7 +107,6 @@ public class OpenShiftEnvironmentProvisioner
     this.envVarsConverter = envVarsConverter;
     this.restartPolicyRewriter = restartPolicyRewriter;
     this.resourceLimitRequestProvisioner = resourceLimitRequestProvisioner;
-    this.logsVolumeMachineProvisioner = logsVolumeMachineProvisioner;
     this.podTerminationGracePeriodProvisioner = podTerminationGracePeriodProvisioner;
     this.imagePullSecretProvisioner = imagePullSecretProvisioner;
     this.proxySettingsProvisioner = proxySettingsProvisioner;

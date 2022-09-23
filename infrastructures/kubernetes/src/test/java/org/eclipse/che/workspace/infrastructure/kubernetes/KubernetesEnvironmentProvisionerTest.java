@@ -23,7 +23,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRout
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesTrustedCAProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ProxySettingsProvisioner;
@@ -62,7 +61,6 @@ public class KubernetesEnvironmentProvisionerTest {
   @Mock private ServersConverter<KubernetesEnvironment> serversProvisioner;
   @Mock private RestartPolicyRewriter restartPolicyRewriter;
   @Mock private ContainerResourceProvisioner ramLimitProvisioner;
-  @Mock private LogsVolumeMachineProvisioner logsVolumeMachineProvisioner;
   @Mock private SecurityContextProvisioner securityContextProvisioner;
   @Mock private PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
 

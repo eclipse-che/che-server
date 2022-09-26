@@ -114,7 +114,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
 
   private static final Logger LOG = LoggerFactory.getLogger(KubernetesInternalRuntime.class);
 
-  private final int workspaceStartTimeoutMin;
   private final long ingressStartTimeoutMillis;
   private final UnrecoverablePodEventListenerFactory unrecoverableEventListenerFactory;
   private final ServersCheckerFactory serverCheckerFactory;
@@ -139,7 +138,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
 
   @Inject
   public KubernetesInternalRuntime(
-      @Named("che.infra.kubernetes.workspace_start_timeout_min") int workspaceStartTimeoutMin,
       @Named("che.infra.kubernetes.ingress_start_timeout_min") int ingressStartTimeoutMin,
       NoOpURLRewriter urlRewriter,
       UnrecoverablePodEventListenerFactory unrecoverableEventListenerFactory,
@@ -166,7 +164,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
     super(context, urlRewriter);
     this.unrecoverableEventListenerFactory = unrecoverableEventListenerFactory;
     this.serverCheckerFactory = serverCheckerFactory;
-    this.workspaceStartTimeoutMin = workspaceStartTimeoutMin;
     this.ingressStartTimeoutMillis = TimeUnit.MINUTES.toMillis(ingressStartTimeoutMin);
     this.probeScheduler = probeScheduler;
     this.probesFactory = probesFactory;
@@ -297,38 +294,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
     secretAsContainerResourceProvisioner.provision(
         context.getEnvironment(), context.getIdentity(), namespace);
     LOG.debug("Provisioning of workspace '{}' completed.", workspaceId);
-  }
-
-  /**
-   * Schedules runtime state checks that are needed after recovering of runtime.
-   *
-   * <p>Different checks will be scheduled according to current runtime status:
-   *
-   * <ul>
-   *   <li>STARTING - schedules servers checkers and starts tracking of starting runtime
-   *   <li>RUNNING - schedules servers checkers
-   *   <li>STOPPING - starts tracking of stopping runtime
-   *   <li>STOPPED - do nothing. Should not happen since only active runtimes are recovered
-   * </ul>
-   */
-  public void scheduleRuntimeStateChecks() throws InfrastructureException {
-    switch (getStatus()) {
-      case RUNNING:
-        scheduleServersCheckers();
-        break;
-
-      case STOPPING:
-        runtimeHangingDetector.trackStopping(this, workspaceStartTimeoutMin);
-        break;
-
-      case STARTING:
-        runtimeHangingDetector.trackStarting(this, workspaceStartTimeoutMin);
-        scheduleServersCheckers();
-        break;
-      case STOPPED:
-      default:
-        // do nothing
-    }
   }
 
   /** Returns new function that wraps given with set/unset context logic */
@@ -574,18 +539,13 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
     runtimeHangingDetector.stopTracking(getContext().getIdentity());
     if (startSynchronizer.interrupt()) {
       // runtime is STARTING. Need to wait until start will be interrupted properly
-      try {
-        if (!startSynchronizer.awaitInterruption(workspaceStartTimeoutMin, TimeUnit.MINUTES)) {
-          // Runtime is not interrupted yet. It may occur when start was performing by another
-          // Che Server that is crashed so start is hung up in STOPPING phase.
-          // Need to clean up runtime resources
-          probeScheduler.cancel(identity.getWorkspaceId());
-          runtimeCleaner.cleanUp(namespace, identity.getWorkspaceId());
-        }
-      } catch (InterruptedException e) {
-        throw new InfrastructureException(
-            "Interrupted while waiting for start task cancellation", e);
-      }
+
+      // Runtime is not interrupted yet. It may occur when start was performing by another
+      // Che Server that is crashed so start is hung up in STOPPING phase.
+      // Need to clean up runtime resources
+      probeScheduler.cancel(identity.getWorkspaceId());
+      runtimeCleaner.cleanUp(namespace, identity.getWorkspaceId());
+
     } else {
       // runtime is RUNNING. Clean up used resources
       // Cancels workspace servers probes if any

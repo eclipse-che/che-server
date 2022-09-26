@@ -59,7 +59,6 @@ public class OpenShiftInternalRuntime extends KubernetesInternalRuntime<OpenShif
 
   @Inject
   public OpenShiftInternalRuntime(
-      @Named("che.infra.kubernetes.workspace_start_timeout_min") int workspaceStartTimeout,
       @Named("che.infra.kubernetes.ingress_start_timeout_min") int ingressStartTimeout,
       NoOpURLRewriter urlRewriter,
       UnrecoverablePodEventListenerFactory unrecoverablePodEventListenerFactory,
@@ -85,7 +84,6 @@ public class OpenShiftInternalRuntime extends KubernetesInternalRuntime<OpenShif
       @Assisted OpenShiftRuntimeContext context,
       @Assisted OpenShiftProject project) {
     super(
-        workspaceStartTimeout,
         ingressStartTimeout,
         urlRewriter,
         unrecoverablePodEventListenerFactory,

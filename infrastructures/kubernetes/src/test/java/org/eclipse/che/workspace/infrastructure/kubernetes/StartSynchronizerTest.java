@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -55,7 +55,7 @@ public class StartSynchronizerTest {
   @BeforeMethod
   public void setUp() {
     runtimeId = new RuntimeIdentityImpl("workspace123", "envName", "ownerId", "infraNamespace");
-    startSynchronizer = new StartSynchronizer(eventService, 5, runtimeId);
+    startSynchronizer = new StartSynchronizer(eventService, runtimeId);
   }
 
   @Test
@@ -173,7 +173,7 @@ public class StartSynchronizerTest {
   public void shouldInterruptStartWhenStoppingEventIsPublished() throws Exception {
     // given
     EventService eventService = new EventService();
-    StartSynchronizer localStartSynchronizer = new StartSynchronizer(eventService, 5, runtimeId);
+    StartSynchronizer localStartSynchronizer = new StartSynchronizer(eventService, runtimeId);
     localStartSynchronizer.start();
 
     // when
@@ -187,7 +187,7 @@ public class StartSynchronizerTest {
   public void shouldCompleteStartWhenStoppedEventIsPublished() {
     // given
     EventService eventService = new EventService();
-    StartSynchronizer localStartSynchronizer = new StartSynchronizer(eventService, 5, runtimeId);
+    StartSynchronizer localStartSynchronizer = new StartSynchronizer(eventService, runtimeId);
     localStartSynchronizer.start();
 
     // when
@@ -212,7 +212,7 @@ public class StartSynchronizerTest {
     // given
     runtimeId = new RuntimeIdentityImpl("workspace123", "envName", "ownerId", "infraNamespace");
     EventService eventService = new EventService();
-    startSynchronizer = new StartSynchronizer(eventService, 5, runtimeId);
+    startSynchronizer = new StartSynchronizer(eventService, runtimeId);
     startSynchronizer.start();
 
     // when
@@ -228,7 +228,7 @@ public class StartSynchronizerTest {
     // given
     runtimeId = new RuntimeIdentityImpl("workspace123", "envName", "ownerId", "infraNamespace");
     EventService eventService = new EventService();
-    startSynchronizer = new StartSynchronizer(eventService, 5, runtimeId);
+    startSynchronizer = new StartSynchronizer(eventService, runtimeId);
     startSynchronizer.start();
 
     // when
@@ -246,7 +246,7 @@ public class StartSynchronizerTest {
     EventService eventService = new EventService();
 
     // when
-    startSynchronizer = new StartSynchronizer(eventService, 5, runtimeId);
+    startSynchronizer = new StartSynchronizer(eventService, runtimeId);
 
     // then
     assertSubscriberTypesNumber(eventService, 0);
@@ -257,7 +257,7 @@ public class StartSynchronizerTest {
     // given
     runtimeId = new RuntimeIdentityImpl("workspace123", "envName", "ownerId", "infraNamespace");
     EventService eventService = new EventService();
-    startSynchronizer = new StartSynchronizer(eventService, 5, runtimeId);
+    startSynchronizer = new StartSynchronizer(eventService, runtimeId);
 
     // when
     startSynchronizer.start();

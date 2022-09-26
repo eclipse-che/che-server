@@ -270,12 +270,11 @@ public class KubernetesInternalRuntimeTest {
             MULTI_HOST_STRATEGY,
             WorkspaceExposureType.NATIVE.getConfigValue());
 
-    startSynchronizer = spy(new StartSynchronizer(eventService, 5, IDENTITY));
+    startSynchronizer = spy(new StartSynchronizer(eventService, IDENTITY));
     when(startSynchronizerFactory.create(any())).thenReturn(startSynchronizer);
 
     internalRuntime =
         new KubernetesInternalRuntime<>(
-            13,
             5,
             new URLRewriter.NoOpURLRewriter(),
             unrecoverablePodEventListenerFactory,

@@ -174,7 +174,6 @@ public class OpenShiftInternalRuntimeTest {
 
     internalRuntime =
         new OpenShiftInternalRuntime(
-            13,
             5,
             new URLRewriter.NoOpURLRewriter(),
             unrecoverablePodEventListenerFactory,

@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.github;
 
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -19,9 +20,9 @@ import static org.testng.Assert.assertNotNull;
 import java.util.Arrays;
 import java.util.Iterator;
 import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLocation;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -38,19 +39,20 @@ public class GithubUrlTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
-  /** Parser used to create the url. */
-  @InjectMocks private GithubURLParser githubUrlParser;
-
   /** Instance of the url created */
   private GithubUrl githubUrl;
 
   /** Setup objects/ */
   @BeforeMethod
   protected void init() throws ApiException {
+    /** Parser used to create the url. */
+    GithubURLParser githubUrlParser =
+        new GithubURLParser(
+            mock(PersonalAccessTokenManager.class), devfileFilenamesProvider, null, false);
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
-    this.githubUrl = this.githubUrlParser.parse("https://github.com/eclipse/che");
-    assertNotNull(this.githubUrl);
+    githubUrl = githubUrlParser.parse("https://github.com/eclipse/che");
+    assertNotNull(githubUrl);
   }
 
   /** Check when there is devfile in the repository */

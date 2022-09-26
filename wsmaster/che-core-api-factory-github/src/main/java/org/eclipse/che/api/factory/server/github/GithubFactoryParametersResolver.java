@@ -25,6 +25,7 @@ import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
+import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
@@ -172,5 +173,10 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
 
       return factory;
     }
+  }
+
+  @Override
+  public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
+    return githubUrlParser.parse(factoryUrl);
   }
 }

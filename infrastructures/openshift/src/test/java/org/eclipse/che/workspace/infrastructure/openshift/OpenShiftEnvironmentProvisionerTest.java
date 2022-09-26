@@ -23,7 +23,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigPr
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ProxySettingsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ServiceAccountProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SshKeysProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TlsProvisionerProvider;
@@ -64,7 +63,6 @@ public class OpenShiftEnvironmentProvisionerTest {
   @Mock private ContainerResourceProvisioner ramLimitProvisioner;
   @Mock private PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   @Mock private ImagePullSecretProvisioner imagePullSecretProvisioner;
-  @Mock private ProxySettingsProvisioner proxySettingsProvisioner;
   @Mock private ServiceAccountProvisioner serviceAccountProvisioner;
   @Mock private CertificateProvisioner certificateProvisioner;
   @Mock private SshKeysProvisioner sshKeysProvisioner;
@@ -94,7 +92,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             ramLimitProvisioner,
             podTerminationGracePeriodProvisioner,
             imagePullSecretProvisioner,
-            proxySettingsProvisioner,
             nodeSelectorProvisioner,
             tolerationsProvisioner,
             serviceAccountProvisioner,
@@ -118,7 +115,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             tolerationsProvisioner,
             podTerminationGracePeriodProvisioner,
             imagePullSecretProvisioner,
-            proxySettingsProvisioner,
             serviceAccountProvisioner,
             certificateProvisioner,
             sshKeysProvisioner,
@@ -145,7 +141,6 @@ public class OpenShiftEnvironmentProvisionerTest {
         .verify(podTerminationGracePeriodProvisioner)
         .provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(imagePullSecretProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
-    provisionOrder.verify(proxySettingsProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(serviceAccountProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(certificateProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(sshKeysProvisioner).provision(eq(osEnv), eq(runtimeIdentity));

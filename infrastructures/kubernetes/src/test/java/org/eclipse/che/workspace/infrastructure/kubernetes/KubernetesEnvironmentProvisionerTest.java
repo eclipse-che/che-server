@@ -25,7 +25,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSe
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesTrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ProxySettingsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ServiceAccountProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SshKeysProvisioner;
@@ -69,7 +68,6 @@ public class KubernetesEnvironmentProvisionerTest {
 
   @Mock private TlsProvisioner<KubernetesEnvironment> externalServerIngressTlsProvisioner;
   @Mock private ImagePullSecretProvisioner imagePullSecretProvisioner;
-  @Mock private ProxySettingsProvisioner proxySettingsProvisioner;
   @Mock private ServiceAccountProvisioner serviceAccountProvisioner;
   @Mock private CertificateProvisioner certificateProvisioner;
   @Mock private SshKeysProvisioner sshKeysProvisioner;
@@ -100,7 +98,6 @@ public class KubernetesEnvironmentProvisionerTest {
             podTerminationGracePeriodProvisioner,
             externalServerIngressTlsProvisionerProvider,
             imagePullSecretProvisioner,
-            proxySettingsProvisioner,
             nodeSelectorProvisioner,
             tolerationsProvisioner,
             serviceAccountProvisioner,
@@ -124,7 +121,6 @@ public class KubernetesEnvironmentProvisionerTest {
             podTerminationGracePeriodProvisioner,
             externalServerIngressTlsProvisioner,
             imagePullSecretProvisioner,
-            proxySettingsProvisioner,
             serviceAccountProvisioner,
             certificateProvisioner,
             gitConfigProvisioner,
@@ -152,7 +148,6 @@ public class KubernetesEnvironmentProvisionerTest {
         .verify(podTerminationGracePeriodProvisioner)
         .provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(imagePullSecretProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
-    provisionOrder.verify(proxySettingsProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(serviceAccountProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(certificateProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(gitConfigProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));

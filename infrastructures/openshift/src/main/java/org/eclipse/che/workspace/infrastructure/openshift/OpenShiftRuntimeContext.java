@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -80,8 +80,6 @@ public class OpenShiftRuntimeContext extends KubernetesRuntimeContext<OpenShiftE
     OpenShiftInternalRuntime runtime =
         runtimeFactory.create(
             this, projectFactory.access(workspaceId, runtimeState.getNamespace()));
-
-    runtime.scheduleRuntimeStateChecks();
 
     return runtime;
   }

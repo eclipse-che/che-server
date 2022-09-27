@@ -61,17 +61,14 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
    */
   static final String CHE_COMPONENT_NAME_LABEL = "che.component.name";
 
-  private final String imagePullPolicy;
   private final KubernetesEnvironmentProvisioner k8sEnvProvisioner;
   private final String devfileEndpointsExposure;
 
   @Inject
   public DockerimageComponentToWorkspaceApplier(
-      @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
           String devfileEndpointsExposure,
       KubernetesEnvironmentProvisioner k8sEnvProvisioner) {
-    this.imagePullPolicy = imagePullPolicy;
     this.k8sEnvProvisioner = k8sEnvProvisioner;
     this.devfileEndpointsExposure = devfileEndpointsExposure;
   }
@@ -188,7 +185,6 @@ public class DockerimageComponentToWorkspaceApplier implements ComponentToWorksp
     Container container =
         new ContainerBuilder()
             .withImage(image)
-            .withImagePullPolicy(imagePullPolicy)
             .withName(name)
             .withEnv(env)
             .withCommand(command)

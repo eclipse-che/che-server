@@ -91,7 +91,6 @@ import org.testng.annotations.Test;
 public class KubernetesPluginsToolingApplierTest {
 
   private static final String TEST_IMAGE = "testImage/test/test";
-  private static final String TEST_IMAGE_POLICY = "IfNotPresent";
   private static final String ENV_VAR = "PLUGINS_ENV_VAR";
   private static final String ENV_VAR_VALUE = "PLUGINS_ENV_VAR_VALUE";
   private static final String POD_NAME = "pod12";
@@ -122,7 +121,6 @@ public class KubernetesPluginsToolingApplierTest {
     internalEnvironment.setDevfile(new DevfileImpl());
     applier =
         new KubernetesPluginsToolingApplier(
-            TEST_IMAGE_POLICY,
             MEMORY_LIMIT_MB,
             MEMORY_REQUEST_MB,
             CPU_LIMIT,
@@ -713,7 +711,6 @@ public class KubernetesPluginsToolingApplierTest {
       throws Exception {
     applier =
         new KubernetesPluginsToolingApplier(
-            TEST_IMAGE_POLICY,
             MEMORY_LIMIT_MB,
             MEMORY_REQUEST_MB,
             CPU_LIMIT,
@@ -730,38 +727,9 @@ public class KubernetesPluginsToolingApplierTest {
   }
 
   @Test
-  public void shouldSetSpecifiedImagePullPolicy() throws Exception {
-    applier =
-        new KubernetesPluginsToolingApplier(
-            TEST_IMAGE_POLICY,
-            MEMORY_LIMIT_MB,
-            MEMORY_REQUEST_MB,
-            CPU_LIMIT,
-            CPU_REQUEST,
-            true,
-            chePluginsVolumeApplier,
-            envVars);
-
-    applier.apply(runtimeIdentity, internalEnvironment, singletonList(createChePlugin()));
-
-    assertEquals(
-        internalEnvironment
-            .getPodsCopy()
-            .values()
-            .iterator()
-            .next()
-            .getSpec()
-            .getContainers()
-            .get(1)
-            .getImagePullPolicy(),
-        TEST_IMAGE_POLICY);
-  }
-
-  @Test
   public void shouldSetNullImagePullPolicyIfValueIsNotStandard() throws Exception {
     applier =
         new KubernetesPluginsToolingApplier(
-            "None",
             MEMORY_LIMIT_MB,
             MEMORY_REQUEST_MB,
             CPU_LIMIT,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -121,7 +121,6 @@ public class JwtProxyProvisionerTest {
             "128mb",
             "0.02",
             "0.5",
-            "Always",
             runtimeId);
     k8sEnv = KubernetesEnvironment.builder().build();
   }
@@ -244,7 +243,6 @@ public class JwtProxyProvisionerTest {
             "128mb",
             "0.02",
             "500m",
-            "Always",
             runtimeId);
 
     ServerConfigImpl server1 =
@@ -296,7 +294,6 @@ public class JwtProxyProvisionerTest {
             "128mb",
             "0.02",
             "0.5",
-            "Always",
             runtimeId);
 
     ServerConfigImpl server1 = new ServerConfigImpl("4401/tcp", "http", "/", emptyMap());
@@ -339,7 +336,6 @@ public class JwtProxyProvisionerTest {
             "128mb",
             "0.02",
             "0.5",
-            "Always",
             runtimeId);
 
     ServerConfigImpl server1 = new ServerConfigImpl("4401/tcp", "http", "/", emptyMap());
@@ -382,7 +378,6 @@ public class JwtProxyProvisionerTest {
             "128mb",
             "0.02",
             "0.5",
-            "Always",
             runtimeId);
 
     ServerConfigImpl server1 = new ServerConfigImpl("4401/tcp", "http", "/", emptyMap());

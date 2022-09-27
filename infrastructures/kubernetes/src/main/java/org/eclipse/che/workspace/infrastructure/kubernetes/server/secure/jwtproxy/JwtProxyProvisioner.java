@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -57,7 +57,6 @@ public class JwtProxyProvisioner extends AbstractJwtProxyProvisioner {
       @Named("che.server.secure_exposer.jwtproxy.memory_limit") String memoryLimitBytes,
       @Named("che.server.secure_exposer.jwtproxy.cpu_request") String cpuRequestCores,
       @Named("che.server.secure_exposer.jwtproxy.cpu_limit") String cpuLimitCores,
-      @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Assisted RuntimeIdentity identity)
       throws InternalInfrastructureException {
     super(
@@ -72,7 +71,6 @@ public class JwtProxyProvisioner extends AbstractJwtProxyProvisioner {
         memoryLimitBytes,
         cpuRequestCores,
         cpuLimitCores,
-        imagePullPolicy,
         identity.getWorkspaceId(),
         true);
   }

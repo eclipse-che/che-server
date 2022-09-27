@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
@@ -66,7 +65,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
   private final KubernetesRecipeParser objectsParser;
   private final KubernetesEnvironmentProvisioner k8sEnvProvisioner;
   private final String environmentType;
-  private final String imagePullPolicy;
   private final Set<String> kubernetesBasedComponentTypes;
   private final EnvVars envVars;
   private final String devfileEndpointsExposure;
@@ -76,7 +74,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       KubernetesRecipeParser objectsParser,
       KubernetesEnvironmentProvisioner k8sEnvProvisioner,
       EnvVars envVars,
-      @Named("che.workspace.sidecar.image_pull_policy") String imagePullPolicy,
       @Named("che.infra.kubernetes.singlehost.workspace.devfile_endpoint_exposure")
           String devfileEndpointsExposure,
       @Named(KUBERNETES_BASED_COMPONENTS_KEY_NAME) Set<String> kubernetesBasedComponentTypes) {
@@ -85,7 +82,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
         k8sEnvProvisioner,
         envVars,
         KubernetesEnvironment.TYPE,
-        imagePullPolicy,
         devfileEndpointsExposure,
         kubernetesBasedComponentTypes);
   }
@@ -95,13 +91,11 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
       KubernetesEnvironmentProvisioner k8sEnvProvisioner,
       EnvVars envVars,
       String environmentType,
-      String imagePullPolicy,
       String devfileEndpointsExposure,
       Set<String> kubernetesBasedComponentTypes) {
     this.objectsParser = objectsParser;
     this.k8sEnvProvisioner = k8sEnvProvisioner;
     this.environmentType = environmentType;
-    this.imagePullPolicy = imagePullPolicy;
     this.kubernetesBasedComponentTypes = kubernetesBasedComponentTypes;
     this.envVars = envVars;
     this.devfileEndpointsExposure = devfileEndpointsExposure;
@@ -139,12 +133,6 @@ public class KubernetesComponentToWorkspaceApplier implements ComponentToWorkspa
         prepareComponentObjects(k8sComponent, componentContent);
 
     List<PodData> podsData = getPodDatas(componentObjects);
-    podsData.stream()
-        .flatMap(
-            e ->
-                Stream.concat(
-                    e.getSpec().getContainers().stream(), e.getSpec().getInitContainers().stream()))
-        .forEach(c -> c.setImagePullPolicy(imagePullPolicy));
 
     if (!k8sComponent.getEnv().isEmpty()) {
       podsData.forEach(p -> envVars.apply(p, k8sComponent.getEnv()));

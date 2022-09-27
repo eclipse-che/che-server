@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -77,7 +77,6 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
   private final ExternalServiceExposureStrategy multiHostExternalServiceExposureStrategy;
   private final CookiePathStrategy cookiePathStrategy;
   private final MultiHostCookiePathStrategy multihostCookiePathStrategy;
-  private final String imagePullPolicy;
   private int availablePort;
   private final KeyPair keyPair;
   private final boolean detectCookieAuth;
@@ -91,7 +90,6 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
    * @param cookiePathStrategy the strategy for the cookie path of the JWT auth cookies, if used
    * @param jwtProxyImage the image of JWT proxy to use
    * @param memoryLimitBytes the memory limit of the JWT proxy container
-   * @param imagePullPolicy the image pull policy for the JWT proxy container
    * @param workspaceId the workspace ID being started
    * @param detectCookieAuth whether to look for cookie auth requirements in the proxied servers or
    *     whether to ignore such requirements
@@ -108,7 +106,6 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
       String memoryLimitBytes,
       String cpuRequestCores,
       String cpuLimitCores,
-      String imagePullPolicy,
       String workspaceId,
       boolean detectCookieAuth) {
     this.keyPair = signatureKeyPair;
@@ -118,7 +115,6 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
     this.multiHostExternalServiceExposureStrategy = multiHostStrategy;
     this.cookiePathStrategy = cookiePathStrategy;
     this.multihostCookiePathStrategy = multihostCookiePathStrategy;
-    this.imagePullPolicy = imagePullPolicy;
     this.serviceName = generate(SERVER_PREFIX, SERVER_UNIQUE_PART_SIZE) + "-jwtproxy";
 
     this.availablePort = FIRST_AVAILABLE_PROXY_PORT;
@@ -307,7 +303,6 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
         .withNewSpec()
         .withContainers(
             new ContainerBuilder()
-                .withImagePullPolicy(imagePullPolicy)
                 .withName(containerName)
                 .withImage(jwtProxyImage)
                 .withVolumeMounts(

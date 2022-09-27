@@ -51,7 +51,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
@@ -107,12 +106,7 @@ public class KubernetesComponentToWorkspaceApplierTest {
     k8sBasedComponents.add("openshift"); // so that we can work with the petclinic.yaml
     applier =
         new KubernetesComponentToWorkspaceApplier(
-            k8sRecipeParser,
-            k8sEnvProvisioner,
-            envVars,
-            "Always",
-            MULTI_HOST_STRATEGY,
-            k8sBasedComponents);
+            k8sRecipeParser, k8sEnvProvisioner, envVars, MULTI_HOST_STRATEGY, k8sBasedComponents);
 
     workspaceConfig = new WorkspaceConfigImpl();
   }
@@ -191,7 +185,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
 
     // then
     KubernetesList list = toK8SList(yamlRecipeContent);
-    replaceImagePullPolicy(list, "Always");
     verify(k8sEnvProvisioner)
         .provision(
             eq(workspaceConfig), eq(KubernetesEnvironment.TYPE), eq(list.getItems()), anyMap());
@@ -210,7 +203,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
     applier.apply(workspaceConfig, component, new URLFileContentProvider(null, null));
 
     KubernetesList list = toK8SList(yamlRecipeContent);
-    replaceImagePullPolicy(list, "Always");
 
     verify(k8sEnvProvisioner)
         .provision(
@@ -486,49 +478,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
   }
 
   @Test
-  public void shouldBeAbleToOverrideImagePullPolicy() throws Exception {
-    // given
-    applier =
-        new KubernetesComponentToWorkspaceApplier(
-            k8sRecipeParser,
-            k8sEnvProvisioner,
-            envVars,
-            "Never",
-            MULTI_HOST_STRATEGY,
-            k8sBasedComponents);
-    String yamlRecipeContent = getResource("devfile/petclinic.yaml");
-    when(contentProvider.fetchContent(anyString())).thenReturn(yamlRecipeContent);
-    doReturn(toK8SList(yamlRecipeContent).getItems()).when(k8sRecipeParser).parse(anyString());
-    ComponentImpl component = new ComponentImpl();
-    component.setType(KUBERNETES_COMPONENT_TYPE);
-    component.setReference(REFERENCE_FILENAME);
-    component.setAlias(COMPONENT_NAME);
-
-    // when
-    applier.apply(workspaceConfig, component, contentProvider);
-
-    // then
-    verify(k8sEnvProvisioner).provision(any(), any(), objectsCaptor.capture(), any());
-    List<HasMetadata> list = objectsCaptor.getValue();
-    for (HasMetadata o : list) {
-      if (o instanceof Pod) {
-        Pod p = (Pod) o;
-
-        // ignore pods that don't have containers
-        if (p.getSpec() == null) {
-          continue;
-        }
-        List<Container> containers = new ArrayList<>();
-        containers.addAll(p.getSpec().getContainers());
-        containers.addAll(p.getSpec().getInitContainers());
-        for (Container con : containers) {
-          assertEquals(con.getImagePullPolicy(), "Never");
-        }
-      }
-    }
-  }
-
-  @Test
   public void shouldProvisionEndpointsToAllMachines()
       throws IOException, ValidationException, InfrastructureException, DevfileException {
     // given
@@ -731,19 +680,6 @@ public class KubernetesComponentToWorkspaceApplierTest {
 
   private KubernetesList toK8SList(String content) {
     return unmarshal(content, KubernetesList.class);
-  }
-
-  private void replaceImagePullPolicy(KubernetesList list, String imagePullPolicy) {
-    list.getItems().stream()
-        .filter(item -> item instanceof Pod)
-        .map(item -> (Pod) item)
-        .filter(pod -> pod.getSpec() != null)
-        .flatMap(
-            pod ->
-                Stream.concat(
-                    pod.getSpec().getContainers().stream(),
-                    pod.getSpec().getInitContainers().stream()))
-        .forEach(c -> c.setImagePullPolicy(imagePullPolicy));
   }
 
   private String getResource(String resourceName) throws IOException {

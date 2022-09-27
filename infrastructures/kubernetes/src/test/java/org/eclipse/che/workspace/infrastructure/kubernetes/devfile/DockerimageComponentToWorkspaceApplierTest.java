@@ -79,8 +79,7 @@ public class DockerimageComponentToWorkspaceApplierTest {
   @BeforeMethod
   public void setUp() throws Exception {
     dockerimageComponentApplier =
-        new DockerimageComponentToWorkspaceApplier(
-            "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
+        new DockerimageComponentToWorkspaceApplier(MULTI_HOST_STRATEGY, k8sEnvProvisioner);
     workspaceConfig = new WorkspaceConfigImpl();
   }
 
@@ -123,7 +122,6 @@ public class DockerimageComponentToWorkspaceApplierTest {
     Container container = podTemplate.getSpec().getContainers().get(0);
     assertEquals(container.getName(), "jdk");
     assertEquals(container.getImage(), "eclipse/ubuntu_jdk8:latest");
-    assertEquals(container.getImagePullPolicy(), "Always");
 
     assertEquals(Names.machineName(podMeta, container), "jdk");
   }
@@ -135,7 +133,7 @@ public class DockerimageComponentToWorkspaceApplierTest {
     dockerimageComponent.setImage("eclipse/ubuntu_jdk8:latest");
     dockerimageComponent.setMemoryLimit("1G");
     dockerimageComponentApplier =
-        new DockerimageComponentToWorkspaceApplier("Never", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
+        new DockerimageComponentToWorkspaceApplier(MULTI_HOST_STRATEGY, k8sEnvProvisioner);
 
     // when
     dockerimageComponentApplier.apply(workspaceConfig, dockerimageComponent, null);
@@ -164,7 +162,6 @@ public class DockerimageComponentToWorkspaceApplierTest {
 
     Container container = podTemplate.getSpec().getContainers().get(0);
     assertEquals(container.getName(), "eclipse-ubuntu_jdk8-latest");
-    assertEquals(container.getImagePullPolicy(), "Never");
   }
 
   @Test
@@ -570,11 +567,9 @@ public class DockerimageComponentToWorkspaceApplierTest {
   public void serverMustHaveRequireSubdomainWhenNonSinglehostDevfileExpose()
       throws DevfileException {
     dockerimageComponentApplier =
-        new DockerimageComponentToWorkspaceApplier(
-            "Always", MULTI_HOST_STRATEGY, k8sEnvProvisioner);
+        new DockerimageComponentToWorkspaceApplier(MULTI_HOST_STRATEGY, k8sEnvProvisioner);
 
     // given
-    EndpointImpl endpoint = new EndpointImpl("jdk-ls", 4923, emptyMap());
     ComponentImpl dockerimageComponent = new ComponentImpl();
     dockerimageComponent.setAlias("jdk");
     dockerimageComponent.setType(DOCKERIMAGE_COMPONENT_TYPE);
@@ -606,11 +601,9 @@ public class DockerimageComponentToWorkspaceApplierTest {
   @Test
   public void serverCantHaveRequireSubdomainWhenSinglehostDevfileExpose() throws DevfileException {
     dockerimageComponentApplier =
-        new DockerimageComponentToWorkspaceApplier(
-            "Always", SINGLE_HOST_STRATEGY, k8sEnvProvisioner);
+        new DockerimageComponentToWorkspaceApplier(SINGLE_HOST_STRATEGY, k8sEnvProvisioner);
 
     // given
-    EndpointImpl endpoint = new EndpointImpl("jdk-ls", 4923, emptyMap());
     ComponentImpl dockerimageComponent = new ComponentImpl();
     dockerimageComponent.setAlias("jdk");
     dockerimageComponent.setType(DOCKERIMAGE_COMPONENT_TYPE);

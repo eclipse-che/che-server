@@ -26,8 +26,6 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.subject.Subject;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
@@ -41,18 +39,21 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class GithubURLParserTest {
 
-  @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
-
-  /** Instance of component that will be tested. */
-  @InjectMocks private GithubURLParser githubUrlParser;
-
-  @InjectMocks
-  private PersonalAccessTokenManager personalAccessTokenManager =
+  private final PersonalAccessTokenManager personalAccessTokenManager =
       mock(PersonalAccessTokenManager.class);
 
-  @InjectMocks private GithubApiClient githubApiClient = mock(GithubApiClient.class);
+  private final GithubApiClient githubApiClient = mock(GithubApiClient.class);
 
-  /** Check invalid url (not a github one) */
+  /** Instance of component that will be tested. */
+  private final GithubURLParser githubUrlParser =
+      new GithubURLParser(
+          personalAccessTokenManager,
+          mock(DevfileFilenamesProvider.class),
+          githubApiClient,
+          null,
+          false);
+
+  /** Check invalid url (not a GitHub one) */
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void invalidUrl() throws ApiException {
     githubUrlParser.parse("http://www.eclipse.org");

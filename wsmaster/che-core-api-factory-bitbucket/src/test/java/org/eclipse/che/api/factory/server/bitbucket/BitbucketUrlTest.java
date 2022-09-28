@@ -58,12 +58,9 @@ public class BitbucketUrlTest {
     assertEquals(bitbucketUrl.devfileFileLocations().size(), 2);
     Iterator<DevfileLocation> iterator = bitbucketUrl.devfileFileLocations().iterator();
     assertEquals(
-        iterator.next().location(),
-        "https://api.bitbucket.org/2.0/repositories/eclipse/che/src/HEAD/devfile.yaml");
+        iterator.next().location(), "https://bitbucket.org/eclipse/che/raw/HEAD/devfile.yaml");
 
-    assertEquals(
-        iterator.next().location(),
-        "https://api.bitbucket.org/2.0/repositories/eclipse/che/src/HEAD/foo.bar");
+    assertEquals(iterator.next().location(), "https://bitbucket.org/eclipse/che/raw/HEAD/foo.bar");
   }
 
   /** Check the original repository */

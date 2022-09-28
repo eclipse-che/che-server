@@ -183,7 +183,7 @@ public class BitbucketFactoryParametersResolverTest {
     verify(urlFactoryBuilder, never()).buildDefaultDevfile(eq("che"));
     assertEquals(
         factoryUrlArgumentCaptor.getValue().devfileFileLocations().iterator().next().location(),
-        "https://api.bitbucket.org/2.0/repositories/eclipse/che/src/HEAD/devfile.yaml");
+        "https://bitbucket.org/eclipse/che/raw/HEAD/devfile.yaml");
   }
 
   @Test

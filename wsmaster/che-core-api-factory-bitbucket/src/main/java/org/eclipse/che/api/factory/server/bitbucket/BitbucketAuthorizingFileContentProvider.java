@@ -38,10 +38,9 @@ class BitbucketAuthorizingFileContentProvider extends AuthorizingFileContentProv
   protected boolean isPublicRepository(BitbucketUrl remoteFactoryUrl) {
     try {
       urlFetcher.fetch(
-          BitbucketApiClient.BITBUCKET_API_SERVER
-              + "repos"
+          remoteFactoryUrl.getHostName()
               + '/'
-              + remoteFactoryUrl.getUsername()
+              + remoteFactoryUrl.getWorkspaceId()
               + '/'
               + remoteFactoryUrl.getRepository());
       return true;

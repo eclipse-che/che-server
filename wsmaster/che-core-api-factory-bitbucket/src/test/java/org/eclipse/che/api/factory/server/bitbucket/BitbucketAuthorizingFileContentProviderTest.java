@@ -48,8 +48,7 @@ public class BitbucketAuthorizingFileContentProviderTest {
     fileContentProvider.fetchContent("devfile.yaml");
     verify(urlFetcher)
         .fetch(
-            eq("https://api.bitbucket.org/2.0/repositories/eclipse/che/src/HEAD/devfile.yaml"),
-            eq("Bearer my-token"));
+            eq("https://bitbucket.org/eclipse/che/raw/HEAD/devfile.yaml"), eq("Bearer my-token"));
   }
 
   @Test
@@ -70,11 +69,11 @@ public class BitbucketAuthorizingFileContentProviderTest {
   @Test(expectedExceptions = FileNotFoundException.class)
   public void shouldThrowNotFoundForPublicRepos() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    String url = "https://api.bitbucket.org/2.0/repositories/foo/bar/devfile.yaml";
+    String url = "https://bitbucket.org/foo/bar/raw/HEAD/devfile.yaml";
     when(personalAccessTokenManager.fetchAndSave(any(), anyString()))
         .thenThrow(UnknownScmProviderException.class);
     when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
-    when(urlFetcher.fetch(eq("https://api.bitbucket.org/2.0/repos/eclipse/che"))).thenReturn("OK");
+    when(urlFetcher.fetch(eq("https://bitbucket.org/eclipse/che"))).thenReturn("OK");
     BitbucketUrl bitbucketUrl =
         new BitbucketUrl().withUsername("eclipse").withWorkspaceId("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =

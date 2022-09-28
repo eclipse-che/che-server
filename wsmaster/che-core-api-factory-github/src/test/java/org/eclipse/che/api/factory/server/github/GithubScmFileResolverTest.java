@@ -44,7 +44,7 @@ public class GithubScmFileResolverTest {
   @BeforeMethod
   protected void init() {
     githubURLParser =
-        new GithubURLParser(personalAccessTokenManager, devfileFilenamesProvider, null);
+        new GithubURLParser(personalAccessTokenManager, devfileFilenamesProvider, null, false);
     assertNotNull(this.githubURLParser);
     githubScmFileResolver =
         new GithubScmFileResolver(

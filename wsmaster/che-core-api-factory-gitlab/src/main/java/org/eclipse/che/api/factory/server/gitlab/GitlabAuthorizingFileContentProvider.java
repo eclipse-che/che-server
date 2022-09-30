@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
+import java.io.IOException;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
@@ -23,5 +24,20 @@ class GitlabAuthorizingFileContentProvider extends AuthorizingFileContentProvide
       URLFetcher urlFetcher,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(gitlabUrl, urlFetcher, personalAccessTokenManager);
+  }
+
+  @Override
+  protected boolean isPublicRepository(GitlabUrl remoteFactoryUrl) {
+    try {
+      urlFetcher.fetch(
+          remoteFactoryUrl.getHostName()
+              + '/'
+              + remoteFactoryUrl.getUsername()
+              + '/'
+              + remoteFactoryUrl.getProject());
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
   }
 }

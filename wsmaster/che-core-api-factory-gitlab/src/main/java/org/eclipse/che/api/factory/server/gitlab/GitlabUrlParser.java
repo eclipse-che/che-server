@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.gitlab;
 
 import static java.lang.String.format;
+import static java.util.regex.Pattern.compile;
 
 import com.google.common.base.Splitter;
 import jakarta.validation.constraints.NotNull;
@@ -52,19 +53,21 @@ public class GitlabUrlParser {
 
   @Inject
   public GitlabUrlParser(
-      @Nullable @Named("che.integration.gitlab.server_endpoints") String bitbucketEndpoints,
+      @Nullable @Named("che.integration.gitlab.server_endpoints") String gitlabEndpoints,
       DevfileFilenamesProvider devfileFilenamesProvider,
       PersonalAccessTokenManager personalAccessTokenManager) {
     this.devfileFilenamesProvider = devfileFilenamesProvider;
     this.personalAccessTokenManager = personalAccessTokenManager;
-    if (bitbucketEndpoints != null) {
-      for (String bitbucketEndpoint : Splitter.on(",").split(bitbucketEndpoints)) {
-        String trimmedEndpoint = StringUtils.trimEnd(bitbucketEndpoint, '/');
+    if (gitlabEndpoints != null) {
+      for (String gitlabEndpoint : Splitter.on(",").split(gitlabEndpoints)) {
+        String trimmedEndpoint = StringUtils.trimEnd(gitlabEndpoint, '/');
         for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
-          this.gitlabUrlPatterns.add(
-              Pattern.compile(format(gitlabUrlPatternTemplate, trimmedEndpoint)));
+          gitlabUrlPatterns.add(compile(format(gitlabUrlPatternTemplate, trimmedEndpoint)));
         }
       }
+    } else {
+      gitlabUrlPatternTemplates.forEach(
+          t -> gitlabUrlPatterns.add(compile(format(t, "https://gitlab.com"))));
     }
   }
 
@@ -103,7 +106,7 @@ public class GitlabUrlParser {
     if (serverUrlOptional.isPresent()) {
       String serverUrl = serverUrlOptional.get();
       return gitlabUrlPatternTemplates.stream()
-          .map(t -> Pattern.compile(format(t, serverUrl)).matcher(url))
+          .map(t -> compile(format(t, serverUrl)).matcher(url))
           .filter(Matcher::matches)
           .findAny();
     }
@@ -111,7 +114,7 @@ public class GitlabUrlParser {
   }
 
   private Optional<String> getServerUrl(String repositoryUrl) {
-    Matcher serverUrlMatcher = Pattern.compile("[^/|:]/").matcher(repositoryUrl);
+    Matcher serverUrlMatcher = compile("[^/|:]/").matcher(repositoryUrl);
     if (serverUrlMatcher.find()) {
       return Optional.of(
           repositoryUrl.substring(0, repositoryUrl.indexOf(serverUrlMatcher.group()) + 1));

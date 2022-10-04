@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.provision;
 
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
@@ -40,31 +39,12 @@ public class NodeSelectorProvisionerTest {
   }
 
   @Test
-  public void shouldAddNodeSelectorIntoAllPods() throws Exception {
-    // given
-    k8sEnv.addPod(createPod("pod"));
-    k8sEnv.addPod(createPod("pod2"));
-
-    provisioner = new NodeSelectorProvisioner("a=b,foo=bar");
-
-    // when
-    provisioner.provision(k8sEnv, runtimeId);
-
-    // then
-    for (Pod pod : k8sEnv.getPodsCopy().values()) {
-      assertEquals(pod.getSpec().getNodeSelector().size(), 2);
-      assertEquals(pod.getSpec().getNodeSelector().get("a"), "b");
-      assertEquals(pod.getSpec().getNodeSelector().get("foo"), "bar");
-    }
-  }
-
-  @Test
   public void shouldOmitEmptySelector() throws Exception {
     // given
     k8sEnv.addPod(createPod("pod"));
     k8sEnv.addPod(createPod("pod2"));
 
-    provisioner = new NodeSelectorProvisioner(null);
+    provisioner = new NodeSelectorProvisioner();
 
     // when
     provisioner.provision(k8sEnv, runtimeId);

@@ -297,8 +297,6 @@ public class JpaEntitiesCascadeRemovalTest {
                                         new ResourceImpl(
                                             RamResourceType.ID, 1024, RamResourceType.UNIT)))));
 
-                bindConstant().annotatedWith(Names.named("che.workspace.probe_pool_size")).to(1);
-
                 // setup bindings for the devfile that would otherwise be read from the config
                 bindConstant()
                     .annotatedWith(Names.named("che.workspace.devfile.default_editor"))

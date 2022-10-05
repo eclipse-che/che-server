@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.workspace.server.hc.probe.ProbeResult.ProbeStatus;
@@ -52,13 +51,11 @@ public class ProbeScheduler {
   private final Map<String, List<ScheduledFuture>> probesFutures;
 
   @Inject
-  public ProbeScheduler(
-      @Named("che.workspace.probe_pool_size") int probeSchedulerPoolSize,
-      ExecutorServiceWrapper executorServiceWrapper) {
+  public ProbeScheduler(ExecutorServiceWrapper executorServiceWrapper) {
     probesExecutor =
         executorServiceWrapper.wrap(
             new ScheduledThreadPoolExecutor(
-                probeSchedulerPoolSize,
+                10,
                 new ThreadFactoryBuilder()
                     .setDaemon(true)
                     .setNameFormat("ServerProbes-%s")

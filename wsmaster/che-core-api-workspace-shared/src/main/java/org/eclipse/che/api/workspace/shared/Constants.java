@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -35,8 +35,6 @@ public final class Constants {
 
   public static final String WORKSPACE_STOPPED_BY = "stopped_by";
   public static final String WORKSPACE_STOP_REASON = "stop_reason";
-
-  public static final String CHE_WORKSPACE_AUTO_START = "che.workspace.auto_start";
 
   /**
    * The configuration property that defines available values for storage types that clients like

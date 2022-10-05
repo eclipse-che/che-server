@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,6 @@ import static org.eclipse.che.api.workspace.server.DtoConverter.asDto;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_DEVWORKSPACES_ENABLED_PROPERTY;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_FACTORY_DEFAULT_EDITOR_PROPERTY;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_FACTORY_DEFAULT_PLUGINS_PROPERTY;
-import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_AUTO_START;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_STORAGE_AVAILABLE_TYPES;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_STORAGE_PREFERRED_TYPE;
 import static org.eclipse.che.api.workspace.shared.Constants.DEBUG_WORKSPACE_START;
@@ -175,7 +174,6 @@ public class WorkspaceServiceTest {
     service =
         new WorkspaceService(
             API_ENDPOINT,
-            true,
             wsManager,
             machineTokenProvider,
             linksGenerator,
@@ -848,7 +846,6 @@ public class WorkspaceServiceTest {
         settings,
         new ImmutableMap.Builder<>()
             .put(SUPPORTED_RECIPE_TYPES, "dockerimage,dockerfile")
-            .put(CHE_WORKSPACE_AUTO_START, "true")
             .put("cheWorkspacePluginRegistryUrl", CHE_WORKSPACE_PLUGIN_REGISTRY_URL)
             .put(
                 "cheWorkspacePluginRegistryInternalUrl", CHE_WORKSPACE_PLUGIN_REGISTRY_INTERNAL_URL)

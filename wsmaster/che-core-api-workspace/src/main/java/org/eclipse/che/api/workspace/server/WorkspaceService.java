@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -21,7 +21,6 @@ import static org.eclipse.che.api.workspace.server.WorkspaceKeyValidator.validat
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_DEVWORKSPACES_ENABLED_PROPERTY;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_FACTORY_DEFAULT_EDITOR_PROPERTY;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_FACTORY_DEFAULT_PLUGINS_PROPERTY;
-import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_AUTO_START;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_DEVFILE_REGISTRY_INTERNAL_URL_PROPERTY;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_DEVFILE_REGISTRY_URL_PROPERTY;
 import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_PLUGIN_REGISTRY_INTERNAL_URL_PROPERTY;
@@ -110,7 +109,6 @@ public class WorkspaceService extends Service {
   private final String devfileRegistryUrl;
   private final String devfileRegistryInternalUrl;
   private final String apiEndpoint;
-  private final boolean cheWorkspaceAutoStart;
   private final boolean cheDevWorkspacesEnabled;
   private final FileContentProvider devfileContentProvider;
   private final Long logLimitBytes;
@@ -122,7 +120,6 @@ public class WorkspaceService extends Service {
   @Inject
   public WorkspaceService(
       @Named("che.api") String apiEndpoint,
-      @Named(CHE_WORKSPACE_AUTO_START) boolean cheWorkspaceAutoStart,
       WorkspaceManager workspaceManager,
       MachineTokenProvider machineTokenProvider,
       WorkspaceLinksGenerator linksGenerator,
@@ -140,7 +137,6 @@ public class WorkspaceService extends Service {
       @Named(CHE_FACTORY_DEFAULT_PLUGINS_PROPERTY) @Nullable String defaultPlugins,
       @Named(CHE_DEVWORKSPACES_ENABLED_PROPERTY) boolean cheDevWorkspacesEnabled) {
     this.apiEndpoint = apiEndpoint;
-    this.cheWorkspaceAutoStart = cheWorkspaceAutoStart;
     this.workspaceManager = workspaceManager;
     this.machineTokenProvider = machineTokenProvider;
     this.linksGenerator = linksGenerator;
@@ -469,7 +465,6 @@ public class WorkspaceService extends Service {
     settings.put(
         Constants.SUPPORTED_RECIPE_TYPES,
         Joiner.on(",").join(workspaceManager.getSupportedRecipes()));
-    settings.put(CHE_WORKSPACE_AUTO_START, Boolean.toString(cheWorkspaceAutoStart));
 
     if (pluginRegistryUrl != null) {
       settings.put("cheWorkspacePluginRegistryUrl", pluginRegistryUrl);

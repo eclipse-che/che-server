@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -46,8 +46,6 @@ public class ServersChecker {
   private final String machineName;
   private final Map<String, ? extends Server> servers;
   private final MachineTokenProvider machineTokenProvider;
-  private final int serverPingSuccessThreshold;
-  private final long serverPingIntervalMillis;
   private final Set<String> livenessProbes;
 
   private Timer timer;
@@ -66,16 +64,12 @@ public class ServersChecker {
       @Assisted String machineName,
       @Assisted Map<String, ? extends Server> servers,
       MachineTokenProvider machineTokenProvider,
-      @Named("che.workspace.server.ping_success_threshold") int serverPingSuccessThreshold,
-      @Named("che.workspace.server.ping_interval_milliseconds") long serverPingInterval,
       @Named("che.workspace.server.liveness_probes") String[] livenessProbes) {
     this.runtimeIdentity = runtimeIdentity;
     this.machineName = machineName;
     this.servers = servers;
     this.timer = new Timer("ServersChecker", true);
     this.machineTokenProvider = machineTokenProvider;
-    this.serverPingSuccessThreshold = serverPingSuccessThreshold;
-    this.serverPingIntervalMillis = serverPingInterval;
     this.livenessProbes =
         Arrays.stream(livenessProbes).map(String::trim).collect(Collectors.toSet());
   }
@@ -213,9 +207,7 @@ public class ServersChecker {
           url,
           machineName,
           serverRef,
-          serverPingIntervalMillis,
           TimeUnit.SECONDS.toMillis(180),
-          serverPingSuccessThreshold,
           TimeUnit.MILLISECONDS,
           timer,
           token);
@@ -225,9 +217,7 @@ public class ServersChecker {
         url,
         machineName,
         serverRef,
-        serverPingIntervalMillis,
         TimeUnit.SECONDS.toMillis(180),
-        serverPingSuccessThreshold,
         TimeUnit.MILLISECONDS,
         timer,
         token);

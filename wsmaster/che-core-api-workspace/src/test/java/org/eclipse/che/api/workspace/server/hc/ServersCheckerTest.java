@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -55,8 +55,6 @@ public class ServersCheckerTest {
   private static final String MACHINE_TOKEN = "machineToken";
   private static final String WORKSPACE_ID = "ws123";
   private static final String USER_ID = "0000-0000-0007";
-  private static final int SERVER_PING_SUCCESS_THRESHOLD = 1;
-  private static final long SERVER_PING_INTERVAL_MILLIS = 3000;
 
   @Mock private Consumer<String> readinessHandler;
   @Mock private MachineTokenProvider machineTokenProvider;
@@ -85,13 +83,7 @@ public class ServersCheckerTest {
     checker =
         spy(
             new ServersChecker(
-                runtimeIdentity,
-                MACHINE_NAME,
-                servers,
-                machineTokenProvider,
-                SERVER_PING_SUCCESS_THRESHOLD,
-                SERVER_PING_INTERVAL_MILLIS,
-                CONFIGURED_SERVERS));
+                runtimeIdentity, MACHINE_NAME, servers, machineTokenProvider, CONFIGURED_SERVERS));
     when(checker.doCreateChecker(any(URL.class), anyString(), anyString()))
         .thenReturn(connectionChecker);
     when(machineTokenProvider.getToken(anyString(), anyString())).thenReturn(MACHINE_TOKEN);

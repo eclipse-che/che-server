@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -40,7 +40,6 @@ public class WorkspaceProbesFactoryTest {
   private static final String WORKSPACE_ID = "wsId";
   private static final String MACHINE_NAME = "machine1";
   private static final String TOKEN = "token1";
-  private static final int SERVER_PING_SUCCESS_THRESHOLD = 1;
   private static final ServerImpl SERVER = new ServerImpl().withUrl("https://localhost:4040/path1");
 
   private static final RuntimeIdentity IDENTITY =
@@ -54,7 +53,7 @@ public class WorkspaceProbesFactoryTest {
   public void setUp() throws Exception {
     lenient().when(tokenProvider.getToken(IDENTITY.getOwnerId(), WORKSPACE_ID)).thenReturn(TOKEN);
 
-    probesFactory = new WorkspaceProbesFactory(tokenProvider, SERVER_PING_SUCCESS_THRESHOLD);
+    probesFactory = new WorkspaceProbesFactory(tokenProvider);
   }
 
   @Test

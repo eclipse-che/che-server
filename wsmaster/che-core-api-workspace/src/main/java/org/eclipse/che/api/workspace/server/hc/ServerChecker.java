@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,7 +29,6 @@ public abstract class ServerChecker {
   private final String serverRef;
   private final long period;
   private final long deadLine;
-  private final int successThreshold;
   private final CompletableFuture<String> reportFuture;
   private final Timer timer;
 
@@ -39,25 +38,17 @@ public abstract class ServerChecker {
    * @param machineName name of machine to whom the server belongs
    * @param serverRef reference of the server
    * @param period period between unsuccessful availability checks, measured in {@code timeUnit}
-   * @param successThreshold number of sequential successful pings to server after which it is
    *     treated as available
    * @param timeout max time allowed for the server availability checks to last before server is
    *     treated unavailable, measured in {@code timeUnit}
    * @param timeUnit measurement unit for {@code period} and {@code timeout} parameters
    */
   protected ServerChecker(
-      String machineName,
-      String serverRef,
-      long period,
-      long timeout,
-      int successThreshold,
-      TimeUnit timeUnit,
-      Timer timer) {
+      String machineName, String serverRef, long timeout, TimeUnit timeUnit, Timer timer) {
     this.machineName = machineName;
     this.serverRef = serverRef;
-    this.successThreshold = successThreshold;
     this.timer = timer;
-    this.period = TimeUnit.MILLISECONDS.convert(period, timeUnit);
+    this.period = TimeUnit.MILLISECONDS.convert(1, timeUnit);
     this.reportFuture = new CompletableFuture<>();
     this.deadLine = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
   }
@@ -123,7 +114,7 @@ public abstract class ServerChecker {
                     "Server '%s' in container '%s' not available.", serverRef, machineName)));
       } else if (isAvailable()) {
         currentNumberOfSequentialSuccessfulPings++;
-        if (currentNumberOfSequentialSuccessfulPings == successThreshold) {
+        if (currentNumberOfSequentialSuccessfulPings == 1) {
           reportFuture.complete(serverRef);
         } else {
           timer.schedule(new ServerCheckingTask(currentNumberOfSequentialSuccessfulPings), period);

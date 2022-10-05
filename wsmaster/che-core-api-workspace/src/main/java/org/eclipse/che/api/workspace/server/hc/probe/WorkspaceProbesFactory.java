@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.inject.Inject;
-import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.Runtime;
 import org.eclipse.che.api.core.model.workspace.runtime.Machine;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
@@ -44,18 +43,15 @@ public class WorkspaceProbesFactory {
   private final Map<String, HttpProbeConfigFactory> probeConfigFactories;
 
   @Inject
-  public WorkspaceProbesFactory(
-      MachineTokenProvider machineTokenProvider,
-      @Named("che.workspace.server.ping_success_threshold") int serverPingSuccessThreshold) {
+  public WorkspaceProbesFactory(MachineTokenProvider machineTokenProvider) {
     probeConfigFactories =
         ImmutableMap.of(
             Constants.SERVER_WS_AGENT_HTTP_REFERENCE,
-            new WsAgentServerLivenessProbeConfigFactory(
-                machineTokenProvider, serverPingSuccessThreshold),
+            new WsAgentServerLivenessProbeConfigFactory(machineTokenProvider, 1),
             Constants.SERVER_EXEC_AGENT_HTTP_REFERENCE,
-            new ExecServerLivenessProbeConfigFactory(serverPingSuccessThreshold),
+            new ExecServerLivenessProbeConfigFactory(1),
             Constants.SERVER_TERMINAL_REFERENCE,
-            new TerminalServerLivenessProbeConfigFactory(serverPingSuccessThreshold));
+            new TerminalServerLivenessProbeConfigFactory(1));
   }
 
   /**

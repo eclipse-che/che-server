@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,11 +14,9 @@ package org.eclipse.che.workspace.infrastructure.openshift.project;
 import static java.lang.String.format;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.ProjectRequestBuilder;
-import io.fabric8.openshift.api.model.RoleBindingBuilder;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.util.Map;
@@ -116,9 +114,7 @@ public class OpenShiftProject extends KubernetesNamespace {
     String workspaceId = getWorkspaceId();
     String projectName = getName();
 
-    KubernetesClient kubeClient = clientFactory.create(workspaceId);
-    OpenShiftClient osClient = clientFactory.createOC(workspaceId);
-
+    OpenShiftClient osClient = cheServerOpenshiftClientFactory.createOC();
     Project project = get(projectName, osClient);
 
     if (project == null) {
@@ -130,27 +126,11 @@ public class OpenShiftProject extends KubernetesNamespace {
       }
 
       if (initWithCheServerSa) {
-        OpenShiftClient openshiftClient = cheServerOpenshiftClientFactory.createOC();
-        create(projectName, openshiftClient);
-        waitDefaultServiceAccount(projectName, openshiftClient);
-        openshiftClient
-            .roleBindings()
-            .inNamespace(projectName)
-            .createOrReplace(
-                new RoleBindingBuilder()
-                    .withNewMetadata()
-                    .withName("admin")
-                    .endMetadata()
-                    .addToUserNames(osClient.currentUser().getMetadata().getName())
-                    .withNewRoleRef()
-                    .withApiVersion("rbac.authorization.k8s.io")
-                    .withKind("RoleBinding")
-                    .withName("admin")
-                    .endRoleRef()
-                    .build());
-      } else {
         create(projectName, osClient);
-        waitDefaultServiceAccount(projectName, kubeClient);
+        waitDefaultServiceAccount(projectName, osClient);
+      } else {
+        create(projectName, clientFactory.createOC(workspaceId));
+        waitDefaultServiceAccount(projectName, clientFactory.create(workspaceId));
       }
     }
     label(osClient.namespaces().withName(projectName).get(), labels);
@@ -167,7 +147,7 @@ public class OpenShiftProject extends KubernetesNamespace {
     String workspaceId = getWorkspaceId();
     String projectName = getName();
 
-    OpenShiftClient osClient = clientFactory.createOC(workspaceId);
+    OpenShiftClient osClient = cheServerOpenshiftClientFactory.createOC(workspaceId);
 
     try {
       delete(projectName, osClient);

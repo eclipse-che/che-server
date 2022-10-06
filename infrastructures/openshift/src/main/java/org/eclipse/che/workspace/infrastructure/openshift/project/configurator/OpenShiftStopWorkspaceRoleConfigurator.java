@@ -13,23 +13,18 @@ package org.eclipse.che.workspace.infrastructure.openshift.project.configurator;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
-import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
+import io.fabric8.kubernetes.api.model.rbac.*;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.openshift.api.model.PolicyRuleBuilder;
-import io.fabric8.openshift.api.model.Role;
-import io.fabric8.openshift.api.model.RoleBinding;
-import io.fabric8.openshift.api.model.RoleBindingBuilder;
-import io.fabric8.openshift.api.model.RoleBuilder;
-import io.fabric8.openshift.client.OpenShiftClient;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.CheInstallationLocation;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +37,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class OpenShiftStopWorkspaceRoleConfigurator implements NamespaceConfigurator {
 
-  private final OpenShiftClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheClientFactory;
   private final String installationLocation;
   private final boolean stopWorkspaceRoleEnabled;
   private final String oAuthIdentityProvider;
@@ -52,12 +47,12 @@ public class OpenShiftStopWorkspaceRoleConfigurator implements NamespaceConfigur
 
   @Inject
   public OpenShiftStopWorkspaceRoleConfigurator(
-      OpenShiftClientFactory clientFactory,
+      CheServerKubernetesClientFactory cheClientFactory,
       CheInstallationLocation installationLocation,
       @Named("che.workspace.stop.role.enabled") boolean stopWorkspaceRoleEnabled,
       @Nullable @Named("che.infra.openshift.oauth_identity_provider") String oAuthIdentityProvider)
       throws InfrastructureException {
-    this.clientFactory = clientFactory;
+    this.cheClientFactory = cheClientFactory;
     this.installationLocation = installationLocation.getInstallationLocationNamespace();
     this.stopWorkspaceRoleEnabled = stopWorkspaceRoleEnabled;
     this.oAuthIdentityProvider = oAuthIdentityProvider;
@@ -72,19 +67,20 @@ public class OpenShiftStopWorkspaceRoleConfigurator implements NamespaceConfigur
 
     try {
       if (stopWorkspaceRoleEnabled && installationLocation != null) {
-        OpenShiftClient osClient = clientFactory.createOC();
+        KubernetesClient client = cheClientFactory.create();
         String stopWorkspacesRoleName = "workspace-stop";
-        if (osClient.roles().inNamespace(projectName).withName(stopWorkspacesRoleName).get()
-            == null) {
-          osClient
-              .roles()
-              .inNamespace(projectName)
-              .createOrReplace(createStopWorkspacesRole(stopWorkspacesRoleName));
-        }
-        osClient
+
+        client
+            .rbac()
+            .roles()
+            .inNamespace(projectName)
+            .createOrReplace(createStopWorkspacesRole(stopWorkspacesRoleName));
+
+        client
+            .rbac()
             .roleBindings()
             .inNamespace(projectName)
-            .createOrReplace(createStopWorkspacesRoleBinding(projectName));
+            .createOrReplace(createStopWorkspacesRoleBinding(stopWorkspacesRoleName));
       }
     } catch (KubernetesClientException e) {
       LOG.warn(
@@ -124,18 +120,17 @@ public class OpenShiftStopWorkspaceRoleConfigurator implements NamespaceConfigur
         .build();
   }
 
-  protected RoleBinding createStopWorkspacesRoleBinding(String projectName) {
+  protected RoleBinding createStopWorkspacesRoleBinding(String name) {
     return new RoleBindingBuilder()
         .withNewMetadata()
-        .withName("che-workspace-stop")
-        .withNamespace(projectName)
+        .withName(name)
         .endMetadata()
         .withNewRoleRef()
-        .withName("workspace-stop")
-        .withNamespace(projectName)
+        .withKind("Role")
+        .withName(name)
         .endRoleRef()
         .withSubjects(
-            new ObjectReferenceBuilder()
+            new SubjectBuilder()
                 .withKind("ServiceAccount")
                 .withName("che")
                 .withNamespace(installationLocation)

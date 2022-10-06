@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,22 +20,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
-import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
+import io.fabric8.kubernetes.api.model.rbac.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.RbacAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.openshift.api.model.PolicyRuleBuilder;
-import io.fabric8.openshift.api.model.Role;
-import io.fabric8.openshift.api.model.RoleBinding;
-import io.fabric8.openshift.api.model.RoleBindingBuilder;
-import io.fabric8.openshift.api.model.RoleBindingList;
-import io.fabric8.openshift.api.model.RoleBuilder;
-import io.fabric8.openshift.api.model.RoleList;
-import io.fabric8.openshift.client.OpenShiftClient;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.CheInstallationLocation;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -54,9 +47,8 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
   @Mock private CheInstallationLocation cheInstallationLocation;
   private OpenShiftStopWorkspaceRoleConfigurator stopWorkspaceRoleProvisioner;
 
-  @Mock private OpenShiftClientFactory clientFactory;
-  @Mock private OpenShiftClient osClient;
-  @Mock private KubernetesClient kubernetesClient;
+  @Mock private CheServerKubernetesClientFactory cheClientFactory;
+  @Mock private KubernetesClient client;
 
   @Mock private MixedOperation<Role, RoleList, Resource<Role>> mixedRoleOperation;
 
@@ -74,6 +66,7 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
   @Mock private Resource<RoleBinding> roleBindingResource;
   @Mock private Role mockRole;
   @Mock private RoleBinding mockRoleBinding;
+  @Mock private RbacAPIGroupDSL rbacAPIGroupDSL;
 
   private final Role expectedRole =
       new RoleBuilder()
@@ -106,15 +99,14 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
   private final RoleBinding expectedRoleBinding =
       new RoleBindingBuilder()
           .withNewMetadata()
-          .withName("che-workspace-stop")
-          .withNamespace("developer-che")
+          .withName("workspace-stop")
           .endMetadata()
           .withNewRoleRef()
+          .withKind("Role")
           .withName("workspace-stop")
-          .withNamespace("developer-che")
           .endRoleRef()
           .withSubjects(
-              new ObjectReferenceBuilder()
+              new SubjectBuilder()
                   .withKind("ServiceAccount")
                   .withName("che")
                   .withNamespace("che")
@@ -126,10 +118,11 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
     lenient().when(cheInstallationLocation.getInstallationLocationNamespace()).thenReturn("che");
     stopWorkspaceRoleProvisioner =
         new OpenShiftStopWorkspaceRoleConfigurator(
-            clientFactory, cheInstallationLocation, true, "yes");
-    lenient().when(clientFactory.createOC()).thenReturn(osClient);
-    lenient().when(osClient.roles()).thenReturn(mixedRoleOperation);
-    lenient().when(osClient.roleBindings()).thenReturn(mixedRoleBindingOperation);
+            cheClientFactory, cheInstallationLocation, true, "yes");
+    lenient().when(cheClientFactory.create()).thenReturn(client);
+    lenient().when(client.rbac()).thenReturn(rbacAPIGroupDSL);
+    lenient().when(rbacAPIGroupDSL.roles()).thenReturn(mixedRoleOperation);
+    lenient().when(rbacAPIGroupDSL.roleBindings()).thenReturn(mixedRoleBindingOperation);
     lenient()
         .when(mixedRoleOperation.inNamespace(anyString()))
         .thenReturn(nonNamespaceRoleOperation);
@@ -156,7 +149,7 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
   @Test
   public void shouldCreateRoleBinding() throws InfrastructureException {
     assertEquals(
-        stopWorkspaceRoleProvisioner.createStopWorkspacesRoleBinding("developer-che"),
+        stopWorkspaceRoleProvisioner.createStopWorkspacesRoleBinding("workspace-stop"),
         expectedRoleBinding);
   }
 
@@ -164,24 +157,8 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
   public void shouldCreateRoleAndRoleBindingWhenRoleDoesNotYetExist()
       throws InfrastructureException {
     stopWorkspaceRoleProvisioner.configure(null, "developer-che");
-    verify(osClient, times(2)).roles();
-    verify(osClient.roles(), times(2)).inNamespace("developer-che");
-    verify(osClient.roles().inNamespace("developer-che")).withName("workspace-stop");
-    verify(osClient.roles().inNamespace("developer-che")).createOrReplace(expectedRole);
-    verify(osClient).roleBindings();
-    verify(osClient.roleBindings()).inNamespace("developer-che");
-    verify(osClient.roleBindings().inNamespace("developer-che"))
-        .createOrReplace(expectedRoleBinding);
-  }
-
-  @Test
-  public void shouldCreateRoleBindingWhenRoleAlreadyExists() throws InfrastructureException {
-    lenient().when(roleResource.get()).thenReturn(expectedRole);
-    stopWorkspaceRoleProvisioner.configure(null, "developer-che");
-    verify(osClient, times(1)).roles();
-    verify(osClient).roleBindings();
-    verify(osClient.roleBindings()).inNamespace("developer-che");
-    verify(osClient.roleBindings().inNamespace("developer-che"))
+    verify(client.rbac().roles().inNamespace("developer-che")).createOrReplace(expectedRole);
+    verify(client.rbac().roleBindings().inNamespace("developer-che"))
         .createOrReplace(expectedRoleBinding);
   }
 
@@ -190,11 +167,9 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
       throws InfrastructureException {
     OpenShiftStopWorkspaceRoleConfigurator disabledStopWorkspaceRoleProvisioner =
         new OpenShiftStopWorkspaceRoleConfigurator(
-            clientFactory, cheInstallationLocation, false, "yes");
+            cheClientFactory, cheInstallationLocation, false, "yes");
     disabledStopWorkspaceRoleProvisioner.configure(null, "developer-che");
-    verify(osClient, never()).roles();
-    verify(osClient, never()).roleBindings();
-    verify(osClient.roleBindings(), never()).inNamespace("developer-che");
+    verify(client, never()).rbac();
   }
 
   @Test
@@ -204,11 +179,9 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
     OpenShiftStopWorkspaceRoleConfigurator
         stopWorkspaceRoleProvisionerWithoutValidInstallationLocation =
             new OpenShiftStopWorkspaceRoleConfigurator(
-                clientFactory, cheInstallationLocation, true, "yes");
+                cheClientFactory, cheInstallationLocation, true, "yes");
     stopWorkspaceRoleProvisionerWithoutValidInstallationLocation.configure(null, "developer-che");
-    verify(osClient, never()).roles();
-    verify(osClient, never()).roleBindings();
-    verify(osClient.roleBindings(), never()).inNamespace("developer-che");
+    verify(client, never()).rbac();
   }
 
   @Test
@@ -217,10 +190,10 @@ public class OpenShiftStopWorkspaceRoleConfiguratorTest {
     when(cheInstallationLocation.getInstallationLocationNamespace()).thenReturn("something");
     OpenShiftStopWorkspaceRoleConfigurator configurator =
         new OpenShiftStopWorkspaceRoleConfigurator(
-            clientFactory, cheInstallationLocation, true, null);
+            cheClientFactory, cheInstallationLocation, true, null);
 
     configurator.configure(null, "something");
 
-    verify(clientFactory, times(0)).createOC();
+    verify(cheClientFactory, times(0)).create();
   }
 }

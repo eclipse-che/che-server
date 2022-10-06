@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -126,9 +126,14 @@ public class KubernetesNamespaceTest {
   @Test
   public void testKubernetesNamespacePreparingCreationWhenNamespaceDoesNotExist() throws Exception {
     // given
+    doThrow(new KubernetesClientException("error", 403, null))
+        .doReturn(namespaceOperation)
+        .doReturn(namespaceOperation)
+        .when(kubernetesClient)
+        .namespaces();
+    Resource namespaceResource = mock(Resource.class);
+    doReturn(namespaceResource).when(namespaceOperation).withName(anyString());
 
-    Resource resource = prepareNamespaceResource(NAMESPACE);
-    doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
     KubernetesNamespace namespace =
         new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
 
@@ -232,9 +237,15 @@ public class KubernetesNamespaceTest {
 
   @Test
   public void testStopsWaitingServiceAccountEventJustAfterEventReceived() throws Exception {
+    // given
+    doThrow(new KubernetesClientException("error", 403, null))
+        .doReturn(namespaceOperation)
+        .doReturn(namespaceOperation)
+        .when(kubernetesClient)
+        .namespaces();
+    Resource namespaceResource = mock(Resource.class);
+    doReturn(namespaceResource).when(namespaceOperation).withName(anyString());
 
-    final Resource resource = prepareNamespaceResource(NAMESPACE);
-    doThrow(new KubernetesClientException("error", 403, null)).when(resource).get();
     when(serviceAccountResource.get()).thenReturn(null);
     doAnswer(
             invocation -> {
@@ -245,8 +256,11 @@ public class KubernetesNamespaceTest {
         .when(serviceAccountResource)
         .watch(any());
 
-    new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID)
-        .prepare(true, Map.of(), Map.of());
+    KubernetesNamespace namespace =
+        new KubernetesNamespace(clientFactory, cheClientFactory, executor, NAMESPACE, WORKSPACE_ID);
+
+    // when
+    namespace.prepare(true, Map.of(), Map.of());
 
     verify(serviceAccountResource).get();
     verify(serviceAccountResource).watch(any());

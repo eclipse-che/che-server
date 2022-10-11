@@ -69,7 +69,7 @@ public class BitbucketServerURLParserTest {
   public Object[][] urls() {
     return new Object[][] {
       {"https://bitbucket.2mcl.com/scm/project/test1.git"},
-      {"https://bitbucket.2mcl.com/scm/project/test1.git?at=branch"},
+      {"https://bitbucket.2mcl.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch"},
       {"https://bbkt.com/scm/project/test1.git"},
     };
   }
@@ -78,8 +78,18 @@ public class BitbucketServerURLParserTest {
   public Object[][] expectedParsing() {
     return new Object[][] {
       {"https://bitbucket.2mcl.com/scm/project/test1.git", "project", "test1", null},
-      {"https://bitbucket.2mcl.com/scm/project/test1.git?at=branch", "project", "test1", "branch"},
-      {"https://bbkt.com/scm/project/test1.git?at=branch", "project", "test1", "branch"}
+      {
+        "https://bitbucket.2mcl.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch",
+        "project",
+        "test1",
+        "refs%2Fheads%2Fbranch"
+      },
+      {
+        "https://bbkt.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch",
+        "project",
+        "test1",
+        "refs%2Fheads%2Fbranch"
+      }
     };
   }
 }

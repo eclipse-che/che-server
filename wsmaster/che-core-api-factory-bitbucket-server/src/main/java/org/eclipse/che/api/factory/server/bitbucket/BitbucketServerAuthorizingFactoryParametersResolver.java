@@ -124,7 +124,11 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
               .withScmProviderName(bitbucketServerUrl.getProviderName())
               .withRepositoryUrl(bitbucketServerUrl.repositoryLocation());
       if (bitbucketServerUrl.getBranch() != null) {
-        scmInfo.withBranch(bitbucketServerUrl.getBranch());
+        String branch = bitbucketServerUrl.getBranch();
+        scmInfo.withBranch(
+            branch.startsWith("refs%2Fheads%2F")
+                ? branch.substring(branch.lastIndexOf("%2F") + 3)
+                : branch);
       }
       return factoryDto.withScmInfo(scmInfo);
     }

@@ -88,7 +88,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
   @Override
   public boolean isConnected(String bitbucketServerUrl) {
-    return serverUri.equals(URI.create(bitbucketServerUrl));
+    return serverUri.equals(
+        URI.create(
+            bitbucketServerUrl.endsWith("/") ? bitbucketServerUrl : bitbucketServerUrl + "/"));
   }
 
   @Override

@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static java.lang.String.format;
+import static java.util.regex.Pattern.compile;
 
 import com.google.common.base.Splitter;
 import jakarta.validation.constraints.NotNull;
@@ -43,8 +44,12 @@ public class BitbucketServerURLParser {
 
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final PersonalAccessTokenManager personalAccessTokenManager;
-  private static final String bitbucketUrlPatternTemplate =
-      "^(?<host>%s)/scm/(?<project>[^/]++)/(?<repo>[^.]++).git(\\?at=)?(?<branch>[\\w\\d-_]*)";
+  private static final List<String> bitbucketUrlPatternTemplates =
+      List.of(
+          "^(?<host>%s)/scm/~(?<user>[^/]+)/(?<repo>.*).git$",
+          "^(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?",
+          "^(?<host>%s)/scm/(?<project>[^/~]+)/(?<repo>[^/]+).git",
+          "^(?<host>%s)/projects/(?<project>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?");
   private final List<Pattern> bitbucketUrlPatterns = new ArrayList<>();
   private static final String OAUTH_PROVIDER_NAME = "bitbucket-server";
 
@@ -58,17 +63,16 @@ public class BitbucketServerURLParser {
     if (bitbucketEndpoints != null) {
       for (String bitbucketEndpoint : Splitter.on(",").split(bitbucketEndpoints)) {
         String trimmedEndpoint = StringUtils.trimEnd(bitbucketEndpoint, '/');
-        this.bitbucketUrlPatterns.add(
-            Pattern.compile(format(bitbucketUrlPatternTemplate, trimmedEndpoint)));
+        bitbucketUrlPatternTemplates.forEach(
+            t -> bitbucketUrlPatterns.add(Pattern.compile(format(t, trimmedEndpoint))));
       }
     }
   }
 
   private boolean isUserTokenPresent(String repositoryUrl) {
     String serverUrl = getServerUrl(repositoryUrl);
-    if (Pattern.compile(format(bitbucketUrlPatternTemplate, serverUrl))
-        .matcher(repositoryUrl)
-        .matches()) {
+    if (bitbucketUrlPatternTemplates.stream()
+        .anyMatch(t -> Pattern.compile(format(t, serverUrl)).matcher(repositoryUrl).matches())) {
       try {
         Optional<PersonalAccessToken> token =
             personalAccessTokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
@@ -98,8 +102,11 @@ public class BitbucketServerURLParser {
         repositoryUrl.indexOf("/scm") > 0 ? repositoryUrl.indexOf("/scm") : repositoryUrl.length());
   }
 
-  private Matcher getPatternMatcherByUrl(String url) {
-    return Pattern.compile(format(bitbucketUrlPatternTemplate, getServerUrl(url))).matcher(url);
+  private Optional<Matcher> getPatternMatcherByUrl(String url) {
+    return bitbucketUrlPatternTemplates.stream()
+        .map(t -> compile(format(t, getServerUrl(url))).matcher(url))
+        .filter(Matcher::matches)
+        .findAny();
   }
 
   /**
@@ -110,9 +117,9 @@ public class BitbucketServerURLParser {
   public BitbucketServerUrl parse(String url) {
 
     if (bitbucketUrlPatterns.isEmpty()) {
-      Matcher patternMatcher = getPatternMatcherByUrl(url);
-      if (patternMatcher.matches()) {
-        return parse(patternMatcher);
+      Optional<Matcher> matcherOptional = getPatternMatcherByUrl(url);
+      if (matcherOptional.isPresent()) {
+        return parse(matcherOptional.get());
       }
       throw new UnsupportedOperationException(
           "The Bitbucket integration is not configured properly and cannot be used at this moment."
@@ -135,13 +142,15 @@ public class BitbucketServerURLParser {
 
   private BitbucketServerUrl parse(Matcher matcher) {
     String host = matcher.group("host");
-    String project = matcher.group("project");
+    String user = matcher.toString().contains("user") ? matcher.group("user") : null;
+    String project = matcher.toString().contains("project") ? matcher.group("project") : null;
     String repoName = matcher.group("repo");
-    String branch = matcher.group("branch");
+    String branch = matcher.toString().contains("branch") ? matcher.group("branch") : null;
 
     return new BitbucketServerUrl()
         .withHostName(host)
         .withProject(project)
+        .withUser(user)
         .withRepository(repoName)
         .withBranch(branch)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());

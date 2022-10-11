@@ -142,8 +142,13 @@ public class BitbucketServerURLParser {
 
   private BitbucketServerUrl parse(Matcher matcher) {
     String host = matcher.group("host");
-    String user = matcher.toString().contains("user") ? matcher.group("user") : null;
-    String project = matcher.toString().contains("project") ? matcher.group("project") : null;
+    String user = null;
+    String project = null;
+    try {
+      user = matcher.group("user");
+    } catch (IllegalArgumentException e) {
+      project = matcher.group("project");
+    }
     String repoName = matcher.group("repo");
     String branch = matcher.toString().contains("branch") ? matcher.group("branch") : null;
 

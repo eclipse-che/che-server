@@ -150,7 +150,12 @@ public class BitbucketServerURLParser {
       project = matcher.group("project");
     }
     String repoName = matcher.group("repo");
-    String branch = matcher.toString().contains("branch") ? matcher.group("branch") : null;
+    String branch = null;
+    try {
+      branch = matcher.group("branch");
+    } catch (IllegalArgumentException e) {
+      // keep branch with null, as the pattern doesn't have the branch group
+    }
 
     return new BitbucketServerUrl()
         .withHostName(host)

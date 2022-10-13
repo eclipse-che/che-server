@@ -25,7 +25,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminat
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ServiceAccountProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SshKeysProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TlsProvisionerProvider;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TolerationsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.VcsSslCertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.env.EnvVarsConverter;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.limits.ram.ContainerResourceProvisioner;
@@ -68,7 +67,6 @@ public class OpenShiftEnvironmentProvisionerTest {
   @Mock private GitConfigProvisioner gitConfigProvisioner;
   @Mock private OpenShiftPreviewUrlExposer previewUrlEndpointsProvisioner;
   @Mock private VcsSslCertificateProvisioner vcsSslCertificateProvisioner;
-  @Mock private TolerationsProvisioner tolerationsProvisioner;
   @Mock private GatewayRouterProvisioner gatewayRouterProvisioner;
   @Mock private DeploymentMetadataProvisioner deploymentMetadataProvisioner;
   @Mock private OpenshiftTrustedCAProvisioner trustedCAProvisioner;
@@ -90,7 +88,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             ramLimitProvisioner,
             podTerminationGracePeriodProvisioner,
             imagePullSecretProvisioner,
-            tolerationsProvisioner,
             serviceAccountProvisioner,
             certificateProvisioner,
             sshKeysProvisioner,
@@ -108,7 +105,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             tlsRouteProvisioner,
             restartPolicyRewriter,
             ramLimitProvisioner,
-            tolerationsProvisioner,
             podTerminationGracePeriodProvisioner,
             imagePullSecretProvisioner,
             serviceAccountProvisioner,
@@ -131,7 +127,6 @@ public class OpenShiftEnvironmentProvisionerTest {
     provisionOrder.verify(restartPolicyRewriter).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(tlsRouteProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(ramLimitProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
-    provisionOrder.verify(tolerationsProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder
         .verify(podTerminationGracePeriodProvisioner)
         .provision(eq(osEnv), eq(runtimeIdentity));

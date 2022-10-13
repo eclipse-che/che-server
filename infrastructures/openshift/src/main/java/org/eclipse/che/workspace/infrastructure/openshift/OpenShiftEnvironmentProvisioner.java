@@ -23,7 +23,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentM
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NodeSelectorProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ServiceAccountProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SshKeysProvisioner;
@@ -65,7 +64,6 @@ public class OpenShiftEnvironmentProvisioner
   private final ContainerResourceProvisioner resourceLimitRequestProvisioner;
   private final PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   private final ImagePullSecretProvisioner imagePullSecretProvisioner;
-  private final NodeSelectorProvisioner nodeSelectorProvisioner;
   private final TolerationsProvisioner tolerationsProvisioner;
   private final ServiceAccountProvisioner serviceAccountProvisioner;
   private final CertificateProvisioner certificateProvisioner;
@@ -87,7 +85,6 @@ public class OpenShiftEnvironmentProvisioner
       ContainerResourceProvisioner resourceLimitRequestProvisioner,
       PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
       ImagePullSecretProvisioner imagePullSecretProvisioner,
-      NodeSelectorProvisioner nodeSelectorProvisioner,
       TolerationsProvisioner tolerationsProvisioner,
       ServiceAccountProvisioner serviceAccountProvisioner,
       CertificateProvisioner certificateProvisioner,
@@ -106,7 +103,6 @@ public class OpenShiftEnvironmentProvisioner
     this.resourceLimitRequestProvisioner = resourceLimitRequestProvisioner;
     this.podTerminationGracePeriodProvisioner = podTerminationGracePeriodProvisioner;
     this.imagePullSecretProvisioner = imagePullSecretProvisioner;
-    this.nodeSelectorProvisioner = nodeSelectorProvisioner;
     this.tolerationsProvisioner = tolerationsProvisioner;
     this.serviceAccountProvisioner = serviceAccountProvisioner;
     this.certificateProvisioner = certificateProvisioner;
@@ -137,7 +133,6 @@ public class OpenShiftEnvironmentProvisioner
     restartPolicyRewriter.provision(osEnv, identity);
     routeTlsProvisioner.provision(osEnv, identity);
     resourceLimitRequestProvisioner.provision(osEnv, identity);
-    nodeSelectorProvisioner.provision(osEnv, identity);
     tolerationsProvisioner.provision(osEnv, identity);
     podTerminationGracePeriodProvisioner.provision(osEnv, identity);
     imagePullSecretProvisioner.provision(osEnv, identity);

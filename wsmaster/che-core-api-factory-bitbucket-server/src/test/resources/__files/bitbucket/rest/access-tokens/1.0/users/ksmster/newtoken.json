@@ -1,6 +1,7 @@
 {
   "id": "158910532909",
   "createdDate": 1609249808751,
+  "expiryDays": 90,
   "name": "che5",
   "permissions": [
     "PROJECT_WRITE",

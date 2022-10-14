@@ -209,7 +209,7 @@ public class HttpBitbucketServerApiClientTest {
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON))
-            .withHeader(HttpHeaders.CONTENT_LENGTH, equalTo("63"))
+            .withHeader(HttpHeaders.CONTENT_LENGTH, equalTo("149"))
             .willReturn(
                 ok().withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/newtoken.json")));
 

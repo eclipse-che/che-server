@@ -228,7 +228,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
                   HttpRequest.BodyPublishers.ofString(
                       OM.writeValueAsString(
                           // set maximum allowed expiryDays to 90
-                          new BitbucketPersonalAccessToken(tokenName, permissions, 90 ))))
+                          new BitbucketPersonalAccessToken(tokenName, permissions, 90))))
               .headers(
                   HttpHeaders.AUTHORIZATION,
                   computeAuthorizationHeader("PUT", uri.toString()),

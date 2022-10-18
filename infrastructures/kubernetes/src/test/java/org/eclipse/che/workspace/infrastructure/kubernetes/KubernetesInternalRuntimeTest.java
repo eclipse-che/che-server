@@ -30,7 +30,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -72,7 +71,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -504,23 +502,6 @@ public class KubernetesInternalRuntimeTest {
   }
 
   @Test
-  public void stopsKubernetesEnvironment() throws Exception {
-    doNothing().when(namespace).cleanUp();
-
-    internalRuntime.internalStop(emptyMap());
-
-    verify(runtimeHangingDetector).stopTracking(IDENTITY);
-    verify(runtimeCleaner).cleanUp(namespace, WORKSPACE_ID);
-  }
-
-  @Test(expectedExceptions = InfrastructureException.class)
-  public void throwsInfrastructureExceptionWhenKubernetesNamespaceCleanupFailed() throws Exception {
-    doThrow(InfrastructureException.class).when(runtimeCleaner).cleanUp(namespace, WORKSPACE_ID);
-
-    internalRuntime.internalStop(emptyMap());
-  }
-
-  @Test
   public void testRepublishContainerOutputAsMachineLogEvents() throws Exception {
     final MachineLogsPublisher logsPublisher =
         new MachineLogsPublisher(eventPublisher, machinesCache, IDENTITY);
@@ -566,15 +547,6 @@ public class KubernetesInternalRuntimeTest {
     logsPublisher.handle(out1);
 
     verify(eventService, never()).publish(any());
-  }
-
-  @Test
-  public void cancelsWsProbesOnRuntimeStop() throws Exception {
-    doNothing().when(namespace).cleanUp();
-
-    internalRuntime.internalStop(emptyMap());
-
-    verify(probesScheduler).cancel(WORKSPACE_ID);
   }
 
   @Test

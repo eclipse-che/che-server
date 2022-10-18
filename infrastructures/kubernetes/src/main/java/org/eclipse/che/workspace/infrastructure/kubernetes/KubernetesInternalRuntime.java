@@ -31,7 +31,6 @@ import io.fabric8.kubernetes.api.model.PodTemplateSpec;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
@@ -47,10 +46,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -198,7 +195,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
 
       startSynchronizer.checkFailure();
 
-      startMachines();
       watchLogsIfDebugEnabled(startOptions);
 
       previewUrlCommandProvisioner.provision(context.getEnvironment(), namespace);
@@ -228,7 +224,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
                   .exceptionally(publishFailedStatus(startFailure, machineName));
           machinesFutures.put(machineName, machineBootChain);
         }
-        waitMachines(machinesFutures, toCancelFutures, startFailure);
       } finally {
         waitRunningAsyncSpan.finish();
       }
@@ -306,63 +301,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
         EnvironmentContext.reset();
       }
     };
-  }
-
-  /**
-   * Waits for readiness of given machines.
-   *
-   * @param machinesFutures machines futures to wait
-   * @param toCancelFutures futures that must be explicitly closed when any error occurs
-   * @param failure failure callback that is used to prevent subsequent steps when any error occurs
-   * @throws InfrastructureException when waiting for machines exceeds the timeout
-   * @throws InfrastructureException when any problem occurred while waiting
-   * @throws RuntimeStartInterruptedException when the thread is interrupted while waiting machines
-   */
-  private void waitMachines(
-      Map<String, CompletableFuture<Void>> machinesFutures,
-      List<CompletableFuture<?>> toCancelFutures,
-      CompletableFuture<Void> failure)
-      throws InfrastructureException {
-    try {
-      LOG.debug(
-          "Waiting to start machines of workspace '{}'",
-          getContext().getIdentity().getWorkspaceId());
-      final CompletableFuture<Void> allDone =
-          CompletableFuture.allOf(machinesFutures.values().toArray(new CompletableFuture[0]));
-
-      CompletableFuture.anyOf(allDone, failure)
-          .get(startSynchronizer.getStartTimeoutMillis(), TimeUnit.MILLISECONDS);
-
-      if (failure.isCompletedExceptionally()) {
-        cancelAll(toCancelFutures);
-        // rethrow the failure cause
-        failure.get();
-      }
-      LOG.debug("Machines of workspace '{}' started", getContext().getIdentity().getWorkspaceId());
-    } catch (TimeoutException ex) {
-      InfrastructureException ie =
-          new InfrastructureException(
-              "Waiting for Kubernetes environment '"
-                  + getContext().getIdentity().getEnvName()
-                  + "' of the workspace'"
-                  + getContext().getIdentity().getWorkspaceId()
-                  + "' reached timeout");
-      failure.completeExceptionally(ie);
-      cancelAll(toCancelFutures);
-      throw ie;
-    } catch (InterruptedException ex) {
-      RuntimeStartInterruptedException runtimeInterruptedEx =
-          new RuntimeStartInterruptedException(getContext().getIdentity());
-      failure.completeExceptionally(runtimeInterruptedEx);
-      cancelAll(toCancelFutures);
-      throw runtimeInterruptedEx;
-    } catch (ExecutionException ex) {
-      failure.completeExceptionally(ex.getCause());
-      cancelAll(toCancelFutures);
-      wrapAndRethrow(ex.getCause());
-      // note that we do NOT finish the startup traces here, because execution exception is
-      // handled by the "exceptional" parts of the completable chain.
-    }
   }
 
   /**
@@ -559,30 +497,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
     return emptyMap();
   }
 
-  /**
-   * Create all machine related objects and start machines.
-   *
-   * @throws InfrastructureException when any error occurs while creating Kubernetes objects
-   */
-  @Traced
-  protected void startMachines() throws InfrastructureException {
-    KubernetesEnvironment k8sEnv = getContext().getEnvironment();
-    String workspaceId = getContext().getIdentity().getWorkspaceId();
-
-    createSecrets(k8sEnv, workspaceId);
-    List<ConfigMap> createdConfigMaps = createConfigMaps(k8sEnv, getContext().getIdentity());
-    List<Service> createdServices = createServices(k8sEnv, workspaceId);
-
-    // needed for resolution later on, even though n routes are actually created by ingress
-    // /workspace{wsid}/server-{port} => service({wsid}):server-port => pod({wsid}):{port}
-    List<Ingress> readyIngresses = createIngresses(k8sEnv, workspaceId);
-
-    listenEvents();
-
-    doStartMachine(
-        serverResolverFactory.create(createdServices, readyIngresses, createdConfigMaps));
-  }
-
   @Traced
   protected void listenEvents() throws InfrastructureException {
     namespace
@@ -671,14 +585,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
     }
 
     return createdServices;
-  }
-
-  @Traced
-  @SuppressWarnings("WeakerAccess") // package-private so that interception is possible
-  List<Ingress> createIngresses(KubernetesEnvironment env, String workspaceId)
-      throws InfrastructureException {
-    TracingTags.WORKSPACE_ID.set(workspaceId);
-    return createAndWaitReady(env.getIngresses().values());
   }
 
   /**
@@ -863,35 +769,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
   protected void markStopped() throws InfrastructureException {
     machines.remove(getContext().getIdentity());
     runtimeStates.remove(getContext().getIdentity());
-  }
-
-  private List<Ingress> createAndWaitReady(Collection<Ingress> ingresses)
-      throws InfrastructureException {
-    List<Ingress> createdIngresses = new ArrayList<>();
-    for (Ingress ingress : ingresses) {
-      createdIngresses.add(namespace.ingresses().create(ingress));
-    }
-    LOG.debug(
-        "Ingresses created for workspace '{}'. Wait them to be ready.",
-        getContext().getIdentity().getWorkspaceId());
-
-    // wait for LB ip
-    List<Ingress> readyIngresses = new ArrayList<>();
-    for (Ingress ingress : createdIngresses) {
-      Ingress actualIngress =
-          namespace
-              .ingresses()
-              .wait(
-                  ingress.getMetadata().getName(),
-                  // Smaller value of ingress and start timeout should be used
-                  Math.min(ingressStartTimeoutMillis, startSynchronizer.getStartTimeoutMillis()),
-                  TimeUnit.MILLISECONDS,
-                  p -> (!p.getStatus().getLoadBalancer().getIngress().isEmpty()));
-      readyIngresses.add(actualIngress);
-    }
-    LOG.debug(
-        "Ingresses creation for workspace '{}' done.", getContext().getIdentity().getWorkspaceId());
-    return readyIngresses;
   }
 
   /**

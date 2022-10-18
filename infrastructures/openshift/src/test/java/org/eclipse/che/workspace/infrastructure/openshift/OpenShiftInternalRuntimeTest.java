@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift;
 
-import static org.eclipse.che.api.core.model.workspace.runtime.MachineStatus.STARTING;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_ORIGINAL_NAME_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.external.MultiHostExternalServiceExposureStrategy.MULTI_HOST_STRATEGY;
@@ -21,7 +20,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -95,7 +93,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * Tests {@link OpenShiftInternalRuntime}.
@@ -229,48 +226,6 @@ public class OpenShiftInternalRuntimeTest {
     when(osEnv.getPodsCopy()).thenReturn(allPods);
     when(osEnv.getSecrets()).thenReturn(ImmutableMap.of("secret", new Secret()));
     when(osEnv.getConfigMaps()).thenReturn(ImmutableMap.of("configMap", new ConfigMap()));
-  }
-
-  @Test
-  public void shouldStartMachines() throws Exception {
-    final Container container1 = mockContainer(CONTAINER_NAME_1, EXPOSED_PORT_1);
-    final Container container2 = mockContainer(CONTAINER_NAME_2, EXPOSED_PORT_2, INTERNAL_PORT);
-    final ImmutableMap<String, Pod> allPods =
-        ImmutableMap.of(POD_NAME, mockPod(ImmutableList.of(container1, container2)));
-    when(osEnv.getPodsCopy()).thenReturn(allPods);
-    when(unrecoverablePodEventListenerFactory.isConfigured()).thenReturn(true);
-
-    internalRuntime.startMachines();
-
-    verify(deployments).deploy(any(Pod.class));
-    verify(routes).create(any());
-    verify(services).create(any());
-    verify(secrets).create(any());
-    verify(configMaps).create(any());
-
-    verify(project.deployments(), times(2)).watchEvents(any());
-    verify(eventService, times(2)).publish(any());
-    verifyEventsOrder(newEvent(M1_NAME, STARTING), newEvent(M2_NAME, STARTING));
-  }
-
-  @Test
-  public void shouldStartMachinesWithoutUnrecoverableEventHandler() throws Exception {
-    when(unrecoverablePodEventListenerFactory.isConfigured()).thenReturn(false);
-    final Container container1 = mockContainer(CONTAINER_NAME_1, EXPOSED_PORT_1);
-    final Container container2 = mockContainer(CONTAINER_NAME_2, EXPOSED_PORT_2, INTERNAL_PORT);
-    final ImmutableMap<String, Pod> allPods =
-        ImmutableMap.of(POD_NAME, mockPod(ImmutableList.of(container1, container2)));
-    when(osEnv.getPodsCopy()).thenReturn(allPods);
-
-    internalRuntime.startMachines();
-
-    verify(deployments).deploy(any(Pod.class));
-    verify(routes).create(any());
-    verify(services).create(any());
-
-    verify(project.deployments(), times(1)).watchEvents(any());
-    verify(eventService, times(2)).publish(any());
-    verifyEventsOrder(newEvent(M1_NAME, STARTING), newEvent(M2_NAME, STARTING));
   }
 
   private static MachineStatusEvent newEvent(String machineName, MachineStatus status) {

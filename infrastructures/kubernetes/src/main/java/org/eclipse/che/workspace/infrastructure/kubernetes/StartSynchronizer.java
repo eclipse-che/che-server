@@ -98,7 +98,6 @@ public class StartSynchronizer {
   // future that holds error that occurs during runtime start
   // failure must be completed with null value when start is finished without any exception
   private final CompletableFuture<Void> startFailure;
-  private final long workspaceStartTimeoutMillis;
 
   // latch that indicates whether start is completed or not
   private CountDownLatch completionLatch;
@@ -123,7 +122,6 @@ public class StartSynchronizer {
     this.runtimeStartInterrupter = new RuntimeStartInterrupter();
     this.runtimeStopWatcher = new RuntimeStopWatcher();
     this.isStarting = false;
-    this.workspaceStartTimeoutMillis = TimeUnit.MINUTES.toMillis(8);
   }
 
   /** Registers a runtime start. */
@@ -288,16 +286,6 @@ public class StartSynchronizer {
     } catch (Throwable ex) {
       throw new InternalInfrastructureException(ex.getMessage(), ex);
     }
-  }
-
-  /**
-   * Returns time before workspace start should be interrupted or 0 if runtime start should be
-   * interrupted now.
-   */
-  public long getStartTimeoutMillis() {
-    long deadLine = startTimeMillis + workspaceStartTimeoutMillis;
-    long timeout = deadLine - System.currentTimeMillis();
-    return Math.max(0, timeout);
   }
 
   /**

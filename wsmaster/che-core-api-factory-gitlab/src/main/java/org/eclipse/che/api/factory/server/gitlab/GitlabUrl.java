@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.net.URLEncoder.encode;
 
 import com.google.common.base.Charsets;
@@ -200,14 +199,22 @@ public class GitlabUrl implements RemoteFactoryUrl {
    * @return location of specified file in a repository
    */
   public String rawFileLocation(String fileName) {
-    return new StringJoiner("/")
-        .add(hostName)
-        .add(username)
-        .add(project)
-        .add("-/raw")
-        .add(firstNonNull(branch, "HEAD"))
-        .add(fileName)
-        .toString();
+    String resultUrl =
+        new StringJoiner("/")
+            .add(hostName)
+            .add("api/v4/projects")
+            // use URL-encoded path to the project as a selector instead of id
+            .add(geProjectIdentifier())
+            .add("repository")
+            .add("files")
+            .add(encode(fileName, Charsets.UTF_8))
+            .add("raw")
+            .toString();
+    if (branch != null) {
+      resultUrl = resultUrl + "?ref=" + branch;
+    }
+
+    return resultUrl;
   }
 
   private String geProjectIdentifier() {

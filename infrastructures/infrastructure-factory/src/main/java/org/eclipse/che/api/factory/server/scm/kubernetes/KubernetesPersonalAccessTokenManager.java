@@ -185,15 +185,16 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           UnknownScmProviderException, UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
-    Optional<PersonalAccessToken> token = get(subject, scmServerUrl);
-    if (token.isPresent()) {
-      return token.get();
+    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    PersonalAccessToken personalAccessToken;
+    if (tokenOptional.isPresent()) {
+      personalAccessToken = tokenOptional.get();
     } else {
       // try to authenticate for the given URL
-      PersonalAccessToken personalAccessToken = fetchAndSave(subject, scmServerUrl);
-      gitCredentialManager.createOrReplace(personalAccessToken);
-      return personalAccessToken;
+      personalAccessToken = fetchAndSave(subject, scmServerUrl);
     }
+    gitCredentialManager.createOrReplace(personalAccessToken);
+    return personalAccessToken;
   }
 
   private String getFirstNamespace()

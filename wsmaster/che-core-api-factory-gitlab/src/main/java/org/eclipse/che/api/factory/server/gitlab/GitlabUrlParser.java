@@ -92,13 +92,10 @@ public class GitlabUrlParser {
   }
 
   public boolean isValid(@NotNull String url) {
-    if (!gitlabUrlPatterns.isEmpty()) {
-      return gitlabUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches());
-    } else {
-      // If Gitlab URL is not configured, try to find it in a manually added user namespace
-      // token.
-      return isUserTokenPresent(url);
-    }
+    // If Gitlab URL is not configured, try to find it in a manually added user namespace
+    // token.
+    return gitlabUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches())
+        || isUserTokenPresent(url);
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
@@ -128,28 +125,19 @@ public class GitlabUrlParser {
    */
   public GitlabUrl parse(String url) {
 
-    if (gitlabUrlPatterns.isEmpty()) {
-      Optional<Matcher> optionalMatcher = getPatternMatcherByUrl(url);
-      if (optionalMatcher.isPresent()) {
-        return parse(optionalMatcher.get());
-      }
-      throw new UnsupportedOperationException(
-          "The gitlab integration is not configured properly and cannot be used at this moment."
-              + "Please refer to docs to check the Gitlab integration instructions");
-    }
-
-    Matcher matcher =
+    Optional<Matcher> matcherOptional =
         gitlabUrlPatterns.stream()
             .map(pattern -> pattern.matcher(url))
             .filter(Matcher::matches)
             .findFirst()
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        format(
-                            "The given url %s is not a valid Gitlab server URL. Check either URL or server configuration.",
-                            url)));
-    return parse(matcher);
+            .or(() -> getPatternMatcherByUrl(url));
+    if (matcherOptional.isPresent()) {
+      return parse(matcherOptional.get());
+    } else {
+      throw new UnsupportedOperationException(
+          "The gitlab integration is not configured properly and cannot be used at this moment."
+              + "Please refer to docs to check the Gitlab integration instructions");
+    }
   }
 
   private GitlabUrl parse(Matcher matcher) {

@@ -1,6 +1,3 @@
-![Next build Status](https://github.com/eclipse-che/che-theia/actions/workflows/next-build.yml/badge.svg)
-![Release build Status](https://github.com/eclipse-che/che-theia/actions/workflows/release.yml/badge.svg)
-
 # What is Che server
 Che Server is a core component of the [Eclipse Che](https://github.com/eclipse/che/). This component is responsible for creation and managing of Che workspaces, but will some day be replaced by the [Dev Workspace Operator](https://github.com/devfile/devworkspace-operator). 
 

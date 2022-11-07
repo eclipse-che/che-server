@@ -1,6 +1,3 @@
-[![Next build Status](https://github.com/eclipse-che/che-theia/actions/workflows/next-build.yml/badge.svg)]
-[![Release build Status](https://github.com/eclipse-che/che-theia/actions/workflows/release.yml/badge.svg)]
-
 # What is Che server
 Che Server is a core component of the [Eclipse Che](https://github.com/eclipse/che/). This component is responsible for creation and managing of Che workspaces, but will some day be replaced by the [Dev Workspace Operator](https://github.com/devfile/devworkspace-operator). 
 
@@ -29,11 +26,25 @@ To debug, run `mvn clean install -X` and connect your IDE to the debug port
 # CI
 There are several [GitHub Actions](https://github.com/eclipse-che/che-server/actions) workflows implemented for this repository:
 
-- [`next`](https://github.com/eclipse-che/che-server/actions/workflows/next-build.yml) - builds Maven artifacts, builds container images and pushes them to [quay.io](https://quay.io/organization/eclipse) on each commit to [`main`](https://github.com/eclipse-che/che-server/tree/main) branch.
-- [`release`](https://github.com/eclipse-che/che-server/actions/workflows/release.yml) - builds Maven artifacts and container images. Images are public and pushed to [quay.io](https://quay.io/organization/eclipse). See [RELEASE.md](https://github.com/eclipse-che/che-server/blob/master/RELEASE.md) for more information about this workflow.
-- [`release-changelog`](https://github.com/eclipse-che/che-server/actions/workflows/release-changelog.yml) - create GitHub release and generate, which will include a generated changelog
-- [`build-pr-check`](https://github.com/eclipse-che/che-server/actions/workflows/build-pr-check.yml) - builds Maven artifacts and container images. This workflow is used as a pull request check for all pull requests, that are submitted to this project 
-- [`sonar`](https://github.com/eclipse-che/che-server/actions/workflows/sonar.yml) - This check runs Sonar against the main branch. The result can be seen here https://sonarcloud.io/dashboard?id=org.eclipse.che%3Ache-server
+- [![build-next](https://github.com/eclipse-che/che-server/actions/workflows/next-build.yml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/next-build.yml)  
+Builds Maven artifacts, builds container images and pushes them to [quay.io](https://quay.io/organization/eclipse) on each commit to [`main`](https://github.com/eclipse-che/che-server/tree/main) branch.
+- [![Release Che Server](https://github.com/eclipse-che/che-server/actions/workflows/release.yml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/release.yml)  
+Builds Maven artifacts and container images. Images are public and pushed to [quay.io](https://quay.io/organization/eclipse). See [RELEASE.md](https://github.com/eclipse-che/che-server/blob/master/RELEASE.md) for more information about this workflow.
+- [![Release Changelog](https://github.com/eclipse-che/che-server/actions/workflows/release-changelog.yml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/release-changelog.yml)  
+Creates a GitHub release which will include a generated changelog.
+- [![Update Che docs variables](https://github.com/eclipse-che/che-server/actions/workflows/che-properties-docs-update.yml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/che-properties-docs-update.yml/badge.svg)  
+Runs on each commit to [`main`](https://github.com/eclipse-che/che-server/tree/main) branch.
+- [![build-pr-check](https://github.com/eclipse-che/che-server/actions/workflows/build-pr-check.yml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/build-pr-check.yml)  
+Builds Maven artifacts and container images. This workflow is used as a check for all pull requests that are submitted to this project.
+- [![Sonar](https://github.com/eclipse-che/che-server/actions/workflows/sonar.yaml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/sonar.yaml)  
+Runs Sonar against the main branch. The result can be seen [here](https://sonarcloud.io/dashboard?id=org.eclipse.che%3Ache-server).
+- [![Try in Web IDE](https://github.com/eclipse-che/che-server/actions/workflows/try-in-web-ide.yaml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/try-in-web-ide.yaml)  
+Used as a check for pull requests that are submitted to this project. 
+
+Downstream builds can be found at the link below, which is _internal to Red Hat_. Stable builds can be found by replacing the 3.x with a specific version like 3.2. 
+
+- [server_3.x](https://main-jenkins-csb-crwqe.apps.ocp-c1.prod.psi.redhat.com/job/DS_CI/job/server_3.x/)
+
 # License
 
 - [Eclipse Public License 2.0](LICENSE)

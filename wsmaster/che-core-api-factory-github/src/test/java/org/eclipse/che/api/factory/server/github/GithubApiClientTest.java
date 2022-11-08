@@ -65,7 +65,7 @@ public class GithubApiClientTest {
   }
 
   @Test
-  public void ShouldUseDefaultApiUrl() throws Exception {
+  public void shouldUseDefaultApiUrl() throws Exception {
     // given
     client = new GithubApiClient("https://github.com");
     Field serverUrl = client.getClass().getDeclaredField("apiServerUrl");
@@ -75,7 +75,7 @@ public class GithubApiClientTest {
   }
 
   @Test
-  public void ShouldUseDefaultApiUrlWithNull() throws Exception {
+  public void shouldUseDefaultApiUrlWithNull() throws Exception {
     // given
     client = new GithubApiClient(null);
     Field serverUrl = client.getClass().getDeclaredField("apiServerUrl");
@@ -85,7 +85,7 @@ public class GithubApiClientTest {
   }
 
   @Test
-  public void ShouldUseDefaultApiUrlWithEmpty() throws Exception {
+  public void shouldUseDefaultApiUrlWithEmpty() throws Exception {
     // given
     client = new GithubApiClient("");
     Field serverUrl = client.getClass().getDeclaredField("apiServerUrl");
@@ -95,7 +95,7 @@ public class GithubApiClientTest {
   }
 
   @Test(expectedExceptions = ScmCommunicationException.class)
-  public void ShouldThrowExceptionOnUserParseError() throws Exception {
+  public void shouldThrowExceptionOnUserParseError() throws Exception {
     // given
     stubFor(get(urlEqualTo("/api/v3/user")).willReturn(aResponse().withBody("invalid value")));
     // when
@@ -145,7 +145,7 @@ public class GithubApiClientTest {
   }
 
   @Test(expectedExceptions = ScmCommunicationException.class)
-  public void ShouldThrowExceptionOnPullRequestParseError() throws Exception {
+  public void shouldThrowExceptionOnPullRequestParseError() throws Exception {
     // given
     stubFor(
         get(urlEqualTo("/api/v3/repos/user/repo/pulls/id"))
@@ -224,7 +224,7 @@ public class GithubApiClientTest {
   }
 
   @Test()
-  public void ShouldReturnNull() throws Exception {
+  public void shouldReturnNull() throws Exception {
     // given
     stubFor(get(urlEqualTo("/api/v3/user")).willReturn(aResponse().withStatus(HTTP_NO_CONTENT)));
     // when
@@ -236,7 +236,7 @@ public class GithubApiClientTest {
   @Test(
       expectedExceptions = ScmBadRequestException.class,
       expectedExceptionsMessageRegExp = "bad request")
-  public void ShouldThrowExceptionOnBadRequestError() throws Exception {
+  public void shouldThrowExceptionOnBadRequestError() throws Exception {
     // given
     stubFor(
         get(urlEqualTo("/api/v3/user"))
@@ -248,7 +248,7 @@ public class GithubApiClientTest {
   @Test(
       expectedExceptions = ScmItemNotFoundException.class,
       expectedExceptionsMessageRegExp = "item not found")
-  public void ShouldThrowExceptionOnNotFoundError() throws Exception {
+  public void shouldThrowExceptionOnNotFoundError() throws Exception {
     // given
     stubFor(
         get(urlEqualTo("/api/v3/user"))
@@ -261,7 +261,7 @@ public class GithubApiClientTest {
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
           "Unexpected status code 502 \\(GET http://localhost:\\d*/api/v3/user\\) 502")
-  public void ShouldThrowExceptionOnOtherError() throws Exception {
+  public void shouldThrowExceptionOnOtherError() throws Exception {
     // given
     stubFor(
         get(urlEqualTo("/api/v3/user"))

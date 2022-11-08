@@ -16,14 +16,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -31,13 +33,20 @@ import org.testng.annotations.Test;
 public class GithubAuthorizingFileContentProviderTest {
 
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private URLFetcher urlFetcher;
+  private static final String URL = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
+  GithubUrl githubUrl;
+  FileContentProvider fileContentProvider;
+
+  @BeforeMethod
+  public void setup() {
+    githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    fileContentProvider =
+        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
+  }
 
   @Test
   public void shouldExpandRelativePaths() throws Exception {
-    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
-    FileContentProvider fileContentProvider =
-        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
     var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
     fileContentProvider.fetchContent("devfile.yaml");
@@ -49,10 +58,6 @@ public class GithubAuthorizingFileContentProviderTest {
 
   @Test
   public void shouldPreserveAbsolutePaths() throws Exception {
-    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
-    FileContentProvider fileContentProvider =
-        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
     String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
     var personalAccessToken = new PersonalAccessToken(url, "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
@@ -62,15 +67,21 @@ public class GithubAuthorizingFileContentProviderTest {
 
   @Test(expectedExceptions = FileNotFoundException.class)
   public void shouldThrowNotFoundForPublicRepos() throws Exception {
-    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    String url = "https://raw.githubusercontent.com/foo/bar/devfile.yaml";
     when(personalAccessTokenManager.getAndStore(anyString()))
         .thenThrow(UnknownScmProviderException.class);
-    when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
+    when(urlFetcher.fetch(eq(URL))).thenThrow(FileNotFoundException.class);
     when(urlFetcher.fetch(eq("https://github.com/eclipse/che"))).thenReturn("OK");
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
-    FileContentProvider fileContentProvider =
-        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
-    fileContentProvider.fetchContent(url);
+    fileContentProvider.fetchContent(URL);
+  }
+
+  @Test(expectedExceptions = DevfileException.class)
+  public void shouldThrowDevfileException() throws Exception {
+    // given
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenThrow(UnknownScmProviderException.class);
+    when(urlFetcher.fetch(eq(URL))).thenThrow(FileNotFoundException.class);
+    when(urlFetcher.fetch(eq("https://github.com/eclipse/che"))).thenThrow(IOException.class);
+    // when
+    fileContentProvider.fetchContent(URL);
   }
 }

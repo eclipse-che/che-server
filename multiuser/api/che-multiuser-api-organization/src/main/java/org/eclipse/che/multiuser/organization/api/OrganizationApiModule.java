@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,7 +28,6 @@ import org.eclipse.che.multiuser.organization.api.permissions.OrganizationResour
 import org.eclipse.che.multiuser.organization.api.permissions.OrganizationalAccountPermissionsChecker;
 import org.eclipse.che.multiuser.organization.api.resource.DefaultOrganizationResourcesProvider;
 import org.eclipse.che.multiuser.organization.api.resource.OrganizationResourceLockKeyProvider;
-import org.eclipse.che.multiuser.organization.api.resource.OrganizationResourcesDistributionService;
 import org.eclipse.che.multiuser.organization.api.resource.OrganizationalAccountAvailableResourcesProvider;
 import org.eclipse.che.multiuser.organization.api.resource.SuborganizationResourcesProvider;
 import org.eclipse.che.multiuser.organization.spi.impl.OrganizationImpl;
@@ -41,7 +40,7 @@ import org.eclipse.che.multiuser.resource.api.free.DefaultResourcesProvider;
 public class OrganizationApiModule extends AbstractModule {
   @Override
   protected void configure() {
-    bind(OrganizationService.class);
+
     bind(OrganizationPermissionsFilter.class);
     bind(OrganizationRemoteSubscriptionPermissionsChecks.class);
     bind(RemoveOrganizationOnLastUserRemovedEventSubscriber.class).asEagerSingleton();
@@ -66,7 +65,6 @@ public class OrganizationApiModule extends AbstractModule {
         .addBinding()
         .to(OrganizationalAccountPermissionsChecker.class);
 
-    bind(OrganizationResourcesDistributionService.class);
     bind(OrganizationResourceDistributionServicePermissionsFilter.class);
 
     bind(OrganizationEventsWebsocketBroadcaster.class).asEagerSingleton();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,7 +27,7 @@ import org.eclipse.che.multiuser.api.permission.server.jsonrpc.RemoteSubscriptio
 public class PermissionsModule extends AbstractModule {
   @Override
   protected void configure() {
-    bind(PermissionsService.class);
+
     bind(SetPermissionsFilter.class);
     bind(RemovePermissionsFilter.class);
     bind(GetPermissionsFilter.class);

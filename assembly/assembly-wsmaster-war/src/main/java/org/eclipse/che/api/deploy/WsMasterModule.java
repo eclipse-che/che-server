@@ -83,25 +83,19 @@ import org.eclipse.che.core.db.DBTermination;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.tracing.metrics.TracingMetricsModule;
 import org.eclipse.che.inject.DynaModule;
-import org.eclipse.che.multiuser.api.authentication.commons.token.ChainedTokenExtractor;
 import org.eclipse.che.multiuser.api.authentication.commons.token.HeaderRequestTokenExtractor;
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.eclipse.che.multiuser.api.permission.server.AdminPermissionInitializer;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 import org.eclipse.che.multiuser.api.permission.server.PermissionCheckerImpl;
 import org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivityModule;
-import org.eclipse.che.multiuser.keycloak.server.deploy.KeycloakModule;
-import org.eclipse.che.multiuser.keycloak.server.deploy.KeycloakUserRemoverModule;
 import org.eclipse.che.multiuser.machine.authentication.server.MachineAuthModule;
 import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.eclipse.che.multiuser.oidc.OIDCInfoProvider;
 import org.eclipse.che.multiuser.oidc.OIDCJwkProvider;
 import org.eclipse.che.multiuser.oidc.OIDCJwtParserProvider;
 import org.eclipse.che.multiuser.oidc.OIDCSigningKeyResolver;
-import org.eclipse.che.multiuser.organization.api.OrganizationApiModule;
-import org.eclipse.che.multiuser.organization.api.OrganizationJpaModule;
 import org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter;
-import org.eclipse.che.multiuser.resource.api.ResourceModule;
 import org.eclipse.che.security.PBKDF2PasswordEncryptor;
 import org.eclipse.che.security.PasswordEncryptor;
 import org.eclipse.che.security.oauth.EmbeddedOAuthAPI;
@@ -190,7 +184,6 @@ public class WsMasterModule extends AbstractModule {
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketModule());
 
     bind(org.eclipse.che.api.core.rest.ApiInfoService.class);
-    bind(org.eclipse.che.api.ssh.server.SshService.class);
     bind(org.eclipse.che.api.user.server.UserService.class);
     bind(org.eclipse.che.api.user.server.ProfileService.class);
     bind(org.eclipse.che.api.user.server.PreferencesService.class);
@@ -204,6 +197,7 @@ public class WsMasterModule extends AbstractModule {
     bind(org.eclipse.che.api.workspace.server.WorkspaceService.class);
     bind(org.eclipse.che.api.devfile.server.DevfileService.class);
     bind(org.eclipse.che.api.devfile.server.UserDevfileEntityProvider.class);
+
     install(new FactoryModuleBuilder().build(ServersCheckerFactory.class));
 
     Multibinder<InternalEnvironmentProvisioner> internalEnvironmentProvisioners =
@@ -356,7 +350,7 @@ public class WsMasterModule extends AbstractModule {
     bind(DataSource.class).toProvider(org.eclipse.che.core.db.JndiDataSourceProvider.class);
 
     install(new org.eclipse.che.multiuser.api.permission.server.jpa.SystemPermissionsJpaModule());
-    install(new org.eclipse.che.multiuser.api.permission.server.PermissionsModule());
+
     install(
         new org.eclipse.che.multiuser.permission.workspace.server.WorkspaceApiPermissionsModule());
     install(
@@ -391,10 +385,6 @@ public class WsMasterModule extends AbstractModule {
         org.eclipse.che.multiuser.permission.resource.filters
             .FreeResourcesLimitServicePermissionsFilter.class);
 
-    install(new ResourceModule());
-    install(new OrganizationApiModule());
-    install(new OrganizationJpaModule());
-
     if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
       bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
       if (KubernetesInfrastructure.NAME.equals(infrastructure)) {
@@ -406,10 +396,6 @@ public class WsMasterModule extends AbstractModule {
       bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
       bind(ProfileDao.class).to(JpaProfileDao.class);
       bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class);
-    } else {
-      install(new KeycloakModule());
-      install(new KeycloakUserRemoverModule());
-      bind(RequestTokenExtractor.class).to(ChainedTokenExtractor.class);
     }
 
     bind(AdminPermissionInitializer.class).asEagerSingleton();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,12 +30,22 @@ public class GithubUser {
     this.id = id;
   }
 
+  public GithubUser withId(long id) {
+    this.id = id;
+    return this;
+  }
+
   public String getLogin() {
     return login;
   }
 
   public void setLogin(String login) {
     this.login = login;
+  }
+
+  public GithubUser withLogin(String login) {
+    this.login = login;
+    return this;
   }
 
   public String getEmail() {
@@ -46,12 +56,22 @@ public class GithubUser {
     this.email = email;
   }
 
+  public GithubUser withEmail(String email) {
+    this.email = email;
+    return this;
+  }
+
   public String getName() {
     return name;
   }
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public GithubUser withName(String name) {
+    this.name = name;
+    return this;
   }
 
   @Override

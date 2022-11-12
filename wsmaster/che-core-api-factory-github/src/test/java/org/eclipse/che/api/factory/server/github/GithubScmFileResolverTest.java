@@ -11,7 +11,10 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
 
@@ -28,24 +31,31 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class GithubScmFileResolverTest {
 
-  GithubURLParser githubURLParser;
-
-  @Mock private URLFetcher urlFetcher;
-
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
-  @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  GithubURLParser githubURLParser;
+
+  private URLFetcher urlFetcher;
+
+  private PersonalAccessTokenManager personalAccessTokenManager;
 
   private GithubScmFileResolver githubScmFileResolver;
 
+  private GithubApiClient githubApiClient;
+
   @BeforeMethod
-  protected void init() {
+  void start() {
+    this.githubApiClient = mock(GithubApiClient.class);
+    this.urlFetcher = mock(URLFetcher.class);
+
+    this.personalAccessTokenManager = mock(PersonalAccessTokenManager.class);
+
     githubURLParser =
-        new GithubURLParser(personalAccessTokenManager, devfileFilenamesProvider, null, false);
-    assertNotNull(this.githubURLParser);
+        new GithubURLParser(
+            personalAccessTokenManager, devfileFilenamesProvider, githubApiClient, null, false);
+
     githubScmFileResolver =
         new GithubScmFileResolver(githubURLParser, urlFetcher, personalAccessTokenManager);
-    assertNotNull(this.githubScmFileResolver);
   }
 
   /** Check url which is not a Gitlab url can't be accepted by this resolver */
@@ -66,12 +76,24 @@ public class GithubScmFileResolverTest {
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(urlFetcher.fetch(anyString(), anyString())).thenReturn(rawContent);
-    var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+
+    when(urlFetcher.fetch(
+            eq(
+                "https://raw.githubusercontent.com/organization/samples/d74923ebf968454cf13251f17df69dcd87d3b932/devfile.yaml"),
+            anyString()))
+        .thenReturn(rawContent);
+
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
+
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(
+            new GithubCommit()
+                .withSha("d74923ebf968454cf13251f17df69dcd87d3b932")
+                .withUrl("http://commit.url"));
 
     String content =
-        githubScmFileResolver.fileContent("https://github.com/test/repo.git", filename);
+        githubScmFileResolver.fileContent("https://github.com/organization/samples.git", filename);
 
     assertEquals(content, rawContent);
   }

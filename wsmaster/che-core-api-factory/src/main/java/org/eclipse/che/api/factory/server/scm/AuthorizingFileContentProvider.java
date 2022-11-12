@@ -33,8 +33,8 @@ import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     implements FileContentProvider {
 
-  private final T remoteFactoryUrl;
-  private final PersonalAccessTokenManager personalAccessTokenManager;
+  protected final T remoteFactoryUrl;
+  protected final PersonalAccessTokenManager personalAccessTokenManager;
   protected final URLFetcher urlFetcher;
 
   public AuthorizingFileContentProvider(
@@ -57,7 +57,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     return fetchContent(fileURL, true);
   }
 
-  private String fetchContent(String fileURL, boolean skipAuthentication)
+  protected String fetchContent(String fileURL, boolean skipAuthentication)
       throws IOException, DevfileException {
     final String requestURL = formatUrl(fileURL);
     try {

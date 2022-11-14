@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.ArrayList;
@@ -43,6 +42,9 @@ public class GithubUrl implements RemoteFactoryUrl {
 
   /** Branch name */
   private String branch;
+
+  /** SHA of the latest commit in the current branch */
+  private String latestCommit;
 
   /** Subfolder if any */
   private String subfolder;
@@ -121,6 +123,27 @@ public class GithubUrl implements RemoteFactoryUrl {
   }
 
   /**
+   * Retuna SHA of the latest commimt
+   *
+   * @return latest commit SHA
+   */
+  public String getLatestCommit() {
+    return this.latestCommit;
+  }
+
+  /**
+   * Sets SHA of the latest commit
+   *
+   * @param latestCommit latest commit SHA
+   */
+  protected GithubUrl withLatestCommit(String latestCommit) {
+    if (!isNullOrEmpty(latestCommit)) {
+      this.latestCommit = latestCommit;
+    }
+    return this;
+  }
+
+  /**
    * Gets subfolder of this github url
    *
    * @return the subfolder part
@@ -180,6 +203,8 @@ public class GithubUrl implements RemoteFactoryUrl {
    * @return location of specified file in a repository
    */
   public String rawFileLocation(String fileName) {
+    String branchName = latestCommit != null ? latestCommit : branch != null ? branch : "HEAD";
+
     return new StringJoiner("/")
         .add(
             isNullOrEmpty(serverUrl)
@@ -191,7 +216,7 @@ public class GithubUrl implements RemoteFactoryUrl {
                         + serverUrl.substring(serverUrl.indexOf("://") + 3))
         .add(username)
         .add(repository)
-        .add(firstNonNull(branch, "HEAD"))
+        .add(branchName)
         .add(fileName)
         .toString();
   }

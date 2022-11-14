@@ -27,6 +27,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.subject.Subject;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -39,19 +40,27 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class GithubURLParserTest {
 
-  private final PersonalAccessTokenManager personalAccessTokenManager =
-      mock(PersonalAccessTokenManager.class);
+  private GithubApiClient githubApiClient;
 
-  private final GithubApiClient githubApiClient = mock(GithubApiClient.class);
+  private PersonalAccessTokenManager personalAccessTokenManager;
 
   /** Instance of component that will be tested. */
-  private final GithubURLParser githubUrlParser =
-      new GithubURLParser(
-          personalAccessTokenManager,
-          mock(DevfileFilenamesProvider.class),
-          githubApiClient,
-          null,
-          false);
+  private GithubURLParser githubUrlParser;
+
+  /** Setup objects/ */
+  @BeforeMethod
+  protected void start() throws ApiException {
+    this.personalAccessTokenManager = mock(PersonalAccessTokenManager.class);
+    this.githubApiClient = mock(GithubApiClient.class);
+
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            mock(DevfileFilenamesProvider.class),
+            githubApiClient,
+            null,
+            false);
+  }
 
   /** Check invalid url (not a GitHub one) */
   @Test(expectedExceptions = IllegalArgumentException.class)
@@ -153,36 +162,45 @@ public class GithubURLParserTest {
 
   /** Check Pull Request with data inside the repository */
   @Test
-  public void checkPullRequestFromRepository() throws ApiException {
-
+  public void checkPullRequestFromRepository() throws Exception {
     String url = "https://github.com/eclipse/che/pull/21276";
+
+    GithubPullRequest pr =
+        new GithubPullRequest()
+            .withState("open")
+            .withHead(
+                new GithubHead()
+                    .withRef("pr-main-to-7.46.0")
+                    .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
+                    .withRepo(new GithubRepo().withName("che")));
+    when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
+
     GithubUrl githubUrl = githubUrlParser.parse(url);
 
     assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");
-    assertEquals(githubUrl.getBranch(), "main");
+    assertEquals(githubUrl.getBranch(), "pr-main-to-7.46.0");
   }
 
   /** Check Pull Request with data outside the repository (fork) */
   @Test
   public void checkPullRequestFromForkedRepository() throws Exception {
+    GithubPullRequest pr =
+        new GithubPullRequest()
+            .withState("open")
+            .withHead(
+                new GithubHead()
+                    .withRef("main")
+                    .withUser(new GithubUser().withLogin("eclipse"))
+                    .withRepo(new GithubRepo().withName("che")));
+
     PersonalAccessToken personalAccessToken = mock(PersonalAccessToken.class);
-    GithubPullRequest githubPullRequest = mock(GithubPullRequest.class);
-    GithubHead githubHead = mock(GithubHead.class);
-    GithubRepo githubRepo = mock(GithubRepo.class);
-    GithubUser githubUser = mock(GithubUser.class);
-    when(githubUser.getLogin()).thenReturn("eclipse");
-    when(githubRepo.getName()).thenReturn("che");
-    when(githubHead.getRef()).thenReturn("main");
-    when(githubHead.getRepo()).thenReturn(githubRepo);
-    when(githubHead.getUser()).thenReturn(githubUser);
-    when(githubPullRequest.getState()).thenReturn("open");
-    when(githubPullRequest.getHead()).thenReturn(githubHead);
     when(personalAccessToken.getToken()).thenReturn("token");
     when(personalAccessTokenManager.get(any(Subject.class), anyString()))
         .thenReturn(Optional.of(personalAccessToken));
+
     when(githubApiClient.getPullRequest(anyString(), anyString(), anyString(), anyString()))
-        .thenReturn(githubPullRequest);
+        .thenReturn(pr);
 
     String url = "https://github.com/eclipse/che/pull/20189";
     GithubUrl githubUrl = githubUrlParser.parse(url);
@@ -195,10 +213,24 @@ public class GithubURLParserTest {
   @Test
   public void checkPullRequestFromForkedRepositoryWithoutAuthentication() throws Exception {
     String url = "https://github.com/eclipse/che/pull/21276";
+
+    GithubPullRequest pr =
+        new GithubPullRequest()
+            .withState("open")
+            .withHead(
+                new GithubHead()
+                    .withRef("pr-main-to-7.46.0-SNAPSHOT")
+                    .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
+                    .withRepo(new GithubRepo().withName("che")));
+
+    when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
+
     GithubUrl githubUrl = githubUrlParser.parseWithoutAuthentication(url);
 
     assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");
+    assertEquals(githubUrl.getBranch(), "pr-main-to-7.46.0-SNAPSHOT");
+
     verify(personalAccessTokenManager, never()).fetchAndSave(any(Subject.class), anyString());
   }
 

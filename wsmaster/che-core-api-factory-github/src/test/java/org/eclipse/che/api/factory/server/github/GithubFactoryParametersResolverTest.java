@@ -20,7 +20,9 @@ import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_Q
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,6 +74,8 @@ public class GithubFactoryParametersResolverTest {
   /** Parser which will allow to check validity of URLs and create objects. */
   private GithubURLParser githubUrlParser;
 
+  private GithubApiClient githubApiClient;
+
   /** Converter allowing to convert github URL to other objects. */
   @Spy
   private GithubSourceStorageBuilder githubSourceStorageBuilder = new GithubSourceStorageBuilder();
@@ -80,7 +84,7 @@ public class GithubFactoryParametersResolverTest {
   @Mock private ProjectConfigDtoMerger projectConfigDtoMerger;
 
   /** Parser which will allow to check validity of URLs and create objects. */
-  @Mock private URLFactoryBuilder urlFactoryBuilder;
+  private URLFactoryBuilder urlFactoryBuilder;
 
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
@@ -95,10 +99,14 @@ public class GithubFactoryParametersResolverTest {
   private GithubFactoryParametersResolver githubFactoryParametersResolver;
 
   @BeforeMethod
-  protected void init() {
+  protected void init() throws Exception {
+    this.githubApiClient = mock(GithubApiClient.class);
+    this.urlFactoryBuilder = mock(URLFactoryBuilder.class);
+
     githubUrlParser =
-        new GithubURLParser(personalAccessTokenManager, devfileFilenamesProvider, null, false);
-    assertNotNull(this.githubUrlParser);
+        new GithubURLParser(
+            personalAccessTokenManager, devfileFilenamesProvider, githubApiClient, null, false);
+
     githubFactoryParametersResolver =
         new GithubFactoryParametersResolver(
             githubUrlParser,
@@ -150,6 +158,10 @@ public class GithubFactoryParametersResolverTest {
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.empty());
+
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(new GithubCommit().withSha("test-sha"));
+
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
     FactoryDto factory = (FactoryDto) githubFactoryParametersResolver.createFactory(params);
@@ -166,6 +178,10 @@ public class GithubFactoryParametersResolverTest {
     // given
     when(urlFactoryBuilder.buildDefaultDevfile(any()))
         .thenReturn(generateDevfileFactory().getDevfile());
+
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(new GithubCommit().withSha("test-sha"));
+
     // when
     Map<String, String> params =
         ImmutableMap.of(
@@ -185,6 +201,10 @@ public class GithubFactoryParametersResolverTest {
     // given
     when(urlFactoryBuilder.buildDefaultDevfile(any()))
         .thenReturn(generateDevfileFactory().getDevfile());
+
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(new GithubCommit().withSha("test-sha"));
+
     // when
     githubFactoryParametersResolver.createFactory(
         ImmutableMap.of(URL_PARAMETER_NAME, "https://github.com/eclipse/che"));
@@ -208,6 +228,9 @@ public class GithubFactoryParametersResolverTest {
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(new GithubCommit().withSha("13bbd0d4605a6ed3350f7b15eb02c4d4e6f8df6e"));
+
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
     FactoryDto factory = (FactoryDto) githubFactoryParametersResolver.createFactory(params);
@@ -222,7 +245,7 @@ public class GithubFactoryParametersResolverTest {
     verify(urlFactoryBuilder, never()).buildDefaultDevfile(eq("che"));
     assertEquals(
         factoryUrlArgumentCaptor.getValue().devfileFileLocations().iterator().next().location(),
-        "https://raw.githubusercontent.com/eclipse/che/HEAD/devfile.yaml");
+        "https://raw.githubusercontent.com/eclipse/che/13bbd0d4605a6ed3350f7b15eb02c4d4e6f8df6e/devfile.yaml");
   }
 
   @Test
@@ -235,6 +258,9 @@ public class GithubFactoryParametersResolverTest {
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
+
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(new GithubCommit().withSha("test-sha"));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
@@ -264,6 +290,9 @@ public class GithubFactoryParametersResolverTest {
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
 
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(new GithubCommit().withSha("test-sha"));
+
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
     FactoryDto factory = (FactoryDto) githubFactoryParametersResolver.createFactory(params);
@@ -283,6 +312,9 @@ public class GithubFactoryParametersResolverTest {
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
+
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenReturn(new GithubCommit().withSha("test-sha"));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when

@@ -132,7 +132,7 @@ public class GithubApiClient {
       String id, String username, String repoName, String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
     final URI uri =
-        apiServerUrl.resolve(String.format("./repos/%1s/%2s/pulls/%3s", username, repoName, id));
+        apiServerUrl.resolve(String.format("./repos/%s/%s/pulls/%s", username, repoName, id));
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
     LOG.trace("executeRequest={}", request);
     return executeRequest(

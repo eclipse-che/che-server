@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,12 +12,7 @@
 package org.eclipse.che.api.devfile.server;
 
 import static io.restassured.RestAssured.given;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_SUBJECT;
-import static org.eclipse.che.api.devfile.server.TestObjectGenerator.USER_DEVFILE_ID;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.SUPPORTED_VERSIONS;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
@@ -25,38 +20,20 @@ import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.restassured.response.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.Page;
-import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.CheJsonProvider;
 import org.eclipse.che.api.core.rest.ServiceContext;
 import org.eclipse.che.api.core.rest.WebApplicationExceptionMapper;
-import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
-import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
 import org.eclipse.che.api.workspace.server.devfile.DevfileEntityProvider;
@@ -68,16 +45,12 @@ import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValid
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.lang.NameGenerator;
-import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.core.Filter;
 import org.everrest.core.GenericContainerRequest;
 import org.everrest.core.RequestFilter;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -164,343 +137,10 @@ public class DevfileServiceTest {
 
   @BeforeMethod
   public void setup() {
-    this.userDevfileService = new DevfileService(schemaProvider, userDevfileManager, linksInjector);
+    this.userDevfileService = new DevfileService(schemaProvider);
     lenient()
         .when(linksInjector.injectLinks(any(UserDevfileDto.class), any(ServiceContext.class)))
         .thenAnswer((Answer<UserDevfileDto>) invocation -> invocation.getArgument(0));
-  }
-
-  @Test(dataProvider = "validUserDevfiles")
-  public void shouldCreateUserDevfileFromJson(UserDevfileDto userDevfileDto) throws Exception {
-    final UserDevfileImpl userDevfileImpl =
-        new UserDevfileImpl("id-123123", TEST_ACCOUNT, userDevfileDto);
-
-    when(userDevfileManager.createDevfile(any(UserDevfile.class))).thenReturn(userDevfileImpl);
-
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType("application/json")
-            .body(DtoFactory.getInstance().toJson(userDevfileDto))
-            .when()
-            .post(SECURE_PATH + "/devfile");
-
-    assertEquals(response.getStatusCode(), 201);
-    UserDevfileDto dto = unwrapDto(response, UserDevfileDto.class);
-    assertEquals(dto.getNamespace(), TEST_ACCOUNT.getName());
-    assertEquals(new UserDevfileImpl(dto, TEST_ACCOUNT), userDevfileImpl);
-    verify(userDevfileManager).createDevfile(any(UserDevfile.class));
-  }
-
-  @Test(dataProvider = "invalidUserDevfiles")
-  public void shouldFailToCreateInvalidUserDevfileFromJson(
-      UserDevfileDto userDevfileDto, String expectedErrorMessage) throws Exception {
-
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType("application/json")
-            .body(DtoFactory.getInstance().toJson(userDevfileDto))
-            .when()
-            .post(SECURE_PATH + "/devfile");
-
-    assertEquals(response.getStatusCode(), 400);
-    ServiceError error = unwrapDto(response, ServiceError.class);
-    assertNotNull(error);
-    assertEquals(error.getMessage(), expectedErrorMessage);
-    verifyNoMoreInteractions(userDevfileManager);
-  }
-
-  @Test
-  public void shouldGetUserDevfileById() throws Exception {
-    final UserDevfileImpl userDevfile = TestObjectGenerator.createUserDevfile();
-    when(userDevfileManager.getById(eq("id-22323"))).thenReturn(userDevfile);
-
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType("application/json")
-            .when()
-            .get(SECURE_PATH + "/devfile/id-22323")
-            .then()
-            .extract()
-            .response();
-
-    assertEquals(response.getStatusCode(), 200);
-    assertEquals(
-        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT), userDevfile);
-    verify(userDevfileManager).getById(eq("id-22323"));
-    verify(linksInjector).injectLinks(any(), any());
-  }
-
-  @Test
-  public void shouldThrowNotFoundExceptionWhenUserDevfileIsNotExistOnGetById() throws Exception {
-
-    final String errMessage = format("UserDevfile with id %s is not found", USER_DEVFILE_ID);
-    doThrow(new NotFoundException(errMessage)).when(userDevfileManager).getById(anyString());
-
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .expect()
-            .statusCode(404)
-            .when()
-            .get(SECURE_PATH + "/devfile/" + USER_DEVFILE_ID);
-
-    assertEquals(unwrapDto(response, ServiceError.class).getMessage(), errMessage);
-  }
-
-  @Test
-  public void shouldThrowNotFoundExceptionWhenUpdatingNonExistingUserDevfile() throws Exception {
-    // given
-    final UserDevfile userDevfile =
-        DtoConverter.asDto(TestObjectGenerator.createUserDevfile("devfile-name"));
-
-    doThrow(new NotFoundException(format("User devfile with id %s is not found.", USER_DEVFILE_ID)))
-        .when(userDevfileManager)
-        .updateUserDevfile(any(UserDevfile.class));
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType(APPLICATION_JSON)
-            .body(DtoFactory.getInstance().toJson(userDevfile))
-            .when()
-            .put(SECURE_PATH + "/devfile/" + USER_DEVFILE_ID);
-    // then
-    assertEquals(response.getStatusCode(), 404);
-    assertEquals(
-        unwrapDto(response, ServiceError.class).getMessage(),
-        format("User devfile with id %s is not found.", USER_DEVFILE_ID));
-  }
-
-  @Test
-  public void shouldBeAbleToUpdateUserDevfile() throws Exception {
-    // given
-    final UserDevfileDto devfileDto = TestObjectGenerator.createUserDevfileDto();
-    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto, TEST_ACCOUNT);
-    when(userDevfileManager.updateUserDevfile(any(UserDevfile.class))).thenReturn(userDevfileImpl);
-
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType(APPLICATION_JSON)
-            .body(DtoFactory.getInstance().toJson(devfileDto))
-            .when()
-            .put(SECURE_PATH + "/devfile/" + devfileDto.getId());
-    // then
-    assertEquals(response.getStatusCode(), 200);
-    assertEquals(
-        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT),
-        userDevfileImpl);
-    verify(userDevfileManager).updateUserDevfile(devfileDto);
-    verify(linksInjector).injectLinks(any(), any());
-  }
-
-  @Test(dataProvider = "invalidUserDevfiles")
-  public void shouldFailToUpdateWithInvalidUserDevfile(
-      UserDevfileDto userDevfileDto, String expectedErrorMessage) throws Exception {
-    // given
-    userDevfileDto = userDevfileDto.withId("id-123");
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType(APPLICATION_JSON)
-            .body(DtoFactory.getInstance().toJson(userDevfileDto))
-            .when()
-            .put(SECURE_PATH + "/devfile/" + userDevfileDto.getId());
-    // then
-    assertEquals(response.getStatusCode(), 400);
-    ServiceError error = unwrapDto(response, ServiceError.class);
-    assertNotNull(error);
-    assertEquals(error.getMessage(), expectedErrorMessage);
-    verifyNoMoreInteractions(userDevfileManager);
-    verifyNoMoreInteractions(linksInjector);
-  }
-
-  @Test
-  public void shouldOverrideIdOnUpdateUserDevfile() throws Exception {
-    // given
-    final UserDevfileDto devfileDto = TestObjectGenerator.createUserDevfileDto();
-    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto, TEST_ACCOUNT);
-
-    final String newID = NameGenerator.generate("id", 24);
-    final UserDevfileImpl expectedUserDevfileImpl =
-        new UserDevfileImpl(newID, TEST_ACCOUNT, userDevfileImpl);
-    final UserDevfileDto expectedDto =
-        org.eclipse.che.api.devfile.server.DtoConverter.asDto(expectedUserDevfileImpl);
-    when(userDevfileManager.updateUserDevfile(any(UserDevfile.class)))
-        .thenReturn(expectedUserDevfileImpl);
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType(APPLICATION_JSON)
-            .body(DtoFactory.getInstance().toJson(devfileDto))
-            .when()
-            .put(SECURE_PATH + "/devfile/" + newID);
-    // then
-    assertEquals(response.getStatusCode(), 200);
-    assertEquals(
-        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT),
-        expectedUserDevfileImpl);
-    verify(userDevfileManager).updateUserDevfile(expectedDto);
-    verify(linksInjector).injectLinks(any(), any());
-  }
-
-  @Test
-  public void shouldRemoveUserDevfileByGivenIdentifier() throws Exception {
-    // given
-    // when
-    given()
-        .auth()
-        .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-        .expect()
-        .statusCode(204)
-        .when()
-        .delete(SECURE_PATH + "/devfile/" + USER_DEVFILE_ID);
-    // then
-    verify(userDevfileManager).removeUserDevfile(USER_DEVFILE_ID);
-  }
-
-  @Test
-  public void shouldNotThrowAnyExceptionWhenRemovingNonExistingUserDevfile() throws Exception {
-    // given
-    Mockito.doNothing().when(userDevfileManager).removeUserDevfile(anyString());
-    // when
-    Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .when()
-            .delete(SECURE_PATH + "/devfile/" + USER_DEVFILE_ID);
-    // then
-    assertEquals(response.getStatusCode(), 204);
-  }
-
-  @Test
-  public void shouldGetUserDevfilesAvailableToUser() throws Exception {
-    // given
-    final UserDevfileDto devfileDto = TestObjectGenerator.createUserDevfileDto();
-    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto, TEST_ACCOUNT);
-    doReturn(new Page<>(ImmutableList.of(userDevfileImpl), 0, 1, 1))
-        .when(userDevfileManager)
-        .getUserDevfiles(anyInt(), anyInt(), anyList(), anyList());
-
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType("application/json")
-            .when()
-            .get(SECURE_PATH + "/devfile/search")
-            .then()
-            .extract()
-            .response();
-
-    // then
-    assertEquals(response.getStatusCode(), 200);
-    final List<UserDevfileDto> res = unwrapDtoList(response, UserDevfileDto.class);
-    assertEquals(res.size(), 1);
-    assertEquals(res.get(0).withLinks(emptyList()), devfileDto);
-    verify(userDevfileManager).getUserDevfiles(eq(30), eq(0), anyList(), anyList());
-  }
-
-  @Test
-  public void shouldBeAbleToSetLimitAndOffsetOnUserDevfileSearch() throws Exception {
-    // given
-    doReturn(new Page<>(Collections.emptyList(), 0, 1, 0))
-        .when(userDevfileManager)
-        .getUserDevfiles(anyInt(), anyInt(), anyList(), anyList());
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType("application/json")
-            .queryParam("maxItems", 5)
-            .queryParam("skipCount", 52)
-            .when()
-            .get(SECURE_PATH + "/devfile/search")
-            .then()
-            .extract()
-            .response();
-    // then
-    // then
-    assertEquals(response.getStatusCode(), 200);
-    verify(userDevfileManager).getUserDevfiles(eq(5), eq(52), anyList(), anyList());
-  }
-
-  @Test
-  public void shouldBeAbleToSetFiltertOnUserDevfileSearch() throws Exception {
-    // given
-    doReturn(new Page<>(Collections.emptyList(), 0, 1, 0))
-        .when(userDevfileManager)
-        .getUserDevfiles(anyInt(), anyInt(), anyList(), anyList());
-    Map<String, String> parameters =
-        ImmutableMap.of("id", "sdfsdf5", "devfile.meta.name", "like:%dfdf");
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType("application/json")
-            .queryParam("id", "sdfsdf5")
-            .queryParam("devfile.meta.name", "like:%dfdf")
-            .when()
-            .get(SECURE_PATH + "/devfile/search")
-            .then()
-            .extract()
-            .response();
-
-    // then
-    assertEquals(response.getStatusCode(), 200);
-    Class<List<Pair<String, String>>> listClass =
-        (Class<List<Pair<String, String>>>) (Class) ArrayList.class;
-    ArgumentCaptor<List<Pair<String, String>>> filterCaptor = ArgumentCaptor.forClass(listClass);
-    verify(userDevfileManager).getUserDevfiles(eq(30), eq(0), filterCaptor.capture(), anyList());
-    assertEquals(
-        filterCaptor.getValue(),
-        ImmutableList.of(new Pair("devfile.meta.name", "like:%dfdf"), new Pair("id", "sdfsdf5")));
-  }
-
-  @Test
-  public void shouldBeAbleToSetOrderOnUserDevfileSearch() throws Exception {
-    // given
-    doReturn(new Page<>(Collections.emptyList(), 0, 1, 0))
-        .when(userDevfileManager)
-        .getUserDevfiles(anyInt(), anyInt(), anyList(), anyList());
-    // when
-    final Response response =
-        given()
-            .auth()
-            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-            .contentType("application/json")
-            .queryParam("order", "id:asc,name:desc")
-            .when()
-            .get(SECURE_PATH + "/devfile/search")
-            .then()
-            .extract()
-            .response();
-    // then
-    assertEquals(response.getStatusCode(), 200);
-    Class<List<Pair<String, String>>> listClass =
-        (Class<List<Pair<String, String>>>) (Class) ArrayList.class;
-    ArgumentCaptor<List<Pair<String, String>>> orderCaptor = ArgumentCaptor.forClass(listClass);
-    verify(userDevfileManager).getUserDevfiles(eq(30), eq(0), anyList(), orderCaptor.capture());
-    assertEquals(
-        orderCaptor.getValue(), ImmutableList.of(new Pair("id", "asc"), new Pair("name", "desc")));
   }
 
   @DataProvider

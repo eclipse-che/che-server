@@ -19,6 +19,7 @@ import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_Q
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
@@ -35,6 +36,7 @@ import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
+import org.eclipse.che.commons.annotation.Nullable;
 
 /**
  * Provides Factory Parameters resolver for github repositories.
@@ -57,6 +59,23 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
 
   @Inject
   public GithubFactoryParametersResolver(
+      GithubURLParser githubUrlParser,
+      URLFetcher urlFetcher,
+      GithubSourceStorageBuilder githubSourceStorageBuilder,
+      URLFactoryBuilder urlFactoryBuilder,
+      ProjectConfigDtoMerger projectConfigDtoMerger,
+      PersonalAccessTokenManager personalAccessTokenManager,
+      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint) {
+    this(
+        githubUrlParser,
+        urlFetcher,
+        githubSourceStorageBuilder,
+        urlFactoryBuilder,
+        projectConfigDtoMerger,
+        personalAccessTokenManager);
+  }
+
+  GithubFactoryParametersResolver(
       GithubURLParser githubUrlParser,
       URLFetcher urlFetcher,
       GithubSourceStorageBuilder githubSourceStorageBuilder,

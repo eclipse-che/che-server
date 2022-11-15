@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -52,6 +53,10 @@ public class GithubApiClient {
   /** GitHub endpoint URL. */
   public static final String GITHUB_SAAS_ENDPOINT = "https://github.com";
 
+  public static final String GITHUB_SAAS_ENDPOINT_API = "https://api.github.com";
+
+  public static final String GITHUB_SAAS_ENDPOINT_RAW = "https://raw.githubusercontent.com";
+
   /** GitHub HTTP header containing OAuth scopes. */
   public static final String GITHUB_OAUTH_SCOPES_HEADER = "X-OAuth-Scopes";
 
@@ -68,7 +73,7 @@ public class GithubApiClient {
     this.apiServerUrl =
         URI.create(
             isNullOrEmpty(trimmedServerUrl) || trimmedServerUrl.equals(GITHUB_SAAS_ENDPOINT)
-                ? "https://api.github.com/"
+                ? GITHUB_SAAS_ENDPOINT_API + "/"
                 : trimmedServerUrl + "/api/v3/");
     this.scmServerUrl =
         URI.create(isNullOrEmpty(trimmedServerUrl) ? GITHUB_SAAS_ENDPOINT : trimmedServerUrl);
@@ -113,11 +118,21 @@ public class GithubApiClient {
         });
   }
 
+  /**
+   * Fetches and returns a pull request.
+   *
+   * @param id pull request ID
+   * @param username user name
+   * @param repoName repository name
+   * @param authenticationToken oauth access token, can be NULL as the GitHub can handle some
+   *     requests without authentication
+   * @return pull request
+   */
   public GithubPullRequest getPullRequest(
       String id, String username, String repoName, String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
     final URI uri =
-        apiServerUrl.resolve(String.format("./repos/%1s/%2s/pulls/%3s", username, repoName, id));
+        apiServerUrl.resolve(String.format("./repos/%s/%s/pulls/%s", username, repoName, id));
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
     LOG.trace("executeRequest={}", request);
     return executeRequest(
@@ -126,6 +141,47 @@ public class GithubApiClient {
         response -> {
           try {
             return OBJECT_MAPPER.readValue(response.body(), GithubPullRequest.class);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        });
+  }
+
+  /**
+   * Returns the latest commit of the branch.
+   *
+   * <p>GitHub REST API documentation: https://docs.github.com/en/rest/commits/commits
+   *
+   * @param user user or organization name
+   * @param repository repository name
+   * @param branch required branch
+   * @param authenticationToken OAuth access token, can be NULL as the GitHub can handle some
+   *     requests without authentication
+   * @return the latest commit of the branch
+   */
+  public GithubCommit getLatestCommit(
+      String user, String repository, String branch, @Nullable String authenticationToken)
+      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+          URISyntaxException {
+
+    final URI uri = apiServerUrl.resolve(String.format("./repos/%s/%s/commits", user, repository));
+
+    final URI requestURI =
+        new URI(
+            uri.getScheme(),
+            uri.getAuthority(),
+            uri.getPath(),
+            String.format("sha=%s&page=1&per_page=1", branch),
+            null);
+    HttpRequest request = buildGithubApiRequest(requestURI, authenticationToken);
+    LOG.trace("executeRequest={}", request);
+
+    return executeRequest(
+        httpClient,
+        request,
+        response -> {
+          try {
+            return OBJECT_MAPPER.readValue(response.body(), GithubCommit[].class)[0];
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -162,15 +218,30 @@ public class GithubApiClient {
         });
   }
 
-  private HttpRequest buildGithubApiRequest(URI uri, String authenticationToken) {
-    return HttpRequest.newBuilder(uri)
-        .headers(
-            "Authorization",
-            "token " + authenticationToken,
-            "Accept",
-            "application/vnd.github.v3+json")
-        .timeout(DEFAULT_HTTP_TIMEOUT)
-        .build();
+  /**
+   * Builds and returns HttpRequest to acces the GitHub API.
+   *
+   * @param uri request uri
+   * @param authenticationToken authentication token, can be NULL as the GitHub can handle some
+   *     requests without authentication
+   * @return HttpRequest object
+   */
+  private HttpRequest buildGithubApiRequest(URI uri, @Nullable String authenticationToken) {
+    if (isNullOrEmpty(authenticationToken)) {
+      return HttpRequest.newBuilder(uri)
+          .headers("Accept", "application/vnd.github.v3+json")
+          .timeout(DEFAULT_HTTP_TIMEOUT)
+          .build();
+    } else {
+      return HttpRequest.newBuilder(uri)
+          .headers(
+              "Authorization",
+              "token " + authenticationToken,
+              "Accept",
+              "application/vnd.github.v3+json")
+          .timeout(DEFAULT_HTTP_TIMEOUT)
+          .build();
+    }
   }
 
   private <T> T executeRequest(

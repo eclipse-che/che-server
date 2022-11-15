@@ -146,4 +146,21 @@ public class GithubApiClientTest {
   public void shouldReturnTrueWhenConnectedToGithub() {
     assertTrue(client.isConnected(wireMockServer.url("/")));
   }
+
+  @Test
+  public void testGetLatestCommit() throws Exception {
+    stubFor(
+        get(urlEqualTo("/api/v3/repos/eclipse-che/che-server/commits?sha=HEAD&page=1&per_page=1"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token token1"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBody("[{\"sha\": \"test_sha\", \"url\": \"http://commit.url\" }]")));
+
+    GithubCommit commit = client.getLatestCommit("eclipse-che", "che-server", "HEAD", "token1");
+
+    assertNotNull(commit, "GitHub API should return the latest commit");
+    assertEquals(commit.getSha(), "test_sha");
+    assertEquals(commit.getUrl(), "http://commit.url");
+  }
 }

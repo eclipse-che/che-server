@@ -24,6 +24,11 @@ class GithubRepo {
   public void setName(String name) {
     this.name = name;
   }
+
+  public GithubRepo withName(String name) {
+    this.name = name;
+    return this;
+  }
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -40,6 +45,11 @@ class GithubHead {
     this.ref = ref;
   }
 
+  public GithubHead withRef(String ref) {
+    this.ref = ref;
+    return this;
+  }
+
   public GithubUser getUser() {
     return user;
   }
@@ -48,12 +58,22 @@ class GithubHead {
     this.user = user;
   }
 
+  public GithubHead withUser(GithubUser user) {
+    this.user = user;
+    return this;
+  }
+
   public GithubRepo getRepo() {
     return repo;
   }
 
   public void setRepo(GithubRepo repo) {
     this.repo = repo;
+  }
+
+  public GithubHead withRepo(GithubRepo repo) {
+    this.repo = repo;
+    return this;
   }
 }
 
@@ -70,11 +90,21 @@ public class GithubPullRequest {
     this.state = state;
   }
 
+  public GithubPullRequest withState(String state) {
+    this.state = state;
+    return this;
+  }
+
   public GithubHead getHead() {
     return head;
   }
 
   public void setHead(GithubHead head) {
     this.head = head;
+  }
+
+  public GithubPullRequest withHead(GithubHead head) {
+    this.head = head;
+    return this;
   }
 }

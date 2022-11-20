@@ -150,7 +150,7 @@
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
         <org.mockito.mockito-testng.version>0.4.13</org.mockito.mockito-testng.version>
-        <org.mockito.version>3.11.2</org.mockito.version>
+        <org.mockito.version>4.9.0</org.mockito.version>
         <org.postgresql.version>42.2.24</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>
         <org.slf4j.version>1.7.32</org.slf4j.version>

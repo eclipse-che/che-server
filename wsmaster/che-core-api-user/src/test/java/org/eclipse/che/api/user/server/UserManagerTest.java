@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,8 +12,6 @@
 package org.eclipse.che.api.user.server;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMapOf;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
@@ -34,9 +32,7 @@ import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
-import org.eclipse.che.api.user.server.event.UserCreatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
-import org.eclipse.che.api.user.server.model.impl.ProfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
@@ -83,53 +79,6 @@ public class UserManagerTest {
                 return postUserPersistedEvent;
               }
             });
-  }
-
-  @Test
-  public void shouldCreateAccountAndProfileAndPreferencesOnUserCreation() throws Exception {
-    final UserImpl user = new UserImpl(null, "test@email.com", "testName", null, null);
-
-    manager.create(user, false);
-
-    verify(userDao).create(any(UserImpl.class));
-    verify(profileDao).create(any(ProfileImpl.class));
-    verify(preferencesDao).setPreferences(anyString(), anyMapOf(String.class, String.class));
-  }
-
-  @Test
-  public void shouldGeneratePasswordWhenCreatingUserAndItIsMissing() throws Exception {
-    final User user = new UserImpl(null, "test@email.com", "testName", null, null);
-
-    manager.create(user, false);
-
-    final ArgumentCaptor<UserImpl> userCaptor = ArgumentCaptor.forClass(UserImpl.class);
-    verify(userDao).create(userCaptor.capture());
-    assertNotNull(userCaptor.getValue().getPassword());
-  }
-
-  @Test
-  public void shouldGenerateIdentifierWhenCreatingUserWithNullId() throws Exception {
-    final User user = new UserImpl(null, "test@email.com", "testName", null, null);
-
-    manager.create(user, false);
-
-    final ArgumentCaptor<UserImpl> userCaptor = ArgumentCaptor.forClass(UserImpl.class);
-    verify(userDao).create(userCaptor.capture());
-    final String id = userCaptor.getValue().getId();
-    assertNotNull(id);
-  }
-
-  @Test
-  public void shouldNotGenerateIdentifierWhenCreatingUserWithNotNullId() throws Exception {
-    final User user = new UserImpl("identifier", "test@email.com", "testName", null, null);
-
-    manager.create(user, false);
-
-    final ArgumentCaptor<UserImpl> userCaptor = ArgumentCaptor.forClass(UserImpl.class);
-    verify(userDao).create(userCaptor.capture());
-    final String id = userCaptor.getValue().getId();
-    assertNotNull(id);
-    assertEquals(id, "identifier");
   }
 
   @Test(expectedExceptions = NullPointerException.class)
@@ -366,74 +315,6 @@ public class UserManagerTest {
 
     assertTrue(
         firedEvents.getValue() instanceof BeforeUserRemovedEvent, "Not a BeforeUserRemovedEvent");
-  }
-
-  @Test
-  public void shouldFirePostUserPersistedEventNewUserCreatedAndBeforeCommit() throws Exception {
-    final UserImpl user =
-        new UserImpl(
-            "identifier",
-            "test@email.com",
-            "testName",
-            "password",
-            Collections.singletonList("alias"));
-
-    manager.create(user, false);
-
-    ArgumentCaptor<Object> firedEvents = ArgumentCaptor.forClass(Object.class);
-    verify(eventService, times(2)).publish(firedEvents.capture());
-
-    // the first event - PostUserPersistedEvent
-    // the second event - UserCreatedEvent
-    Object event = firedEvents.getAllValues().get(0);
-    assertTrue(event instanceof PostUserPersistedEvent, "Not a PostUserPersistedEvent");
-    assertEquals(((PostUserPersistedEvent) event).getUser(), user);
-  }
-
-  @Test
-  public void shouldFireUserCreatedEventOnNewUserCreated() throws Exception {
-    final UserImpl user =
-        new UserImpl(
-            "identifier",
-            "test@email.com",
-            "testName",
-            "password",
-            Collections.singletonList("alias"));
-
-    manager.create(user, false);
-
-    ArgumentCaptor<Object> firedEvents = ArgumentCaptor.forClass(Object.class);
-    verify(eventService, times(2)).publish(firedEvents.capture());
-
-    // the first event - PostUserPersistedEvent
-    // the second event - UserCreatedEvent
-    Object event = firedEvents.getAllValues().get(1);
-    assertTrue(event instanceof UserCreatedEvent, "Not a UserCreatedEvent");
-    assertEquals(((UserCreatedEvent) event).getUser(), user);
-  }
-
-  @Test
-  public void shouldNotCreteUserWhenSubscriberThrowsExceptionOnCreatingNewUser() throws Exception {
-    final UserImpl user =
-        new UserImpl(
-            "identifier",
-            "test@email.com",
-            "testName",
-            "password",
-            Collections.singletonList("alias"));
-    doThrow(new ServerException("error")).when(postUserPersistedEvent).propagateException();
-
-    try {
-      manager.create(user, false);
-      fail("ServerException expected.");
-    } catch (ServerException ignored) {
-    }
-
-    ArgumentCaptor<Object> firedEvents = ArgumentCaptor.forClass(Object.class);
-    verify(eventService, times(1)).publish(firedEvents.capture());
-
-    assertTrue(
-        firedEvents.getValue() instanceof PostUserPersistedEvent, "Not a PostUserPersistedEvent");
   }
 
   @Test

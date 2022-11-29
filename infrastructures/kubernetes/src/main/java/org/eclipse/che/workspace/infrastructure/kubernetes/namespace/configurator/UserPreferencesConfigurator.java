@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,22 +11,10 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
-import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_MOUNT_AS_ANNOTATION;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_MOUNT_LABEL;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.DEV_WORKSPACE_MOUNT_PATH_ANNOTATION;
-
 import com.google.common.annotations.VisibleForTesting;
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.client.KubernetesClientException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -39,6 +27,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
  *
  * @author Pavol Baran
  */
+@Deprecated
 @Singleton
 public class UserPreferencesConfigurator implements NamespaceConfigurator {
   private static final String USER_PREFERENCES_SECRET_NAME = "user-preferences";
@@ -59,62 +48,10 @@ public class UserPreferencesConfigurator implements NamespaceConfigurator {
     this.preferenceManager = preferenceManager;
   }
 
+  /** 'user-preferences' secret is obsolete and not used anymore by DevWorkspaces */
   @Override
   public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
-      throws InfrastructureException {
-    Secret userPreferencesSecret = preparePreferencesSecret(namespaceResolutionContext);
-
-    try {
-      clientFactory
-          .create()
-          .secrets()
-          .inNamespace(namespaceName)
-          .createOrReplace(userPreferencesSecret);
-    } catch (KubernetesClientException e) {
-      throw new InfrastructureException(
-          "Error occurred while trying to create user preferences secret.", e);
-    }
-  }
-
-  private Secret preparePreferencesSecret(NamespaceResolutionContext namespaceResolutionContext)
-      throws InfrastructureException {
-    Base64.Encoder enc = Base64.getEncoder();
-    User user;
-    Map<String, String> preferences;
-
-    try {
-      user = userManager.getById(namespaceResolutionContext.getUserId());
-      preferences = preferenceManager.find(user.getId());
-    } catch (NotFoundException | ServerException e) {
-      throw new InfrastructureException(
-          String.format(
-              "Preferences of user with id:%s cannot be retrieved.",
-              namespaceResolutionContext.getUserId()),
-          e);
-    }
-
-    if (preferences == null || preferences.isEmpty()) {
-      throw new InfrastructureException(
-          String.format(
-              "Preferences of user with id:%s are empty. Cannot create user preferences secrets.",
-              namespaceResolutionContext.getUserId()));
-    }
-
-    Map<String, String> preferencesEncoded = new HashMap<>();
-    preferences.forEach(
-        (key, value) ->
-            preferencesEncoded.put(
-                normalizePreferenceName(key), enc.encodeToString(value.getBytes())));
-    return new SecretBuilder()
-        .addToData(preferencesEncoded)
-        .withNewMetadata()
-        .withName(USER_PREFERENCES_SECRET_NAME)
-        .addToLabels(DEV_WORKSPACE_MOUNT_LABEL, "true")
-        .addToAnnotations(DEV_WORKSPACE_MOUNT_AS_ANNOTATION, "file")
-        .addToAnnotations(DEV_WORKSPACE_MOUNT_PATH_ANNOTATION, USER_PREFERENCES_SECRET_MOUNT_PATH)
-        .endMetadata()
-        .build();
-  }
+      throws InfrastructureException {}
 
   /**
    * Some preferences names are not compatible with k8s restrictions on key field in secret. The

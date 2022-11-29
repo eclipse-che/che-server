@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -41,10 +41,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Named;
-import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.ValidationException;
-import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.user.server.PreferenceManager;
@@ -275,30 +273,21 @@ public class KubernetesNamespaceFactory {
    * the context.
    *
    * @param identity the identity of the workspace runtime
+   * @param userName the user name
    * @return true if the namespace can be created, false if the namespace is expected to already
    *     exist
    * @throws InfrastructureException on failure
    */
-  protected boolean canCreateNamespace(RuntimeIdentity identity) throws InfrastructureException {
+  protected boolean canCreateNamespace(RuntimeIdentity identity, String userName)
+      throws InfrastructureException {
     if (!namespaceCreationAllowed) {
       return false;
-    }
-
-    // we need to make sure that the provided namespace is indeed the one provided by our
-    // configuration
-    User owner;
-    try {
-      owner = userManager.getById(identity.getOwnerId());
-    } catch (NotFoundException | ServerException e) {
-      throw new InfrastructureException(
-          "Failed to resolve workspace owner. Cause: " + e.getMessage(), e);
     }
 
     String requiredNamespace = identity.getInfrastructureNamespace();
 
     NamespaceResolutionContext resolutionContext =
-        new NamespaceResolutionContext(
-            identity.getWorkspaceId(), identity.getOwnerId(), owner.getName());
+        new NamespaceResolutionContext(identity.getWorkspaceId(), identity.getOwnerId(), userName);
 
     String resolvedDefaultNamespace = evaluateNamespaceName(resolutionContext);
 
@@ -320,14 +309,14 @@ public class KubernetesNamespaceFactory {
     KubernetesNamespace namespace = get(identity);
 
     var subject = EnvironmentContext.getCurrent().getSubject();
+    var userName = subject.getUserName();
     NamespaceResolutionContext resolutionCtx =
-        new NamespaceResolutionContext(
-            identity.getWorkspaceId(), subject.getUserId(), subject.getUserName());
+        new NamespaceResolutionContext(identity.getWorkspaceId(), subject.getUserId(), userName);
     Map<String, String> namespaceAnnotationsEvaluated =
         evaluateAnnotationPlaceholders(resolutionCtx);
 
     namespace.prepare(
-        canCreateNamespace(identity),
+        canCreateNamespace(identity, userName),
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
 
@@ -515,9 +504,6 @@ public class KubernetesNamespaceFactory {
         "Evaluated the namespace for workspace {} using the namespace default to {}",
         resolutionCtx.getWorkspaceId(),
         namespace);
-
-    recordEvaluatedNamespaceName(namespace, resolutionCtx);
-
     return namespace;
   }
 

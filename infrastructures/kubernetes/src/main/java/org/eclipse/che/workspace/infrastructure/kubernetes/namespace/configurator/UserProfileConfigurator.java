@@ -24,9 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
@@ -70,21 +67,15 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
 
   private Secret prepareProfileSecret(NamespaceResolutionContext namespaceResolutionContext)
       throws InfrastructureException {
-    User user;
-    try {
-      user = userManager.getById(namespaceResolutionContext.getUserId());
-    } catch (NotFoundException | ServerException e) {
-      throw new InfrastructureException(
-          String.format(
-              "Could not find current user with id:%s.", namespaceResolutionContext.getUserId()),
-          e);
-    }
+    var userId = namespaceResolutionContext.getUserId();
+    var userName = namespaceResolutionContext.getUserName();
+    var userEmail = userName + "@che";
 
     Base64.Encoder enc = Base64.getEncoder();
     final Map<String, String> userProfileData = new HashMap<>();
-    userProfileData.put("id", enc.encodeToString(user.getId().getBytes()));
-    userProfileData.put("name", enc.encodeToString(user.getName().getBytes()));
-    userProfileData.put("email", enc.encodeToString(user.getEmail().getBytes()));
+    userProfileData.put("id", enc.encodeToString(userId.getBytes()));
+    userProfileData.put("name", enc.encodeToString(userName.getBytes()));
+    userProfileData.put("email", enc.encodeToString(userEmail.getBytes()));
 
     return new SecretBuilder()
         .addToData(userProfileData)

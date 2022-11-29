@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,14 +14,12 @@ package org.eclipse.che.api.user.server;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.che.api.user.server.Constants.ID_LENGTH;
 import static org.eclipse.che.api.user.server.Constants.PASSWORD_LENGTH;
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.persist.Transactional;
 import java.util.Optional;
@@ -38,10 +36,8 @@ import org.eclipse.che.api.core.model.user.Profile;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
-import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
 import org.eclipse.che.api.user.server.event.UserCreatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
-import org.eclipse.che.api.user.server.model.impl.ProfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
@@ -54,6 +50,7 @@ import org.eclipse.che.api.user.server.spi.UserDao;
  * @author Yevhenii Voevodin
  * @author Anton Korneta
  */
+@Deprecated
 @Singleton
 public class UserManager {
 
@@ -80,7 +77,7 @@ public class UserManager {
   }
 
   /**
-   * Creates new user and his profile.
+   * Creates new user and his profile. NOTE: The user data is no longer persisted in the database.
    *
    * @param newUser created user
    * @throws NullPointerException when {@code newUser} is null
@@ -100,7 +97,6 @@ public class UserManager {
             newUser.getName(),
             firstNonNull(newUser.getPassword(), generate("", PASSWORD_LENGTH)),
             newUser.getAliases());
-    doCreate(user, isTemporary);
     eventService.publish(new UserCreatedEvent(user));
     return user;
   }
@@ -108,14 +104,8 @@ public class UserManager {
   @Transactional(rollbackOn = {RuntimeException.class, ApiException.class})
   protected void doCreate(UserImpl user, boolean isTemporary)
       throws ConflictException, ServerException {
-    userDao.create(user);
-    eventService.publish(new PostUserPersistedEvent(new UserImpl(user))).propagateException();
-    profileDao.create(new ProfileImpl(user.getId()));
-    preferencesDao.setPreferences(
-        user.getId(),
-        ImmutableMap.of(
-            "temporary", Boolean.toString(isTemporary),
-            "codenvy:created", Long.toString(currentTimeMillis())));
+    throw new UnsupportedOperationException(
+        "'doCreate' method should never be called. User information is no longer persisted in the database.");
   }
 
   /**

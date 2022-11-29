@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,14 +13,10 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurat
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
-import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -82,25 +78,6 @@ public class UserPreferencesConfiguratorTest {
   @AfterMethod
   public void cleanUp() {
     kubernetesServer.after();
-  }
-
-  @Test
-  public void shouldCreatePreferencesSecret() throws InfrastructureException {
-    userPreferencesConfigurator.configure(context, USER_NAMESPACE);
-    List<Secret> secrets =
-        kubernetesServer.getClient().secrets().inNamespace(USER_NAMESPACE).list().getItems();
-    assertEquals(secrets.size(), 1);
-    assertEquals(secrets.get(0).getMetadata().getName(), "user-preferences");
-  }
-
-  @Test(
-      expectedExceptions = InfrastructureException.class,
-      expectedExceptionsMessageRegExp =
-          "Preferences of user with id:" + USER_ID + " cannot be retrieved.")
-  public void shouldNotCreateSecretOnException() throws ServerException, InfrastructureException {
-    when(preferenceManager.find(USER_ID)).thenThrow(new ServerException("test exception"));
-    userPreferencesConfigurator.configure(context, USER_NAMESPACE);
-    fail("InfrastructureException should have been thrown.");
   }
 
   @Test

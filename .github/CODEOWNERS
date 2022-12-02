@@ -35,7 +35,7 @@ deploy/** @tolusha @nickboldt
 deploy/openshift/templates/monitoring/** @tolusha @nickboldt
 
 # e2e tests
-tests/e2e/**  @musienko-maxim @Ohrimenko1988 @rhopp @nickboldt @Katka92
+tests/e2e/** @musienko-maxim @rhopp @nickboldt @Katka92
 
 # e2e tests infra
 tests/.infra/centos-ci/** @musienko-maxim @rhopp @nickboldt

@@ -1,41 +1,41 @@
 # Global Owners
-* @nickboldt @sparkoo
+* @nickboldt @ibuziuk @l0rd @sparkoo
 
 # dockerfiles
 dockerfiles/** @nickboldt
 
 # assembly
-assembly/** @skabashnyuk @nickboldt
-assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/** @ibuziuk @nickboldt @themr0c @boczkowska @MichalMaler
+assembly/** @nickboldt
+assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/** @ibuziuk @nickboldt @themr0c
 
 # core
-core/** @skabashnyuk @nickboldt
+core/** @nickboldt
 
 # workspace runtime infrastructure implementations
-infrastructures/** @skabashnyuk @amisevsk @metlos @nickboldt
+infrastructures/** @amisevsk @nickboldt
 
 # multiuser che
-multiuser/api/**  @skabashnyuk @nickboldt
-multiuser/integration-tests/**  @mshaposhnik @skabashnyuk @nickboldt
+multiuser/api/**  @nickboldt
+multiuser/integration-tests/**  @mshaposhnik @nickboldt
 multiuser/keycloak/**  @mshaposhnik @nickboldt
 multiuser/machine-auth/**  @mshaposhnik @nickboldt
-multiuser/permission/**  @skabashnyuk @nickboldt
-multiuser/personal-account/**  @skabashnyuk @nickboldt
+multiuser/permission/**  @nickboldt
+multiuser/personal-account/**  @nickboldt
 multiuser/sql-schema/**  @mshaposhnik @nickboldt
 
 # wsmaster
-wsmaster/** @skabashnyuk @nickboldt
+wsmaster/** @nickboldt @vinokurig 
 wsmaster/che-core-api-factory/** @mshaposhnik @nickboldt
 wsmaster/che-core-api-factory-shared/**   @mshaposhnik @nickboldt
 wsmaster/che-core-api-workspace-activity/**   @mshaposhnik @nickboldt
-wsmaster/che-core-api-workspace/**  @skabashnyuk @mshaposhnik @metlos @nickboldt
+wsmaster/che-core-api-workspace/**  @mshaposhnik @nickboldt
 
 # deploy
 deploy/** @tolusha @nickboldt
-deploy/openshift/templates/monitoring/** @skabashnyuk @metlos @nickboldt
+deploy/openshift/templates/monitoring/** @tolusha @nickboldt @dkwon17 
 
 # e2e tests
-tests/e2e/**  @musienko-maxim @Ohrimenko1988 @rhopp @nickboldt @Katka92 @ScrewTSW
+tests/e2e/** @musienko-maxim @rhopp @nickboldt @Katka92
 
 # e2e tests infra
 tests/.infra/centos-ci/** @musienko-maxim @rhopp @nickboldt

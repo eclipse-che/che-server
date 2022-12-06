@@ -32,7 +32,7 @@ wsmaster/che-core-api-workspace/**  @mshaposhnik @nickboldt
 
 # deploy
 deploy/** @tolusha @nickboldt
-deploy/openshift/templates/monitoring/** @tolusha @nickboldt
+deploy/openshift/templates/monitoring/** @tolusha @nickboldt @dkwon17 
 
 # e2e tests
 tests/e2e/** @musienko-maxim @rhopp @nickboldt @Katka92

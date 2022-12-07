@@ -79,6 +79,7 @@ public class BitbucketFactoryParametersResolverTest {
   @Mock private URLFactoryBuilder urlFactoryBuilder;
 
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private BitbucketApiClient bitbucketApiClient;
 
   /**
    * Capturing the location parameter when calling {@link
@@ -100,7 +101,8 @@ public class BitbucketFactoryParametersResolverTest {
             bitbucketSourceStorageBuilder,
             urlFactoryBuilder,
             projectConfigDtoMerger,
-            personalAccessTokenManager);
+            personalAccessTokenManager,
+            bitbucketApiClient);
     assertNotNull(this.bitbucketFactoryParametersResolver);
   }
 

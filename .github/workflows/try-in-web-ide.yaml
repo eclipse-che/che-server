@@ -7,7 +7,7 @@ on:
 
 jobs:
   add-link:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Web IDE Pull Request Check
         uses: redhat-actions/try-in-web-ide@v1

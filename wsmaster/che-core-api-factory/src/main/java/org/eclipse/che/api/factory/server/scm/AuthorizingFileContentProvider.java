@@ -80,7 +80,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     }
   }
 
-  protected String fetchContent(String requestURL, UnknownScmProviderException e)
+  protected String fetchContentWithoutToken(String requestURL, UnknownScmProviderException e)
       throws DevfileException, IOException {
     // we don't have any provider matching this SCM provider
     // so try without secrets being configured

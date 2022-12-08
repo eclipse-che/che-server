@@ -70,9 +70,9 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         return urlFetcher.fetch(requestURL, formatAuthorization(token.getToken()));
       }
     } catch (UnknownScmProviderException e) {
-      return fetchContent(requestURL, e);
+      return fetchContentWithoutToken(requestURL, e);
     } catch (ScmCommunicationException e) {
-      return fetchContent(fileURL, e);
+      return toIOException(fileURL, e);
     } catch (ScmUnauthorizedException
         | ScmConfigurationPersistenceException
         | UnsatisfiedScmPreconditionException e) {

@@ -105,7 +105,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     }
   }
 
-  protected String fetchContent(String fileURL, ScmCommunicationException e) throws IOException {
+  protected String toIOException(String fileURL, ScmCommunicationException e) throws IOException {
     throw new IOException(
         String.format(
             "Failed to fetch a content from URL %s. Make sure the URL"

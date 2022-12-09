@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 
 import java.io.FileNotFoundException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -31,6 +32,7 @@ import org.testng.annotations.Test;
 public class BitbucketAuthorizingFileContentProviderTest {
 
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private BitbucketApiClient bitbucketApiClient;
 
   @Test
   public void shouldExpandRelativePaths() throws Exception {
@@ -38,13 +40,11 @@ public class BitbucketAuthorizingFileContentProviderTest {
     BitbucketUrl bitbucketUrl = new BitbucketUrl().withWorkspaceId("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new BitbucketAuthorizingFileContentProvider(
-            bitbucketUrl, urlFetcher, personalAccessTokenManager);
-    var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenThrow(UnknownScmProviderException.class);
     fileContentProvider.fetchContent("devfile.yaml");
-    verify(urlFetcher)
-        .fetch(
-            eq("https://bitbucket.org/eclipse/che/raw/HEAD/devfile.yaml"), eq("Bearer my-token"));
+    verify(urlFetcher).fetch(eq("https://bitbucket.org/eclipse/che/raw/HEAD/devfile.yaml"));
   }
 
   @Test
@@ -53,12 +53,12 @@ public class BitbucketAuthorizingFileContentProviderTest {
     BitbucketUrl bitbucketUrl = new BitbucketUrl().withUsername("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new BitbucketAuthorizingFileContentProvider(
-            bitbucketUrl, urlFetcher, personalAccessTokenManager);
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
     String url = "https://api.bitbucket.org/2.0/repositories/foo/bar/devfile.yaml";
-    var personalAccessToken = new PersonalAccessToken(url, "che", "my-token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenThrow(UnknownScmProviderException.class);
     fileContentProvider.fetchContent(url);
-    verify(urlFetcher).fetch(eq(url), eq("Bearer my-token"));
+    verify(urlFetcher).fetch(eq(url));
   }
 
   @Test(expectedExceptions = FileNotFoundException.class)
@@ -73,7 +73,29 @@ public class BitbucketAuthorizingFileContentProviderTest {
         new BitbucketUrl().withUsername("eclipse").withWorkspaceId("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new BitbucketAuthorizingFileContentProvider(
-            bitbucketUrl, urlFetcher, personalAccessTokenManager);
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
     fileContentProvider.fetchContent(url);
+  }
+
+  @Test
+  public void shouldFetchContent() throws Exception {
+    // given
+    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
+    String url = "https://bitbucket.org/workspace/repository/raw/HEAD/devfile.yaml";
+    PersonalAccessToken personalAccessToken = new PersonalAccessToken(url, "che", "my-token");
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+    when(bitbucketApiClient.getFileContent(
+            eq("workspace"), eq("repository"), eq("HEAD"), eq("devfile.yaml"), eq("my-token")))
+        .thenReturn("content");
+    BitbucketUrl bitbucketUrl =
+        new BitbucketUrl().withUsername("eclipse").withWorkspaceId("eclipse").withRepository("che");
+    FileContentProvider fileContentProvider =
+        new BitbucketAuthorizingFileContentProvider(
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
+    // when
+    String content = fileContentProvider.fetchContent(url);
+
+    // then
+    assertEquals(content, "content");
   }
 }

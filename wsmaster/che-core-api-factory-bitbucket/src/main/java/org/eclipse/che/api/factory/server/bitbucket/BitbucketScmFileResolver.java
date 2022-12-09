@@ -29,15 +29,18 @@ public class BitbucketScmFileResolver implements ScmFileResolver {
   private final BitbucketURLParser bitbucketUrlParser;
   private final URLFetcher urlFetcher;
   private final PersonalAccessTokenManager personalAccessTokenManager;
+  private final BitbucketApiClient bitbucketApiClient;
 
   @Inject
   public BitbucketScmFileResolver(
       BitbucketURLParser bitbucketUrlParser,
       URLFetcher urlFetcher,
-      PersonalAccessTokenManager personalAccessTokenManager) {
+      PersonalAccessTokenManager personalAccessTokenManager,
+      BitbucketApiClient bitbucketApiClient) {
     this.bitbucketUrlParser = bitbucketUrlParser;
     this.urlFetcher = urlFetcher;
     this.personalAccessTokenManager = personalAccessTokenManager;
+    this.bitbucketApiClient = bitbucketApiClient;
   }
 
   @Override
@@ -52,7 +55,7 @@ public class BitbucketScmFileResolver implements ScmFileResolver {
     final BitbucketUrl bitbucketUrl = bitbucketUrlParser.parse(repository);
     try {
       return new BitbucketAuthorizingFileContentProvider(
-              bitbucketUrl, urlFetcher, personalAccessTokenManager)
+              bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient)
           .fetchContent(bitbucketUrl.rawFileLocation(filePath));
     } catch (IOException e) {
       throw new NotFoundException(e.getMessage());

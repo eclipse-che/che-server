@@ -70,44 +70,53 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         return urlFetcher.fetch(requestURL, formatAuthorization(token.getToken()));
       }
     } catch (UnknownScmProviderException e) {
-      // we don't have any provider matching this SCM provider
-      // so try without secrets being configured
-      try {
-        return urlFetcher.fetch(requestURL);
-      } catch (IOException exception) {
-        if (exception instanceof SSLException) {
-          ScmCommunicationException cause =
-              new ScmCommunicationException(
-                  String.format(
-                      "Failed to fetch a content from URL %s due to TLS key misconfiguration. Please refer to the docs about how to correctly import it. ",
-                      requestURL));
-          throw new DevfileException(exception.getMessage(), cause);
-        } else if (exception instanceof FileNotFoundException) {
-          if (isPublicRepository(remoteFactoryUrl)) {
-            // for public repo-s return 404 as-is
-            throw exception;
-          }
-        }
-        throw new DevfileException(
-            String.format("%s: %s", e.getMessage(), exception.getMessage()), exception);
-      }
+      return fetchContentWithoutToken(requestURL, e);
     } catch (ScmCommunicationException e) {
-      throw new IOException(
-          String.format(
-              "Failed to fetch a content from URL %s. Make sure the URL"
-                  + " is correct. For private repository, make sure authentication is configured."
-                  + " Additionally, if you're using "
-                  + " relative form, make sure the referenced file are actually stored"
-                  + " relative to the devfile on the same host,"
-                  + " or try to specify URL in absolute form. The current attempt to authenticate"
-                  + " request, failed with the following error message: %s",
-              fileURL, e.getMessage()),
-          e);
+      return toIOException(fileURL, e);
     } catch (ScmUnauthorizedException
         | ScmConfigurationPersistenceException
         | UnsatisfiedScmPreconditionException e) {
       throw new DevfileException(e.getMessage(), e);
     }
+  }
+
+  protected String fetchContentWithoutToken(String requestURL, UnknownScmProviderException e)
+      throws DevfileException, IOException {
+    // we don't have any provider matching this SCM provider
+    // so try without secrets being configured
+    try {
+      return urlFetcher.fetch(requestURL);
+    } catch (IOException exception) {
+      if (exception instanceof SSLException) {
+        ScmCommunicationException cause =
+            new ScmCommunicationException(
+                String.format(
+                    "Failed to fetch a content from URL %s due to TLS key misconfiguration. Please refer to the docs about how to correctly import it. ",
+                    requestURL));
+        throw new DevfileException(exception.getMessage(), cause);
+      } else if (exception instanceof FileNotFoundException) {
+        if (isPublicRepository(remoteFactoryUrl)) {
+          // for public repo-s return 404 as-is
+          throw exception;
+        }
+      }
+      throw new DevfileException(
+          String.format("%s: %s", e.getMessage(), exception.getMessage()), exception);
+    }
+  }
+
+  protected String toIOException(String fileURL, ScmCommunicationException e) throws IOException {
+    throw new IOException(
+        String.format(
+            "Failed to fetch a content from URL %s. Make sure the URL"
+                + " is correct. For private repository, make sure authentication is configured."
+                + " Additionally, if you're using "
+                + " relative form, make sure the referenced file are actually stored"
+                + " relative to the devfile on the same host,"
+                + " or try to specify URL in absolute form. The current attempt to authenticate"
+                + " request, failed with the following error message: %s",
+            fileURL, e.getMessage()),
+        e);
   }
 
   protected boolean isPublicRepository(T remoteFactoryUrl) {

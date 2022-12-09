@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -37,6 +38,7 @@ public class BitbucketScmFileResolverTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private BitbucketApiClient bitbucketApiClient;
 
   private BitbucketScmFileResolver bitbucketScmFileResolver;
 
@@ -45,7 +47,8 @@ public class BitbucketScmFileResolverTest {
     bitbucketURLParser = new BitbucketURLParser(devfileFilenamesProvider);
     assertNotNull(this.bitbucketURLParser);
     bitbucketScmFileResolver =
-        new BitbucketScmFileResolver(bitbucketURLParser, urlFetcher, personalAccessTokenManager);
+        new BitbucketScmFileResolver(
+            bitbucketURLParser, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
     assertNotNull(this.bitbucketScmFileResolver);
   }
 
@@ -67,7 +70,9 @@ public class BitbucketScmFileResolverTest {
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(urlFetcher.fetch(anyString(), anyString())).thenReturn(rawContent);
+    when(bitbucketApiClient.getFileContent(
+            eq("test"), eq("repo"), eq("HEAD"), eq("devfile.yaml"), eq("my-token")))
+        .thenReturn(rawContent);
     var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 

@@ -51,6 +51,8 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
   /** Personal Access Token manager used when fetching protected content. */
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
+  private final BitbucketApiClient bitbucketApiClient;
+
   @Inject
   public BitbucketFactoryParametersResolver(
       BitbucketURLParser bitbucketURLParser,
@@ -58,12 +60,14 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
       BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder,
       URLFactoryBuilder urlFactoryBuilder,
       ProjectConfigDtoMerger projectConfigDtoMerger,
-      PersonalAccessTokenManager personalAccessTokenManager) {
+      PersonalAccessTokenManager personalAccessTokenManager,
+      BitbucketApiClient bitbucketApiClient) {
     super(urlFactoryBuilder, urlFetcher);
     this.bitbucketURLParser = bitbucketURLParser;
     this.bitbucketSourceStorageBuilder = bitbucketSourceStorageBuilder;
     this.projectConfigDtoMerger = projectConfigDtoMerger;
     this.personalAccessTokenManager = personalAccessTokenManager;
+    this.bitbucketApiClient = bitbucketApiClient;
   }
 
   /**
@@ -98,7 +102,7 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
         .createFactoryFromDevfile(
             bitbucketUrl,
             new BitbucketAuthorizingFileContentProvider(
-                bitbucketUrl, urlFetcher, personalAccessTokenManager),
+                bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient),
             extractOverrideParams(factoryParameters),
             false)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))

@@ -115,6 +115,26 @@ public class BitbucketApiClient {
         });
   }
 
+  public String getFileContent(
+      String workspace, String repository, String source, String path, String authenticationToken)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+    final URI uri =
+        apiServerUrl.resolve(
+            String.format("repositories/%s/%s/src/%s/%s", workspace, repository, source, path));
+    HttpRequest request = buildBitbucketApiRequest(uri, authenticationToken);
+    LOG.trace("executeRequest={}", request);
+    return executeRequest(
+        httpClient,
+        request,
+        response -> {
+          try {
+            return CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        });
+  }
+
   /**
    * Returns email of the user, associated with the provided OAuth access token.
    *

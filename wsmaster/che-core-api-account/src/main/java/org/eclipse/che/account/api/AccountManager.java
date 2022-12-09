@@ -51,7 +51,7 @@ public class AccountManager {
    * @throws ServerException when any other error occurs during account creating
    */
   public void create(Account account) throws ConflictException, ServerException {
-    requireNonNull(account, "Required non-null account");
+    throw new ServerException("Account creation is obsolete and not expected to be invoked");
   }
 
   /**

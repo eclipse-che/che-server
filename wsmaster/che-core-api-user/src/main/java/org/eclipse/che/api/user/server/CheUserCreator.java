@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,6 @@ import jakarta.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.account.api.AccountManager;
-import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -29,6 +28,7 @@ import org.eclipse.che.core.db.DBInitializer;
  *
  * @author Anton Korneta
  */
+@Deprecated
 @Singleton
 public class CheUserCreator {
 
@@ -49,15 +49,6 @@ public class CheUserCreator {
         final UserImpl cheUser =
             new UserImpl("che", "che@eclipse.org", "che", "secret", emptyList());
         userManager.create(cheUser, false);
-      } catch (ConflictException ignore) {
-      }
-    }
-
-    try {
-      accountManager.getById("che");
-    } catch (NotFoundException e) {
-      try {
-        accountManager.create(new AccountImpl("che", "che", "personal"));
       } catch (ConflictException ignore) {
       }
     }

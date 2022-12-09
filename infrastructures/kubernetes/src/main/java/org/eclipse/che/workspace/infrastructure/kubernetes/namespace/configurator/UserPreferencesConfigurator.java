@@ -17,9 +17,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates {@link Secret} with user preferences. This serves as a way for DevWorkspaces to acquire
@@ -30,6 +31,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
 @Deprecated
 @Singleton
 public class UserPreferencesConfigurator implements NamespaceConfigurator {
+  private static final Logger LOG = LoggerFactory.getLogger(UserProfileConfigurator.class);
   private static final String USER_PREFERENCES_SECRET_NAME = "user-preferences";
   private static final String USER_PREFERENCES_SECRET_MOUNT_PATH = "/config/user/preferences";
   private static final int PREFERENCE_NAME_MAX_LENGTH = 253;
@@ -48,10 +50,11 @@ public class UserPreferencesConfigurator implements NamespaceConfigurator {
     this.preferenceManager = preferenceManager;
   }
 
-  /** 'user-preferences' secret is obsolete and not used anymore by DevWorkspaces */
   @Override
-  public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
-      throws InfrastructureException {}
+  public void configure(
+      NamespaceResolutionContext namespaceResolutionContext, String namespaceName) {
+    LOG.debug("'user-preferences' secret is obsolete and not configured anymore for DevWorkspaces");
+  }
 
   /**
    * Some preferences names are not compatible with k8s restrictions on key field in secret. The

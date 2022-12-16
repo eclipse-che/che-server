@@ -373,12 +373,20 @@ bumpVersion() {
         if [[ $RELEASE_CHE_PARENT = "true" ]]; then
             mvn versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=true -DparentVersion=[${VERSION_CHE_PARENT}]
         fi
+
+        # compute current version of root pom
+        current_root_pom_version=$(grep "<che.version>" pom.xml | sed -r -e "s#.+<che.version>([^<>]+)</che.version>.*#\1#")
+
         mvn versions:set -DgenerateBackupPoms=false -DallowSnapshots=true -DnewVersion=$1
         sed -i -e "s#<che.version>.*<\/che.version>#<che.version>$1<\/che.version>#" pom.xml
         pushd typescript-dto >/dev/null
             sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${1}<\/che.version>#" dto-pom.xml
             sed -i -e "/<groupId>org.eclipse.che.parent<\/groupId>/ { n; s#<version>.*<\/version>#<version>${VERSION_CHE_PARENT}<\/version>#}" dto-pom.xml
         popd >/dev/null
+
+        # update integration tests to new root pom version
+        find . -name "pom.xml" -exec sed -i {} -r -e "s@<version>${current_root_pom_version}</version>@<version>$1</version>@g" \;
+
         # run mvn license format, in case some files that have old license headers have been updated
         mvn license:format
         commitChangeOrCreatePR $1 $2 "pr-${2}-to-${1}"

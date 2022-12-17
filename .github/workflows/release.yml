@@ -43,7 +43,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
         with: 
@@ -132,7 +132,7 @@ jobs:
           ./che-server/make-release.sh
       - name: Create GH Release
         id: create_release
-        uses: ncipollo/release-action@v1.11.0
+        uses: ncipollo/release-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.CHE_BOT_GITHUB_TOKEN }} 
         with:

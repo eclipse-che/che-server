@@ -49,13 +49,29 @@ public class GitlabScmFileResolver implements ScmFileResolver {
     GitlabUrl gitlabUrl = gitlabUrlParser.parse(repository);
 
     try {
-      return new GitlabAuthorizingFileContentProvider(
-              gitlabUrl, urlFetcher, personalAccessTokenManager)
-          .fetchContent(gitlabUrl.rawFileLocation(filePath));
+      return fetchContent(gitlabUrl, filePath, false);
+    } catch (DevfileException exception) {
+      // This catch might mean that the authentication was rejected by user, try to repeat the fetch
+      // without authentication flow.
+      try {
+        return fetchContent(gitlabUrl, filePath, true);
+      } catch (DevfileException devfileException) {
+        throw toApiException(devfileException);
+      }
+    }
+  }
+
+  private String fetchContent(GitlabUrl gitlabUrl, String filePath, boolean skipAuthentication)
+      throws DevfileException, NotFoundException {
+    try {
+      GitlabAuthorizingFileContentProvider contentProvider =
+          new GitlabAuthorizingFileContentProvider(
+              gitlabUrl, urlFetcher, personalAccessTokenManager);
+      return skipAuthentication
+          ? contentProvider.fetchContentWithoutAuthentication(filePath)
+          : contentProvider.fetchContent(filePath);
     } catch (IOException e) {
       throw new NotFoundException(e.getMessage());
-    } catch (DevfileException devfileException) {
-      throw toApiException(devfileException);
     }
   }
 }

@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -21,6 +22,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.mockito.Mock;
@@ -80,5 +82,18 @@ public class BitbucketScmFileResolverTest {
         bitbucketScmFileResolver.fileContent("http://bitbucket.org/test/repo.git", filename);
 
     assertEquals(content, rawContent);
+  }
+
+  @Test
+  public void shouldFetchContentWithoutAuthentication() throws Exception {
+    // given
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenThrow(new ScmUnauthorizedException("message", "bitbucket", "v1", "url"));
+
+    // when
+    bitbucketScmFileResolver.fileContent("https://bitbucket.org/username/repo.git", "devfile.yaml");
+
+    // then
+    verify(urlFetcher).fetch(anyString());
   }
 }

@@ -16,6 +16,7 @@ import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -32,6 +33,7 @@ import static org.testng.Assert.assertTrue;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.model.factory.ScmInfo;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
@@ -181,5 +183,27 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
         .withV(CURRENT_VERSION)
         .withSource("repo")
         .withDevfile(Map.of("schemaVersion", "2.0.0"));
+  }
+
+  @Test
+  public void shouldCreateFactoryWithoutAuthentication() throws ApiException {
+    // given
+    String bitbucketServerUrl = "http://bitbucket.2mcl.com/scm/~user/repo.git";
+    Map<String, String> params =
+        ImmutableMap.of(URL_PARAMETER_NAME, bitbucketServerUrl, ERROR_QUERY_NAME, "access_denied");
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
+        .thenReturn(Optional.of(generateDevfileFactory()));
+
+    // when
+    bitbucketServerFactoryParametersResolver.createFactory(params);
+
+    // then
+    verify(urlFactoryBuilder)
+        .createFactoryFromDevfile(
+            any(BitbucketServerUrl.class),
+            any(BitbucketServerAuthorizingFileContentProvider.class),
+            anyMap(),
+            eq(true));
   }
 }

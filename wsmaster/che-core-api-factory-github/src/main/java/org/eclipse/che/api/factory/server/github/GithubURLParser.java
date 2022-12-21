@@ -245,8 +245,7 @@ public class GithubURLParser {
           repoName,
           branchName,
           personalAccessToken != null ? personalAccessToken.getToken() : null);
-    } catch (UnknownScmProviderException e) {
-
+    } catch (UnknownScmProviderException | ScmUnauthorizedException e) {
       // get latest commit without authentication
       try {
         return this.apiClient.getLatestCommit(repoUser, repoName, branchName, null);
@@ -256,9 +255,6 @@ public class GithubURLParser {
           | URISyntaxException exception) {
         LOG.error("Failed to authenticate to GitHub", e);
       }
-
-    } catch (ScmUnauthorizedException e) {
-      throw toApiException(e);
     } catch (ScmCommunicationException
         | UnsatisfiedScmPreconditionException
         | ScmConfigurationPersistenceException e) {

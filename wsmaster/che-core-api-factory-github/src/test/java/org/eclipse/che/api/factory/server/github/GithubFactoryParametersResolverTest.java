@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.model.factory.ScmInfo;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
@@ -326,6 +327,28 @@ public class GithubFactoryParametersResolverTest {
     assertEquals(scmInfo.getScmProviderName(), "github");
     assertEquals(scmInfo.getRepositoryUrl(), "https://github.com/eclipse/che.git");
     assertEquals(scmInfo.getBranch(), "foobar");
+  }
+
+  @Test
+  public void shouldCreateFactoryWithoutAuthentication() throws ApiException {
+    // given
+    String githubUrl = "https://github.com/user/repo.git";
+    Map<String, String> params =
+        ImmutableMap.of(URL_PARAMETER_NAME, githubUrl, ERROR_QUERY_NAME, "access_denied");
+    when(urlFactoryBuilder.createFactoryFromDevfile(
+            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
+        .thenReturn(Optional.of(generateDevfileFactory()));
+
+    // when
+    githubFactoryParametersResolver.createFactory(params);
+
+    // then
+    verify(urlFactoryBuilder)
+        .createFactoryFromDevfile(
+            any(GithubUrl.class),
+            any(GithubAuthorizingFileContentProvider.class),
+            anyMap(),
+            eq(true));
   }
 
   private FactoryDto generateDevfileFactory() {

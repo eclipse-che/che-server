@@ -58,7 +58,7 @@ class BitbucketAuthorizingFileContentProvider extends AuthorizingFileContentProv
           split[3],
           split[4],
           split[6],
-          fileURL.substring(fileURL.indexOf(split[6]) + split[6].length() + 1),
+          requestURL.substring(requestURL.indexOf(split[6]) + split[6].length() + 1),
           token.getToken());
     } catch (UnknownScmProviderException e) {
       return fetchContentWithoutToken(requestURL, e);

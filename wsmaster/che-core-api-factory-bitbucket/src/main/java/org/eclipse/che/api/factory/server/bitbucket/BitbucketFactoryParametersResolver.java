@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -96,7 +97,9 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
     // no need to check null value of url parameter as accept() method has performed the check
     final BitbucketUrl bitbucketUrl =
         bitbucketURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
-
+    boolean skipAuthentication =
+        factoryParameters.get(ERROR_QUERY_NAME) != null
+            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder
         .createFactoryFromDevfile(
@@ -104,7 +107,7 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
             new BitbucketAuthorizingFileContentProvider(
                 bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient),
             extractOverrideParams(factoryParameters),
-            false)
+            skipAuthentication)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new BitbucketFactoryVisitor(bitbucketUrl));
   }

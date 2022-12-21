@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -91,13 +92,16 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
         new BitbucketServerAuthorizingFileContentProvider(
             bitbucketServerUrl, urlFetcher, personalAccessTokenManager);
 
+    boolean skipAuthentication =
+        factoryParameters.get(ERROR_QUERY_NAME) != null
+            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder
         .createFactoryFromDevfile(
             bitbucketServerUrl,
             fileContentProvider,
             extractOverrideParams(factoryParameters),
-            false)
+            skipAuthentication)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new BitbucketFactoryVisitor(bitbucketServerUrl));
   }

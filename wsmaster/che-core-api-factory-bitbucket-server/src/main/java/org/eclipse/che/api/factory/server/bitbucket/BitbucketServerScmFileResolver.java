@@ -50,13 +50,30 @@ public class BitbucketServerScmFileResolver implements ScmFileResolver {
     BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(repository);
 
     try {
-      return new BitbucketServerAuthorizingFileContentProvider(
-              bitbucketServerUrl, urlFetcher, personalAccessTokenManager)
-          .fetchContent(filePath);
+      return fetchContent(bitbucketServerUrl, filePath, false);
+    } catch (DevfileException exception) {
+      // This catch might mean that the authentication was rejected by user, try to repeat the fetch
+      // without authentication flow.
+      try {
+        return fetchContent(bitbucketServerUrl, filePath, true);
+      } catch (DevfileException devfileException) {
+        throw toApiException(devfileException);
+      }
+    }
+  }
+
+  private String fetchContent(
+      BitbucketServerUrl bitbucketServerUrl, String filePath, boolean skipAuthentication)
+      throws DevfileException, NotFoundException {
+    try {
+      BitbucketServerAuthorizingFileContentProvider contentProvider =
+          new BitbucketServerAuthorizingFileContentProvider(
+              bitbucketServerUrl, urlFetcher, personalAccessTokenManager);
+      return skipAuthentication
+          ? contentProvider.fetchContentWithoutAuthentication(filePath)
+          : contentProvider.fetchContent(filePath);
     } catch (IOException e) {
-      throw new NotFoundException("Unable to retrieve file from given location.");
-    } catch (DevfileException devfileException) {
-      throw toApiException(devfileException);
+      throw new NotFoundException(e.getMessage());
     }
   }
 }

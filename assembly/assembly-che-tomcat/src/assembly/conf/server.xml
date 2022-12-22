@@ -69,6 +69,7 @@
       <Connector port="${port.http:-8080}" protocol="HTTP/1.1"
                  connectionTimeout="20000"
                  maxThreads="300"
+                 maxHttpHeaderSize="32768"
                  compression="on"
                  compressionMinSize="2048"
                  noCompressionUserAgents=".*MSIE 6.*"

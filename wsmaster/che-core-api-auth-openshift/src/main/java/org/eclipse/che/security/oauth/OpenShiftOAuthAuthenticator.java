@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,6 +31,7 @@ import org.eclipse.che.security.oauth.shared.User;
  */
 @Singleton
 public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
+  private final String endpointUrl;
   private final String verifyTokenUrl;
 
   @Inject
@@ -41,16 +42,16 @@ public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
       @Nullable @Named("che.oauth.openshift.verify_token_url") String verifyTokenUrl,
       @Named("che.api") String apiEndpoint)
       throws IOException {
+    this.endpointUrl = oauthEndpoint.endsWith("/") ? oauthEndpoint : oauthEndpoint + "/";
     this.verifyTokenUrl = verifyTokenUrl;
     String[] redirectUrl = {apiEndpoint + "/oauth/callback"};
     if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret) && !isNullOrEmpty(oauthEndpoint)) {
-      oauthEndpoint = oauthEndpoint.endsWith("/") ? oauthEndpoint : oauthEndpoint + "/";
       configure(
           clientId,
           clientSecret,
           redirectUrl,
-          oauthEndpoint + "oauth/authorize",
-          oauthEndpoint + "oauth/token",
+          this.endpointUrl + "oauth/authorize",
+          this.endpointUrl + "oauth/token",
           new MemoryDataStoreFactory());
     }
   }
@@ -90,5 +91,10 @@ public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
       return token;
     }
     return null;
+  }
+
+  @Override
+  public String getEndpointUrl() {
+    return endpointUrl;
   }
 }

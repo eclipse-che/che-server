@@ -39,10 +39,12 @@ import org.eclipse.che.security.oauth.shared.User;
 public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   private final String gitlabUserEndpoint;
   private final String cheApiEndpoint;
+  private final String gitlabEndpoint;
 
   public GitLabOAuthAuthenticator(
       String clientId, String clientSecret, String gitlabEndpoint, String cheApiEndpoint)
       throws IOException {
+    this.gitlabEndpoint = gitlabEndpoint;
     String trimmedGitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     this.gitlabUserEndpoint = trimmedGitlabEndpoint + "/api/v4/user";
     this.cheApiEndpoint = cheApiEndpoint;
@@ -115,5 +117,9 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
       return null;
     }
     return token;
+  }
+
+  public String getEndpointUrl() {
+    return trimEnd(gitlabEndpoint, '/');
   }
 }

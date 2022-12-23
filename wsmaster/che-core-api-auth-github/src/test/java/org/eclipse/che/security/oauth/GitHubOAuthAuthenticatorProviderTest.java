@@ -11,9 +11,19 @@
  */
 package org.eclipse.che.security.oauth;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
@@ -26,9 +36,16 @@ public class GitHubOAuthAuthenticatorProviderTest {
   private static final String TEST_URI = "https://api.github.com";
   private File credentialFile;
   private File emptyFile;
+  WireMockServer wireMockServer;
+  WireMock wireMock;
 
   @BeforeClass
   public void setup() throws IOException {
+    wireMockServer =
+        new WireMockServer(wireMockConfig().notifier(new Slf4jNotifier(false)).dynamicPort());
+    wireMockServer.start();
+    WireMock.configureFor("localhost", wireMockServer.port());
+    wireMock = new WireMock("localhost", wireMockServer.port());
     credentialFile = File.createTempFile("GitHubOAuthAuthenticatorProviderTest-", "-credentials");
     Files.asCharSink(credentialFile, Charset.defaultCharset()).write("id/secret");
     credentialFile.deleteOnExit();
@@ -120,6 +137,48 @@ public class GitHubOAuthAuthenticatorProviderTest {
     // then
     assertNotNull(authenticator);
     assertTrue(GitHubOAuthAuthenticator.class.isAssignableFrom(authenticator.getClass()));
+  }
+
+  @Test
+  public void shouldReturnEndpointUrl() throws IOException {
+    // given
+    GitHubOAuthAuthenticatorProvider provider =
+        new GitHubOAuthAuthenticatorProvider(
+            credentialFile.getPath(),
+            credentialFile.getPath(),
+            new String[] {TEST_URI},
+            null,
+            TEST_URI,
+            TEST_URI);
+    OAuthAuthenticator authenticator = provider.get();
+    // when
+    String endpointUrl = authenticator.getEndpointUrl();
+
+    // then
+    assertEquals(endpointUrl, "https://github.com");
+  }
+
+  @Test
+  public void shouldInvalidateToken() throws IOException {
+    // given
+    stubFor(
+        delete(urlEqualTo("/api/v3/applications/id/secret/grant"))
+            .withBasicAuth("id/secret", "id/secret")
+            .withRequestBody(matching("\\{\"access_token\"\\:\"token\"\\}"))
+            .willReturn(aResponse().withStatus(204)));
+    GitHubOAuthAuthenticatorProvider provider =
+        new GitHubOAuthAuthenticatorProvider(
+            credentialFile.getPath(),
+            credentialFile.getPath(),
+            new String[] {TEST_URI},
+            wireMockServer.url("/"),
+            TEST_URI,
+            TEST_URI);
+    OAuthAuthenticator authenticator = provider.get();
+    // when
+    boolean result = authenticator.invalidateToken("token");
+    // then
+    assertTrue(result);
   }
 
   @DataProvider(name = "noopConfig")

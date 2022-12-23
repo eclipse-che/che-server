@@ -35,6 +35,11 @@ import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
@@ -55,6 +60,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   protected String errorPage;
 
   @Inject protected OAuthAuthenticatorProvider providers;
+  @Inject protected PersonalAccessTokenManager personalAccessTokenManager;
 
   @Override
   public Response authenticate(
@@ -130,7 +136,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   public OAuthToken getToken(String oauthProvider)
       throws NotFoundException, UnauthorizedException, ServerException {
     OAuthAuthenticator provider = getAuthenticator(oauthProvider);
-    final Subject subject = EnvironmentContext.getCurrent().getSubject();
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
     try {
       OAuthToken token = provider.getToken(subject.getUserId());
       if (token == null) {
@@ -139,22 +145,36 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       if (token != null) {
         return token;
       }
+      Optional<PersonalAccessToken> tokenOptional =
+          personalAccessTokenManager.get(subject, provider.getEndpointUrl());
+      if (tokenOptional.isPresent()) {
+        PersonalAccessToken accessToken = tokenOptional.get();
+        return newDto(OAuthToken.class).withToken(accessToken.getToken());
+      }
       throw new UnauthorizedException(
           "OAuth token for user " + subject.getUserId() + " was not found");
-    } catch (IOException e) {
+    } catch (IOException | ScmConfigurationPersistenceException | ScmCommunicationException e) {
       throw new ServerException(e.getLocalizedMessage(), e);
+    } catch (ScmUnauthorizedException e) {
+      throwUnauthorizedException(subject);
     }
+    return null;
+  }
+
+  private void throwUnauthorizedException(Subject subject) throws UnauthorizedException {
+    throw new UnauthorizedException(
+        "OAuth token for user " + subject.getUserId() + " was not found");
   }
 
   @Override
   public void invalidateToken(String oauthProvider)
       throws NotFoundException, UnauthorizedException, ServerException {
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
-    final Subject subject = EnvironmentContext.getCurrent().getSubject();
+    OAuthToken oauthToken = getToken(oauthProvider);
     try {
-      if (!oauth.invalidateToken(subject.getUserId())) {
+      if (!oauth.invalidateToken(oauthToken.getToken())) {
         throw new UnauthorizedException(
-            "OAuth token for user " + subject.getUserId() + " was not found");
+            "OAuth token for provider " + oauthProvider + " was not found");
       }
     } catch (IOException e) {
       throw new ServerException(e.getMessage());

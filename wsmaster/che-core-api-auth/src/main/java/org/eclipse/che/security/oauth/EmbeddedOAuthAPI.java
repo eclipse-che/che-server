@@ -127,7 +127,12 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
                   .withName("mode")
                   .withRequired(true)
                   .withDefaultValue("federated_login")));
-      result.add(newDto(OAuthAuthenticatorDescriptor.class).withName(name).withLinks(links));
+      OAuthAuthenticator authenticator = providers.getAuthenticator(name);
+      result.add(
+          newDto(OAuthAuthenticatorDescriptor.class)
+              .withName(name)
+              .withEndpointUrl(authenticator.getEndpointUrl())
+              .withLinks(links));
     }
     return result;
   }

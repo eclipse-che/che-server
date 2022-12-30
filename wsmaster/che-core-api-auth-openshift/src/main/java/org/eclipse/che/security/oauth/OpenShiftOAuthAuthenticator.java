@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.api.client.util.store.MemoryDataStoreFactory;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import org.eclipse.che.security.oauth.shared.User;
  */
 @Singleton
 public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
-  private final String endpointUrl;
+  @Nullable private final String oauthEndpoint;
   private final String verifyTokenUrl;
 
   @Inject
@@ -42,16 +43,17 @@ public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
       @Nullable @Named("che.oauth.openshift.verify_token_url") String verifyTokenUrl,
       @Named("che.api") String apiEndpoint)
       throws IOException {
-    this.endpointUrl = oauthEndpoint.endsWith("/") ? oauthEndpoint : oauthEndpoint + "/";
+    this.oauthEndpoint = oauthEndpoint;
     this.verifyTokenUrl = verifyTokenUrl;
     String[] redirectUrl = {apiEndpoint + "/oauth/callback"};
     if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret) && !isNullOrEmpty(oauthEndpoint)) {
+      oauthEndpoint = oauthEndpoint.endsWith("/") ? oauthEndpoint : oauthEndpoint + "/";
       configure(
           clientId,
           clientSecret,
           redirectUrl,
-          this.endpointUrl + "oauth/authorize",
-          this.endpointUrl + "oauth/token",
+          oauthEndpoint + "oauth/authorize",
+          oauthEndpoint + "oauth/token",
           new MemoryDataStoreFactory());
     }
   }
@@ -95,6 +97,6 @@ public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public String getEndpointUrl() {
-    return endpointUrl;
+    return isNullOrEmpty(oauthEndpoint) ? "" : trimEnd(oauthEndpoint, '/');
   }
 }

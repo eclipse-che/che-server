@@ -32,7 +32,7 @@ import org.eclipse.che.security.oauth.shared.User;
  */
 @Singleton
 public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
-  @Nullable private final String oauthEndpoint;
+  private final String oauthEndpoint;
   private final String verifyTokenUrl;
 
   @Inject
@@ -43,7 +43,7 @@ public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
       @Nullable @Named("che.oauth.openshift.verify_token_url") String verifyTokenUrl,
       @Named("che.api") String apiEndpoint)
       throws IOException {
-    this.oauthEndpoint = oauthEndpoint;
+    this.oauthEndpoint = isNullOrEmpty(oauthEndpoint) ? "" : trimEnd(oauthEndpoint, '/');
     this.verifyTokenUrl = verifyTokenUrl;
     String[] redirectUrl = {apiEndpoint + "/oauth/callback"};
     if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret) && !isNullOrEmpty(oauthEndpoint)) {
@@ -97,6 +97,6 @@ public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public String getEndpointUrl() {
-    return isNullOrEmpty(oauthEndpoint) ? "" : trimEnd(oauthEndpoint, '/');
+    return oauthEndpoint;
   }
 }

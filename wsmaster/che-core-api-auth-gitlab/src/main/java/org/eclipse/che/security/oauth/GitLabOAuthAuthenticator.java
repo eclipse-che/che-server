@@ -44,7 +44,7 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   public GitLabOAuthAuthenticator(
       String clientId, String clientSecret, String gitlabEndpoint, String cheApiEndpoint)
       throws IOException {
-    this.gitlabEndpoint = gitlabEndpoint;
+    this.gitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     String trimmedGitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     this.gitlabUserEndpoint = trimmedGitlabEndpoint + "/api/v4/user";
     this.cheApiEndpoint = cheApiEndpoint;
@@ -120,6 +120,6 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   }
 
   public String getEndpointUrl() {
-    return trimEnd(gitlabEndpoint, '/');
+    return gitlabEndpoint;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -39,10 +39,12 @@ import org.eclipse.che.security.oauth.shared.User;
 public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   private final String gitlabUserEndpoint;
   private final String cheApiEndpoint;
+  private final String gitlabEndpoint;
 
   public GitLabOAuthAuthenticator(
       String clientId, String clientSecret, String gitlabEndpoint, String cheApiEndpoint)
       throws IOException {
+    this.gitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     String trimmedGitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     this.gitlabUserEndpoint = trimmedGitlabEndpoint + "/api/v4/user";
     this.cheApiEndpoint = cheApiEndpoint;
@@ -115,5 +117,9 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
       return null;
     }
     return token;
+  }
+
+  public String getEndpointUrl() {
+    return gitlabEndpoint;
   }
 }

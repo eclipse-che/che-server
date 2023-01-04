@@ -63,6 +63,11 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   }
 
   @Override
+  public String getEndpointUrl() {
+    return "https://bitbucket.org";
+  }
+
+  @Override
   protected <O> O getJson(String getUserUrl, String accessToken, Class<O> userClass)
       throws OAuthAuthenticationException {
     HttpURLConnection urlConnection = null;

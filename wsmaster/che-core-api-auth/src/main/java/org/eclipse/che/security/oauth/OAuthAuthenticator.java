@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2022 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -315,7 +315,7 @@ public abstract class OAuthAuthenticator {
         // if token is not refreshed then old value should be invalidated
         // and null result should be returned
         try {
-          invalidateToken(userId);
+          invalidateTokenByUser(userId);
         } catch (IOException ignored) {
         }
         return null;
@@ -328,17 +328,31 @@ public abstract class OAuthAuthenticator {
    * Invalidate OAuth token for specified user.
    *
    * @param userId user
-   * @return <code>true</code> if OAuth token invalidated and <code>false</code> otherwise, e.g. if
-   *     user does not have token yet
    */
-  public boolean invalidateToken(String userId) throws IOException {
+  private void invalidateTokenByUser(String userId) throws IOException {
     Credential credential = flow.loadCredential(userId);
     if (credential != null) {
       flow.getCredentialDataStore().delete(userId);
-      return true;
     }
-    return false;
   }
+
+  /**
+   * Invalidate OAuth token.
+   *
+   * @param token oauth token
+   * @return <code>true</code> if OAuth token invalidated and <code>false</code> otherwise, e.g. if
+   *     token was not found
+   */
+  public boolean invalidateToken(String token) throws IOException {
+    throw new UnsupportedOperationException("Should be implemented by specific provider");
+  }
+
+  /**
+   * Get endpoint URL.
+   *
+   * @return provider's endpoint URL
+   */
+  public abstract String getEndpointUrl();
 
   /**
    * Checks configuring of authenticator

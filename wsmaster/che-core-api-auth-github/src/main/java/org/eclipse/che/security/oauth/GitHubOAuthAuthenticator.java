@@ -18,6 +18,10 @@ import com.google.api.client.util.store.MemoryDataStoreFactory;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Base64;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.security.oauth.shared.User;
@@ -25,7 +29,10 @@ import org.eclipse.che.security.oauth.shared.User;
 /** OAuth authentication for github account. */
 @Singleton
 public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
-  private final String userRequestUrl;
+  private final String clientId;
+  private final String clientSecret;
+  private final String githubApiUrl;
+  private final String providerUrl;
 
   public GitHubOAuthAuthenticator(
       String clientId,
@@ -35,17 +42,20 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
       String authUri,
       String tokenUri)
       throws IOException {
-    userRequestUrl =
-        isNullOrEmpty(authEndpoint) || trimEnd(authEndpoint, '/').equals("https://github.com")
-            ? "https://api.github.com/user"
-            : trimEnd(authEndpoint, '/') + "/api/v3/user";
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+    providerUrl = isNullOrEmpty(authEndpoint) ? "https://github.com" : trimEnd(authEndpoint, '/');
+    githubApiUrl =
+        providerUrl.equals("https://github.com")
+            ? "https://api.github.com"
+            : providerUrl + "/api/v3";
     configure(
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
   }
 
   @Override
   public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-    GitHubUser user = getJson(userRequestUrl, accessToken.getToken(), GitHubUser.class);
+    GitHubUser user = getJson(githubApiUrl + "/user", accessToken.getToken(), GitHubUser.class);
     final String email = user.getEmail();
 
     if (isNullOrEmpty(email)) {
@@ -67,8 +77,36 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
   }
 
   @Override
-  public OAuthToken getToken(String userId) throws IOException {
-    final OAuthToken token = super.getToken(userId);
+  public boolean invalidateToken(String token) throws IOException {
+    HttpURLConnection urlConnection = null;
+    try {
+      String creds = clientId + ":" + clientSecret;
+      String basicAuth = "Basic " + new String(Base64.getEncoder().encode(creds.getBytes()));
+      String jsonInputString = String.format("{\"access_token\":\"%s\"}", token);
+      urlConnection =
+          (HttpURLConnection)
+              new URL(String.format("%s/applications/%s/grant", githubApiUrl, clientId))
+                  .openConnection();
+      urlConnection.setRequestMethod("DELETE");
+      urlConnection.setRequestProperty("Authorization", basicAuth);
+      urlConnection.setDoOutput(true);
+      try (OutputStream os = urlConnection.getOutputStream()) {
+        os.write(jsonInputString.getBytes());
+      }
+      if (urlConnection.getResponseCode() != 204) {
+        return false;
+      }
+    } finally {
+      if (urlConnection != null) {
+        urlConnection.disconnect();
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public OAuthToken getToken(String oauthProvider) throws IOException {
+    final OAuthToken token = super.getToken(oauthProvider);
     // Need to check if token which is stored is valid for requests, then if valid - we returns it
     // to
     // caller
@@ -76,12 +114,16 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
       if (token == null
           || token.getToken() == null
           || token.getToken().isEmpty()
-          || getJson(userRequestUrl, token.getToken(), GitHubUser.class) == null) {
+          || getJson(githubApiUrl + "/user", token.getToken(), GitHubUser.class) == null) {
         return null;
       }
     } catch (OAuthAuthenticationException e) {
       return null;
     }
     return token;
+  }
+
+  public String getEndpointUrl() {
+    return providerUrl;
   }
 }

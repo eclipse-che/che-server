@@ -79,5 +79,10 @@ public class GitLabOAuthAuthenticatorProvider implements Provider<OAuthAuthentic
     public String getOAuthProvider() {
       return "Noop";
     }
+
+    @Override
+    public String getEndpointUrl() {
+      return "Noop";
+    }
   }
 }

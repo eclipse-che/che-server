@@ -91,5 +91,10 @@ public class BitbucketOAuthAuthenticatorProvider implements Provider<OAuthAuthen
     public String getOAuthProvider() {
       return "Noop";
     }
+
+    @Override
+    public String getEndpointUrl() {
+      return "Noop";
+    }
   }
 }

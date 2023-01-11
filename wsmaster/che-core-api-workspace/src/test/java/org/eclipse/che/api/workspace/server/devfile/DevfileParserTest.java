@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -194,7 +194,7 @@ public class DevfileParserTest {
     JsonProcessingException jsonException = mock(JsonProcessingException.class);
     when(jsonException.getMessage()).thenReturn("non valid");
     when(jsonMapper.readTree(anyString())).thenReturn(devfileJsonNode);
-    doThrow(jsonException).when(jsonMapper).treeToValue(any(), any());
+    doThrow(jsonException).when(jsonMapper).treeToValue(any(), eq(DevfileImpl.class));
 
     // when
     devfileParser.parseJson(DEVFILE_YAML_CONTENT);

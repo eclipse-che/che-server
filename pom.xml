@@ -154,7 +154,7 @@
         <org.mockito.version>3.11.2</org.mockito.version>
         <org.postgresql.version>42.2.24</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>
-        <org.slf4j.version>1.7.36</org.slf4j.version>
+        <org.slf4j.version>2.0.6</org.slf4j.version>
         <org.testng.version>7.4.0</org.testng.version>
     </properties>
     <dependencyManagement>

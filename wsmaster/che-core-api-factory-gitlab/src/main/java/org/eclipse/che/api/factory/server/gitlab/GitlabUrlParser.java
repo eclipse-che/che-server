@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.gitlab;
 
 import static java.lang.String.format;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.regex.Pattern.compile;
 
 import com.google.common.base.Splitter;
@@ -27,6 +28,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -92,10 +94,29 @@ public class GitlabUrlParser {
   }
 
   public boolean isValid(@NotNull String url) {
-    // If Gitlab URL is not configured, try to find it in a manually added user namespace
-    // token.
     return gitlabUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches())
-        || isUserTokenPresent(url);
+        // If the Gitlab URL is not configured, try to find it in a manually added user namespace
+        // token.
+        || isUserTokenPresent(url)
+        // Try to call an API request to see if the URL matches Gitlab.
+        || isApiRequestRelevant(url);
+  }
+
+  private boolean isApiRequestRelevant(String repositoryUrl) {
+    Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
+    if (serverUrlOptional.isPresent()) {
+      GitlabApiClient gitlabApiClient = new GitlabApiClient(serverUrlOptional.get());
+      try {
+        // If the token request catches the unauthorised error, it means that the provided url
+        // belongs to Gitlab.
+        gitlabApiClient.getTokenInfo("");
+      } catch (ScmCommunicationException e) {
+        return e.getStatusCode() == HTTP_UNAUTHORIZED;
+      } catch (ScmItemNotFoundException e) {
+        return false;
+      }
+    }
+    return false;
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {

@@ -11,14 +11,24 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
@@ -31,6 +41,18 @@ public class GitlabUrlParserTest {
 
   /** Instance of component that will be tested. */
   private GitlabUrlParser gitlabUrlParser;
+
+  private WireMockServer wireMockServer;
+  private WireMock wireMock;
+
+  @BeforeClass
+  public void prepare() {
+    wireMockServer =
+        new WireMockServer(wireMockConfig().notifier(new Slf4jNotifier(false)).dynamicPort());
+    wireMockServer.start();
+    WireMock.configureFor("localhost", wireMockServer.port());
+    wireMock = new WireMock("localhost", wireMockServer.port());
+  }
 
   @BeforeMethod
   public void setUp() {
@@ -58,6 +80,32 @@ public class GitlabUrlParserTest {
     assertEquals(gitlabUrl.getRepository(), repository);
     assertEquals(gitlabUrl.getBranch(), branch);
     assertEquals(gitlabUrl.getSubfolder(), subfolder);
+  }
+
+  @Test
+  public void shouldValidateUrlByApiRequest() {
+    // given
+    String url = wireMockServer.url("/user/repo");
+    stubFor(get(urlEqualTo("/oauth/token/info")).willReturn(aResponse().withStatus(401)));
+
+    // when
+    boolean result = gitlabUrlParser.isValid(url);
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequest() {
+    // given
+    String url = wireMockServer.url("/user/repo");
+    stubFor(get(urlEqualTo("/oauth/token/info")).willReturn(aResponse().withStatus(500)));
+
+    // when
+    boolean result = gitlabUrlParser.isValid(url);
+
+    // then
+    assertFalse(result);
   }
 
   @DataProvider(name = "UrlsProvider")

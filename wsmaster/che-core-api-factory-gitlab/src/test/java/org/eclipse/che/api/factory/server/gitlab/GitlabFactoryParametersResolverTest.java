@@ -87,7 +87,8 @@ public class GitlabFactoryParametersResolverTest {
   /** Check url which is not a Gitlab url can't be accepted by this resolver */
   @Test
   public void checkInvalidAcceptUrl() {
-    Map<String, String> parameters = singletonMap(URL_PARAMETER_NAME, "http://github.com");
+    Map<String, String> parameters =
+        singletonMap(URL_PARAMETER_NAME, "http://github.com/user/repo");
     // shouldn't be accepted
     assertFalse(gitlabFactoryParametersResolver.accept(parameters));
   }

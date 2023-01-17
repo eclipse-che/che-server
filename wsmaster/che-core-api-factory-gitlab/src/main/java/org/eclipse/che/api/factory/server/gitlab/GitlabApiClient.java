@@ -130,7 +130,8 @@ public class GitlabApiClient {
             throw new ScmItemNotFoundException(body);
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + response.statusCode() + " " + response.toString());
+                "Unexpected status code " + response.statusCode() + " " + response,
+                response.statusCode());
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {

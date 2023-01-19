@@ -58,7 +58,7 @@ public class GitlabScmFileResolverTest {
   @Test
   public void checkInvalidAcceptUrl() {
     // shouldn't be accepted
-    assertFalse(gitlabScmFileResolver.accept("http://github.com"));
+    assertFalse(gitlabScmFileResolver.accept("http://github.com/user/repo"));
   }
 
   /** Check Gitlab url will be be accepted by this resolver */

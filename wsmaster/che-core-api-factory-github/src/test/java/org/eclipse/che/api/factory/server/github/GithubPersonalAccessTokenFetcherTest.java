@@ -136,7 +136,7 @@ public class GithubPersonalAccessTokenFetcherTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[repo, user:email, read:user, workflow]")
+          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[repo, user:email, read:user, read:org, workflow]")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");

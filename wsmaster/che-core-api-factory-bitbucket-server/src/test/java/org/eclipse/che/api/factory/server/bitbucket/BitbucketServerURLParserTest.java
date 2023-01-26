@@ -11,14 +11,24 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
@@ -31,6 +41,17 @@ public class BitbucketServerURLParserTest {
 
   /** Instance of component that will be tested. */
   private BitbucketServerURLParser bitbucketURLParser;
+
+  private WireMockServer wireMockServer;
+
+  @BeforeClass
+  public void prepare() {
+    wireMockServer =
+        new WireMockServer(wireMockConfig().notifier(new Slf4jNotifier(false)).dynamicPort());
+    wireMockServer.start();
+    WireMock.configureFor("localhost", wireMockServer.port());
+    new WireMock("localhost", wireMockServer.port());
+  }
 
   @BeforeMethod
   public void setUp() {
@@ -63,6 +84,37 @@ public class BitbucketServerURLParserTest {
           "The given url https://github.com/org/repo is not a valid Bitbucket server URL. Check either URL or server configuration.")
   public void shouldThrowExceptionWhenURLDintMatchAnyConfiguredServer() {
     bitbucketURLParser.parse("https://github.com/org/repo");
+  }
+
+  @Test
+  public void shouldValidateUrlByApiRequest() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/access-tokens/1.0/users/0")).willReturn(aResponse().withStatus(401)));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequest() {
+    // given
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/access-tokens/1.0/users/0")).willReturn(aResponse().withStatus(500)));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
   }
 
   @DataProvider(name = "UrlsProvider")

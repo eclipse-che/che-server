@@ -24,15 +24,18 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.StringUtils;
+import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
 
 /**
  * Parser of String Bitbucket Server URLs and provide {@link BitbucketServerUrl} objects.
@@ -90,16 +93,39 @@ public class BitbucketServerURLParser {
     if (!bitbucketUrlPatterns.isEmpty()) {
       return bitbucketUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches());
     } else {
+      return
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
-      return isUserTokenPresent(url);
+      isUserTokenPresent(url)
+          // Try to call an API request to see if the URL matches Bitbucket.
+          || isApiRequestRelevant(url);
     }
+  }
+
+  private boolean isApiRequestRelevant(String repositoryUrl) {
+    try {
+      HttpBitbucketServerApiClient bitbucketServerApiClient =
+          new HttpBitbucketServerApiClient(
+              getServerUrl(repositoryUrl), new BitbucketServerOAuthAuthenticator("", "", "", ""));
+      // If the token request catches the unauthorised error, it means that the provided url
+      // belongs to Bitbucket.
+      bitbucketServerApiClient.getPersonalAccessToken("", 0L);
+    } catch (ScmItemNotFoundException | ScmCommunicationException e) {
+      return false;
+    } catch (ScmUnauthorizedException e) {
+      return true;
+    }
+    return false;
   }
 
   private String getServerUrl(String repositoryUrl) {
     return repositoryUrl.substring(
         0,
-        repositoryUrl.indexOf("/scm") > 0 ? repositoryUrl.indexOf("/scm") : repositoryUrl.length());
+        repositoryUrl.indexOf("/scm") > 0
+            ? repositoryUrl.indexOf("/scm")
+            : repositoryUrl.indexOf("/users") > 0
+                ? repositoryUrl.indexOf("/users")
+                : repositoryUrl.length());
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {

@@ -400,15 +400,11 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   private String computeAuthorizationHeader(String requestMethod, String requestUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException {
+      throws ScmCommunicationException {
     try {
       Subject subject = EnvironmentContext.getCurrent().getSubject();
-      String authorizationHeader =
-          authenticator.computeAuthorizationHeader(subject.getUserId(), requestMethod, requestUrl);
-      if (Strings.isNullOrEmpty(authorizationHeader)) {
-        throw buildScmUnauthorizedException();
-      }
-      return authorizationHeader;
+      return authenticator.computeAuthorizationHeader(
+          subject.getUserId(), requestMethod, requestUrl);
     } catch (OAuthAuthenticationException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }

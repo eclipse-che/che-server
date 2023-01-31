@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -535,7 +535,7 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     assertEquals(toReturnProject, project);
-    verify(toReturnProject).prepare(eq(false), eq(false), any(), any());
+    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
   }
 
   @Test
@@ -854,7 +854,7 @@ public class OpenShiftProjectFactoryTest {
     // then
     assertEquals(toReturnProject, project);
     verify(toReturnProject)
-        .prepare(eq(false), eq(false), any(), eq(Map.of("try_placeholder_here", "jondoe")));
+        .prepare(eq(true), eq(false), any(), eq(Map.of("try_placeholder_here", "jondoe")));
   }
 
   @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -104,7 +104,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
 
   public OpenShiftProject getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
     OpenShiftProject osProject = get(identity);
-
     var subject = EnvironmentContext.getCurrent().getSubject();
     var userName = subject.getUserName();
     NamespaceResolutionContext resolutionCtx =
@@ -113,7 +112,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         evaluateAnnotationPlaceholders(resolutionCtx);
 
     osProject.prepare(
-        canCreateNamespace(identity, userName),
+        canCreateNamespace(),
         initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -265,33 +265,11 @@ public class KubernetesNamespaceFactory {
    * Tells the caller whether the namespace that is being prepared for the provided workspace
    * runtime identity can be created or is expected to already be present.
    *
-   * <p>Note that this method cannot be reduced to merely checking if user-defined namespaces are
-   * allowed or not (and depending on prior validation using the {@link
-   * #checkIfNamespaceIsAllowed(String)} method during the workspace creation) because workspace
-   * start is a) async from workspace creation and the underlying namespaces might have disappeared
-   * and b) can be called during workspace recovery, where we don't even have the current user in
-   * the context.
-   *
-   * @param identity the identity of the workspace runtime
-   * @param userName the user name
    * @return true if the namespace can be created, false if the namespace is expected to already
    *     exist
-   * @throws InfrastructureException on failure
    */
-  protected boolean canCreateNamespace(RuntimeIdentity identity, String userName)
-      throws InfrastructureException {
-    if (!namespaceCreationAllowed) {
-      return false;
-    }
-
-    String requiredNamespace = identity.getInfrastructureNamespace();
-
-    NamespaceResolutionContext resolutionContext =
-        new NamespaceResolutionContext(identity.getWorkspaceId(), identity.getOwnerId(), userName);
-
-    String resolvedDefaultNamespace = evaluateNamespaceName(resolutionContext);
-
-    return resolvedDefaultNamespace.equals(requiredNamespace);
+  protected boolean canCreateNamespace() {
+    return namespaceCreationAllowed;
   }
 
   /**
@@ -316,7 +294,7 @@ public class KubernetesNamespaceFactory {
         evaluateAnnotationPlaceholders(resolutionCtx);
 
     namespace.prepare(
-        canCreateNamespace(identity, userName),
+        canCreateNamespace(),
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
 

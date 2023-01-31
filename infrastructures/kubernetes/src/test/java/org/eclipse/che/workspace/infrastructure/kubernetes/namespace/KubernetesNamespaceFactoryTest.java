@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -505,8 +505,6 @@ public class KubernetesNamespaceFactoryTest {
     when(k8sClient.secrets()).thenReturn(mixedOperation);
     when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
     when(namespaceResource.get()).thenReturn(null);
-    when(cheClientFactory.create()).thenReturn(k8sClient);
-    when(clientFactory.create()).thenReturn(k8sClient);
 
     // when
     RuntimeIdentity identity =
@@ -753,7 +751,7 @@ public class KubernetesNamespaceFactoryTest {
 
     // then
     assertEquals(toReturnNamespace, namespace);
-    verify(toReturnNamespace).prepare(eq(false), any(), any());
+    verify(toReturnNamespace).prepare(eq(true), any(), any());
   }
 
   @Test
@@ -853,7 +851,6 @@ public class KubernetesNamespaceFactoryTest {
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
-    when(cheClientFactory.create()).thenReturn(k8sClient);
     when(clientFactory.create(any())).thenReturn(k8sClient);
 
     // pre-create the cluster roles
@@ -930,7 +927,6 @@ public class KubernetesNamespaceFactoryTest {
     when(toReturnNamespace.getName()).thenReturn("workspace123");
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     when(clientFactory.create(any())).thenReturn(k8sClient);
-    when(cheClientFactory.create()).thenReturn(k8sClient);
 
     // when
     RuntimeIdentity identity =
@@ -978,7 +974,6 @@ public class KubernetesNamespaceFactoryTest {
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
     when(k8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
     when(clientFactory.create(any())).thenReturn(k8sClient);
-    when(cheClientFactory.create()).thenReturn(k8sClient);
 
     // when
     RuntimeIdentity identity =
@@ -1452,7 +1447,7 @@ public class KubernetesNamespaceFactoryTest {
     // then
     assertEquals(toReturnNamespace, namespace);
     verify(toReturnNamespace)
-        .prepare(eq(false), any(), eq(Map.of("try_placeholder_here", "jondoe")));
+        .prepare(eq(true), any(), eq(Map.of("try_placeholder_here", "jondoe")));
   }
 
   @Test(dataProvider = "invalidUsernames")

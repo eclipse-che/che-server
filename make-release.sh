@@ -21,6 +21,15 @@ IMAGES_LIST=(
     quay.io/eclipse/che-server
 )
 
+sed_in_place() {
+    SHORT_UNAME=$(uname -s)
+  if [ "$(uname)" == "Darwin" ]; then
+    sed -i '' "$@"
+  elif [ "${SHORT_UNAME:0:5}" == "Linux" ]; then
+    sed -i "$@"
+  fi
+}
+
 loadMvnSettingsGpgKey() {
     set +x
     mkdir $HOME/.m2
@@ -397,9 +406,10 @@ bumpVersion() {
 updateImageTagsInCheServer() {
     pushd che-server >/dev/null
         git checkout ${BRANCH}
-        pushd .ci >/dev/null
-            ./set_tag_version_images.sh
-        popd >/dev/null
+        plugin_version="latest"
+        sed_in_place -r -e "s#che.factory.default_editor=eclipse/che-theia/.*#che.factory.default_editor=eclipse/che-theia/$plugin_version#g" assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/che.properties
+        sed_in_place -r -e "s#che.workspace.devfile.default_editor=eclipse/che-theia/.*#che.workspace.devfile.default_editor=eclipse/che-theia/$plugin_version#g" assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/che.properties
+
         if [[ $(git diff --stat) != '' ]]; then
             git commit -asm "chore: Set ${CHE_VERSION} release image tags"
             git push origin ${BRANCH}

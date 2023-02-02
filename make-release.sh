@@ -398,7 +398,7 @@ updateImageTagsInCheServer() {
     pushd che-server >/dev/null
         git checkout ${BRANCH}
         pushd .ci >/dev/null
-            ./set_tag_version_images.sh ${CHE_VERSION}
+            ./set_tag_version_images.sh
         popd >/dev/null
         if [[ $(git diff --stat) != '' ]]; then
             git commit -asm "chore: Set ${CHE_VERSION} release image tags"

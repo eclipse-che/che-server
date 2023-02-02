@@ -395,13 +395,16 @@ bumpVersion() {
 }
 
 updateImageTagsInCheServer() {
-    cd che-server
-    git checkout ${BRANCH}
-    cd .ci
-    ./set_tag_version_images.sh ${CHE_VERSION}
-    cd ..
-    git commit -asm "chore: Set ${CHE_VERSION} release image tags"
-    git push origin ${BRANCH}
+    pushd che-server >/dev/null
+        git checkout ${BRANCH}
+        pushd .ci >/dev/null
+            ./set_tag_version_images.sh ${CHE_VERSION}
+        popd >/dev/null
+        if [[ $(git diff --stat) != '' ]]; then
+            git commit -asm "chore: Set ${CHE_VERSION} release image tags"
+            git push origin ${BRANCH}
+        fi
+    popd >/dev/null
 }
 
 installMaven

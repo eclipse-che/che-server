@@ -1,41 +1,20 @@
 # Global Owners
-* @nickboldt @ibuziuk @l0rd @sparkoo
+* @l0rd @ibuziuk @vinokurig @nickboldt 
 
-# dockerfiles
-dockerfiles/** @nickboldt
-
-# assembly
-assembly/** @nickboldt
-assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/** @ibuziuk @nickboldt @themr0c
-
-# core
-core/** @nickboldt
+# che.properties (quasi-documentation)
+assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/** @osslate 
 
 # workspace runtime infrastructure implementations
-infrastructures/** @amisevsk @nickboldt
+infrastructures/** @amisevsk 
 
 # multiuser che
-multiuser/api/**  @nickboldt
-multiuser/integration-tests/**  @mshaposhnik @nickboldt
-multiuser/keycloak/**  @mshaposhnik @nickboldt
-multiuser/machine-auth/**  @mshaposhnik @nickboldt
-multiuser/permission/**  @nickboldt
-multiuser/personal-account/**  @nickboldt
-multiuser/sql-schema/**  @mshaposhnik @nickboldt
+multiuser/**  @mshaposhnik
 
 # wsmaster
-wsmaster/** @nickboldt @vinokurig 
-wsmaster/che-core-api-factory/** @mshaposhnik @nickboldt
-wsmaster/che-core-api-factory-shared/**   @mshaposhnik @nickboldt
-wsmaster/che-core-api-workspace-activity/**   @mshaposhnik @nickboldt
-wsmaster/che-core-api-workspace/**  @mshaposhnik @nickboldt
+wsmaster/** @vinokurig @mshaposhnik
 
 # deploy
-deploy/** @tolusha @nickboldt
-deploy/openshift/templates/monitoring/** @tolusha @nickboldt @dkwon17 
+deploy/** @tolusha @dkwon17
 
 # e2e tests
-tests/e2e/** @musienko-maxim @rhopp @nickboldt @Katka92
-
-# e2e tests infra
-tests/.infra/centos-ci/** @musienko-maxim @rhopp @nickboldt
+tests/e2e/** @musienko-maxim

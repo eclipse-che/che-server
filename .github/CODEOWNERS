@@ -1,18 +1,11 @@
 # Global Owners
 * @l0rd @ibuziuk @vinokurig @nickboldt 
 
-# che.properties (quasi-documentation)
-# Fionn Kelleher (@osslate) is the replacement for Fabrice, but he doesn't seem to have rights to this repo, so comment this out for now
+# che.properties file is quasi-documentation, so in future we might grant access to this 
 # assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/** @osslate 
 
 # workspace runtime infrastructure implementations
 infrastructures/** @amisevsk 
-
-# multiuser che
-multiuser/**  @vinokurig 
-
-# wsmaster
-wsmaster/** @vinokurig 
 
 # deploy
 deploy/** @tolusha @dkwon17

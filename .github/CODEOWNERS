@@ -12,7 +12,7 @@ infrastructures/** @amisevsk
 multiuser/**  @mshaposhnik
 
 # wsmaster
-wsmaster/** @vinokurig @mshaposhnik
+wsmaster/** @vinokurig 
 
 # deploy
 deploy/** @tolusha @dkwon17

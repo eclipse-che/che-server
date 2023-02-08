@@ -40,7 +40,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
-import org.eclipse.che.api.user.server.UserManager;
 
 /**
  * Defines Factory REST API.
@@ -59,7 +58,6 @@ public class FactoryService extends Service {
   /** Validate query parameter. If true, factory will be validated */
   public static final String VALIDATE_QUERY_PARAMETER = "validate";
 
-  private final UserManager userManager;
   private final FactoryAcceptValidator acceptValidator;
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
   private final AdditionalFilenamesProvider additionalFilenamesProvider;
@@ -67,12 +65,10 @@ public class FactoryService extends Service {
 
   @Inject
   public FactoryService(
-      UserManager userManager,
       FactoryAcceptValidator acceptValidator,
       FactoryParametersResolverHolder factoryParametersResolverHolder,
       AdditionalFilenamesProvider additionalFilenamesProvider,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    this.userManager = userManager;
     this.acceptValidator = acceptValidator;
     this.factoryParametersResolverHolder = factoryParametersResolverHolder;
     this.additionalFilenamesProvider = additionalFilenamesProvider;
@@ -161,22 +157,14 @@ public class FactoryService extends Service {
     }
   }
 
-  /** Injects factory links. If factory is named then accept named link will be injected. */
+  /** Injects factory links */
   private FactoryMetaDto injectLinks(FactoryMetaDto factory, Map<String, String> parameters) {
-    String username = null;
-    if (factory.getCreator() != null && factory.getCreator().getUserId() != null) {
-      try {
-        username = userManager.getById(factory.getCreator().getUserId()).getName();
-      } catch (ApiException ignored) {
-        // when impossible to get username then named factory link won't be injected
-      }
-    }
     return factory.withLinks(
         createLinks(
             factory,
             getServiceContext(),
             additionalFilenamesProvider,
-            username,
+            null,
             parameters.get(URL_PARAMETER_NAME)));
   }
 

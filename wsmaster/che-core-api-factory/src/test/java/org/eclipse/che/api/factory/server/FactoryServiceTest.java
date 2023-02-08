@@ -23,7 +23,6 @@ import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -130,13 +129,11 @@ public class FactoryServiceTest {
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class));
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class), anyBoolean());
     user = new UserImpl(USER_ID, USER_EMAIL, ADMIN_USER_NAME);
-    lenient().when(userManager.getById(anyString())).thenReturn(user);
     lenient()
         .when(preferenceManager.find(USER_ID))
         .thenReturn(ImmutableMap.of("preference", "value"));
     service =
         new FactoryService(
-            userManager,
             acceptValidator,
             factoryParametersResolverHolder,
             additionalFilenamesProvider,
@@ -161,11 +158,7 @@ public class FactoryServiceTest {
     // service instance with dummy holder
     service =
         new FactoryService(
-            userManager,
-            acceptValidator,
-            dummyHolder,
-            additionalFilenamesProvider,
-            personalAccessTokenManager);
+            acceptValidator, dummyHolder, additionalFilenamesProvider, personalAccessTokenManager);
 
     // when
     final Map<String, String> map = new HashMap<>();
@@ -192,11 +185,7 @@ public class FactoryServiceTest {
     // service instance with dummy holder
     service =
         new FactoryService(
-            userManager,
-            acceptValidator,
-            dummyHolder,
-            additionalFilenamesProvider,
-            personalAccessTokenManager);
+            acceptValidator, dummyHolder, additionalFilenamesProvider, personalAccessTokenManager);
 
     // invalid factory
     final String invalidFactoryMessage = "invalid factory";
@@ -244,11 +233,7 @@ public class FactoryServiceTest {
     doReturn(factoryParametersResolver).when(dummyHolder).getFactoryParametersResolver(anyMap());
     service =
         new FactoryService(
-            userManager,
-            acceptValidator,
-            dummyHolder,
-            additionalFilenamesProvider,
-            personalAccessTokenManager);
+            acceptValidator, dummyHolder, additionalFilenamesProvider, personalAccessTokenManager);
 
     // when
     given()
@@ -265,7 +250,6 @@ public class FactoryServiceTest {
   public void shouldThrowBadRequestWhenRefreshTokenWithoutUrl() throws Exception {
     service =
         new FactoryService(
-            userManager,
             acceptValidator,
             factoryParametersResolverHolder,
             additionalFilenamesProvider,

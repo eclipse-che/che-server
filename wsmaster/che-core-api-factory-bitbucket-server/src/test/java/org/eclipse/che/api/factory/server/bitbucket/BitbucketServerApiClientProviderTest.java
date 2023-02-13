@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.security.oauth1;
+package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -19,16 +19,20 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
-import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.NoopBitbucketServerApiClient;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.inject.ConfigurationException;
+import org.eclipse.che.security.oauth.OAuthAPI;
+import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
+import org.eclipse.che.security.oauth1.OAuthAuthenticator;
+import org.mockito.Mock;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class BitbucketServerApiClientProviderTest {
   BitbucketServerOAuthAuthenticator oAuthAuthenticator;
+  @Mock OAuthAPI oAuthAPI;
 
   @BeforeClass
   public void setUp() {
@@ -44,6 +48,8 @@ public class BitbucketServerApiClientProviderTest {
         new BitbucketServerApiProvider(
             "https://bitbucket.server.com, https://bitbucket2.server.com",
             "https://bitbucket.server.com",
+            "https://bitbucket.server.com",
+            oAuthAPI,
             ImmutableSet.of(oAuthAuthenticator));
     // when
     BitbucketServerApiClient actual = bitbucketServerApiProvider.get();
@@ -59,6 +65,8 @@ public class BitbucketServerApiClientProviderTest {
         new BitbucketServerApiProvider(
             "https://bitbucket.server.com, https://bitbucket2.server.com",
             "https://bitbucket.server.com",
+            "https://bitbucket.server.com",
+            oAuthAPI,
             ImmutableSet.of(oAuthAuthenticator));
     // when
     BitbucketServerApiClient actual = bitbucketServerApiProvider.get();
@@ -70,13 +78,12 @@ public class BitbucketServerApiClientProviderTest {
 
   @Test(dataProvider = "noopConfig")
   public void shouldProvideNoopOAuthAuthenticatorIfSomeConfigurationIsNotSet(
-      @Nullable String bitbucketEndpoints,
-      @Nullable String bitbucketOauth1Endpoint,
-      Set<OAuthAuthenticator> authenticators)
+      @Nullable String bitbucketEndpoints, Set<OAuthAuthenticator> authenticators)
       throws IOException {
     // given
     BitbucketServerApiProvider bitbucketServerApiProvider =
-        new BitbucketServerApiProvider(bitbucketEndpoints, bitbucketOauth1Endpoint, authenticators);
+        new BitbucketServerApiProvider(
+            bitbucketEndpoints, "https://bitbucket.org", "", oAuthAPI, authenticators);
     // when
     BitbucketServerApiClient actual = bitbucketServerApiProvider.get();
     // then
@@ -86,13 +93,12 @@ public class BitbucketServerApiClientProviderTest {
 
   @Test(dataProvider = "httpOnlyConfig")
   public void shouldProvideHttpAuthenticatorIfOauthConfigurationIsNotSet(
-      @Nullable String bitbucketEndpoints,
-      @Nullable String bitbucketOauth1Endpoint,
-      Set<OAuthAuthenticator> authenticators)
+      @Nullable String bitbucketEndpoints, Set<OAuthAuthenticator> authenticators)
       throws IOException {
     // given
     BitbucketServerApiProvider bitbucketServerApiProvider =
-        new BitbucketServerApiProvider(bitbucketEndpoints, bitbucketOauth1Endpoint, authenticators);
+        new BitbucketServerApiProvider(
+            bitbucketEndpoints, "https://bitbucket.org", "", oAuthAPI, authenticators);
     // when
     BitbucketServerApiClient actual = bitbucketServerApiProvider.get();
     // then
@@ -103,19 +109,23 @@ public class BitbucketServerApiClientProviderTest {
   @Test(
       expectedExceptions = ConfigurationException.class,
       expectedExceptionsMessageRegExp =
-          "`che.integration.bitbucket.server_endpoints` bitbucket configuration is missing. It should contain values from 'che.oauth1.bitbucket.endpoint'")
+          "`che.integration.bitbucket.server_endpoints` bitbucket configuration is missing. It should contain values from 'che.oauth.bitbucket.endpoint'")
   public void shouldFailToBuildIfEndpointsAreMisconfigured() {
     // given
     // when
     BitbucketServerApiProvider bitbucketServerApiProvider =
         new BitbucketServerApiProvider(
-            "", "https://bitbucket.server.com", ImmutableSet.of(oAuthAuthenticator));
+            "",
+            "https://bitbucket.server.com",
+            "https://bitbucket.server.com",
+            oAuthAPI,
+            ImmutableSet.of(oAuthAuthenticator));
   }
 
   @Test(
       expectedExceptions = ConfigurationException.class,
       expectedExceptionsMessageRegExp =
-          "'che.oauth1.bitbucket.endpoint' is set but BitbucketServerOAuthAuthenticator is not deployed correctly")
+          "'che.oauth.bitbucket.endpoint' is set but BitbucketServerOAuthAuthenticator is not deployed correctly")
   public void shouldFailToBuildIfEndpointsAreMisconfigured2() {
     // given
     // when
@@ -123,6 +133,8 @@ public class BitbucketServerApiClientProviderTest {
         new BitbucketServerApiProvider(
             "https://bitbucket.server.com, https://bitbucket2.server.com",
             "https://bitbucket.server.com",
+            "https://bitbucket.server.com",
+            oAuthAPI,
             Collections.emptySet());
   }
 
@@ -137,25 +149,26 @@ public class BitbucketServerApiClientProviderTest {
         new BitbucketServerApiProvider(
             "https://bitbucket3.server.com, https://bitbucket2.server.com",
             "https://bitbucket.server.com",
+            "https://bitbucket.server.com",
+            oAuthAPI,
             ImmutableSet.of(oAuthAuthenticator));
   }
 
   @DataProvider(name = "noopConfig")
   public Object[][] noopConfig() {
     return new Object[][] {
-      {null, null, null},
-      {"", "", null}
+      {null, null},
+      {"", null}
     };
   }
 
   @DataProvider(name = "httpOnlyConfig")
   public Object[][] httpOnlyConfig() {
     return new Object[][] {
-      {"https://bitbucket.server.com", null, null},
-      {"https://bitbucket.server.com, https://bitbucket2.server.com", null, null},
+      {"https://bitbucket.server.com", null},
+      {"https://bitbucket.server.com, https://bitbucket2.server.com", null},
       {
         "https://bitbucket.server.com, https://bitbucket2.server.com",
-        null,
         ImmutableSet.of(oAuthAuthenticator)
       }
     };

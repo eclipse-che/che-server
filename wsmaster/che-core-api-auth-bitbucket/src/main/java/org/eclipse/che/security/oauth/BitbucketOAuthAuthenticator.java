@@ -11,33 +11,47 @@
  */
 package org.eclipse.che.security.oauth;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
+import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.util.store.MemoryDataStoreFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
-import org.eclipse.che.commons.json.JsonHelper;
-import org.eclipse.che.commons.json.JsonParseException;
-import org.eclipse.che.security.oauth.shared.User;
 
 /** OAuth authentication for BitBucket SAAS account. */
 @Singleton
 public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
+  private final String testRequestUrl;
+  private final String bitbucketEndpoint;
+
   public BitbucketOAuthAuthenticator(
-      String clientId, String clientSecret, String[] redirectUris, String authUri, String tokenUri)
+      String bitbucketEndpoint,
+      String clientId,
+      String clientSecret,
+      String[] redirectUris,
+      String authUri,
+      String tokenUri)
       throws IOException {
+    this.bitbucketEndpoint = bitbucketEndpoint;
+    testRequestUrl =
+        bitbucketEndpoint.equals("https://bitbucket.org")
+            ? "https://api.bitbucket.org/2.0/user"
+            : bitbucketEndpoint + "/rest/api/1.0/application-properties";
     configure(
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
   }
 
-  private static final String USER_URL = "https://api.bitbucket.org/2.0/user";
-
   @Override
-  public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-    BitbucketUser user = getJson(USER_URL, accessToken.getToken(), BitbucketUser.class);
-    return user;
+  public String getAuthenticateUrl(URL requestUrl, List<String> scopes) {
+    AuthorizationCodeRequestUrl url = flow.newAuthorizationUrl().setScopes(scopes);
+    url.setState(prepareState(requestUrl));
+    url.set("redirect_uri", findRedirectUrl(requestUrl));
+    return url.build();
   }
 
   @Override
@@ -50,12 +64,10 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
     final OAuthToken token = super.getToken(userId);
     // Need to check if token is valid for requests, if valid - return it to caller.
     try {
-      if (token == null
-          || token.getToken() == null
-          || token.getToken().isEmpty()
-          || getJson(USER_URL, token.getToken(), BitbucketUser.class) == null) {
+      if (token == null || isNullOrEmpty(token.getToken())) {
         return null;
       }
+      testRequest(testRequestUrl, token.getToken());
     } catch (OAuthAuthenticationException e) {
       return null;
     }
@@ -64,21 +76,19 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public String getEndpointUrl() {
-    return "https://bitbucket.org";
+    return bitbucketEndpoint;
   }
 
-  @Override
-  protected <O> O getJson(String getUserUrl, String accessToken, Class<O> userClass)
+  private void testRequest(String requestUrl, String accessToken)
       throws OAuthAuthenticationException {
     HttpURLConnection urlConnection = null;
     InputStream urlInputStream = null;
 
     try {
-      urlConnection = (HttpURLConnection) new URL(getUserUrl).openConnection();
+      urlConnection = (HttpURLConnection) new URL(requestUrl).openConnection();
       urlConnection.setRequestProperty("Authorization", "Bearer " + accessToken);
       urlInputStream = urlConnection.getInputStream();
-      return JsonHelper.fromJson(urlInputStream, userClass, null);
-    } catch (JsonParseException | IOException e) {
+    } catch (IOException e) {
       throw new OAuthAuthenticationException(e.getMessage(), e);
     } finally {
       if (urlInputStream != null) {

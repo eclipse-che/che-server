@@ -9,8 +9,9 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.api.factory.server.bitbucket.server;
+package org.eclipse.che.api.factory.server.bitbucket;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
@@ -21,7 +22,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -42,6 +42,17 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.UnauthorizedException;
+import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
+import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
+import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
+import org.eclipse.che.api.factory.server.bitbucket.server.Page;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
@@ -50,6 +61,8 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.security.oauth.OAuthAPI;
+import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
 import org.eclipse.che.security.oauth1.OAuthAuthenticationException;
 import org.eclipse.che.security.oauth1.OAuthAuthenticator;
 import org.slf4j.Logger;
@@ -67,11 +80,16 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
   private final URI serverUri;
   private final OAuthAuthenticator authenticator;
+  private final OAuthAPI oAuthAPI;
+  private final String apiEndpoint;
   private final HttpClient httpClient;
 
-  public HttpBitbucketServerApiClient(String serverUrl, OAuthAuthenticator authenticator) {
+  public HttpBitbucketServerApiClient(
+      String serverUrl, OAuthAuthenticator authenticator, OAuthAPI oAuthAPI, String apiEndpoint) {
     this.serverUri = URI.create(serverUrl.endsWith("/") ? serverUrl : serverUrl + "/");
     this.authenticator = authenticator;
+    this.oAuthAPI = oAuthAPI;
+    this.apiEndpoint = apiEndpoint;
     this.httpClient =
         HttpClient.newBuilder()
             .executor(
@@ -219,6 +237,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   public BitbucketPersonalAccessToken createPersonalAccessTokens(
       String userSlug, String tokenName, Set<String> permissions)
       throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException {
+    BitbucketPersonalAccessToken token =
+        new BitbucketPersonalAccessToken(tokenName, permissions, 90);
     URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + userSlug);
 
     try {
@@ -228,7 +248,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
                   HttpRequest.BodyPublishers.ofString(
                       OM.writeValueAsString(
                           // set maximum allowed expiryDays to 90
-                          new BitbucketPersonalAccessToken(tokenName, permissions, 90))))
+                          token)))
               .headers(
                   HttpHeaders.AUTHORIZATION,
                   computeAuthorizationHeader("PUT", uri.toString()),
@@ -343,7 +363,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       throws ScmUnauthorizedException, ScmBadRequestException, ScmCommunicationException,
           ScmItemNotFoundException {
     String suffix = api + "?start=" + start + "&limit=" + limit;
-    if (!Strings.isNullOrEmpty(filter)) {
+    if (!isNullOrEmpty(filter)) {
       suffix += "&filter=" + filter;
     }
 
@@ -399,8 +419,30 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     }
   }
 
+  private @Nullable String getToken() throws ScmUnauthorizedException {
+    try {
+      OAuthToken token = oAuthAPI.getToken("bitbucket");
+      return token.getToken();
+    } catch (NotFoundException
+        | ServerException
+        | ForbiddenException
+        | BadRequestException
+        | ConflictException e) {
+      LOG.error(e.getMessage());
+      return null;
+    } catch (UnauthorizedException e) {
+      throw buildScmUnauthorizedException();
+    }
+  }
+
   private String computeAuthorizationHeader(String requestMethod, String requestUrl)
-      throws ScmCommunicationException {
+      throws ScmUnauthorizedException, ScmCommunicationException {
+    if (authenticator instanceof NoopOAuthAuthenticator) {
+      String token = getToken();
+      if (!isNullOrEmpty(token)) {
+        return "Bearer " + token;
+      }
+    }
     try {
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       return authenticator.computeAuthorizationHeader(
@@ -413,11 +455,11 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   private ScmUnauthorizedException buildScmUnauthorizedException() {
     return new ScmUnauthorizedException(
         EnvironmentContext.getCurrent().getSubject().getUserName()
-            + " is not authorized in "
-            + authenticator.getOAuthProvider()
-            + " OAuth1 provider",
-        authenticator.getOAuthProvider(),
-        "1.0",
-        authenticator.getLocalAuthenticateUrl());
+            + " is not authorized in bitbucket OAuth provider",
+        "bitbucket",
+        authenticator instanceof NoopOAuthAuthenticator ? "2.0" : "1.0",
+        authenticator instanceof NoopOAuthAuthenticator
+            ? apiEndpoint + "/oauth/authenticate?oauth_provider=bitbucket&scope=ADMIN_WRITE"
+            : authenticator.getLocalAuthenticateUrl());
   }
 }

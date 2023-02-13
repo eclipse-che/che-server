@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertFalse;
@@ -26,6 +27,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Optional;
+import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
@@ -37,6 +45,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -51,6 +60,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
   Subject subject;
   @Mock BitbucketServerApiClient bitbucketServerApiClient;
   @Mock PersonalAccessToken personalAccessToken;
+  @Mock OAuthAPI oAuthAPI;
   BitbucketUser bitbucketUser;
   BitbucketServerPersonalAccessTokenFetcher fetcher;
   BitbucketPersonalAccessToken bitbucketPersonalAccessToken;
@@ -93,7 +103,9 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             "3456\\<0>945//i0923i4jasoidfj934ui50",
             bitbucketUser,
             ImmutableSet.of("PROJECT_READ", "REPO_READ"));
-    fetcher = new BitbucketServerPersonalAccessTokenFetcher(bitbucketServerApiClient, apiEndpoint);
+    fetcher =
+        new BitbucketServerPersonalAccessTokenFetcher(
+            bitbucketServerApiClient, apiEndpoint, oAuthAPI);
     EnvironmentContext context = new EnvironmentContext();
     context.setSubject(subject);
     EnvironmentContext.setCurrent(context);
@@ -190,8 +202,11 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldSkipToValidateTokensWithUnknownUrls()
-      throws ScmUnauthorizedException, ScmCommunicationException {
+      throws ScmUnauthorizedException, ScmCommunicationException, ForbiddenException,
+          ServerException, ConflictException, UnauthorizedException, NotFoundException,
+          BadRequestException {
     // given
+    when(oAuthAPI.getToken(eq("bitbucket"))).thenReturn(mock(OAuthToken.class));
     when(personalAccessToken.getScmProviderUrl()).thenReturn(someNotBitbucketURL);
     when(bitbucketServerApiClient.isConnected(eq(someNotBitbucketURL))).thenReturn(false);
     // when

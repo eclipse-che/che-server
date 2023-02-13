@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
@@ -35,6 +34,7 @@ import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.StringUtils;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
 
 /**
@@ -46,6 +46,7 @@ import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
 public class BitbucketServerURLParser {
 
   private final DevfileFilenamesProvider devfileFilenamesProvider;
+  private final OAuthAPI oAuthAPI;
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private static final List<String> bitbucketUrlPatternTemplates =
       List.of(
@@ -60,8 +61,10 @@ public class BitbucketServerURLParser {
   public BitbucketServerURLParser(
       @Nullable @Named("che.integration.bitbucket.server_endpoints") String bitbucketEndpoints,
       DevfileFilenamesProvider devfileFilenamesProvider,
+      OAuthAPI oAuthAPI,
       PersonalAccessTokenManager personalAccessTokenManager) {
     this.devfileFilenamesProvider = devfileFilenamesProvider;
+    this.oAuthAPI = oAuthAPI;
     this.personalAccessTokenManager = personalAccessTokenManager;
     if (bitbucketEndpoints != null) {
       for (String bitbucketEndpoint : Splitter.on(",").split(bitbucketEndpoints)) {
@@ -106,7 +109,10 @@ public class BitbucketServerURLParser {
     try {
       HttpBitbucketServerApiClient bitbucketServerApiClient =
           new HttpBitbucketServerApiClient(
-              getServerUrl(repositoryUrl), new BitbucketServerOAuthAuthenticator("", "", "", ""));
+              getServerUrl(repositoryUrl),
+              new BitbucketServerOAuthAuthenticator("", "", "", ""),
+              oAuthAPI,
+              "");
       // If the token request catches the unauthorised error, it means that the provided url
       // belongs to Bitbucket.
       bitbucketServerApiClient.getPersonalAccessToken("", 0L);

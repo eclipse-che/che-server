@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,9 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.security.oauth.shared.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +37,7 @@ public class BitbucketOAuthAuthenticatorProvider implements Provider<OAuthAuthen
 
   @Inject
   public BitbucketOAuthAuthenticatorProvider(
+      @Named("che.oauth.bitbucket.endpoint") String oauthEndpoint,
       @Nullable @Named("che.oauth2.bitbucket.clientid_filepath") String bitbucketClientIdPath,
       @Nullable @Named("che.oauth2.bitbucket.clientsecret_filepath")
           String bitbucketClientSecretPath,
@@ -47,7 +47,12 @@ public class BitbucketOAuthAuthenticatorProvider implements Provider<OAuthAuthen
       throws IOException {
     authenticator =
         getOAuthAuthenticator(
-            bitbucketClientIdPath, bitbucketClientSecretPath, redirectUris, authUri, tokenUri);
+            oauthEndpoint,
+            bitbucketClientIdPath,
+            bitbucketClientSecretPath,
+            redirectUris,
+            authUri,
+            tokenUri);
     LOG.debug("{} Bitbucket OAuth Authenticator is used.", authenticator);
   }
 
@@ -57,11 +62,12 @@ public class BitbucketOAuthAuthenticatorProvider implements Provider<OAuthAuthen
   }
 
   private OAuthAuthenticator getOAuthAuthenticator(
-      String clientIdPath,
-      String clientSecretPath,
-      String[] redirectUris,
-      String authUri,
-      String tokenUri)
+      String oauthEndpoint,
+      @Nullable String clientIdPath,
+      @Nullable String clientSecretPath,
+      @Nullable String[] redirectUris,
+      @Nullable String authUri,
+      @Nullable String tokenUri)
       throws IOException {
 
     if (!isNullOrEmpty(clientIdPath)
@@ -70,23 +76,26 @@ public class BitbucketOAuthAuthenticatorProvider implements Provider<OAuthAuthen
         && !isNullOrEmpty(tokenUri)
         && Objects.nonNull(redirectUris)
         && redirectUris.length != 0) {
+      String trimmedOauthEndpoint = trimEnd(oauthEndpoint, '/');
+      authUri =
+          trimmedOauthEndpoint.equals("https://bitbucket.org")
+              ? authUri
+              : trimmedOauthEndpoint + "/rest/oauth2/1.0/authorize";
+      tokenUri =
+          trimmedOauthEndpoint.equals("https://bitbucket.org")
+              ? tokenUri
+              : trimmedOauthEndpoint + "/rest/oauth2/1.0/token";
       final String clientId = Files.readString(Path.of(clientIdPath)).trim();
       final String clientSecret = Files.readString(Path.of(clientSecretPath)).trim();
       if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {
         return new BitbucketOAuthAuthenticator(
-            clientId, clientSecret, redirectUris, authUri, tokenUri);
+            trimmedOauthEndpoint, clientId, clientSecret, redirectUris, authUri, tokenUri);
       }
     }
     return new NoopOAuthAuthenticator();
   }
 
   static class NoopOAuthAuthenticator extends OAuthAuthenticator {
-    @Override
-    public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-      throw new OAuthAuthenticationException(
-          "The fallback noop authenticator cannot be used for Bitbucket authentication. Make sure OAuth is properly configured.");
-    }
-
     @Override
     public String getOAuthProvider() {
       return "Noop";

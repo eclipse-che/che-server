@@ -11,12 +11,9 @@
  */
 package org.eclipse.che.security.oauth;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.api.client.util.store.MemoryDataStoreFactory;
-import jakarta.mail.internet.AddressException;
-import jakarta.mail.internet.InternetAddress;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -28,7 +25,6 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
-import org.eclipse.che.security.oauth.shared.User;
 
 /**
  * OAuth2 authenticator for GitLab account.
@@ -55,24 +51,6 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
         trimmedGitlabEndpoint + "/oauth/authorize",
         trimmedGitlabEndpoint + "/oauth/token",
         new MemoryDataStoreFactory());
-  }
-
-  @Override
-  public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-    GitLabUser user = getJson(gitlabUserEndpoint, accessToken.getToken(), GitLabUser.class);
-    final String email = user.getEmail();
-
-    if (isNullOrEmpty(email)) {
-      throw new OAuthAuthenticationException(
-          "Sorry, we failed to find any verified email associated with your GitLab account."
-              + " Please, verify at least one email in your account and try to connect with GitLab again.");
-    }
-    try {
-      new InternetAddress(email).validate();
-    } catch (AddressException e) {
-      throw new OAuthAuthenticationException(e.getMessage());
-    }
-    return user;
   }
 
   @Override

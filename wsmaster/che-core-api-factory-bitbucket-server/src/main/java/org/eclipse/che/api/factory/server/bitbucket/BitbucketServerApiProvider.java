@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.security.oauth1;
+package org.eclipse.che.api.factory.server.bitbucket;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -23,11 +23,13 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
-import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.NoopBitbucketServerApiClient;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.inject.ConfigurationException;
+import org.eclipse.che.security.oauth.OAuthAPI;
+import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
+import org.eclipse.che.security.oauth1.OAuthAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +39,19 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
   private static final Logger LOG = LoggerFactory.getLogger(BitbucketServerApiProvider.class);
 
   private final BitbucketServerApiClient bitbucketServerApiClient;
+  private final String apiEndpoint;
+  private final OAuthAPI oAuthAPI;
 
   @Inject
   public BitbucketServerApiProvider(
       @Nullable @Named("che.integration.bitbucket.server_endpoints") String bitbucketEndpoints,
-      @Nullable @Named("che.oauth1.bitbucket.endpoint") String bitbucketOauth1Endpoint,
+      @Named("che.oauth.bitbucket.endpoint") String bitbucketOauthEndpoint,
+      @Named("che.api") String apiEndpoint,
+      OAuthAPI oAuthAPI,
       Set<OAuthAuthenticator> authenticators) {
-    bitbucketServerApiClient = doGet(bitbucketEndpoints, bitbucketOauth1Endpoint, authenticators);
+    this.apiEndpoint = apiEndpoint;
+    this.oAuthAPI = oAuthAPI;
+    bitbucketServerApiClient = doGet(bitbucketEndpoints, bitbucketOauthEndpoint, authenticators);
     LOG.debug("Bitbucket server api is used {}", bitbucketServerApiClient);
   }
 
@@ -52,40 +60,38 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
     return bitbucketServerApiClient;
   }
 
-  private static BitbucketServerApiClient doGet(
+  private BitbucketServerApiClient doGet(
       String rawBitbucketEndpoints,
-      String bitbucketOauth1Endpoint,
+      String bitbucketOauthEndpoint,
       Set<OAuthAuthenticator> authenticators) {
-    if (isNullOrEmpty(bitbucketOauth1Endpoint) && isNullOrEmpty(rawBitbucketEndpoints)) {
+    boolean isCloudEndpoint = bitbucketOauthEndpoint.equals("https://bitbucket.org");
+    if (isCloudEndpoint && isNullOrEmpty(rawBitbucketEndpoints)) {
       return new NoopBitbucketServerApiClient();
-    } else if (!isNullOrEmpty(bitbucketOauth1Endpoint) && isNullOrEmpty(rawBitbucketEndpoints)) {
+    } else if (!isCloudEndpoint && isNullOrEmpty(rawBitbucketEndpoints)) {
       throw new ConfigurationException(
           "`che.integration.bitbucket.server_endpoints` bitbucket configuration is missing."
-              + " It should contain values from 'che.oauth1.bitbucket.endpoint'");
-    } else if (isNullOrEmpty(bitbucketOauth1Endpoint) && !isNullOrEmpty(rawBitbucketEndpoints)) {
+              + " It should contain values from 'che.oauth.bitbucket.endpoint'");
+    } else if (isCloudEndpoint && !isNullOrEmpty(rawBitbucketEndpoints)) {
       return new HttpBitbucketServerApiClient(
-          sanitizedEndpoints(rawBitbucketEndpoints).get(0), new NoopOAuthAuthenticator());
+          sanitizedEndpoints(rawBitbucketEndpoints).get(0),
+          new NoopOAuthAuthenticator(),
+          oAuthAPI,
+          apiEndpoint);
     } else {
-      bitbucketOauth1Endpoint = StringUtils.trimEnd(bitbucketOauth1Endpoint, '/');
-      if (!sanitizedEndpoints(rawBitbucketEndpoints).contains(bitbucketOauth1Endpoint)) {
+      bitbucketOauthEndpoint = StringUtils.trimEnd(bitbucketOauthEndpoint, '/');
+      if (!sanitizedEndpoints(rawBitbucketEndpoints).contains(bitbucketOauthEndpoint)) {
         throw new ConfigurationException(
             "`che.integration.bitbucket.server_endpoints` must contain `"
-                + bitbucketOauth1Endpoint
+                + bitbucketOauthEndpoint
                 + "` value");
       } else {
-        Optional<OAuthAuthenticator> authenticator =
-            authenticators.stream()
-                .filter(
-                    a ->
-                        a.getOAuthProvider()
-                            .equals(BitbucketServerOAuthAuthenticator.AUTHENTICATOR_NAME))
-                .filter(a -> BitbucketServerOAuthAuthenticator.class.isAssignableFrom(a.getClass()))
-                .findFirst();
+        Optional<OAuthAuthenticator> authenticator = authenticators.stream().findFirst();
         if (authenticator.isEmpty()) {
           throw new ConfigurationException(
-              "'che.oauth1.bitbucket.endpoint' is set but BitbucketServerOAuthAuthenticator is not deployed correctly");
+              "'che.oauth.bitbucket.endpoint' is set but BitbucketServerOAuthAuthenticator is not deployed correctly");
         }
-        return new HttpBitbucketServerApiClient(bitbucketOauth1Endpoint, authenticator.get());
+        return new HttpBitbucketServerApiClient(
+            bitbucketOauthEndpoint, authenticator.get(), oAuthAPI, apiEndpoint);
       }
     }
   }

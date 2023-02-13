@@ -23,7 +23,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.security.oauth.shared.User;
 
 /**
  * OAuth authentication for OpenShift.
@@ -56,11 +55,6 @@ public class OpenShiftOAuthAuthenticator extends OAuthAuthenticator {
           oauthEndpoint + "oauth/token",
           new MemoryDataStoreFactory());
     }
-  }
-
-  @Override
-  public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-    throw new OAuthAuthenticationException("not supported");
   }
 
   @Override

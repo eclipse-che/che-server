@@ -75,7 +75,7 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
    * @return Bitbucket Cloud or Server API request URL
    */
   private String getTestRequestUrl() {
-    return bitbucketEndpoint.equals("https://bitbucket.org")
+    return "https://bitbucket.org".equals(bitbucketEndpoint)
         ? "https://api.bitbucket.org/2.0/user"
         : bitbucketEndpoint + "/rest/api/1.0/application-properties";
   }

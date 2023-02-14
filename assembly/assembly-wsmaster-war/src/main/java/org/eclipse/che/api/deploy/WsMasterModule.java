@@ -283,10 +283,6 @@ public class WsMasterModule extends AbstractModule {
 
     configureMultiUserMode(persistenceProperties, infrastructure);
 
-    install(
-        new com.google.inject.persist.jpa.JpaPersistModule("main")
-            .properties(persistenceProperties));
-
     if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
       install(new OpenShiftInfraModule());
     } else if (KubernetesInfrastructure.NAME.equals(infrastructure)) {

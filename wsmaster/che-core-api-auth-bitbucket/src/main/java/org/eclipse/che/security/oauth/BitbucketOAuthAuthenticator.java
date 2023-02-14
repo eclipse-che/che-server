@@ -69,6 +69,11 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
     return token;
   }
 
+  /**
+   * Generate an API request URL, to use for a token validation.
+   *
+   * @return Bitbucket Cloud or Server API request URL
+   */
   private String getTestRequestUrl() {
     return bitbucketEndpoint.equals("https://bitbucket.org")
         ? "https://api.bitbucket.org/2.0/user"

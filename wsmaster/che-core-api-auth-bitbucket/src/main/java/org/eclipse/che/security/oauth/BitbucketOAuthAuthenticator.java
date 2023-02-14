@@ -26,7 +26,6 @@ import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 /** OAuth authentication for BitBucket SAAS account. */
 @Singleton
 public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
-  private final String testRequestUrl;
   private final String bitbucketEndpoint;
 
   public BitbucketOAuthAuthenticator(
@@ -38,10 +37,6 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
       String tokenUri)
       throws IOException {
     this.bitbucketEndpoint = bitbucketEndpoint;
-    testRequestUrl =
-        bitbucketEndpoint.equals("https://bitbucket.org")
-            ? "https://api.bitbucket.org/2.0/user"
-            : bitbucketEndpoint + "/rest/api/1.0/application-properties";
     configure(
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
   }
@@ -67,11 +62,17 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
       if (token == null || isNullOrEmpty(token.getToken())) {
         return null;
       }
-      testRequest(testRequestUrl, token.getToken());
+      testRequest(getTestRequestUrl(), token.getToken());
     } catch (OAuthAuthenticationException e) {
       return null;
     }
     return token;
+  }
+
+  private String getTestRequestUrl() {
+    return bitbucketEndpoint.equals("https://bitbucket.org")
+        ? "https://api.bitbucket.org/2.0/user"
+        : bitbucketEndpoint + "/rest/api/1.0/application-properties";
   }
 
   @Override

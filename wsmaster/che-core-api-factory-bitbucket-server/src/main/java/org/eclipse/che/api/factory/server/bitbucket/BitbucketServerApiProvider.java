@@ -64,14 +64,14 @@ public class BitbucketServerApiProvider implements Provider<BitbucketServerApiCl
       String rawBitbucketEndpoints,
       String bitbucketOauthEndpoint,
       Set<OAuthAuthenticator> authenticators) {
-    boolean isCloudEndpoint = bitbucketOauthEndpoint.equals("https://bitbucket.org");
-    if (isCloudEndpoint && isNullOrEmpty(rawBitbucketEndpoints)) {
+    boolean isBitbucketCloud = bitbucketOauthEndpoint.equals("https://bitbucket.org");
+    if (isBitbucketCloud && isNullOrEmpty(rawBitbucketEndpoints)) {
       return new NoopBitbucketServerApiClient();
-    } else if (!isCloudEndpoint && isNullOrEmpty(rawBitbucketEndpoints)) {
+    } else if (!isBitbucketCloud && isNullOrEmpty(rawBitbucketEndpoints)) {
       throw new ConfigurationException(
           "`che.integration.bitbucket.server_endpoints` bitbucket configuration is missing."
               + " It should contain values from 'che.oauth.bitbucket.endpoint'");
-    } else if (isCloudEndpoint && !isNullOrEmpty(rawBitbucketEndpoints)) {
+    } else if (isBitbucketCloud && !isNullOrEmpty(rawBitbucketEndpoints)) {
       return new HttpBitbucketServerApiClient(
           sanitizedEndpoints(rawBitbucketEndpoints).get(0),
           new NoopOAuthAuthenticator(),

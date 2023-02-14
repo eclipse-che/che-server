@@ -77,14 +77,9 @@ public class BitbucketOAuthAuthenticatorProvider implements Provider<OAuthAuthen
         && Objects.nonNull(redirectUris)
         && redirectUris.length != 0) {
       String trimmedOauthEndpoint = trimEnd(oauthEndpoint, '/');
-      authUri =
-          trimmedOauthEndpoint.equals("https://bitbucket.org")
-              ? authUri
-              : trimmedOauthEndpoint + "/rest/oauth2/1.0/authorize";
-      tokenUri =
-          trimmedOauthEndpoint.equals("https://bitbucket.org")
-              ? tokenUri
-              : trimmedOauthEndpoint + "/rest/oauth2/1.0/token";
+      boolean isBitbucketCloud = trimmedOauthEndpoint.equals("https://bitbucket.org");
+      authUri = isBitbucketCloud ? authUri : trimmedOauthEndpoint + "/rest/oauth2/1.0/authorize";
+      tokenUri = isBitbucketCloud ? tokenUri : trimmedOauthEndpoint + "/rest/oauth2/1.0/token";
       final String clientId = Files.readString(Path.of(clientIdPath)).trim();
       final String clientSecret = Files.readString(Path.of(clientSecretPath)).trim();
       if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {

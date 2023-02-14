@@ -52,10 +52,6 @@
             <artifactId>guice-assistedinject</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.inject.extensions</groupId>
-            <artifactId>guice-persist</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.jaegertracing</groupId>
             <artifactId>jaeger-client</artifactId>
         </dependency>
@@ -314,10 +310,6 @@
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.extension</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>org.eclipse.persistence.jpa</artifactId>
         </dependency>
         <dependency>
             <groupId>org.everrest</groupId>

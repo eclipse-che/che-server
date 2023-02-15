@@ -228,11 +228,6 @@ prepareRelease() {
             echo "[INFO] Dependencies updated in che typescript DTO (parent = ${VERSION_CHE_PARENT}, che server = ${CHE_VERSION})"
         popd >/dev/null
 
-        # TODO more elegant way to execute these scripts
-        pushd .ci >/dev/null
-            ./set_tag_version_images.sh ${CHE_VERSION}
-            echo "[INFO] Tag versions of images have been set in che-server"
-        popd >/dev/null
         # run mvn license format, in case some files that have old license headers have been updated
         mvn license:format
     popd >/dev/null
@@ -403,20 +398,6 @@ bumpVersion() {
     set +x
 }
 
-updateImageTagsInCheServer() {
-    pushd che-server >/dev/null
-        git checkout ${BRANCH}
-        plugin_version="latest"
-        sed_in_place -r -e "s#che.factory.default_editor=eclipse/che-theia/.*#che.factory.default_editor=eclipse/che-theia/$plugin_version#g" assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/che.properties
-        sed_in_place -r -e "s#che.workspace.devfile.default_editor=eclipse/che-theia/.*#che.workspace.devfile.default_editor=eclipse/che-theia/$plugin_version#g" assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/che.properties
-
-        if [[ $(git diff --stat) != '' ]]; then
-            git commit -asm "chore: Set ${CHE_VERSION} release image tags"
-            git push origin ${BRANCH}
-        fi
-    popd >/dev/null
-}
-
 installMaven
 loadMvnSettingsGpgKey
 installDebDeps
@@ -429,7 +410,6 @@ checkoutProjects
 
 if [[ "${BUMP_NEXT_VERSION}" = "true" ]]; then
     bumpVersions
-    updateImageTagsInCheServer
     # checkout back to branches to make release from
     checkoutProjects
 fi

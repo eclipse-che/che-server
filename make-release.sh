@@ -141,6 +141,7 @@ setupGitconfig() {
   git config --global user.email mkuznets@redhat.com
 
   # hub CLI configuration
+  git config --global pull.rebase true 
   git config --global push.default matching
   # replace default GITHUB_TOKEN, that is used by GitHub 
   export GITHUB_TOKEN="${CHE_BOT_GITHUB_TOKEN}"
@@ -164,7 +165,7 @@ commitChangeOrCreatePR() {
         # create pull request for main branch, as branch is restricted
         git branch "${PR_BRANCH}"
         git checkout "${PR_BRANCH}"
-        git pull origin "${PR_BRANCH}"
+        git pull origin "${PR_BRANCH}" || true
         git push origin "${PR_BRANCH}"
         lastCommitComment="$(git log -1 --pretty=%B)"
         hub pull-request -f -m "${lastCommitComment}" -b "${aBRANCH}" -h "${PR_BRANCH}"
@@ -407,7 +408,8 @@ updateImageTagsInCheServer() {
 
         if [[ $(git diff --stat) != '' ]]; then
             git commit -asm "chore: Set ${CHE_VERSION} release image tags"
-            git push origin ${BRANCH}
+            git pull origin "${BRANCH}" || true
+            git push origin "${BRANCH}"
         fi
     popd >/dev/null
 }

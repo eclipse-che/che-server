@@ -42,7 +42,6 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.security.oauth.shared.OAuthTokenProvider;
-import org.eclipse.che.security.oauth.shared.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -222,15 +221,6 @@ public abstract class OAuthAuthenticator {
       throw new OAuthAuthenticationException(ioe.getMessage());
     }
   }
-
-  /**
-   * Get user info.
-   *
-   * @param accessToken oauth access token
-   * @return user info
-   * @throws OAuthAuthenticationException if fail to get user info
-   */
-  public abstract User getUser(OAuthToken accessToken) throws OAuthAuthenticationException;
 
   /**
    * Get the name of OAuth provider supported by current implementation.

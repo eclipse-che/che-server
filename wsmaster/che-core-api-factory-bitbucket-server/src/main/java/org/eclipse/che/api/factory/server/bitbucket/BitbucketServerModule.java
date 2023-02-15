@@ -16,7 +16,6 @@ import com.google.inject.multibindings.Multibinder;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
-import org.eclipse.che.security.oauth1.BitbucketServerApiProvider;
 
 public class BitbucketServerModule extends AbstractModule {
   @Override

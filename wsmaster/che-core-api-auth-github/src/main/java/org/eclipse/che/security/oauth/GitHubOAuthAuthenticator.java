@@ -15,8 +15,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.api.client.util.store.MemoryDataStoreFactory;
-import jakarta.mail.internet.AddressException;
-import jakarta.mail.internet.InternetAddress;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -24,7 +22,6 @@ import java.net.URL;
 import java.util.Base64;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
-import org.eclipse.che.security.oauth.shared.User;
 
 /** OAuth authentication for github account. */
 @Singleton
@@ -51,24 +48,6 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
             : providerUrl + "/api/v3";
     configure(
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
-  }
-
-  @Override
-  public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-    GitHubUser user = getJson(githubApiUrl + "/user", accessToken.getToken(), GitHubUser.class);
-    final String email = user.getEmail();
-
-    if (isNullOrEmpty(email)) {
-      throw new OAuthAuthenticationException(
-          "Sorry, we failed to find any verified emails associated with your GitHub account."
-              + " Please, verify at least one email in your GitHub account and try to connect with GitHub again.");
-    }
-    try {
-      new InternetAddress(email).validate();
-    } catch (AddressException e) {
-      throw new OAuthAuthenticationException(e.getMessage());
-    }
-    return user;
   }
 
   @Override

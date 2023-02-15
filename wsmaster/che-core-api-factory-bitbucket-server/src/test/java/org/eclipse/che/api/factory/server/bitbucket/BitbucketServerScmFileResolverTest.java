@@ -13,7 +13,6 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
@@ -23,6 +22,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -35,6 +35,7 @@ public class BitbucketServerScmFileResolverTest {
   public static final String SCM_URL = "https://foo.bar";
   BitbucketServerURLParser bitbucketURLParser;
 
+  @Mock private OAuthAPI oAuthAPI;
   @Mock private URLFetcher urlFetcher;
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
@@ -46,7 +47,7 @@ public class BitbucketServerScmFileResolverTest {
   protected void init() {
     bitbucketURLParser =
         new BitbucketServerURLParser(
-            SCM_URL, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+            SCM_URL, devfileFilenamesProvider, oAuthAPI, personalAccessTokenManager);
     assertNotNull(this.bitbucketURLParser);
     serverScmFileResolver =
         new BitbucketServerScmFileResolver(

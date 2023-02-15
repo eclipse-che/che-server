@@ -22,6 +22,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.unauthorized;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -34,21 +38,32 @@ import com.google.common.net.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
-import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
 import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
 import org.eclipse.che.security.oauth1.OAuthAuthenticationException;
+import org.mockito.Mock;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+@Listeners(MockitoTestNGListener.class)
 public class HttpBitbucketServerApiClientTest {
   private final String AUTHORIZATION_TOKEN =
       "OAuth oauth_consumer_key=\"key123321\", oauth_nonce=\"6c0eace252f8dcda\","
@@ -59,8 +74,13 @@ public class HttpBitbucketServerApiClientTest {
   WireMock wireMock;
   BitbucketServerApiClient bitbucketServer;
 
+  @Mock OAuthAPI oAuthAPI;
+  String apiEndpoint;
+
   @BeforeMethod
   void start() {
+    oAuthAPI = mock(OAuthAPI.class);
+    apiEndpoint = "apiEndpoint";
     wireMockServer =
         new WireMockServer(wireMockConfig().notifier(new Slf4jNotifier(false)).dynamicPort());
     wireMockServer.start();
@@ -76,7 +96,9 @@ public class HttpBitbucketServerApiClientTest {
                   throws OAuthAuthenticationException {
                 return AUTHORIZATION_TOKEN;
               }
-            });
+            },
+            oAuthAPI,
+            apiEndpoint);
   }
 
   @AfterMethod
@@ -276,12 +298,44 @@ public class HttpBitbucketServerApiClientTest {
       expectedExceptionsMessageRegExp =
           "The fallback noop authenticator cannot be used for authentication. Make sure OAuth is properly configured.")
   public void shouldThrowScmCommunicationExceptionInNoOauthAuthenticator()
-      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException,
+          ForbiddenException, ServerException, ConflictException, UnauthorizedException,
+          NotFoundException, BadRequestException {
 
+    // given
+    when(oAuthAPI.getToken(eq("bitbucket"))).thenReturn(mock(OAuthToken.class));
     HttpBitbucketServerApiClient localServer =
-        new HttpBitbucketServerApiClient(wireMockServer.url("/"), new NoopOAuthAuthenticator());
+        new HttpBitbucketServerApiClient(
+            wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
 
     // when
     localServer.getPersonalAccessToken("ksmster", 5L);
+  }
+
+  @Test
+  public void shouldGetOauth2Token()
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException,
+          ForbiddenException, ServerException, ConflictException, UnauthorizedException,
+          NotFoundException, BadRequestException {
+    // given
+    OAuthToken token = mock(OAuthToken.class);
+    when(token.getToken()).thenReturn("token");
+    when(oAuthAPI.getToken(eq("bitbucket"))).thenReturn(token);
+    bitbucketServer =
+        new HttpBitbucketServerApiClient(
+            wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/users/user"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
+
+    // when
+    bitbucketServer.getUser("user", null);
+
+    // then
+    verify(oAuthAPI).getToken(eq("bitbucket"));
   }
 }

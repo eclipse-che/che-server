@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -35,7 +35,7 @@ public class BitbucketServerOAuthAuthenticatorProvider implements Provider<OAuth
   public BitbucketServerOAuthAuthenticatorProvider(
       @Nullable @Named("che.oauth1.bitbucket.consumerkeypath") String consumerKeyPath,
       @Nullable @Named("che.oauth1.bitbucket.privatekeypath") String privateKeyPath,
-      @Nullable @Named("che.oauth1.bitbucket.endpoint") String bitbucketEndpoint,
+      @Nullable @Named("che.oauth.bitbucket.endpoint") String bitbucketEndpoint,
       @Named("che.api") String apiEndpoint)
       throws IOException {
     authenticator =

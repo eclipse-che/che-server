@@ -25,7 +25,6 @@ import javax.inject.Named;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
-import org.eclipse.che.api.factory.server.bitbucket.server.HttpBitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
@@ -34,6 +33,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +53,16 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE");
   private final BitbucketServerApiClient bitbucketServerApiClient;
   private final URL apiEndpoint;
+  private final OAuthAPI oAuthAPI;
 
   @Inject
   public BitbucketServerPersonalAccessTokenFetcher(
-      BitbucketServerApiClient bitbucketServerApiClient, @Named("che.api") URL apiEndpoint) {
+      BitbucketServerApiClient bitbucketServerApiClient,
+      @Named("che.api") URL apiEndpoint,
+      OAuthAPI oAuthAPI) {
     this.bitbucketServerApiClient = bitbucketServerApiClient;
     this.apiEndpoint = apiEndpoint;
+    this.oAuthAPI = oAuthAPI;
   }
 
   @Override
@@ -109,7 +113,10 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       // If BitBucket oAuth is not configured check the manually added user namespace token.
       HttpBitbucketServerApiClient apiClient =
           new HttpBitbucketServerApiClient(
-              personalAccessToken.getScmProviderUrl(), new NoopOAuthAuthenticator());
+              personalAccessToken.getScmProviderUrl(),
+              new NoopOAuthAuthenticator(),
+              oAuthAPI,
+              apiEndpoint.toString());
       try {
         apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
         return Optional.of(Boolean.TRUE);

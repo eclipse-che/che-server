@@ -26,6 +26,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeClass;
@@ -38,6 +39,7 @@ import org.testng.annotations.Test;
 public class BitbucketServerURLParserTest {
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
+  @Mock private OAuthAPI oAuthAPI;
 
   /** Instance of component that will be tested. */
   private BitbucketServerURLParser bitbucketURLParser;
@@ -59,6 +61,7 @@ public class BitbucketServerURLParserTest {
         new BitbucketServerURLParser(
             "https://bitbucket.2mcl.com,https://bbkt.com",
             devfileFilenamesProvider,
+            oAuthAPI,
             mock(PersonalAccessTokenManager.class));
   }
 
@@ -91,7 +94,7 @@ public class BitbucketServerURLParserTest {
     // given
     bitbucketURLParser =
         new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/access-tokens/1.0/users/0")).willReturn(aResponse().withStatus(401)));

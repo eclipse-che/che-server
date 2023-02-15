@@ -45,6 +45,7 @@ import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -54,6 +55,7 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class BitbucketServerAuthorizingFactoryParametersResolverTest {
 
+  @Mock private OAuthAPI oAuthAPI;
   @Mock private URLFactoryBuilder urlFactoryBuilder;
 
   @Mock private URLFetcher urlFetcher;
@@ -72,6 +74,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
         new BitbucketServerURLParser(
             "http://bitbucket.2mcl.com",
             devfileFilenamesProvider,
+            oAuthAPI,
             mock(PersonalAccessTokenManager.class));
     assertNotNull(this.bitbucketURLParser);
     bitbucketServerFactoryParametersResolver =

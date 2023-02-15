@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.security.oauth;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Collections.emptyList;
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
@@ -28,6 +29,7 @@ import java.net.URL;
 import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -52,6 +54,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Mykhailo Kuznietsov
  */
+@Singleton
 public class EmbeddedOAuthAPI implements OAuthAPI {
   private static final Logger LOG = LoggerFactory.getLogger(EmbeddedOAuthAPI.class);
 
@@ -61,6 +64,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
 
   @Inject protected OAuthAuthenticatorProvider providers;
   @Inject protected PersonalAccessTokenManager personalAccessTokenManager;
+  private String redirectAfterLogin;
 
   @Override
   public Response authenticate(
@@ -70,6 +74,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       String redirectAfterLogin,
       HttpServletRequest request)
       throws NotFoundException, OAuthAuthenticationException {
+    this.redirectAfterLogin = redirectAfterLogin;
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
     final String authUrl =
         oauth.getAuthenticateUrl(getRequestUrl(uriInfo), scopes == null ? emptyList() : scopes);
@@ -80,9 +85,12 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   public Response callback(UriInfo uriInfo, List<String> errorValues) throws NotFoundException {
     URL requestUrl = getRequestUrl(uriInfo);
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
-    if (errorValues != null && errorValues.contains("access_denied")) {
+    errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
+    if (!isNullOrEmpty(redirectAfterLogin)
+        && errorValues != null
+        && errorValues.contains("access_denied")) {
       return Response.temporaryRedirect(
-              uriInfo.getRequestUriBuilder().replacePath(errorPage).replaceQuery(null).build())
+              URI.create(redirectAfterLogin + "&error_code=access_denied"))
           .build();
     }
     final String providerName = getParameter(params, "oauth_provider");

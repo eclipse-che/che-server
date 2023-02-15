@@ -395,7 +395,7 @@ public class WsMasterModule extends AbstractModule {
       }
       bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
       bind(ProfileDao.class).to(JpaProfileDao.class);
-      bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class);
+      bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
     }
 
     bind(AdminPermissionInitializer.class).asEagerSingleton();

@@ -228,11 +228,6 @@ prepareRelease() {
             echo "[INFO] Dependencies updated in che typescript DTO (parent = ${VERSION_CHE_PARENT}, che server = ${CHE_VERSION})"
         popd >/dev/null
 
-        # TODO more elegant way to execute these scripts
-        pushd .ci >/dev/null
-            ./set_tag_version_images.sh ${CHE_VERSION}
-            echo "[INFO] Tag versions of images have been set in che-server"
-        popd >/dev/null
         # run mvn license format, in case some files that have old license headers have been updated
         mvn license:format
     popd >/dev/null

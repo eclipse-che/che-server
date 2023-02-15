@@ -26,7 +26,6 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.SigningKeyResolver;
 import java.util.HashMap;
 import java.util.Map;
-import javax.sql.DataSource;
 import org.eclipse.che.api.core.notification.RemoteSubscriptionStorage;
 import org.eclipse.che.api.core.rest.CheJsonProvider;
 import org.eclipse.che.api.core.rest.MessageBodyAdapter;
@@ -46,17 +45,10 @@ import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver
 import org.eclipse.che.api.factory.server.github.GithubScmFileResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabScmFileResolver;
-import org.eclipse.che.api.metrics.WsMasterMetricsModule;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.system.server.SystemModule;
 import org.eclipse.che.api.user.server.NotImplementedTokenValidator;
 import org.eclipse.che.api.user.server.TokenValidator;
-import org.eclipse.che.api.user.server.jpa.JpaPreferenceDao;
-import org.eclipse.che.api.user.server.jpa.JpaProfileDao;
-import org.eclipse.che.api.user.server.jpa.JpaUserDao;
-import org.eclipse.che.api.user.server.spi.PreferenceDao;
-import org.eclipse.che.api.user.server.spi.ProfileDao;
-import org.eclipse.che.api.user.server.spi.UserDao;
 import org.eclipse.che.api.workspace.server.WorkspaceEntityProvider;
 import org.eclipse.che.api.workspace.server.WorkspaceLockService;
 import org.eclipse.che.api.workspace.server.WorkspaceStatusCache;
@@ -80,7 +72,6 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceNamespace
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.commons.observability.deploy.ExecutorWrapperModule;
 import org.eclipse.che.core.db.DBTermination;
-import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.tracing.metrics.TracingMetricsModule;
 import org.eclipse.che.inject.DynaModule;
 import org.eclipse.che.multiuser.api.authentication.commons.token.HeaderRequestTokenExtractor;
@@ -88,8 +79,6 @@ import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenEx
 import org.eclipse.che.multiuser.api.permission.server.AdminPermissionInitializer;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 import org.eclipse.che.multiuser.api.permission.server.PermissionCheckerImpl;
-import org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivityModule;
-import org.eclipse.che.multiuser.machine.authentication.server.MachineAuthModule;
 import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.eclipse.che.multiuser.oidc.OIDCInfoProvider;
 import org.eclipse.che.multiuser.oidc.OIDCJwkProvider;
@@ -121,7 +110,6 @@ import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructur
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
-import org.flywaydb.core.internal.util.PlaceholderReplacer;
 
 /** @author andrew00x */
 @DynaModule
@@ -136,19 +124,6 @@ public class WsMasterModule extends AbstractModule {
       System.setProperty("http2.disable", "true");
     }
 
-    // db related components modules
-    install(new org.eclipse.che.account.api.AccountModule());
-    install(new org.eclipse.che.api.ssh.server.jpa.SshJpaModule());
-    install(new org.eclipse.che.api.core.jsonrpc.impl.JsonRpcModule());
-    install(new org.eclipse.che.api.core.websocket.impl.WebSocketModule());
-
-    // db configuration
-    bind(SchemaInitializer.class)
-        .to(org.eclipse.che.core.db.schema.impl.flyway.FlywaySchemaInitializer.class);
-    bind(org.eclipse.che.core.db.DBInitializer.class).asEagerSingleton();
-    bind(PlaceholderReplacer.class)
-        .toProvider(org.eclipse.che.core.db.schema.impl.flyway.PlaceholderReplacerProvider.class);
-
     // factory
     bind(FactoryAcceptValidator.class)
         .to(org.eclipse.che.api.factory.server.impl.FactoryAcceptValidatorImpl.class);
@@ -158,7 +133,6 @@ public class WsMasterModule extends AbstractModule {
         .to(org.eclipse.che.api.factory.server.impl.FactoryEditValidatorImpl.class);
     bind(org.eclipse.che.api.factory.server.FactoryService.class);
     bind(ScmService.class);
-    install(new org.eclipse.che.api.factory.server.jpa.FactoryJpaModule());
 
     // Service-specific factory resolvers.
     Multibinder<FactoryParametersResolver> factoryParametersResolverMultibinder =
@@ -300,7 +274,6 @@ public class WsMasterModule extends AbstractModule {
     }
     if (Boolean.valueOf(System.getenv("CHE_METRICS_ENABLED"))) {
       install(new org.eclipse.che.core.metrics.MetricsModule());
-      install(new WsMasterMetricsModule());
       install(new InfrastructureMetricsModule());
     } else {
       install(new org.eclipse.che.core.metrics.NoopMetricsModule());
@@ -338,25 +311,6 @@ public class WsMasterModule extends AbstractModule {
       bind(KubernetesClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
     }
 
-    persistenceProperties.put(
-        PersistenceUnitProperties.EXCEPTION_HANDLER_CLASS,
-        "org.eclipse.che.core.db.postgresql.jpa.eclipselink.PostgreSqlExceptionHandler");
-    bind(DataSource.class).toProvider(org.eclipse.che.core.db.JndiDataSourceProvider.class);
-
-    install(new org.eclipse.che.multiuser.api.permission.server.jpa.SystemPermissionsJpaModule());
-
-    install(
-        new org.eclipse.che.multiuser.permission.workspace.server.WorkspaceApiPermissionsModule());
-    install(
-        new org.eclipse.che.multiuser.permission.workspace.server.jpa
-            .MultiuserWorkspaceJpaModule());
-    install(new MultiUserWorkspaceActivityModule());
-    install(
-        new org.eclipse.che.multiuser.permission.devfile.server.jpa
-            .MultiuserUserDevfileJpaModule());
-    install(
-        new org.eclipse.che.multiuser.permission.devfile.server.UserDevfileApiPermissionsModule());
-
     // Permission filters
     bind(org.eclipse.che.multiuser.permission.system.SystemServicePermissionsFilter.class);
     bind(org.eclipse.che.multiuser.permission.system.JvmServicePermissionsFilter.class);
@@ -369,9 +323,6 @@ public class WsMasterModule extends AbstractModule {
     bind(org.eclipse.che.multiuser.permission.user.UserProfileServicePermissionsFilter.class);
     bind(org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter.class);
     bind(org.eclipse.che.multiuser.permission.logger.LoggerServicePermissionsFilter.class);
-
-    bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
-
     bind(
         org.eclipse.che.multiuser.permission.resource.filters.ResourceServicePermissionsFilter
             .class);
@@ -388,17 +339,13 @@ public class WsMasterModule extends AbstractModule {
         bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);
       }
       bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
-      bind(ProfileDao.class).to(JpaProfileDao.class);
       bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
     }
 
     bind(AdminPermissionInitializer.class).asEagerSingleton();
-    install(new MachineAuthModule());
 
     // User and profile - use profile from keycloak and other stuff is JPA
     bind(PasswordEncryptor.class).to(PBKDF2PasswordEncryptor.class);
-    bind(UserDao.class).to(JpaUserDao.class);
-    bind(PreferenceDao.class).to(JpaPreferenceDao.class);
     bind(PermissionChecker.class).to(PermissionCheckerImpl.class);
 
     bindConstant().annotatedWith(Names.named("che.agents.auth_enabled")).to(true);

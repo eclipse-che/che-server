@@ -24,23 +24,18 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.workspace.server.NoEnvironmentFactory;
-import org.eclipse.che.api.workspace.server.WorkspaceAttributeValidator;
 import org.eclipse.che.api.workspace.server.devfile.DevfileBindings;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironmentFactory;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
-import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
-import org.eclipse.che.workspace.infrastructure.kubernetes.InconsistentRuntimesDetector;
-import org.eclipse.che.workspace.infrastructure.kubernetes.K8sInfraNamespaceWsAttributeValidator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientTermination;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.KubernetesNamespaceService;
-import org.eclipse.che.workspace.infrastructure.kubernetes.cache.jpa.JpaKubernetesRuntimeCacheModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesComponentValidator;
@@ -74,7 +69,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.Singl
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposerFactoryProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.CookiePathStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.NonTlsDistributedClusterModeNotifier;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.KubernetesPluginsToolingApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.PluginBrokerManager;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
@@ -100,10 +94,6 @@ import org.eclipse.che.workspace.infrastructure.openshift.wsplugins.brokerphases
 public class OpenShiftInfraModule extends AbstractModule {
   @Override
   protected void configure() {
-    Multibinder<WorkspaceAttributeValidator> workspaceAttributeValidators =
-        Multibinder.newSetBinder(binder(), WorkspaceAttributeValidator.class);
-    workspaceAttributeValidators.addBinding().to(K8sInfraNamespaceWsAttributeValidator.class);
-
     Multibinder<NamespaceConfigurator> namespaceConfigurators =
         Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPermissionConfigurator.class);
@@ -125,7 +115,6 @@ public class OpenShiftInfraModule extends AbstractModule {
     factories.addBinding(KubernetesEnvironment.TYPE).to(KubernetesEnvironmentFactory.class);
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
-    bind(InconsistentRuntimesDetector.class).asEagerSingleton();
     bind(RuntimeInfrastructure.class).to(OpenShiftInfrastructure.class);
 
     bind(KubernetesNamespaceFactory.class).to(OpenShiftProjectFactory.class);
@@ -162,17 +151,9 @@ public class OpenShiftInfraModule extends AbstractModule {
     bind(PreviewUrlExposer.class).to(new TypeLiteral<OpenShiftPreviewUrlExposer>() {});
     bind(PreviewUrlCommandProvisioner.class)
         .to(new TypeLiteral<OpenShiftPreviewUrlCommandProvisioner>() {});
-
-    install(new JpaKubernetesRuntimeCacheModule());
-
     Multibinder.newSetBinder(binder(), ServiceTermination.class)
         .addBinding()
         .to(KubernetesClientTermination.class);
-
-    MapBinder<String, ChePluginsApplier> pluginsAppliers =
-        MapBinder.newMapBinder(binder(), String.class, ChePluginsApplier.class);
-    pluginsAppliers.addBinding(OpenShiftEnvironment.TYPE).to(KubernetesPluginsToolingApplier.class);
-
     bind(SecureServerExposerFactoryProvider.class)
         .to(new TypeLiteral<SecureServerExposerFactoryProvider<OpenShiftEnvironment>>() {});
 

@@ -26,17 +26,14 @@ import com.google.inject.multibindings.Multibinder;
 import java.util.Map;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.workspace.server.NoEnvironmentFactory;
-import org.eclipse.che.api.workspace.server.WorkspaceAttributeValidator;
 import org.eclipse.che.api.workspace.server.devfile.DevfileBindings;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironmentFactory;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
-import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.KubernetesNamespaceService;
-import org.eclipse.che.workspace.infrastructure.kubernetes.cache.jpa.JpaKubernetesRuntimeCacheModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesComponentValidator;
@@ -79,7 +76,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.Servi
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostExternalServiceExposureStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposerFactoryProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.NonTlsDistributedClusterModeNotifier;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.KubernetesPluginsToolingApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.PluginBrokerManager;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
@@ -90,10 +86,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events.Brok
 public class KubernetesInfraModule extends AbstractModule {
   @Override
   protected void configure() {
-    Multibinder<WorkspaceAttributeValidator> workspaceAttributeValidators =
-        Multibinder.newSetBinder(binder(), WorkspaceAttributeValidator.class);
-    workspaceAttributeValidators.addBinding().to(K8sInfraNamespaceWsAttributeValidator.class);
-
     // order matters here!
     // We first need to grant permissions to user, only then we can run other configurators with
     // user's client.
@@ -117,7 +109,6 @@ public class KubernetesInfraModule extends AbstractModule {
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
     bind(RuntimeInfrastructure.class).to(KubernetesInfrastructure.class);
-    bind(InconsistentRuntimesDetector.class).asEagerSingleton();
 
     bind(TrustedCAProvisioner.class).to(KubernetesTrustedCAProvisioner.class);
 
@@ -189,17 +180,8 @@ public class KubernetesInfraModule extends AbstractModule {
     bind(new TypeLiteral<Map<String, String>>() {})
         .annotatedWith(named("infra.kubernetes.ingress.annotations"))
         .toProvider(IngressAnnotationsProvider.class);
-
-    install(new JpaKubernetesRuntimeCacheModule());
-
     bind(SecureServerExposerFactoryProvider.class)
         .to(new TypeLiteral<SecureServerExposerFactoryProvider<KubernetesEnvironment>>() {});
-
-    MapBinder<String, ChePluginsApplier> chePluginsAppliers =
-        MapBinder.newMapBinder(binder(), String.class, ChePluginsApplier.class);
-    chePluginsAppliers
-        .addBinding(KubernetesEnvironment.TYPE)
-        .to(KubernetesPluginsToolingApplier.class);
 
     bind(BrokerService.class);
 

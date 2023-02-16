@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,6 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,35 +54,15 @@ public class PermissionsManager {
   private final EventService eventService;
 
   private final List<AbstractPermissionsDomain<? extends AbstractPermissions>> domains;
-  private final Map<String, PermissionsDao<? extends AbstractPermissions>> domainToDao;
   private final StripedLocks updateLocks;
 
   @Inject
-  public PermissionsManager(
-      EventService eventService, Set<PermissionsDao<? extends AbstractPermissions>> daos)
-      throws ServerException {
+  public PermissionsManager(EventService eventService) throws ServerException {
     this.eventService = eventService;
     final Map<String, PermissionsDao<? extends AbstractPermissions>> domainToDao = new HashMap<>();
     final List<AbstractPermissionsDomain<? extends AbstractPermissions>> domains =
         new ArrayList<>();
-    for (PermissionsDao<? extends AbstractPermissions> dao : daos) {
-      final AbstractPermissionsDomain<? extends AbstractPermissions> domain = dao.getDomain();
-      final PermissionsDao<? extends AbstractPermissions> oldStorage =
-          domainToDao.put(domain.getId(), dao);
-      domains.add(domain);
-      if (oldStorage != null) {
-        throw new ServerException(
-            "Permissions Domain '"
-                + domain.getId()
-                + "' should be stored in only one storage. "
-                + "Duplicated in "
-                + dao.getClass()
-                + " and "
-                + oldStorage.getClass());
-      }
-    }
     this.domains = ImmutableList.copyOf(domains);
-    this.domainToDao = ImmutableMap.copyOf(domainToDao);
     this.updateLocks = new StripedLocks(16);
   }
 
@@ -258,12 +237,7 @@ public class PermissionsManager {
 
   private PermissionsDao<? extends AbstractPermissions> getPermissionsDao(String domain)
       throws NotFoundException {
-    final PermissionsDao<? extends AbstractPermissions> permissionsStorage =
-        domainToDao.get(domain);
-    if (permissionsStorage == null) {
-      throw new NotFoundException("Requested unsupported domain '" + domain + "'");
-    }
-    return permissionsStorage;
+    throw new NotFoundException("Requested unsupported domain '" + domain + "'");
   }
 
   private boolean userHasLastSetPermissions(

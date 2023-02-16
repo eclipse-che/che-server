@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,6 @@ import static org.eclipse.che.api.system.shared.SystemStatus.PREPARING_TO_SHUTDO
 import static org.eclipse.che.api.system.shared.SystemStatus.READY_TO_SHUTDOWN;
 import static org.eclipse.che.api.system.shared.SystemStatus.RUNNING;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,7 +24,6 @@ import java.util.Iterator;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.system.shared.dto.SystemStatusChangedEventDto;
-import org.eclipse.che.core.db.DBTermination;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -46,9 +44,6 @@ public class SystemManagerTest {
   @Mock private ServiceTerminator terminator;
 
   @Mock private EventService eventService;
-
-  @Mock private DBTermination dbTermination;
-
   @Captor private ArgumentCaptor<SystemStatusChangedEventDto> eventsCaptor;
 
   private SystemManager systemManager;
@@ -56,7 +51,7 @@ public class SystemManagerTest {
   @BeforeMethod
   public void init() {
     MockitoAnnotations.initMocks(this);
-    systemManager = new SystemManager(terminator, dbTermination, eventService);
+    systemManager = new SystemManager(terminator, eventService);
   }
 
   @Test
@@ -97,11 +92,6 @@ public class SystemManagerTest {
     systemManager.shutdown();
 
     verifySuspendCompleted();
-    verifyDBTerminated();
-  }
-
-  private void verifyDBTerminated() {
-    verify(dbTermination, atLeastOnce()).terminate();
   }
 
   private void verifyShutdownCompleted() throws InterruptedException {

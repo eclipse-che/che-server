@@ -15,13 +15,11 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.DEFAULT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta.PHASE_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.CREDENTIALS_SECRET_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.PREFERENCES_CONFIGMAP_NAME;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.SECRETS_ROLE_NAME;
-import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory.NAMESPACE_TEMPLATE_ATTRIBUTE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -65,7 +63,6 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -192,33 +189,6 @@ public class KubernetesNamespaceFactoryTest {
             pool);
 
     namespaceFactory.checkIfNamespaceIsAllowed("jondoe-che");
-  }
-
-  @Test
-  public void shouldLookAtStoredNamespacesOnCheckingIfNamespaceIsAllowed() throws Exception {
-
-    Map<String, String> prefs = new HashMap<>();
-    prefs.put(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, "any-namespace");
-    prefs.put(NAMESPACE_TEMPLATE_ATTRIBUTE, "<username>-che");
-
-    when(preferenceManager.find(anyString())).thenReturn(prefs);
-
-    namespaceFactory =
-        new KubernetesNamespaceFactory(
-            "<username>-che",
-            true,
-            true,
-            true,
-            NAMESPACE_LABELS,
-            NAMESPACE_ANNOTATIONS,
-            emptySet(),
-            clientFactory,
-            cheClientFactory,
-            userManager,
-            preferenceManager,
-            pool);
-
-    namespaceFactory.checkIfNamespaceIsAllowed("any-namespace");
   }
 
   @Test
@@ -1041,97 +1011,6 @@ public class KubernetesNamespaceFactoryTest {
     String namespace = namespaceFactory.getNamespaceName(workspace);
 
     assertEquals(namespace, "che-123");
-  }
-
-  @Test
-  public void testEvalNamespaceUsesNamespaceFromUserPreferencesIfExist() throws Exception {
-    namespaceFactory =
-        new KubernetesNamespaceFactory(
-            "che-<userid>",
-            true,
-            true,
-            true,
-            NAMESPACE_LABELS,
-            NAMESPACE_ANNOTATIONS,
-            emptySet(),
-            clientFactory,
-            cheClientFactory,
-            userManager,
-            preferenceManager,
-            pool);
-
-    Map<String, String> prefs = new HashMap<>();
-    prefs.put(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, "che-123");
-    prefs.put(NAMESPACE_TEMPLATE_ATTRIBUTE, "che-<userid>");
-
-    when(preferenceManager.find(anyString())).thenReturn(prefs);
-    String namespace =
-        namespaceFactory.evaluateNamespaceName(
-            new NamespaceResolutionContext("workspace123", "user123", "jondoe"));
-
-    assertEquals(namespace, "che-123");
-  }
-
-  @Test
-  public void testEvalNamespaceSkipsNamespaceFromUserPreferencesIfTemplateChanged()
-      throws Exception {
-    namespaceFactory =
-        new KubernetesNamespaceFactory(
-            "che-<userid>-<username>",
-            true,
-            true,
-            true,
-            NAMESPACE_LABELS,
-            NAMESPACE_ANNOTATIONS,
-            emptySet(),
-            clientFactory,
-            cheClientFactory,
-            userManager,
-            preferenceManager,
-            pool);
-
-    Map<String, String> prefs = new HashMap<>();
-    // returned but ignored
-    prefs.put(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, "che-123");
-    prefs.put(NAMESPACE_TEMPLATE_ATTRIBUTE, "che-<userid>");
-
-    when(preferenceManager.find(anyString())).thenReturn(prefs);
-    String namespace =
-        namespaceFactory.evaluateNamespaceName(
-            new NamespaceResolutionContext("workspace123", "user123", "jondoe"));
-
-    assertEquals(namespace, "che-user123-jondoe");
-  }
-
-  @Test
-  public void testEvalNamespaceSkipsNamespaceFromUserPreferencesIfUserAllowedPropertySetFalse()
-      throws Exception {
-    namespaceFactory =
-        new KubernetesNamespaceFactory(
-            "che-<userid>-<username>",
-            true,
-            true,
-            true,
-            NAMESPACE_LABELS,
-            NAMESPACE_ANNOTATIONS,
-            emptySet(),
-            clientFactory,
-            cheClientFactory,
-            userManager,
-            preferenceManager,
-            pool);
-
-    Map<String, String> prefs = new HashMap<>();
-    // returned but ignored
-    prefs.put(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, "che-123");
-    prefs.put(NAMESPACE_TEMPLATE_ATTRIBUTE, "che-<userid>");
-
-    when(preferenceManager.find(anyString())).thenReturn(prefs);
-    String namespace =
-        namespaceFactory.evaluateNamespaceName(
-            new NamespaceResolutionContext("workspace123", "user123", "jondoe"));
-
-    assertEquals(namespace, "che-user123-jondoe");
   }
 
   @Test

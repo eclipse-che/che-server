@@ -491,18 +491,6 @@ public class KubernetesPluginsToolingApplierTest {
   }
 
   @Test
-  public void canAddMultipleToolingContainersToAPodFromOnePlugin() throws Exception {
-    applier.apply(
-        runtimeIdentity,
-        internalEnvironment,
-        singletonList(createChePlugin(createContainer(), createContainer())));
-
-    verifyPodAndContainersNumber(3);
-    List<Container> nonUserContainers = getNonUserContainers(internalEnvironment);
-    verifyContainers(nonUserContainers);
-  }
-
-  @Test
   public void canAddMultipleToolingContainersToAPodFromSeveralPlugins() throws Exception {
     applier.apply(
         runtimeIdentity,

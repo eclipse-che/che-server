@@ -33,7 +33,6 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvV
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientTermination;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesEnvironmentProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.StartSynchronizerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.KubernetesNamespaceService;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier;
@@ -46,10 +45,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigUserDataConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.SshKeysConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPermissionConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiExternalEnvVarProvider;
@@ -71,7 +67,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtprox
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.NonTlsDistributedClusterModeNotifier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.PluginBrokerManager;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events.BrokerService;
 import org.eclipse.che.workspace.infrastructure.openshift.devfile.OpenshiftComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
@@ -88,7 +83,6 @@ import org.eclipse.che.workspace.infrastructure.openshift.server.OpenShiftPrevie
 import org.eclipse.che.workspace.infrastructure.openshift.server.OpenShiftServerExposureStrategy;
 import org.eclipse.che.workspace.infrastructure.openshift.server.RouteServerExposer;
 import org.eclipse.che.workspace.infrastructure.openshift.server.external.OpenShiftExternalServerExposerProvider;
-import org.eclipse.che.workspace.infrastructure.openshift.wsplugins.brokerphases.OpenshiftBrokerEnvironmentFactory;
 
 /** @author Sergii Leshchenko */
 public class OpenShiftInfraModule extends AbstractModule {
@@ -98,12 +92,9 @@ public class OpenShiftInfraModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPermissionConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
-    namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
     namespaceConfigurators.addBinding().to(CredentialsSecretConfigurator.class);
-    namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
     namespaceConfigurators.addBinding().to(OpenShiftWorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(OpenShiftStopWorkspaceRoleConfigurator.class);
-    namespaceConfigurators.addBinding().to(SshKeysConfigurator.class);
     namespaceConfigurators.addBinding().to(GitconfigUserDataConfigurator.class);
 
     bind(KubernetesNamespaceService.class);
@@ -159,9 +150,6 @@ public class OpenShiftInfraModule extends AbstractModule {
 
     bind(BrokerService.class);
 
-    bind(new TypeLiteral<BrokerEnvironmentFactory<OpenShiftEnvironment>>() {})
-        .to(OpenshiftBrokerEnvironmentFactory.class);
-
     bind(PluginBrokerManager.class)
         .to(new TypeLiteral<PluginBrokerManager<OpenShiftEnvironment>>() {});
 
@@ -177,9 +165,6 @@ public class OpenShiftInfraModule extends AbstractModule {
         .addBinding(WorkspaceExposureType.GATEWAY)
         .to(new TypeLiteral<GatewayTlsProvisioner<OpenShiftEnvironment>>() {});
     tlsProvisioners.addBinding(WorkspaceExposureType.NATIVE).to(RouteTlsProvisioner.class);
-
-    bind(new TypeLiteral<KubernetesEnvironmentProvisioner<OpenShiftEnvironment>>() {})
-        .to(OpenShiftEnvironmentProvisioner.class);
 
     DevfileBindings.onComponentIntegrityValidatorBinder(
         binder(),

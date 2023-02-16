@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Named;
-import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
@@ -98,8 +97,6 @@ public class KubernetesNamespaceFactory {
   private final KubernetesClientFactory clientFactory;
   private final KubernetesClientFactory cheClientFactory;
   private final boolean namespaceCreationAllowed;
-  private final UserManager userManager;
-  private final PreferenceManager preferenceManager;
   protected final Set<NamespaceConfigurator> namespaceConfigurators;
   protected final KubernetesSharedPool sharedPool;
 
@@ -119,11 +116,9 @@ public class KubernetesNamespaceFactory {
       KubernetesSharedPool sharedPool)
       throws ConfigurationException {
     this.namespaceCreationAllowed = namespaceCreationAllowed;
-    this.userManager = userManager;
     this.clientFactory = clientFactory;
     this.cheClientFactory = cheClientFactory;
     this.defaultNamespaceName = defaultNamespaceName;
-    this.preferenceManager = preferenceManager;
     this.sharedPool = sharedPool;
     this.labelNamespaces = labelNamespaces;
     this.annotateNamespaces = annotateNamespaces;
@@ -595,34 +590,11 @@ public class KubernetesNamespaceFactory {
    * Stores computed namespace name and it's template into user preferences. Template is required to
    * track its changes and re-generate namespace in case it didn't matches.
    */
-  private void recordEvaluatedNamespaceName(String namespace, NamespaceResolutionContext context) {
-    try {
-      final String owner = context.getUserId();
-      Map<String, String> preferences = preferenceManager.find(owner);
-      preferences.put(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE, namespace);
-      preferences.put(NAMESPACE_TEMPLATE_ATTRIBUTE, defaultNamespaceName);
-      preferenceManager.update(owner, preferences);
-    } catch (ServerException e) {
-      LOG.error("Failed storing namespace name in user properties.", e);
-    }
-  }
+  private void recordEvaluatedNamespaceName(String namespace, NamespaceResolutionContext context) {}
 
   /** Returns stored namespace if any, and its default template. */
   private Optional<Pair<String, String>> getPreferencesNamespaceName(
       NamespaceResolutionContext context) {
-    try {
-      String owner = context.getUserId();
-      Map<String, String> preferences = preferenceManager.find(owner);
-      if (preferences.containsKey(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE)
-          && preferences.containsKey(NAMESPACE_TEMPLATE_ATTRIBUTE)) {
-        return Optional.of(
-            Pair.of(
-                preferences.get(WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE),
-                preferences.get(NAMESPACE_TEMPLATE_ATTRIBUTE)));
-      }
-    } catch (ServerException e) {
-      LOG.error(e.getMessage(), e);
-    }
     return Optional.empty();
   }
 

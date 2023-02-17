@@ -15,6 +15,7 @@ import static java.lang.String.format;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import java.util.Collections;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,7 +29,6 @@ import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironment;
 import org.eclipse.che.api.workspace.server.spi.provision.InternalEnvironmentProvisioner;
 import org.eclipse.che.api.workspace.shared.Constants;
-import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceNameValidator;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
@@ -41,7 +41,6 @@ public class OpenShiftInfrastructure extends RuntimeInfrastructure {
   public static final String NAME = "openshift";
 
   private final OpenShiftRuntimeContextFactory runtimeContextFactory;
-  private final KubernetesRuntimeStateCache runtimeStatusesCache;
   private final OpenShiftProjectFactory projectFactory;
   private final OpenShiftClientFactory openShiftClientFactory;
 
@@ -50,7 +49,6 @@ public class OpenShiftInfrastructure extends RuntimeInfrastructure {
       EventService eventService,
       OpenShiftRuntimeContextFactory runtimeContextFactory,
       Set<InternalEnvironmentProvisioner> internalEnvProvisioners,
-      KubernetesRuntimeStateCache runtimeStatusesCache,
       OpenShiftProjectFactory projectFactory,
       OpenShiftClientFactory openShiftClientFactory) {
     super(
@@ -62,14 +60,13 @@ public class OpenShiftInfrastructure extends RuntimeInfrastructure {
         eventService,
         internalEnvProvisioners);
     this.runtimeContextFactory = runtimeContextFactory;
-    this.runtimeStatusesCache = runtimeStatusesCache;
     this.projectFactory = projectFactory;
     this.openShiftClientFactory = openShiftClientFactory;
   }
 
   @Override
   public Set<RuntimeIdentity> getIdentities() throws InfrastructureException {
-    return runtimeStatusesCache.getIdentities();
+    return Collections.emptySet();
   }
 
   @Override

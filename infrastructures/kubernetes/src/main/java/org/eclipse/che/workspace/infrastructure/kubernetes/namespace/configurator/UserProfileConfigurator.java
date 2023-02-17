@@ -41,12 +41,10 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
   private static final String USER_PROFILE_SECRET_MOUNT_PATH = "/config/user/profile";
 
   private final KubernetesClientFactory clientFactory;
-  private final UserManager userManager;
 
   @Inject
   public UserProfileConfigurator(KubernetesClientFactory clientFactory, UserManager userManager) {
     this.clientFactory = clientFactory;
-    this.userManager = userManager;
   }
 
   @Override

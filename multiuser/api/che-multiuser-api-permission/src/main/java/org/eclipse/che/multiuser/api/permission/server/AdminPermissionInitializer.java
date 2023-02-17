@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -21,10 +21,8 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
 import org.eclipse.che.multiuser.api.permission.server.model.impl.AbstractPermissions;
 import org.slf4j.Logger;
@@ -39,9 +37,6 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class AdminPermissionInitializer implements EventSubscriber<PostUserPersistedEvent> {
   private static final Logger LOG = LoggerFactory.getLogger(AdminPermissionInitializer.class);
-
-  private final UserManager userManager;
-
   private final PermissionsManager permissionsManager;
 
   private final EventService eventService;
@@ -51,26 +46,15 @@ public class AdminPermissionInitializer implements EventSubscriber<PostUserPersi
   @Inject
   public AdminPermissionInitializer(
       @Named("che.system.admin_name") String name,
-      UserManager userManager,
       PermissionsManager permissionsManager,
       EventService eventService) {
-    this.userManager = userManager;
     this.permissionsManager = permissionsManager;
     this.eventService = eventService;
     this.name = name;
   }
 
   @PostConstruct
-  public void init() throws ServerException {
-    try {
-      User adminUser = userManager.getByName(name);
-      grantSystemPermissions(adminUser.getId());
-    } catch (NotFoundException ex) {
-      LOG.warn("Admin {} not found yet.", name);
-    } finally {
-      eventService.subscribe(this);
-    }
-  }
+  public void init() throws ServerException {}
 
   @PreDestroy
   public void unsubscribe() {

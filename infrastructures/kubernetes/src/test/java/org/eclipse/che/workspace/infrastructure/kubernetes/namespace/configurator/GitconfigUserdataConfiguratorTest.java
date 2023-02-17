@@ -27,7 +27,6 @@ import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -45,7 +44,6 @@ public class GitconfigUserdataConfiguratorTest {
 
   @Mock private KubernetesClientFactory clientFactory;
   @Mock private GitUserDataFetcher gitUserDataFetcher;
-  @Mock private UserManager userManager;
   private KubernetesServer serverMock;
 
   private NamespaceResolutionContext namespaceResolutionContext;
@@ -57,8 +55,7 @@ public class GitconfigUserdataConfiguratorTest {
   @BeforeMethod
   public void setUp()
       throws InfrastructureException, ScmCommunicationException, ScmUnauthorizedException {
-    configurator =
-        new GitconfigUserDataConfigurator(clientFactory, Set.of(gitUserDataFetcher), userManager);
+    configurator = new GitconfigUserDataConfigurator(clientFactory, Set.of(gitUserDataFetcher));
 
     serverMock = new KubernetesServer(true, true);
     serverMock.before();

@@ -24,7 +24,6 @@ import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -36,16 +35,12 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
   private final KubernetesClientFactory clientFactory;
   private final Set<GitUserDataFetcher> gitUserDataFetchers;
   private static final String CONFIGMAP_DATA_KEY = "gitconfig";
-  private final UserManager userManager;
 
   @Inject
   public GitconfigUserDataConfigurator(
-      KubernetesClientFactory clientFactory,
-      Set<GitUserDataFetcher> gitUserDataFetchers,
-      UserManager userManager) {
+      KubernetesClientFactory clientFactory, Set<GitUserDataFetcher> gitUserDataFetchers) {
     this.clientFactory = clientFactory;
     this.gitUserDataFetchers = gitUserDataFetchers;
-    this.userManager = userManager;
   }
 
   @Override

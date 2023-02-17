@@ -56,7 +56,6 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvV
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.EnvVarEnvironmentProvisioner;
 import org.eclipse.che.api.workspace.server.spi.provision.env.EnvVarProvider;
-import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.commons.observability.deploy.ExecutorWrapperModule;
 import org.eclipse.che.core.tracing.metrics.TracingMetricsModule;
 import org.eclipse.che.inject.DynaModule;
@@ -162,16 +161,6 @@ public class WsMasterModule extends AbstractModule {
     bind(org.eclipse.che.everrest.EverrestDownloadFileResponseFilter.class);
     bind(org.eclipse.che.everrest.ETagResponseFilter.class);
 
-    // temporary solution
-    bind(org.eclipse.che.api.workspace.server.event.RuntimeStatusJsonRpcMessenger.class)
-        .asEagerSingleton();
-    bind(org.eclipse.che.api.workspace.server.event.MachineStatusJsonRpcMessenger.class)
-        .asEagerSingleton();
-    bind(org.eclipse.che.api.workspace.server.event.ServerStatusJsonRpcMessenger.class)
-        .asEagerSingleton();
-    bind(org.eclipse.che.api.workspace.server.event.RuntimeLogJsonRpcMessenger.class)
-        .asEagerSingleton();
-
     bind(org.eclipse.che.security.oauth.OAuthAuthenticatorProvider.class)
         .to(org.eclipse.che.security.oauth.OAuthAuthenticatorProviderImpl.class);
 
@@ -215,9 +204,6 @@ public class WsMasterModule extends AbstractModule {
       install(new KubernetesInfraModule());
     }
     install(new CheJsonRpcWebSocketConfigurationModule());
-
-    bind(org.eclipse.che.api.user.server.AppStatesPreferenceCleaner.class);
-    MapBinder.newMapBinder(binder(), String.class, ChePluginsApplier.class);
 
     if (Boolean.valueOf(System.getenv("CHE_TRACING_ENABLED"))) {
       install(new org.eclipse.che.core.tracing.TracingModule());

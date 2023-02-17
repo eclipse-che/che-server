@@ -130,7 +130,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesShared
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.PodEvents;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.UnrecoverablePodEventListenerFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -206,7 +205,6 @@ public class KubernetesInternalRuntimeTest {
   @Mock
   private KubernetesEnvironmentProvisioner<KubernetesEnvironment> kubernetesEnvironmentProvisioner;
 
-  @Mock private SidecarToolingProvisioner<KubernetesEnvironment> toolingProvisioner;
   private KubernetesRuntimeStateCache runtimeStatesCache;
   private KubernetesMachineCache machinesCache;
   private RuntimeEventsPublisher eventPublisher;
@@ -268,7 +266,6 @@ public class KubernetesInternalRuntimeTest {
             startSynchronizerFactory,
             ImmutableSet.of(internalEnvironmentProvisioner),
             kubernetesEnvironmentProvisioner,
-            toolingProvisioner,
             runtimeHangingDetector,
             previewUrlCommandProvisioner,
             secretAsContainerResourceProvisioner,
@@ -405,12 +402,8 @@ public class KubernetesInternalRuntimeTest {
   public void testCleanupHappensFirst() throws InfrastructureException {
     internalRuntime.start(emptyMap());
 
-    InOrder cleanupInOrderExecutionVerification =
-        Mockito.inOrder(runtimeCleaner, deployments, toolingProvisioner);
+    InOrder cleanupInOrderExecutionVerification = Mockito.inOrder(runtimeCleaner, deployments);
     cleanupInOrderExecutionVerification.verify(runtimeCleaner).cleanUp(namespace, WORKSPACE_ID);
-    cleanupInOrderExecutionVerification
-        .verify(toolingProvisioner)
-        .provision(any(), any(), any(), any());
   }
 
   @Test

@@ -41,7 +41,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.Secr
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.UnrecoverablePodEventListenerFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProject;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftPreviewUrlCommandProvisioner;
@@ -71,7 +70,6 @@ public class OpenShiftInternalRuntime extends KubernetesInternalRuntime<OpenShif
       StartSynchronizerFactory startSynchronizerFactory,
       Set<InternalEnvironmentProvisioner> internalEnvironmentProvisioners,
       OpenShiftEnvironmentProvisioner kubernetesEnvironmentProvisioner,
-      SidecarToolingProvisioner<OpenShiftEnvironment> toolingProvisioner,
       RuntimeHangingDetector runtimeHangingDetector,
       OpenShiftPreviewUrlCommandProvisioner previewUrlCommandProvisioner,
       SecretAsContainerResourceProvisioner<OpenShiftEnvironment>
@@ -96,7 +94,6 @@ public class OpenShiftInternalRuntime extends KubernetesInternalRuntime<OpenShif
         startSynchronizerFactory,
         internalEnvironmentProvisioners,
         kubernetesEnvironmentProvisioner,
-        toolingProvisioner,
         runtimeHangingDetector,
         previewUrlCommandProvisioner,
         secretAsContainerResourceProvisioner,

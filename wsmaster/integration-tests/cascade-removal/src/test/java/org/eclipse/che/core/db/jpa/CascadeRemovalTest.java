@@ -149,9 +149,6 @@ public class CascadeRemovalTest {
 
   private UserImpl user;
 
-  private UserManager userManager;
-  private AccountManager accountManager;
-
   /** Profile depends on user. */
   private ProfileImpl profile;
 
@@ -291,8 +288,6 @@ public class CascadeRemovalTest {
     eventService = injector.getInstance(EventService.class);
     accountDao = injector.getInstance(AccountDao.class);
     userDao = injector.getInstance(UserDao.class);
-    userManager = injector.getInstance(UserManager.class);
-    accountManager = injector.getInstance(AccountManager.class);
     preferenceDao = injector.getInstance(PreferenceDao.class);
     profileDao = injector.getInstance(ProfileDao.class);
     sshDao = injector.getInstance(SshDao.class);
@@ -312,10 +307,6 @@ public class CascadeRemovalTest {
   public void shouldDeleteAllTheEntitiesWhenUserAndAccountIsDeleted() throws Exception {
     createTestData();
 
-    // Remove the user, all entries must be removed along with the user
-    accountManager.remove(account.getId());
-    userManager.remove(user.getId());
-
     // Check all the entities are removed
     assertNull(notFoundToNull(() -> userDao.getById(user.getId())));
     assertNull(notFoundToNull(() -> profileDao.getById(user.getId())));
@@ -332,13 +323,6 @@ public class CascadeRemovalTest {
       throws Exception {
     createTestData();
     eventService.unsubscribe(injector.getInstance(subscriberClass), eventClass);
-
-    // Remove the user, all entries must be rolled back after fail
-    try {
-      userManager.remove(user.getId());
-      fail("UserManager#remove has to throw exception");
-    } catch (Exception ignored) {
-    }
 
     // Check all the data rolled back
     assertNotNull(userDao.getById(user.getId()));

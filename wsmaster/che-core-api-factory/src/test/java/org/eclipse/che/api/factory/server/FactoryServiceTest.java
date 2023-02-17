@@ -35,7 +35,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.io.IOException;
@@ -57,8 +56,6 @@ import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
-import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
@@ -103,8 +100,6 @@ public class FactoryServiceTest {
   private static final DtoFactory DTO = DtoFactory.getInstance();
 
   @Mock private FactoryAcceptValidator acceptValidator;
-  @Mock private PreferenceManager preferenceManager;
-  @Mock private UserManager userManager;
   @Mock private AdditionalFilenamesProvider additionalFilenamesProvider;
   @Mock private DefaultFactoryParameterResolver defaultFactoryParameterResolver;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
@@ -129,9 +124,6 @@ public class FactoryServiceTest {
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class));
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class), anyBoolean());
     user = new UserImpl(USER_ID, USER_EMAIL, ADMIN_USER_NAME);
-    lenient()
-        .when(preferenceManager.find(USER_ID))
-        .thenReturn(ImmutableMap.of("preference", "value"));
     service =
         new FactoryService(
             acceptValidator,

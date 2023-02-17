@@ -81,7 +81,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.Servi
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.UnrecoverablePodEventListenerFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProject;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftRoutes;
@@ -139,7 +138,6 @@ public class OpenShiftInternalRuntimeTest {
   @Mock private KubernetesMachineCache machinesCache;
   @Mock private InternalEnvironmentProvisioner internalEnvironmentProvisioner;
   @Mock private OpenShiftEnvironmentProvisioner kubernetesEnvironmentProvisioner;
-  @Mock private SidecarToolingProvisioner<OpenShiftEnvironment> toolingProvisioner;
   @Mock private UnrecoverablePodEventListenerFactory unrecoverablePodEventListenerFactory;
   @Mock private RuntimeHangingDetector runtimeHangingDetector;
   @Mock private OpenShiftPreviewUrlCommandProvisioner previewUrlCommandProvisioner;
@@ -184,7 +182,6 @@ public class OpenShiftInternalRuntimeTest {
             startSynchronizerFactory,
             ImmutableSet.of(internalEnvironmentProvisioner),
             kubernetesEnvironmentProvisioner,
-            toolingProvisioner,
             runtimeHangingDetector,
             previewUrlCommandProvisioner,
             secretAsContainerResourceProvisioner,

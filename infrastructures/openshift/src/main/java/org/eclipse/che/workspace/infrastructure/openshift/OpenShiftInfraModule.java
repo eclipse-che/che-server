@@ -65,9 +65,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.Singl
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposerFactoryProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.CookiePathStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.NonTlsDistributedClusterModeNotifier;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.PluginBrokerManager;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events.BrokerService;
 import org.eclipse.che.workspace.infrastructure.openshift.devfile.OpenshiftComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironmentFactory;
@@ -147,14 +144,6 @@ public class OpenShiftInfraModule extends AbstractModule {
         .to(KubernetesClientTermination.class);
     bind(SecureServerExposerFactoryProvider.class)
         .to(new TypeLiteral<SecureServerExposerFactoryProvider<OpenShiftEnvironment>>() {});
-
-    bind(BrokerService.class);
-
-    bind(PluginBrokerManager.class)
-        .to(new TypeLiteral<PluginBrokerManager<OpenShiftEnvironment>>() {});
-
-    bind(SidecarToolingProvisioner.class)
-        .to(new TypeLiteral<SidecarToolingProvisioner<OpenShiftEnvironment>>() {});
 
     MapBinder<WorkspaceExposureType, TlsProvisioner<OpenShiftEnvironment>> tlsProvisioners =
         MapBinder.newMapBinder(

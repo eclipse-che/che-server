@@ -32,8 +32,6 @@ import java.util.stream.Collectors;
 import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
-import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -78,8 +76,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       OpenShiftClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
       CheServerOpenshiftClientFactory cheOpenShiftClientFactory,
-      UserManager userManager,
-      PreferenceManager preferenceManager,
       KubernetesSharedPool sharedPool,
       @Nullable @Named("che.infra.openshift.oauth_identity_provider")
           String oAuthIdentityProvider) {
@@ -93,8 +89,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         namespaceConfigurators,
         clientFactory,
         cheClientFactory,
-        userManager,
-        preferenceManager,
         sharedPool);
     this.initWithCheServerSa = initWithCheServerSa;
     this.clientFactory = clientFactory;

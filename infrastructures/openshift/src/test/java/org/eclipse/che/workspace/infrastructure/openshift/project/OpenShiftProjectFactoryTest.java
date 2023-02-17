@@ -176,8 +176,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
 
@@ -207,8 +205,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
     try {
@@ -238,8 +234,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
   }
@@ -274,8 +268,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
@@ -311,8 +303,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "u123", null, false));
@@ -344,8 +334,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
 
@@ -387,8 +375,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
 
@@ -424,8 +410,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
 
@@ -461,8 +445,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
 
@@ -488,8 +470,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
 
@@ -520,8 +500,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -555,8 +533,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -600,8 +576,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -643,8 +617,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -685,8 +657,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -728,8 +698,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -778,8 +746,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
 
@@ -811,8 +777,6 @@ public class OpenShiftProjectFactoryTest {
             clientFactory,
             cheClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
-            preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
@@ -838,8 +802,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
@@ -879,8 +841,6 @@ public class OpenShiftProjectFactoryTest {
                 clientFactory,
                 cheClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
-                preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));

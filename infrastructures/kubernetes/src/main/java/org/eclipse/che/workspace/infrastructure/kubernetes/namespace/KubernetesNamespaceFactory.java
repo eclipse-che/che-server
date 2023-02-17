@@ -44,8 +44,6 @@ import javax.inject.Named;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
-import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -111,8 +109,6 @@ public class KubernetesNamespaceFactory {
       Set<NamespaceConfigurator> namespaceConfigurators,
       KubernetesClientFactory clientFactory,
       CheServerKubernetesClientFactory cheClientFactory,
-      UserManager userManager,
-      PreferenceManager preferenceManager,
       KubernetesSharedPool sharedPool)
       throws ConfigurationException {
     this.namespaceCreationAllowed = namespaceCreationAllowed;

@@ -37,12 +37,10 @@ public class KeycloakModule extends AbstractModule {
         .to(org.eclipse.che.multiuser.keycloak.server.KeycloakHttpJsonRequestFactory.class);
     bind(TokenValidator.class).to(KeycloakTokenValidator.class);
 
-    bind(ProfileDao.class).to(KeycloakProfileDao.class);
     bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);
     bind(SigningKeyResolver.class).to(KeycloakSigningKeyResolver.class);
     bind(JwtParser.class).toProvider(OIDCJwtParserProvider.class);
     bind(OIDCInfo.class).toProvider(KeycloakOIDCInfoProvider.class).asEagerSingleton();
-    bind(PersonalAccountUserManager.class).to(KeycloakUserManager.class);
 
     bind(OAuthAPI.class).toProvider(OAuthAPIProvider.class);
   }

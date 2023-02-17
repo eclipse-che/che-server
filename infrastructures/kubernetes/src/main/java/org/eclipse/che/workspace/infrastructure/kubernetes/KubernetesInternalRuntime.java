@@ -98,7 +98,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.resolver.Serve
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.UnrecoverablePodEventListenerFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +123,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
   private final StartSynchronizer startSynchronizer;
   private final Set<InternalEnvironmentProvisioner> internalEnvironmentProvisioners;
   private final KubernetesEnvironmentProvisioner<E> kubernetesEnvironmentProvisioner;
-  private final SidecarToolingProvisioner<E> toolingProvisioner;
   private final RuntimeHangingDetector runtimeHangingDetector;
   private final PreviewUrlCommandProvisioner previewUrlCommandProvisioner;
   private final SecretAsContainerResourceProvisioner secretAsContainerResourceProvisioner;
@@ -148,7 +146,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
       StartSynchronizerFactory startSynchronizerFactory,
       Set<InternalEnvironmentProvisioner> internalEnvironmentProvisioners,
       KubernetesEnvironmentProvisioner<E> kubernetesEnvironmentProvisioner,
-      SidecarToolingProvisioner<E> toolingProvisioner,
       RuntimeHangingDetector runtimeHangingDetector,
       PreviewUrlCommandProvisioner previewUrlCommandProvisioner,
       SecretAsContainerResourceProvisioner secretAsContainerResourceProvisioner,
@@ -170,7 +167,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
     this.executor = sharedPool.getExecutor();
     this.runtimeStates = runtimeStates;
     this.machines = machines;
-    this.toolingProvisioner = toolingProvisioner;
     this.kubernetesEnvironmentProvisioner = kubernetesEnvironmentProvisioner;
     this.internalEnvironmentProvisioners = internalEnvironmentProvisioners;
     this.runtimeHangingDetector = runtimeHangingDetector;
@@ -267,8 +263,6 @@ public class KubernetesInternalRuntime<E extends KubernetesEnvironment>
       throws InfrastructureException {
     // Tooling side car provisioner should be applied before other provisioners
     // because new machines may be provisioned there
-    toolingProvisioner.provision(
-        context.getIdentity(), startSynchronizer, context.getEnvironment(), startOptions);
 
     startSynchronizer.checkFailure();
 

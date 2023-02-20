@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.api.user.server;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static org.eclipse.che.api.user.server.Constants.LINK_REL_CURRENT_USER;
 import static org.eclipse.che.api.user.server.Constants.LINK_REL_CURRENT_USER_PASSWORD;
@@ -83,6 +84,22 @@ public class UserService extends Service {
     this.userSelfCreationAllowed = userSelfCreationAllowed;
   }
 
+  @GET
+  @Path("/id")
+  @Produces(TEXT_PLAIN)
+  @Operation(
+      summary = "Get current user's id",
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description =
+                "The response contains current user's id ('0000-00-0000' is returned for the anonymous user)"),
+      })
+  public String getId() {
+    return userId();
+  }
+
+  @Deprecated
   @POST
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)
@@ -121,6 +138,7 @@ public class UserService extends Service {
         .build();
   }
 
+  @Deprecated
   @GET
   @Produces(APPLICATION_JSON)
   @GenerateLink(rel = LINK_REL_CURRENT_USER)
@@ -140,6 +158,7 @@ public class UserService extends Service {
     return linksInjector.injectLinks(asDto(user), getServiceContext());
   }
 
+  @Deprecated
   @POST
   @Path("/password")
   @Consumes(APPLICATION_FORM_URLENCODED)
@@ -165,6 +184,7 @@ public class UserService extends Service {
     userManager.update(user);
   }
 
+  @Deprecated
   @GET
   @Path("/{id}")
   @Produces(APPLICATION_JSON)
@@ -188,6 +208,7 @@ public class UserService extends Service {
     return linksInjector.injectLinks(asDto(user), getServiceContext());
   }
 
+  @Deprecated
   @GET
   @Path("/find")
   @Produces(APPLICATION_JSON)
@@ -224,6 +245,7 @@ public class UserService extends Service {
     return linksInjector.injectLinks(asDto(user), getServiceContext());
   }
 
+  @Deprecated
   @DELETE
   @Path("/{id}")
   @GenerateLink(rel = LINK_REL_USER)
@@ -243,6 +265,7 @@ public class UserService extends Service {
     userManager.remove(id);
   }
 
+  @Deprecated
   @GET
   @Path("/settings")
   @Produces(APPLICATION_JSON)

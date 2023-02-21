@@ -153,7 +153,7 @@ public class GitlabUrlParser {
             .findFirst()
             .or(() -> getPatternMatcherByUrl(url));
     if (matcherOptional.isPresent()) {
-      return parse(matcherOptional.get());
+      return parse(matcherOptional.get()).withUrl(url);
     } else {
       throw new UnsupportedOperationException(
           "The gitlab integration is not configured properly and cannot be used at this moment."

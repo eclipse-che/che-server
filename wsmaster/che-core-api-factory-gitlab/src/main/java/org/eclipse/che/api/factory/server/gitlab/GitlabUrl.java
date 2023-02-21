@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
+import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
 
 /**
  * Representation of a gitlab URL, allowing to get details from it.
@@ -30,7 +30,7 @@ import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
  *
  * @author Max Shaposhnyk
  */
-public class GitlabUrl implements RemoteFactoryUrl {
+public class GitlabUrl extends DefaultFactoryUrl {
 
   private final String NAME = "gitlab";
 

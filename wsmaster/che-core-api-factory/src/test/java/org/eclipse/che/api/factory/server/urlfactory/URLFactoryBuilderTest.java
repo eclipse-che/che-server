@@ -21,6 +21,7 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -127,12 +128,12 @@ public class URLFactoryBuilderTest {
         .thenReturn(new ObjectNode(JsonNodeFactory.instance));
     when(devfileParser.parseJsonNode(any(JsonNode.class), anyMap())).thenReturn(devfile);
     when(devfileVersionDetector.devfileMajorVersion(any(JsonNode.class))).thenReturn(1);
-    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
+    when(fileContentProvider.fetchContent(anyString(), eq(null))).thenReturn("content");
 
     FactoryMetaDto factory =
         urlFactoryBuilder
             .createFactoryFromDevfile(
-                new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
+                new DefaultFactoryUrl().withDevfileFileLocation(myLocation).withUrl("url"),
                 fileContentProvider,
                 emptyMap(),
                 false)
@@ -152,12 +153,12 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
-    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
+    when(fileContentProvider.fetchContent(anyString(), eq(null))).thenReturn("content");
 
     FactoryMetaDto factory =
         urlFactoryBuilder
             .createFactoryFromDevfile(
-                new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
+                new DefaultFactoryUrl().withDevfileFileLocation(myLocation).withUrl("url"),
                 fileContentProvider,
                 emptyMap(),
                 false)
@@ -178,7 +179,7 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
-    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
+    when(fileContentProvider.fetchContent(anyString(), eq(null))).thenReturn("content");
 
     RemoteFactoryUrl githubLikeRemoteUrl =
         new RemoteFactoryUrl() {
@@ -219,6 +220,11 @@ public class URLFactoryBuilderTest {
           }
 
           @Override
+          public String getCredentials() {
+            return null;
+          }
+
+          @Override
           public void setDevfileFilename(String devfileName) {}
         };
 
@@ -242,7 +248,7 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
-    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
+    when(fileContentProvider.fetchContent(anyString(), eq(null))).thenReturn("content");
 
     RemoteFactoryUrl githubLikeRemoteUrl =
         new RemoteFactoryUrl() {
@@ -286,6 +292,11 @@ public class URLFactoryBuilderTest {
           }
 
           @Override
+          public String getCredentials() {
+            return null;
+          }
+
+          @Override
           public void setDevfileFilename(String devfileName) {
             this.devfileName = devfileName;
           }
@@ -317,7 +328,7 @@ public class URLFactoryBuilderTest {
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
     when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
-    when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
+    when(fileContentProvider.fetchContent(anyString(), eq(null))).thenReturn("content");
 
     URLFactoryBuilder localUrlFactoryBuilder =
         new URLFactoryBuilder(
@@ -326,7 +337,7 @@ public class URLFactoryBuilderTest {
     FactoryMetaDto factory =
         localUrlFactoryBuilder
             .createFactoryFromDevfile(
-                new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
+                new DefaultFactoryUrl().withDevfileFileLocation(myLocation).withUrl("url"),
                 fileContentProvider,
                 emptyMap(),
                 false)
@@ -381,7 +392,7 @@ public class URLFactoryBuilderTest {
                     return "http://foo.bar/anything";
                   }
                 }));
-    when(fileContentProvider.fetchContent(anyString())).thenReturn("anything");
+    when(fileContentProvider.fetchContent(anyString(), eq(null))).thenReturn("anything");
     when(devfileParser.parseYamlRaw("anything"))
         .thenReturn(new ObjectNode(JsonNodeFactory.instance));
     when(devfileParser.parseJsonNode(any(JsonNode.class), anyMap())).thenReturn(devfile);
@@ -420,7 +431,8 @@ public class URLFactoryBuilderTest {
                   }
                 }));
 
-    when(fileContentProvider.fetchContent(anyString())).thenThrow(new DevfileException("", cause));
+    when(fileContentProvider.fetchContent(anyString(), eq(null)))
+        .thenThrow(new DevfileException("", cause));
 
     // when
     try {

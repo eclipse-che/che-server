@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,10 +92,12 @@ public class URLFetcher {
    * URLFetcher#CONNECTION_READ_TIMEOUT}
    *
    * @param url the URL to fetch
+   * @param authorization Authorisation string or {@code null}
    * @return content of the requested URL
    * @throws IOException if fetch error occurs
    */
-  public String fetch(@NotNull final String url, String authorization) throws IOException {
+  public String fetch(@NotNull final String url, @Nullable String authorization)
+      throws IOException {
     return fetch(url, CONNECTION_READ_TIMEOUT, authorization);
   }
 
@@ -115,12 +118,14 @@ public class URLFetcher {
    * Fetches the url provided and return its content.
    *
    * @param url the URL to fetch
+   * @param authorization Authorisation string or {@code null}
    * @param timeout read and connection timeout (see {@link URLConnection#setConnectTimeout(int)}
    *     and {@link URLConnection#setReadTimeout(int)}
    * @return content of the requested URL
    * @throws IOException if fetch error occurs
    */
-  String fetch(@NotNull final String url, int timeout, String authorization) throws IOException {
+  String fetch(@NotNull final String url, int timeout, @Nullable String authorization)
+      throws IOException {
     requireNonNull(url, "url parameter can't be null");
     URLConnection connection = new URL(sanitized(url)).openConnection();
     connection.setConnectTimeout(timeout);

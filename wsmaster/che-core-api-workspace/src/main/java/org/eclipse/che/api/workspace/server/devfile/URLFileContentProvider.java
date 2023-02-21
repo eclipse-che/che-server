@@ -11,11 +11,13 @@
  */
 package org.eclipse.che.api.workspace.server.devfile;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Base64;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.commons.annotation.Nullable;
 
@@ -33,7 +35,7 @@ public class URLFileContentProvider implements FileContentProvider {
     this.urlFetcher = urlFetcher;
   }
 
-  private String fetchContent(String fileURL, boolean skipAuthentication)
+  private String fetchContentInternal(String fileURL, @Nullable String credentials)
       throws IOException, DevfileException {
     URI fileURI;
     String requestURL;
@@ -56,7 +58,8 @@ public class URLFileContentProvider implements FileContentProvider {
       requestURL = devfileLocation.resolve(fileURI).toString();
     }
     try {
-      return urlFetcher.fetch(requestURL);
+      return urlFetcher.fetch(
+          requestURL, isNullOrEmpty(credentials) ? null : getCredentialsAuthorization(credentials));
     } catch (IOException e) {
       throw new IOException(
           format(
@@ -72,14 +75,24 @@ public class URLFileContentProvider implements FileContentProvider {
     }
   }
 
+  private String getCredentialsAuthorization(String credentials) {
+    return "Basic " + new String(Base64.getEncoder().encode(credentials.getBytes()));
+  }
+
   @Override
   public String fetchContent(String fileURL) throws IOException, DevfileException {
-    return fetchContent(fileURL, false);
+    return fetchContentInternal(fileURL, null);
   }
 
   @Override
   public String fetchContentWithoutAuthentication(String fileURL)
       throws IOException, DevfileException {
-    return fetchContent(fileURL, true);
+    return fetchContentInternal(fileURL, null);
+  }
+
+  @Override
+  public String fetchContent(String fileURL, String credentials)
+      throws IOException, DevfileException {
+    return fetchContentInternal(fileURL, credentials);
   }
 }

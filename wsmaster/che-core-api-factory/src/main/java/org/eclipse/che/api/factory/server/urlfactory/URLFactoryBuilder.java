@@ -115,7 +115,8 @@ public class URLFactoryBuilder {
         devfileYamlContent =
             skipAuthentication
                 ? fileContentProvider.fetchContentWithoutAuthentication(location.location())
-                : fileContentProvider.fetchContent(location.location());
+                : fileContentProvider.fetchContent(
+                    location.location(), remoteFactoryUrl.getCredentials());
       } catch (IOException ex) {
         // try next location
         LOG.debug(

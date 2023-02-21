@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.workspace.server.devfile;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
@@ -42,7 +43,7 @@ public class URLFileContentProviderTest {
     URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
     ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
     provider.fetchContent(url);
-    verify(urlFetcher).fetch(captor.capture());
+    verify(urlFetcher).fetch(captor.capture(), eq(null));
     assertEquals(captor.getValue(), url);
   }
 
@@ -53,7 +54,7 @@ public class URLFileContentProviderTest {
     URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
     ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
     provider.fetchContent(relativeUrl);
-    verify(urlFetcher).fetch(captor.capture());
+    verify(urlFetcher).fetch(captor.capture(), eq(null));
     assertEquals(captor.getValue(), "http://myhost.com/relative/relative.yaml");
   }
 }

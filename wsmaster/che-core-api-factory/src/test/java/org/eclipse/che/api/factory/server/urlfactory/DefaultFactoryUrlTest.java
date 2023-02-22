@@ -17,34 +17,38 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.Optional;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /** Testing {@link DefaultFactoryUrl} */
 @Listeners(MockitoTestNGListener.class)
 public class DefaultFactoryUrlTest {
-  @Test
-  public void shouldCredentials() {
+  @Test(dataProvider = "urlsProvider")
+  public void shouldGetCredentials(String url, String credentials) {
     // given
-    DefaultFactoryUrl factoryUrl =
-        new DefaultFactoryUrl().withUrl("https://username:password@hostname/path");
+    DefaultFactoryUrl factoryUrl = new DefaultFactoryUrl().withUrl(url);
     // when
     Optional<String> credentialsOptional = factoryUrl.getCredentials();
     // then
     assertTrue(credentialsOptional.isPresent());
-    assertEquals(credentialsOptional.get(), "username:password");
+    assertEquals(credentialsOptional.get(), credentials);
   }
 
-  @Test
-  public void shouldCredentialsWithoutPassword() {
-    // given
-    DefaultFactoryUrl factoryUrl =
-        new DefaultFactoryUrl().withUrl("https://username@hostname/path");
-    // when
-    Optional<String> credentialsOptional = factoryUrl.getCredentials();
-    // then
-    assertTrue(credentialsOptional.isPresent());
-    assertEquals(credentialsOptional.get(), "username:");
+  @DataProvider(name = "urlsProvider")
+  private Object[][] urlsProvider() {
+    return new Object[][] {
+      {"https://username:password@hostname/path", "username:password"},
+      {"https://token@hostname/path/user/repo/", "token:"},
+      {"http://token@hostname/path/user/repo/", "token:"},
+      {"https://token@dev.azure.com/user/repo/", "token:"},
+      {
+        "https://personal-access-token@raw.githubusercontent.com/user/repo/branch/.devfile.yaml",
+        "personal-access-token:"
+      },
+      {"https://token@gitlub.com/user/repo/", "token:"},
+      {"https://token@bitbucket.org/user/repo/", "token:"},
+    };
   }
 
   @Test

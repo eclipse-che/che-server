@@ -42,12 +42,12 @@ public class DefaultFactoryUrlTest {
       {"https://token@hostname/path/user/repo/", "token:"},
       {"http://token@hostname/path/user/repo/", "token:"},
       {"https://token@dev.azure.com/user/repo/", "token:"},
+      {"https://token@gitlub.com/user/repo/", "token:"},
+      {"https://token@bitbucket.org/user/repo/", "token:"},
       {
         "https://personal-access-token@raw.githubusercontent.com/user/repo/branch/.devfile.yaml",
         "personal-access-token:"
-      },
-      {"https://token@gitlub.com/user/repo/", "token:"},
-      {"https://token@bitbucket.org/user/repo/", "token:"},
+      }
     };
   }
 

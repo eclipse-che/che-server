@@ -42,7 +42,7 @@ public interface RemoteFactoryUrl {
   /** Remote branch */
   String getBranch();
 
-  /** Optional of Credentials in format <username>:<password> */
+  /** Optional of credentials in format <username>:<password> or <username>: */
   Optional<String> getCredentials();
 
   /** Describes devfile location, including filename if any. */

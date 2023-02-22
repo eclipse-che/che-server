@@ -14,13 +14,12 @@ package org.eclipse.che.api.factory.server.urlfactory;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
-import static java.util.regex.Pattern.compile;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import org.eclipse.che.commons.annotation.Nullable;
 
 /**
  * Default implementation of {@link RemoteFactoryUrl} which used with all factory URL's until there
@@ -29,7 +28,7 @@ import org.eclipse.che.commons.annotation.Nullable;
 public class DefaultFactoryUrl implements RemoteFactoryUrl {
 
   private String devfileFileLocation;
-  private String url;
+  private URL url;
 
   @Override
   public String getProviderName() {
@@ -68,24 +67,14 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
   }
 
   @Override
-  public @Nullable Optional<String> getCredentials() {
-    if (isNullOrEmpty(url)) {
+  public Optional<String> getCredentials() {
+    if (url == null || isNullOrEmpty(url.getUserInfo())) {
       return Optional.empty();
     }
-    Matcher matcher =
-        compile("https?://((?<username>[^:|@]+)?:?(?<password>[^@]+)?@)?.*").matcher(url);
-    String password = null;
-    String username = null;
-    try {
-      username = matcher.matches() ? matcher.group("username") : null;
-    } catch (IllegalArgumentException e) {
-      // no such group
-    }
-    try {
-      password = matcher.matches() ? matcher.group("password") : null;
-    } catch (IllegalArgumentException e) {
-      // no such group
-    }
+    String userInfo = url.getUserInfo();
+    String[] credentials = userInfo.split(":");
+    String username = credentials[0];
+    String password = credentials.length == 2 ? credentials[1] : null;
     if (!isNullOrEmpty(username) || !isNullOrEmpty(password)) {
       return Optional.of(
           format(
@@ -95,9 +84,13 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
     return Optional.empty();
   }
 
-  public <T extends DefaultFactoryUrl> T withUrl(String url) {
-    this.url = url;
-    return (T) this;
+  public <U extends DefaultFactoryUrl> U withUrl(String url) {
+    try {
+      this.url = new URL(url);
+    } catch (MalformedURLException e) {
+      // Do nothing, wrong URL.
+    }
+    return (U) this;
   }
 
   public DefaultFactoryUrl withDevfileFileLocation(String devfileFileLocation) {

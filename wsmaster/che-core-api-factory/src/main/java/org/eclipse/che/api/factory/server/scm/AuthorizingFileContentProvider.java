@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.scm;
 
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
+
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.io.FileNotFoundException;
@@ -159,7 +161,14 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     return requestURL;
   }
 
-  protected String formatAuthorization(String token) {
+  /**
+   * Formats authorization header value.
+   *
+   * @param token personal access token
+   * @param isPAT true if token is personal access token, false if it is OAuth token
+   * @return formatted authorization header value
+   */
+  protected String formatAuthorization(String token, boolean isPAT) {
     return "Bearer " + token;
   }
 

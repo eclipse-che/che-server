@@ -38,6 +38,8 @@ import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
 import org.eclipse.che.api.factory.server.ScmService;
+import org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsScmFileResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketScmFileResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerAuthorizingFactoryParametersResolver;
@@ -169,6 +171,9 @@ public class WsMasterModule extends AbstractModule {
         .to(BitbucketServerAuthorizingFactoryParametersResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(GitlabFactoryParametersResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(BitbucketFactoryParametersResolver.class);
+    factoryParametersResolverMultibinder
+        .addBinding()
+        .to(AzureDevOpsFactoryParametersResolver.class);
 
     Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =
         Multibinder.newSetBinder(binder(), ScmFileResolver.class);
@@ -176,12 +181,14 @@ public class WsMasterModule extends AbstractModule {
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GitlabScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketServerScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(AzureDevOpsScmFileResolver.class);
 
     install(new org.eclipse.che.api.factory.server.scm.KubernetesScmModule());
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketServerModule());
     install(new org.eclipse.che.api.factory.server.gitlab.GitlabModule());
     install(new org.eclipse.che.api.factory.server.github.GithubModule());
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketModule());
+    install(new org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsModule());
 
     bind(org.eclipse.che.api.core.rest.ApiInfoService.class);
     bind(org.eclipse.che.api.user.server.UserService.class);
@@ -282,6 +289,7 @@ public class WsMasterModule extends AbstractModule {
     installDefaultSecureServerExposer(infrastructure);
     install(new org.eclipse.che.security.BitbucketModule());
     install(new GitLabModule());
+    install(new org.eclipse.che.security.oauth.AzureDevOpsModule());
 
     configureMultiUserMode(persistenceProperties, infrastructure);
 

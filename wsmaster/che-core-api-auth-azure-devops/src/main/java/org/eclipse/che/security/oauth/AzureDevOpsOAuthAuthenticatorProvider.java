@@ -20,9 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.security.oauth.shared.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,12 +95,6 @@ public class AzureDevOpsOAuthAuthenticatorProvider implements Provider<OAuthAuth
   }
 
   static class NoopOAuthAuthenticator extends OAuthAuthenticator {
-    @Override
-    public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
-      throw new OAuthAuthenticationException(
-          "The fallback noop authenticator cannot be used for Azure DevOps authentication. Make sure OAuth is properly configured.");
-    }
-
     @Override
     public String getOAuthProvider() {
       return "Noop";

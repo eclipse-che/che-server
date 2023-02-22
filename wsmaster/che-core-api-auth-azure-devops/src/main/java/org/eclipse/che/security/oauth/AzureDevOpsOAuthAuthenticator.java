@@ -82,6 +82,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public User getUser(OAuthToken accessToken) {
+    // should not be called
     throw new UnsupportedOperationException();
   }
 

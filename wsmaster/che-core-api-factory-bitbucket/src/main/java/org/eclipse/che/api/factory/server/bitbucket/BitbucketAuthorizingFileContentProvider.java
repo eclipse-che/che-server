@@ -42,7 +42,7 @@ class BitbucketAuthorizingFileContentProvider extends AuthorizingFileContentProv
 
   /** Formats OAuth token as HTTP Authorization header. */
   @Override
-  protected String formatAuthorization(String token) {
+  protected String formatAuthorization(String token, boolean isPAT) {
     return "Bearer " + token;
   }
 

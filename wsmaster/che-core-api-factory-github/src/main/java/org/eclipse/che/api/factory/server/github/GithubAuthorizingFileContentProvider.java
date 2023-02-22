@@ -33,7 +33,7 @@ class GithubAuthorizingFileContentProvider extends AuthorizingFileContentProvide
    * https://docs.github.com/en/rest/overview/resources-in-the-rest-api#oauth2-token-sent-in-a-header
    */
   @Override
-  protected String formatAuthorization(String token) {
+  protected String formatAuthorization(String token, boolean isPAT) {
     return "token " + token;
   }
 

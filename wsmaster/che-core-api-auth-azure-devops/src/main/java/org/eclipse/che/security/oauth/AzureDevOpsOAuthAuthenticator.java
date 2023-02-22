@@ -28,7 +28,6 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
-import org.eclipse.che.security.oauth.shared.User;
 
 /**
  * OAuth2 authenticator for Azure DevOps Service.
@@ -78,12 +77,6 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
     url.set("redirect_uri", String.format("%s/oauth/callback", cheApiEndpoint));
     url.setState(prepareState(requestUrl));
     return url.build();
-  }
-
-  @Override
-  public User getUser(OAuthToken accessToken) {
-    // should not be called
-    throw new UnsupportedOperationException();
   }
 
   @Override

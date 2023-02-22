@@ -111,18 +111,22 @@ public class URLFactoryBuilder {
     }
 
     for (DevfileLocation location : remoteFactoryUrl.devfileFileLocations()) {
+      String devfileLocation = location.location();
       try {
-        devfileYamlContent =
-            skipAuthentication
-                ? fileContentProvider.fetchContentWithoutAuthentication(location.location())
-                : fileContentProvider.fetchContent(
-                    location.location(), remoteFactoryUrl.getCredentials());
+        Optional<String> credentialsOptional = remoteFactoryUrl.getCredentials();
+        if (skipAuthentication) {
+          devfileYamlContent =
+              fileContentProvider.fetchContentWithoutAuthentication(devfileLocation);
+        } else if (credentialsOptional.isPresent()) {
+          devfileYamlContent =
+              fileContentProvider.fetchContent(devfileLocation, credentialsOptional.get());
+        } else {
+          devfileYamlContent = fileContentProvider.fetchContent(devfileLocation);
+        }
       } catch (IOException ex) {
         // try next location
         LOG.debug(
-            "Unreachable devfile location met: {}. Error is: {}",
-            location.location(),
-            ex.getMessage());
+            "Unreachable devfile location met: {}. Error is: {}", devfileLocation, ex.getMessage());
         continue;
       } catch (DevfileException e) {
         LOG.debug("Unexpected devfile exception: {}", e.getMessage());
@@ -183,7 +187,7 @@ public class URLFactoryBuilder {
   /**
    * Creates devfile with only `generateName` and no `name`. We take `generateName` with precedence.
    * See doc of {@link URLFactoryBuilder#createFactoryFromDevfile(RemoteFactoryUrl,
-   * FileContentProvider, Map, Boolean)} for explanation why.
+   * FileContentProvider, Map, boolean)} for explanation why.
    */
   private DevfileImpl ensureToUseGenerateName(DevfileImpl devfile) {
     MetadataImpl devfileMetadata = new MetadataImpl(devfile.getMetadata());

@@ -42,8 +42,8 @@ public interface RemoteFactoryUrl {
   /** Remote branch */
   String getBranch();
 
-  /** Credentials in format <username>:<password> */
-  String getCredentials();
+  /** Optional of Credentials in format <username>:<password> */
+  Optional<String> getCredentials();
 
   /** Describes devfile location, including filename if any. */
   interface DevfileLocation {

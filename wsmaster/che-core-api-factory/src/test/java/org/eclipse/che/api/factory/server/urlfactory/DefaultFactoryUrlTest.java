@@ -12,8 +12,10 @@
 package org.eclipse.che.api.factory.server.urlfactory;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
+import java.util.Optional;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -27,9 +29,10 @@ public class DefaultFactoryUrlTest {
     DefaultFactoryUrl factoryUrl =
         new DefaultFactoryUrl().withUrl("https://username:password@hostname/path");
     // when
-    String credentials = factoryUrl.getCredentials();
+    Optional<String> credentialsOptional = factoryUrl.getCredentials();
     // then
-    assertEquals(credentials, "username:password");
+    assertTrue(credentialsOptional.isPresent());
+    assertEquals(credentialsOptional.get(), "username:password");
   }
 
   @Test
@@ -38,18 +41,19 @@ public class DefaultFactoryUrlTest {
     DefaultFactoryUrl factoryUrl =
         new DefaultFactoryUrl().withUrl("https://username@hostname/path");
     // when
-    String credentials = factoryUrl.getCredentials();
+    Optional<String> credentialsOptional = factoryUrl.getCredentials();
     // then
-    assertEquals(credentials, "username:");
+    assertTrue(credentialsOptional.isPresent());
+    assertEquals(credentialsOptional.get(), "username:");
   }
 
   @Test
-  public void shouldGetNullCredentials() {
+  public void shouldGetEmptyCredentials() {
     // given
     DefaultFactoryUrl factoryUrl = new DefaultFactoryUrl().withUrl("https://hostname/path");
     // when
-    String credentials = factoryUrl.getCredentials();
+    Optional<String> credentialsOptional = factoryUrl.getCredentials();
     // then
-    assertNull(credentials);
+    assertFalse(credentialsOptional.isPresent());
   }
 }

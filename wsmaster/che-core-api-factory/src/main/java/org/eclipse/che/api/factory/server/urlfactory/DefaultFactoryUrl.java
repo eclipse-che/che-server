@@ -68,9 +68,9 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
   }
 
   @Override
-  public @Nullable String getCredentials() {
+  public @Nullable Optional<String> getCredentials() {
     if (isNullOrEmpty(url)) {
-      return null;
+      return Optional.empty();
     }
     Matcher matcher =
         compile("https?://((?<username>[^:|@]+)?:?(?<password>[^@]+)?@)?.*").matcher(url);
@@ -87,11 +87,12 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
       // no such group
     }
     if (!isNullOrEmpty(username) || !isNullOrEmpty(password)) {
-      return format(
-          "%s:%s",
-          isNullOrEmpty(username) ? "" : username, isNullOrEmpty(password) ? "" : password);
+      return Optional.of(
+          format(
+              "%s:%s",
+              isNullOrEmpty(username) ? "" : username, isNullOrEmpty(password) ? "" : password));
     }
-    return null;
+    return Optional.empty();
   }
 
   public <T extends DefaultFactoryUrl> T withUrl(String url) {

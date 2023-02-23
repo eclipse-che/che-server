@@ -42,6 +42,7 @@ public class DefaultFactoryUrlTest {
       {"https://token@hostname/path/user/repo/", "token:"},
       {"http://token@hostname/path/user/repo/", "token:"},
       {"https://token@dev.azure.com/user/repo/", "token:"},
+      {"https://token@dev.azure.com/user/repo?a=&b=b&c=/.devfile.yaml&api-version=7.0", "token:"},
       {"https://token@gitlub.com/user/repo/", "token:"},
       {"https://token@bitbucket.org/user/repo/", "token:"},
       {

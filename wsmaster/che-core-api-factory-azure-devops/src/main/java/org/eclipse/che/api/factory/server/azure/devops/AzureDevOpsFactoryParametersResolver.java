@@ -16,7 +16,9 @@ import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
+import com.google.common.base.Strings;
 import jakarta.validation.constraints.NotNull;
+import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -32,6 +34,10 @@ import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 
 /**
  * Provides Factory Parameters resolver for Azure DevOps repositories.
@@ -113,13 +119,60 @@ public class AzureDevOpsFactoryParametersResolver extends DefaultFactoryParamete
 
     @Override
     public FactoryDto visit(FactoryDto factory) {
-      // Should never happen
-      throw new UnsupportedOperationException();
+      if (factory.getWorkspace() != null) {
+        return projectConfigDtoMerger.merge(
+            factory,
+            () -> {
+              // Compute project configuration
+              return newDto(ProjectConfigDto.class)
+                  .withSource(buildWorkspaceConfigSource(azureDevOpsUrl))
+                  .withName(azureDevOpsUrl.getRepository())
+                  .withPath("/".concat(azureDevOpsUrl.getRepository()));
+            });
+      } else if (factory.getDevfile() == null) {
+        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(azureDevOpsUrl.getRepository()));
+      }
+
+      updateProjects(
+          factory.getDevfile(),
+          () ->
+              newDto(ProjectDto.class)
+                  .withSource(
+                      newDto(SourceDto.class)
+                          .withLocation(azureDevOpsUrl.getRepositoryLocation())
+                          .withType("git")
+                          .withBranch(azureDevOpsUrl.getBranch())
+                          .withTag(azureDevOpsUrl.getTag()))
+                  .withName(azureDevOpsUrl.getRepository()),
+          project -> {
+            final String location = project.getSource().getLocation();
+            if (location.equals(azureDevOpsUrl.getRepositoryLocation())) {
+              project.getSource().setBranch(azureDevOpsUrl.getBranch());
+              project.getSource().setTag(azureDevOpsUrl.getTag());
+            }
+          });
+
+      return factory;
     }
   }
 
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
     return azureDevOpsURLParser.parse(factoryUrl);
+  }
+
+  private SourceStorageDto buildWorkspaceConfigSource(AzureDevOpsUrl azureDevOpsUrl) {
+    Map<String, String> parameters = new HashMap<>(1);
+    if (!Strings.isNullOrEmpty(azureDevOpsUrl.getBranch())) {
+      parameters.put("branch", azureDevOpsUrl.getBranch());
+    }
+    if (!Strings.isNullOrEmpty(azureDevOpsUrl.getTag())) {
+      parameters.put("tag", azureDevOpsUrl.getTag());
+    }
+
+    return newDto(SourceStorageDto.class)
+        .withLocation(azureDevOpsUrl.getRepositoryLocation())
+        .withType("git")
+        .withParameters(parameters);
   }
 }

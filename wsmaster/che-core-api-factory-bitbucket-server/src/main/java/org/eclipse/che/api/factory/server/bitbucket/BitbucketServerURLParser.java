@@ -169,7 +169,7 @@ public class BitbucketServerURLParser {
                         format(
                             "The given url %s is not a valid Bitbucket server URL. Check either URL or server configuration.",
                             url)));
-    return parse(matcher);
+    return parse(matcher).withUrl(url);
   }
 
   private BitbucketServerUrl parse(Matcher matcher) {

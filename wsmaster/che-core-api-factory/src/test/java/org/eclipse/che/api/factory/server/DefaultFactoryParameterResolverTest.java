@@ -91,14 +91,14 @@ public class DefaultFactoryParameterResolverTest {
     // set up our factory with the location of our devfile that is referencing our localfile
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, "http://myloc.com/aa/bb/devfile");
-    doReturn(DEVFILE).when(urlFetcher).fetch(eq("http://myloc.com/aa/bb/devfile"));
-    doReturn("localfile").when(urlFetcher).fetch("http://myloc.com/aa/localfile");
+    doReturn(DEVFILE).when(urlFetcher).fetch(eq("http://myloc.com/aa/bb/devfile"), eq(null));
+    doReturn("localfile").when(urlFetcher).fetch("http://myloc.com/aa/localfile", null);
 
     // when
     res.createFactory(factoryParameters);
 
     // then
-    verify(urlFetcher).fetch(eq("http://myloc.com/aa/localfile"));
+    verify(urlFetcher).fetch(eq("http://myloc.com/aa/localfile"), eq(null));
   }
 
   @Test

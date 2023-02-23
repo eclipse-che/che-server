@@ -41,6 +41,18 @@ public interface FileContentProvider {
    * Fetches content of the specified file without the authentication step.
    *
    * @param fileURL absolute or devfile-relative file URL to fetch content
+   * @param credentials a string representation of credentials in format: <username>:<password>
+   * @return content of the specified file
+   * @throws IOException when there is an error during content retrieval
+   * @throws DevfileException when implementation does not support fetching of additional files
+   *     content
+   */
+  String fetchContent(String fileURL, String credentials) throws IOException, DevfileException;
+
+  /**
+   * Fetches content of the specified file without the authentication step.
+   *
+   * @param fileURL absolute or devfile-relative file URL to fetch content
    * @return content of the specified file
    * @throws IOException when there is an error during content retrieval
    * @throws DevfileException when implementation does not support fetching of additional files
@@ -78,8 +90,7 @@ public interface FileContentProvider {
       this.provider = provider;
     }
 
-    private String fetchContent(String fileURL, boolean skipAuthentication)
-        throws IOException, DevfileException {
+    private String fetchContentInternal(String fileURL) throws IOException, DevfileException {
       SoftReference<String> ref = cache.get(fileURL);
       String ret = ref == null ? null : ref.get();
 
@@ -93,13 +104,19 @@ public interface FileContentProvider {
 
     @Override
     public String fetchContent(String fileURL) throws IOException, DevfileException {
-      return fetchContent(fileURL, false);
+      return fetchContentInternal(fileURL);
+    }
+
+    @Override
+    public String fetchContent(String fileURL, String credentials)
+        throws IOException, DevfileException {
+      return fetchContentInternal(fileURL);
     }
 
     @Override
     public String fetchContentWithoutAuthentication(String fileURL)
         throws IOException, DevfileException {
-      return fetchContent(fileURL, true);
+      return fetchContentInternal(fileURL);
     }
   }
 }

@@ -132,7 +132,7 @@ public class URLFactoryBuilderTest {
     FactoryMetaDto factory =
         urlFactoryBuilder
             .createFactoryFromDevfile(
-                new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
+                new DefaultFactoryUrl().withDevfileFileLocation(myLocation).withUrl("url"),
                 fileContentProvider,
                 emptyMap(),
                 false)
@@ -157,7 +157,7 @@ public class URLFactoryBuilderTest {
     FactoryMetaDto factory =
         urlFactoryBuilder
             .createFactoryFromDevfile(
-                new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
+                new DefaultFactoryUrl().withDevfileFileLocation(myLocation).withUrl("url"),
                 fileContentProvider,
                 emptyMap(),
                 false)
@@ -216,6 +216,11 @@ public class URLFactoryBuilderTest {
           @Override
           public String getBranch() {
             return null;
+          }
+
+          @Override
+          public Optional<String> getCredentials() {
+            return Optional.empty();
           }
 
           @Override
@@ -286,6 +291,11 @@ public class URLFactoryBuilderTest {
           }
 
           @Override
+          public Optional<String> getCredentials() {
+            return Optional.empty();
+          }
+
+          @Override
           public void setDevfileFilename(String devfileName) {
             this.devfileName = devfileName;
           }
@@ -326,7 +336,7 @@ public class URLFactoryBuilderTest {
     FactoryMetaDto factory =
         localUrlFactoryBuilder
             .createFactoryFromDevfile(
-                new DefaultFactoryUrl().withDevfileFileLocation(myLocation),
+                new DefaultFactoryUrl().withDevfileFileLocation(myLocation).withUrl("url"),
                 fileContentProvider,
                 emptyMap(),
                 false)

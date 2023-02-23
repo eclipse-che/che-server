@@ -61,6 +61,7 @@ public class BitbucketURLParser {
         .withRepository(repoName)
         .withBranch(branchName)
         .withWorkspaceId(workspaceId)
-        .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
+        .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .withUrl(url);
   }
 }

@@ -19,10 +19,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
+import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
 
 /** Representation of a bitbucket Server URL, allowing to get details from it. */
-public class BitbucketServerUrl implements RemoteFactoryUrl {
+public class BitbucketServerUrl extends DefaultFactoryUrl {
 
   private final String NAME = "bitbucket";
 

@@ -174,7 +174,8 @@ public class GithubURLParser {
         .withBranch(branchName)
         .withLatestCommit(latestCommit)
         .withSubfolder(matcher.group("subFolder"))
-        .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
+        .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .withUrl(url);
   }
 
   private GithubPullRequest getPullRequest(

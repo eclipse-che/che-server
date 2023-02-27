@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.scm;
 
 import com.google.common.base.Objects;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 
 /**
@@ -23,7 +24,7 @@ public class PersonalAccessToken {
   private final String scmProviderUrl;
   private final String scmUserName;
   /** Organization that user belongs to. Can be null if user is not a member of any organization. */
-  private final String scmOrganization;
+  @Nullable private final String scmOrganization;
 
   private final String scmUserId;
   private final String scmTokenName;
@@ -101,6 +102,7 @@ public class PersonalAccessToken {
     return cheUserId;
   }
 
+  @Nullable
   public String getScmOrganization() {
     return scmOrganization;
   }

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
+import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
 
 /**
  * Representation of Azure DevOps URL, allowing to get details from it.
@@ -28,7 +28,7 @@ import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
  *
  * @author Anatolii Bazko
  */
-public class AzureDevOpsUrl implements RemoteFactoryUrl {
+public class AzureDevOpsUrl extends DefaultFactoryUrl {
 
   private String hostName;
 

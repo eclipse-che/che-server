@@ -18,6 +18,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
+
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 
@@ -96,5 +98,21 @@ public class AzureDevOpsURLParserTest {
               "MyTag"
             },
       };
+  }
+
+  @Test(dataProvider = "url")
+  public void testCredentials(String url, String organization, Optional<String> credentials) {
+    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(url);
+
+    assertEquals(azureDevOpsUrl.getOrganization(), organization);
+    assertEquals(azureDevOpsUrl.getCredentials(), credentials);
+  }
+
+  @DataProvider(name = "url")
+  public Object[][] url() {
+    return new Object[][]{
+            {"https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo", "MyOrg", Optional.empty()},
+            {"https://user:pwd@dev.azure.com/MyOrg/MyProject/_git/MyRepo", "MyOrg", Optional.of("user:pwd")},
+    };
   }
 }

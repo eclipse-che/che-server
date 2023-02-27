@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.azure.devops;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
@@ -81,6 +82,16 @@ public class AzureDevOpsURLParser {
     String branch = matcher.group("branch");
     String tag = matcher.group("tag");
 
+    // The url might have the following formats:
+    // - https://<organization>@<host>/<organization>/<project>/_git/<repoName>
+    // - https://<credentials>@<host>/<organization>/<project>/_git/<repoName>
+    // For the first case we need to remove the `organization` from the url to distinguish it from
+    // `credentials`
+    String organizationCanIgnore = matcher.group("organizationCanIgnore");
+    if (!isNullOrEmpty(organization) && organization.equals(organizationCanIgnore)) {
+      url = url.replace(organizationCanIgnore + "@", "");
+    }
+
     return new AzureDevOpsUrl()
         .withHostName(azureDevOpsScmApiEndpointHost)
         .withProject(project)
@@ -88,6 +99,7 @@ public class AzureDevOpsURLParser {
         .withOrganization(organization)
         .withBranch(branch)
         .withTag(tag)
-        .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
+        .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .withUrl(url);
   }
 }

@@ -13,13 +13,7 @@ package org.eclipse.che.security.oauth;
 
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
-import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
-import com.google.api.client.auth.oauth2.AuthorizationCodeResponseUrl;
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.auth.oauth2.*;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -31,6 +25,8 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -158,7 +154,7 @@ public abstract class OAuthAuthenticator {
       }
       state.append(query);
     }
-    return state.toString();
+    return URLEncoder.encode(state.toString(), StandardCharsets.UTF_8);
   }
 
   protected String findRedirectUrl(URL requestUrl) {
@@ -200,17 +196,7 @@ public abstract class OAuthAuthenticator {
 
     try {
       TokenResponse tokenResponse =
-          flow.newTokenRequest(code)
-              .setRequestInitializer(
-                  request -> {
-                    if (request.getParser() == null) {
-                      request.setParser(flow.getJsonFactory().createJsonObjectParser());
-                    }
-                    request.getHeaders().setAccept(MediaType.APPLICATION_JSON);
-                  })
-              .setRedirectUri(findRedirectUrl(requestUrl))
-              .setScopes(scopes)
-              .execute();
+          getAuthorizationCodeTokenRequest(requestUrl, scopes, code).execute();
       String userId = getUserFromUrl(authorizationCodeResponseUrl);
       if (userId == null) {
         userId = EnvironmentContext.getCurrent().getSubject().getUserId();
@@ -220,6 +206,24 @@ public abstract class OAuthAuthenticator {
     } catch (IOException ioe) {
       throw new OAuthAuthenticationException(ioe.getMessage());
     }
+  }
+
+  /**
+   * Creates a new {@link AuthorizationCodeTokenRequest} for the given authorization code. Intended
+   * to be overridden by subclasses to customize the request.
+   */
+  protected AuthorizationCodeTokenRequest getAuthorizationCodeTokenRequest(
+      URL requestUrl, List<String> scopes, String code) {
+    return flow.newTokenRequest(code)
+        .setRequestInitializer(
+            request -> {
+              if (request.getParser() == null) {
+                request.setParser(flow.getJsonFactory().createJsonObjectParser());
+              }
+              request.getHeaders().setAccept(MediaType.APPLICATION_JSON);
+            })
+        .setRedirectUri(findRedirectUrl(requestUrl))
+        .setScopes(scopes);
   }
 
   /**

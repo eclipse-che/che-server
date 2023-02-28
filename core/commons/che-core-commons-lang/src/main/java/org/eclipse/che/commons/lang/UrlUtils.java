@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,6 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,7 +73,9 @@ public class UrlUtils {
       if (end < 0) {
         end = query.length();
       }
-      return query.substring(start + 6, end);
+
+      // {@code OAuthAuthenticator} encodes state parameter in UTF-8
+      return URLDecoder.decode(query.substring(start + 6, end), StandardCharsets.UTF_8);
     }
     return null;
   }

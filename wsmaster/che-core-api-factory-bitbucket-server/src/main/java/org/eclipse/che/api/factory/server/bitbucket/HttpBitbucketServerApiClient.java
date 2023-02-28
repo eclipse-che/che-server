@@ -151,7 +151,14 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketUser getUser(String slug, @Nullable String token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("./rest/api/1.0/users/" + slug);
+    URI uri;
+    try {
+      uri = serverUri.resolve("./rest/api/1.0/users/" + slug);
+    } catch (IllegalArgumentException e) {
+      // if the slug contains invalid characters (space for example) then the URI will be invalid
+      throw new ScmCommunicationException(e.getMessage(), e);
+    }
+
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers(

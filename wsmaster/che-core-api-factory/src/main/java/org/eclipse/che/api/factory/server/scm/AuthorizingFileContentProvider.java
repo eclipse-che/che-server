@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.scm;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -78,11 +79,13 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         // try to authenticate for the given URL
         String authorization;
         if (isNullOrEmpty(credentials)) {
+          PersonalAccessToken token =
+              personalAccessTokenManager.getAndStore(remoteFactoryUrl.getHostName());
           authorization =
               formatAuthorization(
-                  personalAccessTokenManager
-                      .getAndStore(remoteFactoryUrl.getHostName())
-                      .getToken());
+                  token.getToken(),
+                  token.getScmTokenName() == null
+                      || !token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
         } else {
           authorization = getCredentialsAuthorization(credentials);
         }
@@ -159,7 +162,14 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     return requestURL;
   }
 
-  protected String formatAuthorization(String token) {
+  /**
+   * Formats authorization header value.
+   *
+   * @param token personal access token
+   * @param isPAT true if token is personal access token, false if it is OAuth token
+   * @return formatted authorization header value
+   */
+  protected String formatAuthorization(String token, boolean isPAT) {
     return "Bearer " + token;
   }
 

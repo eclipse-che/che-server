@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.scm;
 
-import java.util.Objects;
+import com.google.common.base.Objects;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 
 /**
@@ -22,6 +23,9 @@ public class PersonalAccessToken {
 
   private final String scmProviderUrl;
   private final String scmUserName;
+  /** Organization that user belongs to. Can be null if user is not a member of any organization. */
+  @Nullable private final String scmOrganization;
+
   private final String scmUserId;
   private final String scmTokenName;
   private final String scmTokenId;
@@ -31,12 +35,14 @@ public class PersonalAccessToken {
   public PersonalAccessToken(
       String scmProviderUrl,
       String cheUserId,
+      String scmOrganization,
       String scmUserName,
       String scmUserId,
       String scmTokenName,
       String scmTokenId,
       String token) {
     this.scmProviderUrl = scmProviderUrl;
+    this.scmOrganization = scmOrganization;
     this.scmUserName = scmUserName;
     this.scmUserId = scmUserId;
     this.scmTokenName = scmTokenName;
@@ -45,10 +51,22 @@ public class PersonalAccessToken {
     this.cheUserId = cheUserId;
   }
 
+  public PersonalAccessToken(
+      String scmProviderUrl,
+      String cheUserId,
+      String scmUserName,
+      String scmUserId,
+      String scmTokenName,
+      String scmTokenId,
+      String token) {
+    this(scmProviderUrl, cheUserId, null, scmUserName, scmUserId, scmTokenName, scmTokenId, token);
+  }
+
   public PersonalAccessToken(String scmProviderUrl, String scmUserName, String token) {
     this(
         scmProviderUrl,
         EnvironmentContext.getCurrent().getSubject().getUserId(),
+        null,
         scmUserName,
         null,
         null,
@@ -84,33 +102,50 @@ public class PersonalAccessToken {
     return cheUserId;
   }
 
+  @Nullable
+  public String getScmOrganization() {
+    return scmOrganization;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PersonalAccessToken that = (PersonalAccessToken) o;
-    return Objects.equals(scmProviderUrl, that.scmProviderUrl)
-        && Objects.equals(scmUserName, that.scmUserName)
-        && Objects.equals(scmUserId, that.scmUserId)
-        && Objects.equals(scmTokenName, that.scmTokenName)
-        && Objects.equals(scmTokenId, that.scmTokenId)
-        && Objects.equals(token, that.token)
-        && Objects.equals(cheUserId, that.cheUserId);
+    return Objects.equal(scmProviderUrl, that.scmProviderUrl)
+        && Objects.equal(scmUserName, that.scmUserName)
+        && Objects.equal(scmOrganization, that.scmOrganization)
+        && Objects.equal(scmUserId, that.scmUserId)
+        && Objects.equal(scmTokenName, that.scmTokenName)
+        && Objects.equal(scmTokenId, that.scmTokenId)
+        && Objects.equal(token, that.token)
+        && Objects.equal(cheUserId, that.cheUserId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        scmProviderUrl, scmUserName, scmUserId, scmTokenName, scmTokenId, token, cheUserId);
+    return Objects.hashCode(
+        scmProviderUrl,
+        scmUserName,
+        scmOrganization,
+        scmUserId,
+        scmTokenName,
+        scmTokenId,
+        token,
+        cheUserId);
   }
 
   @Override
   public String toString() {
     return "PersonalAccessToken{"
-        + "scmProviderUrl="
+        + "scmProviderUrl='"
         + scmProviderUrl
+        + '\''
         + ", scmUserName='"
         + scmUserName
+        + '\''
+        + ", scmOrganization='"
+        + scmOrganization
         + '\''
         + ", scmUserId='"
         + scmUserId
@@ -126,7 +161,6 @@ public class PersonalAccessToken {
         + '\''
         + ", cheUserId='"
         + cheUserId
-        + '\''
         + '}';
   }
 }

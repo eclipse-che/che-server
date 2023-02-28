@@ -28,6 +28,7 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
+import org.eclipse.che.security.oauth.shared.User;
 
 /**
  * OAuth2 authenticator for Azure DevOps Service.
@@ -62,6 +63,11 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
             trimEnd(azureDevOpsApiEndpoint, '/'), API_VERSION);
     configure(
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
+  }
+
+  @Override
+  public User getUser(OAuthToken accessToken) throws OAuthAuthenticationException {
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   /**

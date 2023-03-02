@@ -160,6 +160,6 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   }
 
   private Boolean isValidScmServerUrl(String scmServerUrl) {
-    return trimEnd(scmServerUrl, '/').startsWith(azureDevOpsScmApiEndpoint);
+    return azureDevOpsScmApiEndpoint.equals(trimEnd(scmServerUrl, '/'));
   }
 }

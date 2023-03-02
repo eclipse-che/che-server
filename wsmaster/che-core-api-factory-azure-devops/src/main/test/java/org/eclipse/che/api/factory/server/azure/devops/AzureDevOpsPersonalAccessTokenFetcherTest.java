@@ -70,7 +70,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
     when(azureDevOpsApiClient.getUserWithOAuthToken(any())).thenReturn(azureDevOpsUser);
     when(azureDevOpsApiClient.getTokenScopes(any())).thenReturn(new String[]{"vso.code_full"});
 
-    PersonalAccessToken personalAccessToken = personalAccessTokenFetcher.fetchPersonalAccessToken(mock(Subject.class), "https://dev.azure.com/organization/project/_git/repository");
+    PersonalAccessToken personalAccessToken = personalAccessTokenFetcher.fetchPersonalAccessToken(mock(Subject.class), "https://dev.azure.com/");
 
     assertNotNull(personalAccessToken);
   }

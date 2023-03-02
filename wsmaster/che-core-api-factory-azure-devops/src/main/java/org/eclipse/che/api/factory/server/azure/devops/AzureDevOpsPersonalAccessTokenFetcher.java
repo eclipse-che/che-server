@@ -74,7 +74,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
-    if (isValidScmServerUrl(scmServerUrl)) {
+    if (!isValidScmServerUrl(scmServerUrl)) {
       LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
       return null;
     }
@@ -130,7 +130,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
   @Override
   public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken) {
-    if (isValidScmServerUrl(personalAccessToken.getScmProviderUrl())) {
+    if (!isValidScmServerUrl(personalAccessToken.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
       return Optional.empty();
     }

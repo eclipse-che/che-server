@@ -49,7 +49,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   private static final Logger LOG =
       LoggerFactory.getLogger(AzureDevOpsPersonalAccessTokenFetcher.class);
   private final String cheApiEndpoint;
-  private final String azureDevOpsApiEndpoint;
+  private final String azureDevOpsScmApiEndpoint;
   private final OAuthAPI oAuthAPI;
   private final String[] scopes;
 
@@ -58,12 +58,12 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   @Inject
   public AzureDevOpsPersonalAccessTokenFetcher(
       @Named("che.api") String cheApiEndpoint,
-      @Named("che.integration.azure.devops.api_endpoint") String azureDevOpsApiEndpoint,
+      @Named("che.integration.azure.devops.scm.api_endpoint") String azureDevOpsScmApiEndpoint,
       @Named("che.integration.azure.devops.application_scopes") String[] scopes,
       AzureDevOpsApiClient azureDevOpsApiClient,
       OAuthAPI oAuthAPI) {
     this.cheApiEndpoint = cheApiEndpoint;
-    this.azureDevOpsApiEndpoint = trimEnd(azureDevOpsApiEndpoint, '/');
+    this.azureDevOpsScmApiEndpoint = trimEnd(azureDevOpsScmApiEndpoint, '/');
     this.oAuthAPI = oAuthAPI;
     this.scopes = scopes;
     this.azureDevOpsApiClient = azureDevOpsApiClient;
@@ -96,7 +96,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
       if (valid.isEmpty()) {
         throw new ScmCommunicationException(
             "Unable to verify if current token is a valid Azure DevOps token.  Token's scm-url needs to be '"
-                + azureDevOpsApiEndpoint
+                + azureDevOpsScmApiEndpoint
                 + "' and was '"
                 + token.getScmProviderUrl()
                 + "'");
@@ -160,6 +160,6 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   }
 
   private Boolean isValidScmServerUrl(String scmServerUrl) {
-    return azureDevOpsApiEndpoint.equals(trimEnd(scmServerUrl, '/'));
+    return azureDevOpsScmApiEndpoint.equals(trimEnd(scmServerUrl, '/'));
   }
 }

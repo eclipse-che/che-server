@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
-import org.eclipse.che.commons.lang.NameGenerator;
 
 /**
  * Representation of Git Ssh URL, allowing to get details from it.
@@ -32,9 +31,7 @@ public class GitSshUrl extends DefaultFactoryUrl {
 
   private final List<String> devfileFilenames = new ArrayList<>();
 
-  protected GitSshUrl() {
-    this.repository = NameGenerator.generate("repo-", 5);
-  }
+  protected GitSshUrl() {}
 
   @Override
   public String getProviderName() {
@@ -102,5 +99,10 @@ public class GitSshUrl extends DefaultFactoryUrl {
 
   public String getRepository() {
     return repository;
+  }
+
+  public GitSshUrl withRepository(String repository) {
+    this.repository = repository;
+    return this;
   }
 }

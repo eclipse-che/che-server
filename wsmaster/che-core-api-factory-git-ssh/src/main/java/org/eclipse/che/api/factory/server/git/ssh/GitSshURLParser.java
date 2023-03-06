@@ -36,7 +36,7 @@ public class GitSshURLParser {
   @Inject
   public GitSshURLParser(DevfileFilenamesProvider devfileFilenamesProvider) {
     this.devfileFilenamesProvider = devfileFilenamesProvider;
-    this.gitSshPattern = compile("^git@(?<hostName>[^:]++):(.*)$");
+    this.gitSshPattern = compile("^git@(?<hostName>[^:]++):(.*)/(?<repoName>[^/]++)$");
   }
 
   public boolean isValid(@NotNull String url) {
@@ -51,9 +51,15 @@ public class GitSshURLParser {
     }
 
     String hostName = matcher.group("hostName");
+    String repoName = matcher.group("repoName");
+    if (repoName.endsWith(".git")) {
+      repoName = repoName.substring(0, repoName.length() - 4);
+    }
+
     return new GitSshUrl()
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withHostName(hostName)
+        .withRepository(repoName)
         .withRepositoryLocation(url)
         .withUrl(url);
   }

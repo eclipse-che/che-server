@@ -34,6 +34,10 @@ public class GitSshScmFileResolver implements ScmFileResolver {
     return gitSshURLParser.isValid(repository);
   }
 
+  /**
+   * There is no way to get a file content from a git repository via ssh protocol. So this method
+   * always returns an empty string. It allows to start a workspace from an empty devfile.
+   */
   @Override
   public String fileContent(@NotNull String repository, @NotNull String filePath) {
     return "";

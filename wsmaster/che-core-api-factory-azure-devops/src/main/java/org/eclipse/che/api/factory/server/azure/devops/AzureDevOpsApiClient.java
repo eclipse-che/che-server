@@ -52,15 +52,12 @@ public class AzureDevOpsApiClient {
 
   private final HttpClient httpClient;
   private final String azureDevOpsApiEndpoint;
-  private final String[] scopes;
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Inject
   public AzureDevOpsApiClient(
-      @Named("che.integration.azure.devops.api_endpoint") String azureDevOpsApiEndpoint,
-      @Named("che.integration.azure.devops.application_scopes") String[] scopes) {
-    this.scopes = scopes;
+      @Named("che.integration.azure.devops.api_endpoint") String azureDevOpsApiEndpoint) {
     this.azureDevOpsApiEndpoint = trimEnd(azureDevOpsApiEndpoint, '/');
     this.httpClient =
         HttpClient.newBuilder()

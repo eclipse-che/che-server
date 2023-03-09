@@ -126,16 +126,6 @@ public class AzureDevOpsApiClient {
         });
   }
 
-  /**
-   * Returns the scopes of the OAuth token. Consider using the REST API:
-   *
-   * <p>https://learn.microsoft.com/en-us/rest/api/azure/devops/tokens/pats/get?view=azure-devops-rest-7.0&tabs=HTTP
-   */
-  public String[] getTokenScopes(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    return scopes;
-  }
-
   private <T> T executeRequest(
       HttpClient httpClient,
       HttpRequest request,

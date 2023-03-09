@@ -123,6 +123,15 @@ public class BitbucketServerUrl extends DefaultFactoryUrl {
     return this;
   }
 
+  /**
+   * Gets user of this bitbucket server url
+   *
+   * @return the user part
+   */
+  public String getUser() {
+    return this.user;
+  }
+
   protected BitbucketServerUrl withUser(String user) {
     if (!isNullOrEmpty(user)) {
       this.user = user;

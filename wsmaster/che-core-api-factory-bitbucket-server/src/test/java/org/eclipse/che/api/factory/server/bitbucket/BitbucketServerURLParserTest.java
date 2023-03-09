@@ -73,9 +73,11 @@ public class BitbucketServerURLParserTest {
 
   /** Compare parsing */
   @Test(dataProvider = "parsing")
-  public void checkParsing(String url, String project, String repository, String branch) {
+  public void checkParsing(
+      String url, String user, String project, String repository, String branch) {
     BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url);
 
+    assertEquals(bitbucketServerUrl.getUser(), user);
     assertEquals(bitbucketServerUrl.getProject(), project);
     assertEquals(bitbucketServerUrl.getRepository(), repository);
     assertEquals(bitbucketServerUrl.getBranch(), branch);
@@ -123,8 +125,12 @@ public class BitbucketServerURLParserTest {
   @DataProvider(name = "UrlsProvider")
   public Object[][] urls() {
     return new Object[][] {
+      {"https://bitbucket.2mcl.com/scm/~user/repo.git"},
       {"https://bitbucket.2mcl.com/scm/project/test1.git"},
       {"https://bitbucket.2mcl.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch"},
+      {"https://bitbucket.2mcl.com/projects/project/repos/test1/browse"},
+      {"https://bitbucket.2mcl.com/users/user/repos/repo"},
+      {"https://bitbucket.2mcl.com/users/user/repos/repo/"},
       {"https://bbkt.com/scm/project/test1.git"},
     };
   }
@@ -132,19 +138,22 @@ public class BitbucketServerURLParserTest {
   @DataProvider(name = "parsing")
   public Object[][] expectedParsing() {
     return new Object[][] {
-      {"https://bitbucket.2mcl.com/scm/project/test1.git", "project", "test1", null},
+      {"https://bitbucket.2mcl.com/scm/project/test1.git", null, "project", "test1", null},
       {
         "https://bitbucket.2mcl.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch",
+        null,
         "project",
         "test1",
         "refs%2Fheads%2Fbranch"
       },
       {
         "https://bbkt.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch",
+        null,
         "project",
         "test1",
         "refs%2Fheads%2Fbranch"
-      }
+      },
+      {"https://bbkt.com/users/user/repos/repo/", "user", null, "repo", null}
     };
   }
 }

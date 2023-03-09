@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.git.ssh;
 
-import static org.eclipse.che.api.factory.shared-am.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 

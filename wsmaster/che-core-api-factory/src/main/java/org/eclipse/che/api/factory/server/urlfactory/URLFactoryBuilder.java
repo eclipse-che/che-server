@@ -135,9 +135,15 @@ public class URLFactoryBuilder {
       if (isNullOrEmpty(devfileYamlContent)) {
         return Optional.empty();
       }
-
       try {
         JsonNode parsedDevfile = devfileParser.parseYamlRaw(devfileYamlContent);
+        // We might have an html content in the parsed devfile, in case if the access is restricted,
+        // or if the URL points to a wrong resource.
+        try {
+          devfileVersionDetector.devfileVersion(parsedDevfile);
+        } catch (DevfileException e) {
+          throw new ApiException("Failed to fetch devfile");
+        }
         return Optional.of(
             createFactory(parsedDevfile, overrideProperties, fileContentProvider, location));
       } catch (OverrideParameterException e) {

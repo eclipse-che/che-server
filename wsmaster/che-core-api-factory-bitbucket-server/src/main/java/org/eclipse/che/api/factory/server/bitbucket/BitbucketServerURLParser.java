@@ -52,6 +52,7 @@ public class BitbucketServerURLParser {
       List.of(
           "^(?<host>%s)/scm/~(?<user>[^/]+)/(?<repo>.*).git$",
           "^(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?",
+          "^(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/?",
           "^(?<host>%s)/scm/(?<project>[^/~]+)/(?<repo>[^/]+).git",
           "^(?<host>%s)/projects/(?<project>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?");
   private final List<Pattern> bitbucketUrlPatterns = new ArrayList<>();

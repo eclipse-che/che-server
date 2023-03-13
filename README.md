@@ -1,6 +1,7 @@
 # What is Che server
 Che Server is a core component of the [Eclipse Che](https://github.com/eclipse/che/). This component is responsible for creation and managing of Che workspaces, but will some day be replaced by the [Dev Workspace Operator](https://github.com/devfile/devworkspace-operator). 
 
+
 # Project structure
 Che Server is mostly a Java web application deployed on a Apache Tomcat server in a container. 
 - ['pom.xml'](https://github.com/eclipse-che/che-server/tree/main/pom.xml) The root Maven module, that lists all dependencies and structure. 

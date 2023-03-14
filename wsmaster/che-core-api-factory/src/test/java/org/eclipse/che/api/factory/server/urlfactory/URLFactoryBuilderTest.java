@@ -21,6 +21,7 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -442,6 +443,22 @@ public class URLFactoryBuilderTest {
       if (e.getServiceError() instanceof ExtendedError)
         assertEquals(((ExtendedError) e.getServiceError()).getAttributes(), expectedAttributes);
     }
+  }
+
+  @Test(
+      expectedExceptions = ApiException.class,
+      expectedExceptionsMessageRegExp = "Failed to fetch devfile")
+  public void shouldThrowErrorOnUnsupportedDevfileContent()
+      throws ApiException, DevfileException, IOException {
+    JsonNode jsonNode = mock(JsonNode.class);
+    when(fileContentProvider.fetchContent(eq("location"))).thenReturn("unsupported content");
+    when(devfileParser.parseYamlRaw(eq("unsupported content"))).thenReturn(jsonNode);
+    when(devfileVersionDetector.devfileVersion(eq(jsonNode))).thenThrow(new DevfileException(""));
+    urlFactoryBuilder.createFactoryFromDevfile(
+        new DefaultFactoryUrl().withDevfileFileLocation("location"),
+        fileContentProvider,
+        emptyMap(),
+        false);
   }
 
   @DataProvider

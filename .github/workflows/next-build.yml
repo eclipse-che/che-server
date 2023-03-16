@@ -50,9 +50,6 @@ jobs:
           ./dockerfiles/build.sh --tag:next --sha-tag
     - name: Push docker images
       run: |
-        docker push quay.io/eclipse/che-endpoint-watcher:next
-        docker push quay.io/eclipse/che-endpoint-watcher:${{ steps.build.outputs.short_sha1 }}
-
         docker push quay.io/eclipse/che-keycloak:next
         docker push quay.io/eclipse/che-keycloak:${{ steps.build.outputs.short_sha1 }}
 

@@ -8,14 +8,12 @@ ORGANIZATION="eclipse"
 
  # KEEP RIGHT ORDER!!!
 DOCKER_FILES_LOCATIONS=(
-    che-server/dockerfiles/endpoint-watcher
     che-server/dockerfiles/keycloak
     che-server/dockerfiles/postgres
     che-server/dockerfiles/che
 )
 
 IMAGES_LIST=(
-    quay.io/eclipse/che-endpoint-watcher
     quay.io/eclipse/che-keycloak
     quay.io/eclipse/che-postgres
     quay.io/eclipse/che-server

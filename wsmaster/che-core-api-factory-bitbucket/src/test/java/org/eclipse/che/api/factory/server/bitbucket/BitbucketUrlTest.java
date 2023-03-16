@@ -15,6 +15,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -61,6 +62,14 @@ public class BitbucketUrlTest {
         iterator.next().location(), "https://bitbucket.org/eclipse/che/raw/HEAD/devfile.yaml");
 
     assertEquals(iterator.next().location(), "https://bitbucket.org/eclipse/che/raw/HEAD/foo.bar");
+  }
+
+  @Test
+  public void shouldReturnEmptyCredentials() {
+    // when
+    BitbucketUrl url = this.bitbucketURLParser.parse("https://user@bitbucket.org/eclipse/che");
+    // then
+    assertTrue(url.getCredentials().isEmpty());
   }
 
   /** Check the original repository */

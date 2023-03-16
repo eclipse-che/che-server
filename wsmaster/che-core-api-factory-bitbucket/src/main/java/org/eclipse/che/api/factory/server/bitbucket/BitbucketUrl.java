@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import com.google.common.base.Strings;
 import java.util.ArrayList;
@@ -145,6 +146,14 @@ public class BitbucketUrl extends DefaultFactoryUrl {
   @Override
   public String getHostName() {
     return "https://" + HOSTNAME;
+  }
+
+  @Override
+  public Optional<String> getCredentials() {
+    if (!isNullOrEmpty(username) && super.getUrl().getUserInfo().equals(username)) {
+      return Optional.empty();
+    }
+    return super.getCredentials();
   }
 
   /**

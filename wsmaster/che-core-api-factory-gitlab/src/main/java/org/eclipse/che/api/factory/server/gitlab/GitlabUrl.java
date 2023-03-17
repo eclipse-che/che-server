@@ -40,6 +40,10 @@ public class GitlabUrl extends DefaultFactoryUrl {
   /** Project part of the gitlab URL */
   private String project;
 
+  /**
+   * Incorporates subgroups in the project path of the gitlab URL. See details at:
+   * https://docs.gitlab.com/ee/user/group/subgroups/
+   */
   private String subGroups;
 
   /** Branch name */

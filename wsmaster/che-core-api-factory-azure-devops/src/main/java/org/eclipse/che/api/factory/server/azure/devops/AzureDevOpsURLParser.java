@@ -87,6 +87,7 @@ public class AzureDevOpsURLParser {
     // - https://<credentials>@<host>/<organization>/<project>/_git/<repoName>
     // For the first case we need to remove the `organization` from the url to distinguish it from
     // `credentials`
+    // TODO: return empty credentials like the BitBucketUrl
     String organizationCanIgnore = matcher.group("organizationCanIgnore");
     if (!isNullOrEmpty(organization) && organization.equals(organizationCanIgnore)) {
       url = url.replace(organizationCanIgnore + "@", "");

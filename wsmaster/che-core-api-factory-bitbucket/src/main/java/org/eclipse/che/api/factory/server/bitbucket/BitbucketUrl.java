@@ -147,6 +147,17 @@ public class BitbucketUrl extends DefaultFactoryUrl {
     return "https://" + HOSTNAME;
   }
 
+  @Override
+  public Optional<String> getCredentials() {
+    // Bitbucket repository URL may contain username e.g.
+    // https://<username>@bitbucket.org/<workspace_ID>/<repo_name>.git. If username is present, it
+    // can not be used as credentials. Moreover, we skip credentials for Bitbucket repository URl at
+    // all, because we do not support credentials in a repository URL. We only support credentials
+    // in a devfile URL, which is handled by the DefaultFactoryUrl class.
+    // Todo: add a new abstraction for divfile URL to be able to retrieve credentials separately.
+    return Optional.empty();
+  }
+
   /**
    * Provides location to the repository part of the full bitbucket URL.
    *

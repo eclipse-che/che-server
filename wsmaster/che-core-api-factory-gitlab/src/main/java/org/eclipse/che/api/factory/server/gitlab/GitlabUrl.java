@@ -25,8 +25,8 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
 /**
  * Representation of a gitlab URL, allowing to get details from it.
  *
- * <p>like https://gitlab.com/<username>/<repository>
- * https://gitlab.com/<username>/<repository>/-/tree/<branch>
+ * <p>like https://gitlab.com/path/to/repository or
+ * https://gitlab.com/path/to/repository/-/tree/<branch>
  *
  * @author Max Shaposhnyk
  */
@@ -37,14 +37,10 @@ public class GitlabUrl extends DefaultFactoryUrl {
   /** Hostname of the gitlab URL */
   private String hostName;
 
-  /** Username part of the gitlab URL */
-  private String username;
-
   /** Project part of the gitlab URL */
   private String project;
 
-  /** Repository part of the gitlab URL. */
-  private String repository;
+  private String subGroups;
 
   /** Branch name */
   private String branch;
@@ -81,20 +77,6 @@ public class GitlabUrl extends DefaultFactoryUrl {
   }
 
   /**
-   * Gets username of this gitlab url
-   *
-   * @return the username part
-   */
-  public String getUsername() {
-    return this.username;
-  }
-
-  public GitlabUrl withUsername(String userName) {
-    this.username = userName;
-    return this;
-  }
-
-  /**
    * Gets project of this bitbucket url
    *
    * @return the project part
@@ -103,22 +85,16 @@ public class GitlabUrl extends DefaultFactoryUrl {
     return this.project;
   }
 
-  public GitlabUrl withProject(String project) {
-    this.project = project;
-    return this;
+  public String getSubGroups() {
+    return subGroups;
   }
 
-  /**
-   * Gets repository of this gitlab url
-   *
-   * @return the repository part
-   */
-  public String getRepository() {
-    return this.repository;
-  }
+  protected GitlabUrl withSubGroups(String subGroups) {
+    this.subGroups = subGroups;
 
-  protected GitlabUrl withRepository(String repository) {
-    this.repository = repository;
+    String[] subGroupsItems = subGroups.split("/");
+    this.project =
+        subGroupsItems[subGroupsItems.length - 1]; // project (repository) name is the last item
     return this;
   }
 
@@ -204,7 +180,7 @@ public class GitlabUrl extends DefaultFactoryUrl {
             .add(hostName)
             .add("api/v4/projects")
             // use URL-encoded path to the project as a selector instead of id
-            .add(geProjectIdentifier())
+            .add(encode(subGroups, Charsets.UTF_8))
             .add("repository")
             .add("files")
             .add(encode(fileName, Charsets.UTF_8))
@@ -217,22 +193,12 @@ public class GitlabUrl extends DefaultFactoryUrl {
     return resultUrl;
   }
 
-  private String geProjectIdentifier() {
-    return repository != null
-        ? encode(username + "/" + project + "/" + repository, Charsets.UTF_8)
-        : encode(username + "/" + project, Charsets.UTF_8);
-  }
-
   /**
    * Provides location to the repository part of the full gitlab URL.
    *
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    if (repository == null) {
-      return hostName + "/" + this.username + "/" + this.project + ".git";
-    } else {
-      return hostName + "/" + this.username + "/" + this.project + "/" + repository + ".git";
-    }
+    return hostName + "/" + subGroups + ".git";
   }
 }

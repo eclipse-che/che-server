@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.gitlab;
 import static java.lang.String.format;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.regex.Pattern.compile;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.common.base.Splitter;
 import jakarta.validation.constraints.NotNull;
@@ -33,7 +34,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.lang.StringUtils;
 
 /**
  * Parser of String Gitlab URLs and provide {@link GitlabUrl} objects.
@@ -46,10 +46,9 @@ public class GitlabUrlParser {
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private static final List<String> gitlabUrlPatternTemplates =
       List.of(
-          "^(?<host>%s)/(?<user>[^/]++)/(?<project>[^./]++).git",
-          "^(?<host>%s)/(?<user>[^/]++)/(?<project>[^/]++)/(?<repository>[^.]++).git",
-          "^(?<host>%s)/(?<user>[^/]++)/(?<project>[^/]++)(/)?(?<repository>[^/]++)?(/)?",
-          "^(?<host>%s)/(?<user>[^/]++)/(?<project>[^/]++)(/)?(?<repository>[^/]++)?/-/tree/(?<branch>[^/]++)(/)?(?<subfolder>[^/]++)?");
+          "^(?<host>%s)/(?<subgroups>([^/]++/?)+)/-/tree/(?<branch>[^/]++)(/)?(?<subfolder>[^/]++)?",
+          "^(?<host>%s)/(?<subgroups>.*)"); // a wider one, should be the last in the
+  // list
   private final List<Pattern> gitlabUrlPatterns = new ArrayList<>();
   private static final String OAUTH_PROVIDER_NAME = "gitlab";
 
@@ -62,7 +61,7 @@ public class GitlabUrlParser {
     this.personalAccessTokenManager = personalAccessTokenManager;
     if (gitlabEndpoints != null) {
       for (String gitlabEndpoint : Splitter.on(",").split(gitlabEndpoints)) {
-        String trimmedEndpoint = StringUtils.trimEnd(gitlabEndpoint, '/');
+        String trimmedEndpoint = trimEnd(gitlabEndpoint, '/');
         for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
           gitlabUrlPatterns.add(compile(format(gitlabUrlPatternTemplate, trimmedEndpoint)));
         }
@@ -163,16 +162,13 @@ public class GitlabUrlParser {
 
   private GitlabUrl parse(Matcher matcher) {
     String host = matcher.group("host");
-    String userName = matcher.group("user");
-    String project = matcher.group("project");
-    String repository = null;
+    String subGroups = trimEnd(matcher.group("subgroups"), '/');
+    if (subGroups.endsWith(".git")) {
+      subGroups = subGroups.substring(0, subGroups.length() - 4);
+    }
+
     String branch = null;
     String subfolder = null;
-    try {
-      repository = matcher.group("repository");
-    } catch (IllegalArgumentException e) {
-      // ok no such group
-    }
     try {
       branch = matcher.group("branch");
     } catch (IllegalArgumentException e) {
@@ -186,9 +182,7 @@ public class GitlabUrlParser {
 
     return new GitlabUrl()
         .withHostName(host)
-        .withUsername(userName)
-        .withProject(project)
-        .withRepository(repository)
+        .withSubGroups(subGroups)
         .withBranch(branch)
         .withSubfolder(subfolder)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());

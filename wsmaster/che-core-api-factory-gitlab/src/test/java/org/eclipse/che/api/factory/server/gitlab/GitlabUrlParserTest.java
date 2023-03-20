@@ -72,12 +72,11 @@ public class GitlabUrlParserTest {
   /** Compare parsing */
   @Test(dataProvider = "parsing")
   public void checkParsing(
-      String url, String user, String project, String repository, String branch, String subfolder) {
+      String url, String project, String subGroups, String branch, String subfolder) {
     GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
 
-    assertEquals(gitlabUrl.getUsername(), user);
     assertEquals(gitlabUrl.getProject(), project);
-    assertEquals(gitlabUrl.getRepository(), repository);
+    assertEquals(gitlabUrl.getSubGroups(), subGroups);
     assertEquals(gitlabUrl.getBranch(), branch);
     assertEquals(gitlabUrl.getSubfolder(), subfolder);
   }
@@ -124,16 +123,31 @@ public class GitlabUrlParserTest {
   @DataProvider(name = "parsing")
   public Object[][] expectedParsing() {
     return new Object[][] {
-      {"https://gitlab1.com/user/project1.git", "user", "project1", null, null, null},
-      {"https://gitlab1.com/user/project/test1.git", "user", "project", "test1", null, null},
-      {"https://gitlab1.com/user/project/", "user", "project", null, null, null},
-      {"https://gitlab1.com/user/project/repo/", "user", "project", "repo", null, null},
-      {"https://gitlab1.com/user/project/-/tree/master/", "user", "project", null, "master", null},
+      {"https://gitlab1.com/user/project1.git", "project1", "user/project1", null, null},
+      {"https://gitlab1.com/user/project/test1.git", "test1", "user/project/test1", null, null},
+      {
+        "https://gitlab1.com/user/project/group1/group2/test1.git",
+        "test1",
+        "user/project/group1/group2/test1",
+        null,
+        null
+      },
+      {"https://gitlab1.com/user/project/", "project", "user/project", null, null},
+      {"https://gitlab1.com/user/project/repo/", "repo", "user/project/repo", null, null},
+      {
+        "https://gitlab1.com/user/project/-/tree/master/", "project", "user/project", "master", null
+      },
       {
         "https://gitlab1.com/user/project/repo/-/tree/foo/subfolder",
-        "user",
-        "project",
         "repo",
+        "user/project/repo",
+        "foo",
+        "subfolder"
+      },
+      {
+        "https://gitlab1.com/user/project/group1/group2/repo/-/tree/foo/subfolder",
+        "repo",
+        "user/project/group1/group2/repo",
         "foo",
         "subfolder"
       }

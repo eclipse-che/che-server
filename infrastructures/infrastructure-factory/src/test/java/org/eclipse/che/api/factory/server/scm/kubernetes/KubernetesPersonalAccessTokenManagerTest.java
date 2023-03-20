@@ -38,6 +38,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
@@ -81,6 +82,39 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new KubernetesPersonalAccessTokenManager(
             namespaceFactory, clientFactory, scmPersonalAccessTokenFetcher, gitCredentialManager);
     assertNotNull(this.personalAccessTokenManager);
+  }
+
+  @Test
+  public void shouldTrimBlankCharsInToken() throws Exception {
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(true);
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString(" token_value \n".getBytes(UTF_8)));
+
+    ObjectMeta meta1 =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(ANNOTATION_CHE_USERID, "user", ANNOTATION_SCM_URL, "http://host1"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(meta1).withData(data).build();
+
+    when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(secret));
+
+    // when
+    PersonalAccessToken token =
+        personalAccessTokenManager
+            .get(new SubjectImpl("user", "user", "t1", false), "http://host1")
+            .get();
+
+    // then
+    assertEquals(token.getToken(), "token_value");
   }
 
   @Test

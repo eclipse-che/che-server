@@ -153,7 +153,9 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           String trimmedUrl = StringUtils.trimEnd(annotations.get(ANNOTATION_SCM_URL), '/');
           if (annotations.get(ANNOTATION_CHE_USERID).equals(cheUser.getUserId())
               && trimmedUrl.equals(StringUtils.trimEnd(scmServerUrl, '/'))) {
-            PersonalAccessToken token =
+            String token =
+                new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
+            PersonalAccessToken personalAccessToken =
                 new PersonalAccessToken(
                     trimmedUrl,
                     annotations.get(ANNOTATION_CHE_USERID),
@@ -162,9 +164,9 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                     annotations.get(ANNOTATION_SCM_USERID),
                     annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME),
                     annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID),
-                    new String(Base64.getDecoder().decode(secret.getData().get("token"))));
-            if (scmPersonalAccessTokenFetcher.isValid(token)) {
-              return Optional.of(token);
+                    token);
+            if (scmPersonalAccessTokenFetcher.isValid(personalAccessToken)) {
+              return Optional.of(personalAccessToken);
             } else {
               // Removing token that is no longer valid. If several tokens exist the next one could
               // be valid. If no valid token can be found, the caller should react in the same way

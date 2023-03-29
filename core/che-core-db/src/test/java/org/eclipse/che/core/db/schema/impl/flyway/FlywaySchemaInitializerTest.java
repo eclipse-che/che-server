@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -113,7 +113,6 @@ public class FlywaySchemaInitializerTest {
 
   @Test
   public void executesOnlyThoseMigrationsWhichGoAfterBaseline() throws Exception {
-    execQuery("CREATE TABLE test (id INT, text TEXT, PRIMARY KEY (id));");
     createScript("1.0/1__init.sql", "CREATE TABLE test (id INT, text TEXT, PRIMARY KEY (id));");
     createScript(
         "2.0/1__add_data.sql",

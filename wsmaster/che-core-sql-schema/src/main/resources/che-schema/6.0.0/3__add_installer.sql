@@ -36,7 +36,7 @@ ALTER TABLE installer_dependencies ADD CONSTRAINT unq_installer_dependency UNIQU
 CREATE TABLE installer_properties (
     inst_int_id         BIGINT       NOT NULL,
     name                VARCHAR(255) NOT NULL,
-    value               VARCHAR(255) NOT NULL
+    value_param         VARCHAR(255) NOT NULL
 );
 --constraints
 ALTER TABLE installer_properties ADD CONSTRAINT fk_installer_properties_inst_int_id FOREIGN KEY (inst_int_id) REFERENCES installer (internal_id);

@@ -22,7 +22,7 @@ CREATE TABLE devfile (
 -- devfile attributes
 CREATE TABLE devfile_attributes (
     devfile_id     BIGINT,
-    value          TEXT,
+    value_param    TEXT,
     name           VARCHAR(255)
 );
 -- constraints & indexes
@@ -67,7 +67,7 @@ CREATE UNIQUE INDEX index_devfile_command_name ON devfile_command (devfile_id, n
 -- devfile command attributes
 CREATE TABLE devfile_command_attributes (
     devfile_command_id     BIGINT,
-    value                  TEXT,
+    value_param            TEXT,
     name                   VARCHAR(255)
 );
 -- constraints & indexes
@@ -159,7 +159,7 @@ CREATE UNIQUE INDEX index_devfile_endpoint_component_name ON devfile_endpoint (d
 -- devfile endpoint attributes
 CREATE TABLE devfile_endpoint_attributes (
     devfile_endpoint_id    BIGINT,
-    value                  TEXT,
+    value_param            TEXT,
     name                   VARCHAR(255)
 );
 -- constraints & indexes
@@ -171,7 +171,7 @@ CREATE UNIQUE INDEX index_devfile_endpoint_attributes_name ON devfile_endpoint_a
 CREATE TABLE devfile_env (
     id                    BIGINT       NOT NULL,
     name                  VARCHAR(255) NOT NULL,
-    value                 TEXT,
+    value_param           TEXT,
     devfile_component_id  BIGINT,
 
     PRIMARY KEY (id)

@@ -10,4 +10,4 @@
 --   Red Hat, Inc. - initial API and implementation
 --
 
-ALTER TABLE projectattribute_values MODIFY COLUMN `values` MEDIUMTEXT;
+ALTER TABLE projectattribute_values MODIFY COLUMN `values_param` MEDIUMTEXT;

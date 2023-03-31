@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -46,6 +46,7 @@ import org.eclipse.che.multiuser.resource.shared.dto.FreeResourcesLimitDto;
  *
  * @author Sergii Leschenko
  */
+@Deprecated
 @Tag(name = "resource-free", description = "Free resources limit REST API")
 @Path("/resource/free")
 public class FreeResourcesLimitService extends Service {

@@ -133,7 +133,7 @@
         <net.java.dev.jna.version>4.1.0</net.java.dev.jna.version>
         <org.antlr.st4.version>4.3.1</org.antlr.st4.version>
         <org.apache.commons.lang3.version>3.12.0</org.apache.commons.lang3.version>
-        <org.apache.httpcomponents.httpclient.version>4.5.13</org.apache.httpcomponents.httpclient.version>
+        <org.apache.httpcomponents.httpclient.version>4.5.14</org.apache.httpcomponents.httpclient.version>
         <org.apache.httpcomponents.httpcore.version>4.4.15</org.apache.httpcomponents.httpcore.version>
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.3.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
         <org.apache.maven.plugin-tools.plugin-annotations.version>3.6.2</org.apache.maven.plugin-tools.plugin-annotations.version>

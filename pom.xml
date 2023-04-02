@@ -129,7 +129,7 @@
         <maven.supported-versions>[3.6.2,)</maven.supported-versions>
         <maven.surefire.plugin.version>3.0.0-M5</maven.surefire.plugin.version>
         <maven.war.plugin.version>3.3.2</maven.war.plugin.version>
-        <mysql.connector.version>8.0.27</mysql.connector.version>
+        <mysql.connector.version>8.0.30</mysql.connector.version>
         <net.java.dev.jna.version>4.1.0</net.java.dev.jna.version>
         <org.antlr.st4.version>4.3.1</org.antlr.st4.version>
         <org.apache.commons.lang3.version>3.12.0</org.apache.commons.lang3.version>

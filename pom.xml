@@ -90,7 +90,7 @@
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
         <jakarta.json.version>2.0.0</jakarta.json.version>
         <jakarta.mail.version>2.0.1</jakarta.mail.version>
-        <jakarta.servlet.version>5.0.0</jakarta.servlet.version>
+        <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
         <jakarta.validatio-api.version>3.0.0</jakarta.validatio-api.version>
         <jakarta.websocket.version>2.0.0</jakarta.websocket.version>
         <jakarta.ws.rs.version>3.0.0</jakarta.ws.rs.version>

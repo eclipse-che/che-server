@@ -68,7 +68,7 @@ public class BitbucketServerUserDataFetcherTest {
     // when
     GitUserData gitUserData = fetcher.fetchGitUserData();
     // then
-    assertEquals(gitUserData.getScmUsername(), "user");
+    assertEquals(gitUserData.getScmUsername(), "User");
     assertEquals(gitUserData.getScmUserEmail(), "user@users.com");
   }
 }

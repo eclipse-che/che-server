@@ -73,7 +73,7 @@ public class BitbucketUserDataFetcher implements GitUserDataFetcher {
       BitbucketUserEmail emailResponse = bitbucketApiClient.getEmail(oAuthToken.getToken());
       String email =
           emailResponse.getValues().length > 0 ? emailResponse.getValues()[0].getEmail() : "";
-      return new GitUserData(user.getName(), email);
+      return new GitUserData(user.getDisplayName(), email);
     } catch (UnauthorizedException e) {
       Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
       throw new ScmUnauthorizedException(

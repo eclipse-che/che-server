@@ -81,7 +81,7 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
       if (bitbucketServerApiClient.isConnected(bitbucketServerEndpoint)) {
         try {
           BitbucketUser user = bitbucketServerApiClient.getUser(cheSubject);
-          return new GitUserData(user.getName(), user.getEmailAddress());
+          return new GitUserData(user.getDisplayName(), user.getEmailAddress());
         } catch (ScmItemNotFoundException e) {
           throw new ScmCommunicationException(e.getMessage(), e);
         }
@@ -102,7 +102,7 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
 
       BitbucketUser user =
           httpBitbucketServerApiClient.getUser(token.getScmUserName(), token.getToken());
-      return new GitUserData(user.getName(), user.getEmailAddress());
+      return new GitUserData(user.getDisplayName(), user.getEmailAddress());
     }
 
     throw new ScmCommunicationException("Failed to retrieve git user data from Bitbucket");

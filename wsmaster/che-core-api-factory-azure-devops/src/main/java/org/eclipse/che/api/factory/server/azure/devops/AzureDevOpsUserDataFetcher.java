@@ -16,75 +16,52 @@ import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.getAut
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
-import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.UnauthorizedException;
-import org.eclipse.che.api.factory.server.scm.GitUserData;
-import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
+import org.eclipse.che.api.factory.server.scm.*;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /**
  * Azure DevOps user data fetcher.
  *
  * @author Anatolii Bazko
  */
-public class AzureDevOpsUserDataFetcher implements GitUserDataFetcher {
+public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
   private final String cheApiEndpoint;
   private final String[] scopes;
-  private final OAuthAPI oAuthAPI;
-
   private final AzureDevOpsApiClient azureDevOpsApiClient;
 
   @Inject
   public AzureDevOpsUserDataFetcher(
-      OAuthAPI oAuthAPI,
+      OAuthTokenFetcher oAuthTokenFetcher,
+      PersonalAccessTokenManager personalAccessTokenManager,
       AzureDevOpsApiClient azureDevOpsApiClient,
       @Named("che.api") String cheApiEndpoint,
       @Named("che.integration.azure.devops.application_scopes") String[] scopes) {
+    super(AzureDevOps.PROVIDER_NAME, personalAccessTokenManager, oAuthTokenFetcher);
     this.scopes = scopes;
     this.cheApiEndpoint = cheApiEndpoint;
-    this.oAuthAPI = oAuthAPI;
     this.azureDevOpsApiClient = azureDevOpsApiClient;
   }
 
   @Override
-  public GitUserData fetchGitUserData() throws ScmUnauthorizedException, ScmCommunicationException {
-    OAuthToken oAuthToken;
-    try {
-      oAuthToken = oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME);
-      AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(oAuthToken.getToken());
-      return new GitUserData(user.getDisplayName(), user.getEmailAddress());
-    } catch (UnauthorizedException e) {
-      Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
-      throw new ScmUnauthorizedException(
-          cheSubject.getUserName()
-              + " is not authorized in "
-              + AzureDevOps.PROVIDER_NAME
-              + " OAuth provider.",
-          AzureDevOps.PROVIDER_NAME,
-          "2.0",
-          getLocalAuthenticateUrl());
-    } catch (NotFoundException
-        | ServerException
-        | ForbiddenException
-        | BadRequestException
-        | ScmItemNotFoundException
-        | ScmBadRequestException
-        | ConflictException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
-    }
+  protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+    AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(oAuthToken.getToken());
+    return new GitUserData(user.getDisplayName(), user.getEmailAddress());
   }
 
-  private String getLocalAuthenticateUrl() {
+  @Override
+  protected GitUserData fetchGitUserDataWithPersonalAccessToken(
+      PersonalAccessToken personalAccessToken)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+    AzureDevOpsUser user =
+        azureDevOpsApiClient.getUserWithPAT(
+            personalAccessToken.getToken(), personalAccessToken.getScmOrganization());
+    return new GitUserData(user.getDisplayName(), user.getEmailAddress());
+  }
+
+  protected String getLocalAuthenticateUrl() {
     return cheApiEndpoint + getAuthenticateUrlPath(scopes);
   }
 }

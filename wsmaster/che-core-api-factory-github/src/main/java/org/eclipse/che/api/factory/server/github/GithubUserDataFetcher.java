@@ -17,28 +17,15 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
-import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.UnauthorizedException;
-import org.eclipse.che.api.factory.server.scm.GitUserData;
-import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
+import org.eclipse.che.api.factory.server.scm.*;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** GitHub user data retriever. */
-public class GithubUserDataFetcher implements GitUserDataFetcher {
+public class GithubUserDataFetcher extends AbstractGitUserDataFetcher {
   private final String apiEndpoint;
-  private final OAuthAPI oAuthAPI;
-
   /** GitHub API client. */
   private final GithubApiClient githubApiClient;
 
@@ -53,48 +40,42 @@ public class GithubUserDataFetcher implements GitUserDataFetcher {
   public GithubUserDataFetcher(
       @Named("che.api") String apiEndpoint,
       @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
-      OAuthAPI oAuthAPI) {
-    this(apiEndpoint, oAuthAPI, new GithubApiClient(oauthEndpoint));
+      OAuthTokenFetcher oAuthTokenFetcher,
+      PersonalAccessTokenManager personalAccessTokenManager) {
+    this(
+        apiEndpoint,
+        oAuthTokenFetcher,
+        personalAccessTokenManager,
+        new GithubApiClient(oauthEndpoint));
   }
 
   /** Constructor used for testing only. */
   public GithubUserDataFetcher(
-      String apiEndpoint, OAuthAPI oAuthAPI, GithubApiClient githubApiClient) {
-    this.apiEndpoint = apiEndpoint;
-    this.oAuthAPI = oAuthAPI;
+      String apiEndpoint,
+      OAuthTokenFetcher oAuthTokenFetcher,
+      PersonalAccessTokenManager personalAccessTokenManager,
+      GithubApiClient githubApiClient) {
+    super(OAUTH_PROVIDER_NAME, personalAccessTokenManager, oAuthTokenFetcher);
     this.githubApiClient = githubApiClient;
+    this.apiEndpoint = apiEndpoint;
   }
 
   @Override
-  public GitUserData fetchGitUserData() throws ScmUnauthorizedException, ScmCommunicationException {
-    OAuthToken oAuthToken;
-    try {
-      oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      // Find the user associated to the OAuth token by querying the GitHub API.
-      GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
-      return new GitUserData(user.getName(), user.getEmail());
-    } catch (UnauthorizedException e) {
-      Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
-      throw new ScmUnauthorizedException(
-          cheSubject.getUserName()
-              + " is not authorized in "
-              + OAUTH_PROVIDER_NAME
-              + " OAuth provider.",
-          OAUTH_PROVIDER_NAME,
-          "2.0",
-          getLocalAuthenticateUrl());
-    } catch (NotFoundException
-        | ServerException
-        | ForbiddenException
-        | BadRequestException
-        | ScmItemNotFoundException
-        | ScmBadRequestException
-        | ConflictException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
-    }
+  protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+    GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
+    return new GitUserData(user.getName(), user.getEmail());
   }
 
-  private String getLocalAuthenticateUrl() {
+  @Override
+  protected GitUserData fetchGitUserDataWithPersonalAccessToken(
+      PersonalAccessToken personalAccessToken)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+    GithubUser user = githubApiClient.getUser(personalAccessToken.getToken());
+    return new GitUserData(user.getName(), user.getEmail());
+  }
+
+  protected String getLocalAuthenticateUrl() {
     return apiEndpoint
         + "/oauth/authenticate?oauth_provider="
         + OAUTH_PROVIDER_NAME

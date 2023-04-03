@@ -33,7 +33,10 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 
-/** Bitbucket user data retriever. */
+/**
+ * Bitbucket user data retriever. TODO: extends {@code AbstractGitUserDataFetcher} when we support
+ * personal access tokens for BitBucket.
+ */
 public class BitbucketUserDataFetcher implements GitUserDataFetcher {
   private final String apiEndpoint;
   private final OAuthAPI oAuthAPI;

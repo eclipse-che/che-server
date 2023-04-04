@@ -133,6 +133,7 @@ public class AzureDevOpsURLParserTest {
         null,
         "MyTag"
       },
+      {"https://MyOrg@dev.azure.com/MyOrg/_git/MyRepo", "MyOrg", null, "MyRepo", null, null},
     };
   }
 

@@ -22,8 +22,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
-import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
@@ -57,7 +56,11 @@ public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
       try {
         gitUserData = fetcher.fetchGitUserData();
         break;
-      } catch (ScmUnauthorizedException | ScmCommunicationException e) {
+      } catch (ScmUnauthorizedException
+          | ScmCommunicationException
+          | ScmConfigurationPersistenceException
+          | ScmItemNotFoundException
+          | ScmBadRequestException e) {
         LOG.debug("No GitUserDataFetcher is configured. " + e.getMessage());
       }
     }

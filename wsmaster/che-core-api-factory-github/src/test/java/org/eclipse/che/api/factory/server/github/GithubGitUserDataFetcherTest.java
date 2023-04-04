@@ -28,7 +28,8 @@ import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
-import org.eclipse.che.security.oauth.OAuthAPI;
+import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
@@ -39,7 +40,8 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class GithubGitUserDataFetcherTest {
 
-  @Mock OAuthAPI oAuthAPI;
+  @Mock OAuthTokenFetcher oAuthTokenFetcher;
+  @Mock PersonalAccessTokenManager personalAccessTokenManager;
   GithubUserDataFetcher githubGUDFetcher;
 
   final int httpPort = 3301;
@@ -57,7 +59,10 @@ public class GithubGitUserDataFetcherTest {
     wireMock = new WireMock("localhost", httpPort);
     githubGUDFetcher =
         new GithubUserDataFetcher(
-            "http://che.api", oAuthAPI, new GithubApiClient(wireMockServer.url("/")));
+            "http://che.api",
+            oAuthTokenFetcher,
+            personalAccessTokenManager,
+            new GithubApiClient(wireMockServer.url("/")));
     stubFor(
         get(urlEqualTo("/api/v3/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
@@ -76,7 +81,7 @@ public class GithubGitUserDataFetcherTest {
   @Test
   public void shouldFetchGitUserData() throws Exception {
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("repo");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthTokenFetcher.getToken(anyString())).thenReturn(oAuthToken);
 
     GitUserData gitUserData = githubGUDFetcher.fetchGitUserData();
 

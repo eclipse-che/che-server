@@ -25,8 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
-import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
@@ -72,7 +71,8 @@ public class GitconfigUserdataConfiguratorTest {
   @Test
   public void createUserdataConfigmapWhenDoesNotExist()
       throws ScmCommunicationException, ScmUnauthorizedException, InfrastructureException,
-          InterruptedException {
+          InterruptedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
+          ScmBadRequestException {
     // given
     when(gitUserDataFetcher.fetchGitUserData()).thenReturn(new GitUserData("gitUser", "gitEmail"));
 
@@ -93,7 +93,8 @@ public class GitconfigUserdataConfiguratorTest {
   @Test
   public void doNothingWhenSecretAlreadyExists()
       throws InfrastructureException, InterruptedException, ScmCommunicationException,
-          ScmUnauthorizedException {
+          ScmUnauthorizedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
+          ScmBadRequestException {
     // given
     when(gitUserDataFetcher.fetchGitUserData()).thenReturn(new GitUserData("gitUser", "gitEmail"));
     Map<String, String> annotations =

@@ -16,7 +16,11 @@ import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.getAut
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
-import org.eclipse.che.api.factory.server.scm.*;
+import org.eclipse.che.api.factory.server.scm.AbstractGitUserDataFetcher;
+import org.eclipse.che.api.factory.server.scm.GitUserData;
+import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;

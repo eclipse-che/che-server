@@ -51,7 +51,7 @@ public class AzureDevOpsURLParser {
     this.azureDevOpsPattern =
         compile(
             format(
-                "^https://(?<organizationCanIgnore>[^@]++)?@?%s/(?<organization>[^/]++)/?(?<project>[^/]++)/_git/"
+                "^https://(?<organizationCanIgnore>[^@]++)?@?%s/(?<organization>[^/]++)/((?<project>[^/]++)/)?_git/"
                     + "(?<repoName>[^?]++)"
                     + "([?&]path=(?<path>[^&]++))?"
                     + "([?&]version=GT(?<tag>[^&]++))?"
@@ -67,17 +67,20 @@ public class AzureDevOpsURLParser {
   public AzureDevOpsUrl parse(String url) {
     Matcher matcher = azureDevOpsPattern.matcher(url);
     if (!matcher.matches()) {
-      throw new IllegalArgumentException(
-          format(
-              "The given url %s is not a valid. It should start with https://<organization>@%s/ or https://%s/",
-              url, azureDevOpsScmApiEndpointHost, azureDevOpsScmApiEndpointHost));
+      throw new IllegalArgumentException(format("The given url %s is not a valid.", url));
     }
 
-    String project = matcher.group("project");
+    String project = null;
+    try {
+      project = matcher.group("project");
+    } catch (IllegalArgumentException e) {
+    }
+
     String repoName = matcher.group("repoName");
     if (repoName.endsWith(".git")) {
       repoName = repoName.substring(0, repoName.length() - 4);
     }
+
     String organization = matcher.group("organization");
     String branch = matcher.group("branch");
     String tag = matcher.group("tag");

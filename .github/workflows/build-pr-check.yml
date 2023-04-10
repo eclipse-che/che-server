@@ -42,9 +42,6 @@ jobs:
         git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
         git add ./shared-files/pr-image-tag
         git commit -m "Update PR_IMAGE_TAG"
-    - name: Push changes
-      if: github.event_name == 'pull_request'
-      run: git push origin HEAD:${{ github.head_ref }}
     - name: Check all properties have description
       run: ./check_properties_description.sh
     - name: Set up JDK 11
@@ -73,7 +70,10 @@ jobs:
       if: github.event_name == 'pull_request'
       id: build
       run: |
-        ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}
+        ./dockerfiles/build.sh --tag="${{ env.PR_IMAGE_TAG }}"
     - name: Push docker images
       if: github.event_name == 'pull_request'
       run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}
+    - name: Push changes
+      if: github.event_name == 'pull_request'
+      run: git push origin HEAD:${{ github.head_ref }}

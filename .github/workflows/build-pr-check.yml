@@ -9,7 +9,15 @@
 
 name: build-pr-check
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - 'shared-files/pr-image-tag'
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   build:
@@ -23,7 +31,7 @@ jobs:
       run: mkdir -p ./shared-files
     - name: Set and write PR_IMAGE_TAG
       if: github.event_name == 'pull_request'
-      run: echo "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
+      run: echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
     - name: Commit changes
       if: github.event_name == 'pull_request'
       env:

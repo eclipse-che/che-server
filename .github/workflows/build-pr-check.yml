@@ -18,10 +18,14 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
+    - name: Create directory for shared files
+      if: github.event_name == 'pull_request'
+      run: mkdir -p ./shared-files
     - name: Set and write PR_IMAGE_TAG
       if: github.event_name == 'pull_request'
-      run: echo "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ${{ github.workspace }}/shared-files/pr-image-tag
+      run: echo "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
     - name: Commit changes
+      if: github.event_name == 'pull_request'
       env:
         GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
         GIT_COMMITTER_EMAIL: ${{ github.event.pull_request.user.email }}

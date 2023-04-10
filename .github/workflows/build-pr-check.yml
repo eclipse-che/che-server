@@ -30,6 +30,8 @@ jobs:
         GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
         GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
       run: |
+        git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
+        git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
         git add ./shared-files/pr-image-tag
         git commit -m "Update PR_IMAGE_TAG"
     - name: Check all properties have description

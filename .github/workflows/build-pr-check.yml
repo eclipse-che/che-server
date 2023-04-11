@@ -28,6 +28,7 @@ jobs:
       run: |
         mkdir -p ./shared-files
         echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
+        echo "export PR_IMAGE_TAG=pr-${{ github.event.number }}" >> $GITHUB_ENV
         git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
         git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
         git add ./shared-files/pr-image-tag

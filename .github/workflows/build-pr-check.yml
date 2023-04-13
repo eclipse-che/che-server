@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright (c) 2023 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,5 +26,30 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
         cache: 'maven'
+    - name: Login to docker.io
+      if: github.event_name == 'pull_request'
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        registry: docker.io
+    - name: Login to quay.io
+      if: github.event_name == 'pull_request'
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+        registry: quay.io
     - name: Build with Maven
       run: mvn -B clean install -U -Pintegration
+    - name: Load PR_IMAGE_TAG
+      if: github.event_name == 'pull_request'
+      run: |
+        source ./shared-files/pr-image-tag
+        echo "PR_IMAGE_TAG=${PR_IMAGE_TAG}" >> $GITHUB_ENV
+    - name: Build docker images
+      if: github.event_name == 'pull_request'
+      run: ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}
+    - name: Push docker images
+      if: github.event_name == 'pull_request'
+      run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}

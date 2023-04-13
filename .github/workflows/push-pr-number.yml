@@ -10,8 +10,8 @@
 name: Set PR number to image tag
 
 on:
-  pull_request_target:
-    types: [opened]
+  pull_request:
+    types: [opened, reopened]
 
 jobs:
   build:

@@ -130,13 +130,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://bitbucket.com",
-            "cheUser",
-            "username",
-            "userId",
-            "token-name",
-            "tid-24",
-            "token123");
+            "https://bitbucket.com", "cheUser", "username", "token-name", "tid-24", "token123");
 
     // when
     personalAccessTokenManager.save(token);

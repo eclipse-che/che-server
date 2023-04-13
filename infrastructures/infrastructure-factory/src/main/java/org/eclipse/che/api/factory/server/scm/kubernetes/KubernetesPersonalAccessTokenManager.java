@@ -58,7 +58,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public static final String NAME_PATTERN = "personal-access-token-";
 
   public static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
-  public static final String ANNOTATION_SCM_USERID = "che.eclipse.org/scm-userid";
   public static final String ANNOTATION_SCM_USERNAME = "che.eclipse.org/scm-username";
   public static final String ANNOTATION_SCM_ORGANIZATION = "che.eclipse.org/scm-organization";
   public static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID =
@@ -96,7 +95,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
               .withAnnotations(
                   new ImmutableMap.Builder<String, String>()
                       .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
-                      .put(ANNOTATION_SCM_USERID, personalAccessToken.getScmUserId())
                       .put(ANNOTATION_SCM_USERNAME, personalAccessToken.getScmUserName())
                       .put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl())
                       .put(
@@ -161,7 +159,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                     annotations.get(ANNOTATION_CHE_USERID),
                     annotations.get(ANNOTATION_SCM_ORGANIZATION),
                     annotations.get(ANNOTATION_SCM_USERNAME),
-                    annotations.get(ANNOTATION_SCM_USERID),
                     annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME),
                     annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID),
                     token);

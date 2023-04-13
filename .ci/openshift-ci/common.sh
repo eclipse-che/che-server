@@ -20,6 +20,7 @@ source shared-files/pr-image-tag
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}
 export CHE_SERVER_IMAGE=${CHE_SERVER_IMAGE:-"quay.io/eclipse/che-server:${PR_IMAGE_TAG}"}
 export ARTIFACTS_DIR=${ARTIFACT_DIR:-"/tmp/artifacts"}
+export CHE_FORWARDED_PORT="8081"
 export OCP_ADMIN_USER_NAME=${OCP_ADMIN_USER_NAME:-"admin"}
 export OCP_NON_ADMIN_USER_NAME=${OCP_NON_ADMIN_USER_NAME:-"user"}
 export OCP_LOGIN_PASSWORD=${OCP_LOGIN_PASSWORD:-"passw"}
@@ -72,9 +73,12 @@ deployChe() {
 
 # this command starts port forwarding between the local machine and the che-host service in the OpenShift cluster.
 forwardPortToService() {
-  CHE_FORWARDED_PORT="8081"
   oc port-forward service/che-host ${CHE_FORWARDED_PORT}:8080 -n ${CHE_NAMESPACE} &
   sleep 3s
+}
+
+killProcessByPort() {
+  fuser -k ${CHE_FORWARDED_PORT}/tcp
 }
 
 requestFactoryResolverGitRepoUrl() {
@@ -82,7 +86,7 @@ requestFactoryResolverGitRepoUrl() {
   CLUSTER_ACCESS_TOKEN=$(oc whoami -t)
 
   curl -i -X 'POST' \
-    http://localhost:8081/api/factory/resolver \
+    http://localhost:${CHE_FORWARDED_PORT}/api/factory/resolver \
     -H 'accept: */*' \
     -H "Authorization: Bearer ${CLUSTER_ACCESS_TOKEN}" \
     -H 'Content-Type: application/json' \
@@ -187,6 +191,7 @@ deleteTestWorkspace() {
 # Catch the finish of the job and write logs in artifacts.
 catchFinish() {
   local RESULT=$?
+  killProcessByPort
   if [ "$RESULT" != "0" ]; then
     set +e
     collectEclipseCheLogs

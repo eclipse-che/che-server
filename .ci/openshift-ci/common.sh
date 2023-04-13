@@ -188,6 +188,12 @@ deleteTestWorkspace() {
   oc delete dw ${WS_NAME} -n ${USER_PROJECT_NAME}
 }
 
+# setup Personal Access Token Secret for the <user> namespace
+setupPersonalAccessToken() {
+  oc project ${USER_PROJECT_NAME}
+  userId=$(oc get secret user-profile -o jsonpath='{.data.id}' | base64 -d)
+}
+
 # Catch the finish of the job and write logs in artifacts.
 catchFinish() {
   local RESULT=$?

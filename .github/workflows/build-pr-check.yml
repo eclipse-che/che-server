@@ -11,9 +11,6 @@ name: build-pr-check
 
 on: [push, pull_request]
 
-import:
-  - path: push-pr-number.yml
-
 jobs:
   check-format:
     runs-on: ubuntu-22.04
@@ -24,7 +21,7 @@ jobs:
         run: |
           echo "Code formatting check passed"
   build:
-    needs: [set-pr-number, check-format]
+    needs: [Set PR number, check-format]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3

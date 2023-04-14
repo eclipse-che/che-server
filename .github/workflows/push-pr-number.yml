@@ -14,8 +14,7 @@ on:
     types: [opened, reopened]
 
 jobs:
-  name: set-pr-number
-  build:
+  set-pr-number:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3

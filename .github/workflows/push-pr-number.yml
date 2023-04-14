@@ -21,6 +21,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Write the PR number of the image tag to the file
+      id: set-pr-number
       env:
         GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
         GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com

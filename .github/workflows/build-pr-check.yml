@@ -12,16 +12,28 @@ name: build-pr-check
 on: [push, pull_request]
 
 jobs:
-  check-format:
+  set-pr-number:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Check format
+      - uses: actions/checkout@v3
+      - name: Set PR number
+        env:
+          GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
+          GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
         run: |
-          echo "Code formatting check passed"
+          mkdir -p ./shared-files
+          if [ -f ./shared-files/pr-image-tag ] && [ $(cat ./shared-files/pr-image-tag) = "pr-${{ github.event.number }}" ]; then
+            echo "File already exists with correct value. Skipping write."
+          else
+            echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
+            git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
+            git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
+            git add ./shared-files/pr-image-tag
+            git commit -m "Set PR_IMAGE_TAG"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
   build:
-    needs: [set-pr-number, check-format]
+    needs: [set-pr-number]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3

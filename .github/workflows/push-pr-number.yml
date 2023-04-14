@@ -11,7 +11,7 @@ name: set-pr-number
 
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened]
 
 jobs:
   set-pr-number:

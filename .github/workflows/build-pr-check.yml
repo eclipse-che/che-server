@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set PR number
+        if: github.event_name == 'pull_request'
         env:
           GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
           GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com

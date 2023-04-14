@@ -14,7 +14,7 @@ on:
     types: [opened, reopened]
 
 jobs:
-  build:
+  build PR number:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3

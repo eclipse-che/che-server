@@ -11,7 +11,7 @@ name: build-pr-check
 
 on: [push, pull_request]
 
-imports:
+import:
   - path: push-pr-number.yml
 
 jobs:

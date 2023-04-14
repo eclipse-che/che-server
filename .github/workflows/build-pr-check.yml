@@ -11,6 +11,9 @@ name: build-pr-check
 
 on: [push, pull_request]
 
+imports:
+  - path: push-pr-number.yml
+
 jobs:
   check-format:
     runs-on: ubuntu-22.04

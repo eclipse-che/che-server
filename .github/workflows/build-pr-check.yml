@@ -23,7 +23,7 @@ jobs:
           GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
         run: |
           mkdir -p ./shared-files
-          if [ -f ./shared-files/pr-image-tag ] && [ $(cat ./shared-files/pr-image-tag) = "pr-${{ github.event.number }}" ]; then
+          if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
             echo "File already exists with correct value. Skipping write."
           else
             echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag

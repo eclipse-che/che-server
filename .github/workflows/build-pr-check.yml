@@ -7,50 +7,69 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-name: build-pr-check
+ame: build-pr-check
 
-on:
-  pull_request:
-    branches: ['*']
+on: [push, pull_request]
 
 jobs:
-  build:
+  set-pr-number:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Check all properties have description
-      run: ./check_properties_description.sh
-    - name: Set up JDK 11
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '11'
-        cache: 'maven'
-    - name: Login to docker.io
-      if: github.event_name == 'pull_request'
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
-        registry: docker.io
-    - name: Login to quay.io
-      if: github.event_name == 'pull_request'
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.QUAY_USERNAME }}
-        password: ${{ secrets.QUAY_PASSWORD }}
-        registry: quay.io
-    - name: Build with Maven
-      run: mvn -B clean install -U -Pintegration
-    - name: Load PR_IMAGE_TAG
-      run: |
-        source ./shared-files/pr-image-tag
-        echo "PR_IMAGE_TAG=${PR_IMAGE_TAG}" >> $GITHUB_ENV
-    - name: Build docker images
-      id: build
-      run: |
-        ./dockerfiles/build.sh --tag:"${{ env.PR_IMAGE_TAG }}"
-    - name: Push docker images
-      run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}
+      - uses: actions/checkout@v3
+      - name: Set PR number
+        if: github.event_name == 'pull_request'
+        env:
+          GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
+          GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
+        run: |
+          mkdir -p ./shared-files
+          if [ -f ./shared-files/pr-image-tag ] && [ $(cat ./shared-files/pr-image-tag) = "pr-${{ github.event.number }}" ]; then
+            echo "File already exists with correct value. Skipping write."
+          else
+            echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
+            git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
+            git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
+            git add ./shared-files/pr-image-tag
+            git commit -m "Set PR_IMAGE_TAG"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+  build:
+    needs: [set-pr-number]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check all properties have description
+        run: ./check_properties_description.sh
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+      - name: Login to docker.io
+        if: github.event_name == 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          registry: docker.io
+      - name: Login to quay.io
+        if: github.event_name == 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+          registry: quay.io
+      - name: Build with Maven
+        run: mvn -B clean install -U -Pintegration
+      - name: Load PR_IMAGE_TAG
+        if: github.event_name == 'pull_request'
+        run: |
+          source ./shared-files/pr-image-tag
+          echo "PR_IMAGE_TAG=${PR_IMAGE_TAG}" >> $GITHUB_ENV
+      - name: Build docker images
+        if: github.event_name == 'pull_request'
+        run: ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}
+      - name: Push docker images
+        if: github.event_name == 'pull_request'
+        run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}

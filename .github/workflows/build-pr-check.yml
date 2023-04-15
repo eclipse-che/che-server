@@ -7,7 +7,7 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 
-ame: build-pr-check
+name: build-pr-check
 
 on: [push, pull_request]
 

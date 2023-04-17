@@ -71,8 +71,11 @@ public class BitbucketApiClientTest {
         user.getId(),
         "bitbucket-user_id_123",
         "Bitbucket user id was not parsed properly by client");
+    assertEquals(user.getName(), "user", "Bitbucket user name was not parsed properly by client");
     assertEquals(
-        user.getName(), "Bitbucket User", "Bitbucket user name was not parsed properly by client");
+        user.getDisplayName(),
+        "Bitbucket User",
+        "Bitbucket user display name was not parsed properly by client");
   }
 
   @Test

@@ -18,10 +18,21 @@ Che Server is mostly a Java web application deployed on a Apache Tomcat server i
 - JDK Version 11
 - Podman or Docker (required for running integration tests)
 
-# Build and debug
-Run `mvn clean install` to build 
-Activate a faster profile build by adding `-Pfast`
-To debug, run `mvn clean install -X` and connect your IDE to the debug port
+# Sources build
+Run `mvn clean install` to build. Activate a faster profile build by adding `-Pfast`
+
+# Image build and push
+1. Go to the `dockerfiles` directory.
+2. Run `./build.sh`.
+3. Tag the **che-server** image with your account `docker tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
+4. Push the **che-server** image to your account `docker push <docker registry>/<your account>/che-server:next`.
+
+# Debug
+1. Deploy Che to [an openshift cluster](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-openshift-using-cli/) or [minikube](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-minikube/). Use the previously built image: `chectl server:start --platform=<openshift / minikube> --cheimage=<docker registry>/<your account>/che-server:next`  
+2. Enable local debug of Eclipse Che server: `chectl server:debug`.
+3. In your IDE create a new Remote JVM Debug configuration on `localhost:8000`.
+4. Hit a breakpoint in the code and activate the debug configuration.
+
 
 # CI
 There are several [GitHub Actions](https://github.com/eclipse-che/che-server/actions) workflows implemented for this repository:
@@ -52,7 +63,7 @@ Downstream builds can be found at the link below, which is _internal to Red Hat_
 # Join the community
 
 The Eclipse Che community is globally reachable through public chat rooms, mailing list and weekly calls.
-See https://www.eclipse.org/che/docs/che-7/overview/introduction-to-eclipse-che/#_joining_the_community
+See https://www.eclipse.org/che/docs/stable/overview/introduction-to-eclipse-che/#_joining_the_community
 
 ## Report issues
 

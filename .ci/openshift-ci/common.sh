@@ -15,7 +15,7 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-git fetch origin
+git fetch
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 

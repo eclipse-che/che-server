@@ -1,17 +1,23 @@
 # What is Che server
-Che Server is a core component of the [Eclipse Che](https://github.com/eclipse/che/). This component is responsible for creation and managing of Che workspaces, but will some day be replaced by the [Dev Workspace Operator](https://github.com/devfile/devworkspace-operator). 
+Che Server provides an Api to retrieve devfile content from the given repositories such as GitHub GitLab Bitbucket and Azure.
 
 # Project structure
-Che Server is mostly a Java web application deployed on a Apache Tomcat server in a container. 
-- ['pom.xml'](https://github.com/eclipse-che/che-server/tree/main/pom.xml) The root Maven module, that lists all dependencies and structure. 
-- ['assembly'](https://github.com/eclipse-che/che-server/tree/main/assembly) - module for final assemblies of Che web applications
-- ['dockerfiles'](https://github.com/eclipse-che/che-server/tree/main/dockerfiles) - directory contains image Dockerfile for Che Server, as well as additional images.
-- ['core'](https://github.com/eclipse-che/che-server/tree/main/core) - core and utility modules for Che.
-- ['wsmaster'](https://github.com/eclipse-che/che-server/tree/main/wsmaster) - primary modules of the Che Server API.
-- ['multiuser'](https://github.com/eclipse-che/che-server/tree/main/multiuser) - modules related to multiuser implementation of Che.
-- ['infrastructure'](https://github.com/eclipse-che/che-server/tree/main/infrastructure) - implementations for the underlying infrastructure, on which Che is running (Kubernetes, Openshift, etc.)
-- ['deploy'](https://github.com/eclipse-che/che-server/tree/main/deploy) - deployment files for Helm installation.
-- ['typescript-dto'](https://github.com/eclipse-che/che-server/tree/main/typescript-dto) module, that provides DTO objects for typescript projects that may depend on Che Server, such as Che Theia.
+Che Server is mostly a Java web application deployed on an Apache Tomcat server in a container. The relevant modules are:     
+### oAuth1 / oAuth2 API implementations
+- wsmaster/che-core-api-auth
+- wsmaster/che-core-api-azure-devops
+- wsmaster/che-core-api-bitbucket
+- wsmaster/che-core-api-github
+- wsmaster/che-core-api-gitlab
+### Factory flow implementations
+- wsmaster/che-core-api-factory-azure-devops
+- wsmaster/che-core-api-factory-bitbucket
+- wsmaster/che-core-api-factory-bitbucket-server
+- wsmaster/che-core-api-factory-github
+- wsmaster/che-core-api-factory-gitlab
+- wsmaster/che-core-api-factory-shared
+
+Other modules are deprecated and will be removed in the future.
 
 # Build requirements
 - Apache Maven 3.6.3 or Higher

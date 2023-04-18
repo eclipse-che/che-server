@@ -15,7 +15,9 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-source shared-files/pr-image-tag
+git fetch origin
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}
 export CHE_SERVER_IMAGE=${CHE_SERVER_IMAGE:-"quay.io/eclipse/che-server:${PR_IMAGE_TAG}"}

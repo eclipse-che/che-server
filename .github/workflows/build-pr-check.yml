@@ -11,6 +11,9 @@ name: build-pr-check
 
 on: [push, pull_request]
 
+env:
+  PR_IMAGE_TAG: pr-${{ github.event.number }}
+
 jobs:
   set-pr-number:
     runs-on: ubuntu-22.04
@@ -19,25 +22,34 @@ jobs:
       - name: Set PR number
         if: github.event_name == 'pull_request'
         env:
+          BRANCH_NAME: ${{ github.head_ref }}
           GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
           GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
         run: |
+          git fetch origin
+          REMOTE_BRANCH_EXISTS=$(git ls-remote --heads origin pr-number-${{ env.BRANCH_NAME }})
+          git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
+          git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
           mkdir -p ./shared-files
-          if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
-            echo "File already exists with correct value. Skipping write."
-          else
-            echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
-            git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
-            git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
+          if [[ -z "${REMOTE_BRANCH_EXISTS}" ]]; then
+            git checkout -b pr-number-${{ env.BRANCH_NAME }}
+            echo -n "PR_IMAGE_TAG=${{ env.PR_IMAGE_TAG }}" > ./shared-files/pr-image-tag
             git add ./shared-files/pr-image-tag
             git commit -m "Set PR_IMAGE_TAG"
-            git push origin HEAD:${{ github.head_ref }}
+            git push origin HEAD:pr-number-${{ env.BRANCH_NAME }}
+          else
+            git checkout pr-number-${{ env.BRANCH_NAME }}
+            if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
+                echo "File already exists with correct value. Skipping write."
+            fi
           fi
   build:
     needs: [set-pr-number]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Check all properties have description
         run: ./check_properties_description.sh
       - name: Set up JDK 11
@@ -62,11 +74,6 @@ jobs:
           registry: quay.io
       - name: Build with Maven
         run: mvn -B clean install -U -Pintegration
-      - name: Load PR_IMAGE_TAG
-        if: github.event_name == 'pull_request'
-        run: |
-          source ./shared-files/pr-image-tag
-          echo "PR_IMAGE_TAG=${PR_IMAGE_TAG}" >> $GITHUB_ENV
       - name: Build docker images
         if: github.event_name == 'pull_request'
         run: ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}

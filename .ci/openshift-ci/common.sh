@@ -16,6 +16,9 @@ set -e
 set -o pipefail
 
 git branch
+git remote add origin https://github.com/eclipse-che/che-server.git
+git fetch
+git branch
 BRANCH_NAME=$(echo $SOURCE_REF | sed 's#refs/heads/##')
 PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 

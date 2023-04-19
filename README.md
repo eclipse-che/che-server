@@ -30,7 +30,7 @@ Other modules are deprecated and will be removed in the future.
 - Podman or Docker (required for running integration tests)
 
 # Sources build
-Run `mvn clean install` to build. Activate a faster profile build by adding `-Pfast`
+Run `mvn clean install` to build. Activate a faster profile build by adding `-Pfast`.
 
 # Image build and push
 1. Go to the `dockerfiles` directory.

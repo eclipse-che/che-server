@@ -4,7 +4,7 @@ hosted on GitHub, GitLab, Bitbucket, and Microsoft Azure Repos.
 
 # Project structure
 Che Server is mostly a Java web application deployed on an Apache Tomcat server in a container. The relevant modules are:     
-### oAuth1 / oAuth2 API implementations
+### OAuth1 / OAuth2 API implementations
 - wsmaster/che-core-api-auth
 - wsmaster/che-core-api-azure-devops
 - wsmaster/che-core-api-bitbucket

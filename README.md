@@ -74,7 +74,7 @@ Downstream builds can be found at the link below, which is _internal to Red Hat_
 # Join the community
 
 The Eclipse Che community is globally reachable through public chat rooms, mailing list and weekly calls.
-See https://www.eclipse.org/che/docs/stable/overview/introduction-to-eclipse-che/#_joining_the_community
+See the Eclipse Che Documentation about [how you can join our community](https://www.eclipse.org/che/docs/stable/overview/introduction-to-eclipse-che/#_joining_the_community).
 
 ## Report issues
 

@@ -19,7 +19,8 @@ git branch
 git remote add origin https://github.com/eclipse-che/che-server.git
 git fetch
 git branch
-BRANCH_NAME=$(echo $SOURCE_REF | sed 's#refs/heads/##')
+PR_COMMIT=$(echo $PULL_PULL_SHA | cut -c1-7)
+BRANCH_NAME=$(git branch --contains $PR_COMMIT | grep -v 'detached' | awk '{print $NF}')
 PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}

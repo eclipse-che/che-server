@@ -15,12 +15,7 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-git branch
-git remote add origin https://github.com/eclipse-che/che-server.git
-git fetch
-git branch
-PR_COMMIT=$(echo $PULL_PULL_SHA | cut -c1-7)
-BRANCH_NAME=$(git branch --contains $PR_COMMIT | grep -v 'detached' | awk '{print $NF}')
+echo $PULL_PULL_SHA
 PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}

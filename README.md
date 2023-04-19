@@ -36,7 +36,7 @@ Run `mvn clean install` to build. Activate a faster profile build by adding `-Pf
 1. Go to the `dockerfiles` directory.
 2. Run `./build.sh`.
 3. Tag the **che-server** image with your account: `docker tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
-4. Push the **che-server** image to your account `docker push <docker registry>/<your account>/che-server:next`.
+4. Push the **che-server** image to your account: `docker push <docker registry>/<your account>/che-server:next`.
 
 # Debug
 1. Deploy Che to [an openshift cluster](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-openshift-using-cli/) or [minikube](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-minikube/). Use the previously built image: `chectl server:start --platform=<openshift / minikube> --cheimage=<docker registry>/<your account>/che-server:next`  

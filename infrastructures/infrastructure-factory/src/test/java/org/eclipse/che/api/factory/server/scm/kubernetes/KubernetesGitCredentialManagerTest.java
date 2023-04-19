@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -93,13 +93,7 @@ public class KubernetesGitCredentialManagerTest {
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://bitbucket.com",
-            "cheUser",
-            "username",
-            "userId",
-            "token-name",
-            "tid-23434",
-            "token123");
+            "https://bitbucket.com", "cheUser", "username", "token-name", "tid-23434", "token123");
 
     // when
     kubernetesGitCredentialManager.createOrReplace(token);
@@ -132,7 +126,6 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com",
             "cheUser",
             "username",
-            "userId",
             "oauth2-token-name",
             "tid-23434",
             "token123");
@@ -158,7 +151,6 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com:5648",
             "cheUser",
             "username",
-            "userId",
             "token-name",
             "tid-23434",
             "token123");

@@ -90,7 +90,6 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
               scmServerUrl,
               cheSubject.getUserId(),
               user.getName(),
-              user.getId(),
               NameGenerator.generate(OAUTH_PROVIDER_NAME, 5),
               NameGenerator.generate("id-", 5),
               oAuthToken.getToken());

@@ -41,7 +41,7 @@ Run `mvn clean install` to build. Activate a faster profile build by adding `-Pf
 # Debug
 1. Deploy Che to a [Red Hat OpenShift](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-openshift-using-cli/) or [Minikube](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-minikube/) cluster by using a previously built image: `chectl server:start --platform=<openshift / minikube> --cheimage=<docker registry>/<your account>/che-server:next`.
 2. Enable local debug of Eclipse Che server: `chectl server:debug`.
-3. In your IDE create a new Remote JVM Debug configuration on `localhost:8000`.
+3. In your IDE, create a new Remote JVM Debug configuration on `localhost:8000`.
 4. Hit a breakpoint in the code and activate the debug configuration.
 
 

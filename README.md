@@ -1,5 +1,5 @@
 # What is Che server
-Che Server provides an Api to retrieve devfile content from the given repositories such as GitHub GitLab Bitbucket and Azure.
+Che Server provides an API to retrieve devfile content from repositories hosted on GitHub, GitLab, Bitbucket, and Microsoft Azure Repos.
 Apart from that Che Server provides an Api to provision Kubernetes namespaces.
 
 # Project structure

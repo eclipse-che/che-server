@@ -15,7 +15,7 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-echo $PULL_PULL_SHA
+PULL_REQUEST_NUM=$(cat ${ARTIFACT_DIR}/started.json | jq -r '.pull')
 PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}

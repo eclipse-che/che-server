@@ -26,7 +26,7 @@ Other modules are deprecated and will be removed in the future.
 
 # Build requirements
 - Apache Maven 3.6.3 or later
-- JDK Version 11
+- JDK 11
 - Podman or Docker (required for running integration tests)
 
 # Sources build

@@ -35,7 +35,7 @@ Run `mvn clean install` to build. Activate a faster profile build by adding `-Pf
 # Image build and push
 1. Go to the `dockerfiles` directory.
 2. Run `./build.sh`.
-3. Tag the **che-server** image with your account `docker tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
+3. Tag the **che-server** image with your account: `docker tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
 4. Push the **che-server** image to your account `docker push <docker registry>/<your account>/che-server:next`.
 
 # Debug

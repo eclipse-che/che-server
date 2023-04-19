@@ -25,7 +25,7 @@ Che Server is mostly a Java web application deployed on an Apache Tomcat server 
 Other modules are deprecated and will be removed in the future.
 
 # Build requirements
-- Apache Maven 3.6.3 or Higher
+- Apache Maven 3.6.3 or later
 - JDK Version 11
 - Podman or Docker (required for running integration tests)
 

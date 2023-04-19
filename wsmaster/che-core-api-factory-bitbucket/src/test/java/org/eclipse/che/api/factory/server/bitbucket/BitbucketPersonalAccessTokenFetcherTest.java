@@ -87,7 +87,6 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             "https://bitbucket.org/",
             "cheUserId",
             "scmUserName",
-            "scmUserId",
             "scmTokenName",
             "scmTokenId",
             bitbucketOauthToken);
@@ -169,7 +168,6 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             "https://bitbucket.org",
             "cheUser",
             "username",
-            "123456789",
             "token-name",
             "tid-23434",
             bitbucketOauthToken);
@@ -194,7 +192,6 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             "https://bitbucket.org",
             "cheUser",
             "username",
-            "123456789",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             bitbucketOauthToken);
@@ -211,7 +208,6 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             "https://bitbucket.org",
             "cheUser",
             "username",
-            "123456789",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             bitbucketOauthToken);

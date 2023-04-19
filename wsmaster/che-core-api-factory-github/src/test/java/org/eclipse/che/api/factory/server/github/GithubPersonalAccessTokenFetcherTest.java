@@ -91,7 +91,6 @@ public class GithubPersonalAccessTokenFetcherTest {
             "https://github.com/",
             "cheUserId",
             "scmUserName",
-            "scmUserId",
             "scmTokenName",
             "scmTokenId",
             githubOauthToken);
@@ -203,8 +202,7 @@ public class GithubPersonalAccessTokenFetcherTest {
         new PersonalAccessToken(
             wireMockServer.url("/"),
             "cheUser",
-            "username",
-            "123456789",
+            "github-user",
             "token-name",
             "tid-23434",
             githubOauthToken);
@@ -230,7 +228,6 @@ public class GithubPersonalAccessTokenFetcherTest {
             wireMockServer.url("/"),
             "cheUser",
             "username",
-            "123456789",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             githubOauthToken);
@@ -247,7 +244,6 @@ public class GithubPersonalAccessTokenFetcherTest {
             wireMockServer.url("/"),
             "cheUser",
             "username",
-            "123456789",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             githubOauthToken);

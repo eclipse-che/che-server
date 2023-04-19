@@ -87,7 +87,6 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
               scmServerUrl,
               cheSubject.getUserId(),
               user.getEmailAddress(),
-              user.getId(),
               NameGenerator.generate(OAUTH_2_PREFIX, 5),
               NameGenerator.generate("id-", 5),
               oAuthToken.getToken());
@@ -144,7 +143,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
             azureDevOpsApiClient.getUserWithPAT(
                 personalAccessToken.getToken(), personalAccessToken.getScmOrganization());
       }
-      return Optional.of(personalAccessToken.getScmUserId().equals(user.getId()));
+      return Optional.of(personalAccessToken.getScmUserName().equals(user.getEmailAddress()));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.of(Boolean.FALSE);
     }

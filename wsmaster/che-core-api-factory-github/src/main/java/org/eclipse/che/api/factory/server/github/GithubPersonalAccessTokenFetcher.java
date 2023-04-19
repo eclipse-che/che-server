@@ -157,7 +157,6 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
               scmServerUrl,
               cheSubject.getUserId(),
               user.getLogin(),
-              Long.toString(user.getId()),
               NameGenerator.generate(OAUTH_2_PREFIX, 5),
               NameGenerator.generate("id-", 5),
               oAuthToken.getToken());
@@ -212,7 +211,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
       } else {
         // No REST API for PAT-s in Github found yet. Just try to do some action.
         GithubUser user = githubApiClient.getUser(personalAccessToken.getToken());
-        if (personalAccessToken.getScmUserId().equals(Long.toString(user.getId()))) {
+        if (personalAccessToken.getScmUserName().equals(user.getLogin())) {
           return Optional.of(Boolean.TRUE);
         } else {
           return Optional.of(Boolean.FALSE);

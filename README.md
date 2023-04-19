@@ -1,6 +1,6 @@
 # What is Che server
-Che Server provides an API to retrieve devfile content from repositories hosted on GitHub, GitLab, Bitbucket, and Microsoft Azure Repos.
-Apart from that Che Server provides an Api to provision Kubernetes namespaces.
+Che Server provides an API for managing Kubernetes namespaces, and to retrieve devfile content from repositories,
+hosted on GitHub, GitLab, Bitbucket, and Microsoft Azure Repos.
 
 # Project structure
 Che Server is mostly a Java web application deployed on an Apache Tomcat server in a container. The relevant modules are:     
@@ -19,6 +19,7 @@ Che Server is mostly a Java web application deployed on an Apache Tomcat server 
 - wsmaster/che-core-api-factory-shared
 ### Kubernetes namespace provisioning
 - infrastructures/kubernetes
+- infrastructure/openshift
 - infrastructures/infrastructure-factory
 
 Other modules are deprecated and will be removed in the future.

@@ -15,14 +15,6 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-ls
-cd ${ARTIFACT_DIR}
-ls -la
-cd ../${OPENSHIFT_CI}
-ls -la
-cd ../${SHARED_DIR}
-ls -la
-
 PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}

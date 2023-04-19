@@ -23,6 +23,12 @@ export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://chepullreq1@bitbucket.org/c
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}"/common.sh
 
+ls
+cd ${ARTIFACT_DIR}
+ls
+cd root
+ls
+
 trap "catchFinish" EXIT SIGINT
 
 setupTestEnvironment

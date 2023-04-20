@@ -15,24 +15,7 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-echo "Content of console.url"
-cat ${SHARED_DIR}/console.url
-
-echo "Content of custom-links.txt"
-cat ${SHARED_DIR}/custom-links.txt
-
-git remote add origin https://github.com/eclipse-che/che-server.git
-git fetch
-
-echo ${PULL_NUMBER}
-echo ${PULL_BASE_REF}
-echo ${PULL_BASE_SHA}
-echo ${PULL_SOURCE_REF}
-
-PR_COMMIT=$(echo ${PULL_PULL_SHA} | cut -c1-7)
-BRANCH=$(git branch --contains ${PR_COMMIT})
-BRANCH_NAME="che#21753"
-PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
+PR_IMAGE_TAG="pr-${PULL_NUMBER}"
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}
 export CHE_SERVER_IMAGE=${CHE_SERVER_IMAGE:-"quay.io/eclipse/che-server:${PR_IMAGE_TAG}"}

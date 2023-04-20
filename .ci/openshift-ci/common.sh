@@ -15,6 +15,15 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
+echo "Content of metedata.json:"
+cat ${SHARED_DIR}/metadata.json
+
+echo "Content of install-config.yaml"
+cat ${SHARED_DIR}/install-config.yaml
+
+echo "Content of install-status.txt"
+cat ${SHARED_DIR}/install-status.txt
+
 PR_IMAGE_TAG=$(git show origin/pr-number-${BRANCH_NAME}:shared-files/pr-image-tag)
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}

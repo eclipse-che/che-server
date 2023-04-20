@@ -1,27 +1,49 @@
 # What is Che server
-Che Server is a core component of the [Eclipse Che](https://github.com/eclipse/che/). This component is responsible for creation and managing of Che workspaces, but will some day be replaced by the [Dev Workspace Operator](https://github.com/devfile/devworkspace-operator). 
+Che Server provides an API for managing Kubernetes namespaces, and to retrieve devfile content from repositories,
+hosted on GitHub, GitLab, Bitbucket, and Microsoft Azure Repos.
 
 # Project structure
-Che Server is mostly a Java web application deployed on a Apache Tomcat server in a container. 
-- ['pom.xml'](https://github.com/eclipse-che/che-server/tree/main/pom.xml) The root Maven module, that lists all dependencies and structure. 
-- ['assembly'](https://github.com/eclipse-che/che-server/tree/main/assembly) - module for final assemblies of Che web applications
-- ['dockerfiles'](https://github.com/eclipse-che/che-server/tree/main/dockerfiles) - directory contains image Dockerfile for Che Server, as well as additional images.
-- ['core'](https://github.com/eclipse-che/che-server/tree/main/core) - core and utility modules for Che.
-- ['wsmaster'](https://github.com/eclipse-che/che-server/tree/main/wsmaster) - primary modules of the Che Server API.
-- ['multiuser'](https://github.com/eclipse-che/che-server/tree/main/multiuser) - modules related to multiuser implementation of Che.
-- ['infrastructure'](https://github.com/eclipse-che/che-server/tree/main/infrastructure) - implementations for the underlying infrastructure, on which Che is running (Kubernetes, Openshift, etc.)
-- ['deploy'](https://github.com/eclipse-che/che-server/tree/main/deploy) - deployment files for Helm installation.
-- ['typescript-dto'](https://github.com/eclipse-che/che-server/tree/main/typescript-dto) module, that provides DTO objects for typescript projects that may depend on Che Server, such as Che Theia.
+Che Server is mostly a Java web application deployed on an Apache Tomcat server in a container. Che Server uses the following modules:     
+### OAuth1 / OAuth2 API implementations
+- wsmaster/che-core-api-auth
+- wsmaster/che-core-api-azure-devops
+- wsmaster/che-core-api-bitbucket
+- wsmaster/che-core-api-github
+- wsmaster/che-core-api-gitlab
+### Factory flow implementations
+- wsmaster/che-core-api-factory-azure-devops
+- wsmaster/che-core-api-factory-bitbucket
+- wsmaster/che-core-api-factory-bitbucket-server
+- wsmaster/che-core-api-factory-github
+- wsmaster/che-core-api-factory-gitlab
+- wsmaster/che-core-api-factory-shared
+### Kubernetes namespace provisioning
+- infrastructures/kubernetes
+- infrastructure/openshift
+- infrastructures/infrastructure-factory
+
+Other modules are deprecated and will be removed in the future.
 
 # Build requirements
-- Apache Maven 3.6.3 or Higher
-- JDK Version 11
+- Apache Maven 3.6.3 or later
+- JDK 11
 - Podman or Docker (required for running integration tests)
 
-# Build and debug
-Run `mvn clean install` to build 
-Activate a faster profile build by adding `-Pfast`
-To debug, run `mvn clean install -X` and connect your IDE to the debug port
+# Sources build
+Run `mvn clean install` to build. Activate a faster profile build by adding `-Pfast`.
+
+# Image build and push
+1. Go to the `dockerfiles` directory.
+2. Run `./build.sh`.
+3. Tag the **che-server** image with your account: `docker tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
+4. Push the **che-server** image to your account: `docker push <docker registry>/<your account>/che-server:next`.
+
+# Debug
+1. Deploy Che to a [Red Hat OpenShift](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-openshift-using-cli/) or [Minikube](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-minikube/) cluster by using a previously built image: `chectl server:start --platform=<openshift / minikube> --cheimage=<docker registry>/<your account>/che-server:next`.
+2. Enable local debugging of the Eclipse Che server: `chectl server:debug`.
+3. In your IDE, create a new Remote JVM Debug configuration on `localhost:8000`.
+4. Hit a breakpoint in the code and activate the debug configuration.
+
 
 # CI
 There are several [GitHub Actions](https://github.com/eclipse-che/che-server/actions) workflows implemented for this repository:
@@ -52,7 +74,7 @@ Downstream builds can be found at the link below, which is _internal to Red Hat_
 # Join the community
 
 The Eclipse Che community is globally reachable through public chat rooms, mailing list and weekly calls.
-See https://www.eclipse.org/che/docs/che-7/overview/introduction-to-eclipse-che/#_joining_the_community
+See the Eclipse Che Documentation about [how you can join our community](https://www.eclipse.org/che/docs/stable/overview/introduction-to-eclipse-che/#_joining_the_community).
 
 ## Report issues
 

@@ -39,7 +39,7 @@ import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
 /** Bitbucket git user data retriever. */
 public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
 
-  private final String OAUTH_PROVIDER_NAME = "bitbucket";
+  private final String OAUTH_PROVIDER_NAME = "bitbucket-server";
   private final String apiEndpoint;
 
   /** Bitbucket API client. */

@@ -83,6 +83,7 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
         .withName(USER_PROFILE_SECRET_NAME)
         .addToLabels(DEV_WORKSPACE_MOUNT_LABEL, "true")
         .addToLabels(DEV_WORKSPACE_WATCH_SECRET_LABEL, "true")
+        .addToLabels("app.kubernetes.io/part-of", "che.eclipse.org")
         .addToAnnotations(DEV_WORKSPACE_MOUNT_AS_ANNOTATION, "file")
         .addToAnnotations(DEV_WORKSPACE_MOUNT_PATH_ANNOTATION, USER_PROFILE_SECRET_MOUNT_PATH)
         .endMetadata()

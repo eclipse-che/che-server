@@ -97,7 +97,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
           scmServerUrl,
           EnvironmentContext.getCurrent().getSubject().getUserId(),
           user.getName(),
-          valueOf(user.getId()),
+          user.getSlug(),
           token.getName(),
           valueOf(token.getId()),
           token.getToken());

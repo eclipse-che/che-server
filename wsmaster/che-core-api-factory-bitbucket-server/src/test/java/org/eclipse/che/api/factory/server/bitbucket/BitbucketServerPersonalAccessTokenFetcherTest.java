@@ -11,11 +11,13 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static java.lang.String.valueOf;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
@@ -72,7 +74,8 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     URL apiEndpoint = new URL("https://che.server.com");
     subject = new SubjectImpl("another_user", "user987", "token111", false);
     bitbucketUser =
-        new BitbucketUser("User", "user", 32423523, "NORMAL", true, "user", "user@users.com");
+        new BitbucketUser(
+            "User User", "user-name", 32423523, "NORMAL", true, "user-slug", "user@users.com");
     bitbucketPersonalAccessToken =
         new BitbucketPersonalAccessToken(
             234234,
@@ -153,6 +156,12 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     PersonalAccessToken result = fetcher.fetchPersonalAccessToken(subject, someBitbucketURL);
     // then
     assertNotNull(result);
+    assertEquals(result.getScmProviderUrl(), someBitbucketURL);
+    assertEquals(result.getCheUserId(), subject.getUserId());
+    assertEquals(result.getScmOrganization(), bitbucketUser.getName());
+    assertEquals(result.getScmUserName(), bitbucketUser.getSlug());
+    assertEquals(result.getScmTokenId(), valueOf(bitbucketPersonalAccessToken.getId()));
+    assertEquals(result.getToken(), bitbucketPersonalAccessToken.getToken());
   }
 
   @Test

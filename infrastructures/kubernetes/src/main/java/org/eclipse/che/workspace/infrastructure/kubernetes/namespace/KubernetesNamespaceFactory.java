@@ -46,7 +46,6 @@ import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -56,7 +55,6 @@ import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
@@ -95,10 +93,8 @@ public class KubernetesNamespaceFactory {
   protected final Map<String, String> namespaceLabels;
   protected final Map<String, String> namespaceAnnotations;
 
-  private final KubernetesClientFactory clientFactory;
-  private final KubernetesClientFactory cheClientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private final boolean namespaceCreationAllowed;
-  private final UserManager userManager;
   private final PreferenceManager preferenceManager;
   protected final Set<NamespaceConfigurator> namespaceConfigurators;
   protected final KubernetesSharedPool sharedPool;
@@ -112,16 +108,12 @@ public class KubernetesNamespaceFactory {
       @Named("che.infra.kubernetes.namespace.labels") String namespaceLabels,
       @Named("che.infra.kubernetes.namespace.annotations") String namespaceAnnotations,
       Set<NamespaceConfigurator> namespaceConfigurators,
-      KubernetesClientFactory clientFactory,
-      CheServerKubernetesClientFactory cheClientFactory,
-      UserManager userManager,
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
       PreferenceManager preferenceManager,
       KubernetesSharedPool sharedPool)
       throws ConfigurationException {
     this.namespaceCreationAllowed = namespaceCreationAllowed;
-    this.userManager = userManager;
-    this.clientFactory = clientFactory;
-    this.cheClientFactory = cheClientFactory;
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.defaultNamespaceName = defaultNamespaceName;
     this.preferenceManager = preferenceManager;
     this.sharedPool = sharedPool;
@@ -168,7 +160,7 @@ public class KubernetesNamespaceFactory {
   @VisibleForTesting
   KubernetesNamespace doCreateNamespaceAccess(String workspaceId, String name) {
     return new KubernetesNamespace(
-        clientFactory, cheClientFactory, sharedPool.getExecutor(), name, workspaceId);
+        cheServerKubernetesClientFactory, sharedPool.getExecutor(), name, workspaceId);
   }
 
   /**
@@ -241,7 +233,8 @@ public class KubernetesNamespaceFactory {
   public Optional<KubernetesNamespaceMeta> fetchNamespace(String name)
       throws InfrastructureException {
     try {
-      Namespace namespace = cheClientFactory.create().namespaces().withName(name).get();
+      Namespace namespace =
+          cheServerKubernetesClientFactory.create().namespaces().withName(name).get();
       if (namespace == null) {
         return Optional.empty();
       } else {
@@ -501,7 +494,12 @@ public class KubernetesNamespaceFactory {
       NamespaceResolutionContext namespaceCtx) throws InfrastructureException {
     try {
       List<Namespace> workspaceNamespaces =
-          cheClientFactory.create().namespaces().withLabels(namespaceLabels).list().getItems();
+          cheServerKubernetesClientFactory
+              .create()
+              .namespaces()
+              .withLabels(namespaceLabels)
+              .list()
+              .getItems();
       if (!workspaceNamespaces.isEmpty()) {
         Map<String, String> evaluatedAnnotations = evaluateAnnotationPlaceholders(namespaceCtx);
         return workspaceNamespaces.stream()

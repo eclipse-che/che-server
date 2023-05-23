@@ -24,10 +24,9 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 
 /**
  * Creates {@link Secret} with user profile information such as his id, name and email. This serves
@@ -40,13 +39,12 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
   private static final String USER_PROFILE_SECRET_NAME = "user-profile";
   private static final String USER_PROFILE_SECRET_MOUNT_PATH = "/config/user/profile";
 
-  private final KubernetesClientFactory clientFactory;
-  private final UserManager userManager;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
   @Inject
-  public UserProfileConfigurator(KubernetesClientFactory clientFactory, UserManager userManager) {
-    this.clientFactory = clientFactory;
-    this.userManager = userManager;
+  public UserProfileConfigurator(
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory) {
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
   }
 
   @Override
@@ -54,7 +52,7 @@ public class UserProfileConfigurator implements NamespaceConfigurator {
       throws InfrastructureException {
     Secret userProfileSecret = prepareProfileSecret(namespaceResolutionContext);
     try {
-      clientFactory
+      cheServerKubernetesClientFactory
           .create()
           .secrets()
           .inNamespace(namespaceName)

@@ -42,7 +42,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
@@ -69,18 +69,18 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public static final String TOKEN_DATA_FIELD = "token";
 
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final KubernetesClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private final ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher;
   private final GitCredentialManager gitCredentialManager;
 
   @Inject
   public KubernetesPersonalAccessTokenManager(
       KubernetesNamespaceFactory namespaceFactory,
-      KubernetesClientFactory clientFactory,
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
       ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher,
       GitCredentialManager gitCredentialManager) {
     this.namespaceFactory = namespaceFactory;
-    this.clientFactory = clientFactory;
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.scmPersonalAccessTokenFetcher = scmPersonalAccessTokenFetcher;
     this.gitCredentialManager = gitCredentialManager;
   }
@@ -119,7 +119,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                               personalAccessToken.getToken().getBytes(StandardCharsets.UTF_8))))
               .build();
 
-      clientFactory.create().secrets().inNamespace(namespace).createOrReplace(secret);
+      cheServerKubernetesClientFactory
+          .create()
+          .secrets()
+          .inNamespace(namespace)
+          .createOrReplace(secret);
     } catch (KubernetesClientException | InfrastructureException e) {
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
@@ -188,7 +192,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
               // be valid. If no valid token can be found, the caller should react in the same way
               // as it reacts if no token exists. Usually, that means that process of new token
               // retrieval would be initiated.
-              clientFactory.create().secrets().inNamespace(namespaceMeta.getName()).delete(secret);
+              cheServerKubernetesClientFactory
+                  .create()
+                  .secrets()
+                  .inNamespace(namespaceMeta.getName())
+                  .delete(secret);
             }
           }
         }

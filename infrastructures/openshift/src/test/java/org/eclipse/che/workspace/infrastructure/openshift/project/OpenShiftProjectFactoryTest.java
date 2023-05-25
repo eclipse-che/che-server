@@ -61,8 +61,6 @@ import java.util.Set;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
@@ -110,11 +108,10 @@ public class OpenShiftProjectFactoryTest {
   private static final String NAMESPACE_ANNOTATIONS = NAMESPACE_ANNOTATION_NAME + "=<username>";
 
   //  @Mock private OpenShiftClientConfigFactory configFactory;
-  @Mock private OpenShiftClientFactory clientFactory;
-  @Mock private CheServerKubernetesClientFactory cheClientFactory;
+  @Mock private OpenShiftClientFactory openShiftClientFactory;
+  @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
   @Mock private WorkspaceManager workspaceManager;
-  @Mock private UserManager userManager;
   @Mock private PreferenceManager preferenceManager;
   @Mock private KubernetesSharedPool pool;
 
@@ -132,8 +129,10 @@ public class OpenShiftProjectFactoryTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    lenient().when(clientFactory.createOC()).thenReturn(osClient);
-    lenient().when(clientFactory.create()).thenReturn(osClient);
+    lenient().when(openShiftClientFactory.createOC()).thenReturn(osClient);
+    lenient().when(cheServerOpenshiftClientFactory.create()).thenReturn(osClient);
+    lenient().when(cheServerOpenshiftClientFactory.createOC()).thenReturn(osClient);
+    lenient().when(cheServerKubernetesClientFactory.create()).thenReturn(osClient);
     lenient().when(osClient.projects()).thenReturn(projectOperation);
 
     lenient()
@@ -147,9 +146,6 @@ public class OpenShiftProjectFactoryTest {
     lenient().when(projectListResource.list()).thenReturn(projectList);
     lenient().when(projectList.getItems()).thenReturn(emptyList());
 
-    lenient()
-        .when(userManager.getById(USER_ID))
-        .thenReturn(new UserImpl(USER_ID, "test@mail.com", USER_NAME));
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl(USER_NAME, USER_ID, "t-354t53xff34234", false));
   }
@@ -173,10 +169,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -204,10 +199,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -235,10 +229,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -271,10 +264,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -308,10 +300,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -341,10 +332,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -384,10 +374,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -421,10 +410,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -458,10 +446,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -485,10 +472,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -517,10 +503,9 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_ANNOTATIONS,
                 true,
                 emptySet(),
-                clientFactory,
-                cheClientFactory,
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
@@ -551,11 +536,10 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                Set.of(new CredentialsSecretConfigurator(clientFactory)),
-                clientFactory,
-                cheClientFactory,
+                Set.of(new CredentialsSecretConfigurator(cheServerKubernetesClientFactory)),
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
@@ -596,11 +580,10 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                Set.of(new PreferencesConfigMapConfigurator(clientFactory)),
-                clientFactory,
-                cheClientFactory,
+                Set.of(new PreferencesConfigMapConfigurator(cheServerKubernetesClientFactory)),
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
@@ -639,11 +622,10 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                Set.of(new CredentialsSecretConfigurator(clientFactory)),
-                clientFactory,
-                cheClientFactory,
+                Set.of(new CredentialsSecretConfigurator(cheServerKubernetesClientFactory)),
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
@@ -681,11 +663,10 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_LABELS,
                 NAMESPACE_ANNOTATIONS,
                 true,
-                Set.of(new PreferencesConfigMapConfigurator(clientFactory)),
-                clientFactory,
-                cheClientFactory,
+                Set.of(new PreferencesConfigMapConfigurator(cheServerKubernetesClientFactory)),
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
@@ -713,7 +694,9 @@ public class OpenShiftProjectFactoryTest {
   @Test
   public void shouldCallStopWorkspaceRoleProvisionWhenIdentityProviderIsDefined() throws Exception {
     var saConf =
-        spy(new OpenShiftWorkspaceServiceAccountConfigurator("serviceAccount", "", clientFactory));
+        spy(
+            new OpenShiftWorkspaceServiceAccountConfigurator(
+                "serviceAccount", "", cheServerOpenshiftClientFactory));
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
@@ -725,10 +708,9 @@ public class OpenShiftProjectFactoryTest {
                 NAMESPACE_ANNOTATIONS,
                 true,
                 Set.of(saConf),
-                clientFactory,
-                cheClientFactory,
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 OAUTH_IDENTITY_PROVIDER));
@@ -775,10 +757,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -808,10 +789,9 @@ public class OpenShiftProjectFactoryTest {
             NAMESPACE_ANNOTATIONS,
             true,
             emptySet(),
-            clientFactory,
-            cheClientFactory,
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
             cheServerOpenshiftClientFactory,
-            userManager,
             preferenceManager,
             pool,
             NO_OAUTH_IDENTITY_PROVIDER);
@@ -835,10 +815,9 @@ public class OpenShiftProjectFactoryTest {
                 "try_placeholder_here=<username>",
                 true,
                 emptySet(),
-                clientFactory,
-                cheClientFactory,
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));
@@ -876,10 +855,9 @@ public class OpenShiftProjectFactoryTest {
                 "try_placeholder_here=<username>",
                 true,
                 namespaceConfigurators,
-                clientFactory,
-                cheClientFactory,
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
                 cheServerOpenshiftClientFactory,
-                userManager,
                 preferenceManager,
                 pool,
                 NO_OAUTH_IDENTITY_PROVIDER));

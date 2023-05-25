@@ -43,7 +43,7 @@ import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditi
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.StringUtils;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
@@ -86,13 +86,14 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
           ANNOTATION_DEV_WORKSPACE_MOUNT_PATH, CREDENTIALS_MOUNT_PATH);
 
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final KubernetesClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
   @Inject
   public KubernetesGitCredentialManager(
-      KubernetesNamespaceFactory namespaceFactory, KubernetesClientFactory clientFactory) {
+      KubernetesNamespaceFactory namespaceFactory,
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory) {
     this.namespaceFactory = namespaceFactory;
-    this.clientFactory = clientFactory;
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
   }
 
   @Override
@@ -100,7 +101,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
       final String namespace = getFirstNamespace();
-      final KubernetesClient client = clientFactory.create();
+      final KubernetesClient client = cheServerKubernetesClientFactory.create();
       // to avoid duplicating secrets we try to reuse existing one by matching
       // hostname/username if possible, and update it. Otherwise, create new one.
       Optional<Secret> existing =

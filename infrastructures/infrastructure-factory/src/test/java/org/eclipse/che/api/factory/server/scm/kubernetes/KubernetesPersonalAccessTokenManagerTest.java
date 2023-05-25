@@ -45,7 +45,7 @@ import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
 import org.eclipse.che.commons.subject.SubjectImpl;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
@@ -64,7 +64,7 @@ import org.testng.annotations.Test;
 public class KubernetesPersonalAccessTokenManagerTest {
 
   @Mock private KubernetesNamespaceFactory namespaceFactory;
-  @Mock private KubernetesClientFactory clientFactory;
+  @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher;
 
   @Mock private KubernetesClient kubeClient;
@@ -80,7 +80,10 @@ public class KubernetesPersonalAccessTokenManagerTest {
   protected void init() {
     personalAccessTokenManager =
         new KubernetesPersonalAccessTokenManager(
-            namespaceFactory, clientFactory, scmPersonalAccessTokenFetcher, gitCredentialManager);
+            namespaceFactory,
+            cheServerKubernetesClientFactory,
+            scmPersonalAccessTokenFetcher,
+            gitCredentialManager);
     assertNotNull(this.personalAccessTokenManager);
   }
 
@@ -123,7 +126,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
 
-    when(clientFactory.create()).thenReturn(kubeClient);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     ArgumentCaptor<Secret> captor = ArgumentCaptor.forClass(Secret.class);
@@ -259,7 +262,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(false);
-    when(clientFactory.create()).thenReturn(kubeClient);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     Map<String, String> data1 =
@@ -296,7 +299,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
                   PersonalAccessToken token = invocation.getArgument(0);
                   return "id2".equals(token.getScmTokenId());
                 });
-    when(clientFactory.create()).thenReturn(kubeClient);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     Map<String, String> data1 =

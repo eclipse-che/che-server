@@ -23,34 +23,30 @@ import javax.inject.Inject;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.*;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GitconfigUserDataConfigurator implements NamespaceConfigurator {
   private static final Logger LOG = LoggerFactory.getLogger(GitconfigUserDataConfigurator.class);
-  private final KubernetesClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private final Set<GitUserDataFetcher> gitUserDataFetchers;
   private static final String CONFIGMAP_DATA_KEY = "gitconfig";
-  private final UserManager userManager;
 
   @Inject
   public GitconfigUserDataConfigurator(
-      KubernetesClientFactory clientFactory,
-      Set<GitUserDataFetcher> gitUserDataFetchers,
-      UserManager userManager) {
-    this.clientFactory = clientFactory;
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
+      Set<GitUserDataFetcher> gitUserDataFetchers) {
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.gitUserDataFetchers = gitUserDataFetchers;
-    this.userManager = userManager;
   }
 
   @Override
   public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {
-    var client = clientFactory.create();
+    var client = cheServerKubernetesClientFactory.create();
     GitUserData gitUserData = null;
     for (GitUserDataFetcher fetcher : gitUserDataFetchers) {
       try {

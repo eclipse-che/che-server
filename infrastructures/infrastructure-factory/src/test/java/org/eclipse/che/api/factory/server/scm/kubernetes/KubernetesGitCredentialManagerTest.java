@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.commons.lang.NameGenerator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
@@ -58,7 +58,7 @@ import org.testng.annotations.Test;
 public class KubernetesGitCredentialManagerTest {
 
   @Mock private KubernetesNamespaceFactory namespaceFactory;
-  @Mock private KubernetesClientFactory clientFactory;
+  @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private KubernetesClient kubeClient;
 
   @Mock private MixedOperation<Secret, SecretList, Resource<Secret>> secretsMixedOperation;
@@ -74,7 +74,7 @@ public class KubernetesGitCredentialManagerTest {
   @BeforeMethod
   protected void init() {
     kubernetesGitCredentialManager =
-        new KubernetesGitCredentialManager(namespaceFactory, clientFactory);
+        new KubernetesGitCredentialManager(namespaceFactory, cheServerKubernetesClientFactory);
     assertNotNull(this.kubernetesGitCredentialManager);
   }
 
@@ -83,7 +83,7 @@ public class KubernetesGitCredentialManagerTest {
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
 
-    when(clientFactory.create()).thenReturn(kubeClient);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     when(nonNamespaceOperation.withLabels(anyMap())).thenReturn(filterWatchDeletable);
@@ -113,7 +113,7 @@ public class KubernetesGitCredentialManagerTest {
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
 
-    when(clientFactory.create()).thenReturn(kubeClient);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     when(nonNamespaceOperation.withLabels(anyMap())).thenReturn(filterWatchDeletable);
@@ -173,7 +173,7 @@ public class KubernetesGitCredentialManagerTest {
 
     when(namespaceFactory.list()).thenReturn(Collections.singletonList(namespaceMeta));
 
-    when(clientFactory.create()).thenReturn(kubeClient);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(namespaceMeta.getName())))
         .thenReturn(nonNamespaceOperation);

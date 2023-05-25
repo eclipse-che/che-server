@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -25,7 +25,7 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
+import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftWorkspaceServiceAccount;
 
 /**
@@ -35,7 +35,7 @@ import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftWorks
 @Singleton
 public class OpenShiftWorkspaceServiceAccountConfigurator implements NamespaceConfigurator {
 
-  private final OpenShiftClientFactory clientFactory;
+  private final CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
 
   private final String serviceAccountName;
   private final Set<String> clusterRoleNames;
@@ -44,8 +44,8 @@ public class OpenShiftWorkspaceServiceAccountConfigurator implements NamespaceCo
   public OpenShiftWorkspaceServiceAccountConfigurator(
       @Nullable @Named("che.infra.kubernetes.service_account_name") String serviceAccountName,
       @Nullable @Named("che.infra.kubernetes.workspace_sa_cluster_roles") String clusterRoleNames,
-      OpenShiftClientFactory clientFactory) {
-    this.clientFactory = clientFactory;
+      CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory) {
+    this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
     this.serviceAccountName = serviceAccountName;
     if (!isNullOrEmpty(clusterRoleNames)) {
       this.clusterRoleNames =
@@ -69,6 +69,6 @@ public class OpenShiftWorkspaceServiceAccountConfigurator implements NamespaceCo
   @VisibleForTesting
   public OpenShiftWorkspaceServiceAccount createServiceAccount(String wsId, String namespaceName) {
     return new OpenShiftWorkspaceServiceAccount(
-        wsId, namespaceName, serviceAccountName, clusterRoleNames, clientFactory);
+        wsId, namespaceName, serviceAccountName, clusterRoleNames, cheServerOpenshiftClientFactory);
   }
 }

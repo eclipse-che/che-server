@@ -14,9 +14,11 @@ package org.eclipse.che.api.factory.server;
 import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static java.lang.String.valueOf;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.server.FactoryService.VALIDATE_QUERY_PARAMETER;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -55,6 +57,7 @@ import org.eclipse.che.api.factory.server.impl.SourceStorageParametersValidator;
 import org.eclipse.che.api.factory.server.model.impl.AuthorImpl;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
@@ -108,6 +111,7 @@ public class FactoryServiceTest {
   @Mock private AdditionalFilenamesProvider additionalFilenamesProvider;
   @Mock private DefaultFactoryParameterResolver defaultFactoryParameterResolver;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
 
@@ -263,6 +267,25 @@ public class FactoryServiceTest {
     assertEquals(
         DTO.createDtoFromJson(response.getBody().asString(), ServiceError.class).getMessage(),
         "Factory url required");
+  }
+
+  @Test
+  public void shouldReturnDefaultFactoryParameterResolver() throws Exception {
+    // given
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(singletonList("devfile.yaml"));
+
+    // when
+    FactoryParametersResolver factoryParametersResolver =
+        factoryParametersResolverHolder.getFactoryParametersResolver(
+            singletonMap(URL_PARAMETER_NAME, "https://host/path/devfile.yaml"));
+
+    // then
+    assertTrue(
+        factoryParametersResolver
+            .getClass()
+            .getName()
+            .startsWith(DefaultFactoryParameterResolver.class.getName()));
   }
 
   private FactoryImpl createFactory() {

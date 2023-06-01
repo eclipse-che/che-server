@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
@@ -39,6 +40,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersiste
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
+import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 
 /**
@@ -176,6 +178,7 @@ public class FactoryService extends Service {
     private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
     @Inject private DefaultFactoryParameterResolver defaultFactoryResolver;
+    @Inject private DevfileFilenamesProvider devfileFilenamesProvider;
 
     /**
      * Provides a suitable resolver for the given parameters. If there is no at least one resolver
@@ -185,6 +188,14 @@ public class FactoryService extends Service {
      */
     public FactoryParametersResolver getFactoryParametersResolver(Map<String, String> parameters)
         throws BadRequestException {
+      String url = parameters.get(URL_PARAMETER_NAME);
+      // Check if the URL is a raw devfile URL. If so, use the default resolver,
+      // which resolves factories from a direct URL to a devfile content.
+      if (!isNullOrEmpty(url)
+          && devfileFilenamesProvider.getConfiguredDevfileFilenames().stream()
+              .anyMatch(url::endsWith)) {
+        return defaultFactoryResolver;
+      }
       for (FactoryParametersResolver factoryParametersResolver :
           specificFactoryParametersResolvers) {
         try {

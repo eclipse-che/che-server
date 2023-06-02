@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
@@ -31,6 +32,7 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
+import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
@@ -51,6 +53,7 @@ public class DefaultFactoryParameterResolver implements FactoryParametersResolve
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
+  @Inject private DevfileFilenamesProvider devfileFilenamesProvider;
 
   @Inject
   public DefaultFactoryParameterResolver(
@@ -69,7 +72,9 @@ public class DefaultFactoryParameterResolver implements FactoryParametersResolve
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return url != null && !url.isEmpty();
+    return !isNullOrEmpty(url)
+        && devfileFilenamesProvider.getConfiguredDevfileFilenames().stream()
+            .anyMatch(url::endsWith);
   }
 
   /**

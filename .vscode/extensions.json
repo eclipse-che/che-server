@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+      "redhat.java",
+      "vscjava.vscode-maven",
+      "redhat.fabric8-analytics"
+    ]
+}

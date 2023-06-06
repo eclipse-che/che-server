@@ -1,21 +1,23 @@
-apiVersion: 1.0.0
+schemaVersion: 2.1.0
 metadata:
   name: che-server-in-che
 components:
-  - type: dockerimage
-    image: quay.io/eclipse/che-java11-maven:nightly
-    alias: maven
-    mountSources: true
-    memoryLimit: 2Gi
-    volumes:
-      - name: m2
-        containerPath: /home/user/.m2
-  - type: chePlugin
-    id: redhat/java11/latest
+  - container:
+      image: quay.io/devfile/universal-developer-image:ubi8-latest
+      memoryLimit: 8Gi
+      mountSources: true
+      volumeMounts:
+        - name: m2
+          path: /home/user/.m2
+    name: tools
+  - name: m2
+    volume: {}
 commands:
-  - name: build without tests
-    actions:
-      - type: exec
-        component: maven
-        command: mvn clean install -DskipTests
-        workdir: ${CHE_PROJECTS_ROOT}/che
+  - exec:
+      commandLine: mvn clean install -DskipTests
+      component: maven
+      group:
+        isDefault: true
+        kind: build
+      workingDir: ${PROJECT_SOURCE}
+    id: mvn-build

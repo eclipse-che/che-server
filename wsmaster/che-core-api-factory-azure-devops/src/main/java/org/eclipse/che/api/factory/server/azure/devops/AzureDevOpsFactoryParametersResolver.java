@@ -23,7 +23,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
@@ -45,7 +45,7 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  * @author Anatolii Bazko
  */
 @Singleton
-public class AzureDevOpsFactoryParametersResolver extends DefaultFactoryParameterResolver {
+public class AzureDevOpsFactoryParametersResolver extends RawDevfileUrlFactoryParameterResolver {
 
   /** Parser which will allow to check validity of URLs and create objects. */
   private final AzureDevOpsURLParser azureDevOpsURLParser;

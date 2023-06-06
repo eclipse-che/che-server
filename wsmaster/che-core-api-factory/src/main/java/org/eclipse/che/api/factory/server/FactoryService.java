@@ -175,7 +175,7 @@ public class FactoryService extends Service {
     @SuppressWarnings("unused")
     private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
-    @Inject private DefaultFactoryParameterResolver defaultFactoryResolver;
+    @Inject private RawDevfileUrlFactoryParameterResolver defaultFactoryResolver;
 
     /**
      * Provides a suitable resolver for the given parameters. If there is no at least one resolver

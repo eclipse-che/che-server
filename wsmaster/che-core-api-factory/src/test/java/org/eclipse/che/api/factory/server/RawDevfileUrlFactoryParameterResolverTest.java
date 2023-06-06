@@ -54,7 +54,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(value = {MockitoTestNGListener.class})
-public class DefaultFactoryParameterResolverTest {
+public class RawDevfileUrlFactoryParameterResolverTest {
 
   private static final String DEVFILE =
       ""
@@ -70,7 +70,7 @@ public class DefaultFactoryParameterResolverTest {
   private final DevfileFilenamesProvider devfileFilenamesProvider =
       new DevfileFilenamesProvider("devfile.yaml, .devfile.yaml");
 
-  @InjectMocks private DefaultFactoryParameterResolver defaultFactoryParameterResolver;
+  @InjectMocks private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
 
   @Test
   public void shouldResolveRelativeFiles() throws Exception {
@@ -94,8 +94,8 @@ public class DefaultFactoryParameterResolverTest {
         new URLFactoryBuilder(
             "editor", "plugin", false, devfileParser, new DevfileVersionDetector());
 
-    DefaultFactoryParameterResolver res =
-        new DefaultFactoryParameterResolver(factoryBuilder, urlFetcher);
+    RawDevfileUrlFactoryParameterResolver res =
+        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher);
 
     // set up our factory with the location of our devfile that is referencing our localfile
     Map<String, String> factoryParameters = new HashMap<>();
@@ -116,8 +116,8 @@ public class DefaultFactoryParameterResolverTest {
     URLFactoryBuilder urlFactoryBuilder = mock(URLFactoryBuilder.class);
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
-    DefaultFactoryParameterResolver res =
-        new DefaultFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+    RawDevfileUrlFactoryParameterResolver res =
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, "http://myloc/devfile");
@@ -147,8 +147,8 @@ public class DefaultFactoryParameterResolverTest {
     URLFactoryBuilder urlFactoryBuilder = mock(URLFactoryBuilder.class);
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
-    DefaultFactoryParameterResolver res =
-        new DefaultFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+    RawDevfileUrlFactoryParameterResolver res =
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, url);
@@ -171,13 +171,15 @@ public class DefaultFactoryParameterResolverTest {
       throws NoSuchFieldException, IllegalAccessException {
     // given
     Field field =
-        defaultFactoryParameterResolver.getClass().getDeclaredField("devfileFilenamesProvider");
+        rawDevfileUrlFactoryParameterResolver
+            .getClass()
+            .getDeclaredField("devfileFilenamesProvider");
     field.setAccessible(true);
-    field.set(defaultFactoryParameterResolver, devfileFilenamesProvider);
+    field.set(rawDevfileUrlFactoryParameterResolver, devfileFilenamesProvider);
 
     // when
     boolean result =
-        defaultFactoryParameterResolver.accept(
+        rawDevfileUrlFactoryParameterResolver.accept(
             Collections.singletonMap(URL_PARAMETER_NAME, "https://host/path/" + devfileName));
 
     // then

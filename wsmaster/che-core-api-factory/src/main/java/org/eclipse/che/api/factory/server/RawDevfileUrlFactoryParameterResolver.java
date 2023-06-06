@@ -42,12 +42,11 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 
 /**
- * Default {@link FactoryParametersResolver} implementation. Tries to resolve factory based on
- * provided parameters. Presumes url parameter as direct URL to a devfile content. Extracts and
- * applies devfile values override parameters.
+ * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a
+ * direct URL to a devfile content. Extracts and applies devfile values override parameters.
  */
 @Singleton
-public class DefaultFactoryParameterResolver implements FactoryParametersResolver {
+public class RawDevfileUrlFactoryParameterResolver implements FactoryParametersResolver {
 
   private static final String OVERRIDE_PREFIX = "override.";
 
@@ -56,7 +55,7 @@ public class DefaultFactoryParameterResolver implements FactoryParametersResolve
   @Inject private DevfileFilenamesProvider devfileFilenamesProvider;
 
   @Inject
-  public DefaultFactoryParameterResolver(
+  public RawDevfileUrlFactoryParameterResolver(
       URLFactoryBuilder urlFactoryBuilder, URLFetcher urlFetcher) {
     this.urlFactoryBuilder = urlFactoryBuilder;
     this.urlFetcher = urlFetcher;

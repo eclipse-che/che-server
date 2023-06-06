@@ -17,6 +17,7 @@ import static java.lang.String.valueOf;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.server.FactoryService.VALIDATE_QUERY_PARAMETER;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -106,7 +107,7 @@ public class FactoryServiceTest {
   @Mock private PreferenceManager preferenceManager;
   @Mock private UserManager userManager;
   @Mock private AdditionalFilenamesProvider additionalFilenamesProvider;
-  @Mock private DefaultFactoryParameterResolver defaultFactoryParameterResolver;
+  @Mock private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
@@ -152,7 +153,7 @@ public class FactoryServiceTest {
   @Test
   public void shouldThrowBadRequestWhenNoURLParameterGiven() throws Exception {
     final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
-    doReturn(defaultFactoryParameterResolver)
+    doReturn(rawDevfileUrlFactoryParameterResolver)
         .when(dummyHolder)
         .getFactoryParametersResolver(anyMap());
     // service instance with dummy holder
@@ -179,7 +180,7 @@ public class FactoryServiceTest {
   @Test
   public void checkValidateResolver() throws Exception {
     final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
-    doReturn(defaultFactoryParameterResolver)
+    doReturn(rawDevfileUrlFactoryParameterResolver)
         .when(dummyHolder)
         .getFactoryParametersResolver(anyMap());
     // service instance with dummy holder
@@ -198,7 +199,7 @@ public class FactoryServiceTest {
         newDto(FactoryDto.class).withV(CURRENT_VERSION).withName("matchingResolverFactory");
 
     // accept resolver
-    when(defaultFactoryParameterResolver.createFactory(anyMap())).thenReturn(expectFactory);
+    when(rawDevfileUrlFactoryParameterResolver.createFactory(anyMap())).thenReturn(expectFactory);
 
     // when
     final Map<String, String> map = new HashMap<>();
@@ -216,7 +217,7 @@ public class FactoryServiceTest {
 
     // check we call resolvers
     dummyHolder.getFactoryParametersResolver(anyMap());
-    verify(defaultFactoryParameterResolver).createFactory(anyMap());
+    verify(rawDevfileUrlFactoryParameterResolver).createFactory(anyMap());
 
     // check we call validator
     verify(acceptValidator).validateOnAccept(any());
@@ -263,6 +264,24 @@ public class FactoryServiceTest {
     assertEquals(
         DTO.createDtoFromJson(response.getBody().asString(), ServiceError.class).getMessage(),
         "Factory url required");
+  }
+
+  @Test
+  public void shouldReturnDefaultFactoryParameterResolver() throws Exception {
+    // given
+    Map<String, String> params = singletonMap(URL_PARAMETER_NAME, "https://host/path/devfile.yaml");
+    when(rawDevfileUrlFactoryParameterResolver.accept(eq(params))).thenReturn(true);
+
+    // when
+    FactoryParametersResolver factoryParametersResolver =
+        factoryParametersResolverHolder.getFactoryParametersResolver(params);
+
+    // then
+    assertTrue(
+        factoryParametersResolver
+            .getClass()
+            .getName()
+            .startsWith(RawDevfileUrlFactoryParameterResolver.class.getName()));
   }
 
   private FactoryImpl createFactory() {

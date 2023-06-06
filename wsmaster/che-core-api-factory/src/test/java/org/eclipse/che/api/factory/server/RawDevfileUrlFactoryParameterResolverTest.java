@@ -26,10 +26,14 @@ import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
+import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
@@ -42,6 +46,7 @@ import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrity
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.DataProvider;
@@ -49,7 +54,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(value = {MockitoTestNGListener.class})
-public class DefaultFactoryParameterResolverTest {
+public class RawDevfileUrlFactoryParameterResolverTest {
 
   private static final String DEVFILE =
       ""
@@ -62,6 +67,10 @@ public class DefaultFactoryParameterResolverTest {
           + "  reference: ../localfile\n";
 
   @Mock private URLFetcher urlFetcher;
+  private final DevfileFilenamesProvider devfileFilenamesProvider =
+      new DevfileFilenamesProvider("devfile.yaml, .devfile.yaml");
+
+  @InjectMocks private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
 
   @Test
   public void shouldResolveRelativeFiles() throws Exception {
@@ -85,8 +94,8 @@ public class DefaultFactoryParameterResolverTest {
         new URLFactoryBuilder(
             "editor", "plugin", false, devfileParser, new DevfileVersionDetector());
 
-    DefaultFactoryParameterResolver res =
-        new DefaultFactoryParameterResolver(factoryBuilder, urlFetcher);
+    RawDevfileUrlFactoryParameterResolver res =
+        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher);
 
     // set up our factory with the location of our devfile that is referencing our localfile
     Map<String, String> factoryParameters = new HashMap<>();
@@ -107,8 +116,8 @@ public class DefaultFactoryParameterResolverTest {
     URLFactoryBuilder urlFactoryBuilder = mock(URLFactoryBuilder.class);
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
-    DefaultFactoryParameterResolver res =
-        new DefaultFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+    RawDevfileUrlFactoryParameterResolver res =
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, "http://myloc/devfile");
@@ -138,8 +147,8 @@ public class DefaultFactoryParameterResolverTest {
     URLFactoryBuilder urlFactoryBuilder = mock(URLFactoryBuilder.class);
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
-    DefaultFactoryParameterResolver res =
-        new DefaultFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+    RawDevfileUrlFactoryParameterResolver res =
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, url);
@@ -157,6 +166,26 @@ public class DefaultFactoryParameterResolverTest {
     }
   }
 
+  @Test(dataProvider = "devfileNames")
+  public void shouldAcceptRawDevfileUrl(String devfileName)
+      throws NoSuchFieldException, IllegalAccessException {
+    // given
+    Field field =
+        rawDevfileUrlFactoryParameterResolver
+            .getClass()
+            .getDeclaredField("devfileFilenamesProvider");
+    field.setAccessible(true);
+    field.set(rawDevfileUrlFactoryParameterResolver, devfileFilenamesProvider);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(
+            Collections.singletonMap(URL_PARAMETER_NAME, "https://host/path/" + devfileName));
+
+    // then
+    assertTrue(result);
+  }
+
   @DataProvider(name = "invalidURLsProvider")
   private Object[][] invalidUrlsProvider() {
     return new Object[][] {
@@ -167,5 +196,10 @@ public class DefaultFactoryParameterResolverTest {
       },
       {"unknown:///abc.dce", "unknown protocol: unknown"}
     };
+  }
+
+  @DataProvider(name = "devfileNames")
+  private Object[] devfileNames() {
+    return new String[] {"devfile.yaml", ".devfile.yaml"};
   }
 }

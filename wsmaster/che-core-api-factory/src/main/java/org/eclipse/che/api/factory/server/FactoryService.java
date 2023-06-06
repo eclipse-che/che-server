@@ -175,7 +175,7 @@ public class FactoryService extends Service {
     @SuppressWarnings("unused")
     private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
-    @Inject private DefaultFactoryParameterResolver defaultFactoryResolver;
+    @Inject private RawDevfileUrlFactoryParameterResolver defaultFactoryResolver;
 
     /**
      * Provides a suitable resolver for the given parameters. If there is no at least one resolver
@@ -185,6 +185,11 @@ public class FactoryService extends Service {
      */
     public FactoryParametersResolver getFactoryParametersResolver(Map<String, String> parameters)
         throws BadRequestException {
+      // Check if the URL is a raw devfile URL. If so, use the default resolver,
+      // which resolves factories from a direct URL to a devfile content.
+      if (defaultFactoryResolver.accept(parameters)) {
+        return defaultFactoryResolver;
+      }
       for (FactoryParametersResolver factoryParametersResolver :
           specificFactoryParametersResolvers) {
         try {
@@ -195,12 +200,7 @@ public class FactoryService extends Service {
           // ignore and try next resolver
         }
       }
-
-      if (defaultFactoryResolver.accept(parameters)) {
-        return defaultFactoryResolver;
-      } else {
-        throw new BadRequestException(FACTORY_NOT_RESOLVABLE);
-      }
+      throw new BadRequestException(FACTORY_NOT_RESOLVABLE);
     }
   }
 

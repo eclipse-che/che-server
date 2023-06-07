@@ -1,10 +1,10 @@
-schemaVersion: 2.1.0
+schemaVersion: 2.2.0
 metadata:
-  name: che-server-in-che
+  generateName: che-server
 components:
   - container:
       image: quay.io/devfile/universal-developer-image:ubi8-latest
-      memoryLimit: 8Gi
+      memoryLimit: 12Gi
       mountSources: true
       volumeMounts:
         - name: m2
@@ -13,11 +13,13 @@ components:
   - name: m2
     volume: {}
 commands:
-  - exec:
-      commandLine: mvn clean install -DskipTests
-      component: maven
-      group:
-        isDefault: true
-        kind: build
+  - id: build
+    exec:
+      label: "1. Build"
+      component: tools
       workingDir: ${PROJECT_SOURCE}
-    id: mvn-build
+      commandLine: |
+        mvn clean install -DskipTests
+      group:
+        kind: build
+        isDefault: true

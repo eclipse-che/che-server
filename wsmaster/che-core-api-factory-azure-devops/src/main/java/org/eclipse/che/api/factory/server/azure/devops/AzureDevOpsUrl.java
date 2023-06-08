@@ -149,11 +149,7 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
   }
 
   private StringJoiner getRepoPathJoiner() {
-    StringJoiner repoPath = new StringJoiner("/").add(hostName).add(organization);
-    if (project != null) {
-      repoPath.add("_git");
-    }
-    return repoPath;
+    return new StringJoiner("/").add(hostName).add(organization).add(project);
   }
 
   @Override

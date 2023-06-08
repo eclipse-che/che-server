@@ -70,15 +70,17 @@ public class AzureDevOpsURLParser {
       throw new IllegalArgumentException(format("The given url %s is not a valid.", url));
     }
 
-    String project = null;
-    try {
-      project = matcher.group("project");
-    } catch (IllegalArgumentException e) {
-    }
-
     String repoName = matcher.group("repoName");
     if (repoName.endsWith(".git")) {
       repoName = repoName.substring(0, repoName.length() - 4);
+    }
+
+    String project = matcher.group("project");
+    if (project == null) {
+      // if project is not specified, repo name must be equal to project name
+      // https://dev.azure.com/<MyOrg>/<MyRepo>/_git/<MyRepo> ==
+      // https://dev.azure.com/<MyOrg>/_git/<MyRepo>
+      project = repoName;
     }
 
     String organization = matcher.group("organization");

@@ -136,8 +136,7 @@ public class GitlabFactoryParametersResolver extends RawDevfileUrlFactoryParamet
                       newDto(SourceDto.class)
                           .withLocation(gitlabUrl.repositoryLocation())
                           .withType("git")
-                          .withBranch(gitlabUrl.getBranch())
-                          .withSparseCheckoutDir(gitlabUrl.getSubfolder()))
+                          .withBranch(gitlabUrl.getBranch()))
                   .withName(gitlabUrl.getProject()),
           project -> {
             final String location = project.getSource().getLocation();

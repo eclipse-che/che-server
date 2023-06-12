@@ -99,7 +99,7 @@ public class GithubURLParser {
     this.githubPattern =
         compile(
             format(
-                "^%s/(?<repoUser>[^/]++)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>[^/]++)(?:/(?<subFolder>.*))?)|(/pull/(?<pullRequestId>[^/]++)))?$",
+                "^%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>.++))|(/pull/(?<pullRequestId>\\d++)))?$",
                 endpoint));
   }
 
@@ -173,7 +173,6 @@ public class GithubURLParser {
         .withDisableSubdomainIsolation(disableSubdomainIsolation)
         .withBranch(branchName)
         .withLatestCommit(latestCommit)
-        .withSubfolder(matcher.group("subFolder"))
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);
   }

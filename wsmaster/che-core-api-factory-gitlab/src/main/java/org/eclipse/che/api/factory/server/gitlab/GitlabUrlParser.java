@@ -46,7 +46,7 @@ public class GitlabUrlParser {
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private static final List<String> gitlabUrlPatternTemplates =
       List.of(
-          "^(?<host>%s)/(?<subgroups>([^/]++/?)+)/-/tree/(?<branch>[^/]++)(/)?(?<subfolder>[^/]++)?",
+          "^(?<host>%s)/(?<subgroups>([^/]++/?)+)/-/tree/(?<branch>.++)(/)?",
           "^(?<host>%s)/(?<subgroups>.*)"); // a wider one, should be the last in the
   // list
   private final List<Pattern> gitlabUrlPatterns = new ArrayList<>();
@@ -168,14 +168,8 @@ public class GitlabUrlParser {
     }
 
     String branch = null;
-    String subfolder = null;
     try {
       branch = matcher.group("branch");
-    } catch (IllegalArgumentException e) {
-      // ok no such group
-    }
-    try {
-      subfolder = matcher.group("subfolder");
     } catch (IllegalArgumentException e) {
       // ok no such group
     }
@@ -184,7 +178,6 @@ public class GitlabUrlParser {
         .withHostName(host)
         .withSubGroups(subGroups)
         .withBranch(branch)
-        .withSubfolder(subfolder)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
   }
 }

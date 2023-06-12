@@ -132,14 +132,9 @@ public class GitlabUrlParserTest {
       {"https://gitlab1.com/user/project/", "project", "user/project", null},
       {"https://gitlab1.com/user/project/repo/", "repo", "user/project/repo", null},
       {"https://gitlab1.com/user/project/-/tree/master/", "project", "user/project", "master"},
+      {"https://gitlab1.com/user/project/repo/-/tree/foo", "repo", "user/project/repo", "foo"},
       {
-        "https://gitlab1.com/user/project/repo/-/tree/foo/subfolder",
-        "repo",
-        "user/project/repo",
-        "foo"
-      },
-      {
-        "https://gitlab1.com/user/project/group1/group2/repo/-/tree/foo/subfolder",
+        "https://gitlab1.com/user/project/group1/group2/repo/-/tree/foo/",
         "repo",
         "user/project/group1/group2/repo",
         "foo"

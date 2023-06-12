@@ -93,7 +93,8 @@ public class GitlabUrlParser {
   }
 
   public boolean isValid(@NotNull String url) {
-    return gitlabUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches())
+    return gitlabUrlPatterns.stream()
+            .anyMatch(pattern -> pattern.matcher(trimEnd(url, '/')).matches())
         // If the Gitlab URL is not configured, try to find it in a manually added user namespace
         // token.
         || isUserTokenPresent(url)
@@ -144,15 +145,15 @@ public class GitlabUrlParser {
    * {@link GitlabUrl} objects.
    */
   public GitlabUrl parse(String url) {
-
+    String trimmedUrl = trimEnd(url, '/');
     Optional<Matcher> matcherOptional =
         gitlabUrlPatterns.stream()
-            .map(pattern -> pattern.matcher(url))
+            .map(pattern -> pattern.matcher(trimmedUrl))
             .filter(Matcher::matches)
             .findFirst()
-            .or(() -> getPatternMatcherByUrl(url));
+            .or(() -> getPatternMatcherByUrl(trimmedUrl));
     if (matcherOptional.isPresent()) {
-      return parse(matcherOptional.get()).withUrl(url);
+      return parse(matcherOptional.get()).withUrl(trimmedUrl);
     } else {
       throw new UnsupportedOperationException(
           "The gitlab integration is not configured properly and cannot be used at this moment."

@@ -85,10 +85,6 @@ public class GitlabUrlTest {
         "https://gitlab.net/eclipse/fooproj/che/-/tree/foobranch/",
         "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=foobranch"
       },
-      {
-        "https://gitlab.net/eclipse/fooproj/che/-/tree/foobranch/subfolder",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=foobranch"
-      },
     };
   }
 

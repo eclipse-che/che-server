@@ -127,7 +127,13 @@ public class GithubURLParserTest {
       {"https://github.com/eclipse/che/", "eclipse", "che", null},
       {"https://github.com/eclipse/repositorygit", "eclipse", "repositorygit", null},
       {"https://github.com/eclipse/che/tree/4.2.x", "eclipse", "che", "4.2.x"},
-      {"https://github.com/eclipse/che/tree/master", "eclipse", "che", "master"}
+      {"https://github.com/eclipse/che/tree/master", "eclipse", "che", "master"},
+      {
+        "https://github.com/eclipse/che/tree/branch/with/slash",
+        "eclipse",
+        "che",
+        "branch/with/slash"
+      }
     };
   }
 

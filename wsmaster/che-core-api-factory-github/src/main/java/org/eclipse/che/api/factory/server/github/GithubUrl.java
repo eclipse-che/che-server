@@ -46,9 +46,6 @@ public class GithubUrl extends DefaultFactoryUrl {
   /** SHA of the latest commit in the current branch */
   private String latestCommit;
 
-  /** Subfolder if any */
-  private String subfolder;
-
   private String serverUrl;
 
   private boolean disableSubdomainIsolation;
@@ -140,26 +137,6 @@ public class GithubUrl extends DefaultFactoryUrl {
     if (!isNullOrEmpty(latestCommit)) {
       this.latestCommit = latestCommit;
     }
-    return this;
-  }
-
-  /**
-   * Gets subfolder of this github url
-   *
-   * @return the subfolder part
-   */
-  public String getSubfolder() {
-    return this.subfolder;
-  }
-
-  /**
-   * Sets the subfolder represented by the URL.
-   *
-   * @param subfolder path inside the repository
-   * @return current github instance
-   */
-  protected GithubUrl withSubfolder(String subfolder) {
-    this.subfolder = subfolder;
     return this;
   }
 

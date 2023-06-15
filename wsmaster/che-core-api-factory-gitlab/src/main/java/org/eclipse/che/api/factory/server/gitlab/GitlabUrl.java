@@ -49,9 +49,6 @@ public class GitlabUrl extends DefaultFactoryUrl {
   /** Branch name */
   private String branch;
 
-  /** Subfolder if any */
-  private String subfolder;
-
   /** Devfile filenames list */
   private final List<String> devfileFilenames = new ArrayList<>();
 
@@ -126,26 +123,6 @@ public class GitlabUrl extends DefaultFactoryUrl {
     if (!Strings.isNullOrEmpty(branch)) {
       this.branch = branch;
     }
-    return this;
-  }
-
-  /**
-   * Gets subfolder of this gitlab url
-   *
-   * @return the subfolder part
-   */
-  public String getSubfolder() {
-    return this.subfolder;
-  }
-
-  /**
-   * Sets the subfolder represented by the URL.
-   *
-   * @param subfolder path inside the repository
-   * @return current gitlab URL instance
-   */
-  protected GitlabUrl withSubfolder(String subfolder) {
-    this.subfolder = subfolder;
     return this;
   }
 

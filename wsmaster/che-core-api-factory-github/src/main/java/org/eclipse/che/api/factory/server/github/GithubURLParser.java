@@ -99,20 +99,20 @@ public class GithubURLParser {
     this.githubPattern =
         compile(
             format(
-                "^%s/(?<repoUser>[^/]++)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>[^/]++)(?:/(?<subFolder>.*))?)|(/pull/(?<pullRequestId>[^/]++)))?$",
+                "^%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>.++))|(/pull/(?<pullRequestId>\\d++)))?$",
                 endpoint));
   }
 
   public boolean isValid(@NotNull String url) {
-    return githubPattern.matcher(url).matches();
+    return githubPattern.matcher(trimEnd(url, '/')).matches();
   }
 
   public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
-    return parse(url, false);
+    return parse(trimEnd(url, '/'), false);
   }
 
   public GithubUrl parse(String url) throws ApiException {
-    return parse(url, true);
+    return parse(trimEnd(url, '/'), true);
   }
 
   private GithubUrl parse(String url, boolean authenticationRequired) throws ApiException {
@@ -173,7 +173,6 @@ public class GithubURLParser {
         .withDisableSubdomainIsolation(disableSubdomainIsolation)
         .withBranch(branchName)
         .withLatestCommit(latestCommit)
-        .withSubfolder(matcher.group("subFolder"))
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);
   }

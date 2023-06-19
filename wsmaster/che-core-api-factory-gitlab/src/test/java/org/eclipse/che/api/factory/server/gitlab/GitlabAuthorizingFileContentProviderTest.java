@@ -37,7 +37,7 @@ public class GitlabAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
     var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.get(anyString())).thenReturn(personalAccessToken);
     fileContentProvider.fetchContent("devfile.yaml");
     verify(urlFetcher)
         .fetch(
@@ -55,7 +55,7 @@ public class GitlabAuthorizingFileContentProviderTest {
     String url =
         "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw";
     var personalAccessToken = new PersonalAccessToken(url, "che", "my-token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.get(anyString())).thenReturn(personalAccessToken);
 
     fileContentProvider.fetchContent(url);
     verify(urlFetcher).fetch(eq(url), eq("Bearer my-token"));

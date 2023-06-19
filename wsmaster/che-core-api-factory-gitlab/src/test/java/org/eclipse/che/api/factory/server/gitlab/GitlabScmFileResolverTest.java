@@ -72,7 +72,7 @@ public class GitlabScmFileResolverTest {
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(personalAccessTokenManager.getAndStore(any(String.class)))
+    when(personalAccessTokenManager.get(any(String.class)))
         .thenReturn(new PersonalAccessToken(SCM_URL, "root", "token123"));
 
     when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
@@ -86,7 +86,7 @@ public class GitlabScmFileResolverTest {
   @Test
   public void shouldFetchContentWithoutAuthentication() throws Exception {
     // given
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    when(personalAccessTokenManager.get(anyString()))
         .thenThrow(new ScmUnauthorizedException("message", "gitlab", "v1", "url"));
 
     // when

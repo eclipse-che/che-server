@@ -54,7 +54,7 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    when(personalAccessTokenManager.get(anyString()))
         .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
 
     fileContentProvider.fetchContent("devfile.yaml");
@@ -81,7 +81,7 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    when(personalAccessTokenManager.get(anyString()))
         .thenReturn(new PersonalAccessToken(raw_url, "che", "my-token"));
 
     fileContentProvider.fetchContent(raw_url);
@@ -98,8 +98,7 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
-    when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenThrow(UnknownScmProviderException.class);
+    when(personalAccessTokenManager.get(anyString())).thenThrow(UnknownScmProviderException.class);
 
     when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
 
@@ -115,8 +114,7 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
-    when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenThrow(UnknownScmProviderException.class);
+    when(personalAccessTokenManager.get(anyString())).thenThrow(UnknownScmProviderException.class);
     when(urlFetcher.fetch(eq(url))).thenThrow(FileNotFoundException.class);
     when(urlFetcher.fetch(eq("https://github.com/eclipse/che"))).thenThrow(IOException.class);
 
@@ -132,7 +130,7 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
     var personalAccessToken = new PersonalAccessToken(raw_url, "che", "my-token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.get(anyString())).thenReturn(personalAccessToken);
 
     fileContentProvider.fetchContent(raw_url);
 

@@ -87,7 +87,6 @@ import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.WorkspaceServiceAccountConfigurator;
@@ -449,43 +448,6 @@ public class KubernetesNamespaceFactoryTest {
         defaultNamespace
             .getAttributes()
             .get(PHASE_ATTRIBUTE)); // no phase - means such namespace does not exist
-  }
-
-  @Test
-  public void shouldCreateCredentialsSecretIfNotExists() throws Exception {
-    // given
-    namespaceFactory =
-        spy(
-            new KubernetesNamespaceFactory(
-                "<username>-che",
-                true,
-                true,
-                true,
-                NAMESPACE_LABELS,
-                NAMESPACE_ANNOTATIONS,
-                Set.of(new CredentialsSecretConfigurator(cheServerKubernetesClientFactory)),
-                cheServerKubernetesClientFactory,
-                preferenceManager,
-                pool));
-    KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
-    when(toReturnNamespace.getName()).thenReturn("namespaceName");
-    doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());
-    MixedOperation mixedOperation = mock(MixedOperation.class);
-    when(k8sClient.secrets()).thenReturn(mixedOperation);
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
-    when(namespaceResource.get()).thenReturn(null);
-
-    // when
-    RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
-    namespaceFactory.getOrCreate(identity);
-
-    // then
-    ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
-    verify(namespaceOperation).create(secretsCaptor.capture());
-    Secret secret = secretsCaptor.getValue();
-    Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
-    Assert.assertEquals(secret.getType(), "opaque");
   }
 
   @Test

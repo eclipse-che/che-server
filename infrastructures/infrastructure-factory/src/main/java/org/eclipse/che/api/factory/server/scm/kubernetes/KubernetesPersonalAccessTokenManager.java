@@ -153,7 +153,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           UnsatisfiedScmPreconditionException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
     Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
-    PersonalAccessToken personalAccessToken;
     if (tokenOptional.isPresent()) {
       return tokenOptional.get();
     } else {

@@ -15,7 +15,6 @@ import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.Secret;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
@@ -58,17 +57,19 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
   public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {
     var client = cheServerKubernetesClientFactory.create();
-    Optional<Secret> mergedCredentialsSecret =
-        client.secrets().inNamespace(namespaceName).list().getItems().stream()
-            .filter(s -> s.getMetadata().getName().equals(MERGED_GIT_CREDENTIALS_SECRET_NAME))
-            .findAny();
+    Secret mergedCredentialsSecret =
+        client
+            .secrets()
+            .inNamespace(namespaceName)
+            .withName(MERGED_GIT_CREDENTIALS_SECRET_NAME)
+            .get();
 
     client.secrets().inNamespace(namespaceName).withLabels(SEARCH_LABELS).list().getItems().stream()
         .filter(
             s ->
-                mergedCredentialsSecret.isEmpty()
-                    || !getCredentialsData(mergedCredentialsSecret.get(), "credentials")
-                        .contains(getCredentialsData(s, "token")))
+                mergedCredentialsSecret == null
+                    || !getSecretData(mergedCredentialsSecret, "credentials")
+                        .contains(getSecretData(s, "token")))
         .forEach(
             s -> {
               try {
@@ -83,7 +84,7 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
             });
   }
 
-  private String getCredentialsData(Secret secret, String key) {
+  private String getSecretData(Secret secret, String key) {
     return new String(Base64.getDecoder().decode(secret.getData().get(key).getBytes()));
   }
 }

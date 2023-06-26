@@ -48,13 +48,13 @@ public class AuthorizingFactoryParameterResolverTest {
     // given
     when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
     when(urlFetcher.fetch(anyString(), anyString())).thenReturn("content");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+    when(personalAccessTokenManager.get(anyString())).thenReturn(personalAccessToken);
 
     // when
     provider.fetchContent("url");
 
     // then
-    verify(personalAccessTokenManager).getAndStore(anyString());
+    verify(personalAccessTokenManager).get(anyString());
   }
 
   @Test

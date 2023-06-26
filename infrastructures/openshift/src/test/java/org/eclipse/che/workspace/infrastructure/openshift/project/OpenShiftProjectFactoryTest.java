@@ -73,7 +73,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesConfigsMaps;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesSecrets;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
@@ -524,50 +523,6 @@ public class OpenShiftProjectFactoryTest {
   }
 
   @Test
-  public void shouldCreateCredentialsSecretIfNotExists() throws Exception {
-    // given
-    projectFactory =
-        spy(
-            new OpenShiftProjectFactory(
-                "<userid>-che",
-                true,
-                true,
-                true,
-                NAMESPACE_LABELS,
-                NAMESPACE_ANNOTATIONS,
-                true,
-                Set.of(new CredentialsSecretConfigurator(cheServerKubernetesClientFactory)),
-                openShiftClientFactory,
-                cheServerKubernetesClientFactory,
-                cheServerOpenshiftClientFactory,
-                preferenceManager,
-                pool,
-                NO_OAUTH_IDENTITY_PROVIDER));
-    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
-    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
-    when(toReturnProject.getName()).thenReturn("namespace123");
-    NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
-    MixedOperation mixedOperation = mock(MixedOperation.class);
-    when(osClient.secrets()).thenReturn(mixedOperation);
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
-    Resource<Secret> nullSecret = mock(Resource.class);
-    when(namespaceOperation.withName(CREDENTIALS_SECRET_NAME)).thenReturn(nullSecret);
-    when(nullSecret.get()).thenReturn(null);
-
-    // when
-    RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "namespace123");
-    projectFactory.getOrCreate(identity);
-
-    // then
-    ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
-    verify(namespaceOperation).create(secretsCaptor.capture());
-    Secret secret = secretsCaptor.getValue();
-    Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
-    Assert.assertEquals(secret.getType(), "opaque");
-  }
-
-  @Test
   public void shouldCreatePreferencesConfigmapIfNotExists() throws Exception {
     // given
     projectFactory =
@@ -607,47 +562,6 @@ public class OpenShiftProjectFactoryTest {
     verify(namespaceOperation).create(configMapCaptor.capture());
     ConfigMap configmap = configMapCaptor.getValue();
     Assert.assertEquals(configmap.getMetadata().getName(), PREFERENCES_CONFIGMAP_NAME);
-  }
-
-  @Test
-  public void shouldNotCreateCredentialsSecretIfExist() throws Exception {
-    // given
-    projectFactory =
-        spy(
-            new OpenShiftProjectFactory(
-                "<userid>-che",
-                true,
-                true,
-                true,
-                NAMESPACE_LABELS,
-                NAMESPACE_ANNOTATIONS,
-                true,
-                Set.of(new CredentialsSecretConfigurator(cheServerKubernetesClientFactory)),
-                openShiftClientFactory,
-                cheServerKubernetesClientFactory,
-                cheServerOpenshiftClientFactory,
-                preferenceManager,
-                pool,
-                NO_OAUTH_IDENTITY_PROVIDER));
-    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
-    prepareProject(toReturnProject);
-    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
-    when(toReturnProject.getName()).thenReturn("namespace123");
-    NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
-    MixedOperation mixedOperation = mock(MixedOperation.class);
-    when(osClient.secrets()).thenReturn(mixedOperation);
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
-    Resource<Secret> secretResource = mock(Resource.class);
-    when(namespaceOperation.withName(CREDENTIALS_SECRET_NAME)).thenReturn(secretResource);
-    when(secretResource.get()).thenReturn(mock(Secret.class));
-
-    // when
-    RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
-    projectFactory.getOrCreate(identity);
-
-    // then
-    verify(namespaceOperation, never()).create(any());
   }
 
   @Test

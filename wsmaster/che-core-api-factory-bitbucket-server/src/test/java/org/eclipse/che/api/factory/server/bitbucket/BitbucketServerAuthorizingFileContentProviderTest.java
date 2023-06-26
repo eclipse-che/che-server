@@ -41,7 +41,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
             url, urlFetcher, personalAccessTokenManager);
 
     PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
+    when(personalAccessTokenManager.get(anyString())).thenReturn(token);
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
 
@@ -60,7 +60,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
             url, urlFetcher, personalAccessTokenManager);
 
     PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
-    when(personalAccessTokenManager.getAndStore(eq(TEST_HOSTNAME))).thenReturn(token);
+    when(personalAccessTokenManager.get(eq(TEST_HOSTNAME))).thenReturn(token);
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
 
@@ -68,7 +68,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     fileContentProvider.fetchContent(fileURL);
 
     // then
-    verify(personalAccessTokenManager).getAndStore(eq(TEST_HOSTNAME));
+    verify(personalAccessTokenManager).get(eq(TEST_HOSTNAME));
     verify(urlFetcher).fetch(eq(fileURL), eq("Bearer token"));
   }
 
@@ -88,7 +88,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
         new BitbucketServerAuthorizingFileContentProvider(
             url, urlFetcher, personalAccessTokenManager);
     PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
+    when(personalAccessTokenManager.get(anyString())).thenReturn(token);
 
     // when
     fileContentProvider.fetchContent(relative);

@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.github;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -85,7 +86,8 @@ public class GithubScmFileResolverTest {
             anyString()))
         .thenReturn(rawContent);
 
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    lenient()
+        .when(personalAccessTokenManager.get(anyString()))
         .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
 
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
@@ -103,7 +105,8 @@ public class GithubScmFileResolverTest {
   @Test
   public void shouldReturnContentWithoutAuthentication() throws Exception {
     // given
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    lenient()
+        .when(personalAccessTokenManager.get(anyString()))
         .thenThrow(new ScmUnauthorizedException("message", "github", "v1", "url"));
 
     // when

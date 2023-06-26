@@ -147,6 +147,21 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   @Override
+  public PersonalAccessToken get(String scmServerUrl)
+      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
+          ScmCommunicationException, UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException {
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    if (tokenOptional.isPresent()) {
+      return tokenOptional.get();
+    } else {
+      // try to authenticate for the given URL
+      return fetchAndSave(subject, scmServerUrl);
+    }
+  }
+
+  @Override
   public Optional<PersonalAccessToken> get(
       Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
@@ -223,6 +238,18 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     }
     gitCredentialManager.createOrReplace(personalAccessToken);
     return personalAccessToken;
+  }
+
+  @Override
+  public void store(String scmServerUrl)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
+          ScmCommunicationException, ScmUnauthorizedException {
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    if (tokenOptional.isPresent()) {
+      PersonalAccessToken personalAccessToken = tokenOptional.get();
+      gitCredentialManager.createOrReplace(personalAccessToken);
+    }
   }
 
   private String getFirstNamespace()

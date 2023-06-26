@@ -73,7 +73,7 @@ public class BitbucketServerScmFileResolverTest {
   public void shouldReturnContentFromUrlFetcher() throws Exception {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    when(personalAccessTokenManager.get(anyString()))
         .thenReturn(new PersonalAccessToken(SCM_URL, "root", "token123"));
 
     when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
@@ -87,7 +87,7 @@ public class BitbucketServerScmFileResolverTest {
   @Test
   public void shouldFetchContentWithoutAuthentication() throws Exception {
     // given
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    when(personalAccessTokenManager.get(anyString()))
         .thenThrow(new ScmUnauthorizedException("message", "bitbucket-server", "v1", "url"));
 
     // when

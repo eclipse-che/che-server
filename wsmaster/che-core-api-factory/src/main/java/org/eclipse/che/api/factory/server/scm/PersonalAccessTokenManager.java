@@ -54,6 +54,22 @@ public interface PersonalAccessTokenManager {
           ScmCommunicationException;
 
   /**
+   * Gets {@link PersonalAccessToken} from permanent storage.
+   *
+   * @param scmServerUrl Git provider endpoint
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   * @throws ScmUnauthorizedException - scm authorization required.
+   * @throws ScmCommunicationException - problem occurred during communication with scm provider.
+   * @throws UnknownScmProviderException - scm provider is unknown.
+   * @throws UnsatisfiedScmPreconditionException - storage preconditions aren't met.
+   */
+  PersonalAccessToken get(String scmServerUrl)
+      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
+          ScmCommunicationException, UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException;
+
+  /**
    * Gets {@link PersonalAccessToken} from permanent storage for the given OAuth provider name. It
    * is useful when OAuth provider is not configured and Git provider endpoint is unknown. {@code
    * scmServerUrl} can be provided as an additional clause.
@@ -82,4 +98,18 @@ public interface PersonalAccessTokenManager {
       throws ScmCommunicationException, ScmConfigurationPersistenceException,
           UnknownScmProviderException, UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException;
+
+  /**
+   * Set or update git-credentials with {@link PersonalAccessToken} from permanent storage.
+   *
+   * @param scmServerUrl Git provider endpoint
+   * @throws UnsatisfiedScmPreconditionException - storage preconditions aren't met.
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   * @throws ScmCommunicationException - problem occurred during communication with scm provider.
+   * @throws ScmUnauthorizedException - scm authorization required.
+   */
+  void store(String scmServerUrl)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
+          ScmCommunicationException, ScmUnauthorizedException;
 }

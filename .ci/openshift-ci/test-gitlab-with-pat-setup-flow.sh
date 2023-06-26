@@ -29,6 +29,7 @@ trap "catchFinish" EXIT SIGINT
 
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 setupPersonalAccessToken  ${GIT_PROVIDER_TYPE} ${GIT_PROVIDER_URL} ${GITLAB_USER_ID} ${GITLAB_PAT}
+requestProvisionNamespace
 testFactoryResolverWithPatOAuth ${PUBLIC_REPO_URL} ${PRIVATE_REPO_URL}
 echo "[INFO] Check clone public repository with PAT setup"
 testCloneGitRepoWithSetupPat ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_URL} ${USER_CHE_NAMESPACE} ${GITLAB_PAT}

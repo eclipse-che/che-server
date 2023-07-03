@@ -157,11 +157,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                       format(
                               "%s://%s:%s@%s%s",
                               scmUrl.getProtocol(),
-                              personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
-                                  ? "oauth2"
-                                  : isNullOrEmpty(personalAccessToken.getScmOrganization())
-                                      ? personalAccessToken.getScmUserName()
-                                      : "username",
+                              getUsernameSegment(personalAccessToken),
                               URLEncoder.encode(personalAccessToken.getToken(), UTF_8),
                               scmUrl.getHost(),
                               scmUrl.getPort() != 80 && scmUrl.getPort() != -1
@@ -172,6 +168,21 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
     } catch (InfrastructureException | MalformedURLException e) {
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
+  }
+
+  /**
+   * Returns username URL segment for git credentials. For OAuth2 tokens it is "oauth2", for others
+   * - {@param personalAccessToken#getScmUserName()} or just "username" string if the token has a
+   * non-null {@param personalAccessToken#getScmOrganization()}. This is needed to support providers
+   * that do not have username in their user object. Such providers have an additional organization
+   * field.
+   */
+  private String getUsernameSegment(PersonalAccessToken personalAccessToken) {
+    return personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
+        ? "oauth2"
+        : isNullOrEmpty(personalAccessToken.getScmOrganization())
+            ? personalAccessToken.getScmUserName()
+            : "username";
   }
 
   /**

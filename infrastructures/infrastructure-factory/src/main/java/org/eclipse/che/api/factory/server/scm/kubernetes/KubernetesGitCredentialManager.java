@@ -161,7 +161,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                                   ? "oauth2"
                                   : isNullOrEmpty(personalAccessToken.getScmOrganization())
                                       ? personalAccessToken.getScmUserName()
-                                      : personalAccessToken.getScmOrganization(),
+                                      : "username",
                               URLEncoder.encode(personalAccessToken.getToken(), UTF_8),
                               scmUrl.getHost(),
                               scmUrl.getPort() != 80 && scmUrl.getPort() != -1

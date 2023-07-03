@@ -109,12 +109,12 @@ public class KubernetesGitCredentialManagerTest {
   }
 
   @Test
-  public void shouldUseScmOrganization() throws Exception {
+  public void shouldUseHardcodedUsernameIfScmOrganizationIsDefined() throws Exception {
     // given
     KubernetesNamespaceMeta namespaceMeta = new KubernetesNamespaceMetaImpl("test");
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://bitbucket.com:5648",
+            "https://bitbucket-server.com:5648",
             "cheUser",
             "cheOrganization",
             "username",
@@ -157,7 +157,7 @@ public class KubernetesGitCredentialManagerTest {
     assertNotNull(createdSecret);
     assertEquals(
         new String(Base64.getDecoder().decode(createdSecret.getData().get("credentials"))),
-        "https://cheOrganization:token123@bitbucket.com:5648");
+        "https://username:token123@bitbucket-server.com:5648");
   }
 
   @Test

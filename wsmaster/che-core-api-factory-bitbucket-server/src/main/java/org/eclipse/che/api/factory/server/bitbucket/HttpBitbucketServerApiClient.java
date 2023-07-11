@@ -176,7 +176,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           request,
           inputStream -> {
             try {
-              return OM.readValue(inputStream, BitbucketUser.class);
+              String result =
+                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+              return OM.readValue(result, BitbucketUser.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
@@ -230,7 +232,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           request,
           inputStream -> {
             try {
-              return OM.readValue(inputStream, String.class);
+              String result =
+                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+              return OM.readValue(result, String.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
@@ -271,7 +275,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           request,
           inputStream -> {
             try {
-              return OM.readValue(inputStream, BitbucketPersonalAccessToken.class);
+              String result =
+                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+              return OM.readValue(result, BitbucketPersonalAccessToken.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
@@ -313,7 +319,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           request,
           inputStream -> {
             try {
-              return OM.readValue(inputStream, BitbucketPersonalAccessToken.class);
+              String result =
+                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+              return OM.readValue(result, BitbucketPersonalAccessToken.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
@@ -388,7 +396,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
         request,
         inputStream -> {
           try {
-            return OM.readValue(inputStream, typeReference);
+            String result =
+                CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+            return OM.readValue(result, typeReference);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }

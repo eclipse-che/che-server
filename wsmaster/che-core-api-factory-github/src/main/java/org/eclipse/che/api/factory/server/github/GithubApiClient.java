@@ -111,7 +111,9 @@ public class GithubApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), GithubUser.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, GithubUser.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -140,7 +142,9 @@ public class GithubApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), GithubPullRequest.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, GithubPullRequest.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -181,7 +185,9 @@ public class GithubApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), GithubCommit[].class)[0];
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, GithubCommit[].class)[0];
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }

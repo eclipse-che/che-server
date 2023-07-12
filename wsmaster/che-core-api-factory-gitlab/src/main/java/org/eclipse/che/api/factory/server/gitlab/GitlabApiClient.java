@@ -78,7 +78,9 @@ public class GitlabApiClient {
         request,
         inputStream -> {
           try {
-            return OBJECT_MAPPER.readValue(inputStream, GitlabUser.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, GitlabUser.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -100,7 +102,9 @@ public class GitlabApiClient {
           request,
           inputStream -> {
             try {
-              return OBJECT_MAPPER.readValue(inputStream, GitlabOauthTokenInfo.class);
+              String result =
+                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+              return OBJECT_MAPPER.readValue(result, GitlabOauthTokenInfo.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }

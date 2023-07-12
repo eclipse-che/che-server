@@ -108,7 +108,9 @@ public class BitbucketApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), BitbucketUser.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, BitbucketUser.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -154,7 +156,9 @@ public class BitbucketApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), BitbucketUserEmail.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, BitbucketUserEmail.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }

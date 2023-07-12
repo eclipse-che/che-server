@@ -116,7 +116,9 @@ public class AzureDevOpsApiClient {
         userDataRequest,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), AzureDevOpsUser.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, AzureDevOpsUser.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }

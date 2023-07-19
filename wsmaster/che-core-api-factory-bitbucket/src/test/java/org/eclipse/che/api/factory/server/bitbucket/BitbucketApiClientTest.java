@@ -90,7 +90,7 @@ public class BitbucketApiClientTest {
                         BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
-    String[] scopes = client.getTokenScopes("token1");
+    String[] scopes = client.getTokenScopes("token1").second;
     String[] expectedScopes = {"repository:write"};
     assertNotNull(scopes, "Bitbucket API should have returned a non-null scope array");
     assertEqualsNoOrder(
@@ -107,7 +107,7 @@ public class BitbucketApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
-    String[] scopes = client.getTokenScopes("token1");
+    String[] scopes = client.getTokenScopes("token1").second;
     assertNotNull(scopes, "Bitbucket API should have returned a non-null scope array");
     assertEquals(
         scopes.length,
@@ -128,7 +128,7 @@ public class BitbucketApiClientTest {
                     .withHeader(BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
-    String[] scopes = client.getTokenScopes("token1");
+    String[] scopes = client.getTokenScopes("token1").second;
     assertNotNull(scopes, "Bitbucket API should have returned a non-null scope array");
     assertEquals(
         scopes.length,

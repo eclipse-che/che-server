@@ -109,7 +109,7 @@ public class GitlabUrlParser {
       try {
         // If the token request catches the unauthorised error, it means that the provided url
         // belongs to Gitlab.
-        gitlabApiClient.getTokenInfo("");
+        gitlabApiClient.getOAuthTokenInfo("");
       } catch (ScmCommunicationException e) {
         return e.getStatusCode() == HTTP_UNAUTHORIZED;
       } catch (ScmItemNotFoundException e) {

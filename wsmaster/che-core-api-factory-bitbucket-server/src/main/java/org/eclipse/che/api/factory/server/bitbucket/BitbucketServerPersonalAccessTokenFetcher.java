@@ -27,11 +27,13 @@ import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiCli
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
@@ -76,22 +78,20 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     final String tokenName =
         format(TOKEN_NAME_TEMPLATE, cheUser.getUserId(), apiEndpoint.getHost());
     try {
-      BitbucketUser user =
-          bitbucketServerApiClient.getUser(EnvironmentContext.getCurrent().getSubject());
+      BitbucketUser user = bitbucketServerApiClient.getUser(null);
       LOG.debug("Current bitbucket user {} ", user);
       // cleanup existed
       List<BitbucketPersonalAccessToken> existingTokens =
-          bitbucketServerApiClient.getPersonalAccessTokens(user.getSlug()).stream()
+          bitbucketServerApiClient.getPersonalAccessTokens().stream()
               .filter(p -> p.getName().equals(tokenName))
               .collect(Collectors.toList());
       for (BitbucketPersonalAccessToken existedToken : existingTokens) {
         LOG.debug("Deleting existed che token {} {}", existedToken.getId(), existedToken.getName());
-        bitbucketServerApiClient.deletePersonalAccessTokens(user.getSlug(), existedToken.getId());
+        bitbucketServerApiClient.deletePersonalAccessTokens(existedToken.getId());
       }
 
       BitbucketPersonalAccessToken token =
-          bitbucketServerApiClient.createPersonalAccessTokens(
-              user.getSlug(), tokenName, DEFAULT_TOKEN_SCOPE);
+          bitbucketServerApiClient.createPersonalAccessTokens(tokenName, DEFAULT_TOKEN_SCOPE);
       LOG.debug("Token created = {} for {}", token.getId(), token.getUser());
       return new PersonalAccessToken(
           scmServerUrl,
@@ -118,7 +118,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
               oAuthAPI,
               apiEndpoint.toString());
       try {
-        apiClient.getUser(personalAccessToken.getScmUserName(), personalAccessToken.getToken());
+        apiClient.getUser(personalAccessToken.getToken());
         return Optional.of(Boolean.TRUE);
       } catch (ScmItemNotFoundException
           | ScmUnauthorizedException
@@ -131,11 +131,44 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     try {
       BitbucketPersonalAccessToken bitbucketPersonalAccessToken =
           bitbucketServerApiClient.getPersonalAccessToken(
-              personalAccessToken.getScmUserName(),
               Long.valueOf(personalAccessToken.getScmTokenId()));
       return Optional.of(DEFAULT_TOKEN_SCOPE.equals(bitbucketPersonalAccessToken.getPermissions()));
     } catch (ScmItemNotFoundException e) {
       return Optional.of(Boolean.FALSE);
+    }
+  }
+
+  @Override
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+    if (!bitbucketServerApiClient.isConnected(params.getScmProviderUrl())) {
+      // If BitBucket oAuth is not configured check the manually added user namespace token.
+      HttpBitbucketServerApiClient apiClient =
+          new HttpBitbucketServerApiClient(
+              params.getScmProviderUrl(),
+              new NoopOAuthAuthenticator(),
+              oAuthAPI,
+              apiEndpoint.toString());
+      try {
+        BitbucketUser user = apiClient.getUser(params.getToken());
+        return Optional.of(Pair.of(Boolean.TRUE, user.getName()));
+      } catch (ScmItemNotFoundException
+          | ScmUnauthorizedException
+          | ScmCommunicationException exception) {
+        LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
+        return Optional.empty();
+      }
+    }
+    try {
+      BitbucketPersonalAccessToken bitbucketPersonalAccessToken =
+          bitbucketServerApiClient.getPersonalAccessToken(Long.valueOf(params.getScmTokenId()));
+      return Optional.of(
+          Pair.of(
+              DEFAULT_TOKEN_SCOPE.equals(bitbucketPersonalAccessToken.getPermissions())
+                  ? Boolean.TRUE
+                  : Boolean.FALSE,
+              bitbucketPersonalAccessToken.getUser().getName()));
+    } catch (ScmItemNotFoundException | ScmUnauthorizedException | ScmCommunicationException e) {
+      return Optional.empty();
     }
   }
 }

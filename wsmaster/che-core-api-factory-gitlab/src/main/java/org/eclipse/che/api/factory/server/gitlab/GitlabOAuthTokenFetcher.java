@@ -33,6 +33,7 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
@@ -40,6 +41,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.inject.ConfigurationException;
@@ -52,8 +54,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
 
   private static final Logger LOG = LoggerFactory.getLogger(GitlabOAuthTokenFetcher.class);
   private static final String OAUTH_PROVIDER_NAME = "gitlab";
-  public static final Set<String> DEFAULT_TOKEN_SCOPES =
-      ImmutableSet.of("api", "write_repository", "openid");
+  public static final Set<String> DEFAULT_TOKEN_SCOPES = ImmutableSet.of("api", "write_repository");
 
   private final List<String> registeredGitlabEndpoints;
   private final OAuthAPI oAuthAPI;
@@ -105,22 +106,24 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     OAuthToken oAuthToken;
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      GitlabUser user = gitlabApiClient.getUser(oAuthToken.getToken());
-      PersonalAccessToken token =
-          new PersonalAccessToken(
-              scmServerUrl,
-              cheSubject.getUserId(),
-              user.getUsername(),
-              NameGenerator.generate(OAUTH_2_PREFIX, 5),
-              NameGenerator.generate("id-", 5),
-              oAuthToken.getToken());
-      Optional<Boolean> valid = isValid(token);
-      if (valid.isEmpty() || !valid.get()) {
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
+      String tokenId = NameGenerator.generate("id-", 5);
+      Optional<Pair<Boolean, String>> valid =
+          isValid(
+              new PersonalAccessTokenParams(
+                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
+      if (valid.isEmpty() || !valid.get().first) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary  privileges. Please make sure Che app scopes are correct and containing at least: "
                 + DEFAULT_TOKEN_SCOPES.toString());
       }
-      return token;
+      return new PersonalAccessToken(
+          scmServerUrl,
+          cheSubject.getUserId(),
+          valid.get().second,
+          tokenName,
+          tokenId,
+          oAuthToken.getToken());
     } catch (UnauthorizedException e) {
       throw new ScmUnauthorizedException(
           cheSubject.getUserName()
@@ -132,12 +135,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
           getLocalAuthenticateUrl());
     } catch (NotFoundException nfe) {
       throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
-    } catch (ServerException
-        | ForbiddenException
-        | BadRequestException
-        | ScmItemNotFoundException
-        | ScmBadRequestException
-        | ConflictException e) {
+    } catch (ServerException | ForbiddenException | BadRequestException | ConflictException e) {
       LOG.warn(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
@@ -160,7 +158,8 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
         && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
       // validation OAuth token by special API call
       try {
-        GitlabOauthTokenInfo info = gitlabApiClient.getTokenInfo(personalAccessToken.getToken());
+        GitlabOauthTokenInfo info =
+            gitlabApiClient.getOAuthTokenInfo(personalAccessToken.getToken());
         return Optional.of(Sets.newHashSet(info.getScope()).containsAll(DEFAULT_TOKEN_SCOPES));
       } catch (ScmItemNotFoundException | ScmCommunicationException e) {
         return Optional.of(Boolean.FALSE);
@@ -178,6 +177,36 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
       } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
         return Optional.of(Boolean.FALSE);
       }
+    }
+  }
+
+  @Override
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+    GitlabApiClient gitlabApiClient = getApiClient(params.getScmProviderUrl());
+    if (gitlabApiClient == null || !gitlabApiClient.isConnected(params.getScmProviderUrl())) {
+      if (OAUTH_PROVIDER_NAME.equals(params.getScmTokenName())) {
+        gitlabApiClient = new GitlabApiClient(params.getScmProviderUrl());
+      } else {
+        LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
+        return Optional.empty();
+      }
+    }
+    try {
+      GitlabUser user = gitlabApiClient.getUser(params.getToken());
+      String[] scopes;
+      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+        scopes = gitlabApiClient.getOAuthTokenInfo(params.getToken()).getScope();
+      } else {
+        scopes = gitlabApiClient.getPersonalAccessTokenInfo(params.getToken()).getScopes();
+      }
+      return Optional.of(
+          Pair.of(
+              Sets.newHashSet(scopes).containsAll(DEFAULT_TOKEN_SCOPES)
+                  ? Boolean.TRUE
+                  : Boolean.FALSE,
+              user.getUsername()));
+    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+      return Optional.empty();
     }
   }
 

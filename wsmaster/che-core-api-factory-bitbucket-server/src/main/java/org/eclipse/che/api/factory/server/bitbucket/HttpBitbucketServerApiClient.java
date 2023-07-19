@@ -37,11 +37,9 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
@@ -112,44 +110,49 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public BitbucketUser getUser(Subject cheUser)
-      throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException {
-    try {
-      // Since Bitbucket server API doesn't provide a way to get an account profile currently
-      // authenticated user we will try to find it and by iterating over the list available to the
-      // current user Bitbucket users and attempting to get their personal access tokens. To speed
-      // up this process first of all we will search among users that contain(somewhere in Bitbucket
-      // user
-      // entity) Che's user username. At the second step, we will search against all visible(to the
-      // current Che's user) bitbucket users that are not included in the first list.
-      Set<String> usersByName =
-          getUsers(cheUser.getUserName()).stream()
-              .map(BitbucketUser::getSlug)
-              .collect(Collectors.toSet());
-
-      Optional<BitbucketUser> currentUser = findCurrentUser(usersByName);
-      if (currentUser.isPresent()) {
-        return currentUser.get();
-      }
-      Set<String> usersAllExceptByName =
-          getUsers().stream()
-              .map(BitbucketUser::getSlug)
-              .filter(s -> !usersByName.contains(s))
-              .collect(Collectors.toSet());
-      currentUser = findCurrentUser(usersAllExceptByName);
-      if (currentUser.isPresent()) {
-        return currentUser.get();
-      }
-    } catch (ScmBadRequestException | ScmItemNotFoundException scmException) {
-      throw new ScmCommunicationException(scmException.getMessage(), scmException);
-    }
-    throw new ScmItemNotFoundException(
-        "Current user not found. That is possible only if user are not authorized against "
-            + serverUri);
+  public BitbucketUser getUser(@Nullable String token)
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    return getUser(getUserSlug(token), token);
   }
 
-  @Override
-  public BitbucketUser getUser(String slug, @Nullable String token)
+  private String getUserSlug(@Nullable String token)
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+    URI uri;
+    try {
+      uri = serverUri.resolve("./plugins/servlet/applinks/whoami");
+    } catch (IllegalArgumentException e) {
+      // if the slug contains invalid characters (space for example) then the URI will be invalid
+      throw new ScmCommunicationException(e.getMessage(), e);
+    }
+
+    HttpRequest request =
+        HttpRequest.newBuilder(uri)
+            .headers(
+                "Authorization",
+                token != null
+                    ? "Bearer " + token
+                    : computeAuthorizationHeader("GET", uri.toString()))
+            .timeout(DEFAULT_HTTP_TIMEOUT)
+            .build();
+
+    try {
+      LOG.trace("executeRequest={}", request);
+      return executeRequest(
+          httpClient,
+          request,
+          inputStream -> {
+            try {
+              return CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
+    } catch (ScmBadRequestException e) {
+      throw new ScmCommunicationException(e.getMessage(), e);
+    }
+  }
+
+  private BitbucketUser getUser(String slug, @Nullable String token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     URI uri;
     try {
@@ -209,9 +212,10 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public void deletePersonalAccessTokens(String userSlug, Long tokenId)
+  public void deletePersonalAccessTokens(Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
+    URI uri =
+        serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(null) + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .DELETE()
@@ -246,11 +250,12 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
   @Override
   public BitbucketPersonalAccessToken createPersonalAccessTokens(
-      String userSlug, String tokenName, Set<String> permissions)
-      throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException {
+      String tokenName, Set<String> permissions)
+      throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException,
+          ScmItemNotFoundException {
     BitbucketPersonalAccessToken token =
         new BitbucketPersonalAccessToken(tokenName, permissions, 90);
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + userSlug);
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(null));
 
     try {
       HttpRequest request =
@@ -288,20 +293,23 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public List<BitbucketPersonalAccessToken> getPersonalAccessTokens(String userSlug)
+  public List<BitbucketPersonalAccessToken> getPersonalAccessTokens()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     try {
       return doGetItems(
-          BitbucketPersonalAccessToken.class, "./rest/access-tokens/1.0/users/" + userSlug, null);
+          BitbucketPersonalAccessToken.class,
+          "./rest/access-tokens/1.0/users/" + getUserSlug(null),
+          null);
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }
 
   @Override
-  public BitbucketPersonalAccessToken getPersonalAccessToken(String userSlug, Long tokenId)
+  public BitbucketPersonalAccessToken getPersonalAccessToken(Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + userSlug + "/" + tokenId);
+    URI uri =
+        serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(null) + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers(
@@ -329,37 +337,6 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
-  }
-
-  /**
-   * This method is testing provided collection of user's `slug`s if contains the `slug` of the
-   * currently authenticated user and return it. The major method to test that condition is to get
-   * the list of personal access tokens. Current Che user that is associated with Bitbucket user
-   * should not be able to get someone else list of personal access tokens except his own.
-   *
-   * @param userSlugs set of user's `slug`s to test if it contains currently authenticated user.
-   * @return Bitbucket user from the given set that is associated with the current user. Or
-   *     Optional.empty if the given set doesn't contain that user.
-   * @throws ScmCommunicationException can happen if communication between che server and bitbucket
-   *     server is failed.
-   * @throws ScmUnauthorizedException can happen if currently authenticated che user is not
-   *     associated with bitbucket server.
-   * @throws ScmItemNotFoundException can happen if provided `slug` to test is not associated with
-   *     any user on Bitbucket server
-   */
-  private Optional<BitbucketUser> findCurrentUser(Set<String> userSlugs)
-      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
-
-    for (String userSlug : userSlugs) {
-      BitbucketUser user = getUser(userSlug, null);
-      try {
-        getPersonalAccessTokens(userSlug);
-        return Optional.of(user);
-      } catch (ScmItemNotFoundException | ScmUnauthorizedException e) {
-        // ok
-      }
-    }
-    return Optional.empty();
   }
 
   private <T> List<T> doGetItems(Class<T> tClass, String api, String filter)

@@ -1,0 +1,7 @@
+{
+  "id": 1,
+  "name": "gitlab",
+  "scopes": ["api", "write_repository"],
+  "expires_at": "2024-07-18",
+  "created_at": "2023-07-19T07:41:19.492Z"
+}

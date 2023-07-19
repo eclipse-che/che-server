@@ -29,6 +29,7 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
@@ -36,6 +37,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
@@ -150,30 +152,31 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
     }
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      // Find the user associated to the OAuth token by querying the GitHub API.
-      GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
-      PersonalAccessToken token =
-          new PersonalAccessToken(
-              scmServerUrl,
-              cheSubject.getUserId(),
-              user.getLogin(),
-              NameGenerator.generate(OAUTH_2_PREFIX, 5),
-              NameGenerator.generate("id-", 5),
-              oAuthToken.getToken());
-      Optional<Boolean> valid = isValid(token);
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
+      String tokenId = NameGenerator.generate("id-", 5);
+      Optional<Pair<Boolean, String>> valid =
+          isValid(
+              new PersonalAccessTokenParams(
+                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw new ScmCommunicationException(
             "Unable to verify if current token is a valid GitHub token.  Token's scm-url needs to be '"
                 + GithubApiClient.GITHUB_SAAS_ENDPOINT
                 + "' and was '"
-                + token.getScmProviderUrl()
+                + scmServerUrl
                 + "'");
-      } else if (!valid.get()) {
+      } else if (!valid.get().first) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: "
                 + DEFAULT_TOKEN_SCOPES.toString());
       }
-      return token;
+      return new PersonalAccessToken(
+          scmServerUrl,
+          cheSubject.getUserId(),
+          valid.get().second,
+          tokenName,
+          tokenId,
+          oAuthToken.getToken());
     } catch (UnauthorizedException e) {
       throw new ScmUnauthorizedException(
           cheSubject.getUserName()
@@ -185,18 +188,14 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
           getLocalAuthenticateUrl());
     } catch (NotFoundException nfe) {
       throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
-    } catch (ServerException
-        | ForbiddenException
-        | BadRequestException
-        | ScmItemNotFoundException
-        | ScmBadRequestException
-        | ConflictException e) {
+    } catch (ServerException | ForbiddenException | BadRequestException | ConflictException e) {
       LOG.error(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }
 
   @Override
+  @Deprecated
   public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken) {
     if (!githubApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
@@ -204,21 +203,27 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
     }
 
     try {
-      if (personalAccessToken.getScmTokenName() != null
-          && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
-        String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken());
-        return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
-      } else {
-        // No REST API for PAT-s in Github found yet. Just try to do some action.
-        GithubUser user = githubApiClient.getUser(personalAccessToken.getToken());
-        if (personalAccessToken.getScmUserName().equals(user.getLogin())) {
-          return Optional.of(Boolean.TRUE);
-        } else {
-          return Optional.of(Boolean.FALSE);
-        }
-      }
+      String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken()).second;
+      return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.of(Boolean.FALSE);
+    }
+  }
+
+  @Override
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+    if (!githubApiClient.isConnected(params.getScmProviderUrl())) {
+      LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
+      return Optional.empty();
+    }
+    try {
+      Pair<String, String[]> pair = githubApiClient.getTokenScopes(params.getToken());
+      return Optional.of(
+          Pair.of(
+              containsScopes(pair.second, DEFAULT_TOKEN_SCOPES) ? Boolean.TRUE : Boolean.FALSE,
+              pair.first));
+    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+      return Optional.empty();
     }
   }
 

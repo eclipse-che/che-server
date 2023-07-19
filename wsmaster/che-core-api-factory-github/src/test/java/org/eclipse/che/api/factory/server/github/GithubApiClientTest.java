@@ -165,7 +165,7 @@ public class GithubApiClientTest {
                     .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo, user:email")
                     .withBodyFile("github/rest/user/response.json")));
 
-    String[] scopes = client.getTokenScopes("token1");
+    String[] scopes = client.getTokenScopes("token1").second;
     String[] expectedScopes = {"repo", "user:email"};
     assertNotNull(scopes, "GitHub API should have returned a non-null scope array");
     assertEqualsNoOrder(
@@ -182,7 +182,7 @@ public class GithubApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("github/rest/user/response.json")));
 
-    String[] scopes = client.getTokenScopes("token1");
+    String[] scopes = client.getTokenScopes("token1").second;
     assertNotNull(scopes, "GitHub API should have returned a non-null scope array");
     assertEquals(
         scopes.length,
@@ -203,7 +203,7 @@ public class GithubApiClientTest {
                     .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "")
                     .withBodyFile("github/rest/user/response.json")));
 
-    String[] scopes = client.getTokenScopes("token1");
+    String[] scopes = client.getTokenScopes("token1").second;
     assertNotNull(scopes, "GitHub API should have returned a non-null scope array");
     assertEquals(
         scopes.length,

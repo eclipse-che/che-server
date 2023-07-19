@@ -64,7 +64,7 @@ public class BitbucketServerUserDataFetcherTest {
           ScmBadRequestException, ScmConfigurationPersistenceException {
     // given
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
-    when(bitbucketServerApiClient.getUser(eq(subject))).thenReturn(bitbucketUser);
+    when(bitbucketServerApiClient.getUser(null)).thenReturn(bitbucketUser);
     // when
     GitUserData gitUserData = fetcher.fetchGitUserData();
     // then

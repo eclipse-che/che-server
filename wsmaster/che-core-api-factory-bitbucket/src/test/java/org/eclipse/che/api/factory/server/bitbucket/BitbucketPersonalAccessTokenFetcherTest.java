@@ -28,11 +28,14 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
+import java.util.Optional;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.security.oauth.OAuthAPI;
@@ -82,16 +85,11 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/user/response.json")));
-    PersonalAccessToken personalAccessToken =
-        new PersonalAccessToken(
-            "https://bitbucket.org/",
-            "cheUserId",
-            "scmUserName",
-            "scmTokenName",
-            "scmTokenId",
-            bitbucketOauthToken);
+    PersonalAccessTokenParams personalAccessTokenParams =
+        new PersonalAccessTokenParams(
+            "https://bitbucket.org/", "scmTokenName", "scmTokenId", bitbucketOauthToken, null);
     assertTrue(
-        bitbucketPersonalAccessTokenFetcher.isValid(personalAccessToken).isEmpty(),
+        bitbucketPersonalAccessTokenFetcher.isValid(personalAccessTokenParams).isEmpty(),
         "Should not validate SCM server with trailing /");
   }
 
@@ -163,16 +161,13 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                         BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
-    PersonalAccessToken token =
-        new PersonalAccessToken(
-            "https://bitbucket.org",
-            "cheUser",
-            "username",
-            "token-name",
-            "tid-23434",
-            bitbucketOauthToken);
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
+            "https://bitbucket.org", "params-name", "tid-23434", bitbucketOauthToken, null);
 
-    assertTrue(bitbucketPersonalAccessTokenFetcher.isValid(token).get());
+    Optional<Pair<Boolean, String>> valid = bitbucketPersonalAccessTokenFetcher.isValid(params);
+    assertTrue(valid.isPresent());
+    assertTrue(valid.get().first);
   }
 
   @Test
@@ -187,31 +182,31 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                         BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
-    PersonalAccessToken token =
-        new PersonalAccessToken(
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
             "https://bitbucket.org",
-            "cheUser",
-            "username",
-            OAUTH_2_PREFIX + "-token-name",
+            OAUTH_2_PREFIX + "-params-name",
             "tid-23434",
-            bitbucketOauthToken);
+            bitbucketOauthToken,
+            null);
 
-    assertTrue(bitbucketPersonalAccessTokenFetcher.isValid(token).get());
+    Optional<Pair<Boolean, String>> valid = bitbucketPersonalAccessTokenFetcher.isValid(params);
+    assertTrue(valid.isPresent());
+    assertTrue(valid.get().first);
   }
 
   @Test
   public void shouldNotValidateExpiredOauthToken() throws Exception {
     stubFor(get(urlEqualTo("/user")).willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
 
-    PersonalAccessToken token =
-        new PersonalAccessToken(
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
             "https://bitbucket.org",
-            "cheUser",
-            "username",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
-            bitbucketOauthToken);
+            bitbucketOauthToken,
+            null);
 
-    assertFalse(bitbucketPersonalAccessTokenFetcher.isValid(token).get());
+    assertFalse(bitbucketPersonalAccessTokenFetcher.isValid(params).isPresent());
   }
 }

@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
@@ -95,7 +96,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(true);
+    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+        .thenReturn("user");
 
     Map<String, String> data =
         Map.of("token", Base64.getEncoder().encodeToString(" token_value \n".getBytes(UTF_8)));
@@ -161,7 +163,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(true);
+    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+        .thenReturn("user");
 
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -214,7 +217,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(true);
+    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+        .thenReturn("user");
 
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -261,7 +265,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(false);
+    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+        .thenReturn(null);
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
@@ -292,12 +297,12 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class)))
+    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
         .thenAnswer(
-            (Answer<Boolean>)
+            (Answer<String>)
                 invocation -> {
-                  PersonalAccessToken token = invocation.getArgument(0);
-                  return "id2".equals(token.getScmTokenId());
+                  PersonalAccessTokenParams params = invocation.getArgument(0);
+                  return "id2".equals(params.getScmTokenId()) ? "user" : null;
                 });
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);

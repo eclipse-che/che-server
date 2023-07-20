@@ -96,7 +96,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenReturn("user");
 
     Map<String, String> data =
@@ -163,7 +163,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenReturn("user");
 
     Map<String, String> data1 =
@@ -217,7 +217,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenReturn("user");
 
     Map<String, String> data =
@@ -260,7 +260,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenReturn("user");
 
     Map<String, String> data =
@@ -297,7 +297,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenReturn("user");
 
     Map<String, String> data1 =
@@ -345,7 +345,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenReturn(null);
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
@@ -377,7 +377,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessTokenParams.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenAnswer(
             (Answer<String>)
                 invocation -> {

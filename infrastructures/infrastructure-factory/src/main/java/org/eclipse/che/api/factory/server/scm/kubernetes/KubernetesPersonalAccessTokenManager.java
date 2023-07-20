@@ -196,7 +196,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
             String tokenId = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
             String organization = annotations.get(ANNOTATION_SCM_ORGANIZATION);
             String scmUsername =
-                scmPersonalAccessTokenFetcher.isValid(
+                scmPersonalAccessTokenFetcher.getScmUsername(
                     new PersonalAccessTokenParams(
                         trimmedUrl, providerName, tokenId, token, organization));
             if (!isNullOrEmpty(scmUsername)) {

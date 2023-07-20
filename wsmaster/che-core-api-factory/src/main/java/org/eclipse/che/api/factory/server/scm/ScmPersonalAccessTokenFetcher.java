@@ -57,7 +57,7 @@ public class ScmPersonalAccessTokenFetcher {
    * Iterate over the Set<PersonalAccessTokenFetcher> declared in container and sequentially invoke
    * {@link PersonalAccessTokenFetcher#isValid(PersonalAccessToken)} method.
    *
-   * @deprecated use {@link #isValid(PersonalAccessTokenParams)} instead.
+   * @deprecated use {@link #getScmUsername(PersonalAccessTokenParams)} instead.
    * @throws UnknownScmProviderException - if none of PersonalAccessTokenFetchers return a
    *     meaningful result.
    */
@@ -82,7 +82,7 @@ public class ScmPersonalAccessTokenFetcher {
    * fetchers return an scm username, return it. Otherwise, return null.
    */
   @Nullable
-  public String isValid(PersonalAccessTokenParams params)
+  public String getScmUsername(PersonalAccessTokenParams params)
       throws UnknownScmProviderException, ScmUnauthorizedException, ScmCommunicationException {
     for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
       Optional<Pair<Boolean, String>> isValid = fetcher.isValid(params);

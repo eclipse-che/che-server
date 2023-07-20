@@ -61,6 +61,7 @@ public class ScmPersonalAccessTokenFetcher {
    * @throws UnknownScmProviderException - if none of PersonalAccessTokenFetchers return a
    *     meaningful result.
    */
+  @Deprecated
   public boolean isValid(PersonalAccessToken personalAccessToken)
       throws UnknownScmProviderException, ScmUnauthorizedException, ScmCommunicationException {
     for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {

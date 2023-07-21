@@ -193,18 +193,20 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     }
     try {
       GitlabUser user = gitlabApiClient.getUser(params.getToken());
-      String[] scopes;
       if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
-        scopes = gitlabApiClient.getOAuthTokenInfo(params.getToken()).getScope();
-      } else {
-        scopes = gitlabApiClient.getPersonalAccessTokenInfo(params.getToken()).getScopes();
+        // validation OAuth token by special API call
+        GitlabOauthTokenInfo info = gitlabApiClient.getOAuthTokenInfo(params.getToken());
+        return Optional.of(
+            Pair.of(
+                Sets.newHashSet(info.getScope()).containsAll(DEFAULT_TOKEN_SCOPES)
+                    ? Boolean.TRUE
+                    : Boolean.FALSE,
+                user.getUsername()));
       }
-      return Optional.of(
-          Pair.of(
-              Sets.newHashSet(scopes).containsAll(DEFAULT_TOKEN_SCOPES)
-                  ? Boolean.TRUE
-                  : Boolean.FALSE,
-              user.getUsername()));
+      // validating personal access token from secret. Since PAT API is accessible only in
+      // latest GitLab version, we just perform check by accessing something from API.
+      // TODO: add PAT scope validation
+      return Optional.of(Pair.of(Boolean.TRUE, user.getUsername()));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.empty();
     }

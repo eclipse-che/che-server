@@ -203,8 +203,19 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
     }
 
     try {
-      String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken()).second;
-      return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
+      if (personalAccessToken.getScmTokenName() != null
+          && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+        String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken()).second;
+        return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
+      } else {
+        // No REST API for PAT-s in Github found yet. Just try to do some action.
+        GithubUser user = githubApiClient.getUser(personalAccessToken.getToken());
+        if (personalAccessToken.getScmUserName().equals(user.getLogin())) {
+          return Optional.of(Boolean.TRUE);
+        } else {
+          return Optional.of(Boolean.FALSE);
+        }
+      }
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.of(Boolean.FALSE);
     }
@@ -217,11 +228,18 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
       return Optional.empty();
     }
     try {
-      Pair<String, String[]> pair = githubApiClient.getTokenScopes(params.getToken());
-      return Optional.of(
-          Pair.of(
-              containsScopes(pair.second, DEFAULT_TOKEN_SCOPES) ? Boolean.TRUE : Boolean.FALSE,
-              pair.first));
+      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+        Pair<String, String[]> pair = githubApiClient.getTokenScopes(params.getToken());
+        return Optional.of(
+            Pair.of(
+                containsScopes(pair.second, DEFAULT_TOKEN_SCOPES) ? Boolean.TRUE : Boolean.FALSE,
+                pair.first));
+      } else {
+        // TODO: add PAT scope validation
+        // No REST API for PAT-s in Github found yet. Just try to do some action.
+        GithubUser user = githubApiClient.getUser(params.getToken());
+        return Optional.of(Pair.of(Boolean.TRUE, user.getLogin()));
+      }
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.empty();
     }

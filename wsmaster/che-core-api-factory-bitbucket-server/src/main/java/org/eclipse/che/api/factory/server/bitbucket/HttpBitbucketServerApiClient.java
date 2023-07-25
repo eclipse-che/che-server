@@ -113,50 +113,13 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketUser getUser(String token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    return getUser(getUserSlug(Optional.of(token)), Optional.of(token));
+    return getUser(getUserSlug(token), Optional.of(token));
   }
 
   @Override
   public BitbucketUser getUser()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    return getUser(getUserSlug(Optional.empty()), Optional.empty());
-  }
-
-  private String getUserSlug(Optional<String> token)
-      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
-    URI uri;
-    try {
-      uri = serverUri.resolve("./plugins/servlet/applinks/whoami");
-    } catch (IllegalArgumentException e) {
-      // if the slug contains invalid characters (space for example) then the URI will be invalid
-      throw new ScmCommunicationException(e.getMessage(), e);
-    }
-
-    HttpRequest request =
-        HttpRequest.newBuilder(uri)
-            .headers(
-                "Authorization",
-                token.isPresent()
-                    ? "Bearer " + token.get()
-                    : computeAuthorizationHeader("GET", uri.toString()))
-            .timeout(DEFAULT_HTTP_TIMEOUT)
-            .build();
-
-    try {
-      LOG.trace("executeRequest={}", request);
-      return executeRequest(
-          httpClient,
-          request,
-          inputStream -> {
-            try {
-              return CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
-            } catch (IOException e) {
-              throw new UncheckedIOException(e);
-            }
-          });
-    } catch (ScmBadRequestException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
-    }
+    return getUser(getUserSlug(), Optional.empty());
   }
 
   private BitbucketUser getUser(String slug, Optional<String> token)
@@ -221,8 +184,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public void deletePersonalAccessTokens(Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri =
-        serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(null) + "/" + tokenId);
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug() + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .DELETE()
@@ -262,7 +224,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           ScmItemNotFoundException {
     BitbucketPersonalAccessToken token =
         new BitbucketPersonalAccessToken(tokenName, permissions, 90);
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()));
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug());
 
     try {
       HttpRequest request =
@@ -305,7 +267,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     try {
       return doGetItems(
           BitbucketPersonalAccessToken.class,
-          "./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()),
+          "./rest/access-tokens/1.0/users/" + getUserSlug(),
           null);
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
@@ -315,9 +277,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketPersonalAccessToken getPersonalAccessToken(Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri =
-        serverUri.resolve(
-            "./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()) + "/" + tokenId);
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug() + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers(
@@ -338,6 +298,53 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
               String result =
                   CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
               return OM.readValue(result, BitbucketPersonalAccessToken.class);
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
+    } catch (ScmBadRequestException e) {
+      throw new ScmCommunicationException(e.getMessage(), e);
+    }
+  }
+
+  private String getUserSlug(String token)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmUnauthorizedException {
+    return getUserSlug(Optional.of(token));
+  }
+
+  private String getUserSlug()
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmUnauthorizedException {
+    return getUserSlug(Optional.empty());
+  }
+
+  private String getUserSlug(Optional<String> token)
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+    URI uri;
+    try {
+      uri = serverUri.resolve("./plugins/servlet/applinks/whoami");
+    } catch (IllegalArgumentException e) {
+      // if the slug contains invalid characters (space for example) then the URI will be invalid
+      throw new ScmCommunicationException(e.getMessage(), e);
+    }
+
+    HttpRequest request =
+        HttpRequest.newBuilder(uri)
+            .headers(
+                "Authorization",
+                token.isPresent()
+                    ? "Bearer " + token.get()
+                    : computeAuthorizationHeader("GET", uri.toString()))
+            .timeout(DEFAULT_HTTP_TIMEOUT)
+            .build();
+
+    try {
+      LOG.trace("executeRequest={}", request);
+      return executeRequest(
+          httpClient,
+          request,
+          inputStream -> {
+            try {
+              return CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }

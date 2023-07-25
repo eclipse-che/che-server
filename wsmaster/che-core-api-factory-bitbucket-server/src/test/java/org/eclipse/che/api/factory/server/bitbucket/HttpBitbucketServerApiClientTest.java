@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
@@ -247,6 +248,22 @@ public class HttpBitbucketServerApiClientTest {
     // then
     assertNotNull(result);
     assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
+  }
+
+  @Test
+  public void shouldBeAbleToDeletePAT()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+
+    // given
+    stubFor(
+        delete(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster/5"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
+            .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON))
+            .willReturn(aResponse().withStatus(204)));
+
+    // when
+    bitbucketServer.deletePersonalAccessTokens(5L);
   }
 
   @Test

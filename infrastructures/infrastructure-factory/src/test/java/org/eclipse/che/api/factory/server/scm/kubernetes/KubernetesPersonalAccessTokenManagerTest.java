@@ -379,10 +379,12 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenAnswer(
-            (Answer<String>)
+            (Answer<Optional<String>>)
                 invocation -> {
                   PersonalAccessTokenParams params = invocation.getArgument(0);
-                  return "id2".equals(params.getScmTokenId()) ? "user" : null;
+                  return "id2".equals(params.getScmTokenId())
+                      ? Optional.of("user")
+                      : Optional.empty();
                 });
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);

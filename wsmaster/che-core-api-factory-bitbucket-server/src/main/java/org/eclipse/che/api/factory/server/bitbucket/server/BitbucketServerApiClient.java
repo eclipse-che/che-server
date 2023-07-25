@@ -17,7 +17,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.commons.annotation.Nullable;
 
 /** Bitbucket Server API client. */
 public interface BitbucketServerApiClient {
@@ -28,13 +27,17 @@ public interface BitbucketServerApiClient {
   boolean isConnected(String bitbucketServerUrl);
 
   /**
-   * @param token token to override. Pass {@code null} to use token from the authentication flow.
-   * @return - Retrieve the {@link BitbucketUser} matching the supplied userSlug.
-   * @throws ScmItemNotFoundException
-   * @throws ScmUnauthorizedException
-   * @throws ScmCommunicationException
+   * @param token token to authorise the user request.
+   * @return - authenticated {@link BitbucketUser}.
    */
-  BitbucketUser getUser(@Nullable String token)
+  BitbucketUser getUser(String token)
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
+
+  /**
+   * @return Retrieve the authenticated {@link BitbucketUser} using an OAuth token.
+   * @return - authenticated {@link BitbucketUser}.
+   */
+  BitbucketUser getUser()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 
   /**

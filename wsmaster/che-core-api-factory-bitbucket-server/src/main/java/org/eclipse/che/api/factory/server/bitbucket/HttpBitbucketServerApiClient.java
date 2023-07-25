@@ -37,6 +37,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -110,12 +111,18 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public BitbucketUser getUser(@Nullable String token)
+  public BitbucketUser getUser(String token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    return getUser(getUserSlug(token), token);
+    return getUser(getUserSlug(Optional.of(token)), Optional.of(token));
   }
 
-  private String getUserSlug(@Nullable String token)
+  @Override
+  public BitbucketUser getUser()
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    return getUser(getUserSlug(Optional.empty()), Optional.empty());
+  }
+
+  private String getUserSlug(Optional<String> token)
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
     URI uri;
     try {
@@ -129,8 +136,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
         HttpRequest.newBuilder(uri)
             .headers(
                 "Authorization",
-                token != null
-                    ? "Bearer " + token
+                token.isPresent()
+                    ? "Bearer " + token.get()
                     : computeAuthorizationHeader("GET", uri.toString()))
             .timeout(DEFAULT_HTTP_TIMEOUT)
             .build();
@@ -152,7 +159,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     }
   }
 
-  private BitbucketUser getUser(String slug, @Nullable String token)
+  private BitbucketUser getUser(String slug, Optional<String> token)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     URI uri;
     try {
@@ -166,8 +173,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
         HttpRequest.newBuilder(uri)
             .headers(
                 "Authorization",
-                token != null
-                    ? "Bearer " + token
+                token.isPresent()
+                    ? "Bearer " + token.get()
                     : computeAuthorizationHeader("GET", uri.toString()))
             .timeout(DEFAULT_HTTP_TIMEOUT)
             .build();
@@ -255,7 +262,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           ScmItemNotFoundException {
     BitbucketPersonalAccessToken token =
         new BitbucketPersonalAccessToken(tokenName, permissions, 90);
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(null));
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()));
 
     try {
       HttpRequest request =
@@ -298,7 +305,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     try {
       return doGetItems(
           BitbucketPersonalAccessToken.class,
-          "./rest/access-tokens/1.0/users/" + getUserSlug(null),
+          "./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()),
           null);
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
@@ -309,7 +316,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   public BitbucketPersonalAccessToken getPersonalAccessToken(Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     URI uri =
-        serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(null) + "/" + tokenId);
+        serverUri.resolve(
+            "./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()) + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers(

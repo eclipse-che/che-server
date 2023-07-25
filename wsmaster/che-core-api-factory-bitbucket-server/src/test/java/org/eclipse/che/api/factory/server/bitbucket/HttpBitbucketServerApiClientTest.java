@@ -121,7 +121,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
 
-    BitbucketUser user = bitbucketServer.getUser(null);
+    BitbucketUser user = bitbucketServer.getUser();
     assertNotNull(user);
   }
 
@@ -338,7 +338,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
 
     // when
-    bitbucketServer.getUser(null);
+    bitbucketServer.getUser();
 
     // then
     verify(oAuthAPI, times(2)).getToken(eq("bitbucket"));

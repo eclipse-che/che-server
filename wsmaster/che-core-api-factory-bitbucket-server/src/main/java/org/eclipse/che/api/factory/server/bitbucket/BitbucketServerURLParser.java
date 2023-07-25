@@ -116,7 +116,7 @@ public class BitbucketServerURLParser {
               "");
       // If the user request catches the unauthorised error, it means that the provided url
       // belongs to Bitbucket.
-      bitbucketServerApiClient.getUser(null);
+      bitbucketServerApiClient.getUser();
     } catch (ScmItemNotFoundException | ScmCommunicationException e) {
       return false;
     } catch (ScmUnauthorizedException e) {

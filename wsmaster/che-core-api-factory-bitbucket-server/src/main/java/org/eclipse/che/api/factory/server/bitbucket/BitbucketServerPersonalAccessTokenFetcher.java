@@ -78,7 +78,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     final String tokenName =
         format(TOKEN_NAME_TEMPLATE, cheUser.getUserId(), apiEndpoint.getHost());
     try {
-      BitbucketUser user = bitbucketServerApiClient.getUser(null);
+      BitbucketUser user = bitbucketServerApiClient.getUser();
       LOG.debug("Current bitbucket user {} ", user);
       // cleanup existed
       List<BitbucketPersonalAccessToken> existingTokens =

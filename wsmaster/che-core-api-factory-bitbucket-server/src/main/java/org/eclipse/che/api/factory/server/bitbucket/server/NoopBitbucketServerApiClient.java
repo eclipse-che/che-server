@@ -17,7 +17,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.commons.annotation.Nullable;
 
 /**
  * Implementation of @{@link BitbucketServerApiClient} that is going to be deployed in container in
@@ -30,7 +29,14 @@ public class NoopBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public BitbucketUser getUser(@Nullable String token)
+  public BitbucketUser getUser(String token)
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    throw new RuntimeException(
+        "The fallback noop api client cannot be used for real operation. Make sure Bitbucket OAuth1 is properly configured.");
+  }
+
+  @Override
+  public BitbucketUser getUser()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException(
         "The fallback noop api client cannot be used for real operation. Make sure Bitbucket OAuth1 is properly configured.");

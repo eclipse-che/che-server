@@ -11,8 +11,6 @@
  */
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.LabelSelector;
@@ -195,17 +193,17 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
             String providerName = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
             String tokenId = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
             String organization = annotations.get(ANNOTATION_SCM_ORGANIZATION);
-            String scmUsername =
+            Optional<String> scmUsername =
                 scmPersonalAccessTokenFetcher.getScmUsername(
                     new PersonalAccessTokenParams(
                         trimmedUrl, providerName, tokenId, token, organization));
-            if (!isNullOrEmpty(scmUsername)) {
+            if (scmUsername.isPresent()) {
               PersonalAccessToken personalAccessToken =
                   new PersonalAccessToken(
                       trimmedUrl,
                       annotations.get(ANNOTATION_CHE_USERID),
                       organization,
-                      scmUsername,
+                      scmUsername.get(),
                       providerName,
                       tokenId,
                       token);

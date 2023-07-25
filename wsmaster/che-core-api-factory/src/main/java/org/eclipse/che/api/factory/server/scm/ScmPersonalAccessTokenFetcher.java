@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 
@@ -81,15 +80,14 @@ public class ScmPersonalAccessTokenFetcher {
    * {@link PersonalAccessTokenFetcher#isValid(PersonalAccessTokenParams)} method. If any of the
    * fetchers return an scm username, return it. Otherwise, return null.
    */
-  @Nullable
-  public String getScmUsername(PersonalAccessTokenParams params)
+  public Optional<String> getScmUsername(PersonalAccessTokenParams params)
       throws UnknownScmProviderException, ScmUnauthorizedException, ScmCommunicationException {
     for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
       Optional<Pair<Boolean, String>> isValid = fetcher.isValid(params);
       if (isValid.isPresent() && isValid.get().first) {
-        return isValid.get().second;
+        return Optional.of(isValid.get().second);
       }
     }
-    return null;
+    return Optional.empty();
   }
 }

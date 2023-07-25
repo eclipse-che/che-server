@@ -97,7 +97,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn("user");
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data =
         Map.of("token", Base64.getEncoder().encodeToString(" token_value \n".getBytes(UTF_8)));
@@ -164,7 +164,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn("user");
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -218,7 +218,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn("user");
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -261,7 +261,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn("user");
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -298,7 +298,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn("user");
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));

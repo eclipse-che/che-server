@@ -346,7 +346,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn(null);
+        .thenReturn(Optional.empty());
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);

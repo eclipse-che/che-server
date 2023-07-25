@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
@@ -24,6 +25,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -99,6 +101,9 @@ public class HttpBitbucketServerApiClientTest {
             },
             oAuthAPI,
             apiEndpoint);
+    stubFor(
+        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
+            .willReturn(aResponse().withBody("ksmster")));
   }
 
   @AfterMethod
@@ -117,7 +122,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
 
-    BitbucketUser user = bitbucketServer.getUser("ksmster", null);
+    BitbucketUser user = bitbucketServer.getUser();
     assertNotNull(user);
   }
 
@@ -215,7 +220,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/response.json")));
 
     List<String> page =
-        bitbucketServer.getPersonalAccessTokens("ksmster").stream()
+        bitbucketServer.getPersonalAccessTokens().stream()
             .map(BitbucketPersonalAccessToken::getName)
             .collect(Collectors.toList());
     assertEquals(page, ImmutableList.of("che", "t2"));
@@ -223,7 +228,8 @@ public class HttpBitbucketServerApiClientTest {
 
   @Test
   public void shouldBeAbleToCreatePAT()
-      throws ScmCommunicationException, ScmBadRequestException, ScmUnauthorizedException {
+      throws ScmCommunicationException, ScmBadRequestException, ScmUnauthorizedException,
+          ScmItemNotFoundException {
 
     // given
     stubFor(
@@ -238,10 +244,26 @@ public class HttpBitbucketServerApiClientTest {
     // when
     BitbucketPersonalAccessToken result =
         bitbucketServer.createPersonalAccessTokens(
-            "ksmster", "myToKen", ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
+            "myToKen", ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
     // then
     assertNotNull(result);
     assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
+  }
+
+  @Test
+  public void shouldBeAbleToDeletePAT()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+
+    // given
+    stubFor(
+        delete(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster/5"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
+            .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON))
+            .willReturn(aResponse().withStatus(204)));
+
+    // when
+    bitbucketServer.deletePersonalAccessTokens(5L);
   }
 
   @Test
@@ -257,7 +279,7 @@ public class HttpBitbucketServerApiClientTest {
                 ok().withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/newtoken.json")));
 
     // when
-    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("ksmster", 5L);
+    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken(5L);
     // then
     assertNotNull(result);
     assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
@@ -275,7 +297,7 @@ public class HttpBitbucketServerApiClientTest {
             .willReturn(notFound()));
 
     // when
-    bitbucketServer.getPersonalAccessToken("ksmster", 5L);
+    bitbucketServer.getPersonalAccessToken(5L);
   }
 
   @Test(expectedExceptions = ScmUnauthorizedException.class)
@@ -290,7 +312,7 @@ public class HttpBitbucketServerApiClientTest {
             .willReturn(unauthorized()));
 
     // when
-    bitbucketServer.getPersonalAccessToken("ksmster", 5L);
+    bitbucketServer.getPersonalAccessToken(5L);
   }
 
   @Test(
@@ -309,7 +331,7 @@ public class HttpBitbucketServerApiClientTest {
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
 
     // when
-    localServer.getPersonalAccessToken("ksmster", 5L);
+    localServer.getPersonalAccessToken(5L);
   }
 
   @Test
@@ -325,7 +347,7 @@ public class HttpBitbucketServerApiClientTest {
         new HttpBitbucketServerApiClient(
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
     stubFor(
-        get(urlEqualTo("/rest/api/1.0/users/user"))
+        get(urlEqualTo("/rest/api/1.0/users/ksmster"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .willReturn(
                 aResponse()
@@ -333,9 +355,9 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
 
     // when
-    bitbucketServer.getUser("user", null);
+    bitbucketServer.getUser();
 
     // then
-    verify(oAuthAPI).getToken(eq("bitbucket"));
+    verify(oAuthAPI, times(2)).getToken(eq("bitbucket"));
   }
 }

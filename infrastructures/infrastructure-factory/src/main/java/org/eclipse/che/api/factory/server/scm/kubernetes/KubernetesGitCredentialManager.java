@@ -126,11 +126,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                                       '/'))
                           && personalAccessToken
                               .getCheUserId()
-                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID))
-                          && personalAccessToken
-                              .getScmUserName()
-                              .equals(
-                                  s.getMetadata().getAnnotations().get(ANNOTATION_SCM_USERNAME)))
+                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID)))
               .findFirst();
 
       Secret secret =
@@ -138,7 +134,6 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
               () -> {
                 Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
                 annotations.put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl());
-                annotations.put(ANNOTATION_SCM_USERNAME, personalAccessToken.getScmUserName());
                 annotations.put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId());
                 ObjectMeta meta =
                     new ObjectMetaBuilder()

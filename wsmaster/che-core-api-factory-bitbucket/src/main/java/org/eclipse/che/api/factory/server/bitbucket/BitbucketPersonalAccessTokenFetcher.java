@@ -24,12 +24,14 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.lang.NameGenerator;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
@@ -83,30 +85,31 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
     }
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      // Find the user associated to the OAuth token by querying the Bitbucket API.
-      BitbucketUser user = bitbucketApiClient.getUser(oAuthToken.getToken());
-      PersonalAccessToken token =
-          new PersonalAccessToken(
-              scmServerUrl,
-              cheSubject.getUserId(),
-              user.getName(),
-              NameGenerator.generate(OAUTH_PROVIDER_NAME, 5),
-              NameGenerator.generate("id-", 5),
-              oAuthToken.getToken());
-      Optional<Boolean> valid = isValid(token);
+      String tokenName = NameGenerator.generate(OAUTH_PROVIDER_NAME, 5);
+      String tokenId = NameGenerator.generate("id-", 5);
+      Optional<Pair<Boolean, String>> valid =
+          isValid(
+              new PersonalAccessTokenParams(
+                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw new ScmCommunicationException(
             "Unable to verify if current token is a valid Bitbucket token.  Token's scm-url needs to be '"
                 + BitbucketApiClient.BITBUCKET_SERVER
                 + "' and was '"
-                + token.getScmProviderUrl()
+                + scmServerUrl
                 + "'");
-      } else if (!valid.get()) {
+      } else if (!valid.get().first) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: "
                 + DEFAULT_TOKEN_SCOPE);
       }
-      return token;
+      return new PersonalAccessToken(
+          scmServerUrl,
+          cheSubject.getUserId(),
+          valid.get().second,
+          tokenName,
+          tokenId,
+          oAuthToken.getToken());
     } catch (UnauthorizedException e) {
       throw new ScmUnauthorizedException(
           cheSubject.getUserName()
@@ -118,12 +121,7 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
           getLocalAuthenticateUrl());
     } catch (NotFoundException nfe) {
       throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
-    } catch (ServerException
-        | ForbiddenException
-        | BadRequestException
-        | ScmItemNotFoundException
-        | ScmBadRequestException
-        | ConflictException e) {
+    } catch (ServerException | ForbiddenException | BadRequestException | ConflictException e) {
       LOG.error(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
@@ -137,10 +135,30 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
     }
 
     try {
-      String[] scopes = bitbucketApiClient.getTokenScopes(personalAccessToken.getToken());
+      String[] scopes = bitbucketApiClient.getTokenScopes(personalAccessToken.getToken()).second;
       return Optional.of(Sets.newHashSet(scopes).contains(DEFAULT_TOKEN_SCOPE));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.of(Boolean.FALSE);
+    }
+  }
+
+  @Override
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+    if (!bitbucketApiClient.isConnected(params.getScmProviderUrl())) {
+      LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
+      return Optional.empty();
+    }
+
+    try {
+      Pair<String, String[]> pair = bitbucketApiClient.getTokenScopes(params.getToken());
+      return Optional.of(
+          Pair.of(
+              Sets.newHashSet(pair.second).contains(DEFAULT_TOKEN_SCOPE)
+                  ? Boolean.TRUE
+                  : Boolean.FALSE,
+              pair.first));
+    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+      return Optional.empty();
     }
   }
 

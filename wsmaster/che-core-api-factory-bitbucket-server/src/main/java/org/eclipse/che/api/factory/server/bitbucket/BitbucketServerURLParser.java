@@ -114,9 +114,9 @@ public class BitbucketServerURLParser {
               new BitbucketServerOAuthAuthenticator("", "", "", ""),
               oAuthAPI,
               "");
-      // If the token request catches the unauthorised error, it means that the provided url
+      // If the user request catches the unauthorised error, it means that the provided url
       // belongs to Bitbucket.
-      bitbucketServerApiClient.getPersonalAccessToken("", 0L);
+      bitbucketServerApiClient.getUser();
     } catch (ScmItemNotFoundException | ScmCommunicationException e) {
       return false;
     } catch (ScmUnauthorizedException e) {

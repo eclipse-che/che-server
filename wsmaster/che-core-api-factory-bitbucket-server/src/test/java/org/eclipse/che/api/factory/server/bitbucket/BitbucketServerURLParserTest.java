@@ -99,7 +99,8 @@ public class BitbucketServerURLParserTest {
             null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
-        get(urlEqualTo("/rest/access-tokens/1.0/users/0")).willReturn(aResponse().withStatus(401)));
+        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
+            .willReturn(aResponse().withStatus(401)));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);
@@ -113,7 +114,8 @@ public class BitbucketServerURLParserTest {
     // given
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
-        get(urlEqualTo("/rest/access-tokens/1.0/users/0")).willReturn(aResponse().withStatus(500)));
+        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
+            .willReturn(aResponse().withStatus(500)));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);

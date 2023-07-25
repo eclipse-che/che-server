@@ -27,12 +27,14 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.lang.NameGenerator;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
@@ -80,30 +82,31 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       oAuthToken = oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME);
-      // Find the user associated to the OAuth token by querying the Azure DevOps API.
-      AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(oAuthToken.getToken());
-      PersonalAccessToken token =
-          new PersonalAccessToken(
-              scmServerUrl,
-              cheSubject.getUserId(),
-              user.getEmailAddress(),
-              NameGenerator.generate(OAUTH_2_PREFIX, 5),
-              NameGenerator.generate("id-", 5),
-              oAuthToken.getToken());
-      Optional<Boolean> valid = isValid(token);
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
+      String tokenId = NameGenerator.generate("id-", 5);
+      Optional<Pair<Boolean, String>> valid =
+          isValid(
+              new PersonalAccessTokenParams(
+                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw new ScmCommunicationException(
             "Unable to verify if current token is a valid Azure DevOps token.  Token's scm-url needs to be '"
                 + azureDevOpsScmApiEndpoint
                 + "' and was '"
-                + token.getScmProviderUrl()
+                + scmServerUrl
                 + "'");
-      } else if (!valid.get()) {
+      } else if (!valid.get().first) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: "
                 + Arrays.toString(scopes));
       }
-      return token;
+      return new PersonalAccessToken(
+          scmServerUrl,
+          cheSubject.getUserId(),
+          valid.get().second,
+          tokenName,
+          tokenId,
+          oAuthToken.getToken());
     } catch (UnauthorizedException e) {
       throw new ScmUnauthorizedException(
           cheSubject.getUserName()
@@ -115,12 +118,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
           getLocalAuthenticateUrl());
     } catch (NotFoundException nfe) {
       throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
-    } catch (ServerException
-        | ForbiddenException
-        | BadRequestException
-        | ScmItemNotFoundException
-        | ScmBadRequestException
-        | ConflictException e) {
+    } catch (ServerException | ForbiddenException | BadRequestException | ConflictException e) {
       LOG.error(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
@@ -146,6 +144,26 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
       return Optional.of(personalAccessToken.getScmUserName().equals(user.getEmailAddress()));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.of(Boolean.FALSE);
+    }
+  }
+
+  @Override
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+    if (!isValidScmServerUrl(params.getScmProviderUrl())) {
+      LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
+      return Optional.empty();
+    }
+
+    try {
+      AzureDevOpsUser user;
+      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+        user = azureDevOpsApiClient.getUserWithOAuthToken(params.getToken());
+      } else {
+        user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());
+      }
+      return Optional.of(Pair.of(Boolean.TRUE, user.getEmailAddress()));
+    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+      return Optional.empty();
     }
   }
 

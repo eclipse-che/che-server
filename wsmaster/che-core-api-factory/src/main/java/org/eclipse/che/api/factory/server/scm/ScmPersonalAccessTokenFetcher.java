@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 
 /**
@@ -55,9 +56,11 @@ public class ScmPersonalAccessTokenFetcher {
    * Iterate over the Set<PersonalAccessTokenFetcher> declared in container and sequentially invoke
    * {@link PersonalAccessTokenFetcher#isValid(PersonalAccessToken)} method.
    *
+   * @deprecated use {@link #getScmUsername(PersonalAccessTokenParams)} instead.
    * @throws UnknownScmProviderException - if none of PersonalAccessTokenFetchers return a
    *     meaningful result.
    */
+  @Deprecated
   public boolean isValid(PersonalAccessToken personalAccessToken)
       throws UnknownScmProviderException, ScmUnauthorizedException, ScmCommunicationException {
     for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
@@ -70,5 +73,21 @@ public class ScmPersonalAccessTokenFetcher {
     throw new UnknownScmProviderException(
         "No PersonalAccessTokenFetcher configured for " + personalAccessToken.getScmProviderUrl(),
         personalAccessToken.getScmProviderUrl());
+  }
+
+  /**
+   * Iterate over the Set<PersonalAccessTokenFetcher> declared in container and sequentially invoke
+   * {@link PersonalAccessTokenFetcher#isValid(PersonalAccessTokenParams)} method. If any of the
+   * fetchers return an scm username, return it. Otherwise, return null.
+   */
+  public Optional<String> getScmUsername(PersonalAccessTokenParams params)
+      throws UnknownScmProviderException, ScmUnauthorizedException, ScmCommunicationException {
+    for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
+      Optional<Pair<Boolean, String>> isValid = fetcher.isValid(params);
+      if (isValid.isPresent() && isValid.get().first) {
+        return Optional.of(isValid.get().second);
+      }
+    }
+    return Optional.empty();
   }
 }

@@ -17,8 +17,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.commons.subject.Subject;
 
 /**
  * Implementation of @{@link BitbucketServerApiClient} that is going to be deployed in container in
@@ -31,14 +29,14 @@ public class NoopBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public BitbucketUser getUser(Subject cheUser)
-      throws ScmUnauthorizedException, ScmCommunicationException {
+  public BitbucketUser getUser(String token)
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException(
         "The fallback noop api client cannot be used for real operation. Make sure Bitbucket OAuth1 is properly configured.");
   }
 
   @Override
-  public BitbucketUser getUser(String slug, @Nullable String token)
+  public BitbucketUser getUser()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException(
         "The fallback noop api client cannot be used for real operation. Make sure Bitbucket OAuth1 is properly configured.");
@@ -59,7 +57,7 @@ public class NoopBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public void deletePersonalAccessTokens(String userSlug, Long tokenId)
+  public void deletePersonalAccessTokens(Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException(
         "The fallback noop api client cannot be used for real operation. Make sure Bitbucket OAuth1 is properly configured.");
@@ -67,19 +65,19 @@ public class NoopBitbucketServerApiClient implements BitbucketServerApiClient {
 
   @Override
   public BitbucketPersonalAccessToken createPersonalAccessTokens(
-      String userSlug, String tokenName, Set<String> permissions)
+      String tokenName, Set<String> permissions)
       throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException("Invalid usage of BitbucketServerApi");
   }
 
   @Override
-  public List<BitbucketPersonalAccessToken> getPersonalAccessTokens(String userSlug)
+  public List<BitbucketPersonalAccessToken> getPersonalAccessTokens()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException("Invalid usage of BitbucketServerApi");
   }
 
   @Override
-  public BitbucketPersonalAccessToken getPersonalAccessToken(String userSlug, Long tokenId)
+  public BitbucketPersonalAccessToken getPersonalAccessToken(Long tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException("Invalid usage of BitbucketServerApi");
   }

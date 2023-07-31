@@ -228,7 +228,7 @@ public class GithubApiClient {
             String result =
                 CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
             GithubUser user = OBJECT_MAPPER.readValue(result, GithubUser.class);
-            return Pair.of(user.getName(), scopes);
+            return Pair.of(user.getLogin(), scopes);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }

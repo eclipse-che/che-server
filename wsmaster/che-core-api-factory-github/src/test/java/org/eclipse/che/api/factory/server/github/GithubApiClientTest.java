@@ -36,6 +36,7 @@ import java.lang.reflect.Field;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.commons.lang.Pair;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -165,11 +166,13 @@ public class GithubApiClientTest {
                     .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo, user:email")
                     .withBodyFile("github/rest/user/response.json")));
 
-    String[] scopes = client.getTokenScopes("token1").second;
+    Pair<String, String[]> pair = client.getTokenScopes("token1");
+    String[] scopes = pair.second;
     String[] expectedScopes = {"repo", "user:email"};
     assertNotNull(scopes, "GitHub API should have returned a non-null scope array");
     assertEqualsNoOrder(
         scopes, expectedScopes, "Returned scope array does not match expected values");
+    assertEquals(pair.first, "github-user");
   }
 
   @Test

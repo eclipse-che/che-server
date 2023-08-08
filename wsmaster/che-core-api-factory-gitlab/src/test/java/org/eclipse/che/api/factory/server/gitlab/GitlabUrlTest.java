@@ -66,6 +66,15 @@ public class GitlabUrlTest {
     assertEquals(iterator.next().location(), format(fileUrl, "foo.bar"));
   }
 
+  @Test(dataProvider = "urlsProvider")
+  public void shouldReturnProviderUrl(String repoUrl, String ignored) {
+    // when
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl);
+
+    // then
+    assertEquals(gitlabUrl.getProviderUrl(), "https://gitlab.net");
+  }
+
   @DataProvider
   public static Object[][] urlsProvider() {
     return new Object[][] {
@@ -75,6 +84,14 @@ public class GitlabUrlTest {
       },
       {
         "https://gitlab.net/eclipse/fooproj/che.git",
+        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw"
+      },
+      {
+        "git@gitlab.net:eclipse/che.git",
+        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw"
+      },
+      {
+        "git@gitlab.net:eclipse/fooproj/che.git",
         "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw"
       },
       {
@@ -100,6 +117,8 @@ public class GitlabUrlTest {
     return new Object[][] {
       {"https://gitlab.net/eclipse/che.git", "https://gitlab.net/eclipse/che.git"},
       {"https://gitlab.net/eclipse/foo/che.git", "https://gitlab.net/eclipse/foo/che.git"},
+      {"git@gitlab.net:eclipse/che.git", "git@gitlab.net:eclipse/che.git"},
+      {"git@gitlab.net:eclipse/foo/che.git", "git@gitlab.net:eclipse/foo/che.git"},
       {
         "https://gitlab.net/eclipse/fooproj/che/-/tree/master/",
         "https://gitlab.net/eclipse/fooproj/che.git"

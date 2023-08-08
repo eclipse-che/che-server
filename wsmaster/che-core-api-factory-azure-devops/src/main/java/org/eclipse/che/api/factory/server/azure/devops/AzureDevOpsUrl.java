@@ -30,6 +30,7 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
  */
 public class AzureDevOpsUrl extends DefaultFactoryUrl {
 
+  private boolean isHTTPSUrl;
   private String hostName;
 
   private String repository;
@@ -145,7 +146,17 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
   }
 
   public String getRepositoryLocation() {
-    return getRepoPathJoiner().add("_git").add(repository).toString();
+    if (isHTTPSUrl) {
+      return getRepoPathJoiner().add("_git").add(repository).toString();
+    }
+    return "git@ssh."
+        + hostName.substring(8)
+        + ":v3/"
+        + organization
+        + "/"
+        + project
+        + "/"
+        + repository;
   }
 
   private StringJoiner getRepoPathJoiner() {
@@ -155,6 +166,11 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
   @Override
   public String getHostName() {
     return hostName;
+  }
+
+  public AzureDevOpsUrl setIsHTTPSUrl(boolean isHTTPSUrl) {
+    this.isHTTPSUrl = isHTTPSUrl;
+    return this;
   }
 
   public AzureDevOpsUrl withHostName(String hostName) {

@@ -37,6 +37,8 @@ public class GithubUrl extends DefaultFactoryUrl {
   /** Username part of github URL */
   private String username;
 
+  private boolean isHTTPSUrl = true;
+
   /** Repository part of the URL. */
   private String repository;
 
@@ -75,6 +77,11 @@ public class GithubUrl extends DefaultFactoryUrl {
 
   public GithubUrl withUsername(String userName) {
     this.username = userName;
+    return this;
+  }
+
+  public GithubUrl setIsHTTPSUrl(boolean isHTTPSUrl) {
+    this.isHTTPSUrl = isHTTPSUrl;
     return this;
   }
 
@@ -209,8 +216,17 @@ public class GithubUrl extends DefaultFactoryUrl {
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    return (isNullOrEmpty(serverUrl) ? HOSTNAME : serverUrl)
-        + "/"
+    if (isHTTPSUrl) {
+      return (isNullOrEmpty(serverUrl) ? HOSTNAME : serverUrl)
+          + "/"
+          + this.username
+          + "/"
+          + this.repository
+          + ".git";
+    }
+    return "git@"
+        + getHostName().substring(getHostName().indexOf("://") + 3)
+        + ":"
         + this.username
         + "/"
         + this.repository

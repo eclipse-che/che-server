@@ -98,6 +98,11 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
     return this;
   }
 
+  @Override
+  public String getProviderUrl() {
+    return "https://" + hostName;
+  }
+
   protected AzureDevOpsUrl withDevfileFilenames(List<String> devfileFilenames) {
     this.devfileFilenames.addAll(devfileFilenames);
     return this;
@@ -149,18 +154,11 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
     if (isHTTPSUrl) {
       return getRepoPathJoiner().add("_git").add(repository).toString();
     }
-    return "git@ssh."
-        + hostName.substring(8)
-        + ":v3/"
-        + organization
-        + "/"
-        + project
-        + "/"
-        + repository;
+    return "git@ssh." + hostName + ":v3/" + organization + "/" + project + "/" + repository;
   }
 
   private StringJoiner getRepoPathJoiner() {
-    return new StringJoiner("/").add(hostName).add(organization).add(project);
+    return new StringJoiner("/").add(getProviderUrl()).add(organization).add(project);
   }
 
   @Override
@@ -174,7 +172,7 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
   }
 
   public AzureDevOpsUrl withHostName(String hostName) {
-    this.hostName = "https://" + hostName;
+    this.hostName = hostName;
     return this;
   }
 }

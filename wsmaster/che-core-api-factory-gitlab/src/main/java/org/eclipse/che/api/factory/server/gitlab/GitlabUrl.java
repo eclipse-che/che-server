@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.net.URLEncoder.encode;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -120,7 +120,7 @@ public class GitlabUrl extends DefaultFactoryUrl {
   }
 
   protected GitlabUrl withBranch(String branch) {
-    if (!Strings.isNullOrEmpty(branch)) {
+    if (!isNullOrEmpty(branch)) {
       this.branch = branch;
     }
     return this;
@@ -165,11 +165,8 @@ public class GitlabUrl extends DefaultFactoryUrl {
             .add("repository")
             .add("files")
             .add(encode(fileName, Charsets.UTF_8))
-            .add("raw")
+            .add("raw?ref=" + (isNullOrEmpty(branch) ? "HEAD" : branch))
             .toString();
-    if (branch != null) {
-      resultUrl = resultUrl + "?ref=" + branch;
-    }
 
     return resultUrl;
   }

@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 
@@ -159,6 +160,12 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       }
     }
     try {
+      // Token is added manually by a user without token id. Validate only by requesting user info.
+      if (isNullOrEmpty(params.getScmTokenId())) {
+        BitbucketUser user = bitbucketServerApiClient.getUser(params.getToken());
+        return Optional.of(Pair.of(Boolean.TRUE, user.getName()));
+      }
+      // Token is added by OAuth. Token id is available.
       BitbucketPersonalAccessToken bitbucketPersonalAccessToken =
           bitbucketServerApiClient.getPersonalAccessToken(Long.valueOf(params.getScmTokenId()));
       return Optional.of(

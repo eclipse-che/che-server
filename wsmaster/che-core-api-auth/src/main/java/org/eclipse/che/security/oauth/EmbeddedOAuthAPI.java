@@ -38,11 +38,6 @@ import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
-import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
-import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
@@ -64,7 +59,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
   protected String errorPage;
 
   @Inject protected OAuthAuthenticatorProvider providers;
-  @Inject protected PersonalAccessTokenManager personalAccessTokenManager;
   private String redirectAfterLogin;
 
   @Override
@@ -159,25 +153,11 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
       if (token != null) {
         return token;
       }
-      Optional<PersonalAccessToken> tokenOptional =
-          personalAccessTokenManager.get(subject, provider.getEndpointUrl());
-      if (tokenOptional.isPresent()) {
-        PersonalAccessToken accessToken = tokenOptional.get();
-        return newDto(OAuthToken.class).withToken(accessToken.getToken());
-      }
       throw new UnauthorizedException(
           "OAuth token for user " + subject.getUserId() + " was not found");
-    } catch (IOException | ScmConfigurationPersistenceException | ScmCommunicationException e) {
+    } catch (IOException e) {
       throw new ServerException(e.getLocalizedMessage(), e);
-    } catch (ScmUnauthorizedException e) {
-      throwUnauthorizedException(subject);
     }
-    return null;
-  }
-
-  private void throwUnauthorizedException(Subject subject) throws UnauthorizedException {
-    throw new UnauthorizedException(
-        "OAuth token for user " + subject.getUserId() + " was not found");
   }
 
   @Override

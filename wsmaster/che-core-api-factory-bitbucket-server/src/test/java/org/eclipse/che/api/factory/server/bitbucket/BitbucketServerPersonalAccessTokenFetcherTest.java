@@ -231,6 +231,23 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     // then
     assertFalse(result.isEmpty());
     assertTrue(result.get().first);
+    assertEquals(result.get().second, bitbucketUser.getName());
+  }
+
+  @Test
+  public void shouldValidateTokenWithoutId()
+      throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException {
+    // given
+    when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(someBitbucketURL);
+    when(personalAccessTokenParams.getToken()).thenReturn("token");
+    when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
+    when(bitbucketServerApiClient.getUser(eq("token"))).thenReturn(bitbucketUser);
+    // when
+    Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);
+    // then
+    assertFalse(result.isEmpty());
+    assertTrue(result.get().first);
+    assertEquals(result.get().second, bitbucketUser.getName());
   }
 
   @DataProvider

@@ -32,7 +32,6 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
-import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
@@ -52,7 +51,6 @@ public class RawDevfileUrlFactoryParameterResolver implements FactoryParametersR
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
-  @Inject private DevfileFilenamesProvider devfileFilenamesProvider;
 
   @Inject
   public RawDevfileUrlFactoryParameterResolver(
@@ -71,9 +69,7 @@ public class RawDevfileUrlFactoryParameterResolver implements FactoryParametersR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url)
-        && devfileFilenamesProvider.getConfiguredDevfileFilenames().stream()
-            .anyMatch(url::endsWith);
+    return !isNullOrEmpty(url) && url.endsWith(".yaml");
   }
 
   /**

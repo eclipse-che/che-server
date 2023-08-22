@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import com.google.common.collect.Sets;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
@@ -52,7 +53,13 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
   private static final String OAUTH_PROVIDER_NAME = "bitbucket";
 
   /** OAuth scope required to make integration with Bitbucket work. */
-  public static final String DEFAULT_TOKEN_SCOPE = "repository:write";
+  public static final String DEFAULT_REPOSITORY_WRITE_TOKEN_SCOPE = "repository:write";
+
+  public static final String DEFAULT_PULLREQUEST_WRITE_TOKEN_SCOPE = "pullrequest:write";
+
+  public static final String DEFAULT_ACCOUNT_READ_TOKEN_SCOPE = "account";
+
+  public static final String DEFAULT_ACCOUNT_WRITE_TOKEN_SCOPE = "account:write";
 
   @Inject
   public BitbucketPersonalAccessTokenFetcher(
@@ -101,7 +108,9 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
       } else if (!valid.get().first) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: "
-                + DEFAULT_TOKEN_SCOPE);
+                + DEFAULT_REPOSITORY_WRITE_TOKEN_SCOPE
+                + " and "
+                + DEFAULT_ACCOUNT_READ_TOKEN_SCOPE);
       }
       return new PersonalAccessToken(
           scmServerUrl,
@@ -136,7 +145,7 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
 
     try {
       String[] scopes = bitbucketApiClient.getTokenScopes(personalAccessToken.getToken()).second;
-      return Optional.of(Sets.newHashSet(scopes).contains(DEFAULT_TOKEN_SCOPE));
+      return Optional.of(isValidScope(Sets.newHashSet(scopes)));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.of(Boolean.FALSE);
     }
@@ -153,9 +162,7 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
       Pair<String, String[]> pair = bitbucketApiClient.getTokenScopes(params.getToken());
       return Optional.of(
           Pair.of(
-              Sets.newHashSet(pair.second).contains(DEFAULT_TOKEN_SCOPE)
-                  ? Boolean.TRUE
-                  : Boolean.FALSE,
+              isValidScope(Sets.newHashSet(pair.second)) ? Boolean.TRUE : Boolean.FALSE,
               pair.first));
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
       return Optional.empty();
@@ -167,5 +174,16 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
         + "/oauth/authenticate?oauth_provider="
         + OAUTH_PROVIDER_NAME
         + "&scope=repository&request_method=POST&signature_method=rsa";
+  }
+
+  /**
+   * Checks if the given scopes are valid for Bitbucket. Note: that pullrequest:write is a wider
+   * scope than repository:write, and account:write is a wider scope than account.
+   */
+  private boolean isValidScope(Set<String> scopes) {
+    return (scopes.contains(DEFAULT_REPOSITORY_WRITE_TOKEN_SCOPE)
+            || scopes.contains(DEFAULT_PULLREQUEST_WRITE_TOKEN_SCOPE))
+        && (scopes.contains(DEFAULT_ACCOUNT_READ_TOKEN_SCOPE)
+            || scopes.contains(DEFAULT_ACCOUNT_WRITE_TOKEN_SCOPE));
   }
 }

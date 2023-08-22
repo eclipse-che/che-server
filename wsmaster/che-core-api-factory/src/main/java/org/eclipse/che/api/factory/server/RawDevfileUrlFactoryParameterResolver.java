@@ -69,7 +69,7 @@ public class RawDevfileUrlFactoryParameterResolver implements FactoryParametersR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url) && url.endsWith(".yaml");
+    return !isNullOrEmpty(url) && (url.endsWith(".yaml") || url.endsWith(".yml"));
   }
 
   /**

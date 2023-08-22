@@ -198,6 +198,6 @@ public class RawDevfileUrlFactoryParameterResolverTest {
 
   @DataProvider(name = "devfileNames")
   private Object[] devfileNames() {
-    return new String[] {"devfile.yaml", ".devfile.yaml", "any-name.yaml"};
+    return new String[] {"devfile.yaml", ".devfile.yaml", "any-name.yaml", "any-name.yml"};
   }
 }

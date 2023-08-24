@@ -81,10 +81,6 @@ public class AzureDevOpsURLParser {
     }
 
     String repoName = matcher.group("repoName");
-    if (repoName.endsWith(".git")) {
-      repoName = repoName.substring(0, repoName.length() - 4);
-    }
-
     String project = matcher.group("project");
     if (project == null) {
       // if project is not specified, repo name must be equal to project name

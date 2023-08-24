@@ -71,7 +71,7 @@ public class AzureDevOpsURLParserTest {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.git",
         "MyOrg",
         "MyProject",
-        "MyRepo",
+        "MyRepo.git",
         null,
         null
       },
@@ -79,7 +79,7 @@ public class AzureDevOpsURLParserTest {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.dot.git",
         "MyOrg",
         "MyProject",
-        "MyRepo.dot",
+        "MyRepo.dot.git",
         null,
         null
       },
@@ -100,7 +100,14 @@ public class AzureDevOpsURLParserTest {
         null
       },
       {"https://dev.azure.com/MyOrg/MyProject/_git/-", "MyOrg", "MyProject", "-", null, null},
-      {"https://dev.azure.com/MyOrg/MyProject/_git/-j.git", "MyOrg", "MyProject", "-j", null, null},
+      {
+        "https://dev.azure.com/MyOrg/MyProject/_git/-j.git",
+        "MyOrg",
+        "MyProject",
+        "-j.git",
+        null,
+        null
+      },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain&_a=contents",
         "MyOrg",

@@ -128,7 +128,7 @@ public class AzureDevOpsURLParserTest {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.git",
         "MyOrg",
         "MyProject",
-        "MyRepo",
+        "MyRepo.git",
         null,
         null
       },
@@ -136,7 +136,7 @@ public class AzureDevOpsURLParserTest {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.dot.git",
         "MyOrg",
         "MyProject",
-        "MyRepo.dot",
+        "MyRepo.dot.git",
         null,
         null
       },
@@ -157,7 +157,14 @@ public class AzureDevOpsURLParserTest {
         null
       },
       {"git@ssh.dev.azure.com:v3/MyOrg/MyProject/-", "MyOrg", "MyProject", "-", null, null},
-      {"git@ssh.dev.azure.com:v3/MyOrg/MyProject/-j.git", "MyOrg", "MyProject", "-j", null, null},
+      {
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/-j.git",
+        "MyOrg",
+        "MyProject",
+        "-j.git",
+        null,
+        null
+      },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain",
         "MyOrg",

@@ -59,11 +59,11 @@ public class AzureDevOpsURLTest {
       },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.git",
-        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&api-version=7.0"
+        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.git/items?path=/devfile.yaml&api-version=7.0"
       },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.dot.git",
-        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.dot/items?path=/devfile.yaml&api-version=7.0"
+        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.dot.git/items?path=/devfile.yaml&api-version=7.0"
       },
       {
         "https://dev.azure.com/MyOrg/MyProject/_git/MyRepo",
@@ -79,7 +79,7 @@ public class AzureDevOpsURLTest {
       },
       {
         "https://dev.azure.com/MyOrg/MyProject/_git/-j.git",
-        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/-j/items?path=/devfile.yaml&api-version=7.0"
+        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/-j.git/items?path=/devfile.yaml&api-version=7.0"
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo",
@@ -87,11 +87,11 @@ public class AzureDevOpsURLTest {
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.git",
-        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&api-version=7.0"
+        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.git/items?path=/devfile.yaml&api-version=7.0"
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.dot.git",
-        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.dot/items?path=/devfile.yaml&api-version=7.0"
+        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.dot.git/items?path=/devfile.yaml&api-version=7.0"
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo",
@@ -107,7 +107,7 @@ public class AzureDevOpsURLTest {
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/-j.git",
-        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/-j/items?path=/devfile.yaml&api-version=7.0"
+        "https://dev.azure.com/MyOrg/MyProject/_apis/git/repositories/-j.git/items?path=/devfile.yaml&api-version=7.0"
       },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain&_a=contents",
@@ -147,11 +147,11 @@ public class AzureDevOpsURLTest {
       },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.git",
-        "https://dev.azure.com/MyOrg/MyProject/_git/MyRepo"
+        "https://dev.azure.com/MyOrg/MyProject/_git/MyRepo.git"
       },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.dot.git",
-        "https://dev.azure.com/MyOrg/MyProject/_git/MyRepo.dot"
+        "https://dev.azure.com/MyOrg/MyProject/_git/MyRepo.dot.git"
       },
       {
         "https://dev.azure.com/MyOrg/MyProject/_git/MyRepo",
@@ -167,7 +167,7 @@ public class AzureDevOpsURLTest {
       },
       {
         "https://dev.azure.com/MyOrg/MyProject/_git/-j.git",
-        "https://dev.azure.com/MyOrg/MyProject/_git/-j"
+        "https://dev.azure.com/MyOrg/MyProject/_git/-j.git"
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo",
@@ -175,11 +175,11 @@ public class AzureDevOpsURLTest {
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.git",
-        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo"
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.git"
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.dot.git",
-        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.dot"
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.dot.git"
       },
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo",
@@ -192,7 +192,7 @@ public class AzureDevOpsURLTest {
       {"git@ssh.dev.azure.com:v3/MyOrg/MyProject/-", "git@ssh.dev.azure.com:v3/MyOrg/MyProject/-"},
       {
         "git@ssh.dev.azure.com:v3/MyOrg/MyProject/-j.git",
-        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/-j"
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/-j.git"
       },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain&_a=contents",

@@ -80,7 +80,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         String authorization;
         if (isNullOrEmpty(credentials)) {
           PersonalAccessToken token =
-              personalAccessTokenManager.get(remoteFactoryUrl.getHostName());
+              personalAccessTokenManager.get(remoteFactoryUrl.getProviderUrl());
           authorization =
               formatAuthorization(
                   token.getToken(),

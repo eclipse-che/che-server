@@ -83,6 +83,24 @@ public class BitbucketServerURLParserTest {
     assertEquals(bitbucketServerUrl.getBranch(), branch);
   }
 
+  @Test(dataProvider = "parsing")
+  public void shouldParseWithoutPredefinedEndpoint(
+      String url, String user, String project, String repository, String branch) {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url);
+
+    // then
+    assertEquals(bitbucketServerUrl.getUser(), user);
+    assertEquals(bitbucketServerUrl.getProject(), project);
+    assertEquals(bitbucketServerUrl.getRepository(), repository);
+    assertEquals(bitbucketServerUrl.getBranch(), branch);
+  }
+
   @Test(
       expectedExceptions = IllegalArgumentException.class,
       expectedExceptionsMessageRegExp =
@@ -134,6 +152,8 @@ public class BitbucketServerURLParserTest {
       {"https://bitbucket.2mcl.com/users/user/repos/repo"},
       {"https://bitbucket.2mcl.com/users/user/repos/repo/"},
       {"https://bbkt.com/scm/project/test1.git"},
+      {"ssh://git@bitbucket.2mcl.com:12345/~user/repo.git"},
+      {"ssh://git@bitbucket.2mcl.com:12345/project/test1.git"}
     };
   }
 
@@ -141,6 +161,8 @@ public class BitbucketServerURLParserTest {
   public Object[][] expectedParsing() {
     return new Object[][] {
       {"https://bitbucket.2mcl.com/scm/project/test1.git", null, "project", "test1", null},
+      {"ssh://git@bitbucket.2mcl.com:12345/project/test1.git", null, "project", "test1", null},
+      {"ssh://git@bitbucket.2mcl.com:12345/~user/test1.git", "user", null, "test1", null},
       {
         "https://bitbucket.2mcl.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch",
         null,

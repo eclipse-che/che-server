@@ -64,6 +64,34 @@ public class GithubUrlTest {
         iterator.next().location(), "https://raw.githubusercontent.com/eclipse/che/HEAD/foo.bar");
   }
 
+  @Test
+  public void shouldReturnDevfileLocationFromSSHUrl() throws Exception {
+    DevfileFilenamesProvider devfileFilenamesProvider = mock(DevfileFilenamesProvider.class);
+
+    /** Parser used to create the url. */
+    GithubURLParser githubUrlParser =
+        new GithubURLParser(
+            mock(PersonalAccessTokenManager.class),
+            devfileFilenamesProvider,
+            githubApiClient,
+            null,
+            false);
+
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
+
+    GithubUrl githubUrl = githubUrlParser.parse("git@github.com:eclipse/che");
+
+    assertEquals(githubUrl.devfileFileLocations().size(), 2);
+    Iterator<DevfileLocation> iterator = githubUrl.devfileFileLocations().iterator();
+    assertEquals(
+        iterator.next().location(),
+        "https://raw.githubusercontent.com/eclipse/che/HEAD/devfile.yaml");
+
+    assertEquals(
+        iterator.next().location(), "https://raw.githubusercontent.com/eclipse/che/HEAD/foo.bar");
+  }
+
   /** Check the original repository */
   @Test
   public void checkRepositoryLocation() throws Exception {
@@ -84,6 +112,27 @@ public class GithubUrlTest {
     GithubUrl githubUrl = githubUrlParser.parse("https://github.com/eclipse/che");
 
     assertEquals(githubUrl.repositoryLocation(), "https://github.com/eclipse/che.git");
+  }
+
+  @Test
+  public void shouldReturnRepositoryLocationFromSSHUrl() throws Exception {
+    DevfileFilenamesProvider devfileFilenamesProvider = mock(DevfileFilenamesProvider.class);
+
+    /** Parser used to create the url. */
+    GithubURLParser githubUrlParser =
+        new GithubURLParser(
+            mock(PersonalAccessTokenManager.class),
+            devfileFilenamesProvider,
+            githubApiClient,
+            null,
+            false);
+
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
+
+    GithubUrl githubUrl = githubUrlParser.parse("git@github.com:eclipse/che.git");
+
+    assertEquals(githubUrl.repositoryLocation(), "git@github.com:eclipse/che.git");
   }
 
   @Test

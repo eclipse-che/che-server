@@ -40,6 +40,8 @@ public class AzureDevOpsURLParser {
    */
   private final Pattern azureDevOpsPattern;
 
+  private final Pattern azureSSHDevOpsPattern;
+
   @Inject
   public AzureDevOpsURLParser(
       DevfileFilenamesProvider devfileFilenamesProvider,
@@ -58,14 +60,22 @@ public class AzureDevOpsURLParser {
                     + "([?&]version=GB(?<branch>[^&]++))?"
                     + "(.*)",
                 azureDevOpsScmApiEndpointHost));
+    this.azureSSHDevOpsPattern =
+        compile(
+            format(
+                "^git@ssh\\.%s:v3/(?<organization>.*)/(?<project>.*)/(?<repoName>.*)$",
+                azureDevOpsScmApiEndpointHost));
   }
 
   public boolean isValid(@NotNull String url) {
-    return azureDevOpsPattern.matcher(url).matches();
+    return azureDevOpsPattern.matcher(url).matches()
+        || azureSSHDevOpsPattern.matcher(url).matches();
   }
 
   public AzureDevOpsUrl parse(String url) {
-    Matcher matcher = azureDevOpsPattern.matcher(url);
+    boolean isHTTPSUrl = azureDevOpsPattern.matcher(url).matches();
+    Matcher matcher =
+        isHTTPSUrl ? azureDevOpsPattern.matcher(url) : azureSSHDevOpsPattern.matcher(url);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(format("The given url %s is not a valid.", url));
     }
@@ -79,23 +89,28 @@ public class AzureDevOpsURLParser {
       project = repoName;
     }
 
-    String organization = matcher.group("organization");
-    String branch = matcher.group("branch");
-    String tag = matcher.group("tag");
+    String branch = null;
+    String tag = null;
 
-    // The url might have the following formats:
-    // - https://<organization>@<host>/<organization>/<project>/_git/<repoName>
-    // - https://<credentials>@<host>/<organization>/<project>/_git/<repoName>
-    // For the first case we need to remove the `organization` from the url to distinguish it from
-    // `credentials`
-    // TODO: return empty credentials like the BitBucketUrl
-    String organizationCanIgnore = matcher.group("organizationCanIgnore");
-    if (!isNullOrEmpty(organization) && organization.equals(organizationCanIgnore)) {
-      url = url.replace(organizationCanIgnore + "@", "");
+    String organization = matcher.group("organization");
+    if (isHTTPSUrl) {
+      branch = matcher.group("branch");
+      tag = matcher.group("tag");
+      // The url might have the following formats:
+      // - https://<organization>@<host>/<organization>/<project>/_git/<repoName>
+      // - https://<credentials>@<host>/<organization>/<project>/_git/<repoName>
+      // For the first case we need to remove the `organization` from the url to distinguish it from
+      // `credentials`
+      // TODO: return empty credentials like the BitBucketUrl
+      String organizationCanIgnore = matcher.group("organizationCanIgnore");
+      if (!isNullOrEmpty(organization) && organization.equals(organizationCanIgnore)) {
+        url = url.replace(organizationCanIgnore + "@", "");
+      }
     }
 
     return new AzureDevOpsUrl()
         .withHostName(azureDevOpsScmApiEndpointHost)
+        .setIsHTTPSUrl(isHTTPSUrl)
         .withProject(project)
         .withRepository(repoName)
         .withOrganization(organization)

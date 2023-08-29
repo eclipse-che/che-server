@@ -64,7 +64,7 @@ public class KubernetesGitCredentialManagerTest {
 
   @Mock NonNamespaceOperation<Secret, SecretList, Resource<Secret>> nonNamespaceOperation;
 
-  @Mock private FilterWatchListDeletable<Secret, SecretList> filterWatchDeletable;
+  @Mock private FilterWatchListDeletable<Secret, SecretList, Resource<Secret>> filterWatchDeletable;
 
   @Mock private SecretList secretList;
 

@@ -15,7 +15,6 @@ import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.http.HttpClient;
-import io.fabric8.kubernetes.client.utils.HttpClientUtils;
 import io.fabric8.kubernetes.client.utils.TokenRefreshInterceptor;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -85,8 +84,8 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
   }
 
   private HttpClient clientForConfig(OpenShiftConfig config) {
-    HttpClient.Builder builder = httpClient.newBuilder().authenticatorNone();
-    builder.addOrReplaceInterceptor(HttpClientUtils.HEADER_INTERCEPTOR, null);
+    HttpClient.DerivedClientBuilder builder = httpClient.newBuilder().authenticatorNone();
+    builder.addOrReplaceInterceptor("HEADER", null);
     return builder
         .addOrReplaceInterceptor(
             TokenRefreshInterceptor.NAME, new OpenShiftOAuthInterceptor(httpClient, config))

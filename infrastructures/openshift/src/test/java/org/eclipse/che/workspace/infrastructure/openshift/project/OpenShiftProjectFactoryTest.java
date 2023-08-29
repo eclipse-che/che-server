@@ -122,7 +122,8 @@ public class OpenShiftProjectFactoryTest {
 
   private OpenShiftProjectFactory projectFactory;
 
-  @Mock private FilterWatchListDeletable<Project, ProjectList> projectListResource;
+  @Mock
+  private FilterWatchListDeletable<Project, ProjectList, Resource<Project>> projectListResource;
 
   @Mock private ProjectList projectList;
 
@@ -861,7 +862,7 @@ public class OpenShiftProjectFactoryTest {
         .withAnnotations(annotations)
         .endMetadata()
         .withNewStatus()
-        .withNewPhase(phase)
+        .withPhase(phase)
         .endStatus()
         .build();
   }

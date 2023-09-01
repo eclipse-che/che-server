@@ -87,7 +87,7 @@ public class GithubScmFileResolverTest {
         .thenReturn(rawContent);
 
     lenient()
-        .when(personalAccessTokenManager.get(anyString()))
+        .when(personalAccessTokenManager.getAndStore(anyString()))
         .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
 
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
@@ -106,7 +106,7 @@ public class GithubScmFileResolverTest {
   public void shouldReturnContentWithoutAuthentication() throws Exception {
     // given
     lenient()
-        .when(personalAccessTokenManager.get(anyString()))
+        .when(personalAccessTokenManager.getAndStore(anyString()))
         .thenThrow(new ScmUnauthorizedException("message", "github", "v1", "url"));
 
     // when

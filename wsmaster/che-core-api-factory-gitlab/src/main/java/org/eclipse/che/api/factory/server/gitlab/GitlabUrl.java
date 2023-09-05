@@ -178,11 +178,8 @@ public class GitlabUrl extends DefaultFactoryUrl {
             .add("repository")
             .add("files")
             .add(encode(fileName, Charsets.UTF_8))
-            .add("raw")
+            .add("raw?ref=" + (isNullOrEmpty(branch) ? "HEAD" : branch))
             .toString();
-    if (branch != null) {
-      resultUrl = resultUrl + "?ref=" + branch;
-    }
 
     return resultUrl;
   }

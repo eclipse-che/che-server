@@ -41,7 +41,7 @@ public class GitlabAuthorizingFileContentProviderTest {
     verify(urlFetcher)
         .fetch(
             eq(
-                "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw"),
+                "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=HEAD"),
             eq("Bearer my-token"));
   }
 

@@ -232,15 +232,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throws ScmCommunicationException, ScmConfigurationPersistenceException,
           UnknownScmProviderException, UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException {
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
-    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
-    PersonalAccessToken personalAccessToken;
-    if (tokenOptional.isPresent()) {
-      personalAccessToken = tokenOptional.get();
-    } else {
-      // try to authenticate for the given URL
-      personalAccessToken = fetchAndSave(subject, scmServerUrl);
-    }
+    PersonalAccessToken personalAccessToken = get(scmServerUrl);
     gitCredentialManager.createOrReplace(personalAccessToken);
     return personalAccessToken;
   }

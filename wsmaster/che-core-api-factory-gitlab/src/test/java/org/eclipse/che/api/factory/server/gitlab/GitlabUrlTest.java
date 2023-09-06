@@ -88,11 +88,11 @@ public class GitlabUrlTest {
       },
       {
         "git@gitlab.net:eclipse/che.git",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw"
+        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw?ref=HEAD"
       },
       {
         "git@gitlab.net:eclipse/fooproj/che.git",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw"
+        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=HEAD"
       },
       {
         "https://gitlab.net/eclipse/fooproj/-/tree/master/",

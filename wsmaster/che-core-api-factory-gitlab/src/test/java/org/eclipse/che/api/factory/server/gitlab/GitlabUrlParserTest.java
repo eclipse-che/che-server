@@ -79,6 +79,22 @@ public class GitlabUrlParserTest {
     assertEquals(gitlabUrl.getBranch(), branch);
   }
 
+  /** Compare parsing */
+  @Test(dataProvider = "parsing")
+  public void shouldParseWithoutPredefinedEndpoint(
+      String url, String project, String subGroups, String branch) {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(null, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+    // when
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), project);
+    assertEquals(gitlabUrl.getSubGroups(), subGroups);
+    assertEquals(gitlabUrl.getBranch(), branch);
+  }
+
   @Test
   public void shouldValidateUrlByApiRequest() {
     // given
@@ -114,7 +130,12 @@ public class GitlabUrlParserTest {
       {"https://gitlab1.com/user/project/"},
       {"https://gitlab1.com/user/project/repo/"},
       {"https://gitlab1.com/user/project/-/tree/master/"},
-      {"https://gitlab1.com/user/project/repo/-/tree/master/subfolder"}
+      {"https://gitlab1.com/user/project/repo/-/tree/master/subfolder"},
+      {"git@gitlab1.com:user/project/test1.git"},
+      {"git@gitlab1.com:user/project1.git"},
+      {"git@gitlab.foo.xxx:scm/project/test1.git"},
+      {"git@gitlab1.com:user/project/"},
+      {"git@gitlab1.com:user/project/repo/"},
     };
   }
 
@@ -131,6 +152,16 @@ public class GitlabUrlParserTest {
       },
       {"https://gitlab1.com/user/project/", "project", "user/project", null},
       {"https://gitlab1.com/user/project/repo/", "repo", "user/project/repo", null},
+      {"git@gitlab1.com:user/project1.git", "project1", "user/project1", null},
+      {"git@gitlab1.com:user/project/test1.git", "test1", "user/project/test1", null},
+      {
+        "git@gitlab1.com:user/project/group1/group2/test1.git",
+        "test1",
+        "user/project/group1/group2/test1",
+        null
+      },
+      {"git@gitlab1.com:user/project/", "project", "user/project", null},
+      {"git@gitlab1.com:user/project/repo/", "repo", "user/project/repo", null},
       {"https://gitlab1.com/user/project/-/tree/master/", "project", "user/project", "master"},
       {"https://gitlab1.com/user/project/repo/-/tree/foo", "repo", "user/project/repo", "foo"},
       {

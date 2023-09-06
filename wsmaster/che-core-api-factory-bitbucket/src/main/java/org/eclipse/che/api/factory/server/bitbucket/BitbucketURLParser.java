@@ -36,29 +36,39 @@ public class BitbucketURLParser {
       Pattern.compile(
           "^https?://(?<username>[^/@]+)?@?bitbucket\\.org/(?<workspaceId>[^/]+)/(?<repoName>[^/]+)/?(\\.git)?(/(src|branch)/(?<branchName>[^/]+)/?)?$");
 
+  protected static final Pattern BITBUCKET_SSH_PATTERN =
+      Pattern.compile("^git@bitbucket.org:(?<workspaceId>.*)/(?<repoName>.*)$");
+
   public boolean isValid(@NotNull String url) {
-    return BITBUCKET_PATTERN.matcher(url).matches();
+    return BITBUCKET_PATTERN.matcher(url).matches() || BITBUCKET_SSH_PATTERN.matcher(url).matches();
   }
 
   public BitbucketUrl parse(String url) {
     // Apply bitbucket url to the regexp
-    Matcher matcher = BITBUCKET_PATTERN.matcher(url);
+    boolean isHTTPSUrl = BITBUCKET_PATTERN.matcher(url).matches();
+    Matcher matcher =
+        isHTTPSUrl ? BITBUCKET_PATTERN.matcher(url) : BITBUCKET_SSH_PATTERN.matcher(url);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
           String.format("The given bitbucket url %s is not a valid URL bitbucket url. ", url));
     }
 
-    String username = matcher.group("username");
+    String workspaceId = matcher.group("workspaceId");
     String repoName = matcher.group("repoName");
     if (repoName.matches("^[\\w-][\\w.-]*?\\.git$")) {
       repoName = repoName.substring(0, repoName.length() - 4);
     }
-    String workspaceId = matcher.group("workspaceId");
-    String branchName = matcher.group("branchName");
+    String username = null;
+    String branchName = null;
+    if (isHTTPSUrl) {
+      username = matcher.group("username");
+      branchName = matcher.group("branchName");
+    }
 
     return new BitbucketUrl()
         .withUsername(username)
         .withRepository(repoName)
+        .setIsHTTPSUrl(isHTTPSUrl)
         .withBranch(branchName)
         .withWorkspaceId(workspaceId)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())

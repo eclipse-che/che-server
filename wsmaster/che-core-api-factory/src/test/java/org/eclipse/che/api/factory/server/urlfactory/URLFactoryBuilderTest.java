@@ -215,6 +215,11 @@ public class URLFactoryBuilderTest {
           }
 
           @Override
+          public String getProviderUrl() {
+            return null;
+          }
+
+          @Override
           public String getBranch() {
             return null;
           }
@@ -283,6 +288,11 @@ public class URLFactoryBuilderTest {
 
           @Override
           public String getHostName() {
+            return null;
+          }
+
+          @Override
+          public String getProviderUrl() {
             return null;
           }
 

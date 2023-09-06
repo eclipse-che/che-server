@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,6 @@ import static java.util.Collections.singletonMap;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import io.fabric8.kubernetes.api.model.LoadBalancerStatusBuilder;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
@@ -26,6 +25,7 @@ import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValue;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBackend;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressBuilder;
+import io.fabric8.kubernetes.api.model.networking.v1.IngressLoadBalancerStatusBuilder;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
 import io.fabric8.kubernetes.api.model.networking.v1.IngressServiceBackend;
 import io.fabric8.kubernetes.api.model.networking.v1.ServiceBackendPort;
@@ -276,7 +276,7 @@ public class IngressServerResolverTest {
             new ServicePortBuilder()
                 .withPort(port)
                 .withNewTargetPort()
-                .withIntVal(port)
+                .withValue(port)
                 .endTargetPort()
                 .build())
         .endSpec()
@@ -310,7 +310,7 @@ public class IngressServerResolverTest {
         .endSpec()
         .withNewStatus()
         .withLoadBalancer(
-            new LoadBalancerStatusBuilder()
+            new IngressLoadBalancerStatusBuilder()
                 .addNewIngress()
                 .withIp("127.0.0.1")
                 .endIngress()

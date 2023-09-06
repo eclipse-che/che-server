@@ -135,7 +135,9 @@ public class KubernetesNamespaceFactoryTest {
 
   private KubernetesNamespaceFactory namespaceFactory;
 
-  @Mock private FilterWatchListDeletable<Namespace, NamespaceList> namespaceListResource;
+  @Mock
+  private FilterWatchListDeletable<Namespace, NamespaceList, Resource<NamespaceList>>
+      namespaceListResource;
 
   @Mock private NamespaceList namespaceList;
 
@@ -277,7 +279,7 @@ public class KubernetesNamespaceFactoryTest {
                 .withAnnotations(Map.of(NAMESPACE_ANNOTATION_NAME, "jondoe"))
                 .endMetadata()
                 .withNewStatus()
-                .withNewPhase("Active")
+                .withPhase("Active")
                 .endStatus()
                 .build(),
             new NamespaceBuilder()
@@ -286,7 +288,7 @@ public class KubernetesNamespaceFactoryTest {
                 .withAnnotations(Map.of(NAMESPACE_ANNOTATION_NAME, "jondoe"))
                 .endMetadata()
                 .withNewStatus()
-                .withNewPhase("Active")
+                .withPhase("Active")
                 .endStatus()
                 .build(),
             new NamespaceBuilder()
@@ -295,7 +297,7 @@ public class KubernetesNamespaceFactoryTest {
                 .withAnnotations(Map.of(NAMESPACE_ANNOTATION_NAME, "some_other_user"))
                 .endMetadata()
                 .withNewStatus()
-                .withNewPhase("Active")
+                .withPhase("Active")
                 .endStatus()
                 .build());
     doReturn(namespaces).when(namespaceList).getItems();
@@ -333,7 +335,7 @@ public class KubernetesNamespaceFactoryTest {
             .withName("ns1")
             .endMetadata()
             .withNewStatus()
-            .withNewPhase("Active")
+            .withPhase("Active")
             .endStatus()
             .build();
     doThrow(new KubernetesClientException("Not allowed.", 403, new Status()))
@@ -397,7 +399,7 @@ public class KubernetesNamespaceFactoryTest {
             .withName("jondoe-che")
             .endMetadata()
             .withNewStatus()
-            .withNewPhase("Active")
+            .withPhase("Active")
             .endStatus()
             .build());
     namespaceFactory =
@@ -1127,7 +1129,7 @@ public class KubernetesNamespaceFactoryTest {
                 .withAnnotations(Map.of(NAMESPACE_ANNOTATION_NAME, "jondoe"))
                 .endMetadata()
                 .withNewStatus()
-                .withNewPhase("Active")
+                .withPhase("Active")
                 .endStatus()
                 .build(),
             new NamespaceBuilder()
@@ -1136,7 +1138,7 @@ public class KubernetesNamespaceFactoryTest {
                 .withAnnotations(Map.of(NAMESPACE_ANNOTATION_NAME, "jondoe"))
                 .endMetadata()
                 .withNewStatus()
-                .withNewPhase("Active")
+                .withPhase("Active")
                 .endStatus()
                 .build());
     doReturn(namespaces).when(namespaceList).getItems();
@@ -1281,7 +1283,7 @@ public class KubernetesNamespaceFactoryTest {
                 .withAnnotations(Map.of(NAMESPACE_ANNOTATION_NAME, "jondoe"))
                 .endMetadata()
                 .withNewStatus()
-                .withNewPhase("Active")
+                .withPhase("Active")
                 .endStatus()
                 .build());
     doReturn(namespaces).when(namespaceList).getItems();
@@ -1458,7 +1460,7 @@ public class KubernetesNamespaceFactoryTest {
         .withName(name)
         .endMetadata()
         .withNewStatus()
-        .withNewPhase(phase)
+        .withPhase(phase)
         .endStatus()
         .build();
   }

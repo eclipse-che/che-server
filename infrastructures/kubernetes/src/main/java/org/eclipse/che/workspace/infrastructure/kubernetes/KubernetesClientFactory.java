@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
-import io.fabric8.kubernetes.client.BaseKubernetesClient;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -19,7 +18,6 @@ import io.fabric8.kubernetes.client.http.HttpClient;
 import io.fabric8.kubernetes.client.utils.HttpClientUtils;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import okhttp3.OkHttpClient;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
 
@@ -94,12 +92,12 @@ public class KubernetesClientFactory {
   }
 
   /**
-   * Creates instance of {@link KubernetesClient} that uses an {@link OkHttpClient} instance derived
+   * Creates instance of {@link KubernetesClient} that uses an {@link HttpClient} instance derived
    * from the shared {@code httpClient} instance in which interceptors are overridden to
    * authenticate with the credentials (user/password or Oauth token) contained in the {@code
    * config} parameter.
    */
-  protected BaseKubernetesClient<?> create(Config config) {
+  protected KubernetesClient create(Config config) {
     return new UnclosableKubernetesClient(httpClient, config);
   }
 

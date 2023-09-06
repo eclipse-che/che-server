@@ -96,7 +96,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: repository:write")
+          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: repository:write and account")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
@@ -140,7 +140,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withHeader(
-                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
+                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER,
+                        "repository:write,account")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
     PersonalAccessToken token =
@@ -158,7 +159,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withHeader(
-                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
+                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER,
+                        "repository:write,account")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
     PersonalAccessTokenParams params =
@@ -179,7 +181,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withHeader(
-                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER, "repository:write")
+                        BitbucketApiClient.BITBUCKET_OAUTH_SCOPES_HEADER,
+                        "repository:write,account")
                     .withBodyFile("bitbucket/rest/user/response.json")));
 
     PersonalAccessTokenParams params =

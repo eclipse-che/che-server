@@ -28,12 +28,10 @@ import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
@@ -67,8 +65,6 @@ public class RawDevfileUrlFactoryParameterResolverTest {
           + "  reference: ../localfile\n";
 
   @Mock private URLFetcher urlFetcher;
-  private final DevfileFilenamesProvider devfileFilenamesProvider =
-      new DevfileFilenamesProvider("devfile.yaml, .devfile.yaml");
 
   @InjectMocks private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
 
@@ -167,16 +163,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   }
 
   @Test(dataProvider = "devfileNames")
-  public void shouldAcceptRawDevfileUrl(String devfileName)
-      throws NoSuchFieldException, IllegalAccessException {
-    // given
-    Field field =
-        rawDevfileUrlFactoryParameterResolver
-            .getClass()
-            .getDeclaredField("devfileFilenamesProvider");
-    field.setAccessible(true);
-    field.set(rawDevfileUrlFactoryParameterResolver, devfileFilenamesProvider);
-
+  public void shouldAcceptRawDevfileUrl(String devfileName) {
     // when
     boolean result =
         rawDevfileUrlFactoryParameterResolver.accept(
@@ -184,6 +171,17 @@ public class RawDevfileUrlFactoryParameterResolverTest {
 
     // then
     assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotAcceptRawDevfileUrl() {
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(
+            Collections.singletonMap(URL_PARAMETER_NAME, "https://host/user/repo.git"));
+
+    // then
+    assertFalse(result);
   }
 
   @DataProvider(name = "invalidURLsProvider")
@@ -200,6 +198,6 @@ public class RawDevfileUrlFactoryParameterResolverTest {
 
   @DataProvider(name = "devfileNames")
   private Object[] devfileNames() {
-    return new String[] {"devfile.yaml", ".devfile.yaml"};
+    return new String[] {"devfile.yaml", ".devfile.yaml", "any-name.yaml", "any-name.yml"};
   }
 }

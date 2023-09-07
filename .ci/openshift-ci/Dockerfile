@@ -12,7 +12,7 @@
 
 # Dockerfile to bootstrap build and test in openshift-ci
 
-FROM registry.ci.openshift.org/openshift/release:golang-1.18
+FROM registry.access.redhat.com/ubi9/nodejs-18:1
 
 SHELL ["/bin/bash", "-c"]
 

@@ -19,7 +19,7 @@ SHELL ["/bin/bash", "-c"]
 USER 0
 
 # Install yq, kubectl, chectl cli used by olm/olm.sh script.
-RUN dnf install -y -q --allowerasing --nobest nodejs-devel nodejs-libs \
+RUN dnf install -y psmisc nodejs-devel nodejs-libs -q --allowerasing --nobest \
     # already installed or installed as deps:
     openssl openssl-devel ca-certificates make cmake cpp gcc gcc-c++ zlib zlib-devel brotli brotli-devel python3 nodejs-packaging && \
     dnf update -y && dnf clean all && \

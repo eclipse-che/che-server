@@ -564,7 +564,7 @@
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-compat</artifactId>
-                <version>${org.apache.maven.verson.pnc}</version>
+                <version>${org.apache.maven.version.pnc}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
@@ -574,7 +574,7 @@
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-model</artifactId>
-                <version>${org.apache.maven.verson.pnc}</version>
+                <version>${org.apache.maven.version.pnc}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>

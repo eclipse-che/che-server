@@ -237,7 +237,7 @@ testGitCredentialsData() {
     userName=${GIT_PROVIDER_USERNAME}
   fi
 
-  gitCredential="https://${userName}:${GIT_PROVIDER_PAT}@${hostName}"
+  gitCredentials="https://${userName}:${GIT_PROVIDER_PAT}@${hostName}"
   WORKSPACE_POD_NAME=$(oc get pods -n ${OCP_USER_NAMESPACE} | grep workspace | awk '{print $1}')
   if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- cat /.git-credentials/credentials | grep -q ${gitCredentials}; then
     echo "[INFO] Git credentials file '/.git-credentials/credentials' exists and has the expected content."

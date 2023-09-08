@@ -138,6 +138,7 @@
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.3.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
         <org.apache.maven.plugin-tools.plugin-annotations.version>3.6.2</org.apache.maven.plugin-tools.plugin-annotations.version>
         <org.apache.maven.verson>3.8.4</org.apache.maven.verson>
+        <org.apache.maven.version.pnc>3.8.4</org.apache.maven.version.pnc>
         <org.apache.tomcat.version>10.1.6</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>3.4.1</org.codehaus.plexus.utils.version>
         <org.eclipse.persistence.eclipselink.version>2.7.10</org.eclipse.persistence.eclipselink.version>
@@ -563,7 +564,7 @@
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-compat</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.verson.pnc}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
@@ -573,7 +574,7 @@
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-model</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.verson.pnc}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>

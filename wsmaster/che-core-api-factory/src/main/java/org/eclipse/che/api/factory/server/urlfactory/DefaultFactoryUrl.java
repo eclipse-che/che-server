@@ -62,11 +62,6 @@ public class DefaultFactoryUrl implements RemoteFactoryUrl {
   }
 
   @Override
-  public String getProviderUrl() {
-    return getHostName();
-  }
-
-  @Override
   public String getBranch() {
     return null;
   }

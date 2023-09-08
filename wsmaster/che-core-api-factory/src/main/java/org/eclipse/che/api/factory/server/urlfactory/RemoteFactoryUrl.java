@@ -39,9 +39,6 @@ public interface RemoteFactoryUrl {
   /** Remote hostname */
   String getHostName();
 
-  /** Remote provider URL */
-  String getProviderUrl();
-
   /** Remote branch */
   String getBranch();
 

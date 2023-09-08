@@ -40,10 +40,13 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
@@ -111,6 +114,7 @@ public class FactoryServiceTest {
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
+  private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
   private FactoryBuilder factoryBuilderSpy;
 
@@ -126,6 +130,13 @@ public class FactoryServiceTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
+    specificFactoryParametersResolvers = new HashSet<>();
+    Field parametersResolvers =
+        FactoryParametersResolverHolder.class.getDeclaredField(
+            "specificFactoryParametersResolvers");
+    parametersResolvers.setAccessible(true);
+    parametersResolvers.set(factoryParametersResolverHolder, specificFactoryParametersResolvers);
+    specificFactoryParametersResolvers.add(rawDevfileUrlFactoryParameterResolver);
     factoryBuilderSpy = spy(new FactoryBuilder(new SourceStorageParametersValidator()));
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class));
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class), anyBoolean());

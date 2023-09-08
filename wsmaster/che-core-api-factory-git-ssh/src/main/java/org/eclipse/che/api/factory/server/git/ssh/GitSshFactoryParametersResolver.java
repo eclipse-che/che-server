@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.git.ssh;
 
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
@@ -20,6 +21,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.factory.server.FactoryResolverPriority;
 import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
@@ -125,5 +127,10 @@ public class GitSshFactoryParametersResolver extends RawDevfileUrlFactoryParamet
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) {
     return gitSshURLParser.parse(factoryUrl);
+  }
+
+  @Override
+  public FactoryResolverPriority priority() {
+    return LOWEST;
   }
 }

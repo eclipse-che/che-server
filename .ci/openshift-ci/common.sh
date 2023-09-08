@@ -218,7 +218,7 @@ testProjectIsCloned() {
   if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- test -f /projects/${PROJECT_NAME}/${YAML_FILE_NAME}; then
     echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} exists."
   else
-    echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} does not exist."
+    echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is absent."
     return 1
   fi
 }
@@ -284,7 +284,8 @@ testClonePublicRepoNoPatOAuth() {
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
   echo "[INFO] Check the public repository is cloned with NO PAT/OAuth setup"
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || exit 1
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
   deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
 }
 
@@ -296,7 +297,9 @@ testClonePrivateRepoNoPatOAuth() {
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
   echo "[INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup"
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && exit 1
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should NOT be present" && exit 1; }
+  echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is NOT present. This is EXPECTED"
   deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
 }
 
@@ -307,7 +310,8 @@ testCloneGitRepoWithSetupPat() {
   OCP_USER_NAMESPACE=$4
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || exit 1
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
 }
 
 setupTestEnvironment() {

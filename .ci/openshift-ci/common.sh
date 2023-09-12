@@ -333,6 +333,18 @@ testCloneGitRepoWithSetupPat() {
   { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
 }
 
+testCloneGitRepoProjectShouldExists() {
+  WS_NAME=$1
+  PROJECT_NAME=$2
+  GIT_REPO_URL=$3
+  OCP_USER_NAMESPACE=$4
+
+  runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
+  echo "[INFO] Check the repository is cloned"
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
+}
+
 setupTestEnvironment() {
   OCP_USER_NAME=$1
 

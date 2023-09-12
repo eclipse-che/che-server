@@ -195,8 +195,8 @@ setupSSHKeyPairs() {
 
   echo "[INFO] Setup SSH Key Pairs Secret"
   oc project ${USER_CHE_NAMESPACE}
-  ENCODED_GIT_PRIVATE_KEY=$(echo -n ${GIT_PRIVATE_KEY} | base64)
-  ENCODED_GIT_PUBLIC_KEY=$(echo -n ${GIT_PUBLIC_KEY} | base64)
+  ENCODED_GIT_PRIVATE_KEY=$(echo -n "${GIT_PRIVATE_KEY}" | base64 -w 0)
+  ENCODED_GIT_PUBLIC_KEY=$(echo -n "${GIT_PUBLIC_KEY}" | base64 -w 0)
   cat .ci/openshift-ci/ssh-secret.yaml > ssh-secret.yaml
 
   # patch the ssh-secret.yaml file

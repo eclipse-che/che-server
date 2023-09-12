@@ -189,6 +189,25 @@ setupPersonalAccessToken() {
   oc apply -f pat-secret.yaml -n ${USER_CHE_NAMESPACE}
 }
 
+setupSSHKeyPairs() {
+  GIT_PRIVATE_KEY=$1
+  GIT_PUBLIC_KEY=$2
+
+  echo "[INFO] Setup SSH Key Pairs Secret"
+  oc project ${USER_CHE_NAMESPACE}
+  ENCODED_GIT_PRIVATE_KEY=$(echo "${GIT_PRIVATE_KEY}" | base64 -w 0)
+  ENCODED_GIT_PUBLIC_KEY=$(echo "${GIT_PUBLIC_KEY}" | base64 -w 0)
+  cat .ci/openshift-ci/ssh-secret.yaml > ssh-secret.yaml
+
+  # patch the ssh-secret.yaml file
+  sed -i "s#ssh_private_key#${ENCODED_GIT_PRIVATE_KEY}#g" ssh-secret.yaml
+  sed -i "s#ssh_public_key#${ENCODED_GIT_PUBLIC_KEY}#g" ssh-secret.yaml
+
+  cat ssh-secret.yaml
+
+  oc apply -f ssh-secret.yaml -n ${USER_CHE_NAMESPACE}
+}
+
 runTestWorkspaceWithGitRepoUrl() {
   WS_NAME=$1
   PROJECT_NAME=$2
@@ -310,6 +329,18 @@ testCloneGitRepoWithSetupPat() {
   OCP_USER_NAMESPACE=$4
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
+}
+
+testCloneGitRepoProjectShouldExists() {
+  WS_NAME=$1
+  PROJECT_NAME=$2
+  GIT_REPO_URL=$3
+  OCP_USER_NAMESPACE=$4
+
+  runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
+  echo "[INFO] Check the repository is cloned"
   testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
   { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
 }

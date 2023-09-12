@@ -27,7 +27,7 @@ source "${SCRIPT_DIR}"/common.sh
 trap "catchFinish" EXIT SIGINT
 
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
-setupSSHKeyPairs "${BITBUCKET_PRIVATE_KEY}" "${BITBUCKET_PUBLIC_KEY}"
+setupSSHKeyPairs "${GITHUB_PRIVATE_KEY}" "${GITHUB_PUBLIC_KEY}"
 testFactoryResolverNoPatOAuth ${PUBLIC_REPO_SSH_URL} ${PRIVATE_REPO_SSH_URL}
 
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_SSH_URL} ${USER_CHE_NAMESPACE}

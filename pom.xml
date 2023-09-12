@@ -137,7 +137,7 @@
         <org.apache.httpcomponents.httpcore.version>4.4.15</org.apache.httpcomponents.httpcore.version>
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.3.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
         <org.apache.maven.plugin-tools.plugin-annotations.version>3.6.2</org.apache.maven.plugin-tools.plugin-annotations.version>
-        <org.apache.maven.verson>3.8.4</org.apache.maven.verson>
+        <org.apache.maven.version>3.9.4</org.apache.maven.version>
         <org.apache.tomcat.version>10.1.6</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>3.4.1</org.codehaus.plexus.utils.version>
         <org.eclipse.persistence.eclipselink.version>2.7.10</org.eclipse.persistence.eclipselink.version>
@@ -558,27 +558,27 @@
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-artifact</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-compat</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-core</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-model</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>jsr250-api</artifactId>

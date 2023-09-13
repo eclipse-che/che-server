@@ -295,31 +295,17 @@ collectEclipseCheLogs() {
   oc get checluster -o yaml -n $CHE_NAMESPACE > "${ARTIFACTS_DIR}/che-cluster.yaml"
 }
 
-testClonePublicRepoNoPatOAuth() {
-  WS_NAME=$1
-  PROJECT_NAME=$2
-  GIT_REPO_URL=$3
-  OCP_USER_NAMESPACE=$4
+testCloneGitRepoNoProjectExists() {
+    WS_NAME=$1
+    PROJECT_NAME=$2
+    GIT_REPO_URL=$3
+    OCP_USER_NAMESPACE=$4
 
-  runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
-  echo "[INFO] Check the public repository is cloned with NO PAT/OAuth setup"
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
-  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
-  deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
-}
-
-testClonePrivateRepoNoPatOAuth() {
-  WS_NAME=$1
-  PROJECT_NAME=$2
-  GIT_REPO_URL=$3
-  OCP_USER_NAMESPACE=$4
-
-  runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
-  echo "[INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup"
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
-  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should NOT be present" && exit 1; }
-  echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is NOT present. This is EXPECTED"
-  deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
+    runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
+    echo "[INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup"
+    testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
+    { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should NOT be present" && exit 1; }
+    echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is NOT present. This is EXPECTED"
 }
 
 # Test that the repository is cloned when PAT, OAuth or SSH is configured
@@ -333,7 +319,6 @@ testCloneGitRepoProjectShouldExists() {
   echo "[INFO] Check the repository is cloned"
   testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
   { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
-  deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
 }
 
 setupTestEnvironment() {

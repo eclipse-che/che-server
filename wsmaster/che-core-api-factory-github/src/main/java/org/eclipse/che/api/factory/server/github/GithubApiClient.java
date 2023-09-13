@@ -275,7 +275,10 @@ public class GithubApiClient {
       } else if (response.statusCode() == HTTP_NO_CONTENT) {
         return null;
       } else {
-        String body = CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+        String body =
+            response.body() == null
+                ? "Unrecognised error"
+                : CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
         switch (response.statusCode()) {
           case HTTP_BAD_REQUEST:
             throw new ScmBadRequestException(body);

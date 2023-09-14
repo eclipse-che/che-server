@@ -98,44 +98,31 @@ requestFactoryResolverGitRepoUrl() {
 
 # check that factory resolver returns correct value without any PAT/OAuth setup
 testFactoryResolverNoPatOAuth() {
-  PUBLIC_REPO_URL=$1
-  PRIVATE_REPO_URL=$2
-
   echo "[INFO] Check factory resolver for public repository with NO PAT/OAuth setup"
-  if [ "$(requestFactoryResolverGitRepoUrl ${PUBLIC_REPO_URL} | grep "HTTP/1.1 200")" ]; then
-    echo "[INFO] Factory resolver returned 'HTTP/1.1 200' status code."
-  else
-    echo "[ERROR] Factory resolver returned wrong status code. Expected: HTTP/1.1 200."
-    exit 1
-  fi
+  testFactoryResolver $1 200
 
   echo "[INFO] Check factory resolver for private repository with NO PAT/OAuth setup"
-  if [ "$(requestFactoryResolverGitRepoUrl ${PRIVATE_REPO_URL} | grep "HTTP/1.1 400")" ]; then
-    echo "[INFO] Factory resolver returned 'HTTP/1.1 400' status code. Expected client side error."
-  else
-    echo "[ERROR] Factory resolver returned wrong status code. Expected 'HTTP/1.1 400'."
-    exit 1
-  fi
+  testFactoryResolver $1 400
 }
 
 # check that factory resolver returns correct value with PAT/OAuth setup
 testFactoryResolverWithPatOAuth() {
-  PUBLIC_REPO_URL=$1
-  PRIVATE_REPO_URL=$2
-
   echo "[INFO] Check factory resolver for public repository with PAT/OAuth setup"
-  if [ "$(requestFactoryResolverGitRepoUrl ${PUBLIC_REPO_URL} | grep "HTTP/1.1 200")" ]; then
-    echo "[INFO] Factory resolver returned 'HTTP/1.1 200' status code."
-  else
-    echo "[ERROR] Factory resolver returned wrong status code. Expected: HTTP/1.1 200"
-    exit 1
-  fi
+  testFactoryResolver $1 200
 
   echo "[INFO] Check factory resolver for private repository with PAT/OAuth setup"
-  if [ "$(requestFactoryResolverGitRepoUrl ${PRIVATE_REPO_URL} | grep "HTTP/1.1 200")" ]; then
-    echo "[INFO] Factory resolver returned 'HTTP/1.1 200' status code."
+  testFactoryResolver $2 200
+}
+
+testFactoryResolverResponse() {
+  URL=$1
+  RESPONSE_CODE=$2
+
+  echo "[INFO] Check factory resolver"
+  if [ "$(requestFactoryResolverGitRepoUrl ${URL} | grep "HTTP/1.1 ${RESPONSE_CODE}")" ]; then
+    echo "[INFO] Factory resolver returned 'HTTP/1.1 ${RESPONSE_CODE}' status code."
   else
-    echo "[ERROR] Factory resolver returned wrong status code. Expected: HTTP/1.1 200"
+    echo "[ERROR] Factory resolver returned wrong status code. Expected: HTTP/1.1 ${RESPONSE_CODE}."
     exit 1
   fi
 }

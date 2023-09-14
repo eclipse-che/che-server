@@ -16,8 +16,8 @@ set -ex
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://gitlab.com/chepullreq1/public-repo/-/raw/main/devfile.yaml?ref_type=heads"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml?ref_type=heads"}
+export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://gitlab.com/chepullreq1/public-repo/-/raw/main/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"}
 
 # import common test functions
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -30,5 +30,6 @@ testFactoryResolverNoPatOAuth ${PUBLIC_REPO_RAW_PATH_URL} ${PRIVATE_REPO_RAW_PAT
 
 testCloneGitRepoNoProjectExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_RAW_PATH_URL} ${USER_CHE_NAMESPACE}
 deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
+
 testCloneGitRepoNoProjectExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_RAW_PATH_URL} ${USER_CHE_NAMESPACE}
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}

@@ -166,8 +166,7 @@ initUserNamespace() {
 setupPersonalAccessToken() {
   GIT_PROVIDER_TYPE=$1
   GIT_PROVIDER_URL=$2
-  GIT_PROVIDER_USER_ID=$3
-  GIT_PROVIDER_PAT=$4
+  GIT_PROVIDER_PAT=$3
 
   echo "[INFO] Setup Personal Access Token Secret"
   oc project ${USER_CHE_NAMESPACE}
@@ -179,12 +178,34 @@ setupPersonalAccessToken() {
   sed -i "s#che-user-id#${CHE_USER_ID}#g" pat-secret.yaml
   sed -i "s#git-provider-name#${GIT_PROVIDER_TYPE}#g" pat-secret.yaml
   sed -i "s#git-provider-url#${GIT_PROVIDER_URL}#g" pat-secret.yaml
-  sed -i "s#git-provider-user-id#${GIT_PROVIDER_USER_ID}#g" pat-secret.yaml
   sed -i "s#encoded-access-token#${ENCODED_PAT}#g" pat-secret.yaml
+
+  if [ "${GIT_PROVIDER_TYPE}" == "azure-devops" ]; then
+    sed -i "s#''#${GIT_PROVIDER_USERNAME}#g" pat-secret.yaml
+  fi
 
   cat pat-secret.yaml
 
   oc apply -f pat-secret.yaml -n ${USER_CHE_NAMESPACE}
+}
+
+setupSSHKeyPairs() {
+  GIT_PRIVATE_KEY=$1
+  GIT_PUBLIC_KEY=$2
+
+  echo "[INFO] Setup SSH Key Pairs Secret"
+  oc project ${USER_CHE_NAMESPACE}
+  ENCODED_GIT_PRIVATE_KEY=$(echo "${GIT_PRIVATE_KEY}" | base64 -w 0)
+  ENCODED_GIT_PUBLIC_KEY=$(echo "${GIT_PUBLIC_KEY}" | base64 -w 0)
+  cat .ci/openshift-ci/ssh-secret.yaml > ssh-secret.yaml
+
+  # patch the ssh-secret.yaml file
+  sed -i "s#ssh_private_key#${ENCODED_GIT_PRIVATE_KEY}#g" ssh-secret.yaml
+  sed -i "s#ssh_public_key#${ENCODED_GIT_PUBLIC_KEY}#g" ssh-secret.yaml
+
+  cat ssh-secret.yaml
+
+  oc apply -f ssh-secret.yaml -n ${USER_CHE_NAMESPACE}
 }
 
 runTestWorkspaceWithGitRepoUrl() {
@@ -216,23 +237,32 @@ testProjectIsCloned() {
   if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- test -f /projects/${PROJECT_NAME}/${YAML_FILE_NAME}; then
     echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} exists."
   else
-    echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} does not exist."
+    echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is absent."
     return 1
   fi
 }
 
-testGitCredentials() {
+testGitCredentialsData() {
   OCP_USER_NAMESPACE=$1
   GIT_PROVIDER_PAT=$2
+  GIT_PROVIDER_URL=$3
 
   echo "[INFO] Check the 'git credentials' is in a workspace"
-  gitCredentials="${GIT_PROVIDER_USERNAME}:${GIT_PROVIDER_PAT}"
+  hostName="${GIT_PROVIDER_URL#https://}"
+
+  if [ "${GIT_PROVIDER_TYPE}" == "azure-devops" ]; then
+    userName="username"
+  else
+    userName=${GIT_PROVIDER_USERNAME}
+  fi
+
+  gitCredentials="https://${userName}:${GIT_PROVIDER_PAT}@${hostName}"
   WORKSPACE_POD_NAME=$(oc get pods -n ${OCP_USER_NAMESPACE} | grep workspace | awk '{print $1}')
   if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- cat /.git-credentials/credentials | grep -q ${gitCredentials}; then
     echo "[INFO] Git credentials file '/.git-credentials/credentials' exists and has the expected content."
   else
     echo "[ERROR] Git credentials file '/.git-credentials/credentials' does not exist or has incorrect content."
-    return 1
+    exit 1
   fi
 }
 
@@ -273,7 +303,8 @@ testClonePublicRepoNoPatOAuth() {
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
   echo "[INFO] Check the public repository is cloned with NO PAT/OAuth setup"
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || exit 1
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
   deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
 }
 
@@ -285,7 +316,9 @@ testClonePrivateRepoNoPatOAuth() {
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
   echo "[INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup"
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && exit 1
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should NOT be present" && exit 1; }
+  echo "[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is NOT present. This is EXPECTED"
   deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
 }
 
@@ -294,12 +327,22 @@ testCloneGitRepoWithSetupPat() {
   PROJECT_NAME=$2
   GIT_REPO_URL=$3
   OCP_USER_NAMESPACE=$4
-  GIT_PROVIDER_PATH=$5
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
-  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || exit 1
-  testGitCredentials ${OCP_USER_NAMESPACE} ${GIT_PROVIDER_PAT}
-  deleteTestWorkspace ${WS_NAME} ${OCP_USER_NAMESPACE}
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
+}
+
+testCloneGitRepoProjectShouldExists() {
+  WS_NAME=$1
+  PROJECT_NAME=$2
+  GIT_REPO_URL=$3
+  OCP_USER_NAMESPACE=$4
+
+  runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
+  echo "[INFO] Check the repository is cloned"
+  testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
+  { echo "[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present." && exit 1; }
 }
 
 setupTestEnvironment() {

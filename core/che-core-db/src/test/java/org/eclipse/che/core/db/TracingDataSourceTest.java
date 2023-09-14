@@ -61,7 +61,7 @@ public class TracingDataSourceTest {
   @Test
   public void shouldBeAbleToGetConnectionWithEmailAndPassword() throws SQLException {
     TracingDataSource ds = new TracingDataSource(dataSource);
-    
+
     Connection actual = ds.getConnection("user", "password");
     assertEquals(actual.getClass(), TracingConnection.class);
     Mockito.verify(dataSource).getConnection(Mockito.eq("user"), Mockito.eq("password"));

@@ -99,19 +99,19 @@ requestFactoryResolverGitRepoUrl() {
 # check that factory resolver returns correct value without any PAT/OAuth setup
 testFactoryResolverNoPatOAuth() {
   echo "[INFO] Check factory resolver for public repository with NO PAT/OAuth setup"
-  testFactoryResolver $1 200
+  testFactoryResolverResponse $1 200
 
   echo "[INFO] Check factory resolver for private repository with NO PAT/OAuth setup"
-  testFactoryResolver $1 400
+  testFactoryResolverResponse $1 400
 }
 
 # check that factory resolver returns correct value with PAT/OAuth setup
 testFactoryResolverWithPatOAuth() {
   echo "[INFO] Check factory resolver for public repository with PAT/OAuth setup"
-  testFactoryResolver $1 200
+  testFactoryResolverResponse $1 200
 
   echo "[INFO] Check factory resolver for private repository with PAT/OAuth setup"
-  testFactoryResolver $2 200
+  testFactoryResolverResponse $2 200
 }
 
 testFactoryResolverResponse() {

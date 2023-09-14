@@ -1,3 +1,4 @@
+
 #!/bin/bash
 #
 # Copyright (c) 2023 Red Hat, Inc.
@@ -16,8 +17,8 @@ set -ex
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-export PUBLIC_REPO_URL=${PUBLIC_REPO_URL:-"https://chepullreq1@bitbucket.org/chepullreq/public-repo.git"}
-export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://chepullreq1@bitbucket.org/chepullreq/private-repo.git"}
+export PUBLIC_REPO_SSH_URL=${PUBLIC_REPO_SSH_URL:-"git@bitbucket.org:chepullreq/public-repo.git"}
+export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@bitbucket.org:chepullreq/private-repo.git"}
 
 # import common test functions
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -26,8 +27,10 @@ source "${SCRIPT_DIR}"/common.sh
 trap "catchFinish" EXIT SIGINT
 
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
-testFactoryResolverNoPatOAuth ${PUBLIC_REPO_URL} ${PRIVATE_REPO_URL}
-testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_URL} ${USER_CHE_NAMESPACE}
+setupSSHKeyPairs "${BITBUCKET_PRIVATE_KEY}" "${BITBUCKET_PUBLIC_KEY}"
+testFactoryResolverNoPatOAuth ${PUBLIC_REPO_SSH_URL} ${PRIVATE_REPO_SSH_URL}
+
+testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_SSH_URL} ${USER_CHE_NAMESPACE}
 deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
-testCloneGitRepoNoProjectExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_URL} ${USER_CHE_NAMESPACE}
+testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_SSH_URL} ${USER_CHE_NAMESPACE}
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}

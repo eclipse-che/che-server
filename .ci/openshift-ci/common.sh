@@ -102,7 +102,7 @@ testFactoryResolverNoPatOAuth() {
   testFactoryResolverResponse $1 200
 
   echo "[INFO] Check factory resolver for private repository with NO PAT/OAuth setup"
-  testFactoryResolverResponse $1 400
+  testFactoryResolverResponse $2 400
 }
 
 # check that factory resolver returns correct value with PAT/OAuth setup
@@ -120,7 +120,7 @@ testFactoryResolverResponse() {
 
   echo "[INFO] Check factory resolver"
   if [ "$(requestFactoryResolverGitRepoUrl ${URL} | grep "HTTP/1.1 ${RESPONSE_CODE}")" ]; then
-    echo "[INFO] Factory resolver returned 'HTTP/1.1 ${RESPONSE_CODE}' status code."
+    echo "[INFO] Factory resolver returned 'HTTP/1.1 ${RESPONSE_CODE}' status code. Expected client side response."
   else
     echo "[ERROR] Factory resolver returned wrong status code. Expected: HTTP/1.1 ${RESPONSE_CODE}."
     exit 1

@@ -122,7 +122,8 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
           throw exception;
         }
       }
-      throw new DevfileException("Could not reach devfile at " + " `" + exception.getMessage() + "`", exception);
+      throw new DevfileException(
+          "Could not reach devfile at " + "`" + exception.getMessage() + "`", exception);
     }
   }
 

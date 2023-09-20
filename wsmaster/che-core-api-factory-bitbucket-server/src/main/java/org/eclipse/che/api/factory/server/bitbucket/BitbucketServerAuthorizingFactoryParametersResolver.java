@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -43,8 +43,10 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  */
 @Singleton
 public class BitbucketServerAuthorizingFactoryParametersResolver
-    extends RawDevfileUrlFactoryParameterResolver {
+    implements FactoryParametersResolver {
 
+  private final URLFactoryBuilder urlFactoryBuilder;
+  private final URLFetcher urlFetcher;
   /** Parser which will allow to check validity of URLs and create objects. */
   private final BitbucketServerURLParser bitbucketURLParser;
 
@@ -56,7 +58,8 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
       URLFetcher urlFetcher,
       BitbucketServerURLParser bitbucketURLParser,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(urlFactoryBuilder, urlFetcher);
+    this.urlFactoryBuilder = urlFactoryBuilder;
+    this.urlFetcher = urlFetcher;
     this.bitbucketURLParser = bitbucketURLParser;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }

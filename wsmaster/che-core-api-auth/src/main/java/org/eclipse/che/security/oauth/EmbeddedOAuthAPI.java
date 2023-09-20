@@ -27,7 +27,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 import javax.inject.Inject;
@@ -87,16 +86,9 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
-      String baseUrl = redirectAfterLogin;
-      String query = "";
-      if (redirectAfterLogin.contains("?")) {
-        baseUrl = redirectAfterLogin.substring(0, redirectAfterLogin.indexOf("?") + 1);
-        query =
-            URLDecoder.decode(
-                redirectAfterLogin.substring(redirectAfterLogin.indexOf("?") + 1), UTF_8);
-      }
       return Response.temporaryRedirect(
-              URI.create(baseUrl + URLEncoder.encode(query + "&error_code=access_denied", UTF_8)))
+              URI.create(
+                  redirectAfterLogin + URLEncoder.encode("&error_code=access_denied", UTF_8)))
           .build();
     }
     final String providerName = getParameter(params, "oauth_provider");

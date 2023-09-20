@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
@@ -26,6 +27,8 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -84,8 +87,16 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
+      String baseUrl = redirectAfterLogin;
+      String query = "";
+      if (redirectAfterLogin.contains("?")) {
+        baseUrl = redirectAfterLogin.substring(0, redirectAfterLogin.indexOf("?") + 1);
+        query =
+            URLDecoder.decode(
+                redirectAfterLogin.substring(redirectAfterLogin.indexOf("?") + 1), UTF_8);
+      }
       return Response.temporaryRedirect(
-              URI.create(redirectAfterLogin + "&error_code=access_denied"))
+              URI.create(baseUrl + URLEncoder.encode(query + "&error_code=access_denied", UTF_8)))
           .build();
     }
     final String providerName = getParameter(params, "oauth_provider");

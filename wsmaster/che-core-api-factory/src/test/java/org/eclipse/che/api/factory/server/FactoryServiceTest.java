@@ -326,4 +326,27 @@ public class FactoryServiceTest {
     // then
     assertEquals(factoryParametersResolver, topPriorityResolver);
   }
+
+  @Test
+  public void shouldReturnDefaultPriorityFactoryParameterResolverOverLowPriority()
+      throws Exception {
+    // given
+    Map<String, String> params = singletonMap(URL_PARAMETER_NAME, "https://host/path/devfile.yaml");
+    specificFactoryParametersResolvers.clear();
+    FactoryParametersResolver lowPriorityResolver = mock(FactoryParametersResolver.class);
+    FactoryParametersResolver defaultPriorityResolver = mock(FactoryParametersResolver.class);
+    when(lowPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(defaultPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(lowPriorityResolver.priority()).thenReturn(LOWEST);
+    when(defaultPriorityResolver.priority()).thenReturn(DEFAULT);
+    specificFactoryParametersResolvers.add(lowPriorityResolver);
+    specificFactoryParametersResolvers.add(defaultPriorityResolver);
+
+    // when
+    FactoryParametersResolver factoryParametersResolver =
+        factoryParametersResolverHolder.getFactoryParametersResolver(params);
+
+    // then
+    assertEquals(factoryParametersResolver, defaultPriorityResolver);
+  }
 }

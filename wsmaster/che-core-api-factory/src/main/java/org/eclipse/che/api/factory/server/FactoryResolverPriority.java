@@ -16,13 +16,13 @@ public enum FactoryResolverPriority {
   HIGHEST(2),
   LOWEST(0);
 
-  private final int priority;
+  private final int value;
 
-  FactoryResolverPriority(int priority) {
-    this.priority = priority;
+  FactoryResolverPriority(int value) {
+    this.value = value;
   }
 
-  public int getPriority() {
-    return priority;
+  public int getValue() {
+    return value;
   }
 }

@@ -195,7 +195,7 @@ public class FactoryService extends Service {
                       return false;
                     }
                   })
-              .min(comparingInt(r -> r.priority().ordinal()));
+              .max(comparingInt(r -> r.priority().getValue()));
       if (resolverOptional.isPresent()) {
         return resolverOptional.get();
       }

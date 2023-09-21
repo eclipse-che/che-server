@@ -21,6 +21,8 @@ import static java.net.HttpURLConnection.HTTP_BAD_GATEWAY;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertEqualsNoOrder;
 import static org.testng.Assert.assertFalse;
@@ -33,10 +35,13 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
 import java.lang.reflect.Field;
+import java.net.http.HttpClient;
+import java.net.http.HttpResponse;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.commons.lang.Pair;
+import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -256,6 +261,24 @@ public class GithubApiClientTest {
     stubFor(
         get(urlEqualTo("/api/v3/user"))
             .willReturn(aResponse().withStatus(HTTP_NOT_FOUND).withBody("item not found")));
+    // when
+    client.getUser("token");
+  }
+
+  @Test(
+      expectedExceptions = ScmBadRequestException.class,
+      expectedExceptionsMessageRegExp = "Unrecognised error")
+  public void shouldThrowExceptionWithUnrecognisedErrorIfResponseBodyIsNull() throws Exception {
+    // given
+    HttpClient httpClient = Mockito.mock(HttpClient.class);
+    HttpResponse response = Mockito.mock(HttpResponse.class);
+    Field declaredField = GithubApiClient.class.getDeclaredField("httpClient");
+    declaredField.setAccessible(true);
+    declaredField.set(client, httpClient);
+    when(httpClient.send(any(), any())).thenReturn(response);
+    when(response.body()).thenReturn(null);
+    when(response.statusCode()).thenReturn(HTTP_BAD_REQUEST);
+
     // when
     client.getUser("token");
   }

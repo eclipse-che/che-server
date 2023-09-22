@@ -19,11 +19,10 @@ import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_Q
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
@@ -36,7 +35,6 @@ import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.commons.annotation.Nullable;
 
 /**
  * Provides Factory Parameters resolver for github repositories.
@@ -44,13 +42,17 @@ import org.eclipse.che.commons.annotation.Nullable;
  * @author Florent Benoit
  */
 @Singleton
-public class GithubFactoryParametersResolver extends RawDevfileUrlFactoryParameterResolver {
+public class GithubFactoryParametersResolver implements FactoryParametersResolver {
 
   /** Parser which will allow to check validity of URLs and create objects. */
   private final GithubURLParser githubUrlParser;
 
+  private final URLFetcher urlFetcher;
+
   /** Builder allowing to build objects from github URL. */
   private final GithubSourceStorageBuilder githubSourceStorageBuilder;
+
+  private final URLFactoryBuilder urlFactoryBuilder;
 
   /** ProjectDtoMerger */
   private final ProjectConfigDtoMerger projectConfigDtoMerger;
@@ -64,27 +66,11 @@ public class GithubFactoryParametersResolver extends RawDevfileUrlFactoryParamet
       GithubSourceStorageBuilder githubSourceStorageBuilder,
       URLFactoryBuilder urlFactoryBuilder,
       ProjectConfigDtoMerger projectConfigDtoMerger,
-      PersonalAccessTokenManager personalAccessTokenManager,
-      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint) {
-    this(
-        githubUrlParser,
-        urlFetcher,
-        githubSourceStorageBuilder,
-        urlFactoryBuilder,
-        projectConfigDtoMerger,
-        personalAccessTokenManager);
-  }
-
-  GithubFactoryParametersResolver(
-      GithubURLParser githubUrlParser,
-      URLFetcher urlFetcher,
-      GithubSourceStorageBuilder githubSourceStorageBuilder,
-      URLFactoryBuilder urlFactoryBuilder,
-      ProjectConfigDtoMerger projectConfigDtoMerger,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(urlFactoryBuilder, urlFetcher);
     this.githubUrlParser = githubUrlParser;
+    this.urlFetcher = urlFetcher;
     this.githubSourceStorageBuilder = githubSourceStorageBuilder;
+    this.urlFactoryBuilder = urlFactoryBuilder;
     this.projectConfigDtoMerger = projectConfigDtoMerger;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }

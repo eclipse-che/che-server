@@ -9,20 +9,20 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.api.factory.server.gitlab;
+package org.eclipse.che.api.factory.server.git.ssh;
 
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.FactoryResolverPriority;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -36,99 +36,80 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 
 /**
- * Provides Factory Parameters resolver for Gitlab repositories.
+ * Provides Factory Parameters resolver for Git Ssh repositories.
  *
- * @author Max Shaposhnyk
+ * @author Anatolii Bazko
  */
 @Singleton
-public class GitlabFactoryParametersResolver implements FactoryParametersResolver {
+public class GitSshFactoryParametersResolver implements FactoryParametersResolver {
 
-  private final URLFactoryBuilder urlFactoryBuilder;
+  private final GitSshURLParser gitSshURLParser;
+
   private final URLFetcher urlFetcher;
-  private final GitlabUrlParser gitlabURLParser;
+  private final URLFactoryBuilder urlFactoryBuilder;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
-  public GitlabFactoryParametersResolver(
-      URLFactoryBuilder urlFactoryBuilder,
+  public GitSshFactoryParametersResolver(
+      GitSshURLParser gitSshURLParser,
       URLFetcher urlFetcher,
-      GitlabUrlParser gitlabURLParser,
+      URLFactoryBuilder urlFactoryBuilder,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    this.urlFactoryBuilder = urlFactoryBuilder;
+    this.gitSshURLParser = gitSshURLParser;
     this.urlFetcher = urlFetcher;
-    this.gitlabURLParser = gitlabURLParser;
+    this.urlFactoryBuilder = urlFactoryBuilder;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
-  /**
-   * Check if this resolver can be used with the given parameters.
-   *
-   * @param factoryParameters map of parameters dedicated to factories
-   * @return true if it will be accepted by the resolver implementation or false if it is not
-   *     accepted
-   */
   @Override
   public boolean accept(@NotNull final Map<String, String> factoryParameters) {
     return factoryParameters.containsKey(URL_PARAMETER_NAME)
-        && gitlabURLParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
+        && gitSshURLParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
   }
 
-  /**
-   * Create factory object based on provided parameters
-   *
-   * @param factoryParameters map containing factory data parameters provided through URL
-   * @throws BadRequestException when data are invalid
-   */
   @Override
   public FactoryMetaDto createFactory(@NotNull final Map<String, String> factoryParameters)
       throws ApiException {
     // no need to check null value of url parameter as accept() method has performed the check
-    final GitlabUrl gitlabUrl = gitlabURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
-    boolean skipAuthentication =
-        factoryParameters.get(ERROR_QUERY_NAME) != null
-            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
+    final GitSshUrl gitSshUrl = gitSshURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+
     // create factory from the following location if location exists, else create default factory
     return urlFactoryBuilder
         .createFactoryFromDevfile(
-            gitlabUrl,
-            new GitlabAuthorizingFileContentProvider(
-                gitlabUrl, urlFetcher, personalAccessTokenManager),
+            gitSshUrl,
+            new GitSshAuthorizingFileContentProvider(
+                gitSshUrl, urlFetcher, personalAccessTokenManager),
             extractOverrideParams(factoryParameters),
-            skipAuthentication)
+            true)
         .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
-        .acceptVisitor(new GitlabFactoryVisitor(gitlabUrl));
+        .acceptVisitor(new GitSshFactoryVisitor(gitSshUrl));
   }
 
   /**
-   * Visitor that puts the default devfile or updates devfile projects into the Gitlab Factory, if
+   * Visitor that puts the default devfile or updates devfile projects into the Git Ssh Factory, if
    * needed.
    */
-  private class GitlabFactoryVisitor implements FactoryVisitor {
+  private class GitSshFactoryVisitor implements FactoryVisitor {
 
-    private final GitlabUrl gitlabUrl;
+    private final GitSshUrl gitSshUrl;
 
-    private GitlabFactoryVisitor(GitlabUrl gitlabUrl) {
-      this.gitlabUrl = gitlabUrl;
+    private GitSshFactoryVisitor(GitSshUrl gitSshUrl) {
+      this.gitSshUrl = gitSshUrl;
     }
 
     @Override
     public FactoryDevfileV2Dto visit(FactoryDevfileV2Dto factoryDto) {
       ScmInfoDto scmInfo =
           newDto(ScmInfoDto.class)
-              .withScmProviderName(gitlabUrl.getProviderName())
-              .withRepositoryUrl(gitlabUrl.repositoryLocation());
-      if (gitlabUrl.getBranch() != null) {
-        scmInfo.withBranch(gitlabUrl.getBranch());
-      }
+              .withScmProviderName(gitSshUrl.getProviderName())
+              .withRepositoryUrl(gitSshUrl.getRepositoryLocation());
       return factoryDto.withScmInfo(scmInfo);
     }
 
     @Override
     public FactoryDto visit(FactoryDto factory) {
-
       if (factory.getDevfile() == null) {
-        // initialize default devfile
-        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(gitlabUrl.getProject()));
+        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(gitSshUrl.getRepository()));
       }
 
       updateProjects(
@@ -137,23 +118,22 @@ public class GitlabFactoryParametersResolver implements FactoryParametersResolve
               newDto(ProjectDto.class)
                   .withSource(
                       newDto(SourceDto.class)
-                          .withLocation(gitlabUrl.repositoryLocation())
-                          .withType("git")
-                          .withBranch(gitlabUrl.getBranch()))
-                  .withName(gitlabUrl.getProject()),
-          project -> {
-            final String location = project.getSource().getLocation();
-            if (location.equals(gitlabUrl.repositoryLocation())) {
-              project.getSource().setBranch(gitlabUrl.getBranch());
-            }
-          });
+                          .withLocation(gitSshUrl.getRepositoryLocation())
+                          .withType("git"))
+                  .withName(gitSshUrl.getRepository()),
+          project -> {});
 
       return factory;
     }
   }
 
   @Override
-  public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
-    return gitlabURLParser.parse(factoryUrl);
+  public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) {
+    return gitSshURLParser.parse(factoryUrl);
+  }
+
+  @Override
+  public FactoryResolverPriority priority() {
+    return LOWEST;
   }
 }

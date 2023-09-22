@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.singletonMap;
+import static java.util.Comparator.comparingInt;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.server.FactoryLinksHelper.createLinks;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
@@ -28,6 +29,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
@@ -175,8 +177,6 @@ public class FactoryService extends Service {
     @SuppressWarnings("unused")
     private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
-    @Inject private RawDevfileUrlFactoryParameterResolver defaultFactoryResolver;
-
     /**
      * Provides a suitable resolver for the given parameters. If there is no at least one resolver
      * able to process parameters,then {@link BadRequestException} will be thrown
@@ -185,20 +185,19 @@ public class FactoryService extends Service {
      */
     public FactoryParametersResolver getFactoryParametersResolver(Map<String, String> parameters)
         throws BadRequestException {
-      // Check if the URL is a raw devfile URL. If so, use the default resolver,
-      // which resolves factories from a direct URL to a devfile content.
-      if (defaultFactoryResolver.accept(parameters)) {
-        return defaultFactoryResolver;
-      }
-      for (FactoryParametersResolver factoryParametersResolver :
-          specificFactoryParametersResolvers) {
-        try {
-          if (factoryParametersResolver.accept(parameters)) {
-            return factoryParametersResolver;
-          }
-        } catch (IllegalArgumentException e) {
-          // ignore and try next resolver
-        }
+      Optional<FactoryParametersResolver> resolverOptional =
+          specificFactoryParametersResolvers.stream()
+              .filter(
+                  r -> {
+                    try {
+                      return r.accept(parameters);
+                    } catch (IllegalArgumentException e) {
+                      return false;
+                    }
+                  })
+              .max(comparingInt(r -> r.priority().getValue()));
+      if (resolverOptional.isPresent()) {
+        return resolverOptional.get();
       }
       throw new BadRequestException(FACTORY_NOT_RESOLVABLE);
     }

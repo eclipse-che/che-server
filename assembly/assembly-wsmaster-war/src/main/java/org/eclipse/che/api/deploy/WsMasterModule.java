@@ -36,6 +36,7 @@ import org.eclipse.che.api.factory.server.FactoryAcceptValidator;
 import org.eclipse.che.api.factory.server.FactoryCreateValidator;
 import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
 import org.eclipse.che.api.factory.server.ScmService;
 import org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsFactoryParametersResolver;
@@ -44,6 +45,8 @@ import org.eclipse.che.api.factory.server.bitbucket.BitbucketFactoryParametersRe
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketScmFileResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerAuthorizingFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerScmFileResolver;
+import org.eclipse.che.api.factory.server.git.ssh.GitSshFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.git.ssh.GitSshScmFileResolver;
 import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.github.GithubScmFileResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolver;
@@ -175,6 +178,10 @@ public class WsMasterModule extends AbstractModule {
     factoryParametersResolverMultibinder
         .addBinding()
         .to(AzureDevOpsFactoryParametersResolver.class);
+    factoryParametersResolverMultibinder
+        .addBinding()
+        .to(RawDevfileUrlFactoryParameterResolver.class);
+    factoryParametersResolverMultibinder.addBinding().to(GitSshFactoryParametersResolver.class);
 
     Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =
         Multibinder.newSetBinder(binder(), ScmFileResolver.class);
@@ -183,6 +190,7 @@ public class WsMasterModule extends AbstractModule {
     scmFileResolverResolverMultibinder.addBinding().to(GitlabScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketServerScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(AzureDevOpsScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(GitSshScmFileResolver.class);
 
     install(new org.eclipse.che.api.factory.server.scm.KubernetesScmModule());
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketServerModule());

@@ -32,6 +32,12 @@ Other modules are deprecated and will be removed in the future.
 # Sources build
 Run `mvn clean install` to build. Activate a faster profile build by adding `-Pfast`.
 
+You can skip enforcers, validators, and tests with:
+
+```
+mvn clean install -V -B -e -Pfast -DskipTests -Dskip-validate-sources -Denforcer.skip=true -Dmaven.repo.local=.repository/
+```
+
 # Image build and push
 1. Go to the `dockerfiles` directory.
 2. Run `./build.sh`.

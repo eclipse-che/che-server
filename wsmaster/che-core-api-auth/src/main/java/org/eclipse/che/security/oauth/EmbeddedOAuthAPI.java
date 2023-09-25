@@ -87,18 +87,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
-      try {
-        URL url = new URL(redirectAfterLogin);
-        String query = url.getQuery();
-        return Response.temporaryRedirect(
-                URI.create(
-                    redirectAfterLogin.substring(0, redirectAfterLogin.indexOf(query))
-                        + URLEncoder.encode(query + "&error_code=access_denied", UTF_8)))
-            .build();
-      } catch (MalformedURLException e) {
-        LOG.error(e.getMessage(), e);
-        throw new RuntimeException(e);
-      }
+      return Response.temporaryRedirect(URI.create(encodeRedirectUrl())).build();
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);
@@ -114,6 +103,23 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     }
     final String redirectAfterLogin = getParameter(params, "redirect_after_login");
     return Response.temporaryRedirect(URI.create(redirectAfterLogin)).build();
+  }
+
+  /**
+   * Encode the redirect URL query parameters to avoid the error when the redirect URL contains
+   * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
+   * the {@link URI#create(String)} method.
+   */
+  private String encodeRedirectUrl() {
+    try {
+      URL url = new URL(redirectAfterLogin);
+      String query = url.getQuery();
+      return redirectAfterLogin.substring(0, redirectAfterLogin.indexOf(query))
+          + URLEncoder.encode(query + "&error_code=access_denied", UTF_8);
+    } catch (MalformedURLException e) {
+      LOG.error(e.getMessage(), e);
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

@@ -25,6 +25,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -86,10 +87,18 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
-      return Response.temporaryRedirect(
-              URI.create(
-                  redirectAfterLogin + URLEncoder.encode("&error_code=access_denied", UTF_8)))
-          .build();
+      try {
+        URL url = new URL(redirectAfterLogin);
+        String query = url.getQuery();
+        return Response.temporaryRedirect(
+                URI.create(
+                    redirectAfterLogin.substring(0, redirectAfterLogin.indexOf(query))
+                        + URLEncoder.encode(query + "&error_code=access_denied", UTF_8)))
+            .build();
+      } catch (MalformedURLException e) {
+        LOG.error(e.getMessage(), e);
+        throw new RuntimeException(e);
+      }
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);

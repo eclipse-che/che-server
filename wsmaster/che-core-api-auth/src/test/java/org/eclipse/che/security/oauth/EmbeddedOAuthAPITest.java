@@ -75,6 +75,6 @@ public class EmbeddedOAuthAPITest {
     // then
     assertEquals(
         callback.getLocation().toString(),
-        "http://eclipse.che?quary=param%26error_code%3Daccess_denied");
+        "http://eclipse.che?quary%3Dparam%26error_code%3Daccess_denied");
   }
 }

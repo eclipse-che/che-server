@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -41,8 +41,10 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  * @author Max Shaposhnyk
  */
 @Singleton
-public class GitlabFactoryParametersResolver extends DefaultFactoryParameterResolver {
+public class GitlabFactoryParametersResolver implements FactoryParametersResolver {
 
+  private final URLFactoryBuilder urlFactoryBuilder;
+  private final URLFetcher urlFetcher;
   private final GitlabUrlParser gitlabURLParser;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
@@ -52,7 +54,8 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
       URLFetcher urlFetcher,
       GitlabUrlParser gitlabURLParser,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(urlFactoryBuilder, urlFetcher);
+    this.urlFactoryBuilder = urlFactoryBuilder;
+    this.urlFetcher = urlFetcher;
     this.gitlabURLParser = gitlabURLParser;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
@@ -136,8 +139,7 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
                       newDto(SourceDto.class)
                           .withLocation(gitlabUrl.repositoryLocation())
                           .withType("git")
-                          .withBranch(gitlabUrl.getBranch())
-                          .withSparseCheckoutDir(gitlabUrl.getSubfolder()))
+                          .withBranch(gitlabUrl.getBranch()))
                   .withName(gitlabUrl.getProject()),
           project -> {
             final String location = project.getSource().getLocation();

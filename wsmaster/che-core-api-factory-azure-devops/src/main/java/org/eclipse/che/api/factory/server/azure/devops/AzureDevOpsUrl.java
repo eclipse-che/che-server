@@ -30,6 +30,7 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
  */
 public class AzureDevOpsUrl extends DefaultFactoryUrl {
 
+  private boolean isHTTPSUrl;
   private String hostName;
 
   private String repository;
@@ -97,6 +98,11 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
     return this;
   }
 
+  @Override
+  public String getProviderUrl() {
+    return "https://" + hostName;
+  }
+
   protected AzureDevOpsUrl withDevfileFilenames(List<String> devfileFilenames) {
     this.devfileFilenames.addAll(devfileFilenames);
     return this;
@@ -145,11 +151,14 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
   }
 
   public String getRepositoryLocation() {
-    return getRepoPathJoiner().add("_git").add(repository).toString();
+    if (isHTTPSUrl) {
+      return getRepoPathJoiner().add("_git").add(repository).toString();
+    }
+    return "git@ssh." + hostName + ":v3/" + organization + "/" + project + "/" + repository;
   }
 
   private StringJoiner getRepoPathJoiner() {
-    return new StringJoiner("/").add(hostName).add(organization).add(project);
+    return new StringJoiner("/").add(getProviderUrl()).add(organization).add(project);
   }
 
   @Override
@@ -157,8 +166,13 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
     return hostName;
   }
 
+  public AzureDevOpsUrl setIsHTTPSUrl(boolean isHTTPSUrl) {
+    this.isHTTPSUrl = isHTTPSUrl;
+    return this;
+  }
+
   public AzureDevOpsUrl withHostName(String hostName) {
-    this.hostName = "https://" + hostName;
+    this.hostName = hostName;
     return this;
   }
 }

@@ -15,6 +15,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -63,9 +64,40 @@ public class BitbucketUrlTest {
     assertEquals(iterator.next().location(), "https://bitbucket.org/eclipse/che/raw/HEAD/foo.bar");
   }
 
+  @Test
+  public void shouldReturnDevfileLocationBySSHUrl() {
+    bitbucketUrl = bitbucketURLParser.parse("git@bitbucket.org:eclipse/che");
+
+    lenient()
+        .when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
+
+    assertEquals(bitbucketUrl.devfileFileLocations().size(), 2);
+    Iterator<DevfileLocation> iterator = bitbucketUrl.devfileFileLocations().iterator();
+    assertEquals(
+        iterator.next().location(), "https://bitbucket.org/eclipse/che/raw/HEAD/devfile.yaml");
+
+    assertEquals(iterator.next().location(), "https://bitbucket.org/eclipse/che/raw/HEAD/foo.bar");
+  }
+
+  @Test
+  public void shouldReturnEmptyCredentials() {
+    // when
+    BitbucketUrl url = this.bitbucketURLParser.parse("https://user@bitbucket.org/eclipse/che");
+    // then
+    assertTrue(url.getCredentials().isEmpty());
+  }
+
   /** Check the original repository */
   @Test
   public void checkRepositoryLocation() {
     assertEquals(bitbucketUrl.repositoryLocation(), "https://bitbucket.org/eclipse/che.git");
+  }
+
+  @Test
+  public void shouldReturnRepositoryLocationBySSHUrl() {
+    bitbucketUrl = bitbucketURLParser.parse("git@bitbucket.org:eclipse/che");
+
+    assertEquals(bitbucketUrl.repositoryLocation(), "git@bitbucket.org:eclipse/che.git");
   }
 }

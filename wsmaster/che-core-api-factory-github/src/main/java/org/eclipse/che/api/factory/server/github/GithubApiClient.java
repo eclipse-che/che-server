@@ -41,6 +41,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +112,9 @@ public class GithubApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), GithubUser.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, GithubUser.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -140,7 +143,9 @@ public class GithubApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), GithubPullRequest.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, GithubPullRequest.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -181,7 +186,9 @@ public class GithubApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), GithubCommit[].class)[0];
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, GithubCommit[].class)[0];
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -200,7 +207,7 @@ public class GithubApiClient {
    * @throws ScmCommunicationException
    * @throws ScmBadRequestException
    */
-  public String[] getTokenScopes(String authenticationToken)
+  public Pair<String, String[]> getTokenScopes(String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
     final URI uri = apiServerUrl.resolve("./user");
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
@@ -209,12 +216,22 @@ public class GithubApiClient {
         httpClient,
         request,
         response -> {
-          Optional<String> scopes = response.headers().firstValue(GITHUB_OAUTH_SCOPES_HEADER);
-          return Splitter.on(',')
-              .trimResults()
-              .omitEmptyStrings()
-              .splitToList(scopes.orElse(""))
-              .toArray(String[]::new);
+          Optional<String> responseScopes =
+              response.headers().firstValue(GITHUB_OAUTH_SCOPES_HEADER);
+          String[] scopes =
+              Splitter.on(',')
+                  .trimResults()
+                  .omitEmptyStrings()
+                  .splitToList(responseScopes.orElse(""))
+                  .toArray(String[]::new);
+          try {
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            GithubUser user = OBJECT_MAPPER.readValue(result, GithubUser.class);
+            return Pair.of(user.getLogin(), scopes);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
         });
   }
 
@@ -258,7 +275,10 @@ public class GithubApiClient {
       } else if (response.statusCode() == HTTP_NO_CONTENT) {
         return null;
       } else {
-        String body = CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+        String body =
+            response.body() == null
+                ? "Unrecognised error"
+                : CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
         switch (response.statusCode()) {
           case HTTP_BAD_REQUEST:
             throw new ScmBadRequestException(body);

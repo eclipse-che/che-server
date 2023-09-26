@@ -9,4 +9,4 @@
 --   Codenvy, S.A. - initial API and implementation
 --
 
-ALTER TABLE projectattribute_values ALTER COLUMN values TYPE TEXT;
+ALTER TABLE projectattribute_values ALTER COLUMN values_param TYPE TEXT;

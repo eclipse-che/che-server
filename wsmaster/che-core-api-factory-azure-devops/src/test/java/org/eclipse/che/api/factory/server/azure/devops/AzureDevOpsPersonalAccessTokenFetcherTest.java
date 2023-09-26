@@ -57,7 +57,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
   public void fetchPersonalAccessTokenShouldReturnToken() throws Exception {
     when(oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME)).thenReturn(oAuthToken);
     when(azureDevOpsApiClient.getUserWithOAuthToken(any())).thenReturn(azureDevOpsUser);
-    when(azureDevOpsUser.getId()).thenReturn("user-id");
+    when(azureDevOpsUser.getEmailAddress()).thenReturn("user-email");
 
     PersonalAccessToken personalAccessToken =
         personalAccessTokenFetcher.fetchPersonalAccessToken(

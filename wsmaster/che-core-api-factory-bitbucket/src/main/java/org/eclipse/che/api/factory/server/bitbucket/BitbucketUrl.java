@@ -41,6 +41,8 @@ public class BitbucketUrl extends DefaultFactoryUrl {
   /** Repository part of the URL. */
   private String repository;
 
+  private boolean isHTTPSUrl;
+
   /** Branch name */
   private String branch;
 
@@ -78,6 +80,11 @@ public class BitbucketUrl extends DefaultFactoryUrl {
 
   protected BitbucketUrl withRepository(String repository) {
     this.repository = repository;
+    return this;
+  }
+
+  public BitbucketUrl setIsHTTPSUrl(boolean isHTTPSUrl) {
+    this.isHTTPSUrl = isHTTPSUrl;
     return this;
   }
 
@@ -147,19 +154,33 @@ public class BitbucketUrl extends DefaultFactoryUrl {
     return "https://" + HOSTNAME;
   }
 
+  @Override
+  public Optional<String> getCredentials() {
+    // Bitbucket repository URL may contain username e.g.
+    // https://<username>@bitbucket.org/<workspace_ID>/<repo_name>.git. If username is present, it
+    // can not be used as credentials. Moreover, we skip credentials for Bitbucket repository URl at
+    // all, because we do not support credentials in a repository URL. We only support credentials
+    // in a devfile URL, which is handled by the DefaultFactoryUrl class.
+    // Todo: add a new abstraction for divfile URL to be able to retrieve credentials separately.
+    return Optional.empty();
+  }
+
   /**
    * Provides location to the repository part of the full bitbucket URL.
    *
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    return "https://"
-        + (this.username != null ? this.username + '@' : "")
-        + HOSTNAME
-        + "/"
-        + this.workspaceId
-        + "/"
-        + this.repository
-        + ".git";
+    if (isHTTPSUrl) {
+      return "https://"
+          + (this.username != null ? this.username + '@' : "")
+          + HOSTNAME
+          + "/"
+          + workspaceId
+          + "/"
+          + repository
+          + ".git";
+    }
+    return String.format("git@%s:%s/%s.git", HOSTNAME, workspaceId, repository);
   }
 }

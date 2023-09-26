@@ -65,7 +65,7 @@ ALTER TABLE profile ADD CONSTRAINT fk_profile_userid FOREIGN KEY (userid) REFERE
 -- Profile Attribute -----------------------------------------------------------
 CREATE TABLE profile_attributes (
     user_id     VARCHAR(255),
-    value       VARCHAR(255)    NOT NULL,
+    value_param VARCHAR(255)    NOT NULL,
     name        VARCHAR(255)
 );
 -- constraints
@@ -88,7 +88,7 @@ ALTER TABLE preference ADD CONSTRAINT fk_preference_userid FOREIGN KEY (userid) 
 -- Preferences Preferences -----------------------------------------------------
 CREATE TABLE preference_preferences (
     preference_userid   VARCHAR(255),
-    value               TEXT,
+    value_param         TEXT,
     name                VARCHAR(255)
 );
 -- constraints
@@ -208,7 +208,7 @@ ALTER TABLE projectattribute ADD CONSTRAINT fk_projectattribute_dbattributes_id 
 -- Project attribute values ----------------------------------------------------
 CREATE TABLE projectattribute_values (
     projectattribute_id     BIGINT,
-    `values`                VARCHAR(255)
+    `values_param`          VARCHAR(255)
 );
 --constraints
 ALTER TABLE projectattribute_values ADD CONSTRAINT fk_projectattribute_values_projectattribute_id FOREIGN KEY (projectattribute_id) REFERENCES projectattribute (id);
@@ -243,7 +243,7 @@ ALTER TABLE command ADD CONSTRAINT fk_command_commands_id FOREIGN KEY (commands_
 -- Command attributes ----------------------------------------------------------
 CREATE TABLE command_attributes (
     command_id  BIGINT,
-    value       TEXT,
+    value_param TEXT,
     name        VARCHAR(255)
 );
 --constraints

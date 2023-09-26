@@ -41,7 +41,6 @@ public class KubernetesInfrastructure extends RuntimeInfrastructure {
   private final KubernetesRuntimeContextFactory runtimeContextFactory;
   private final KubernetesRuntimeStateCache runtimeStatusesCache;
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final KubernetesClientFactory kubernetesClientFactory;
 
   @Inject
   public KubernetesInfrastructure(
@@ -49,8 +48,7 @@ public class KubernetesInfrastructure extends RuntimeInfrastructure {
       KubernetesRuntimeContextFactory runtimeContextFactory,
       Set<InternalEnvironmentProvisioner> internalEnvProvisioners,
       KubernetesRuntimeStateCache runtimeStatusesCache,
-      KubernetesNamespaceFactory namespaceFactory,
-      KubernetesClientFactory kubernetesClientFactory) {
+      KubernetesNamespaceFactory namespaceFactory) {
     super(
         NAME,
         ImmutableSet.of(KubernetesEnvironment.TYPE, Constants.NO_ENVIRONMENT_RECIPE_TYPE),
@@ -59,7 +57,6 @@ public class KubernetesInfrastructure extends RuntimeInfrastructure {
     this.runtimeContextFactory = runtimeContextFactory;
     this.runtimeStatusesCache = runtimeStatusesCache;
     this.namespaceFactory = namespaceFactory;
-    this.kubernetesClientFactory = kubernetesClientFactory;
   }
 
   @Override

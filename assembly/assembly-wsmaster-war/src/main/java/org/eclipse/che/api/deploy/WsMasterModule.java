@@ -36,6 +36,7 @@ import org.eclipse.che.api.factory.server.FactoryAcceptValidator;
 import org.eclipse.che.api.factory.server.FactoryCreateValidator;
 import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
 import org.eclipse.che.api.factory.server.ScmService;
 import org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsFactoryParametersResolver;
@@ -50,6 +51,7 @@ import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver
 import org.eclipse.che.api.factory.server.github.GithubScmFileResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabScmFileResolver;
+import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
 import org.eclipse.che.api.metrics.WsMasterMetricsModule;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.system.server.SystemModule;
@@ -176,6 +178,9 @@ public class WsMasterModule extends AbstractModule {
     factoryParametersResolverMultibinder
         .addBinding()
         .to(AzureDevOpsFactoryParametersResolver.class);
+    factoryParametersResolverMultibinder
+        .addBinding()
+        .to(RawDevfileUrlFactoryParameterResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(GitSshFactoryParametersResolver.class);
 
     Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =
@@ -408,6 +413,7 @@ public class WsMasterModule extends AbstractModule {
       bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
       bind(ProfileDao.class).to(JpaProfileDao.class);
       bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
+      bind(OAuthTokenFetcher.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
     }
 
     bind(AdminPermissionInitializer.class).asEagerSingleton();

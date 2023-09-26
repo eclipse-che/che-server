@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
@@ -38,14 +38,16 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 
 /** Provides Factory Parameters resolver for bitbucket repositories. */
 @Singleton
-public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterResolver {
+public class BitbucketFactoryParametersResolver implements FactoryParametersResolver {
 
   /** Parser which will allow to check validity of URLs and create objects. */
   private final BitbucketURLParser bitbucketURLParser;
 
+  private final URLFetcher urlFetcher;
   /** Builder allowing to build objects from bitbucket URL. */
   private final BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder;
 
+  private final URLFactoryBuilder urlFactoryBuilder;
   /** ProjectDtoMerger */
   private final ProjectConfigDtoMerger projectConfigDtoMerger;
 
@@ -63,9 +65,10 @@ public class BitbucketFactoryParametersResolver extends DefaultFactoryParameterR
       ProjectConfigDtoMerger projectConfigDtoMerger,
       PersonalAccessTokenManager personalAccessTokenManager,
       BitbucketApiClient bitbucketApiClient) {
-    super(urlFactoryBuilder, urlFetcher);
     this.bitbucketURLParser = bitbucketURLParser;
+    this.urlFetcher = urlFetcher;
     this.bitbucketSourceStorageBuilder = bitbucketSourceStorageBuilder;
+    this.urlFactoryBuilder = urlFactoryBuilder;
     this.projectConfigDtoMerger = projectConfigDtoMerger;
     this.personalAccessTokenManager = personalAccessTokenManager;
     this.bitbucketApiClient = bitbucketApiClient;

@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.POD_STATUS_PHASE_FAILED;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.POD_STATUS_PHASE_RUNNING;
@@ -55,12 +56,12 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
+import io.fabric8.kubernetes.client.GracePeriodConfigurable;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.AppsAPIGroupDSL;
-import io.fabric8.kubernetes.client.dsl.EditReplacePatchDeletable;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
@@ -119,12 +120,12 @@ public class KubernetesDeploymentsTest {
   @Mock private Deployment deployment;
   @Mock private ObjectMeta deploymentMetadata;
   @Mock private DeploymentSpec deploymentSpec;
-  @Mock private EditReplacePatchDeletable<Deployment> deploymentEditReplacePatchDeletable;
+  @Mock private GracePeriodConfigurable gracePeriodConfigurable;
 
   // Pod Mocks
   @Mock private Pod pod;
   @Mock private PodStatus status;
-  @Mock private PodResource<Pod> podResource;
+  @Mock private PodResource podResource;
   @Mock private ObjectMeta metadata;
   @Mock private MixedOperation podsMixedOperation;
   @Mock private NonNamespaceOperation podsNamespaceOperation;
@@ -491,7 +492,7 @@ public class KubernetesDeploymentsTest {
   public void testDeleteNonExistingPodBeforeWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
 
-    doReturn(Boolean.FALSE).when(podResource).delete();
+    doReturn(emptyList()).when(podResource).delete();
     doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
@@ -527,7 +528,7 @@ public class KubernetesDeploymentsTest {
   public void testDeleteNonExistingDeploymentBeforeWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
     doReturn(deploymentResource).when(deploymentResource).withPropagationPolicy(eq(BACKGROUND));
-    doReturn(Boolean.FALSE).when(deploymentResource).delete();
+    doReturn(emptyList()).when(deploymentResource).delete();
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
 
@@ -587,9 +588,9 @@ public class KubernetesDeploymentsTest {
   public void testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
     when(deploymentResource.withPropagationPolicy(eq(BACKGROUND)))
-        .thenReturn(deploymentEditReplacePatchDeletable);
+        .thenReturn(gracePeriodConfigurable);
     doThrow(new RuntimeException("testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch msg"))
-        .when(deploymentEditReplacePatchDeletable)
+        .when(gracePeriodConfigurable)
         .delete();
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());

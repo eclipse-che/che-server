@@ -37,6 +37,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.StatusDetails;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -71,7 +72,6 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import okhttp3.Response;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
@@ -301,7 +301,7 @@ public class KubernetesDeployments {
     CompletableFuture<Pod> future = new CompletableFuture<>();
     try {
 
-      PodResource<Pod> podResource =
+      PodResource podResource =
           clientFactory.create(workspaceId).pods().inNamespace(namespace).withName(podName);
 
       Watch watch =
@@ -366,7 +366,7 @@ public class KubernetesDeployments {
     final CompletableFuture<Void> podRunningFuture = new CompletableFuture<>();
     try {
       final String podName = getPodName(name);
-      final PodResource<Pod> podResource =
+      final PodResource podResource =
           clientFactory.create(workspaceId).pods().inNamespace(namespace).withName(podName);
       final Watch watch =
           podResource.watch(
@@ -941,18 +941,18 @@ public class KubernetesDeployments {
       // If we have a Pod, we have to watch to make sure it is deleted, otherwise, we watch the
       // Deployment we are deleting.
       if (!Strings.isNullOrEmpty(podName)) {
-        PodResource<Pod> podResource =
+        PodResource podResource =
             clientFactory.create(workspaceId).pods().inNamespace(namespace).withName(podName);
         watch = podResource.watch(new DeleteWatcher<>(deleteFuture));
         toCloseOnException = watch;
       } else {
-        watch = deploymentResource.watch(new DeleteWatcher<Deployment>(deleteFuture));
+        watch = deploymentResource.watch(new DeleteWatcher<>(deleteFuture));
         toCloseOnException = watch;
       }
 
-      Boolean deleteSucceeded = deploymentResource.withPropagationPolicy(BACKGROUND).delete();
+      List<StatusDetails> deleted = deploymentResource.withPropagationPolicy(BACKGROUND).delete();
 
-      if (deleteSucceeded == null || !deleteSucceeded) {
+      if (deleted == null || deleted.isEmpty()) {
         deleteFuture.complete(null);
       }
       return deleteFuture.whenComplete(
@@ -978,7 +978,7 @@ public class KubernetesDeployments {
   protected CompletableFuture<Void> doDeletePod(String podName) throws InfrastructureException {
     Watch toCloseOnException = null;
     try {
-      PodResource<Pod> podResource =
+      PodResource podResource =
           clientFactory.create(workspaceId).pods().inNamespace(namespace).withName(podName);
       if (podResource.get() == null) {
         throw new InfrastructureException(format("No pod found to delete for name %s", podName));
@@ -988,8 +988,8 @@ public class KubernetesDeployments {
       final Watch watch = podResource.watch(new DeleteWatcher<>(deleteFuture));
       toCloseOnException = watch;
 
-      Boolean deleteSucceeded = podResource.withPropagationPolicy(BACKGROUND).delete();
-      if (deleteSucceeded == null || !deleteSucceeded) {
+      List<StatusDetails> deleted = podResource.withPropagationPolicy(BACKGROUND).delete();
+      if (deleted == null || deleted.isEmpty()) {
         deleteFuture.complete(null);
       }
       return deleteFuture.whenComplete(

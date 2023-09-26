@@ -41,7 +41,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.InternalInfrastructureException;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,18 +73,15 @@ public class KubernetesNamespace {
   private final KubernetesServices services;
   private final KubernetesPersistentVolumeClaims pvcs;
   private final KubernetesIngresses ingresses;
-  /** Factory for workspace related operations clients */
-  private final KubernetesClientFactory clientFactory;
   /** Factory for cluster related operations clients (like labeling the namespaces) */
-  private final KubernetesClientFactory cheSAClientFactory;
+  private final CheServerKubernetesClientFactory cheSAClientFactory;
 
   private final KubernetesSecrets secrets;
   private final KubernetesConfigsMaps configMaps;
 
   @VisibleForTesting
   protected KubernetesNamespace(
-      KubernetesClientFactory clientFactory,
-      KubernetesClientFactory cheSAClientFactory,
+      CheServerKubernetesClientFactory cheSAClientFactory,
       String workspaceId,
       String name,
       KubernetesDeployments deployments,
@@ -93,7 +90,6 @@ public class KubernetesNamespace {
       KubernetesIngresses kubernetesIngresses,
       KubernetesSecrets secrets,
       KubernetesConfigsMaps configMaps) {
-    this.clientFactory = clientFactory;
     this.cheSAClientFactory = cheSAClientFactory;
     this.workspaceId = workspaceId;
     this.name = name;
@@ -106,21 +102,19 @@ public class KubernetesNamespace {
   }
 
   public KubernetesNamespace(
-      KubernetesClientFactory clientFactory,
-      KubernetesClientFactory cheSAClientFactory,
+      CheServerKubernetesClientFactory cheSAClientFactory,
       Executor executor,
       String name,
       String workspaceId) {
-    this.clientFactory = clientFactory;
     this.cheSAClientFactory = cheSAClientFactory;
     this.workspaceId = workspaceId;
     this.name = name;
-    this.deployments = new KubernetesDeployments(name, workspaceId, clientFactory, executor);
-    this.services = new KubernetesServices(name, workspaceId, clientFactory);
-    this.pvcs = new KubernetesPersistentVolumeClaims(name, workspaceId, clientFactory);
-    this.ingresses = new KubernetesIngresses(name, workspaceId, clientFactory);
-    this.secrets = new KubernetesSecrets(name, workspaceId, clientFactory);
-    this.configMaps = new KubernetesConfigsMaps(name, workspaceId, clientFactory);
+    this.deployments = new KubernetesDeployments(name, workspaceId, cheSAClientFactory, executor);
+    this.services = new KubernetesServices(name, workspaceId, cheSAClientFactory);
+    this.pvcs = new KubernetesPersistentVolumeClaims(name, workspaceId, cheSAClientFactory);
+    this.ingresses = new KubernetesIngresses(name, workspaceId, cheSAClientFactory);
+    this.secrets = new KubernetesSecrets(name, workspaceId, cheSAClientFactory);
+    this.configMaps = new KubernetesConfigsMaps(name, workspaceId, cheSAClientFactory);
   }
 
   /**
@@ -270,7 +264,7 @@ public class KubernetesNamespace {
    * @throws InfrastructureException if any unexpected exception occurs during namespace deletion
    */
   void delete() throws InfrastructureException {
-    KubernetesClient client = clientFactory.create(workspaceId);
+    KubernetesClient client = cheSAClientFactory.create(workspaceId);
 
     try {
       delete(name, client);

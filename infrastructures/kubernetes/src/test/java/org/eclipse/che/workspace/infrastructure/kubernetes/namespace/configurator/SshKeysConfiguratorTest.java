@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,7 +28,7 @@ import org.eclipse.che.api.ssh.server.SshManager;
 import org.eclipse.che.api.ssh.server.model.impl.SshPairImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -44,7 +44,7 @@ public class SshKeysConfiguratorTest {
   private static final String USER_NAME = "user-name";
   private static final String USER_NAMESPACE = "user-namespace";
 
-  @Mock private KubernetesClientFactory clientFactory;
+  @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private SshManager sshManager;
 
   @InjectMocks private SshKeysConfigurator sshKeysConfigurator;
@@ -62,7 +62,7 @@ public class SshKeysConfiguratorTest {
     kubernetesServer.before();
 
     when(sshManager.getPairs(USER_ID, "vcs")).thenReturn(Collections.singletonList(sshPair));
-    when(clientFactory.create()).thenReturn(kubernetesServer.getClient());
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubernetesServer.getClient());
   }
 
   @AfterMethod

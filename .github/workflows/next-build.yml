@@ -45,8 +45,7 @@ jobs:
     - name: Build docker images
       id: build
       run: |
-          SHORT_SHA1=$(git rev-parse --short HEAD)
-          echo ::set-output name=short_sha1::${SHORT_SHA1}
+          echo "short_sha1=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           ./dockerfiles/build.sh --tag:next --sha-tag
     - name: Push docker images
       run: |

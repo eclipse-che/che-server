@@ -40,6 +40,8 @@ public class AzureDevOpsURLParser {
    */
   private final Pattern azureDevOpsPattern;
 
+  private final Pattern azureSSHDevOpsPattern;
+
   @Inject
   public AzureDevOpsURLParser(
       DevfileFilenamesProvider devfileFilenamesProvider,
@@ -51,49 +53,64 @@ public class AzureDevOpsURLParser {
     this.azureDevOpsPattern =
         compile(
             format(
-                "^https://(?<organizationCanIgnore>[^@]++)?@?%s/(?<organization>[^/]++)/?(?<project>[^/]++)/_git/"
+                "^https://(?<organizationCanIgnore>[^@]++)?@?%s/(?<organization>[^/]++)/((?<project>[^/]++)/)?_git/"
                     + "(?<repoName>[^?]++)"
                     + "([?&]path=(?<path>[^&]++))?"
                     + "([?&]version=GT(?<tag>[^&]++))?"
                     + "([?&]version=GB(?<branch>[^&]++))?"
                     + "(.*)",
                 azureDevOpsScmApiEndpointHost));
+    this.azureSSHDevOpsPattern =
+        compile(
+            format(
+                "^git@ssh\\.%s:v3/(?<organization>.*)/(?<project>.*)/(?<repoName>.*)$",
+                azureDevOpsScmApiEndpointHost));
   }
 
   public boolean isValid(@NotNull String url) {
-    return azureDevOpsPattern.matcher(url).matches();
+    return azureDevOpsPattern.matcher(url).matches()
+        || azureSSHDevOpsPattern.matcher(url).matches();
   }
 
   public AzureDevOpsUrl parse(String url) {
-    Matcher matcher = azureDevOpsPattern.matcher(url);
+    boolean isHTTPSUrl = azureDevOpsPattern.matcher(url).matches();
+    Matcher matcher =
+        isHTTPSUrl ? azureDevOpsPattern.matcher(url) : azureSSHDevOpsPattern.matcher(url);
     if (!matcher.matches()) {
-      throw new IllegalArgumentException(
-          format(
-              "The given url %s is not a valid. It should start with https://<organization>@%s/ or https://%s/",
-              url, azureDevOpsScmApiEndpointHost, azureDevOpsScmApiEndpointHost));
+      throw new IllegalArgumentException(format("The given url %s is not a valid.", url));
     }
 
-    String project = matcher.group("project");
     String repoName = matcher.group("repoName");
-    if (repoName.endsWith(".git")) {
-      repoName = repoName.substring(0, repoName.length() - 4);
+    String project = matcher.group("project");
+    if (project == null) {
+      // if project is not specified, repo name must be equal to project name
+      // https://dev.azure.com/<MyOrg>/<MyRepo>/_git/<MyRepo> ==
+      // https://dev.azure.com/<MyOrg>/_git/<MyRepo>
+      project = repoName;
     }
-    String organization = matcher.group("organization");
-    String branch = matcher.group("branch");
-    String tag = matcher.group("tag");
 
-    // The url might have the following formats:
-    // - https://<organization>@<host>/<organization>/<project>/_git/<repoName>
-    // - https://<credentials>@<host>/<organization>/<project>/_git/<repoName>
-    // For the first case we need to remove the `organization` from the url to distinguish it from
-    // `credentials`
-    String organizationCanIgnore = matcher.group("organizationCanIgnore");
-    if (!isNullOrEmpty(organization) && organization.equals(organizationCanIgnore)) {
-      url = url.replace(organizationCanIgnore + "@", "");
+    String branch = null;
+    String tag = null;
+
+    String organization = matcher.group("organization");
+    if (isHTTPSUrl) {
+      branch = matcher.group("branch");
+      tag = matcher.group("tag");
+      // The url might have the following formats:
+      // - https://<organization>@<host>/<organization>/<project>/_git/<repoName>
+      // - https://<credentials>@<host>/<organization>/<project>/_git/<repoName>
+      // For the first case we need to remove the `organization` from the url to distinguish it from
+      // `credentials`
+      // TODO: return empty credentials like the BitBucketUrl
+      String organizationCanIgnore = matcher.group("organizationCanIgnore");
+      if (!isNullOrEmpty(organization) && organization.equals(organizationCanIgnore)) {
+        url = url.replace(organizationCanIgnore + "@", "");
+      }
     }
 
     return new AzureDevOpsUrl()
         .withHostName(azureDevOpsScmApiEndpointHost)
+        .setIsHTTPSUrl(isHTTPSUrl)
         .withProject(project)
         .withRepository(repoName)
         .withOrganization(organization)

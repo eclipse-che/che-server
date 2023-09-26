@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -21,11 +21,8 @@ import java.util.Map;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -49,8 +46,6 @@ public class UserPreferencesConfiguratorTest {
   private static final String USER_NAMESPACE = "user-namespace";
 
   @Mock private KubernetesNamespaceFactory namespaceFactory;
-  @Mock private KubernetesClientFactory clientFactory;
-  @Mock private UserManager userManager;
   @Mock private PreferenceManager preferenceManager;
 
   @InjectMocks private UserPreferencesConfigurator userPreferencesConfigurator;
@@ -67,11 +62,7 @@ public class UserPreferencesConfiguratorTest {
     Map<String, String> preferences = new HashMap<>();
     preferences.put("preference-name", "preference");
 
-    lenient()
-        .when(userManager.getById(USER_ID))
-        .thenReturn(new UserImpl(USER_ID, USER_EMAIL, USER_NAME));
     lenient().when(namespaceFactory.evaluateNamespaceName(any())).thenReturn(USER_NAMESPACE);
-    lenient().when(clientFactory.create()).thenReturn(kubernetesServer.getClient());
     lenient().when(preferenceManager.find(USER_ID)).thenReturn(preferences);
   }
 

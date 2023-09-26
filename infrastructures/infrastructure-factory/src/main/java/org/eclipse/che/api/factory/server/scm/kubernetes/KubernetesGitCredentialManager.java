@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
@@ -43,7 +44,7 @@ import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditi
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.StringUtils;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 
@@ -86,13 +87,14 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
           ANNOTATION_DEV_WORKSPACE_MOUNT_PATH, CREDENTIALS_MOUNT_PATH);
 
   private final KubernetesNamespaceFactory namespaceFactory;
-  private final KubernetesClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
   @Inject
   public KubernetesGitCredentialManager(
-      KubernetesNamespaceFactory namespaceFactory, KubernetesClientFactory clientFactory) {
+      KubernetesNamespaceFactory namespaceFactory,
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory) {
     this.namespaceFactory = namespaceFactory;
-    this.clientFactory = clientFactory;
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
   }
 
   @Override
@@ -100,7 +102,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
       final String namespace = getFirstNamespace();
-      final KubernetesClient client = clientFactory.create();
+      final KubernetesClient client = cheServerKubernetesClientFactory.create();
       // to avoid duplicating secrets we try to reuse existing one by matching
       // hostname/username if possible, and update it. Otherwise, create new one.
       Optional<Secret> existing =
@@ -124,11 +126,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                                       '/'))
                           && personalAccessToken
                               .getCheUserId()
-                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID))
-                          && personalAccessToken
-                              .getScmUserName()
-                              .equals(
-                                  s.getMetadata().getAnnotations().get(ANNOTATION_SCM_USERNAME)))
+                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID)))
               .findFirst();
 
       Secret secret =
@@ -136,7 +134,6 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
               () -> {
                 Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
                 annotations.put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl());
-                annotations.put(ANNOTATION_SCM_USERNAME, personalAccessToken.getScmUserName());
                 annotations.put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId());
                 ObjectMeta meta =
                     new ObjectMetaBuilder()
@@ -155,9 +152,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                       format(
                               "%s://%s:%s@%s%s",
                               scmUrl.getProtocol(),
-                              personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
-                                  ? "oauth2"
-                                  : personalAccessToken.getScmUserName(),
+                              getUsernameSegment(personalAccessToken),
                               URLEncoder.encode(personalAccessToken.getToken(), UTF_8),
                               scmUrl.getHost(),
                               scmUrl.getPort() != 80 && scmUrl.getPort() != -1
@@ -168,6 +163,21 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
     } catch (InfrastructureException | MalformedURLException e) {
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
+  }
+
+  /**
+   * Returns username URL segment for git credentials. For OAuth2 tokens it is "oauth2", for others
+   * - {@param personalAccessToken#getScmUserName()} or just "username" string if the token has a
+   * non-null {@param personalAccessToken#getScmOrganization()}. This is needed to support providers
+   * that do not have username in their user object. Such providers have an additional organization
+   * field.
+   */
+  private String getUsernameSegment(PersonalAccessToken personalAccessToken) {
+    return personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
+        ? "oauth2"
+        : isNullOrEmpty(personalAccessToken.getScmOrganization())
+            ? personalAccessToken.getScmUserName()
+            : "username";
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,7 +23,7 @@ import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.Map;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 public class PreferencesConfigMapConfiguratorTest {
   private NamespaceConfigurator configurator;
 
-  @Mock private KubernetesClientFactory clientFactory;
+  @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private KubernetesServer serverMock;
 
   private NamespaceResolutionContext namespaceResolutionContext;
@@ -46,12 +46,12 @@ public class PreferencesConfigMapConfiguratorTest {
 
   @BeforeMethod
   public void setUp() throws InfrastructureException {
-    configurator = new PreferencesConfigMapConfigurator(clientFactory);
+    configurator = new PreferencesConfigMapConfigurator(cheServerKubernetesClientFactory);
 
     serverMock = new KubernetesServer(true, true);
     serverMock.before();
     KubernetesClient client = spy(serverMock.getClient());
-    when(clientFactory.create()).thenReturn(client);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(client);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);
@@ -74,7 +74,7 @@ public class PreferencesConfigMapConfiguratorTest {
             .inNamespace(TEST_NAMESPACE_NAME)
             .withName(PREFERENCES_CONFIGMAP_NAME)
             .get());
-    verify(clientFactory, times(1)).create();
+    verify(cheServerKubernetesClientFactory, times(1)).create();
   }
 
   @Test

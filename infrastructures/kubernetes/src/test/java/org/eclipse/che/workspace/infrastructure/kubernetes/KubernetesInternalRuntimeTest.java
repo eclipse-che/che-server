@@ -843,7 +843,7 @@ public class KubernetesInternalRuntimeTest {
   }
 
   private static IntOrString intOrString(int port) {
-    return new IntOrStringBuilder().withIntVal(port).withStrVal(String.valueOf(port)).build();
+    return new IntOrStringBuilder().withValue(port).withValue(String.valueOf(port)).build();
   }
 
   private static class MapBasedRuntimeStateCache implements KubernetesRuntimeStateCache {

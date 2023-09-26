@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -42,7 +42,7 @@ public class ProfileImpl implements Profile {
 
   @ElementCollection
   @MapKeyColumn(name = "name")
-  @Column(name = "value", nullable = false)
+  @Column(name = "value_param", nullable = false)
   @CollectionTable(name = "profile_attributes", joinColumns = @JoinColumn(name = "user_id"))
   private Map<String, String> attributes;
 

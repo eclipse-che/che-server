@@ -15,8 +15,12 @@ import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static java.lang.String.valueOf;
 import static java.util.Collections.singletonMap;
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.DEFAULT;
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
 import static org.eclipse.che.api.factory.server.FactoryService.VALIDATE_QUERY_PARAMETER;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -34,40 +38,27 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.model.user.User;
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
-import org.eclipse.che.api.core.model.workspace.config.ProjectConfig;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
 import org.eclipse.che.api.factory.server.FactoryService.FactoryParametersResolverHolder;
 import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
 import org.eclipse.che.api.factory.server.impl.SourceStorageParametersValidator;
-import org.eclipse.che.api.factory.server.model.impl.AuthorImpl;
-import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
-import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.RecipeImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.SourceStorageImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
-import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.dto.server.DtoFactory;
@@ -106,10 +97,11 @@ public class FactoryServiceTest {
   @Mock private PreferenceManager preferenceManager;
   @Mock private UserManager userManager;
   @Mock private AdditionalFilenamesProvider additionalFilenamesProvider;
-  @Mock private DefaultFactoryParameterResolver defaultFactoryParameterResolver;
+  @Mock private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
+  private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
   private FactoryBuilder factoryBuilderSpy;
 
@@ -125,6 +117,13 @@ public class FactoryServiceTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
+    specificFactoryParametersResolvers = new HashSet<>();
+    Field parametersResolvers =
+        FactoryParametersResolverHolder.class.getDeclaredField(
+            "specificFactoryParametersResolvers");
+    parametersResolvers.setAccessible(true);
+    parametersResolvers.set(factoryParametersResolverHolder, specificFactoryParametersResolvers);
+    specificFactoryParametersResolvers.add(rawDevfileUrlFactoryParameterResolver);
     factoryBuilderSpy = spy(new FactoryBuilder(new SourceStorageParametersValidator()));
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class));
     lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class), anyBoolean());
@@ -152,7 +151,7 @@ public class FactoryServiceTest {
   @Test
   public void shouldThrowBadRequestWhenNoURLParameterGiven() throws Exception {
     final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
-    doReturn(defaultFactoryParameterResolver)
+    doReturn(rawDevfileUrlFactoryParameterResolver)
         .when(dummyHolder)
         .getFactoryParametersResolver(anyMap());
     // service instance with dummy holder
@@ -179,7 +178,7 @@ public class FactoryServiceTest {
   @Test
   public void checkValidateResolver() throws Exception {
     final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
-    doReturn(defaultFactoryParameterResolver)
+    doReturn(rawDevfileUrlFactoryParameterResolver)
         .when(dummyHolder)
         .getFactoryParametersResolver(anyMap());
     // service instance with dummy holder
@@ -198,7 +197,7 @@ public class FactoryServiceTest {
         newDto(FactoryDto.class).withV(CURRENT_VERSION).withName("matchingResolverFactory");
 
     // accept resolver
-    when(defaultFactoryParameterResolver.createFactory(anyMap())).thenReturn(expectFactory);
+    when(rawDevfileUrlFactoryParameterResolver.createFactory(anyMap())).thenReturn(expectFactory);
 
     // when
     final Map<String, String> map = new HashMap<>();
@@ -216,7 +215,7 @@ public class FactoryServiceTest {
 
     // check we call resolvers
     dummyHolder.getFactoryParametersResolver(anyMap());
-    verify(defaultFactoryParameterResolver).createFactory(anyMap());
+    verify(rawDevfileUrlFactoryParameterResolver).createFactory(anyMap());
 
     // check we call validator
     verify(acceptValidator).validateOnAccept(any());
@@ -265,62 +264,89 @@ public class FactoryServiceTest {
         "Factory url required");
   }
 
-  private FactoryImpl createFactory() {
-    return createNamedFactory(FACTORY_NAME);
+  @Test
+  public void shouldReturnDefaultFactoryParameterResolver() throws Exception {
+    // given
+    Map<String, String> params = singletonMap(URL_PARAMETER_NAME, "https://host/path/devfile.yaml");
+    when(rawDevfileUrlFactoryParameterResolver.accept(eq(params))).thenReturn(true);
+
+    // when
+    FactoryParametersResolver factoryParametersResolver =
+        factoryParametersResolverHolder.getFactoryParametersResolver(params);
+
+    // then
+    assertTrue(
+        factoryParametersResolver
+            .getClass()
+            .getName()
+            .startsWith(RawDevfileUrlFactoryParameterResolver.class.getName()));
   }
 
-  private FactoryImpl createNamedFactory(String name) {
-    return createFactoryWithStorage(name, PROJECT_SOURCE_TYPE, PROJECT_SOURCE_LOCATION);
+  @Test
+  public void shouldReturnTopPriorityFactoryParameterResolverOverLowPriority() throws Exception {
+    // given
+    Map<String, String> params = singletonMap(URL_PARAMETER_NAME, "https://host/path/devfile.yaml");
+    specificFactoryParametersResolvers.clear();
+    FactoryParametersResolver topPriorityResolver = mock(FactoryParametersResolver.class);
+    FactoryParametersResolver lowPriorityResolver = mock(FactoryParametersResolver.class);
+    when(topPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(lowPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(topPriorityResolver.priority()).thenReturn(HIGHEST);
+    when(lowPriorityResolver.priority()).thenReturn(LOWEST);
+    specificFactoryParametersResolvers.add(topPriorityResolver);
+    specificFactoryParametersResolvers.add(lowPriorityResolver);
+
+    // when
+    FactoryParametersResolver factoryParametersResolver =
+        factoryParametersResolverHolder.getFactoryParametersResolver(params);
+
+    // then
+    assertEquals(factoryParametersResolver, topPriorityResolver);
   }
 
-  private FactoryImpl createFactoryWithStorage(String name, String type, String location) {
-    return FactoryImpl.builder()
-        .setId(FACTORY_ID)
-        .setVersion("4.0")
-        .setWorkspace(createWorkspaceConfig(type, location))
-        .setCreator(new AuthorImpl(USER_ID, 12L))
-        .setName(name)
-        .build();
+  @Test
+  public void shouldReturnTopPriorityFactoryParameterResolverOverDefaultPriority()
+      throws Exception {
+    // given
+    Map<String, String> params = singletonMap(URL_PARAMETER_NAME, "https://host/path/devfile.yaml");
+    specificFactoryParametersResolvers.clear();
+    FactoryParametersResolver topPriorityResolver = mock(FactoryParametersResolver.class);
+    FactoryParametersResolver defaultPriorityResolver = mock(FactoryParametersResolver.class);
+    when(topPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(defaultPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(topPriorityResolver.priority()).thenReturn(HIGHEST);
+    when(defaultPriorityResolver.priority()).thenReturn(DEFAULT);
+    specificFactoryParametersResolvers.add(topPriorityResolver);
+    specificFactoryParametersResolvers.add(defaultPriorityResolver);
+
+    // when
+    FactoryParametersResolver factoryParametersResolver =
+        factoryParametersResolverHolder.getFactoryParametersResolver(params);
+
+    // then
+    assertEquals(factoryParametersResolver, topPriorityResolver);
   }
 
-  private static WorkspaceConfig createWorkspaceConfig(String type, String location) {
-    return WorkspaceConfigImpl.builder()
-        .setName(WORKSPACE_NAME)
-        .setEnvironments(singletonMap("env1", new EnvironmentImpl(createEnvDto())))
-        .setProjects(createProjects(type, location))
-        .build();
-  }
+  @Test
+  public void shouldReturnDefaultPriorityFactoryParameterResolverOverLowPriority()
+      throws Exception {
+    // given
+    Map<String, String> params = singletonMap(URL_PARAMETER_NAME, "https://host/path/devfile.yaml");
+    specificFactoryParametersResolvers.clear();
+    FactoryParametersResolver lowPriorityResolver = mock(FactoryParametersResolver.class);
+    FactoryParametersResolver defaultPriorityResolver = mock(FactoryParametersResolver.class);
+    when(lowPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(defaultPriorityResolver.accept(eq(params))).thenReturn(true);
+    when(lowPriorityResolver.priority()).thenReturn(LOWEST);
+    when(defaultPriorityResolver.priority()).thenReturn(DEFAULT);
+    specificFactoryParametersResolvers.add(lowPriorityResolver);
+    specificFactoryParametersResolvers.add(defaultPriorityResolver);
 
-  private static EnvironmentDto createEnvDto() {
-    final RecipeImpl environmentRecipe = new RecipeImpl();
-    environmentRecipe.setType("type");
-    environmentRecipe.setContent("content");
-    environmentRecipe.setContentType("compose");
-    environmentRecipe.setLocation("location");
-    final EnvironmentImpl env = new EnvironmentImpl();
-    final MachineConfigImpl extendedMachine = new MachineConfigImpl();
-    extendedMachine.setAttributes(singletonMap("att1", "value"));
-    extendedMachine.setServers(
-        singletonMap(
-            "agent", new ServerConfigImpl("5555", "https", "path", singletonMap("key", "value"))));
-    env.setRecipe(environmentRecipe);
-    env.setMachines(singletonMap("machine1", extendedMachine));
-    return org.eclipse.che.api.workspace.server.DtoConverter.asDto(env);
-  }
+    // when
+    FactoryParametersResolver factoryParametersResolver =
+        factoryParametersResolverHolder.getFactoryParametersResolver(params);
 
-  private static List<ProjectConfig> createProjects(String type, String location) {
-    final ProjectConfigImpl projectConfig = new ProjectConfigImpl();
-    projectConfig.setSource(new SourceStorageImpl(type, location, null));
-    return ImmutableList.of(projectConfig);
-  }
-
-  private static <T> T getFromResponse(Response response, Class<T> clazz) throws Exception {
-    return DTO.createDtoFromJson(response.getBody().asInputStream(), clazz);
-  }
-
-  private static <T> List<T> unwrapDtoList(Response response, Class<T> dtoClass)
-      throws IOException {
-    return new ArrayList<>(
-        DtoFactory.getInstance().createListDtoFromJson(response.body().asInputStream(), dtoClass));
+    // then
+    assertEquals(factoryParametersResolver, defaultPriorityResolver);
   }
 }

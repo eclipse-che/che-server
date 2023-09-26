@@ -71,15 +71,28 @@ public class GitlabUrlParserTest {
 
   /** Compare parsing */
   @Test(dataProvider = "parsing")
-  public void checkParsing(
-      String url, String user, String project, String repository, String branch, String subfolder) {
+  public void checkParsing(String url, String project, String subGroups, String branch) {
     GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
 
-    assertEquals(gitlabUrl.getUsername(), user);
     assertEquals(gitlabUrl.getProject(), project);
-    assertEquals(gitlabUrl.getRepository(), repository);
+    assertEquals(gitlabUrl.getSubGroups(), subGroups);
     assertEquals(gitlabUrl.getBranch(), branch);
-    assertEquals(gitlabUrl.getSubfolder(), subfolder);
+  }
+
+  /** Compare parsing */
+  @Test(dataProvider = "parsing")
+  public void shouldParseWithoutPredefinedEndpoint(
+      String url, String project, String subGroups, String branch) {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(null, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+    // when
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), project);
+    assertEquals(gitlabUrl.getSubGroups(), subGroups);
+    assertEquals(gitlabUrl.getBranch(), branch);
   }
 
   @Test
@@ -117,25 +130,51 @@ public class GitlabUrlParserTest {
       {"https://gitlab1.com/user/project/"},
       {"https://gitlab1.com/user/project/repo/"},
       {"https://gitlab1.com/user/project/-/tree/master/"},
-      {"https://gitlab1.com/user/project/repo/-/tree/master/subfolder"}
+      {"https://gitlab1.com/user/project/repo/-/tree/master/subfolder"},
+      {"git@gitlab1.com:user/project/test1.git"},
+      {"git@gitlab1.com:user/project1.git"},
+      {"git@gitlab.foo.xxx:scm/project/test1.git"},
+      {"git@gitlab1.com:user/project/"},
+      {"git@gitlab1.com:user/project/repo/"},
     };
   }
 
   @DataProvider(name = "parsing")
   public Object[][] expectedParsing() {
     return new Object[][] {
-      {"https://gitlab1.com/user/project1.git", "user", "project1", null, null, null},
-      {"https://gitlab1.com/user/project/test1.git", "user", "project", "test1", null, null},
-      {"https://gitlab1.com/user/project/", "user", "project", null, null, null},
-      {"https://gitlab1.com/user/project/repo/", "user", "project", "repo", null, null},
-      {"https://gitlab1.com/user/project/-/tree/master/", "user", "project", null, "master", null},
+      {"https://gitlab1.com/user/project1.git", "project1", "user/project1", null},
+      {"https://gitlab1.com/user/project/test1.git", "test1", "user/project/test1", null},
       {
-        "https://gitlab1.com/user/project/repo/-/tree/foo/subfolder",
-        "user",
-        "project",
+        "https://gitlab1.com/user/project/group1/group2/test1.git",
+        "test1",
+        "user/project/group1/group2/test1",
+        null
+      },
+      {"https://gitlab1.com/user/project/", "project", "user/project", null},
+      {"https://gitlab1.com/user/project/repo/", "repo", "user/project/repo", null},
+      {"git@gitlab1.com:user/project1.git", "project1", "user/project1", null},
+      {"git@gitlab1.com:user/project/test1.git", "test1", "user/project/test1", null},
+      {
+        "git@gitlab1.com:user/project/group1/group2/test1.git",
+        "test1",
+        "user/project/group1/group2/test1",
+        null
+      },
+      {"git@gitlab1.com:user/project/", "project", "user/project", null},
+      {"git@gitlab1.com:user/project/repo/", "repo", "user/project/repo", null},
+      {"https://gitlab1.com/user/project/-/tree/master/", "project", "user/project", "master"},
+      {"https://gitlab1.com/user/project/repo/-/tree/foo", "repo", "user/project/repo", "foo"},
+      {
+        "https://gitlab1.com/user/project/repo/-/tree/branch/with/slash",
         "repo",
-        "foo",
-        "subfolder"
+        "user/project/repo",
+        "branch/with/slash"
+      },
+      {
+        "https://gitlab1.com/user/project/group1/group2/repo/-/tree/foo/",
+        "repo",
+        "user/project/group1/group2/repo",
+        "foo"
       }
     };
   }

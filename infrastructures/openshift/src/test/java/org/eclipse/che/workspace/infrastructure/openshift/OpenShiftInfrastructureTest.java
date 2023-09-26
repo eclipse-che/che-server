@@ -12,21 +12,17 @@
 package org.eclipse.che.workspace.infrastructure.openshift;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import io.fabric8.kubernetes.client.Config;
 import java.util.Collections;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProjectFactory;
-import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 
 @Listeners(MockitoTestNGListener.class)
 public class OpenShiftInfrastructureTest {
-  @Mock private OpenShiftClientFactory factory;
   private OpenShiftInfrastructure infra;
 
   @BeforeMethod
@@ -37,9 +33,6 @@ public class OpenShiftInfrastructureTest {
             mock(OpenShiftRuntimeContextFactory.class),
             Collections.emptySet(),
             mock(KubernetesRuntimeStateCache.class),
-            mock(OpenShiftProjectFactory.class),
-            factory);
-
-    when(factory.getDefaultConfig()).thenReturn(mock(Config.class));
+            mock(OpenShiftProjectFactory.class));
   }
 }

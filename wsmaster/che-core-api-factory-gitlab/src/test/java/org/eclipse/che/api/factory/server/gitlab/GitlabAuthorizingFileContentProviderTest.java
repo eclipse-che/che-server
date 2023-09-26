@@ -32,11 +32,7 @@ public class GitlabAuthorizingFileContentProviderTest {
   @Test
   public void shouldExpandRelativePaths() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    GitlabUrl gitlabUrl =
-        new GitlabUrl()
-            .withHostName("https://gitlab.net")
-            .withUsername("eclipse")
-            .withProject("che");
+    GitlabUrl gitlabUrl = new GitlabUrl().withHostName("gitlab.net").withSubGroups("eclipse/che");
     FileContentProvider fileContentProvider =
         new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
     var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
@@ -45,15 +41,14 @@ public class GitlabAuthorizingFileContentProviderTest {
     verify(urlFetcher)
         .fetch(
             eq(
-                "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw"),
+                "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=HEAD"),
             eq("Bearer my-token"));
   }
 
   @Test
   public void shouldPreserveAbsolutePaths() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    GitlabUrl gitlabUrl =
-        new GitlabUrl().withHostName("gitlab.net").withUsername("eclipse").withProject("che");
+    GitlabUrl gitlabUrl = new GitlabUrl().withHostName("gitlab.net").withSubGroups("eclipse/che");
     FileContentProvider fileContentProvider =
         new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
     String url =

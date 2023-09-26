@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -24,7 +24,7 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesWorkspaceServiceAccount;
 
 /**
@@ -34,7 +34,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesW
 @Singleton
 public class WorkspaceServiceAccountConfigurator implements NamespaceConfigurator {
 
-  private final KubernetesClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
   private final String serviceAccountName;
   private final Set<String> clusterRoleNames;
@@ -43,8 +43,8 @@ public class WorkspaceServiceAccountConfigurator implements NamespaceConfigurato
   public WorkspaceServiceAccountConfigurator(
       @Nullable @Named("che.infra.kubernetes.service_account_name") String serviceAccountName,
       @Nullable @Named("che.infra.kubernetes.workspace_sa_cluster_roles") String clusterRoleNames,
-      KubernetesClientFactory clientFactory) {
-    this.clientFactory = clientFactory;
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory) {
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.serviceAccountName = serviceAccountName;
     if (!isNullOrEmpty(clusterRoleNames)) {
       this.clusterRoleNames =
@@ -69,6 +69,10 @@ public class WorkspaceServiceAccountConfigurator implements NamespaceConfigurato
   public KubernetesWorkspaceServiceAccount doCreateServiceAccount(
       String workspaceId, String namespaceName) {
     return new KubernetesWorkspaceServiceAccount(
-        workspaceId, namespaceName, serviceAccountName, clusterRoleNames, clientFactory);
+        workspaceId,
+        namespaceName,
+        serviceAccountName,
+        clusterRoleNames,
+        cheServerKubernetesClientFactory);
   }
 }

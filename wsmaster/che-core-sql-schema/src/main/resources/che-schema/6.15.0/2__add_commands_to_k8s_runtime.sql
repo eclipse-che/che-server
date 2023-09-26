@@ -32,7 +32,7 @@ ALTER TABLE k8s_runtime_command ADD CONSTRAINT fk_k8s_runtime_workspace_id FOREI
 CREATE TABLE k8s_runtime_command_attributes (
     command_id  BIGINT             NOT NULL,
     name        VARCHAR(255)       NOT NULL,
-    value       TEXT
+    value_param TEXT
 );
 --indexes
 CREATE INDEX index_k8s_runtime_command_attr_command_id ON k8s_runtime_command_attributes (command_id);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,11 +17,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.testng.Assert.*;
 
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
+import org.eclipse.che.workspace.infrastructure.openshift.CheServerOpenshiftClientFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftWorkspaceServiceAccount;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -42,7 +41,7 @@ public class OpenShiftWorkspaceServiceAccountConfiguratorTest {
 
   private NamespaceResolutionContext nsContext;
 
-  @Mock private OpenShiftClientFactory clientFactory;
+  @Mock private CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
 
   private OpenShiftWorkspaceServiceAccountConfigurator saConfigurator;
 
@@ -56,7 +55,7 @@ public class OpenShiftWorkspaceServiceAccountConfiguratorTest {
     saConfigurator =
         spy(
             new OpenShiftWorkspaceServiceAccountConfigurator(
-                SA_NAME, CLUSTER_ROLES, clientFactory));
+                SA_NAME, CLUSTER_ROLES, cheServerOpenshiftClientFactory));
     OpenShiftWorkspaceServiceAccount serviceAccount = mock(OpenShiftWorkspaceServiceAccount.class);
     doReturn(serviceAccount).when(saConfigurator).createServiceAccount(WS_ID, NS_NAME);
 
@@ -68,7 +67,9 @@ public class OpenShiftWorkspaceServiceAccountConfiguratorTest {
   @Test
   public void testDoNothingWhenServiceAccountNotSet() throws InfrastructureException {
     saConfigurator =
-        spy(new OpenShiftWorkspaceServiceAccountConfigurator(null, CLUSTER_ROLES, clientFactory));
+        spy(
+            new OpenShiftWorkspaceServiceAccountConfigurator(
+                null, CLUSTER_ROLES, cheServerOpenshiftClientFactory));
 
     saConfigurator.configure(nsContext, NS_NAME);
 

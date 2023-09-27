@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
@@ -24,8 +25,10 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -84,9 +87,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
-      return Response.temporaryRedirect(
-              URI.create(redirectAfterLogin + "&error_code=access_denied"))
-          .build();
+      return Response.temporaryRedirect(URI.create(encodeRedirectUrl())).build();
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);
@@ -102,6 +103,23 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     }
     final String redirectAfterLogin = getParameter(params, "redirect_after_login");
     return Response.temporaryRedirect(URI.create(redirectAfterLogin)).build();
+  }
+
+  /**
+   * Encode the redirect URL query parameters to avoid the error when the redirect URL contains
+   * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
+   * the {@link URI#create(String)} method.
+   */
+  private String encodeRedirectUrl() {
+    try {
+      URL url = new URL(redirectAfterLogin);
+      String query = url.getQuery();
+      return redirectAfterLogin.substring(0, redirectAfterLogin.indexOf(query))
+          + URLEncoder.encode(query + "&error_code=access_denied", UTF_8);
+    } catch (MalformedURLException e) {
+      LOG.error(e.getMessage(), e);
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

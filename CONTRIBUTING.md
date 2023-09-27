@@ -1,17 +1,36 @@
-# Build requirements
+## Developing with Eclipse Che
+
+This project contains a [devfile v2](https://github.com/eclipse-che/che-server/blob/main/devfile.yaml) located in the project's root directory.
+With this devfile you can perform the following tasks:
+
+- Build project sources with maven.
+- Build a container image.
+- Push your changes to GitHub.
+
+### Starting a Workspace within Eclipse Che
+
+To start a new workspace within Eclipse Che, navigate to the following URL:
+
+```sh
+{CHE-HOST}/#https://github.com/eclipse-che/che-server
+```
+
+### Running Devfile Tasks for Downloading Dependencies and Building the Project
+
+For VS Code, execute tasks defined in the devfile with these steps:
+
+1. Open the command palette (Ctrl/Cmd + Shift + P).
+2. Execute the `Tasks: Run Task` command.
+3. Select the `devfile` folder  and select the `1. Build sources` task to build the project sources with maven.
+4. Follow steps 1 and 2 again, select the `1. Build image` task to build a container image.
+5. In the workspace terminal, tag the **che-server** image with your account: `podman tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
+6. Push the **che-server** image to your account: `podman push <docker registry>/<your account>/che-server:next`.
+
+# Local build requirements
 - Apache Maven 3.9 or later
 - JDK 11
 - Podman or Docker (required for running integration tests)
-A Che workspace environment allows to build the image internaly, using the workspace terminal.
-
-# Sources build
-Run `mvn clean install` to build. Activate a faster profile build by adding `-Pfast`.
-
-# Image build and push
-1. Go to the `dockerfiles` directory.
-2. Run `./build.sh`.
-3. Tag the **che-server** image with your account: `docker tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
-4. Push the **che-server** image to your account: `docker push <docker registry>/<your account>/che-server:next`.
+A Che workspace environment allows to build the image internally, using the workspace terminal.
 
 # Start and debug
 1. Deploy Che to a [Red Hat OpenShift](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-openshift-using-cli/) or [Minikube](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-minikube/) cluster by using a previously built image: `chectl server:start --platform=<openshift / minikube> --cheimage=<docker registry>/<your account>/che-server:next`.

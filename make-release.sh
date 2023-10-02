@@ -11,9 +11,7 @@ DOCKER_FILES_LOCATIONS=(
     che-server/dockerfiles/che
 )
 
-IMAGES_LIST=(
-    quay.io/eclipse/che-server
-)
+IMAGE="quay.io/eclipse/che-server"
 
 sed_in_place() {
     SHORT_UNAME=$(uname -s)
@@ -298,39 +296,30 @@ buildImages() {
     fi
 
     # BUILD IMAGES
-    for image_dir in ${DOCKER_FILES_LOCATIONS[@]}
-      do
-        bash "$(pwd)/${image_dir}/build.sh" --tag:${TAG}
-        if [[ $? -ne 0 ]]; then
-           echo "ERROR:"
-           echo "build of '${image_dir}' image is failed!"
-           exit 1
-        fi
-      done
+    bash "$(pwd)/build/build.sh" --tag:${TAG}
+    if [[ $? -ne 0 ]]; then
+       echo "ERROR:"
+       echo "build of che-server image is failed!"
+       exit 1
+    fi
 }
 
 tagLatestImages() {
-    for image in ${IMAGES_LIST[@]}
-     do
-         echo y | docker tag "${image}:$1" "${image}:latest"
-         if [[ $? -ne 0 ]]; then
-           die_with  "docker tag of '${image}' image is failed!"
-         fi
-     done
+    echo y | docker tag "${IMAGE}:$1" "${image}:latest"
+    if [[ $? -ne 0 ]]; then
+      die_with  "docker tag of '${image}' image is failed!"
+    fi
 }
 
 pushImagesOnQuay() {
-    #PUSH IMAGES
-    for image in ${IMAGES_LIST[@]}
-        do
-            echo y | docker push "${image}:$1"
-            if [[ $2 == "pushLatest" ]]; then
-                echo y | docker push "${image}:latest"
-            fi
-            if [[ $? -ne 0 ]]; then
-            die_with  "docker push of '${image}' image is failed!"
-            fi
-        done
+    #PUSH THE IMAGE
+    echo y | docker push "${IMAGE}:$1"
+    if [[ $2 == "pushLatest" ]]; then
+      echo y | docker push "${image}:latest"
+    fi
+    if [[ $? -ne 0 ]]; then
+      die_with  "docker push of '${image}' image is failed!"
+    fi
 }
 
 bumpVersions() {

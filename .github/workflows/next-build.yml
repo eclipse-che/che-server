@@ -46,7 +46,7 @@ jobs:
       id: build
       run: |
           echo "short_sha1=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          ./dockerfiles/build.sh --tag:next --sha-tag
+          ./build/build.sh --tag:next --sha-tag
     - name: Push docker images
       run: |
         docker push quay.io/eclipse/che-server:next

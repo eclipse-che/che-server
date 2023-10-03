@@ -50,6 +50,7 @@ init() {
   ARGS=""
   OPTIONS=""
   DOCKERFILE=""
+  BUILD_COMMAND="build"
   BUILD_ARGS=""
 
   while [ $# -gt 0 ]; do

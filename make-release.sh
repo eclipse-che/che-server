@@ -6,11 +6,6 @@
 REGISTRY="quay.io"
 ORGANIZATION="eclipse"
 
- # KEEP RIGHT ORDER!!!
-DOCKER_FILES_LOCATIONS=(
-    che-server/dockerfiles/che
-)
-
 IMAGE="quay.io/eclipse/che-server"
 
 sed_in_place() {

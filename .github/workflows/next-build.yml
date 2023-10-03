@@ -51,7 +51,6 @@ jobs:
       run: |
 
 
-        podman push quay.io/eclipse/che-postgres:${{ steps.build.outputs.short_sha1 }}
 
         podman push quay.io/eclipse/che-server:next
         podman push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}

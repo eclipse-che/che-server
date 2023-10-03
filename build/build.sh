@@ -115,7 +115,7 @@ build() {
               echo "[WARNING] buildah is not installed, trying with docker"
               BUILDER=$(command -v docker || true)
               if [[ ! -x $BUILDER ]]; then
-                  echo "[ERROR] neither docker, buildah, nor podman are installed. Aborting"; exit 1
+                  echo "[ERROR] This script requires podman, buildah or docker to be installed. Must abort!"; exit 1
               fi
           else
               BUILD_COMMAND="bud"

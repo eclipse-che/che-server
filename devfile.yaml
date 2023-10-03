@@ -19,7 +19,7 @@ commands:
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: |
-        mvn clean install -DskipTests
+        mvn clean install -V -e -Pfast -DskipTests -Dskip-validate-sources -Denforcer.skip=true
       group:
         kind: build
         isDefault: true

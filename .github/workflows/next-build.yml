@@ -50,7 +50,6 @@ jobs:
     - name: Push docker images
       run: |
 
-        podman push quay.io/eclipse/che-keycloak:next
         podman push quay.io/eclipse/che-keycloak:${{ steps.build.outputs.short_sha1 }}
 
         podman push quay.io/eclipse/che-postgres:next

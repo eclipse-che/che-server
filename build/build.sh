@@ -105,6 +105,7 @@ build() {
       DIR=$(cd "$(dirname "$0")"; pwd)
   fi
 
+  BUILD_COMAMAND="build"
   if [ -z $BUILDER ]; then
       echo "BUILDER is not specified, trying with podman"
       BUILDER=$(command -v podman || true)

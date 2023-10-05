@@ -18,12 +18,12 @@ import javax.inject.Named;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.AbstractGitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
-import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.security.oauth.OAuthAPI;
 
 /**
  * Azure DevOps user data fetcher.
@@ -37,7 +37,7 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
 
   @Inject
   public AzureDevOpsUserDataFetcher(
-      OAuthTokenFetcher oAuthTokenFetcher,
+      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager,
       AzureDevOpsApiClient azureDevOpsApiClient,
       @Named("che.api") String cheApiEndpoint,

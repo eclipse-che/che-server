@@ -29,6 +29,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.inject.ConfigurationException;
+import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** Gitlab OAuth token retriever. */
 public class GitlabUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -48,7 +49,7 @@ public class GitlabUserDataFetcher extends AbstractGitUserDataFetcher {
       @Nullable @Named("che.integration.gitlab.oauth_endpoint") String oauthEndpoint,
       @Named("che.api") String apiEndpoint,
       PersonalAccessTokenManager personalAccessTokenManager,
-      OAuthTokenFetcher oAuthTokenFetcher) {
+      OAuthAPI oAuthTokenFetcher) {
     super(OAUTH_PROVIDER_NAME, personalAccessTokenManager, oAuthTokenFetcher);
     this.apiEndpoint = apiEndpoint;
     if (gitlabEndpoints != null) {

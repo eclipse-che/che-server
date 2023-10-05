@@ -11,10 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.azure.devops;
 
-import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import com.google.common.base.Strings;
 import jakarta.validation.constraints.NotNull;
@@ -23,6 +21,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
@@ -38,6 +37,7 @@ import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for Azure DevOps repositories.
@@ -45,7 +45,10 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  * @author Anatolii Bazko
  */
 @Singleton
-public class AzureDevOpsFactoryParametersResolver implements FactoryParametersResolver {
+public class AzureDevOpsFactoryParametersResolver extends BaseFactoryParameterResolver
+    implements FactoryParametersResolver {
+
+  private static final String PROVIDER_NAME = "azure-devops";
 
   /** Parser which will allow to check validity of URLs and create objects. */
   private final AzureDevOpsURLParser azureDevOpsURLParser;
@@ -61,7 +64,9 @@ public class AzureDevOpsFactoryParametersResolver implements FactoryParametersRe
       AzureDevOpsURLParser azureDevOpsURLParser,
       URLFetcher urlFetcher,
       URLFactoryBuilder urlFactoryBuilder,
-      PersonalAccessTokenManager personalAccessTokenManager) {
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
+    super(authorisationRequestManager, urlFactoryBuilder, PROVIDER_NAME);
     this.azureDevOpsURLParser = azureDevOpsURLParser;
     this.urlFetcher = urlFetcher;
     this.urlFactoryBuilder = urlFactoryBuilder;
@@ -76,26 +81,24 @@ public class AzureDevOpsFactoryParametersResolver implements FactoryParametersRe
   }
 
   @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
+  }
+
+  @Override
   public FactoryMetaDto createFactory(@NotNull final Map<String, String> factoryParameters)
       throws ApiException {
-    boolean skipAuthentication =
-        factoryParameters.get(ERROR_QUERY_NAME) != null
-            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
-
     // no need to check null value of url parameter as accept() method has performed the check
     final AzureDevOpsUrl azureDevOpsUrl =
         azureDevOpsURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
 
     // create factory from the following location if location exists, else create default factory
-    return urlFactoryBuilder
-        .createFactoryFromDevfile(
-            azureDevOpsUrl,
-            new AzureDevOpsAuthorizingFileContentProvider(
-                azureDevOpsUrl, urlFetcher, personalAccessTokenManager),
-            extractOverrideParams(factoryParameters),
-            skipAuthentication)
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
-        .acceptVisitor(new AzureDevOpsFactoryVisitor(azureDevOpsUrl));
+    return createFactory(
+        factoryParameters,
+        azureDevOpsUrl,
+        new AzureDevOpsFactoryVisitor(azureDevOpsUrl),
+        new AzureDevOpsAuthorizingFileContentProvider(
+            azureDevOpsUrl, urlFetcher, personalAccessTokenManager));
   }
 
   /**

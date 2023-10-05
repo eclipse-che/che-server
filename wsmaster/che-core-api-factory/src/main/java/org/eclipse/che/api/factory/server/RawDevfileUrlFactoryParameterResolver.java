@@ -36,7 +36,10 @@ import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
  * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a
  * direct URL to a devfile content. Extracts and applies devfile values override parameters.
  */
-public class RawDevfileUrlFactoryParameterResolver implements FactoryParametersResolver {
+public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterResolver
+    implements FactoryParametersResolver {
+
+  private static final String PROVIDER_NAME = "raw-devfile-url";
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
@@ -44,6 +47,7 @@ public class RawDevfileUrlFactoryParameterResolver implements FactoryParametersR
   @Inject
   public RawDevfileUrlFactoryParameterResolver(
       URLFactoryBuilder urlFactoryBuilder, URLFetcher urlFetcher) {
+    super(null, urlFactoryBuilder, PROVIDER_NAME);
     this.urlFactoryBuilder = urlFactoryBuilder;
     this.urlFetcher = urlFetcher;
   }
@@ -59,6 +63,11 @@ public class RawDevfileUrlFactoryParameterResolver implements FactoryParametersR
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
     return !isNullOrEmpty(url) && (url.endsWith(".yaml") || url.endsWith(".yml"));
+  }
+
+  @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
   }
 
   /**

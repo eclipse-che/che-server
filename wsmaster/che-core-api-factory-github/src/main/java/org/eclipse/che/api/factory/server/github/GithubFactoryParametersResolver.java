@@ -11,10 +11,9 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
-import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static java.util.Collections.emptyMap;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -22,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
@@ -35,6 +35,7 @@ import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for github repositories.
@@ -42,7 +43,10 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
  * @author Florent Benoit
  */
 @Singleton
-public class GithubFactoryParametersResolver implements FactoryParametersResolver {
+public class GithubFactoryParametersResolver extends BaseFactoryParameterResolver
+    implements FactoryParametersResolver {
+
+  private static final String PROVIDER_NAME = "github";
 
   /** Parser which will allow to check validity of URLs and create objects. */
   private final GithubURLParser githubUrlParser;
@@ -64,9 +68,11 @@ public class GithubFactoryParametersResolver implements FactoryParametersResolve
       GithubURLParser githubUrlParser,
       URLFetcher urlFetcher,
       GithubSourceStorageBuilder githubSourceStorageBuilder,
+      AuthorisationRequestManager authorisationRequestManager,
       URLFactoryBuilder urlFactoryBuilder,
       ProjectConfigDtoMerger projectConfigDtoMerger,
       PersonalAccessTokenManager personalAccessTokenManager) {
+    super(authorisationRequestManager, urlFactoryBuilder, PROVIDER_NAME);
     this.githubUrlParser = githubUrlParser;
     this.urlFetcher = urlFetcher;
     this.githubSourceStorageBuilder = githubSourceStorageBuilder;
@@ -89,6 +95,11 @@ public class GithubFactoryParametersResolver implements FactoryParametersResolve
         && githubUrlParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
   }
 
+  @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
+  }
+
   /**
    * Create factory object based on provided parameters
    *
@@ -98,28 +109,21 @@ public class GithubFactoryParametersResolver implements FactoryParametersResolve
   @Override
   public FactoryMetaDto createFactory(@NotNull final Map<String, String> factoryParameters)
       throws ApiException {
-    boolean skipAuthentication =
-        factoryParameters.get(ERROR_QUERY_NAME) != null
-            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
     // no need to check null value of url parameter as accept() method has performed the check
     final GithubUrl githubUrl;
-    if (skipAuthentication) {
+    if (getSkipAuthorisation(factoryParameters)) {
       githubUrl =
           githubUrlParser.parseWithoutAuthentication(factoryParameters.get(URL_PARAMETER_NAME));
     } else {
       githubUrl = githubUrlParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
     }
 
-    // create factory from the following location if location exists, else create default factory
-    return urlFactoryBuilder
-        .createFactoryFromDevfile(
-            githubUrl,
-            new GithubAuthorizingFileContentProvider(
-                githubUrl, urlFetcher, personalAccessTokenManager),
-            extractOverrideParams(factoryParameters),
-            skipAuthentication)
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
-        .acceptVisitor(new GithubFactoryVisitor(githubUrl));
+    return createFactory(
+        factoryParameters,
+        githubUrl,
+        new GithubFactoryVisitor(githubUrl),
+        new GithubAuthorizingFileContentProvider(
+            githubUrl, urlFetcher, personalAccessTokenManager));
   }
 
   /**
@@ -182,6 +186,10 @@ public class GithubFactoryParametersResolver implements FactoryParametersResolve
 
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
-    return githubUrlParser.parse(factoryUrl);
+    if (getSkipAuthorisation(emptyMap())) {
+      return githubUrlParser.parseWithoutAuthentication(factoryUrl);
+    } else {
+      return githubUrlParser.parse(factoryUrl);
+    }
   }
 }

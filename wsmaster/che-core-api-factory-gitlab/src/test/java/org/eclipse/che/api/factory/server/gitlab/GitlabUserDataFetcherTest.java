@@ -28,8 +28,8 @@ import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
-import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class GitlabUserDataFetcherTest {
 
-  @Mock OAuthTokenFetcher oAuthTokenFetcher;
+  @Mock OAuthAPI oAuthTokenFetcher;
   @Mock PersonalAccessTokenManager personalAccessTokenManager;
 
   GitlabUserDataFetcher gitlabUserDataFetcher;

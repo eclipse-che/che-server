@@ -42,6 +42,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Defines Factory REST API.
@@ -64,17 +65,20 @@ public class FactoryService extends Service {
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
   private final AdditionalFilenamesProvider additionalFilenamesProvider;
   private final PersonalAccessTokenManager personalAccessTokenManager;
+  private final AuthorisationRequestManager authorisationRequestManager;
 
   @Inject
   public FactoryService(
       FactoryAcceptValidator acceptValidator,
       FactoryParametersResolverHolder factoryParametersResolverHolder,
       AdditionalFilenamesProvider additionalFilenamesProvider,
-      PersonalAccessTokenManager personalAccessTokenManager) {
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
     this.acceptValidator = acceptValidator;
     this.factoryParametersResolverHolder = factoryParametersResolverHolder;
     this.additionalFilenamesProvider = additionalFilenamesProvider;
     this.personalAccessTokenManager = personalAccessTokenManager;
+    this.authorisationRequestManager = authorisationRequestManager;
   }
 
   @POST
@@ -147,8 +151,10 @@ public class FactoryService extends Service {
       FactoryParametersResolver factoryParametersResolver =
           factoryParametersResolverHolder.getFactoryParametersResolver(
               singletonMap(URL_PARAMETER_NAME, url));
-      personalAccessTokenManager.getAndStore(
-          factoryParametersResolver.parseFactoryUrl(url).getHostName());
+      if (!authorisationRequestManager.isStored(factoryParametersResolver.getProviderName())) {
+        personalAccessTokenManager.getAndStore(
+            factoryParametersResolver.parseFactoryUrl(url).getHostName());
+      }
     } catch (ScmCommunicationException
         | ScmConfigurationPersistenceException
         | UnknownScmProviderException

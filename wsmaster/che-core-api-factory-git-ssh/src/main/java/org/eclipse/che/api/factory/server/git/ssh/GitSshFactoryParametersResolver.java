@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.git.ssh;
 
 import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
+import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
@@ -84,12 +85,16 @@ public class GitSshFactoryParametersResolver extends BaseFactoryParameterResolve
     // no need to check null value of url parameter as accept() method has performed the check
     final GitSshUrl gitSshUrl = gitSshURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
 
-    return super.createFactory(
-        factoryParameters,
-        gitSshUrl,
-        new GitSshFactoryVisitor(gitSshUrl),
-        new GitSshAuthorizingFileContentProvider(
-            gitSshUrl, urlFetcher, personalAccessTokenManager));
+    // create factory from the following location if location exists, else create default factory
+    return urlFactoryBuilder
+        .createFactoryFromDevfile(
+            gitSshUrl,
+            new GitSshAuthorizingFileContentProvider(
+                gitSshUrl, urlFetcher, personalAccessTokenManager),
+            extractOverrideParams(factoryParameters),
+            true)
+        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
+        .acceptVisitor(new GitSshFactoryVisitor(gitSshUrl));
   }
 
   /**

@@ -300,9 +300,9 @@ buildImages() {
 }
 
 tagLatestImages() {
-    echo y | docker tag "${IMAGE}:$1" "${image}:latest"
+    echo y | docker tag "${IMAGE}:$1" "${IMAGE}:latest"
     if [[ $? -ne 0 ]]; then
-      die_with  "docker tag of '${image}' image is failed!"
+      die_with  "docker tag of '${IMAGE}' image is failed!"
     fi
 }
 
@@ -310,10 +310,10 @@ pushImagesOnQuay() {
     #PUSH THE IMAGE
     echo y | docker push "${IMAGE}:$1"
     if [[ $2 == "pushLatest" ]]; then
-      echo y | docker push "${image}:latest"
+      echo y | docker push "${IMAGE}:latest"
     fi
     if [[ $? -ne 0 ]]; then
-      die_with  "docker push of '${image}' image is failed!"
+      die_with  "docker push of '${IMAGE}' image is failed!"
     fi
 }
 

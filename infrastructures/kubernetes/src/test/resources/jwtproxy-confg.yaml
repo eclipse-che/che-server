@@ -49,3 +49,4 @@ jwtproxy:
         type: "void"
       public_base_path: "/here"
       upstream: "ws://terminal:4101"
+

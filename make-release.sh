@@ -294,7 +294,7 @@ buildImages() {
     bash "$(pwd)/build/build.sh" --tag:${TAG}
     if [[ $? -ne 0 ]]; then
        echo "ERROR:"
-       echo "build of che-server image is failed!"
+       echo "build of che-server image $TAG is failed!"
        exit 1
     fi
 }

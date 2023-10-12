@@ -30,6 +30,7 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -59,7 +60,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public static final String NAME_PATTERN = "personal-access-token-";
 
   public static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
-  public static final String ANNOTATION_SCM_USERNAME = "che.eclipse.org/scm-username";
   public static final String ANNOTATION_SCM_ORGANIZATION = "che.eclipse.org/scm-organization";
   public static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID =
       "che.eclipse.org/scm-personal-access-token-id";
@@ -96,7 +96,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
               .withAnnotations(
                   new ImmutableMap.Builder<String, String>()
                       .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
-                      .put(ANNOTATION_SCM_USERNAME, personalAccessToken.getScmUserName())
                       .put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl())
                       .put(
                           ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
@@ -147,6 +146,21 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   @Override
+  public PersonalAccessToken get(String scmServerUrl)
+      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
+          ScmCommunicationException, UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException {
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    if (tokenOptional.isPresent()) {
+      return tokenOptional.get();
+    } else {
+      // try to authenticate for the given URL
+      return fetchAndSave(subject, scmServerUrl);
+    }
+  }
+
+  @Override
   public Optional<PersonalAccessToken> get(
       Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
@@ -176,28 +190,34 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                   || trimmedUrl.equals(StringUtils.trimEnd(scmServerUrl, '/')))) {
             String token =
                 new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
-            PersonalAccessToken personalAccessToken =
-                new PersonalAccessToken(
-                    trimmedUrl,
-                    annotations.get(ANNOTATION_CHE_USERID),
-                    annotations.get(ANNOTATION_SCM_ORGANIZATION),
-                    annotations.get(ANNOTATION_SCM_USERNAME),
-                    annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME),
-                    annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID),
-                    token);
-            if (scmPersonalAccessTokenFetcher.isValid(personalAccessToken)) {
+            String providerName = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+            String tokenId = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
+            String organization = annotations.get(ANNOTATION_SCM_ORGANIZATION);
+            Optional<String> scmUsername =
+                scmPersonalAccessTokenFetcher.getScmUsername(
+                    new PersonalAccessTokenParams(
+                        trimmedUrl, providerName, tokenId, token, organization));
+            if (scmUsername.isPresent()) {
+              PersonalAccessToken personalAccessToken =
+                  new PersonalAccessToken(
+                      trimmedUrl,
+                      annotations.get(ANNOTATION_CHE_USERID),
+                      organization,
+                      scmUsername.get(),
+                      providerName,
+                      tokenId,
+                      token);
               return Optional.of(personalAccessToken);
-            } else {
-              // Removing token that is no longer valid. If several tokens exist the next one could
-              // be valid. If no valid token can be found, the caller should react in the same way
-              // as it reacts if no token exists. Usually, that means that process of new token
-              // retrieval would be initiated.
-              cheServerKubernetesClientFactory
-                  .create()
-                  .secrets()
-                  .inNamespace(namespaceMeta.getName())
-                  .delete(secret);
             }
+            // Removing token that is no longer valid. If several tokens exist the next one could
+            // be valid. If no valid token can be found, the caller should react in the same way
+            // as it reacts if no token exists. Usually, that means that process of new token
+            // retrieval would be initiated.
+            cheServerKubernetesClientFactory
+                .create()
+                .secrets()
+                .inNamespace(namespaceMeta.getName())
+                .delete(secret);
           }
         }
       }
@@ -212,17 +232,21 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throws ScmCommunicationException, ScmConfigurationPersistenceException,
           UnknownScmProviderException, UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException {
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
-    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
-    PersonalAccessToken personalAccessToken;
-    if (tokenOptional.isPresent()) {
-      personalAccessToken = tokenOptional.get();
-    } else {
-      // try to authenticate for the given URL
-      personalAccessToken = fetchAndSave(subject, scmServerUrl);
-    }
+    PersonalAccessToken personalAccessToken = get(scmServerUrl);
     gitCredentialManager.createOrReplace(personalAccessToken);
     return personalAccessToken;
+  }
+
+  @Override
+  public void store(String scmServerUrl)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
+          ScmCommunicationException, ScmUnauthorizedException {
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    if (tokenOptional.isPresent()) {
+      PersonalAccessToken personalAccessToken = tokenOptional.get();
+      gitCredentialManager.createOrReplace(personalAccessToken);
+    }
   }
 
   private String getFirstNamespace()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,7 +22,7 @@ import io.fabric8.kubernetes.api.model.LabelSelector;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaimFluent.SpecNested;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimFluent;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSource;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
@@ -199,13 +199,15 @@ public class KubernetesObjectUtil {
    */
   public static PersistentVolumeClaim newPVC(
       String name, String accessMode, String quantity, String storageClassName) {
-    SpecNested<PersistentVolumeClaimBuilder> specs =
-        new PersistentVolumeClaimBuilder()
-            .withNewMetadata()
-            .withName(name)
-            .endMetadata()
-            .withNewSpec()
-            .withAccessModes(accessMode);
+    PersistentVolumeClaimFluent<PersistentVolumeClaimBuilder>.SpecNested<
+            PersistentVolumeClaimBuilder>
+        specs =
+            new PersistentVolumeClaimBuilder()
+                .withNewMetadata()
+                .withName(name)
+                .endMetadata()
+                .withNewSpec()
+                .withAccessModes(accessMode);
     if (!isNullOrEmpty(storageClassName)) {
       specs.withStorageClassName(storageClassName);
     }

@@ -76,6 +76,15 @@ public class BitbucketURLParserTest {
       {"https://bitbucket.org/eclipse/che.with.dots.git"},
       {"https://bitbucket.org/eclipse/che-with-hyphen"},
       {"https://bitbucket.org/eclipse/che-with-hyphen.git"},
+      {"git@bitbucket.org:eclipse/che"},
+      {"git@bitbucket.org:eclipse/che123"},
+      {"git@bitbucket.org:eclipse/che/"},
+      {"git@bitbucket.org:eclipse/che/src/4.2.x"},
+      {"git@bitbucket.org:eclipse/che/src/master/"},
+      {"git@bitbucket.org:eclipse/che.git"},
+      {"git@bitbucket.org:eclipse/che.with.dots.git"},
+      {"git@bitbucket.org:eclipse/che-with-hyphen"},
+      {"git@bitbucket.org:eclipse/che-with-hyphen.git"},
       {"https://username@bitbucket.org/eclipse/che"},
       {"https://username@bitbucket.org/eclipse/che123"},
       {"https://username@bitbucket.org/eclipse/che/"},
@@ -102,6 +111,16 @@ public class BitbucketURLParserTest {
       {"https://bitbucket.org/eclipse/che-with-hyphen.git", "eclipse", "che-with-hyphen", null},
       {"https://bitbucket.org/eclipse/che/", "eclipse", "che", null},
       {"https://bitbucket.org/eclipse/repositorygit", "eclipse", "repositorygit", null},
+      {"git@bitbucket.org:eclipse/che", "eclipse", "che", null},
+      {"git@bitbucket.org:eclipse/che123", "eclipse", "che123", null},
+      {"git@bitbucket.org:eclipse/che.git", "eclipse", "che", null},
+      {"git@bitbucket.org:eclipse/che.with.dot.git", "eclipse", "che.with.dot", null},
+      {"git@bitbucket.org:eclipse/-.git", "eclipse", "-", null},
+      {"git@bitbucket.org:eclipse/-j.git", "eclipse", "-j", null},
+      {"git@bitbucket.org:eclipse/-", "eclipse", "-", null},
+      {"git@bitbucket.org:eclipse/che-with-hyphen", "eclipse", "che-with-hyphen", null},
+      {"git@bitbucket.org:eclipse/che-with-hyphen.git", "eclipse", "che-with-hyphen", null},
+      {"git@bitbucket.org:eclipse/repositorygit", "eclipse", "repositorygit", null},
       {"https://bitbucket.org/eclipse/che/src/4.2.x", "eclipse", "che", "4.2.x"},
       {"https://bitbucket.org/eclipse/che/src/master/", "eclipse", "che", "master"}
     };
@@ -117,7 +136,15 @@ public class BitbucketURLParserTest {
       {"https://bitbucket.org/eclipse/івапівап.git", "івапівап.git"},
       {"https://bitbucket.org/eclipse/ ", " "},
       {"https://bitbucket.org/eclipse/.", "."},
-      {"https://bitbucket.org/eclipse/ .git", " .git"}
+      {"https://bitbucket.org/eclipse/ .git", " .git"},
+      {"git@bitbucket.org:eclipse/che .git", "che .git"},
+      {"git@bitbucket.org:eclipse/.git", ".git"},
+      {"git@bitbucket.org:eclipse/myB@dR&pository.git", "myB@dR&pository.git"},
+      {"git@bitbucket.org:eclipse/.", "."},
+      {"git@bitbucket.org:eclipse/івапівап.git", "івапівап.git"},
+      {"git@bitbucket.org:eclipse/ ", " "},
+      {"git@bitbucket.org:eclipse/.", "."},
+      {"git@bitbucket.org:eclipse/ .git", " .git"}
     };
   }
 }

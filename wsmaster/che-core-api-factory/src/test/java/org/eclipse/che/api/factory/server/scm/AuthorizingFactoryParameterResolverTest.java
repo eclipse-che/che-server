@@ -46,7 +46,7 @@ public class AuthorizingFactoryParameterResolverTest {
   @Test
   public void shouldFetchContentWithAuthentication() throws Exception {
     // given
-    when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
+    when(remoteFactoryUrl.getProviderUrl()).thenReturn("https://provider.url");
     when(urlFetcher.fetch(anyString(), anyString())).thenReturn("content");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 

@@ -31,11 +31,14 @@ import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
 import java.util.Collections;
+import java.util.Optional;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.security.oauth.OAuthAPI;
@@ -86,16 +89,11 @@ public class GithubPersonalAccessTokenFetcherTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withHeader(GithubApiClient.GITHUB_OAUTH_SCOPES_HEADER, "repo")
                     .withBodyFile("github/rest/user/response.json")));
-    PersonalAccessToken personalAccessToken =
-        new PersonalAccessToken(
-            "https://github.com/",
-            "cheUserId",
-            "scmUserName",
-            "scmTokenName",
-            "scmTokenId",
-            githubOauthToken);
+    PersonalAccessTokenParams personalAccessTokenParams =
+        new PersonalAccessTokenParams(
+            "https://github.com/", "scmTokenName", "scmTokenId", githubOauthToken, null);
     assertTrue(
-        githubPATFetcher.isValid(personalAccessToken).isEmpty(),
+        githubPATFetcher.isValid(personalAccessTokenParams).isEmpty(),
         "Should not validate SCM server with trailing /");
   }
 
@@ -198,16 +196,13 @@ public class GithubPersonalAccessTokenFetcherTest {
                         DEFAULT_TOKEN_SCOPES.toString().replace("[", "").replace("]", ""))
                     .withBodyFile("github/rest/user/response.json")));
 
-    PersonalAccessToken token =
-        new PersonalAccessToken(
-            wireMockServer.url("/"),
-            "cheUser",
-            "github-user",
-            "token-name",
-            "tid-23434",
-            githubOauthToken);
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
+            wireMockServer.url("/"), "token-name", "tid-23434", githubOauthToken, null);
 
-    assertTrue(githubPATFetcher.isValid(token).get());
+    Optional<Pair<Boolean, String>> valid = githubPATFetcher.isValid(params);
+    assertTrue(valid.isPresent());
+    assertTrue(valid.get().first);
   }
 
   @Test
@@ -223,31 +218,31 @@ public class GithubPersonalAccessTokenFetcherTest {
                         DEFAULT_TOKEN_SCOPES.toString().replace("[", "").replace("]", ""))
                     .withBodyFile("github/rest/user/response.json")));
 
-    PersonalAccessToken token =
-        new PersonalAccessToken(
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
             wireMockServer.url("/"),
-            "cheUser",
-            "username",
-            OAUTH_2_PREFIX + "-token-name",
+            OAUTH_2_PREFIX + "-params-name",
             "tid-23434",
-            githubOauthToken);
+            githubOauthToken,
+            null);
 
-    assertTrue(githubPATFetcher.isValid(token).get());
+    Optional<Pair<Boolean, String>> valid = githubPATFetcher.isValid(params);
+    assertTrue(valid.isPresent());
+    assertTrue(valid.get().first);
   }
 
   @Test
   public void shouldNotValidateExpiredOauthToken() throws Exception {
     stubFor(get(urlEqualTo("/api/v3/user")).willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
 
-    PersonalAccessToken token =
-        new PersonalAccessToken(
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
             wireMockServer.url("/"),
-            "cheUser",
-            "username",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
-            githubOauthToken);
+            githubOauthToken,
+            null);
 
-    assertFalse(githubPATFetcher.isValid(token).get());
+    assertFalse(githubPATFetcher.isValid(params).isPresent());
   }
 }

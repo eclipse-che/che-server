@@ -108,7 +108,13 @@ public class GithubURLParserTest {
       {"https://github.com/eclipse/che.git"},
       {"https://github.com/eclipse/che.with.dots.git"},
       {"https://github.com/eclipse/che-with-hyphen"},
-      {"https://github.com/eclipse/che-with-hyphen.git"}
+      {"https://github.com/eclipse/che-with-hyphen.git"},
+      {"git@github.com:eclipse/che.git)"},
+      {"git@github.com:eclipse/che)"},
+      {"git@github.com:eclipse/che123)"},
+      {"git@github.com:eclipse/che.with.dots.git)"},
+      {"git@github.com:eclipse/che-with-hyphen)"},
+      {"git@github.com:eclipse/che-with-hyphen.git)"}
     };
   }
 
@@ -133,7 +139,18 @@ public class GithubURLParserTest {
         "eclipse",
         "che",
         "branch/with/slash"
-      }
+      },
+      {"git@github.com:eclipse/che", "eclipse", "che", null},
+      {"git@github.com:eclipse/che123", "eclipse", "che123", null},
+      {"git@github.com:eclipse/che.git", "eclipse", "che", null},
+      {"git@github.com:eclipse/che.with.dot.git", "eclipse", "che.with.dot", null},
+      {"git@github.com:eclipse/-.git", "eclipse", "-", null},
+      {"git@github.com:eclipse/-j.git", "eclipse", "-j", null},
+      {"git@github.com:eclipse/-", "eclipse", "-", null},
+      {"git@github.com:eclipse/che-with-hyphen", "eclipse", "che-with-hyphen", null},
+      {"git@github.com:eclipse/che-with-hyphen.git", "eclipse", "che-with-hyphen", null},
+      {"git@github.com:eclipse/che/", "eclipse", "che", null},
+      {"git@github.com:eclipse/repositorygit", "eclipse", "repositorygit", null},
     };
   }
 
@@ -147,7 +164,15 @@ public class GithubURLParserTest {
       {"https://github.com/eclipse/івапівап.git", "івапівап.git"},
       {"https://github.com/eclipse/ ", " "},
       {"https://github.com/eclipse/.", "."},
-      {"https://github.com/eclipse/ .git", " .git"}
+      {"https://github.com/eclipse/ .git", " .git"},
+      {"git@github.com:eclipse/che .git", "che .git"},
+      {"git@github.com:eclipse/.git", ".git"},
+      {"git@github.com:eclipse/myB@dR&pository.git", "myB@dR&pository.git"},
+      {"git@github.com:eclipse/.", "."},
+      {"git@github.com:eclipse/івапівап.git", "івапівап.git"},
+      {"git@github.com:eclipse/ ", " "},
+      {"git@github.com:eclipse/.", "."},
+      {"git@github.com:eclipse/ .git", " .git"}
     };
   }
 

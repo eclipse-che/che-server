@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
@@ -24,8 +25,10 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -38,11 +41,6 @@ import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
-import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
-import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
@@ -64,7 +62,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
   protected String errorPage;
 
   @Inject protected OAuthAuthenticatorProvider providers;
-  @Inject protected PersonalAccessTokenManager personalAccessTokenManager;
   private String redirectAfterLogin;
 
   @Override
@@ -90,9 +87,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
-      return Response.temporaryRedirect(
-              URI.create(redirectAfterLogin + "&error_code=access_denied"))
-          .build();
+      return Response.temporaryRedirect(URI.create(encodeRedirectUrl())).build();
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);
@@ -108,6 +103,23 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
     }
     final String redirectAfterLogin = getParameter(params, "redirect_after_login");
     return Response.temporaryRedirect(URI.create(redirectAfterLogin)).build();
+  }
+
+  /**
+   * Encode the redirect URL query parameters to avoid the error when the redirect URL contains
+   * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
+   * the {@link URI#create(String)} method.
+   */
+  private String encodeRedirectUrl() {
+    try {
+      URL url = new URL(redirectAfterLogin);
+      String query = url.getQuery();
+      return redirectAfterLogin.substring(0, redirectAfterLogin.indexOf(query))
+          + URLEncoder.encode(query + "&error_code=access_denied", UTF_8);
+    } catch (MalformedURLException e) {
+      LOG.error(e.getMessage(), e);
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -159,25 +171,11 @@ public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
       if (token != null) {
         return token;
       }
-      Optional<PersonalAccessToken> tokenOptional =
-          personalAccessTokenManager.get(subject, provider.getEndpointUrl());
-      if (tokenOptional.isPresent()) {
-        PersonalAccessToken accessToken = tokenOptional.get();
-        return newDto(OAuthToken.class).withToken(accessToken.getToken());
-      }
       throw new UnauthorizedException(
           "OAuth token for user " + subject.getUserId() + " was not found");
-    } catch (IOException | ScmConfigurationPersistenceException | ScmCommunicationException e) {
+    } catch (IOException e) {
       throw new ServerException(e.getLocalizedMessage(), e);
-    } catch (ScmUnauthorizedException e) {
-      throwUnauthorizedException(subject);
     }
-    return null;
-  }
-
-  private void throwUnauthorizedException(Subject subject) throws UnauthorizedException {
-    throw new UnauthorizedException(
-        "OAuth token for user " + subject.getUserId() + " was not found");
   }
 
   @Override

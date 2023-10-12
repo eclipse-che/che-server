@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
@@ -125,11 +126,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                                       '/'))
                           && personalAccessToken
                               .getCheUserId()
-                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID))
-                          && personalAccessToken
-                              .getScmUserName()
-                              .equals(
-                                  s.getMetadata().getAnnotations().get(ANNOTATION_SCM_USERNAME)))
+                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID)))
               .findFirst();
 
       Secret secret =
@@ -137,7 +134,6 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
               () -> {
                 Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
                 annotations.put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl());
-                annotations.put(ANNOTATION_SCM_USERNAME, personalAccessToken.getScmUserName());
                 annotations.put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId());
                 ObjectMeta meta =
                     new ObjectMetaBuilder()
@@ -156,9 +152,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                       format(
                               "%s://%s:%s@%s%s",
                               scmUrl.getProtocol(),
-                              personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
-                                  ? "oauth2"
-                                  : personalAccessToken.getScmUserName(),
+                              getUsernameSegment(personalAccessToken),
                               URLEncoder.encode(personalAccessToken.getToken(), UTF_8),
                               scmUrl.getHost(),
                               scmUrl.getPort() != 80 && scmUrl.getPort() != -1
@@ -169,6 +163,21 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
     } catch (InfrastructureException | MalformedURLException e) {
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
+  }
+
+  /**
+   * Returns username URL segment for git credentials. For OAuth2 tokens it is "oauth2", for others
+   * - {@param personalAccessToken#getScmUserName()} or just "username" string if the token has a
+   * non-null {@param personalAccessToken#getScmOrganization()}. This is needed to support providers
+   * that do not have username in their user object. Such providers have an additional organization
+   * field.
+   */
+  private String getUsernameSegment(PersonalAccessToken personalAccessToken) {
+    return personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
+        ? "oauth2"
+        : isNullOrEmpty(personalAccessToken.getScmOrganization())
+            ? personalAccessToken.getScmUserName()
+            : "username";
   }
 
   /**

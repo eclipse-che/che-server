@@ -20,6 +20,7 @@ import static org.eclipse.che.api.factory.server.github.GithubApiClient.GITHUB_S
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import jakarta.validation.constraints.NotNull;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -63,6 +64,8 @@ public class GithubURLParser {
    */
   private final Pattern githubPattern;
 
+  private final Pattern githubSSHPattern;
+
   private final boolean disableSubdomainIsolation;
 
   @Inject
@@ -101,10 +104,14 @@ public class GithubURLParser {
             format(
                 "^%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>.++))|(/pull/(?<pullRequestId>\\d++)))?$",
                 endpoint));
+    this.githubSSHPattern =
+        compile(format("^git@%s:(?<repoUser>.*)/(?<repoName>.*)$", URI.create(endpoint).getHost()));
   }
 
   public boolean isValid(@NotNull String url) {
-    return githubPattern.matcher(trimEnd(url, '/')).matches();
+    String trimmedUrl = trimEnd(url, '/');
+    return githubPattern.matcher(trimmedUrl).matches()
+        || githubSSHPattern.matcher(trimmedUrl).matches();
   }
 
   public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
@@ -116,13 +123,11 @@ public class GithubURLParser {
   }
 
   private GithubUrl parse(String url, boolean authenticationRequired) throws ApiException {
-    // Apply github url to the regexp
-    Matcher matcher = githubPattern.matcher(url);
+    boolean isHTTPSUrl = githubPattern.matcher(url).matches();
+    Matcher matcher = isHTTPSUrl ? githubPattern.matcher(url) : githubSSHPattern.matcher(url);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
-          format(
-              "The given github url %s is not a valid URL github url. It should start with https://github.com/<user>/<repo>",
-              url));
+          format("The given url %s is not a valid github URL. ", url));
     }
 
     String serverUrl =
@@ -135,9 +140,12 @@ public class GithubURLParser {
       repoName = repoName.substring(0, repoName.length() - 4);
     }
 
-    String branchName = matcher.group("branchName");
-
-    String pullRequestId = matcher.group("pullRequestId");
+    String branchName = null;
+    String pullRequestId = null;
+    if (isHTTPSUrl) {
+      branchName = matcher.group("branchName");
+      pullRequestId = matcher.group("pullRequestId");
+    }
 
     if (pullRequestId != null) {
       GithubPullRequest pullRequest =
@@ -169,6 +177,7 @@ public class GithubURLParser {
     return new GithubUrl()
         .withUsername(repoUser)
         .withRepository(repoName)
+        .setIsHTTPSUrl(isHTTPSUrl)
         .withServerUrl(serverUrl)
         .withDisableSubdomainIsolation(disableSubdomainIsolation)
         .withBranch(branchName)

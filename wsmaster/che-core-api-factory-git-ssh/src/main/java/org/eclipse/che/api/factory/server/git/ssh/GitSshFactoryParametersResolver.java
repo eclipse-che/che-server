@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.git.ssh;
 
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
@@ -20,7 +21,8 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.FactoryResolverPriority;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -39,10 +41,12 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  * @author Anatolii Bazko
  */
 @Singleton
-public class GitSshFactoryParametersResolver extends RawDevfileUrlFactoryParameterResolver {
+public class GitSshFactoryParametersResolver implements FactoryParametersResolver {
 
   private final GitSshURLParser gitSshURLParser;
 
+  private final URLFetcher urlFetcher;
+  private final URLFactoryBuilder urlFactoryBuilder;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
@@ -51,8 +55,9 @@ public class GitSshFactoryParametersResolver extends RawDevfileUrlFactoryParamet
       URLFetcher urlFetcher,
       URLFactoryBuilder urlFactoryBuilder,
       PersonalAccessTokenManager personalAccessTokenManager) {
-    super(urlFactoryBuilder, urlFetcher);
     this.gitSshURLParser = gitSshURLParser;
+    this.urlFetcher = urlFetcher;
+    this.urlFactoryBuilder = urlFactoryBuilder;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -125,5 +130,10 @@ public class GitSshFactoryParametersResolver extends RawDevfileUrlFactoryParamet
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) {
     return gitSshURLParser.parse(factoryUrl);
+  }
+
+  @Override
+  public FactoryResolverPriority priority() {
+    return LOWEST;
   }
 }

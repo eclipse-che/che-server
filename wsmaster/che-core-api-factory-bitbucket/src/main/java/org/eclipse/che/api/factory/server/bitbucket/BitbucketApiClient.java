@@ -37,6 +37,7 @@ import java.util.function.Function;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +109,9 @@ public class BitbucketApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), BitbucketUser.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, BitbucketUser.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -154,7 +157,9 @@ public class BitbucketApiClient {
         request,
         response -> {
           try {
-            return OBJECT_MAPPER.readValue(response.body(), BitbucketUserEmail.class);
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            return OBJECT_MAPPER.readValue(result, BitbucketUserEmail.class);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }
@@ -162,15 +167,13 @@ public class BitbucketApiClient {
   }
 
   /**
-   * Returns the scopes of the OAuth token.
+   * Returns a pair of the username and array of scopes of the OAuth token.
    *
    * @param authenticationToken The OAuth token to inspect.
-   * @return Array of scopes from the supplied token, empty array if no scope.
-   * @throws ScmItemNotFoundException
-   * @throws ScmCommunicationException
-   * @throws ScmBadRequestException
+   * @return A pair of the username and array of scopes from the supplied token, empty array if no
+   *     scopes.
    */
-  public String[] getTokenScopes(String authenticationToken)
+  public Pair<String, String[]> getTokenScopes(String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
     final URI uri = apiServerUrl.resolve("user");
     HttpRequest request = buildBitbucketApiRequest(uri, authenticationToken);
@@ -179,12 +182,22 @@ public class BitbucketApiClient {
         httpClient,
         request,
         response -> {
-          Optional<String> scopes = response.headers().firstValue(BITBUCKET_OAUTH_SCOPES_HEADER);
-          return Splitter.on(',')
-              .trimResults()
-              .omitEmptyStrings()
-              .splitToList(scopes.orElse(""))
-              .toArray(String[]::new);
+          try {
+            String result =
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+            BitbucketUser user = OBJECT_MAPPER.readValue(result, BitbucketUser.class);
+            Optional<String> responseScopes =
+                response.headers().firstValue(BITBUCKET_OAUTH_SCOPES_HEADER);
+            String[] scopes =
+                Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .splitToList(responseScopes.orElse(""))
+                    .toArray(String[]::new);
+            return Pair.of(user.getName(), scopes);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
         });
   }
 

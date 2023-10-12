@@ -36,6 +36,7 @@ import org.eclipse.che.api.factory.server.FactoryAcceptValidator;
 import org.eclipse.che.api.factory.server.FactoryCreateValidator;
 import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
 import org.eclipse.che.api.factory.server.ScmService;
 import org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsFactoryParametersResolver;
@@ -177,6 +178,9 @@ public class WsMasterModule extends AbstractModule {
     factoryParametersResolverMultibinder
         .addBinding()
         .to(AzureDevOpsFactoryParametersResolver.class);
+    factoryParametersResolverMultibinder
+        .addBinding()
+        .to(RawDevfileUrlFactoryParameterResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(GitSshFactoryParametersResolver.class);
 
     Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =

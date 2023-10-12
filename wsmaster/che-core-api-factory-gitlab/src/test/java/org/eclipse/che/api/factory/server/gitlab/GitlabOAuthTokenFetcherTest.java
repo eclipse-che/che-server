@@ -27,11 +27,14 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
+import java.util.Optional;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.inject.ConfigurationException;
@@ -72,7 +75,7 @@ public class GitlabOAuthTokenFetcherTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "Current token doesn't have the necessary  privileges. Please make sure Che app scopes are correct and containing at least: \\[api, write_repository, openid\\]")
+          "Current token doesn't have the necessary  privileges. Please make sure Che app scopes are correct and containing at least: \\[api, write_repository\\]")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("oauthtoken").withScope("api repo");
@@ -157,7 +160,7 @@ public class GitlabOAuthTokenFetcherTest {
   }
 
   @Test
-  public void shouldValidatePersonalToken() throws Exception {
+  public void shouldValidateOAuthToken() throws Exception {
     stubFor(
         get(urlEqualTo("/api/v4/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token123"))
@@ -165,16 +168,21 @@ public class GitlabOAuthTokenFetcherTest {
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("gitlab/rest/api/v4/user/response.json")));
+    stubFor(
+        get(urlEqualTo("/oauth/token/info"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token123"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("gitlab/rest/api/v4/user/token_info.json")));
 
-    PersonalAccessToken token =
-        new PersonalAccessToken(
-            wireMockServer.baseUrl(),
-            "cheUser",
-            "john_smith",
-            "token-name",
-            "tid-23434",
-            "token123");
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
+            wireMockServer.baseUrl(), "oauth2-token-name", "tid-23434", "token123", null);
 
-    assertTrue(oAuthTokenFetcher.isValid(token).get());
+    Optional<Pair<Boolean, String>> valid = oAuthTokenFetcher.isValid(params);
+
+    assertTrue(valid.isPresent());
+    assertTrue(valid.get().first);
   }
 }

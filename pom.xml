@@ -147,7 +147,7 @@
         <org.flyway.version>4.2.0</org.flyway.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
         <org.javassist.version>3.29.2-GA</org.javassist.version>
-        <org.jgroups.kubernetes.version>2.0.1.Final</org.jgroups.kubernetes.version>
+        <org.jgroups.kubernetes.version>2.0.1.Final</org.jgroups.kubernetes.version>#
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
         <org.mockito.mockito-testng.version>0.4.13</org.mockito.mockito-testng.version>

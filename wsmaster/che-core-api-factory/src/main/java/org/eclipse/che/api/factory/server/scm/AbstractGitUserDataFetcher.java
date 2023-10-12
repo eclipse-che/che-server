@@ -17,6 +17,7 @@ import org.eclipse.che.api.core.*;
 import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.security.oauth.OAuthAPI;
 
 /**
  * Abstraction to fetch git user data from the specific git provider using OAuth 2.0 or personal
@@ -27,12 +28,12 @@ import org.eclipse.che.commons.subject.Subject;
 public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
   protected final String oAuthProviderName;
   protected final PersonalAccessTokenManager personalAccessTokenManager;
-  protected final OAuthTokenFetcher oAuthTokenFetcher;
+  protected final OAuthAPI oAuthTokenFetcher;
 
   public AbstractGitUserDataFetcher(
       String oAuthProviderName,
       PersonalAccessTokenManager personalAccessTokenManager,
-      OAuthTokenFetcher oAuthTokenFetcher) {
+      OAuthAPI oAuthTokenFetcher) {
     this.oAuthProviderName = oAuthProviderName;
     this.personalAccessTokenManager = personalAccessTokenManager;
     this.oAuthTokenFetcher = oAuthTokenFetcher;

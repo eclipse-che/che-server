@@ -32,6 +32,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,6 +63,7 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.dto.server.DtoFactory;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.core.Filter;
 import org.everrest.core.GenericContainerRequest;
@@ -99,6 +101,7 @@ public class FactoryServiceTest {
   @Mock private AdditionalFilenamesProvider additionalFilenamesProvider;
   @Mock private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private AuthorisationRequestManager authorisationRequestManager;
 
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
   private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
@@ -136,7 +139,8 @@ public class FactoryServiceTest {
             acceptValidator,
             factoryParametersResolverHolder,
             additionalFilenamesProvider,
-            personalAccessTokenManager);
+            personalAccessTokenManager,
+            authorisationRequestManager);
   }
 
   @Filter
@@ -157,7 +161,11 @@ public class FactoryServiceTest {
     // service instance with dummy holder
     service =
         new FactoryService(
-            acceptValidator, dummyHolder, additionalFilenamesProvider, personalAccessTokenManager);
+            acceptValidator,
+            dummyHolder,
+            additionalFilenamesProvider,
+            personalAccessTokenManager,
+            authorisationRequestManager);
 
     // when
     final Map<String, String> map = new HashMap<>();
@@ -184,7 +192,11 @@ public class FactoryServiceTest {
     // service instance with dummy holder
     service =
         new FactoryService(
-            acceptValidator, dummyHolder, additionalFilenamesProvider, personalAccessTokenManager);
+            acceptValidator,
+            dummyHolder,
+            additionalFilenamesProvider,
+            personalAccessTokenManager,
+            authorisationRequestManager);
 
     // invalid factory
     final String invalidFactoryMessage = "invalid factory";
@@ -232,7 +244,11 @@ public class FactoryServiceTest {
     doReturn(factoryParametersResolver).when(dummyHolder).getFactoryParametersResolver(anyMap());
     service =
         new FactoryService(
-            acceptValidator, dummyHolder, additionalFilenamesProvider, personalAccessTokenManager);
+            acceptValidator,
+            dummyHolder,
+            additionalFilenamesProvider,
+            personalAccessTokenManager,
+            authorisationRequestManager);
 
     // when
     given()
@@ -246,13 +262,40 @@ public class FactoryServiceTest {
   }
 
   @Test
+  public void shouldNotRefreshTokenIfAuthorisationRejected() throws Exception {
+    // given
+    final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
+    FactoryParametersResolver factoryParametersResolver = mock(FactoryParametersResolver.class);
+    doReturn(factoryParametersResolver).when(dummyHolder).getFactoryParametersResolver(anyMap());
+    when(authorisationRequestManager.isStored(any())).thenReturn(true);
+    service =
+        new FactoryService(
+            acceptValidator,
+            dummyHolder,
+            additionalFilenamesProvider,
+            personalAccessTokenManager,
+            authorisationRequestManager);
+
+    // when
+    given()
+        .contentType(ContentType.JSON)
+        .when()
+        .queryParam("url", "someUrl")
+        .post(SERVICE_PATH + "/token/refresh");
+
+    // then
+    verify(personalAccessTokenManager, never()).getAndStore(eq("hostName"));
+  }
+
+  @Test
   public void shouldThrowBadRequestWhenRefreshTokenWithoutUrl() throws Exception {
     service =
         new FactoryService(
             acceptValidator,
             factoryParametersResolverHolder,
             additionalFilenamesProvider,
-            personalAccessTokenManager);
+            personalAccessTokenManager,
+            authorisationRequestManager);
 
     // when
     final Response response =

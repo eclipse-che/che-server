@@ -21,6 +21,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.FactoryResolverPriority;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
@@ -34,6 +35,7 @@ import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for Git Ssh repositories.
@@ -41,7 +43,10 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  * @author Anatolii Bazko
  */
 @Singleton
-public class GitSshFactoryParametersResolver implements FactoryParametersResolver {
+public class GitSshFactoryParametersResolver extends BaseFactoryParameterResolver
+    implements FactoryParametersResolver {
+
+  private static final String PROVIDER_NAME = "git-ssh";
 
   private final GitSshURLParser gitSshURLParser;
 
@@ -54,7 +59,9 @@ public class GitSshFactoryParametersResolver implements FactoryParametersResolve
       GitSshURLParser gitSshURLParser,
       URLFetcher urlFetcher,
       URLFactoryBuilder urlFactoryBuilder,
-      PersonalAccessTokenManager personalAccessTokenManager) {
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
+    super(authorisationRequestManager, urlFactoryBuilder, PROVIDER_NAME);
     this.gitSshURLParser = gitSshURLParser;
     this.urlFetcher = urlFetcher;
     this.urlFactoryBuilder = urlFactoryBuilder;
@@ -65,6 +72,11 @@ public class GitSshFactoryParametersResolver implements FactoryParametersResolve
   public boolean accept(@NotNull final Map<String, String> factoryParameters) {
     return factoryParameters.containsKey(URL_PARAMETER_NAME)
         && gitSshURLParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
+  }
+
+  @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
   }
 
   @Override

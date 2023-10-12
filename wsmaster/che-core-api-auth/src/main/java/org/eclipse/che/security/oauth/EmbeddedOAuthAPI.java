@@ -40,7 +40,6 @@ import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
-import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
@@ -54,7 +53,7 @@ import org.slf4j.LoggerFactory;
  * @author Mykhailo Kuznietsov
  */
 @Singleton
-public class EmbeddedOAuthAPI implements OAuthAPI, OAuthTokenFetcher {
+public class EmbeddedOAuthAPI implements OAuthAPI {
   private static final Logger LOG = LoggerFactory.getLogger(EmbeddedOAuthAPI.class);
 
   @Inject

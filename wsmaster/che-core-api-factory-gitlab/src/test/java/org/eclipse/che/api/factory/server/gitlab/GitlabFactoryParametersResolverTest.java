@@ -45,6 +45,7 @@ import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -68,6 +69,8 @@ public class GitlabFactoryParametersResolverTest {
   GitlabUrlParser gitlabUrlParser;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
+  @Mock private AuthorisationRequestManager authorisationRequestManager;
+
   private GitlabFactoryParametersResolver gitlabFactoryParametersResolver;
 
   @BeforeMethod
@@ -80,7 +83,11 @@ public class GitlabFactoryParametersResolverTest {
     assertNotNull(this.gitlabUrlParser);
     gitlabFactoryParametersResolver =
         new GitlabFactoryParametersResolver(
-            urlFactoryBuilder, urlFetcher, gitlabUrlParser, personalAccessTokenManager);
+            urlFactoryBuilder,
+            urlFetcher,
+            gitlabUrlParser,
+            personalAccessTokenManager,
+            authorisationRequestManager);
     assertNotNull(this.gitlabFactoryParametersResolver);
   }
 

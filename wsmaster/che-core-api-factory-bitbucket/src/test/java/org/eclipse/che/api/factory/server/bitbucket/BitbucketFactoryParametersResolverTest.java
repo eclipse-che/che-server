@@ -49,6 +49,7 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -65,6 +66,8 @@ public class BitbucketFactoryParametersResolverTest {
   @Mock private URLFetcher urlFetcher;
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
+
+  @Mock private AuthorisationRequestManager authorisationRequestManager;
 
   /** Parser which will allow to check validity of URLs and create objects. */
   private BitbucketURLParser bitbucketURLParser;
@@ -104,7 +107,8 @@ public class BitbucketFactoryParametersResolverTest {
             urlFactoryBuilder,
             projectConfigDtoMerger,
             personalAccessTokenManager,
-            bitbucketApiClient);
+            bitbucketApiClient,
+            authorisationRequestManager);
     assertNotNull(this.bitbucketFactoryParametersResolver);
   }
 

@@ -19,13 +19,13 @@ import javax.inject.Named;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.AbstractGitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
-import org.eclipse.che.api.factory.server.scm.OAuthTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** GitHub user data retriever. */
 public class GithubUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -44,7 +44,7 @@ public class GithubUserDataFetcher extends AbstractGitUserDataFetcher {
   public GithubUserDataFetcher(
       @Named("che.api") String apiEndpoint,
       @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
-      OAuthTokenFetcher oAuthTokenFetcher,
+      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager) {
     this(
         apiEndpoint,
@@ -56,7 +56,7 @@ public class GithubUserDataFetcher extends AbstractGitUserDataFetcher {
   /** Constructor used for testing only. */
   public GithubUserDataFetcher(
       String apiEndpoint,
-      OAuthTokenFetcher oAuthTokenFetcher,
+      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager,
       GithubApiClient githubApiClient) {
     super(OAUTH_PROVIDER_NAME, personalAccessTokenManager, oAuthTokenFetcher);

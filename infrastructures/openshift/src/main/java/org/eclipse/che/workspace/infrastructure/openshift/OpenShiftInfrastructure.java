@@ -43,7 +43,6 @@ public class OpenShiftInfrastructure extends RuntimeInfrastructure {
   private final OpenShiftRuntimeContextFactory runtimeContextFactory;
   private final KubernetesRuntimeStateCache runtimeStatusesCache;
   private final OpenShiftProjectFactory projectFactory;
-  private final OpenShiftClientFactory openShiftClientFactory;
 
   @Inject
   public OpenShiftInfrastructure(
@@ -51,8 +50,7 @@ public class OpenShiftInfrastructure extends RuntimeInfrastructure {
       OpenShiftRuntimeContextFactory runtimeContextFactory,
       Set<InternalEnvironmentProvisioner> internalEnvProvisioners,
       KubernetesRuntimeStateCache runtimeStatusesCache,
-      OpenShiftProjectFactory projectFactory,
-      OpenShiftClientFactory openShiftClientFactory) {
+      OpenShiftProjectFactory projectFactory) {
     super(
         NAME,
         ImmutableSet.of(
@@ -64,7 +62,6 @@ public class OpenShiftInfrastructure extends RuntimeInfrastructure {
     this.runtimeContextFactory = runtimeContextFactory;
     this.runtimeStatusesCache = runtimeStatusesCache;
     this.projectFactory = projectFactory;
-    this.openShiftClientFactory = openShiftClientFactory;
   }
 
   @Override

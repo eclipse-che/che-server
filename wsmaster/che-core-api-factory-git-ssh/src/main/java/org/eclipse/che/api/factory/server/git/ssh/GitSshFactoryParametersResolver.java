@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.git.ssh;
 
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
@@ -20,7 +21,9 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.FactoryResolverPriority;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -32,6 +35,7 @@ import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for Git Ssh repositories.
@@ -39,10 +43,15 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  * @author Anatolii Bazko
  */
 @Singleton
-public class GitSshFactoryParametersResolver extends DefaultFactoryParameterResolver {
+public class GitSshFactoryParametersResolver extends BaseFactoryParameterResolver
+    implements FactoryParametersResolver {
+
+  private static final String PROVIDER_NAME = "git-ssh";
 
   private final GitSshURLParser gitSshURLParser;
 
+  private final URLFetcher urlFetcher;
+  private final URLFactoryBuilder urlFactoryBuilder;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   @Inject
@@ -50,9 +59,12 @@ public class GitSshFactoryParametersResolver extends DefaultFactoryParameterReso
       GitSshURLParser gitSshURLParser,
       URLFetcher urlFetcher,
       URLFactoryBuilder urlFactoryBuilder,
-      PersonalAccessTokenManager personalAccessTokenManager) {
-    super(urlFactoryBuilder, urlFetcher);
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
+    super(authorisationRequestManager, urlFactoryBuilder, PROVIDER_NAME);
     this.gitSshURLParser = gitSshURLParser;
+    this.urlFetcher = urlFetcher;
+    this.urlFactoryBuilder = urlFactoryBuilder;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -60,6 +72,11 @@ public class GitSshFactoryParametersResolver extends DefaultFactoryParameterReso
   public boolean accept(@NotNull final Map<String, String> factoryParameters) {
     return factoryParameters.containsKey(URL_PARAMETER_NAME)
         && gitSshURLParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
+  }
+
+  @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
   }
 
   @Override
@@ -125,5 +142,10 @@ public class GitSshFactoryParametersResolver extends DefaultFactoryParameterReso
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) {
     return gitSshURLParser.parse(factoryUrl);
+  }
+
+  @Override
+  public FactoryResolverPriority priority() {
+    return LOWEST;
   }
 }

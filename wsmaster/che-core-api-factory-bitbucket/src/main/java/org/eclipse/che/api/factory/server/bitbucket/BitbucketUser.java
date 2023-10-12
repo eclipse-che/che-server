@@ -13,12 +13,15 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
+import com.google.common.base.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BitbucketUser {
   private String name;
   private String id;
+
+  @JsonProperty("display_name")
+  private String displayName;
 
   public String getName() {
     return name;
@@ -38,21 +41,41 @@ public class BitbucketUser {
     this.id = id;
   }
 
+  public String getDisplayName() {
+    return displayName;
+  }
+
+  public void setDisplayName(String displayName) {
+    this.displayName = displayName;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     BitbucketUser that = (BitbucketUser) o;
-    return Objects.equals(name, that.name) && Objects.equals(id, that.id);
+    return Objects.equal(name, that.name)
+        && Objects.equal(id, that.id)
+        && Objects.equal(displayName, that.displayName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, id);
+    return Objects.hashCode(name, id, displayName);
   }
 
   @Override
   public String toString() {
-    return "BitbucketUser{" + "name='" + name + '\'' + ", id='" + id + '\'' + '}';
+    return "BitbucketUser{"
+        + "name='"
+        + name
+        + '\''
+        + ", id='"
+        + id
+        + '\''
+        + ", displayName='"
+        + displayName
+        + '\''
+        + '}';
   }
 }

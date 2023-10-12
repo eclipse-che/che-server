@@ -11,8 +11,9 @@
  */
 package org.eclipse.che.api.factory.server;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toMap;
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
 import jakarta.validation.constraints.NotNull;
@@ -20,14 +21,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
@@ -36,25 +31,23 @@ import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 
 /**
- * Default {@link FactoryParametersResolver} implementation. Tries to resolve factory based on
- * provided parameters. Presumes url parameter as direct URL to a devfile content. Extracts and
- * applies devfile values override parameters.
+ * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a
+ * direct URL to a devfile content. Extracts and applies devfile values override parameters.
  */
-@Singleton
-public class DefaultFactoryParameterResolver implements FactoryParametersResolver {
+public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterResolver
+    implements FactoryParametersResolver {
 
-  private static final String OVERRIDE_PREFIX = "override.";
+  private static final String PROVIDER_NAME = "raw-devfile-url";
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
 
   @Inject
-  public DefaultFactoryParameterResolver(
+  public RawDevfileUrlFactoryParameterResolver(
       URLFactoryBuilder urlFactoryBuilder, URLFetcher urlFetcher) {
+    super(null, urlFactoryBuilder, PROVIDER_NAME);
     this.urlFactoryBuilder = urlFactoryBuilder;
     this.urlFetcher = urlFetcher;
   }
@@ -69,7 +62,12 @@ public class DefaultFactoryParameterResolver implements FactoryParametersResolve
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return url != null && !url.isEmpty();
+    return !isNullOrEmpty(url) && (url.endsWith(".yaml") || url.endsWith(".yml"));
+  }
+
+  @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
   }
 
   /**
@@ -109,36 +107,8 @@ public class DefaultFactoryParameterResolver implements FactoryParametersResolve
     throw new ApiException("Operation is not supported");
   }
 
-  /**
-   * Finds and returns devfile override parameters in general factory parameters map.
-   *
-   * @param factoryParameters map containing factory data parameters provided through URL
-   * @return filtered devfile values override map
-   */
-  protected Map<String, String> extractOverrideParams(Map<String, String> factoryParameters) {
-    return factoryParameters.entrySet().stream()
-        .filter(e -> e.getKey().startsWith(OVERRIDE_PREFIX))
-        .collect(toMap(e -> e.getKey().substring(OVERRIDE_PREFIX.length()), Entry::getValue));
-  }
-
-  /**
-   * If devfile has no projects, put there one provided by given `projectSupplier`. Otherwise update
-   * all projects with given `projectModifier`.
-   *
-   * @param devfile of the projects to update
-   * @param projectSupplier provides default project
-   * @param projectModifier updates existing projects
-   */
-  protected void updateProjects(
-      DevfileDto devfile,
-      Supplier<ProjectDto> projectSupplier,
-      Consumer<ProjectDto> projectModifier) {
-    List<ProjectDto> projects = devfile.getProjects();
-    if (projects.isEmpty()) {
-      devfile.setProjects(Collections.singletonList(projectSupplier.get()));
-    } else {
-      // update existing project with same repository, set current branch if needed
-      projects.forEach(projectModifier);
-    }
+  @Override
+  public FactoryResolverPriority priority() {
+    return HIGHEST;
   }
 }

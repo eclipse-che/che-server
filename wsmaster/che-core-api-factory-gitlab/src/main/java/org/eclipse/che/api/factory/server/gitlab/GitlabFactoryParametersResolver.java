@@ -11,10 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
-import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -22,7 +20,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -34,6 +33,7 @@ import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for Gitlab repositories.
@@ -41,8 +41,13 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  * @author Max Shaposhnyk
  */
 @Singleton
-public class GitlabFactoryParametersResolver extends DefaultFactoryParameterResolver {
+public class GitlabFactoryParametersResolver extends BaseFactoryParameterResolver
+    implements FactoryParametersResolver {
 
+  private static final String PROVIDER_NAME = "gitlab";
+
+  private final URLFactoryBuilder urlFactoryBuilder;
+  private final URLFetcher urlFetcher;
   private final GitlabUrlParser gitlabURLParser;
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
@@ -51,8 +56,11 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
       URLFactoryBuilder urlFactoryBuilder,
       URLFetcher urlFetcher,
       GitlabUrlParser gitlabURLParser,
-      PersonalAccessTokenManager personalAccessTokenManager) {
-    super(urlFactoryBuilder, urlFetcher);
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
+    super(authorisationRequestManager, urlFactoryBuilder, PROVIDER_NAME);
+    this.urlFactoryBuilder = urlFactoryBuilder;
+    this.urlFetcher = urlFetcher;
     this.gitlabURLParser = gitlabURLParser;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
@@ -70,6 +78,11 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
         && gitlabURLParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
   }
 
+  @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
+  }
+
   /**
    * Create factory object based on provided parameters
    *
@@ -81,19 +94,13 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
       throws ApiException {
     // no need to check null value of url parameter as accept() method has performed the check
     final GitlabUrl gitlabUrl = gitlabURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
-    boolean skipAuthentication =
-        factoryParameters.get(ERROR_QUERY_NAME) != null
-            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
     // create factory from the following location if location exists, else create default factory
-    return urlFactoryBuilder
-        .createFactoryFromDevfile(
-            gitlabUrl,
-            new GitlabAuthorizingFileContentProvider(
-                gitlabUrl, urlFetcher, personalAccessTokenManager),
-            extractOverrideParams(factoryParameters),
-            skipAuthentication)
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
-        .acceptVisitor(new GitlabFactoryVisitor(gitlabUrl));
+    return createFactory(
+        factoryParameters,
+        gitlabUrl,
+        new GitlabFactoryVisitor(gitlabUrl),
+        new GitlabAuthorizingFileContentProvider(
+            gitlabUrl, urlFetcher, personalAccessTokenManager));
   }
 
   /**
@@ -136,8 +143,7 @@ public class GitlabFactoryParametersResolver extends DefaultFactoryParameterReso
                       newDto(SourceDto.class)
                           .withLocation(gitlabUrl.repositoryLocation())
                           .withType("git")
-                          .withBranch(gitlabUrl.getBranch())
-                          .withSparseCheckoutDir(gitlabUrl.getSubfolder()))
+                          .withBranch(gitlabUrl.getBranch()))
                   .withName(gitlabUrl.getProject()),
           project -> {
             final String location = project.getSource().getLocation();

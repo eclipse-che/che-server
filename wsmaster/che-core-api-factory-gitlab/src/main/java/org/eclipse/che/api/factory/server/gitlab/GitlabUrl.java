@@ -11,10 +11,10 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.net.URLEncoder.encode;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +37,9 @@ public class GitlabUrl extends DefaultFactoryUrl {
   /** Hostname of the gitlab URL */
   private String hostName;
 
+  /** Scheme of the gitlab URL */
+  private String scheme;
+
   /** Project part of the gitlab URL */
   private String project;
 
@@ -48,9 +51,6 @@ public class GitlabUrl extends DefaultFactoryUrl {
 
   /** Branch name */
   private String branch;
-
-  /** Subfolder if any */
-  private String subfolder;
 
   /** Devfile filenames list */
   private final List<String> devfileFilenames = new ArrayList<>();
@@ -66,6 +66,11 @@ public class GitlabUrl extends DefaultFactoryUrl {
     return NAME;
   }
 
+  @Override
+  public String getProviderUrl() {
+    return (isNullOrEmpty(scheme) ? "https" : scheme) + "://" + hostName;
+  }
+
   /**
    * Gets hostname of this gitlab url
    *
@@ -77,6 +82,11 @@ public class GitlabUrl extends DefaultFactoryUrl {
 
   public GitlabUrl withHostName(String hostName) {
     this.hostName = hostName;
+    return this;
+  }
+
+  public GitlabUrl withScheme(String scheme) {
+    this.scheme = scheme;
     return this;
   }
 
@@ -123,29 +133,9 @@ public class GitlabUrl extends DefaultFactoryUrl {
   }
 
   protected GitlabUrl withBranch(String branch) {
-    if (!Strings.isNullOrEmpty(branch)) {
+    if (!isNullOrEmpty(branch)) {
       this.branch = branch;
     }
-    return this;
-  }
-
-  /**
-   * Gets subfolder of this gitlab url
-   *
-   * @return the subfolder part
-   */
-  public String getSubfolder() {
-    return this.subfolder;
-  }
-
-  /**
-   * Sets the subfolder represented by the URL.
-   *
-   * @param subfolder path inside the repository
-   * @return current gitlab URL instance
-   */
-  protected GitlabUrl withSubfolder(String subfolder) {
-    this.subfolder = subfolder;
     return this;
   }
 
@@ -181,18 +171,15 @@ public class GitlabUrl extends DefaultFactoryUrl {
   public String rawFileLocation(String fileName) {
     String resultUrl =
         new StringJoiner("/")
-            .add(hostName)
+            .add((isNullOrEmpty(scheme) ? "https" : scheme) + "://" + hostName)
             .add("api/v4/projects")
             // use URL-encoded path to the project as a selector instead of id
             .add(encode(subGroups, Charsets.UTF_8))
             .add("repository")
             .add("files")
             .add(encode(fileName, Charsets.UTF_8))
-            .add("raw")
+            .add("raw?ref=" + (isNullOrEmpty(branch) ? "HEAD" : branch))
             .toString();
-    if (branch != null) {
-      resultUrl = resultUrl + "?ref=" + branch;
-    }
 
     return resultUrl;
   }
@@ -203,6 +190,9 @@ public class GitlabUrl extends DefaultFactoryUrl {
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    return hostName + "/" + subGroups + ".git";
+    if (isNullOrEmpty(scheme)) {
+      return "git@" + hostName + ":" + subGroups + ".git";
+    }
+    return scheme + "://" + hostName + "/" + subGroups + ".git";
   }
 }

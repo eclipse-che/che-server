@@ -11,10 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
-import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -22,7 +20,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.factory.server.DefaultFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
+import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -31,10 +30,10 @@ import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
-import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for both public and private bitbucket repositories.
@@ -43,8 +42,12 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
  */
 @Singleton
 public class BitbucketServerAuthorizingFactoryParametersResolver
-    extends DefaultFactoryParameterResolver {
+    extends BaseFactoryParameterResolver implements FactoryParametersResolver {
 
+  private static final String PROVIDER_NAME = "bitbucket-server";
+
+  private final URLFactoryBuilder urlFactoryBuilder;
+  private final URLFetcher urlFetcher;
   /** Parser which will allow to check validity of URLs and create objects. */
   private final BitbucketServerURLParser bitbucketURLParser;
 
@@ -55,8 +58,11 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
       URLFactoryBuilder urlFactoryBuilder,
       URLFetcher urlFetcher,
       BitbucketServerURLParser bitbucketURLParser,
-      PersonalAccessTokenManager personalAccessTokenManager) {
-    super(urlFactoryBuilder, urlFetcher);
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
+    super(authorisationRequestManager, urlFactoryBuilder, PROVIDER_NAME);
+    this.urlFactoryBuilder = urlFactoryBuilder;
+    this.urlFetcher = urlFetcher;
     this.bitbucketURLParser = bitbucketURLParser;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
@@ -74,6 +80,11 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
         && bitbucketURLParser.isValid(factoryParameters.get(URL_PARAMETER_NAME));
   }
 
+  @Override
+  public String getProviderName() {
+    return PROVIDER_NAME;
+  }
+
   /**
    * Create factory object based on provided parameters
    *
@@ -87,23 +98,13 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
     // no need to check null value of url parameter as accept() method has performed the check
     final BitbucketServerUrl bitbucketServerUrl =
         bitbucketURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
-
-    final FileContentProvider fileContentProvider =
-        new BitbucketServerAuthorizingFileContentProvider(
-            bitbucketServerUrl, urlFetcher, personalAccessTokenManager);
-
-    boolean skipAuthentication =
-        factoryParameters.get(ERROR_QUERY_NAME) != null
-            && factoryParameters.get(ERROR_QUERY_NAME).equals("access_denied");
     // create factory from the following location if location exists, else create default factory
-    return urlFactoryBuilder
-        .createFactoryFromDevfile(
-            bitbucketServerUrl,
-            fileContentProvider,
-            extractOverrideParams(factoryParameters),
-            skipAuthentication)
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
-        .acceptVisitor(new BitbucketFactoryVisitor(bitbucketServerUrl));
+    return createFactory(
+        factoryParameters,
+        bitbucketServerUrl,
+        new BitbucketFactoryVisitor(bitbucketServerUrl),
+        new BitbucketServerAuthorizingFileContentProvider(
+            bitbucketServerUrl, urlFetcher, personalAccessTokenManager));
   }
 
   /**

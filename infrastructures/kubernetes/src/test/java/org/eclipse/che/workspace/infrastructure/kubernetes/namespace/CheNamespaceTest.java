@@ -25,8 +25,8 @@ import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ConfigMapList;
+import io.fabric8.kubernetes.client.GracePeriodConfigurable;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.EditReplacePatchDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Arrays;
@@ -70,7 +70,7 @@ public class CheNamespaceTest {
   @Mock
   private MixedOperation<ConfigMap, ConfigMapList, Resource<ConfigMap>> kubeConfigMapsWithLabel;
 
-  @Mock private EditReplacePatchDeletable<ConfigMap> kubeConfigMapsWithPropagationPolicy;
+  @Mock private GracePeriodConfigurable gracePeriodConfigurable;
 
   @Mock private InternalRuntime internalRuntime;
 
@@ -237,12 +237,12 @@ public class CheNamespaceTest {
     when(kubeConfigMapsInNamespace.withLabel(CHE_WORKSPACE_ID_LABEL, WORKSPACE_ID))
         .thenReturn(kubeConfigMapsWithLabel);
     when(kubeConfigMapsWithLabel.withPropagationPolicy(BACKGROUND))
-        .thenReturn(kubeConfigMapsWithPropagationPolicy);
+        .thenReturn(gracePeriodConfigurable);
 
     // when
     cheNamespace.cleanUp(WORKSPACE_ID);
 
     // then
-    verify(kubeConfigMapsWithPropagationPolicy).delete();
+    verify(gracePeriodConfigurable).delete();
   }
 }

@@ -33,7 +33,10 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 
-/** Bitbucket user data retriever. */
+/**
+ * Bitbucket user data retriever. TODO: extends {@code AbstractGitUserDataFetcher} when we support
+ * personal access tokens for BitBucket.
+ */
 public class BitbucketUserDataFetcher implements GitUserDataFetcher {
   private final String apiEndpoint;
   private final OAuthAPI oAuthAPI;
@@ -70,7 +73,7 @@ public class BitbucketUserDataFetcher implements GitUserDataFetcher {
       BitbucketUserEmail emailResponse = bitbucketApiClient.getEmail(oAuthToken.getToken());
       String email =
           emailResponse.getValues().length > 0 ? emailResponse.getValues()[0].getEmail() : "";
-      return new GitUserData(user.getName(), email);
+      return new GitUserData(user.getDisplayName(), email);
     } catch (UnauthorizedException e) {
       Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
       throw new ScmUnauthorizedException(

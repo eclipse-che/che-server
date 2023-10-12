@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,6 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 
 /**
  * This {@link NamespaceConfigurator} ensures that User has assigned configured ClusterRoles from
@@ -37,13 +36,13 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
 public class UserPermissionConfigurator implements NamespaceConfigurator {
 
   private final Set<String> userClusterRoles;
-  private final KubernetesClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
   @Inject
   public UserPermissionConfigurator(
       @Nullable @Named("che.infra.kubernetes.user_cluster_roles") String userClusterRoles,
-      CheServerKubernetesClientFactory cheClientFactory) {
-    this.clientFactory = cheClientFactory;
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory) {
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     if (!isNullOrEmpty(userClusterRoles)) {
       this.userClusterRoles =
           Sets.newHashSet(
@@ -58,7 +57,7 @@ public class UserPermissionConfigurator implements NamespaceConfigurator {
       throws InfrastructureException {
     if (!userClusterRoles.isEmpty()) {
       bindRoles(
-          clientFactory.create(),
+          cheServerKubernetesClientFactory.create(),
           namespaceName,
           namespaceResolutionContext.getUserName(),
           userClusterRoles);

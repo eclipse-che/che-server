@@ -24,7 +24,6 @@ import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
  * @author Florent Benoit
  */
 public interface FactoryParametersResolver {
-
   /**
    * Resolver acceptance based on the given parameters.
    *
@@ -33,6 +32,9 @@ public interface FactoryParametersResolver {
    *     accepted
    */
   boolean accept(@NotNull Map<String, String> factoryParameters);
+
+  /** Returns the name of the provider */
+  String getProviderName();
 
   /**
    * Create factory object based on provided parameters
@@ -50,4 +52,10 @@ public interface FactoryParametersResolver {
    * @throws ApiException when authentication required operations fail
    */
   RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException;
+
+  /**
+   * Returns priority of the resolver. Resolvers with higher priority will be used among matched
+   * resolvers.
+   */
+  FactoryResolverPriority priority();
 }

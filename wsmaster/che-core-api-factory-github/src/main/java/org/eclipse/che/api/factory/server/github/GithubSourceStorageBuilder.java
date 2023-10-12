@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,7 +13,6 @@ package org.eclipse.che.api.factory.server.github;
 
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
-import com.google.common.base.Strings;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Singleton;
@@ -40,9 +39,6 @@ public class GithubSourceStorageBuilder {
     Map<String, String> parameters = new HashMap<>(2);
     parameters.put("branch", githubUrl.getBranch());
 
-    if (!Strings.isNullOrEmpty(githubUrl.getSubfolder())) {
-      parameters.put("keepDir", githubUrl.getSubfolder());
-    }
     return newDto(SourceStorageDto.class)
         .withLocation(githubUrl.repositoryLocation())
         .withType("github")
@@ -59,7 +55,6 @@ public class GithubSourceStorageBuilder {
     return newDto(SourceDto.class)
         .withLocation(githubUrl.repositoryLocation())
         .withType("github")
-        .withBranch(githubUrl.getBranch())
-        .withSparseCheckoutDir(githubUrl.getSubfolder());
+        .withBranch(githubUrl.getBranch());
   }
 }

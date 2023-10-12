@@ -97,6 +97,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  * @author Yevhenii Voevodin
  * @author Igor Vinokur
  */
+@Deprecated
 @Tag(name = "workspace", description = "Workspace REST API")
 @Path("/workspace")
 public class WorkspaceService extends Service {

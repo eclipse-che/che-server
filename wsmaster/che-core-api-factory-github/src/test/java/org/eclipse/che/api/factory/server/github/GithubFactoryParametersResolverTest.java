@@ -51,6 +51,7 @@ import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
+import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -88,6 +89,7 @@ public class GithubFactoryParametersResolverTest {
   private URLFactoryBuilder urlFactoryBuilder;
 
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private AuthorisationRequestManager authorisationRequestManager;
 
   /**
    * Capturing the location parameter when calling {@link
@@ -113,6 +115,7 @@ public class GithubFactoryParametersResolverTest {
             githubUrlParser,
             urlFetcher,
             githubSourceStorageBuilder,
+            authorisationRequestManager,
             urlFactoryBuilder,
             projectConfigDtoMerger,
             personalAccessTokenManager);
@@ -349,6 +352,50 @@ public class GithubFactoryParametersResolverTest {
             any(GithubAuthorizingFileContentProvider.class),
             anyMap(),
             eq(true));
+  }
+
+  @Test
+  public void shouldParseFactoryUrlWithAuthentication() throws Exception {
+    // given
+    githubUrlParser = mock(GithubURLParser.class);
+
+    githubFactoryParametersResolver =
+        new GithubFactoryParametersResolver(
+            githubUrlParser,
+            urlFetcher,
+            githubSourceStorageBuilder,
+            authorisationRequestManager,
+            urlFactoryBuilder,
+            projectConfigDtoMerger,
+            personalAccessTokenManager);
+    when(authorisationRequestManager.isStored(eq("github"))).thenReturn(true);
+    // when
+    githubFactoryParametersResolver.parseFactoryUrl("url");
+    // then
+    verify(githubUrlParser).parseWithoutAuthentication("url");
+    verify(githubUrlParser, never()).parse("url");
+  }
+
+  @Test
+  public void shouldParseFactoryUrlWithOutAuthentication() throws Exception {
+    // given
+    githubUrlParser = mock(GithubURLParser.class);
+
+    githubFactoryParametersResolver =
+        new GithubFactoryParametersResolver(
+            githubUrlParser,
+            urlFetcher,
+            githubSourceStorageBuilder,
+            authorisationRequestManager,
+            urlFactoryBuilder,
+            projectConfigDtoMerger,
+            personalAccessTokenManager);
+    when(authorisationRequestManager.isStored(eq("github"))).thenReturn(false);
+    // when
+    githubFactoryParametersResolver.parseFactoryUrl("url");
+    // then
+    verify(githubUrlParser).parse("url");
+    verify(githubUrlParser, never()).parseWithoutAuthentication("url");
   }
 
   private FactoryDto generateDevfileFactory() {

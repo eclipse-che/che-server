@@ -33,7 +33,6 @@ import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -60,8 +59,10 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   private static final Logger LOG = LoggerFactory.getLogger(OpenShiftProjectFactory.class);
 
   private final boolean initWithCheServerSa;
-  private final OpenShiftClientFactory clientFactory;
-  private final CheServerOpenshiftClientFactory cheOpenShiftClientFactory;
+  private final OpenShiftClientFactory openShiftClientFactory;
+  private final CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
+
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
   private final String oAuthIdentityProvider;
 
@@ -75,10 +76,9 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       @Named("che.infra.kubernetes.namespace.annotations") String projectAnnotations,
       @Named("che.infra.openshift.project.init_with_server_sa") boolean initWithCheServerSa,
       Set<NamespaceConfigurator> namespaceConfigurators,
-      OpenShiftClientFactory clientFactory,
-      CheServerKubernetesClientFactory cheClientFactory,
-      CheServerOpenshiftClientFactory cheOpenShiftClientFactory,
-      UserManager userManager,
+      OpenShiftClientFactory openShiftClientFactory,
+      CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
+      CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory,
       PreferenceManager preferenceManager,
       KubernetesSharedPool sharedPool,
       @Nullable @Named("che.infra.openshift.oauth_identity_provider")
@@ -91,14 +91,13 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
         projectLabels,
         projectAnnotations,
         namespaceConfigurators,
-        clientFactory,
-        cheClientFactory,
-        userManager,
+        cheServerKubernetesClientFactory,
         preferenceManager,
         sharedPool);
     this.initWithCheServerSa = initWithCheServerSa;
-    this.clientFactory = clientFactory;
-    this.cheOpenShiftClientFactory = cheOpenShiftClientFactory;
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
+    this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
+    this.openShiftClientFactory = openShiftClientFactory;
     this.oAuthIdentityProvider = oAuthIdentityProvider;
   }
 
@@ -154,9 +153,9 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
   @VisibleForTesting
   OpenShiftProject doCreateProjectAccess(String workspaceId, String name) {
     return new OpenShiftProject(
-        clientFactory,
-        cheOpenShiftClientFactory,
-        cheOpenShiftClientFactory,
+        openShiftClientFactory,
+        cheServerKubernetesClientFactory,
+        cheServerOpenshiftClientFactory,
         sharedPool.getExecutor(),
         name,
         workspaceId);
@@ -170,7 +169,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
 
   private Optional<Project> fetchNamespaceObject(String name) throws InfrastructureException {
     try {
-      Project project = clientFactory.createOC().projects().withName(name).get();
+      Project project = cheServerOpenshiftClientFactory.createOC().projects().withName(name).get();
       return Optional.ofNullable(project);
     } catch (KubernetesClientException e) {
       if (e.getCode() == 403) {
@@ -189,7 +188,12 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       NamespaceResolutionContext namespaceCtx) throws InfrastructureException {
     try {
       List<Project> workspaceProjects =
-          clientFactory.createOC().projects().withLabels(namespaceLabels).list().getItems();
+          cheServerOpenshiftClientFactory
+              .createOC()
+              .projects()
+              .withLabels(namespaceLabels)
+              .list()
+              .getItems();
       if (!workspaceProjects.isEmpty()) {
         Map<String, String> evaluatedAnnotations = evaluateAnnotationPlaceholders(namespaceCtx);
         return workspaceProjects.stream()

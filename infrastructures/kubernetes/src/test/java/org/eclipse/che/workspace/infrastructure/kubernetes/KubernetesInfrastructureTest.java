@@ -12,14 +12,11 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import io.fabric8.kubernetes.client.Config;
 import java.util.Collections;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
-import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -27,7 +24,6 @@ import org.testng.annotations.Listeners;
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesInfrastructureTest {
 
-  @Mock private KubernetesClientFactory factory;
   private KubernetesInfrastructure infra;
 
   @BeforeMethod
@@ -38,9 +34,6 @@ public class KubernetesInfrastructureTest {
             mock(KubernetesRuntimeContextFactory.class),
             Collections.emptySet(),
             mock(KubernetesRuntimeStateCache.class),
-            mock(KubernetesNamespaceFactory.class),
-            factory);
-
-    when(factory.getDefaultConfig()).thenReturn(mock(Config.class));
+            mock(KubernetesNamespaceFactory.class));
   }
 }

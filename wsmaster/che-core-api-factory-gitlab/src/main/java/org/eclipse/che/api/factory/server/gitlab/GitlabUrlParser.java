@@ -18,6 +18,7 @@ import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.common.base.Splitter;
 import jakarta.validation.constraints.NotNull;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,8 +47,10 @@ public class GitlabUrlParser {
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private static final List<String> gitlabUrlPatternTemplates =
       List.of(
-          "^(?<host>%s)/(?<subgroups>([^/]++/?)+)/-/tree/(?<branch>[^/]++)(/)?(?<subfolder>[^/]++)?",
-          "^(?<host>%s)/(?<subgroups>.*)"); // a wider one, should be the last in the
+          "^(?<scheme>%s)://(?<host>%s)/(?<subgroups>([^/]++/?)+)/-/tree/(?<branch>.++)(/)?",
+          "^(?<scheme>%s)://(?<host>%s)/(?<subgroups>.*)"); // a wider one, should be the last in
+  // the list
+  private final String gitlabSSHPatternTemplate = "^git@(?<host>%s):(?<subgroups>.*)$";
   // list
   private final List<Pattern> gitlabUrlPatterns = new ArrayList<>();
   private static final String OAUTH_PROVIDER_NAME = "gitlab";
@@ -62,13 +65,18 @@ public class GitlabUrlParser {
     if (gitlabEndpoints != null) {
       for (String gitlabEndpoint : Splitter.on(",").split(gitlabEndpoints)) {
         String trimmedEndpoint = trimEnd(gitlabEndpoint, '/');
+        URI uri = URI.create(trimmedEndpoint);
+        String schema = uri.getScheme();
+        String host = uri.getHost();
         for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
-          gitlabUrlPatterns.add(compile(format(gitlabUrlPatternTemplate, trimmedEndpoint)));
+          gitlabUrlPatterns.add(compile(format(gitlabUrlPatternTemplate, schema, host)));
         }
+        gitlabUrlPatterns.add(compile(format(gitlabSSHPatternTemplate, host)));
       }
     } else {
       gitlabUrlPatternTemplates.forEach(
-          t -> gitlabUrlPatterns.add(compile(format(t, "https://gitlab.com"))));
+          t -> gitlabUrlPatterns.add(compile(format(t, "https", "gitlab.com"))));
+      gitlabUrlPatterns.add(compile(format(gitlabSSHPatternTemplate, "gitlab.com")));
     }
   }
 
@@ -93,7 +101,8 @@ public class GitlabUrlParser {
   }
 
   public boolean isValid(@NotNull String url) {
-    return gitlabUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches())
+    return gitlabUrlPatterns.stream()
+            .anyMatch(pattern -> pattern.matcher(trimEnd(url, '/')).matches())
         // If the Gitlab URL is not configured, try to find it in a manually added user namespace
         // token.
         || isUserTokenPresent(url)
@@ -108,10 +117,10 @@ public class GitlabUrlParser {
       try {
         // If the token request catches the unauthorised error, it means that the provided url
         // belongs to Gitlab.
-        gitlabApiClient.getTokenInfo("");
+        gitlabApiClient.getOAuthTokenInfo("");
       } catch (ScmCommunicationException e) {
         return e.getStatusCode() == HTTP_UNAUTHORIZED;
-      } catch (ScmItemNotFoundException e) {
+      } catch (ScmItemNotFoundException | IllegalArgumentException e) {
         return false;
       }
     }
@@ -119,18 +128,32 @@ public class GitlabUrlParser {
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
-    Optional<String> serverUrlOptional = getServerUrl(url);
-    if (serverUrlOptional.isPresent()) {
-      String serverUrl = serverUrlOptional.get();
-      return gitlabUrlPatternTemplates.stream()
-          .map(t -> compile(format(t, serverUrl)).matcher(url))
-          .filter(Matcher::matches)
-          .findAny();
-    }
-    return Optional.empty();
+    URI uri =
+        URI.create(
+            url.matches(format(gitlabSSHPatternTemplate, ".*"))
+                ? "ssh://" + url.replace(":", "/")
+                : url);
+    String scheme = uri.getScheme();
+    String host = uri.getHost();
+    return gitlabUrlPatternTemplates.stream()
+        .map(t -> compile(format(t, scheme, host)).matcher(url))
+        .filter(Matcher::matches)
+        .findAny()
+        .or(
+            () -> {
+              Matcher matcher = compile(format(gitlabSSHPatternTemplate, host)).matcher(url);
+              if (matcher.matches()) {
+                return Optional.of(matcher);
+              }
+              return Optional.empty();
+            });
   }
 
   private Optional<String> getServerUrl(String repositoryUrl) {
+    if (repositoryUrl.startsWith("git@")) {
+      String substring = repositoryUrl.substring(4);
+      return Optional.of("https://" + substring.substring(0, substring.indexOf(":")));
+    }
     Matcher serverUrlMatcher = compile("[^/|:]/").matcher(repositoryUrl);
     if (serverUrlMatcher.find()) {
       return Optional.of(
@@ -144,15 +167,15 @@ public class GitlabUrlParser {
    * {@link GitlabUrl} objects.
    */
   public GitlabUrl parse(String url) {
-
+    String trimmedUrl = trimEnd(url, '/');
     Optional<Matcher> matcherOptional =
         gitlabUrlPatterns.stream()
-            .map(pattern -> pattern.matcher(url))
+            .map(pattern -> pattern.matcher(trimmedUrl))
             .filter(Matcher::matches)
             .findFirst()
-            .or(() -> getPatternMatcherByUrl(url));
+            .or(() -> getPatternMatcherByUrl(trimmedUrl));
     if (matcherOptional.isPresent()) {
-      return parse(matcherOptional.get()).withUrl(url);
+      return parse(matcherOptional.get()).withUrl(trimmedUrl);
     } else {
       throw new UnsupportedOperationException(
           "The gitlab integration is not configured properly and cannot be used at this moment."
@@ -161,6 +184,12 @@ public class GitlabUrlParser {
   }
 
   private GitlabUrl parse(Matcher matcher) {
+    String scheme = null;
+    try {
+      scheme = matcher.group("scheme");
+    } catch (IllegalArgumentException e) {
+      // ok no such group
+    }
     String host = matcher.group("host");
     String subGroups = trimEnd(matcher.group("subgroups"), '/');
     if (subGroups.endsWith(".git")) {
@@ -168,23 +197,17 @@ public class GitlabUrlParser {
     }
 
     String branch = null;
-    String subfolder = null;
     try {
       branch = matcher.group("branch");
-    } catch (IllegalArgumentException e) {
-      // ok no such group
-    }
-    try {
-      subfolder = matcher.group("subfolder");
     } catch (IllegalArgumentException e) {
       // ok no such group
     }
 
     return new GitlabUrl()
         .withHostName(host)
+        .withScheme(scheme)
         .withSubGroups(subGroups)
         .withBranch(branch)
-        .withSubfolder(subfolder)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
   }
 }

@@ -38,7 +38,7 @@ import org.eclipse.che.api.ssh.server.model.impl.SshPairImpl;
 import org.eclipse.che.api.ssh.shared.model.SshPair;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,7 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
 
   private final SshManager sshManager;
 
-  private final KubernetesClientFactory clientFactory;
+  private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
   private static final Logger LOG = LoggerFactory.getLogger(SshKeysConfigurator.class);
 
@@ -63,16 +63,17 @@ public class SshKeysConfigurator implements NamespaceConfigurator {
       Pattern.compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$");
 
   @Inject
-  public SshKeysConfigurator(SshManager sshManager, KubernetesClientFactory clientFactory) {
+  public SshKeysConfigurator(
+      SshManager sshManager, CheServerKubernetesClientFactory cheServerKubernetesClientFactory) {
     this.sshManager = sshManager;
-    this.clientFactory = clientFactory;
+    this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
   }
 
   @Override
   public void configure(NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {
 
-    var client = clientFactory.create();
+    var client = cheServerKubernetesClientFactory.create();
     List<SshPairImpl> vcsSshPairs = getVcsSshPairs(namespaceResolutionContext);
 
     List<String> invalidSshKeyNames =

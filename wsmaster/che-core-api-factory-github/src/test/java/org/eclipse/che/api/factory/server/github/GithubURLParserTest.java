@@ -76,15 +76,13 @@ public class GithubURLParserTest {
 
   /** Compare parsing */
   @Test(dataProvider = "parsing")
-  public void checkParsing(
-      String url, String username, String repository, String branch, String subfolder)
+  public void checkParsing(String url, String username, String repository, String branch)
       throws ApiException {
     GithubUrl githubUrl = githubUrlParser.parse(url);
 
     assertEquals(githubUrl.getUsername(), username);
     assertEquals(githubUrl.getRepository(), repository);
     assertEquals(githubUrl.getBranch(), branch);
-    assertEquals(githubUrl.getSubfolder(), subfolder);
   }
 
   /** Compare parsing */
@@ -110,39 +108,49 @@ public class GithubURLParserTest {
       {"https://github.com/eclipse/che.git"},
       {"https://github.com/eclipse/che.with.dots.git"},
       {"https://github.com/eclipse/che-with-hyphen"},
-      {"https://github.com/eclipse/che-with-hyphen.git"}
+      {"https://github.com/eclipse/che-with-hyphen.git"},
+      {"git@github.com:eclipse/che.git)"},
+      {"git@github.com:eclipse/che)"},
+      {"git@github.com:eclipse/che123)"},
+      {"git@github.com:eclipse/che.with.dots.git)"},
+      {"git@github.com:eclipse/che-with-hyphen)"},
+      {"git@github.com:eclipse/che-with-hyphen.git)"}
     };
   }
 
   @DataProvider(name = "parsing")
   public Object[][] expectedParsing() {
     return new Object[][] {
-      {"https://github.com/eclipse/che", "eclipse", "che", null, null},
-      {"https://github.com/eclipse/che123", "eclipse", "che123", null, null},
-      {"https://github.com/eclipse/che.git", "eclipse", "che", null, null},
-      {"https://github.com/eclipse/che.with.dot.git", "eclipse", "che.with.dot", null, null},
-      {"https://github.com/eclipse/-.git", "eclipse", "-", null, null},
-      {"https://github.com/eclipse/-j.git", "eclipse", "-j", null, null},
-      {"https://github.com/eclipse/-", "eclipse", "-", null, null},
-      {"https://github.com/eclipse/che-with-hyphen", "eclipse", "che-with-hyphen", null, null},
-      {"https://github.com/eclipse/che-with-hyphen.git", "eclipse", "che-with-hyphen", null, null},
-      {"https://github.com/eclipse/che/", "eclipse", "che", null, null},
-      {"https://github.com/eclipse/repositorygit", "eclipse", "repositorygit", null, null},
-      {"https://github.com/eclipse/che/tree/4.2.x", "eclipse", "che", "4.2.x", null},
+      {"https://github.com/eclipse/che", "eclipse", "che", null},
+      {"https://github.com/eclipse/che123", "eclipse", "che123", null},
+      {"https://github.com/eclipse/che.git", "eclipse", "che", null},
+      {"https://github.com/eclipse/che.with.dot.git", "eclipse", "che.with.dot", null},
+      {"https://github.com/eclipse/-.git", "eclipse", "-", null},
+      {"https://github.com/eclipse/-j.git", "eclipse", "-j", null},
+      {"https://github.com/eclipse/-", "eclipse", "-", null},
+      {"https://github.com/eclipse/che-with-hyphen", "eclipse", "che-with-hyphen", null},
+      {"https://github.com/eclipse/che-with-hyphen.git", "eclipse", "che-with-hyphen", null},
+      {"https://github.com/eclipse/che/", "eclipse", "che", null},
+      {"https://github.com/eclipse/repositorygit", "eclipse", "repositorygit", null},
+      {"https://github.com/eclipse/che/tree/4.2.x", "eclipse", "che", "4.2.x"},
+      {"https://github.com/eclipse/che/tree/master", "eclipse", "che", "master"},
       {
-        "https://github.com/eclipse/che/tree/master/dashboard/",
+        "https://github.com/eclipse/che/tree/branch/with/slash",
         "eclipse",
         "che",
-        "master",
-        "dashboard/"
+        "branch/with/slash"
       },
-      {
-        "https://github.com/eclipse/che/tree/master/plugins/plugin-git/che-plugin-git-ext-git",
-        "eclipse",
-        "che",
-        "master",
-        "plugins/plugin-git/che-plugin-git-ext-git"
-      }
+      {"git@github.com:eclipse/che", "eclipse", "che", null},
+      {"git@github.com:eclipse/che123", "eclipse", "che123", null},
+      {"git@github.com:eclipse/che.git", "eclipse", "che", null},
+      {"git@github.com:eclipse/che.with.dot.git", "eclipse", "che.with.dot", null},
+      {"git@github.com:eclipse/-.git", "eclipse", "-", null},
+      {"git@github.com:eclipse/-j.git", "eclipse", "-j", null},
+      {"git@github.com:eclipse/-", "eclipse", "-", null},
+      {"git@github.com:eclipse/che-with-hyphen", "eclipse", "che-with-hyphen", null},
+      {"git@github.com:eclipse/che-with-hyphen.git", "eclipse", "che-with-hyphen", null},
+      {"git@github.com:eclipse/che/", "eclipse", "che", null},
+      {"git@github.com:eclipse/repositorygit", "eclipse", "repositorygit", null},
     };
   }
 
@@ -156,7 +164,15 @@ public class GithubURLParserTest {
       {"https://github.com/eclipse/івапівап.git", "івапівап.git"},
       {"https://github.com/eclipse/ ", " "},
       {"https://github.com/eclipse/.", "."},
-      {"https://github.com/eclipse/ .git", " .git"}
+      {"https://github.com/eclipse/ .git", " .git"},
+      {"git@github.com:eclipse/che .git", "che .git"},
+      {"git@github.com:eclipse/.git", ".git"},
+      {"git@github.com:eclipse/myB@dR&pository.git", "myB@dR&pository.git"},
+      {"git@github.com:eclipse/.", "."},
+      {"git@github.com:eclipse/івапівап.git", "івапівап.git"},
+      {"git@github.com:eclipse/ ", " "},
+      {"git@github.com:eclipse/.", "."},
+      {"git@github.com:eclipse/ .git", " .git"}
     };
   }
 

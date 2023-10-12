@@ -17,6 +17,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersiste
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.subject.Subject;
 
 /** Manages {@link PersonalAccessToken}s in Che's permanent storage. */
@@ -45,10 +46,45 @@ public interface PersonalAccessTokenManager {
    * @param cheUser Che user object
    * @param scmServerUrl Git provider endpoint
    * @return personal access token
-   * @throws ScmConfigurationPersistenceException - problem occurred during communication with *
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
    *     permanent storage.
    */
   Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
+      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
+          ScmCommunicationException;
+
+  /**
+   * Gets {@link PersonalAccessToken} from permanent storage.
+   *
+   * @param scmServerUrl Git provider endpoint
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   * @throws ScmUnauthorizedException - scm authorization required.
+   * @throws ScmCommunicationException - problem occurred during communication with scm provider.
+   * @throws UnknownScmProviderException - scm provider is unknown.
+   * @throws UnsatisfiedScmPreconditionException - storage preconditions aren't met.
+   */
+  PersonalAccessToken get(String scmServerUrl)
+      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
+          ScmCommunicationException, UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException;
+
+  /**
+   * Gets {@link PersonalAccessToken} from permanent storage for the given OAuth provider name. It
+   * is useful when OAuth provider is not configured and Git provider endpoint is unknown. {@code
+   * scmServerUrl} can be provided as an additional clause.
+   *
+   * @param cheUser Che user object
+   * @param oAuthProviderName OAuth provider name to get token for
+   * @param scmServerUrl Git provider endpoint
+   * @return personal access token
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   * @throws ScmUnauthorizedException - scm authorization required.
+   * @throws ScmCommunicationException - problem occurred during communication with scm provider.
+   */
+  Optional<PersonalAccessToken> get(
+      Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
           ScmCommunicationException;
 
@@ -62,4 +98,18 @@ public interface PersonalAccessTokenManager {
       throws ScmCommunicationException, ScmConfigurationPersistenceException,
           UnknownScmProviderException, UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException;
+
+  /**
+   * Set or update git-credentials with {@link PersonalAccessToken} from permanent storage.
+   *
+   * @param scmServerUrl Git provider endpoint
+   * @throws UnsatisfiedScmPreconditionException - storage preconditions aren't met.
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   * @throws ScmCommunicationException - problem occurred during communication with scm provider.
+   * @throws ScmUnauthorizedException - scm authorization required.
+   */
+  void store(String scmServerUrl)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
+          ScmCommunicationException, ScmUnauthorizedException;
 }

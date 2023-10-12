@@ -71,7 +71,7 @@ public class AzureDevOpsURLParserTest {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.git",
         "MyOrg",
         "MyProject",
-        "MyRepo",
+        "MyRepo.git",
         null,
         null
       },
@@ -79,7 +79,7 @@ public class AzureDevOpsURLParserTest {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo.dot.git",
         "MyOrg",
         "MyProject",
-        "MyRepo.dot",
+        "MyRepo.dot.git",
         null,
         null
       },
@@ -100,13 +100,69 @@ public class AzureDevOpsURLParserTest {
         null
       },
       {"https://dev.azure.com/MyOrg/MyProject/_git/-", "MyOrg", "MyProject", "-", null, null},
-      {"https://dev.azure.com/MyOrg/MyProject/_git/-j.git", "MyOrg", "MyProject", "-j", null, null},
+      {
+        "https://dev.azure.com/MyOrg/MyProject/_git/-j.git",
+        "MyOrg",
+        "MyProject",
+        "-j.git",
+        null,
+        null
+      },
       {
         "https://MyOrg@dev.azure.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain&_a=contents",
         "MyOrg",
         "MyProject",
         "MyRepo",
         "main",
+        null
+      },
+      {
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo",
+        "MyOrg",
+        "MyProject",
+        "MyRepo",
+        null,
+        null
+      },
+      {
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.git",
+        "MyOrg",
+        "MyProject",
+        "MyRepo.git",
+        null,
+        null
+      },
+      {
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo.dot.git",
+        "MyOrg",
+        "MyProject",
+        "MyRepo.dot.git",
+        null,
+        null
+      },
+      {
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo",
+        "MyOrg",
+        "MyProject",
+        "MyRepo",
+        null,
+        null
+      },
+      {
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/MyRepo-with-hypen",
+        "MyOrg",
+        "MyProject",
+        "MyRepo-with-hypen",
+        null,
+        null
+      },
+      {"git@ssh.dev.azure.com:v3/MyOrg/MyProject/-", "MyOrg", "MyProject", "-", null, null},
+      {
+        "git@ssh.dev.azure.com:v3/MyOrg/MyProject/-j.git",
+        "MyOrg",
+        "MyProject",
+        "-j.git",
+        null,
         null
       },
       {
@@ -133,6 +189,7 @@ public class AzureDevOpsURLParserTest {
         null,
         "MyTag"
       },
+      {"https://MyOrg@dev.azure.com/MyOrg/_git/MyRepo", "MyOrg", "MyRepo", "MyRepo", null, null},
     };
   }
 

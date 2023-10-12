@@ -25,12 +25,10 @@ import java.util.Map;
 import java.util.Set;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
-import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.api.user.server.UserManager;
+import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
@@ -43,9 +41,8 @@ public class GitconfigUserdataConfiguratorTest {
 
   private NamespaceConfigurator configurator;
 
-  @Mock private KubernetesClientFactory clientFactory;
+  @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private GitUserDataFetcher gitUserDataFetcher;
-  @Mock private UserManager userManager;
   private KubernetesServer serverMock;
 
   private NamespaceResolutionContext namespaceResolutionContext;
@@ -58,12 +55,13 @@ public class GitconfigUserdataConfiguratorTest {
   public void setUp()
       throws InfrastructureException, ScmCommunicationException, ScmUnauthorizedException {
     configurator =
-        new GitconfigUserDataConfigurator(clientFactory, Set.of(gitUserDataFetcher), userManager);
+        new GitconfigUserDataConfigurator(
+            cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
 
     serverMock = new KubernetesServer(true, true);
     serverMock.before();
     KubernetesClient client = spy(serverMock.getClient());
-    when(clientFactory.create()).thenReturn(client);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(client);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);
@@ -72,7 +70,8 @@ public class GitconfigUserdataConfiguratorTest {
   @Test
   public void createUserdataConfigmapWhenDoesNotExist()
       throws ScmCommunicationException, ScmUnauthorizedException, InfrastructureException,
-          InterruptedException {
+          InterruptedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
+          ScmBadRequestException {
     // given
     when(gitUserDataFetcher.fetchGitUserData()).thenReturn(new GitUserData("gitUser", "gitEmail"));
 
@@ -93,7 +92,8 @@ public class GitconfigUserdataConfiguratorTest {
   @Test
   public void doNothingWhenSecretAlreadyExists()
       throws InfrastructureException, InterruptedException, ScmCommunicationException,
-          ScmUnauthorizedException {
+          ScmUnauthorizedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
+          ScmBadRequestException {
     // given
     when(gitUserDataFetcher.fetchGitUserData()).thenReturn(new GitUserData("gitUser", "gitEmail"));
     Map<String, String> annotations =

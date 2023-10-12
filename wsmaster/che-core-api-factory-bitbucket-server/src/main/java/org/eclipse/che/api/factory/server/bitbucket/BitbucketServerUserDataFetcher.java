@@ -16,32 +16,51 @@ import static java.util.stream.Collectors.toList;
 import com.google.common.base.Splitter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.security.oauth.OAuthAPI;
+import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
 
 /** Bitbucket git user data retriever. */
 public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
 
+  private final String OAUTH_PROVIDER_NAME = "bitbucket-server";
+  private final String apiEndpoint;
+
   /** Bitbucket API client. */
   private final BitbucketServerApiClient bitbucketServerApiClient;
+
+  private final PersonalAccessTokenManager personalAccessTokenManager;
+  private final OAuthAPI oAuthAPI;
 
   private final List<String> registeredBitbucketEndpoints;
 
   @Inject
   public BitbucketServerUserDataFetcher(
+      @Named("che.api") String apiEndpoint,
+      @Nullable @Named("che.integration.bitbucket.server_endpoints") String bitbucketEndpoints,
       BitbucketServerApiClient bitbucketServerApiClient,
-      @Nullable @Named("che.integration.bitbucket.server_endpoints") String bitbucketEndpoints) {
+      OAuthAPI oAuthAPI,
+      PersonalAccessTokenManager personalAccessTokenManager) {
+    this.oAuthAPI = oAuthAPI;
+    this.apiEndpoint = apiEndpoint;
+    this.bitbucketServerApiClient = bitbucketServerApiClient;
+    this.personalAccessTokenManager = personalAccessTokenManager;
     if (bitbucketEndpoints != null) {
       this.registeredBitbucketEndpoints =
           Splitter.on(",")
@@ -51,27 +70,40 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
     } else {
       this.registeredBitbucketEndpoints = Collections.emptyList();
     }
-    this.bitbucketServerApiClient = bitbucketServerApiClient;
   }
 
   @Override
-  public GitUserData fetchGitUserData() throws ScmUnauthorizedException, ScmCommunicationException {
-    GitUserData gitUserData = null;
+  public GitUserData fetchGitUserData()
+      throws ScmUnauthorizedException, ScmCommunicationException,
+          ScmConfigurationPersistenceException, ScmItemNotFoundException {
+    Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
     for (String bitbucketServerEndpoint : this.registeredBitbucketEndpoints) {
       if (bitbucketServerApiClient.isConnected(bitbucketServerEndpoint)) {
-        Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
         try {
-          BitbucketUser user = bitbucketServerApiClient.getUser(cheSubject);
-          gitUserData = new GitUserData(user.getName(), user.getEmailAddress());
+          BitbucketUser user = bitbucketServerApiClient.getUser();
+          return new GitUserData(user.getDisplayName(), user.getEmailAddress());
         } catch (ScmItemNotFoundException e) {
           throw new ScmCommunicationException(e.getMessage(), e);
         }
-        break;
       }
     }
-    if (gitUserData == null) {
-      throw new ScmCommunicationException("Failed to retrieve git user data from Bitbucket");
+
+    // Try go get user data using personal access token
+    Optional<PersonalAccessToken> personalAccessToken =
+        this.personalAccessTokenManager.get(cheSubject, OAUTH_PROVIDER_NAME, null);
+    if (personalAccessToken.isPresent()) {
+      PersonalAccessToken token = personalAccessToken.get();
+      HttpBitbucketServerApiClient httpBitbucketServerApiClient =
+          new HttpBitbucketServerApiClient(
+              StringUtils.trimEnd(token.getScmProviderUrl(), '/'),
+              new NoopOAuthAuthenticator(),
+              oAuthAPI,
+              this.apiEndpoint);
+
+      BitbucketUser user = httpBitbucketServerApiClient.getUser(token.getToken());
+      return new GitUserData(user.getDisplayName(), user.getEmailAddress());
     }
-    return gitUserData;
+
+    throw new ScmCommunicationException("Failed to retrieve git user data from Bitbucket");
   }
 }

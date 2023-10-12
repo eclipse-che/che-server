@@ -91,6 +91,11 @@ public class Page<ITEM_T> {
   private final long totalCount;
   private final List<ITEM_T> items;
 
+  final String nonNullItemsString = "Required non-null items";
+  final String nonNegativeValueOfItems = "Required non-negative value of items before";
+  final String positiveValueOfPageSize = "Required positive value of page size";
+  final String nonNegativeValueOfTotalItems = "Required non-negative value of total items";
+
   /**
    * Creates a new page.
    *
@@ -104,13 +109,13 @@ public class Page<ITEM_T> {
    * @throws IllegalArgumentException when {@code totalCount} is negative
    */
   public Page(Collection<? extends ITEM_T> items, long itemsBefore, int pageSize, long totalCount) {
-    requireNonNull(items, "Required non-null items");
+    requireNonNull(items, nonNullItemsString);
     this.items = new ArrayList<>(items);
-    checkArgument(itemsBefore >= 0, "Required non-negative value of items before");
+    checkArgument(itemsBefore >= 0, nonNegativeValueOfItems);
     this.itemsBefore = itemsBefore;
-    checkArgument(pageSize > 0, "Required positive value of page size");
+    checkArgument(pageSize > 0, positiveValueOfPageSize);
     this.pageSize = pageSize;
-    checkArgument(totalCount >= 0, "Required non-negative value of total items");
+    checkArgument(totalCount >= 0, nonNegativeValueOfTotalItems);
     this.totalCount = totalCount;
   }
 

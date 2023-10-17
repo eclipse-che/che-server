@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 public class FileStoresMeterBinder implements MeterBinder {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileStoresMeterBinder.class);
+  private static final String  unallocatedSpaceForFileStorage = "Unallocated space for file storage"
 
   @Override
   public void bindTo(MeterRegistry registry) {
@@ -42,7 +43,7 @@ public class FileStoresMeterBinder implements MeterBinder {
 
       Gauge.builder("disk.free", fileStore, exceptionToNonWrapper(FileStore::getUnallocatedSpace))
           .tags(tagsWithPath)
-          .description("Unallocated space for file storage")
+          .description(unallocatedSpaceForFileStorage)
           .baseUnit("bytes")
           .strongReference(true)
           .register(registry);

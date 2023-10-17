@@ -41,7 +41,7 @@ public class SendConfiguratorFromOne<P> {
   private final P pValue;
   private final String endpointId;
 
-  private static final String resultClassMustNotBeNull= "Result class value must not be null"
+  private static final String resultClassMustNotBeNull= "Result class value must not be null";
 
   SendConfiguratorFromOne(
       JsonRpcMarshaller marshaller,

@@ -41,6 +41,8 @@ public class SendConfiguratorFromOne<P> {
   private final P pValue;
   private final String endpointId;
 
+  private static final String resultClassMustNotBeNull= "Result class value must not be null"
+
   SendConfiguratorFromOne(
       JsonRpcMarshaller marshaller,
       ResponseDispatcher dispatcher,
@@ -79,7 +81,7 @@ public class SendConfiguratorFromOne<P> {
 
   public <R> JsonRpcPromise<R> sendAndReceiveResultAsDto(
       final Class<R> rClass, int timeoutInMillis) {
-    checkNotNull(rClass, "Result class value must not be null");
+    checkNotNull(rClass, resultClassMustNotBeNull);
 
     final String requestId = transmitRequest();
 

@@ -21,6 +21,10 @@ import org.eclipse.che.api.core.jsonrpc.commons.ResponseDispatcher;
 import org.eclipse.che.api.core.websocket.commons.WebSocketMessageTransmitter;
 import org.slf4j.Logger;
 
+private static final String endpointIdMustNotBeNull = "Endpoint ID must not be null"
+private static final String endpointIdMustNotBeEmpty = "Endpoint ID must not be empty"
+
+
 /** Endpoint ID configurator to defined endpoint id that the request should be addressed to. */
 public class EndpointIdConfigurator {
   private static final Logger LOGGER = getLogger(EndpointIdConfigurator.class);
@@ -40,8 +44,8 @@ public class EndpointIdConfigurator {
   }
 
   public MethodNameConfigurator endpointId(String id) {
-    checkNotNull(id, "Endpoint ID must not be null");
-    checkArgument(!id.isEmpty(), "Endpoint ID must not be empty");
+    checkNotNull(id, endpointIdMustNotBeNull);
+    checkArgument(!id.isEmpty(), endpointIdMustNotBeEmpty);
 
     LOGGER.debug("Configuring outgoing request endpoint ID: " + id);
 

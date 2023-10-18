@@ -17,7 +17,7 @@ rm -f ./index.d.ts
 set +e
 docker run -i --rm -v "$HOME/.m2:/root/.m2" \
                    -v "$(pwd)/dto-pom.xml:/usr/src/mymaven/pom.xml" \
-                   -w /usr/src/mymaven maven:3.6.1-jdk-11 \
+                   -w /usr/src/mymaven docker.io/maven:3.8-jdk-11 \
                     /bin/bash -c "mvn -q -U -DskipTests=true -Dfindbugs.skip=true -Dskip-validate-sources install \
                     && cat target/dts-dto-typescript.d.ts" >> index.d.ts
 

@@ -49,9 +49,6 @@ jobs:
           ./build/build.sh --tag:next --sha-tag
     - name: Push docker images
       run: |
-
-
-
         podman push quay.io/eclipse/che-server:next
         podman push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
     - name: Create failure MM message

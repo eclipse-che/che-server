@@ -19,6 +19,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.eclipse.che.dto.generator.DtoGenerator;
 
+
+
 /** Mojo to run {@link org.eclipse.che.dto.generator.DtoGenerator}. */
 @Mojo(name = "generate", requiresDependencyResolution = ResolutionScope.COMPILE)
 public class DtoGeneratorMojo extends AbstractMojo {
@@ -38,10 +40,12 @@ public class DtoGeneratorMojo extends AbstractMojo {
   @Parameter(property = "che.dto.skip", defaultValue = "false")
   private boolean skip;
 
+  private static String skippingTheExecution= "Skipping the execution";
+
   @Override
   public void execute() throws MojoExecutionException {
     if (skip) {
-      getLog().info("Skipping the execution");
+      getLog().info(skippingTheExecution);
       return;
     }
 

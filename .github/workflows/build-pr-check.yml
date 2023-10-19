@@ -47,7 +47,7 @@ jobs:
       run: mvn -B clean install -U -Pintegration
     - name: Build docker images
       if: github.event_name == 'pull_request'
-      run: ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}
+      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }}
     - name: Push docker images
       if: github.event_name == 'pull_request'
       run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}

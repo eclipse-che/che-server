@@ -46,18 +46,9 @@ jobs:
       id: build
       run: |
           echo "short_sha1=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          ./dockerfiles/build.sh --tag:next --sha-tag
+          ./build/build.sh --tag:next --sha-tag
     - name: Push docker images
       run: |
-        docker push quay.io/eclipse/che-endpoint-watcher:next
-        docker push quay.io/eclipse/che-endpoint-watcher:${{ steps.build.outputs.short_sha1 }}
-
-        docker push quay.io/eclipse/che-keycloak:next
-        docker push quay.io/eclipse/che-keycloak:${{ steps.build.outputs.short_sha1 }}
-
-        docker push quay.io/eclipse/che-postgres:next
-        docker push quay.io/eclipse/che-postgres:${{ steps.build.outputs.short_sha1 }}
-
         docker push quay.io/eclipse/che-server:next
         docker push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
     - name: Create failure MM message

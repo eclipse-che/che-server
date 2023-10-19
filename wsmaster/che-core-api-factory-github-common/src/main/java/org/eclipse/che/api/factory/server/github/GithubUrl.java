@@ -29,8 +29,8 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
  * @author Florent Benoit
  */
 public class GithubUrl extends DefaultFactoryUrl {
-
-  private final String NAME = "github";
+  // TODO
+  private final String providerName;
 
   private static final String HOSTNAME = "https://github.com";
 
@@ -59,11 +59,13 @@ public class GithubUrl extends DefaultFactoryUrl {
    * Creation of this instance is made by the parser so user may not need to create a new instance
    * directly
    */
-  protected GithubUrl() {}
+  protected GithubUrl(String providerName) {
+    this.providerName = providerName;
+  }
 
   @Override
   public String getProviderName() {
-    return NAME;
+    return providerName;
   }
 
   /**

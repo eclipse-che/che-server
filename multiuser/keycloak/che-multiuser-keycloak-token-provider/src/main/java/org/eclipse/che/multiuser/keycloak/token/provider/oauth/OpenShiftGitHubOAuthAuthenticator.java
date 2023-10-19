@@ -33,7 +33,7 @@ public class OpenShiftGitHubOAuthAuthenticator extends GitHubOAuthAuthenticator 
       @Nullable @Named("che.oauth.github.tokenuri") String tokenUri)
       throws IOException {
 
-    super("NULL", "NULL", redirectUris, null, authUri, tokenUri);
+    super("NULL", "NULL", redirectUris, null, authUri, tokenUri, "github");
 
     if (!isNullOrEmpty(authUri)
         && !isNullOrEmpty(tokenUri)

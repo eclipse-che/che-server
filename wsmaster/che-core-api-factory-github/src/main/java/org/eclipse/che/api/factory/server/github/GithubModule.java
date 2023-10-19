@@ -23,8 +23,11 @@ public class GithubModule extends AbstractModule {
     Multibinder<PersonalAccessTokenFetcher> tokenFetcherMultibinder =
         Multibinder.newSetBinder(binder(), PersonalAccessTokenFetcher.class);
     tokenFetcherMultibinder.addBinding().to(GithubPersonalAccessTokenFetcher.class);
+    tokenFetcherMultibinder.addBinding().to(GithubPersonalAccessTokenFetcherSecond.class);
+
     Multibinder<GitUserDataFetcher> gitUserDataMultibinder =
         Multibinder.newSetBinder(binder(), GitUserDataFetcher.class);
     gitUserDataMultibinder.addBinding().to(GithubUserDataFetcher.class);
+    gitUserDataMultibinder.addBinding().to(GithubUserDataFetcherSecond.class);
   }
 }

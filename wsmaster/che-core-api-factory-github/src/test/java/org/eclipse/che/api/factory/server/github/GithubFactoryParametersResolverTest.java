@@ -99,7 +99,7 @@ public class GithubFactoryParametersResolverTest {
   @Captor private ArgumentCaptor<RemoteFactoryUrl> factoryUrlArgumentCaptor;
 
   /** Instance of resolver that will be tested. */
-  private GithubFactoryParametersResolver githubFactoryParametersResolver;
+  private AbstractGithubFactoryParametersResolver abstractGithubFactoryParametersResolver;
 
   @BeforeMethod
   protected void init() throws Exception {
@@ -110,7 +110,7 @@ public class GithubFactoryParametersResolverTest {
         new GithubURLParser(
             personalAccessTokenManager, devfileFilenamesProvider, githubApiClient, null, false);
 
-    githubFactoryParametersResolver =
+    abstractGithubFactoryParametersResolver =
         new GithubFactoryParametersResolver(
             githubUrlParser,
             urlFetcher,
@@ -119,14 +119,14 @@ public class GithubFactoryParametersResolverTest {
             urlFactoryBuilder,
             projectConfigDtoMerger,
             personalAccessTokenManager);
-    assertNotNull(this.githubFactoryParametersResolver);
+    assertNotNull(this.abstractGithubFactoryParametersResolver);
   }
 
   /** Check missing parameter name can't be accepted by this resolver */
   @Test
   public void checkMissingParameter() {
     Map<String, String> parameters = singletonMap("foo", "this is a foo bar");
-    boolean accept = githubFactoryParametersResolver.accept(parameters);
+    boolean accept = abstractGithubFactoryParametersResolver.accept(parameters);
     // shouldn't be accepted
     assertFalse(accept);
   }
@@ -135,7 +135,7 @@ public class GithubFactoryParametersResolverTest {
   @Test
   public void checkInvalidAcceptUrl() {
     Map<String, String> parameters = singletonMap(URL_PARAMETER_NAME, "http://www.eclipse.org/che");
-    boolean accept = githubFactoryParametersResolver.accept(parameters);
+    boolean accept = abstractGithubFactoryParametersResolver.accept(parameters);
     // shouldn't be accepted
     assertFalse(accept);
   }
@@ -145,7 +145,7 @@ public class GithubFactoryParametersResolverTest {
   public void checkValidAcceptUrl() {
     Map<String, String> parameters =
         singletonMap(URL_PARAMETER_NAME, "https://github.com/codenvy/codenvy.git");
-    boolean accept = githubFactoryParametersResolver.accept(parameters);
+    boolean accept = abstractGithubFactoryParametersResolver.accept(parameters);
     // shouldn't be accepted
     assertTrue(accept);
   }
@@ -168,7 +168,7 @@ public class GithubFactoryParametersResolverTest {
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
-    FactoryDto factory = (FactoryDto) githubFactoryParametersResolver.createFactory(params);
+    FactoryDto factory = (FactoryDto) abstractGithubFactoryParametersResolver.createFactory(params);
     // then
     verify(urlFactoryBuilder).buildDefaultDevfile(eq("che"));
     assertEquals(factory, computedFactory);
@@ -193,7 +193,7 @@ public class GithubFactoryParametersResolverTest {
             "https://github.com/eclipse/che",
             ERROR_QUERY_NAME,
             "access_denied");
-    githubFactoryParametersResolver.createFactory(params);
+    abstractGithubFactoryParametersResolver.createFactory(params);
     // then
     verify(urlFactoryBuilder)
         .createFactoryFromDevfile(
@@ -210,7 +210,7 @@ public class GithubFactoryParametersResolverTest {
         .thenReturn(new GithubCommit().withSha("test-sha"));
 
     // when
-    githubFactoryParametersResolver.createFactory(
+    abstractGithubFactoryParametersResolver.createFactory(
         ImmutableMap.of(URL_PARAMETER_NAME, "https://github.com/eclipse/che"));
     // then
     verify(urlFactoryBuilder)
@@ -237,7 +237,7 @@ public class GithubFactoryParametersResolverTest {
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
-    FactoryDto factory = (FactoryDto) githubFactoryParametersResolver.createFactory(params);
+    FactoryDto factory = (FactoryDto) abstractGithubFactoryParametersResolver.createFactory(params);
     // then
     assertNotNull(factory.getDevfile());
     assertNull(factory.getWorkspace());
@@ -268,7 +268,7 @@ public class GithubFactoryParametersResolverTest {
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
-    FactoryDto factory = (FactoryDto) githubFactoryParametersResolver.createFactory(params);
+    FactoryDto factory = (FactoryDto) abstractGithubFactoryParametersResolver.createFactory(params);
     // then
     assertNotNull(factory.getDevfile());
     SourceDto source = factory.getDevfile().getProjects().get(0).getSource();
@@ -299,7 +299,7 @@ public class GithubFactoryParametersResolverTest {
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
-    FactoryDto factory = (FactoryDto) githubFactoryParametersResolver.createFactory(params);
+    FactoryDto factory = (FactoryDto) abstractGithubFactoryParametersResolver.createFactory(params);
     // then
     assertNotNull(factory.getDevfile());
     SourceDto source = factory.getDevfile().getProjects().get(0).getSource();
@@ -323,7 +323,7 @@ public class GithubFactoryParametersResolverTest {
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
     FactoryDevfileV2Dto factory =
-        (FactoryDevfileV2Dto) githubFactoryParametersResolver.createFactory(params);
+        (FactoryDevfileV2Dto) abstractGithubFactoryParametersResolver.createFactory(params);
     // then
     ScmInfo scmInfo = factory.getScmInfo();
     assertNotNull(scmInfo);
@@ -343,7 +343,7 @@ public class GithubFactoryParametersResolverTest {
         .thenReturn(Optional.of(generateDevfileFactory()));
 
     // when
-    githubFactoryParametersResolver.createFactory(params);
+    abstractGithubFactoryParametersResolver.createFactory(params);
 
     // then
     verify(urlFactoryBuilder)
@@ -359,7 +359,7 @@ public class GithubFactoryParametersResolverTest {
     // given
     githubUrlParser = mock(GithubURLParser.class);
 
-    githubFactoryParametersResolver =
+    abstractGithubFactoryParametersResolver =
         new GithubFactoryParametersResolver(
             githubUrlParser,
             urlFetcher,
@@ -370,7 +370,7 @@ public class GithubFactoryParametersResolverTest {
             personalAccessTokenManager);
     when(authorisationRequestManager.isStored(eq("github"))).thenReturn(true);
     // when
-    githubFactoryParametersResolver.parseFactoryUrl("url");
+    abstractGithubFactoryParametersResolver.parseFactoryUrl("url");
     // then
     verify(githubUrlParser).parseWithoutAuthentication("url");
     verify(githubUrlParser, never()).parse("url");
@@ -381,7 +381,7 @@ public class GithubFactoryParametersResolverTest {
     // given
     githubUrlParser = mock(GithubURLParser.class);
 
-    githubFactoryParametersResolver =
+    abstractGithubFactoryParametersResolver =
         new GithubFactoryParametersResolver(
             githubUrlParser,
             urlFetcher,
@@ -392,7 +392,7 @@ public class GithubFactoryParametersResolverTest {
             personalAccessTokenManager);
     when(authorisationRequestManager.isStored(eq("github"))).thenReturn(false);
     // when
-    githubFactoryParametersResolver.parseFactoryUrl("url");
+    abstractGithubFactoryParametersResolver.parseFactoryUrl("url");
     // then
     verify(githubUrlParser).parse("url");
     verify(githubUrlParser, never()).parseWithoutAuthentication("url");

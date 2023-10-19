@@ -25,13 +25,13 @@ import org.eclipse.che.security.oauth.AuthorisationRequestManager;
  * @author Florent Benoit
  */
 @Singleton
-public class GithubFactoryParametersResolver extends AbstractGithubFactoryParametersResolver {
+public class GithubFactoryParametersResolverSecond extends AbstractGithubFactoryParametersResolver {
 
-  private static final String PROVIDER_NAME = "github";
+  private static final String PROVIDER_NAME = "github_2";
 
   @Inject
-  public GithubFactoryParametersResolver(
-      GithubURLParser githubUrlParser,
+  public GithubFactoryParametersResolverSecond(
+      GithubURLParserSecond githubUrlParser,
       URLFetcher urlFetcher,
       GithubSourceStorageBuilder githubSourceStorageBuilder,
       AuthorisationRequestManager authorisationRequestManager,

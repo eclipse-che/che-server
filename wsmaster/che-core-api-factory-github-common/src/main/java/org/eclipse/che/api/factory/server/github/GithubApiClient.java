@@ -12,10 +12,7 @@
 package org.eclipse.che.api.factory.server.github;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.*;
 import static java.time.Duration.ofSeconds;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 

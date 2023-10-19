@@ -17,21 +17,17 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** GitHub OAuth token retriever. */
-public class GithubPersonalAccessTokenFetcher extends AbstractGithubPersonalAccessTokenFetcher {
+public class GithubPersonalAccessTokenFetcherSecond
+    extends AbstractGithubPersonalAccessTokenFetcher {
 
   /** Name of this OAuth provider as found in OAuthAPI. */
-  private static final String OAUTH_PROVIDER_NAME = "github";
+  private static final String OAUTH_PROVIDER_NAME = "github_2";
 
   @Inject
-  public GithubPersonalAccessTokenFetcher(
+  public GithubPersonalAccessTokenFetcherSecond(
       @Named("che.api") String apiEndpoint,
-      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
+      @Nullable @Named("che.integration.github.oauth_endpoint_2") String oauthEndpoint,
       OAuthAPI oAuthAPI) {
     super(apiEndpoint, oAuthAPI, new GithubApiClient(oauthEndpoint), OAUTH_PROVIDER_NAME);
-  }
-
-  GithubPersonalAccessTokenFetcher(
-      @Named("che.api") String apiEndpoint, OAuthAPI oAuthAPI, GithubApiClient githubApiClient) {
-    super(apiEndpoint, oAuthAPI, githubApiClient, OAUTH_PROVIDER_NAME);
   }
 }

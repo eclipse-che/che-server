@@ -48,7 +48,9 @@ import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerScmFileResolv
 import org.eclipse.che.api.factory.server.git.ssh.GitSshFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.git.ssh.GitSshScmFileResolver;
 import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolverSecond;
 import org.eclipse.che.api.factory.server.github.GithubScmFileResolver;
+import org.eclipse.che.api.factory.server.github.GithubScmFileResolverSecond;
 import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.gitlab.GitlabScmFileResolver;
 import org.eclipse.che.api.metrics.WsMasterMetricsModule;
@@ -171,6 +173,9 @@ public class WsMasterModule extends AbstractModule {
     factoryParametersResolverMultibinder.addBinding().to(GithubFactoryParametersResolver.class);
     factoryParametersResolverMultibinder
         .addBinding()
+        .to(GithubFactoryParametersResolverSecond.class);
+    factoryParametersResolverMultibinder
+        .addBinding()
         .to(BitbucketServerAuthorizingFactoryParametersResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(GitlabFactoryParametersResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(BitbucketFactoryParametersResolver.class);
@@ -185,6 +190,7 @@ public class WsMasterModule extends AbstractModule {
     Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =
         Multibinder.newSetBinder(binder(), ScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GithubScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(GithubScmFileResolverSecond.class);
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GitlabScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketServerScmFileResolver.class);

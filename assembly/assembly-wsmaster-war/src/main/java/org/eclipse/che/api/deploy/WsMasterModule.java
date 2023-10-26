@@ -302,8 +302,9 @@ public class WsMasterModule extends AbstractModule {
     install(new FactoryModuleBuilder().build(PassThroughProxyProvisionerFactory.class));
     installDefaultSecureServerExposer(infrastructure);
     install(new org.eclipse.che.security.BitbucketModule());
-    install(new GitLabModule());
+    install(new org.eclipse.che.security.oauth.GitLabModule());
     install(new org.eclipse.che.security.oauth.AzureDevOpsModule());
+    install(new org.eclipse.che.security.oauth.GithubModule());
 
     configureMultiUserMode(persistenceProperties, infrastructure);
 

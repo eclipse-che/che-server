@@ -20,7 +20,6 @@ import org.eclipse.che.inject.DynaModule;
  *
  * @author Sergii Kabashniuk
  */
-@DynaModule
 public class GithubModule extends AbstractModule {
   @Override
   protected void configure() {

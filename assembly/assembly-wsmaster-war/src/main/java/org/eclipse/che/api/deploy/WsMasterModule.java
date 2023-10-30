@@ -106,7 +106,6 @@ import org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter;
 import org.eclipse.che.security.PBKDF2PasswordEncryptor;
 import org.eclipse.che.security.PasswordEncryptor;
 import org.eclipse.che.security.oauth.EmbeddedOAuthAPI;
-import org.eclipse.che.security.oauth.GitLabModule;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth.OpenShiftOAuthModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;

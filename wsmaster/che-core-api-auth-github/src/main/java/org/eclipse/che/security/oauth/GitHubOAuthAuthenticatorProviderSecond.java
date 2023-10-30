@@ -20,7 +20,7 @@ import org.eclipse.che.commons.annotation.Nullable;
 /**
  * Provides implementation of GitHub {@link OAuthAuthenticator} based on available configuration.
  *
- * @author Pavol Baran
+ * @author Anatolii Bazko
  */
 @Singleton
 public class GitHubOAuthAuthenticatorProviderSecond

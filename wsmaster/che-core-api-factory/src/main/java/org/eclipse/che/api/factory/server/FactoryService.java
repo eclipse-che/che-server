@@ -151,8 +151,10 @@ public class FactoryService extends Service {
       FactoryParametersResolver factoryParametersResolver =
           factoryParametersResolverHolder.getFactoryParametersResolver(
               singletonMap(URL_PARAMETER_NAME, url));
-      personalAccessTokenManager.getAndStore(
-          factoryParametersResolver.parseFactoryUrl(url).getProviderUrl());
+      if (!authorisationRequestManager.isStored(factoryParametersResolver.getProviderName())) {
+        personalAccessTokenManager.getAndStore(
+            factoryParametersResolver.parseFactoryUrl(url).getProviderUrl());
+      }
     } catch (ScmCommunicationException
         | ScmConfigurationPersistenceException
         | UnknownScmProviderException

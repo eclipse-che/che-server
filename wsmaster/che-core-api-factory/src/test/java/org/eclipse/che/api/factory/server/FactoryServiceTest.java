@@ -269,6 +269,7 @@ public class FactoryServiceTest {
     final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
     FactoryParametersResolver factoryParametersResolver = mock(FactoryParametersResolver.class);
     doReturn(factoryParametersResolver).when(dummyHolder).getFactoryParametersResolver(anyMap());
+    when(authorisationRequestManager.isStored(any())).thenReturn(true);
     service =
         new FactoryService(
             acceptValidator,

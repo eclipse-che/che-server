@@ -161,6 +161,21 @@ public class GithubPersonalAccessTokenFetcherTest {
     githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
 
+  @Test(
+      expectedExceptions = ScmUnauthorizedException.class,
+      expectedExceptionsMessageRegExp = "Username is not authorized in github OAuth provider.")
+  public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
+    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");
+    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    stubFor(
+        get(urlEqualTo("/api/v3/user"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
+            .willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+
+    githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
+  }
+
   @Test
   public void shouldReturnToken() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);

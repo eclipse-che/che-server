@@ -212,4 +212,20 @@ public class BitbucketPersonalAccessTokenFetcherTest {
 
     assertFalse(bitbucketPersonalAccessTokenFetcher.isValid(params).isPresent());
   }
+
+  @Test(
+      expectedExceptions = ScmUnauthorizedException.class,
+      expectedExceptionsMessageRegExp = "Username is not authorized in bitbucket OAuth provider.")
+  public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
+    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
+    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    stubFor(
+        get(urlEqualTo("/user"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + bitbucketOauthToken))
+            .willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+
+    bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
+        subject, BitbucketApiClient.BITBUCKET_SERVER);
+  }
 }

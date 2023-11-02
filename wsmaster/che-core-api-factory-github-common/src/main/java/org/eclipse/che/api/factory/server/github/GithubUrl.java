@@ -29,7 +29,6 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
  * @author Florent Benoit
  */
 public class GithubUrl extends DefaultFactoryUrl {
-  // TODO
   private final String providerName;
 
   private static final String HOSTNAME = "https://github.com";

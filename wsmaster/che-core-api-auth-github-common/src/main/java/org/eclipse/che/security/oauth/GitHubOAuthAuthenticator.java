@@ -20,11 +20,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
-import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 
 /** OAuth authentication for github account. */
-@Singleton
 public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
   private final String clientId;
   private final String clientSecret;

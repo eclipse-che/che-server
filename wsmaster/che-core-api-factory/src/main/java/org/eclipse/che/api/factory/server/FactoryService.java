@@ -153,6 +153,7 @@ public class FactoryService extends Service {
               singletonMap(URL_PARAMETER_NAME, url));
       if (!authorisationRequestManager.isStored(factoryParametersResolver.getProviderName())) {
         personalAccessTokenManager.getAndStore(
+            // get the provider URL from the factory URL
             factoryParametersResolver.parseFactoryUrl(url).getProviderUrl());
       }
     } catch (ScmCommunicationException

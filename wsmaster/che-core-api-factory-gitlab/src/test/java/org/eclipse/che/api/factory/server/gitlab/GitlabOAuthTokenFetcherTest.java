@@ -17,6 +17,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -75,7 +76,7 @@ public class GitlabOAuthTokenFetcherTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "Current token doesn't have the necessary  privileges. Please make sure Che app scopes are correct and containing at least: \\[api, write_repository\\]")
+          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[api, write_repository]")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("oauthtoken").withScope("api repo");
@@ -184,5 +185,20 @@ public class GitlabOAuthTokenFetcherTest {
 
     assertTrue(valid.isPresent());
     assertTrue(valid.get().first);
+  }
+
+  @Test(
+      expectedExceptions = ScmUnauthorizedException.class,
+      expectedExceptionsMessageRegExp = "Username is not authorized in gitlab OAuth provider.")
+  public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
+    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("token").withScope("");
+    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    stubFor(
+        get(urlEqualTo("/api/v4/user"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token token"))
+            .willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+
+    oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
 }

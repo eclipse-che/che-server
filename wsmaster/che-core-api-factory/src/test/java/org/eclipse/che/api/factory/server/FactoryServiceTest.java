@@ -95,6 +95,8 @@ public class FactoryServiceTest {
 
   private static final DtoFactory DTO = DtoFactory.getInstance();
 
+  private final String scmServerUrl = "https://hostName.com";
+
   @Mock private FactoryAcceptValidator acceptValidator;
   @Mock private PreferenceManager preferenceManager;
   @Mock private UserManager userManager;
@@ -240,7 +242,7 @@ public class FactoryServiceTest {
     FactoryParametersResolver factoryParametersResolver = mock(FactoryParametersResolver.class);
     RemoteFactoryUrl remoteFactoryUrl = mock(RemoteFactoryUrl.class);
     when(factoryParametersResolver.parseFactoryUrl(eq("someUrl"))).thenReturn(remoteFactoryUrl);
-    when(remoteFactoryUrl.getHostName()).thenReturn("hostName");
+    when(remoteFactoryUrl.getProviderUrl()).thenReturn(scmServerUrl);
     doReturn(factoryParametersResolver).when(dummyHolder).getFactoryParametersResolver(anyMap());
     service =
         new FactoryService(
@@ -258,7 +260,7 @@ public class FactoryServiceTest {
         .post(SERVICE_PATH + "/token/refresh");
 
     // then
-    verify(personalAccessTokenManager).getAndStore(eq("hostName"));
+    verify(personalAccessTokenManager).getAndStore(eq(scmServerUrl));
   }
 
   @Test
@@ -284,7 +286,7 @@ public class FactoryServiceTest {
         .post(SERVICE_PATH + "/token/refresh");
 
     // then
-    verify(personalAccessTokenManager, never()).getAndStore(eq("hostName"));
+    verify(personalAccessTokenManager, never()).getAndStore(eq(scmServerUrl));
   }
 
   @Test

@@ -159,12 +159,7 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
               new PersonalAccessTokenParams(
                   scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
-        throw new ScmCommunicationException(
-            "Unable to verify if current token is a valid GitHub token.  Token's scm-url needs to be '"
-                + GithubApiClient.GITHUB_SAAS_ENDPOINT
-                + "' and was '"
-                + scmServerUrl
-                + "'");
+        throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: "
@@ -178,20 +173,24 @@ public class GithubPersonalAccessTokenFetcher implements PersonalAccessTokenFetc
           tokenId,
           oAuthToken.getToken());
     } catch (UnauthorizedException e) {
-      throw new ScmUnauthorizedException(
-          cheSubject.getUserName()
-              + " is not authorized in "
-              + OAUTH_PROVIDER_NAME
-              + " OAuth provider.",
-          OAUTH_PROVIDER_NAME,
-          "2.0",
-          getLocalAuthenticateUrl());
+      throw buildScmUnauthorizedException(cheSubject);
     } catch (NotFoundException nfe) {
       throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
     } catch (ServerException | ForbiddenException | BadRequestException | ConflictException e) {
       LOG.error(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
+  }
+
+  private ScmUnauthorizedException buildScmUnauthorizedException(Subject cheSubject) {
+    return new ScmUnauthorizedException(
+        cheSubject.getUserName()
+            + " is not authorized in "
+            + OAUTH_PROVIDER_NAME
+            + " OAuth provider.",
+        OAUTH_PROVIDER_NAME,
+        "2.0",
+        getLocalAuthenticateUrl());
   }
 
   @Override

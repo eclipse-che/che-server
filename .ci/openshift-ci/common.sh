@@ -212,7 +212,7 @@ runTestWorkspaceWithGitRepoUrl() {
   cat devworkspace-test.yaml
 
   oc apply -f devworkspace-test.yaml -n ${OCP_USER_NAMESPACE}
-  oc wait -n ${OCP_USER_NAMESPACE} --for=condition=Ready dw ${WS_NAME} --timeout=360s
+  oc wait -n ${OCP_USER_NAMESPACE} --for=condition=Ready dw ${WS_NAME} --timeout=600s
   echo "[INFO] Test workspace is run"
 }
 

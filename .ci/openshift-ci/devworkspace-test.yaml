@@ -4,6 +4,7 @@ metadata:
   name: ws-name
 spec:
   started: true
+  routingClass: che
   template:
     projects:
       - name: project-name

@@ -85,8 +85,14 @@ public class BitbucketServerURLParser {
   }
 
   private boolean isUserTokenPresent(String repositoryUrl) {
+    URI uri;
+    try {
+      uri = URI.create(repositoryUrl);
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
+
     String serverUrl = getServerUrl(repositoryUrl);
-    URI uri = URI.create(repositoryUrl);
     String schema = uri.getScheme();
     String host = uri.getHost();
     if (bitbucketUrlPatternTemplates.stream()
@@ -130,7 +136,7 @@ public class BitbucketServerURLParser {
       // If the user request catches the unauthorised error, it means that the provided url
       // belongs to Bitbucket.
       bitbucketServerApiClient.getUser();
-    } catch (ScmItemNotFoundException | ScmCommunicationException e) {
+    } catch (ScmItemNotFoundException | ScmCommunicationException | IllegalArgumentException e) {
       return false;
     } catch (ScmUnauthorizedException e) {
       return true;

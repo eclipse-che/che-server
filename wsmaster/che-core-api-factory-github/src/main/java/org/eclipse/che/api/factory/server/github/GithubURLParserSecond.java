@@ -24,37 +24,21 @@ import org.eclipse.che.commons.annotation.Nullable;
  * @author Florent Benoit
  */
 @Singleton
-public class GithubURLParser extends AbstractGithubURLParser {
-
+public class GithubURLParserSecond extends AbstractGithubURLParser {
   /** Name of this OAuth provider as found in OAuthAPI. */
-  private static final String OAUTH_PROVIDER_NAME = "github";
+  private static final String OAUTH_PROVIDER_NAME = "github_2";
 
   @Inject
-  public GithubURLParser(
+  public GithubURLParserSecond(
       PersonalAccessTokenManager tokenManager,
       DevfileFilenamesProvider devfileFilenamesProvider,
-      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
-      @Named("che.integration.github.disable_subdomain_isolation")
+      @Nullable @Named("che.integration.github.oauth_endpoint_2") String oauthEndpoint,
+      @Named("che.integration.github.disable_subdomain_isolation_2")
           boolean disableSubdomainIsolation) {
     super(
         tokenManager,
         devfileFilenamesProvider,
         new GithubApiClient(oauthEndpoint),
-        oauthEndpoint,
-        disableSubdomainIsolation,
-        OAUTH_PROVIDER_NAME);
-  }
-
-  GithubURLParser(
-      PersonalAccessTokenManager tokenManager,
-      DevfileFilenamesProvider devfileFilenamesProvider,
-      GithubApiClient githubApiClient,
-      String oauthEndpoint,
-      boolean disableSubdomainIsolation) {
-    super(
-        tokenManager,
-        devfileFilenamesProvider,
-        githubApiClient,
         oauthEndpoint,
         disableSubdomainIsolation,
         OAUTH_PROVIDER_NAME);

@@ -139,7 +139,7 @@ public class GithubUrlTest {
   public void testRawFileLocationWithDefaultBranchName() {
     String file = ".che/che-theia-plugins.yaml";
 
-    GithubUrl url = new GithubUrl().withUsername("eclipse").withRepository("che");
+    GithubUrl url = new GithubUrl("github").withUsername("eclipse").withRepository("che");
 
     assertEquals(
         url.rawFileLocation(file),
@@ -151,7 +151,7 @@ public class GithubUrlTest {
     String file = ".che/che-theia-plugins.yaml";
 
     GithubUrl url =
-        new GithubUrl().withUsername("eclipse").withRepository("che").withBranch("main");
+        new GithubUrl("github").withUsername("eclipse").withRepository("che").withBranch("main");
 
     assertEquals(
         url.rawFileLocation(file),
@@ -163,7 +163,7 @@ public class GithubUrlTest {
     String file = ".che/che-theia-plugins.yaml";
 
     GithubUrl url =
-        new GithubUrl()
+        new GithubUrl("github")
             .withUsername("eclipse")
             .withRepository("che")
             .withBranch("main")

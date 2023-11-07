@@ -20,20 +20,21 @@ import org.eclipse.che.commons.annotation.Nullable;
 /**
  * Provides implementation of GitHub {@link OAuthAuthenticator} based on available configuration.
  *
- * @author Pavol Baran
+ * @author Anatolii Bazko
  */
 @Singleton
-public class GitHubOAuthAuthenticatorProvider extends AbstractGitHubOAuthAuthenticatorProvider {
-  private static final String PROVIDER_NAME = "github";
+public class GitHubOAuthAuthenticatorProviderSecond
+    extends AbstractGitHubOAuthAuthenticatorProvider {
+  private static final String PROVIDER_NAME = "github_2";
 
   @Inject
-  public GitHubOAuthAuthenticatorProvider(
-      @Nullable @Named("che.oauth2.github.clientid_filepath") String gitHubClientIdPath,
-      @Nullable @Named("che.oauth2.github.clientsecret_filepath") String gitHubClientSecretPath,
+  public GitHubOAuthAuthenticatorProviderSecond(
+      @Nullable @Named("che.oauth2.github.clientid_filepath_2") String gitHubClientIdPath,
+      @Nullable @Named("che.oauth2.github.clientsecret_filepath_2") String gitHubClientSecretPath,
       @Nullable @Named("che.oauth.github.redirecturis") String[] redirectUris,
-      @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
-      @Nullable @Named("che.oauth.github.authuri") String authUri,
-      @Nullable @Named("che.oauth.github.tokenuri") String tokenUri)
+      @Nullable @Named("che.integration.github.oauth_endpoint_2") String oauthEndpoint,
+      @Nullable @Named("che.oauth.github.authuri_2") String authUri,
+      @Nullable @Named("che.oauth.github.tokenuri_2") String tokenUri)
       throws IOException {
     super(
         gitHubClientIdPath,

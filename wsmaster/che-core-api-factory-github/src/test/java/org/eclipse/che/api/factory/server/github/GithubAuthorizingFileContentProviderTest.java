@@ -45,7 +45,7 @@ public class GithubAuthorizingFileContentProviderTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     GithubUrl githubUrl =
-        new GithubUrl()
+        new GithubUrl("github")
             .withUsername("eclipse")
             .withRepository("che")
             .withBranch("main")
@@ -71,7 +71,7 @@ public class GithubAuthorizingFileContentProviderTest {
     String raw_url = "https://raw.githubusercontent.com/foo/bar/branch-name/devfile.yaml";
 
     GithubUrl githubUrl =
-        new GithubUrl()
+        new GithubUrl("github")
             .withUsername("eclipse")
             .withRepository("che")
             .withBranch("main")
@@ -92,7 +92,7 @@ public class GithubAuthorizingFileContentProviderTest {
   public void shouldThrowNotFoundForPublicRepos() throws Exception {
     String url = "https://raw.githubusercontent.com/foo/bar/branch-name/devfile.yaml";
 
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    GithubUrl githubUrl = new GithubUrl("github").withUsername("eclipse").withRepository("che");
 
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     FileContentProvider fileContentProvider =
@@ -109,7 +109,7 @@ public class GithubAuthorizingFileContentProviderTest {
   @Test(expectedExceptions = DevfileException.class)
   public void shouldThrowDevfileException() throws Exception {
     String url = "https://raw.githubusercontent.com/foo/bar/branch-name/devfile.yaml";
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    GithubUrl githubUrl = new GithubUrl("github").withUsername("eclipse").withRepository("che");
 
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     FileContentProvider fileContentProvider =
@@ -128,7 +128,7 @@ public class GithubAuthorizingFileContentProviderTest {
     String raw_url = "https://ghserver.com/foo/bar/branch-name/devfile.yaml";
 
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    GithubUrl githubUrl = new GithubUrl("github").withUsername("eclipse").withRepository("che");
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
     var personalAccessToken = new PersonalAccessToken(raw_url, "che", "my-token");

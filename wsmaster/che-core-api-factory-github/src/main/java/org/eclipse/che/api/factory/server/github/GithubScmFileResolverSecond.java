@@ -16,11 +16,11 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 
 /** Github specific SCM file resolver. */
-public class GithubScmFileResolver extends AbstractGithubScmFileResolver {
+public class GithubScmFileResolverSecond extends AbstractGithubScmFileResolver {
 
   @Inject
-  public GithubScmFileResolver(
-      GithubURLParser githubUrlParser,
+  public GithubScmFileResolverSecond(
+      GithubURLParserSecond githubUrlParser,
       URLFetcher urlFetcher,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(githubUrlParser, urlFetcher, personalAccessTokenManager);

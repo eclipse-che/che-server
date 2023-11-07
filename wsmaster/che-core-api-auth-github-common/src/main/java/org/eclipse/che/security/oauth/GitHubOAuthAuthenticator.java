@@ -20,16 +20,15 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
-import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 
 /** OAuth authentication for github account. */
-@Singleton
 public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
   private final String clientId;
   private final String clientSecret;
   private final String githubApiUrl;
   private final String providerUrl;
+  private final String providerName;
 
   public GitHubOAuthAuthenticator(
       String clientId,
@@ -37,10 +36,12 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
       String[] redirectUris,
       String authEndpoint,
       String authUri,
-      String tokenUri)
+      String tokenUri,
+      String providerName)
       throws IOException {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
+    this.providerName = providerName;
     providerUrl = isNullOrEmpty(authEndpoint) ? "https://github.com" : trimEnd(authEndpoint, '/');
     githubApiUrl =
         providerUrl.equals("https://github.com")
@@ -52,7 +53,7 @@ public class GitHubOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public final String getOAuthProvider() {
-    return "github";
+    return providerName;
   }
 
   @Override

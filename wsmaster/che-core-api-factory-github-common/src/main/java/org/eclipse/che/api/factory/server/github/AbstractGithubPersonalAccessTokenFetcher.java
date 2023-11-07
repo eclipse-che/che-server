@@ -41,7 +41,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
   private final OAuthAPI oAuthAPI;
 
   /** GitHub API client. */
-  private final GithubApiClient githubApiClient;
+  private GithubApiClient githubApiClient;
 
   /** Name of this OAuth provider as found in OAuthAPI. */
   private final String providerName;
@@ -205,9 +205,13 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
 
   @Override
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
-    if (!githubApiClient.isConnected(params.getScmProviderUrl())) {
-      LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
-      return Optional.empty();
+    if (githubApiClient == null || !githubApiClient.isConnected(params.getScmProviderUrl())) {
+      if (providerName.equals(params.getScmTokenName())) {
+        githubApiClient = new GithubApiClient(params.getScmProviderUrl());
+      } else {
+        LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
+        return Optional.empty();
+      }
     }
     try {
       if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {

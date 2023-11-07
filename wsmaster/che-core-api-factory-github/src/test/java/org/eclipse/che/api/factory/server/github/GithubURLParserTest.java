@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.github;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -266,5 +267,39 @@ public class GithubURLParserTest {
 
     String url = "https://github.com/eclipse/che/pull/11103";
     githubUrlParser.parse(url);
+  }
+
+  @Test
+  public void shouldParseServerUr() throws Exception {
+    // given
+    String url = "https://github-server.com/user/repo";
+
+    // when
+    GithubUrl githubUrl = githubUrlParser.parse(url);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "user");
+    assertEquals(githubUrl.getRepository(), "repo");
+    assertEquals(githubUrl.getHostName(), "https://github-server.com");
+  }
+
+  @Test
+  public void shouldParseServerUrWithPullRequestId() throws Exception {
+    // given
+    String url = "https://github-server.com/user/repo/pull/11103";
+    GithubPullRequest pr =
+        new GithubPullRequest()
+            .withState("open")
+            .withHead(
+                new GithubHead()
+                    .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
+                    .withRepo(new GithubRepo().withName("che")));
+    when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
+
+    // when
+    githubUrlParser.parse(url);
+
+    // then
+    verify(personalAccessTokenManager).get(any(Subject.class), eq("https://github-server.com"));
   }
 }

@@ -88,11 +88,10 @@ jobs:
         run: |
           sudo apt-get update -y || true
           # install more dependencies
-          sudo apt-get -y -q install wget curl bash git hub
+          sudo apt-get -y -q install wget curl bash git
           java -version
-
-          # want git >=2.24, hub >=2
-          hub --version # hub reports git version too
+          git --version
+          gh --version
 
           # want >=5
           bash --version

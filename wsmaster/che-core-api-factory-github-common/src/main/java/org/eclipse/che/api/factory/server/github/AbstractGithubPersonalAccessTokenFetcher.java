@@ -41,7 +41,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
   private final OAuthAPI oAuthAPI;
 
   /** GitHub API client. */
-  private GithubApiClient githubApiClient;
+  private final GithubApiClient githubApiClient;
 
   /** Name of this OAuth provider as found in OAuthAPI. */
   private final String providerName;
@@ -124,6 +124,10 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     this.providerName = providerName;
   }
 
+  public String getProviderName() {
+    return this.providerName;
+  }
+
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
@@ -135,7 +139,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     }
     try {
       oAuthToken = oAuthAPI.getToken(providerName);
-      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5) + "_" + providerName;
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
@@ -205,17 +209,13 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
 
   @Override
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
-    if (githubApiClient == null || !githubApiClient.isConnected(params.getScmProviderUrl())) {
-      if (providerName.equals(params.getScmTokenName())) {
-        githubApiClient = new GithubApiClient(params.getScmProviderUrl());
-      } else {
-        LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
-        return Optional.empty();
-      }
-    }
+    GithubApiClient apiClient =
+        githubApiClient.isConnected(params.getScmProviderUrl())
+            ? githubApiClient
+            : new GithubApiClient(params.getScmProviderUrl());
     try {
       if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
-        Pair<String, String[]> pair = githubApiClient.getTokenScopes(params.getToken());
+        Pair<String, String[]> pair = apiClient.getTokenScopes(params.getToken());
         return Optional.of(
             Pair.of(
                 containsScopes(pair.second, DEFAULT_TOKEN_SCOPES) ? Boolean.TRUE : Boolean.FALSE,
@@ -223,7 +223,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       } else {
         // TODO: add PAT scope validation
         // No REST API for PAT-s in Github found yet. Just try to do some action.
-        GithubUser user = githubApiClient.getUser(params.getToken());
+        GithubUser user = apiClient.getUser(params.getToken());
         return Optional.of(Pair.of(Boolean.TRUE, user.getLogin()));
       }
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {

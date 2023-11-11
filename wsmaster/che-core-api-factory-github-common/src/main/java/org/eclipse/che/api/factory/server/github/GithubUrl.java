@@ -192,7 +192,7 @@ public class GithubUrl extends DefaultFactoryUrl {
 
     return new StringJoiner("/")
         .add(
-            isNullOrEmpty(serverUrl)
+            HOSTNAME.equals(serverUrl)
                 ? "https://raw.githubusercontent.com"
                 : disableSubdomainIsolation
                     ? serverUrl + "/raw"
@@ -208,7 +208,8 @@ public class GithubUrl extends DefaultFactoryUrl {
 
   @Override
   public String getHostName() {
-    return isNullOrEmpty(serverUrl) ? HOSTNAME : serverUrl;
+    // TODO: rework this method to return hostname in format https://<hostname>/user/repo
+    return serverUrl;
   }
 
   /**
@@ -218,12 +219,7 @@ public class GithubUrl extends DefaultFactoryUrl {
    */
   protected String repositoryLocation() {
     if (isHTTPSUrl) {
-      return (isNullOrEmpty(serverUrl) ? HOSTNAME : serverUrl)
-          + "/"
-          + this.username
-          + "/"
-          + this.repository
-          + ".git";
+      return serverUrl + "/" + this.username + "/" + this.repository + ".git";
     }
     return "git@"
         + getHostName().substring(getHostName().indexOf("://") + 3)

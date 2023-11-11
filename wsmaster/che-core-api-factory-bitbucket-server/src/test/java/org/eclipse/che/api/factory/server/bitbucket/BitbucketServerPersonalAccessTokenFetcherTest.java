@@ -82,7 +82,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             234345345,
             23534534,
             90,
-            "che-token-<user987>-<che.server.com>",
+            "che-token-<user987>-<che.server.com>_bitbucket-server",
             "2340590skdf3<0>945i0923i4jasoidfj934ui50",
             bitbucketUser,
             ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
@@ -92,7 +92,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             234345345,
             23534534,
             90,
-            "che-token-<user987>-<che.server.com>",
+            "che-token-<user987>-<che.server.com>_bitbucket-server",
             "34545<0>945i0923i4jasoidfj934ui50",
             bitbucketUser,
             ImmutableSet.of("REPO_READ"));
@@ -102,7 +102,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             234345345,
             23534534,
             90,
-            "che-token-<user987>-<che.server.com>",
+            "che-token-<user987>-<che.server.com>_bitbucket-server",
             "3456\\<0>945//i0923i4jasoidfj934ui50",
             bitbucketUser,
             ImmutableSet.of("PROJECT_READ", "REPO_READ"));
@@ -147,7 +147,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     when(bitbucketServerApiClient.getPersonalAccessTokens()).thenReturn(Collections.emptyList());
 
     when(bitbucketServerApiClient.createPersonalAccessTokens(
-            eq("che-token-<user987>-<che.server.com>"),
+            eq("che-token-<user987>-<che.server.com>_bitbucket-server"),
             eq(ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"))))
         .thenReturn(bitbucketPersonalAccessToken);
     // when
@@ -170,7 +170,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     when(bitbucketServerApiClient.getPersonalAccessTokens())
         .thenReturn(ImmutableList.of(bitbucketPersonalAccessToken, bitbucketPersonalAccessToken2));
     when(bitbucketServerApiClient.createPersonalAccessTokens(
-            eq("che-token-<user987>-<che.server.com>"),
+            eq("che-token-<user987>-<che.server.com>_bitbucket-server"),
             eq(ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"))))
         .thenReturn(bitbucketPersonalAccessToken3);
     // when
@@ -194,7 +194,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     doThrow(ScmBadRequestException.class)
         .when(bitbucketServerApiClient)
         .createPersonalAccessTokens(
-            eq("che-token-<user987>-<che.server.com>"),
+            eq("che-token-<user987>-<che.server.com>_bitbucket-server"),
             eq(ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE")));
     // when
 

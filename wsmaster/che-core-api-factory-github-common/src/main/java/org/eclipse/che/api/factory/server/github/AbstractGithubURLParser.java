@@ -47,7 +47,6 @@ public abstract class AbstractGithubURLParser {
   private final PersonalAccessTokenManager tokenManager;
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final GithubApiClient apiClient;
-  private final String oauthEndpoint;
   /**
    * Regexp to find repository details (repository name, project name and branch and subfolder)
    * Examples of valid URLs are in the test class.
@@ -76,7 +75,6 @@ public abstract class AbstractGithubURLParser {
     this.tokenManager = tokenManager;
     this.devfileFilenamesProvider = devfileFilenamesProvider;
     this.apiClient = githubApiClient;
-    this.oauthEndpoint = oauthEndpoint;
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
 
@@ -174,12 +172,7 @@ public abstract class AbstractGithubURLParser {
       throw buildIllegalArgumentException(url);
     }
 
-    String serverUrl =
-        isNullOrEmpty(oauthEndpoint) || trimEnd(oauthEndpoint, '/').equals(GITHUB_SAAS_ENDPOINT)
-            ? url.startsWith(GITHUB_SAAS_ENDPOINT) || url.startsWith("git@github.com:")
-                ? null
-                : getServerUrl(url).orElseThrow(() -> buildIllegalArgumentException(url))
-            : trimEnd(oauthEndpoint, '/');
+    String serverUrl = getServerUrl(url).orElseThrow(() -> buildIllegalArgumentException(url));
     String repoUser = matcher.group("repoUser");
     String repoName = matcher.group("repoName");
     if (repoName.matches("^[\\w-][\\w.-]*?\\.git$")) {
@@ -195,12 +188,7 @@ public abstract class AbstractGithubURLParser {
 
     if (pullRequestId != null) {
       GithubPullRequest pullRequest =
-          this.getPullRequest(
-              isNullOrEmpty(serverUrl) ? GITHUB_SAAS_ENDPOINT : serverUrl,
-              pullRequestId,
-              repoUser,
-              repoName,
-              authenticationRequired);
+          this.getPullRequest(serverUrl, pullRequestId, repoUser, repoName, authenticationRequired);
       if (pullRequest != null) {
         String state = pullRequest.getState();
         if (!"open".equalsIgnoreCase(state)) {
@@ -219,8 +207,12 @@ public abstract class AbstractGithubURLParser {
 
     String latestCommit = null;
     GithubCommit commit =
-        this.getLatestCommit(
-            repoUser, repoName, firstNonNull(branchName, "HEAD"), authenticationRequired);
+        getLatestCommit(
+            serverUrl,
+            repoUser,
+            repoName,
+            firstNonNull(branchName, "HEAD"),
+            authenticationRequired);
     if (commit != null) {
       latestCommit = commit.getSha();
     }
@@ -255,8 +247,13 @@ public abstract class AbstractGithubURLParser {
         personalAccessToken = tokenManager.fetchAndSave(subject, githubEndpoint);
       }
 
+      GithubApiClient apiClient =
+          this.apiClient.isConnected(githubEndpoint)
+              ? this.apiClient
+              : new GithubApiClient(githubEndpoint);
+
       // get pull request
-      return this.apiClient.getPullRequest(
+      return apiClient.getPullRequest(
           pullRequestId,
           repoUser,
           repoName,
@@ -265,7 +262,7 @@ public abstract class AbstractGithubURLParser {
 
       // get pull request without authentication
       try {
-        return this.apiClient.getPullRequest(pullRequestId, repoUser, repoName, null);
+        return apiClient.getPullRequest(pullRequestId, repoUser, repoName, null);
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
           | ScmBadRequestException exception) {
@@ -286,12 +283,17 @@ public abstract class AbstractGithubURLParser {
   }
 
   private GithubCommit getLatestCommit(
-      String repoUser, String repoName, String branchName, boolean authenticationRequired)
-      throws ApiException {
+      String githubEndpoint,
+      String repoUser,
+      String repoName,
+      String branchName,
+      boolean authenticationRequired) {
+    GithubApiClient apiClient =
+        this.apiClient.isConnected(githubEndpoint)
+            ? this.apiClient
+            : new GithubApiClient(githubEndpoint);
     try {
       // prepare token
-      String githubEndpoint =
-          isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
       Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
@@ -302,7 +304,7 @@ public abstract class AbstractGithubURLParser {
       }
 
       // get latest commit
-      return this.apiClient.getLatestCommit(
+      return apiClient.getLatestCommit(
           repoUser,
           repoName,
           branchName,
@@ -310,7 +312,7 @@ public abstract class AbstractGithubURLParser {
     } catch (UnknownScmProviderException | ScmUnauthorizedException e) {
       // get latest commit without authentication
       try {
-        return this.apiClient.getLatestCommit(repoUser, repoName, branchName, null);
+        return apiClient.getLatestCommit(repoUser, repoName, branchName, null);
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
           | ScmBadRequestException

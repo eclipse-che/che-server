@@ -190,13 +190,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                   || trimmedUrl.equals(StringUtils.trimEnd(scmServerUrl, '/')))) {
             String token =
                 new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
-            String providerName = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+            String tokenName = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
             String tokenId = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
             String organization = annotations.get(ANNOTATION_SCM_ORGANIZATION);
             Optional<String> scmUsername =
                 scmPersonalAccessTokenFetcher.getScmUsername(
                     new PersonalAccessTokenParams(
-                        trimmedUrl, providerName, tokenId, token, organization));
+                        trimmedUrl, tokenName, tokenId, token, organization));
             if (scmUsername.isPresent()) {
               PersonalAccessToken personalAccessToken =
                   new PersonalAccessToken(
@@ -204,7 +204,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                       annotations.get(ANNOTATION_CHE_USERID),
                       organization,
                       scmUsername.get(),
-                      providerName,
+                      tokenName,
                       tokenId,
                       token);
               return Optional.of(personalAccessToken);

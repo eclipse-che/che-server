@@ -137,6 +137,7 @@ public class GitlabOAuthTokenFetcherTest {
     PersonalAccessToken token =
         oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
     assertNotNull(token);
+    assertTrue(token.getScmTokenName().endsWith("_gitlab"));
   }
 
   @Test(

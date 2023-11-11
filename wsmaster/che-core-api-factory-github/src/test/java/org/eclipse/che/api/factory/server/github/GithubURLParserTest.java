@@ -16,6 +16,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -90,7 +91,13 @@ public class GithubURLParserTest {
   @Test(dataProvider = "parsingBadRepository")
   public void checkParsingBadRepositoryDoNotModifiesInitialInput(String url, String repository)
       throws ApiException {
+    // given
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
+
+    // when
     GithubUrl githubUrl = githubUrlParser.parse(url);
+
+    // then
     assertEquals(githubUrl.getRepository(), repository);
   }
 
@@ -190,6 +197,7 @@ public class GithubURLParserTest {
                     .withRef("pr-main-to-7.46.0")
                     .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
                     .withRepo(new GithubRepo().withName("che")));
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
 
     GithubUrl githubUrl = githubUrlParser.parse(url);
@@ -216,6 +224,7 @@ public class GithubURLParserTest {
     when(personalAccessTokenManager.get(any(Subject.class), anyString()))
         .thenReturn(Optional.of(personalAccessToken));
 
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(anyString(), anyString(), anyString(), anyString()))
         .thenReturn(pr);
 
@@ -240,6 +249,7 @@ public class GithubURLParserTest {
                     .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
                     .withRepo(new GithubRepo().withName("che")));
 
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
 
     GithubUrl githubUrl = githubUrlParser.parseWithoutAuthentication(url);
@@ -262,6 +272,7 @@ public class GithubURLParserTest {
     when(personalAccessToken.getToken()).thenReturn("token");
     when(personalAccessTokenManager.get(any(Subject.class), anyString()))
         .thenReturn(Optional.of(personalAccessToken));
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(anyString(), anyString(), anyString(), anyString()))
         .thenReturn(githubPullRequest);
 
@@ -294,12 +305,14 @@ public class GithubURLParserTest {
                 new GithubHead()
                     .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
                     .withRepo(new GithubRepo().withName("che")));
+    when(githubApiClient.isConnected(eq("https://github-server.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
 
     // when
     githubUrlParser.parse(url);
 
     // then
-    verify(personalAccessTokenManager).get(any(Subject.class), eq("https://github-server.com"));
+    verify(personalAccessTokenManager, times(2))
+        .get(any(Subject.class), eq("https://github-server.com"));
   }
 }

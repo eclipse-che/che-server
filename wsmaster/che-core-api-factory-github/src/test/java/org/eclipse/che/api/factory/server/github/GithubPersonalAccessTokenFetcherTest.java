@@ -196,6 +196,7 @@ public class GithubPersonalAccessTokenFetcherTest {
     PersonalAccessToken token =
         githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
     assertNotNull(token);
+    assertTrue(token.getScmTokenName().endsWith("_github"));
   }
 
   @Test

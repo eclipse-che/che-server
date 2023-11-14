@@ -43,6 +43,8 @@ import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderExcept
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.security.oauth.AuthorisationRequestManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Defines Factory REST API.
@@ -60,6 +62,8 @@ public class FactoryService extends Service {
 
   /** Validate query parameter. If true, factory will be validated */
   public static final String VALIDATE_QUERY_PARAMETER = "validate";
+
+  private static final Logger LOG = LoggerFactory.getLogger(FactoryService.class);
 
   private final FactoryAcceptValidator acceptValidator;
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
@@ -160,7 +164,8 @@ public class FactoryService extends Service {
         | ScmConfigurationPersistenceException
         | UnknownScmProviderException
         | UnsatisfiedScmPreconditionException e) {
-      throw new ApiException(e);
+      // Do not throw an exception here, proceed the workspace start.
+      LOG.debug("Failed to update the OAuth token", e);
     } catch (ScmUnauthorizedException e) {
       throw toApiException(e);
     }

@@ -55,6 +55,10 @@ import org.eclipse.che.api.factory.server.FactoryService.FactoryParametersResolv
 import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
 import org.eclipse.che.api.factory.server.impl.SourceStorageParametersValidator;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
@@ -72,6 +76,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -307,6 +312,48 @@ public class FactoryServiceTest {
     assertEquals(
         DTO.createDtoFromJson(response.getBody().asString(), ServiceError.class).getMessage(),
         "Factory url required");
+  }
+
+  @Test(dataProvider = "exceptionProvider")
+  public void shouldNotThrowExceptionOtherThenScmUnauthorizedException(
+      Class<Throwable> throwableClass) throws Exception {
+    // given
+    final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
+    FactoryParametersResolver factoryParametersResolver = mock(FactoryParametersResolver.class);
+    doReturn(factoryParametersResolver).when(dummyHolder).getFactoryParametersResolver(anyMap());
+    RemoteFactoryUrl remoteFactoryUrl = mock(RemoteFactoryUrl.class);
+    when(factoryParametersResolver.parseFactoryUrl(eq("someUrl"))).thenReturn(remoteFactoryUrl);
+    when(remoteFactoryUrl.getProviderUrl()).thenReturn(scmServerUrl);
+    when(authorisationRequestManager.isStored(any())).thenReturn(false);
+    when(personalAccessTokenManager.getAndStore(any())).thenThrow(throwableClass);
+    service =
+        new FactoryService(
+            acceptValidator,
+            dummyHolder,
+            additionalFilenamesProvider,
+            personalAccessTokenManager,
+            authorisationRequestManager);
+
+    // when
+    Response response =
+        given()
+            .contentType(ContentType.JSON)
+            .when()
+            .queryParam("url", "someUrl")
+            .post(SERVICE_PATH + "/token/refresh");
+
+    // then
+    assertEquals(response.getStatusCode(), 204);
+  }
+
+  @DataProvider(name = "exceptionProvider")
+  private Object[] exceptionClasses() {
+    return new Class[] {
+      ScmCommunicationException.class,
+      ScmConfigurationPersistenceException.class,
+      UnknownScmProviderException.class,
+      UnsatisfiedScmPreconditionException.class
+    };
   }
 
   @Test

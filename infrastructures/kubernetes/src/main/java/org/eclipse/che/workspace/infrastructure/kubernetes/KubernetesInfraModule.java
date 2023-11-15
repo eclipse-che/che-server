@@ -47,6 +47,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNames
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigUserDataConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.OAuthTokenSecretsConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.SshKeysConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPermissionConfigurator;
@@ -101,6 +102,7 @@ public class KubernetesInfraModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPermissionConfigurator.class);
     namespaceConfigurators.addBinding().to(CredentialsSecretConfigurator.class);
+    namespaceConfigurators.addBinding().to(OAuthTokenSecretsConfigurator.class);
     namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
     namespaceConfigurators.addBinding().to(WorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);

@@ -132,10 +132,14 @@ public abstract class AbstractGithubURLParser {
   }
 
   private Optional<String> getServerUrl(String repositoryUrl) {
+    // If the given repository url is an SSH url, generate the base url from the pattern:
+    // https://<hostname extracted from the SSH url>.
     if (repositoryUrl.startsWith("git@")) {
       String substring = repositoryUrl.substring(4);
       return Optional.of("https://" + substring.substring(0, substring.indexOf(":")));
     }
+    // Otherwise, extract the base url from the given repository url by cutting the url after the
+    // first slash.
     Matcher serverUrlMatcher = compile("[^/|:]/").matcher(repositoryUrl);
     if (serverUrlMatcher.find()) {
       return Optional.of(

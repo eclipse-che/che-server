@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.LabelSelector;
@@ -186,6 +188,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
               && (oAuthProviderName == null
                   || oAuthProviderName.equals(
                       annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME)))
+              && (!isNullOrEmpty(trimmedUrl)) // ignore PAT with empty server endpoint URL
               && (scmServerUrl == null
                   || trimmedUrl.equals(StringUtils.trimEnd(scmServerUrl, '/')))) {
             String token =

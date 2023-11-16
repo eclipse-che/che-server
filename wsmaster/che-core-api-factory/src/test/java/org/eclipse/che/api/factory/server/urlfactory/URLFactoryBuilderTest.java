@@ -441,7 +441,8 @@ public class URLFactoryBuilderTest {
                   }
                 }));
 
-    when(fileContentProvider.fetchContent(anyString())).thenThrow(new DevfileException("", cause));
+    when(fileContentProvider.fetchContent(anyString()))
+        .thenThrow(new DevfileException(expectedMessage, cause));
 
     // when
     try {
@@ -457,7 +458,7 @@ public class URLFactoryBuilderTest {
 
   @Test(
       expectedExceptions = ApiException.class,
-      expectedExceptionsMessageRegExp = "Failed to fetch devfile")
+      expectedExceptionsMessageRegExp = "Could not reach devfile at location")
   public void shouldThrowErrorOnUnsupportedDevfileContent()
       throws ApiException, DevfileException, IOException {
     JsonNode jsonNode = mock(JsonNode.class);

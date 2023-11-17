@@ -11,6 +11,9 @@
  */
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.LabelSelector;
@@ -41,7 +44,6 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
-import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
@@ -180,35 +182,31 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                 .secrets()
                 .get(KUBERNETES_PERSONAL_ACCESS_TOKEN_LABEL_SELECTOR);
         for (Secret secret : secrets) {
-          Map<String, String> annotations = secret.getMetadata().getAnnotations();
-          String trimmedUrl = StringUtils.trimEnd(annotations.get(ANNOTATION_SCM_URL), '/');
-          if (annotations.get(ANNOTATION_CHE_USERID).equals(cheUser.getUserId())
-              && (oAuthProviderName == null
-                  || oAuthProviderName.equals(
-                      annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME)))
-              && (scmServerUrl == null
-                  || trimmedUrl.equals(StringUtils.trimEnd(scmServerUrl, '/')))) {
-            String token =
-                new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
-            String providerName = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
-            String tokenId = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
-            String organization = annotations.get(ANNOTATION_SCM_ORGANIZATION);
+          if (deleteSecretIfMisconfigured(secret)) {
+            continue;
+          }
+
+          if (isSecretMatchesSearchCriteria(cheUser, oAuthProviderName, scmServerUrl, secret)) {
+            PersonalAccessTokenParams personalAccessTokenParams =
+                this.secret2PersonalAccessTokenParams(secret);
             Optional<String> scmUsername =
-                scmPersonalAccessTokenFetcher.getScmUsername(
-                    new PersonalAccessTokenParams(
-                        trimmedUrl, providerName, tokenId, token, organization));
+                scmPersonalAccessTokenFetcher.getScmUsername(personalAccessTokenParams);
+
             if (scmUsername.isPresent()) {
+              Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
+
               PersonalAccessToken personalAccessToken =
                   new PersonalAccessToken(
-                      trimmedUrl,
-                      annotations.get(ANNOTATION_CHE_USERID),
-                      organization,
+                      personalAccessTokenParams.getScmProviderUrl(),
+                      secretAnnotations.get(ANNOTATION_CHE_USERID),
+                      personalAccessTokenParams.getOrganization(),
                       scmUsername.get(),
-                      providerName,
-                      tokenId,
-                      token);
+                      secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME),
+                      personalAccessTokenParams.getScmTokenId(),
+                      personalAccessTokenParams.getToken());
               return Optional.of(personalAccessToken);
             }
+
             // Removing token that is no longer valid. If several tokens exist the next one could
             // be valid. If no valid token can be found, the caller should react in the same way
             // as it reacts if no token exists. Usually, that means that process of new token
@@ -225,6 +223,64 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
     return Optional.empty();
+  }
+
+  private boolean deleteSecretIfMisconfigured(Secret secret) throws InfrastructureException {
+    Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
+
+    String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
+    String configuredCheUserId = secretAnnotations.get(ANNOTATION_CHE_USERID);
+    String configuredOAuthProviderName =
+        secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+
+    // if any of the required annotations is missing, the secret is not valid
+    if (isNullOrEmpty(configuredScmServerUrl)
+        || isNullOrEmpty(configuredCheUserId)
+        || isNullOrEmpty(configuredOAuthProviderName)) {
+      cheServerKubernetesClientFactory
+          .create()
+          .secrets()
+          .inNamespace(secret.getMetadata().getNamespace())
+          .delete(secret);
+      return true;
+    }
+
+    return false;
+  }
+
+  private PersonalAccessTokenParams secret2PersonalAccessTokenParams(Secret secret) {
+    Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
+
+    String token = new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
+    String configuredOAuthProviderName =
+        secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+    String configuredTokenId = secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
+    String configuredScmOrganization = secretAnnotations.get(ANNOTATION_SCM_ORGANIZATION);
+    String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
+
+    return new PersonalAccessTokenParams(
+        trimEnd(configuredScmServerUrl, '/'),
+        configuredOAuthProviderName,
+        configuredTokenId,
+        token,
+        configuredScmOrganization);
+  }
+
+  private boolean isSecretMatchesSearchCriteria(
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      Secret secret) {
+    Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
+    String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
+    String configuredCheUserId = secretAnnotations.get(ANNOTATION_CHE_USERID);
+    String configuredOAuthProviderName =
+        secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+
+    return (configuredCheUserId.equals(cheUser.getUserId()))
+        && (oAuthProviderName == null || oAuthProviderName.equals(configuredOAuthProviderName))
+        && (scmServerUrl == null
+            || trimEnd(configuredScmServerUrl, '/').equals(trimEnd(scmServerUrl, '/')));
   }
 
   @Override

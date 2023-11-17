@@ -13,9 +13,7 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
-import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.ANNOTATION_CHE_USERID;
-import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID;
-import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.ANNOTATION_SCM_URL;
+import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -105,7 +103,13 @@ public class KubernetesPersonalAccessTokenManagerTest {
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user", ANNOTATION_SCM_URL, "http://host1"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
             .build();
 
     Secret secret = new SecretBuilder().withMetadata(meta1).withData(data).build();
@@ -176,17 +180,35 @@ public class KubernetesPersonalAccessTokenManagerTest {
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host1"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host2"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host2"))
             .build();
     ObjectMeta meta3 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user2", ANNOTATION_SCM_URL, "http://host3"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user2",
+                    ANNOTATION_SCM_URL,
+                    "http://host3"))
             .build();
 
     Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
@@ -227,6 +249,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,
@@ -269,7 +293,13 @@ public class KubernetesPersonalAccessTokenManagerTest {
     ObjectMeta metaData =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host1"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
             .build();
 
     Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
@@ -308,12 +338,24 @@ public class KubernetesPersonalAccessTokenManagerTest {
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host1.com/"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1.com/"))
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host2.com"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host2.com"))
             .build();
 
     Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
@@ -337,6 +379,41 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
+  public void shouldDeleteMisconfiguredTokensOnGet() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    Map<String, String> data1 =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+    ObjectMeta meta1 =
+        new ObjectMetaBuilder()
+            .withNamespace("test")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1"))
+            .build();
+    Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(secret1));
+    // when
+    Optional<PersonalAccessToken> token =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", "user1", "t1", false), "http://host1");
+    // then
+    assertFalse(token.isPresent());
+    verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
+  }
+
+  @Test
   public void shouldDeleteInvalidTokensOnGet() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
@@ -355,7 +432,13 @@ public class KubernetesPersonalAccessTokenManagerTest {
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host1"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
             .build();
     Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
     when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(secret1));
@@ -397,6 +480,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,
@@ -408,6 +493,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,

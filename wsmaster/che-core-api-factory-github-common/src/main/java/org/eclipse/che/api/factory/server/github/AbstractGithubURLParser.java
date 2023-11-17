@@ -90,7 +90,10 @@ public abstract class AbstractGithubURLParser {
     String trimmedUrl = trimEnd(url, '/');
     return githubPattern.matcher(trimmedUrl).matches()
         || githubSSHPattern.matcher(trimmedUrl).matches()
+        // If the GitHub URL is not configured, try to find it in a manually added user namespace
+        // token.
         || isUserTokenPresent(trimmedUrl)
+        // Try to call an API request to see if the URL matches GitHub.
         || isApiRequestRelevant(trimmedUrl);
   }
 

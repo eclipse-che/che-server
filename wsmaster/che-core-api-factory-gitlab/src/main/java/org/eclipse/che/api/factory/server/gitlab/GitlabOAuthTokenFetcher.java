@@ -232,8 +232,4 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
         ? new GitlabApiClient(scmServerUrl)
         : null;
   }
-
-  public String getProviderName() {
-    return OAUTH_PROVIDER_NAME;
-  }
 }

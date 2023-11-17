@@ -207,6 +207,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
     GithubApiClient apiClient;
     if (githubApiClient.isConnected(params.getScmProviderUrl())) {
+      // The url from the token has the same url as the api client, no need to create a new one.
       apiClient = githubApiClient;
     } else {
       if ("github".equals(params.getScmTokenName())) {

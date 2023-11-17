@@ -173,7 +173,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
     // then
     ScmInfo scmInfo = factory.getScmInfo();
     assertNotNull(scmInfo);
-    assertEquals(scmInfo.getScmProviderName(), "bitbucket-server");
+    assertEquals(scmInfo.getScmProviderName(), "bitbucket");
     assertEquals(scmInfo.getRepositoryUrl(), "http://bitbucket.2mcl.com/scm/~test/repo.git");
     assertEquals(scmInfo.getBranch(), "foobar");
   }

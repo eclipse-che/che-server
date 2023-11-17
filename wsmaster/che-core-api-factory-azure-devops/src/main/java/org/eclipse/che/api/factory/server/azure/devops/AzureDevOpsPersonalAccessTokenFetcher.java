@@ -82,8 +82,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       oAuthToken = oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME);
-      String tokenName =
-          NameGenerator.generate(OAUTH_2_PREFIX, 5) + "_" + AzureDevOps.PROVIDER_NAME;
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
@@ -173,9 +172,5 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
   private Boolean isValidScmServerUrl(String scmServerUrl) {
     return azureDevOpsScmApiEndpoint.equals(trimEnd(scmServerUrl, '/'));
-  }
-
-  public String getProviderName() {
-    return AzureDevOps.PROVIDER_NAME;
   }
 }

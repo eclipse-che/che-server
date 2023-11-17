@@ -106,8 +106,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     OAuthToken oAuthToken;
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5) + "_" + OAUTH_PROVIDER_NAME;
-      ;
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(

@@ -124,10 +124,6 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     this.providerName = providerName;
   }
 
-  public String getProviderName() {
-    return this.providerName;
-  }
-
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
@@ -139,7 +135,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     }
     try {
       oAuthToken = oAuthAPI.getToken(providerName);
-      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5) + "_" + providerName;
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
@@ -209,10 +205,17 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
 
   @Override
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
-    GithubApiClient apiClient =
-        githubApiClient.isConnected(params.getScmProviderUrl())
-            ? githubApiClient
-            : new GithubApiClient(params.getScmProviderUrl());
+    GithubApiClient apiClient;
+    if (githubApiClient.isConnected(params.getScmProviderUrl())) {
+      apiClient = githubApiClient;
+    } else {
+      if ("github".equals(params.getScmTokenName())) {
+        apiClient = new GithubApiClient(params.getScmProviderUrl());
+      } else {
+        LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
+        return Optional.empty();
+      }
+    }
     try {
       if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
         Pair<String, String[]> pair = apiClient.getTokenScopes(params.getToken());

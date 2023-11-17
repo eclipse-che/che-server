@@ -24,7 +24,7 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
 /** Representation of a bitbucket Server URL, allowing to get details from it. */
 public class BitbucketServerUrl extends DefaultFactoryUrl {
 
-  private final String NAME = "bitbucket-server";
+  private final String NAME = "bitbucket";
 
   /** Hostname of bitbucket URL */
   private String hostName;

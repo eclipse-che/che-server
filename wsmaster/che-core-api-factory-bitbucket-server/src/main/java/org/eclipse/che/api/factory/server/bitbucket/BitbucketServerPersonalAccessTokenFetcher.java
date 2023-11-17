@@ -51,9 +51,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   private static final Logger LOG =
       LoggerFactory.getLogger(BitbucketServerPersonalAccessTokenFetcher.class);
 
-  private static final String PROVIDER_NAME = "bitbucket-server";
-
-  private static final String TOKEN_NAME_TEMPLATE = "che-token-<%s>-<%s>_" + PROVIDER_NAME;
+  private static final String TOKEN_NAME_TEMPLATE = "che-token-<%s>-<%s>";
   public static final Set<String> DEFAULT_TOKEN_SCOPE =
       ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE");
   private final BitbucketServerApiClient bitbucketServerApiClient;
@@ -179,9 +177,5 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     } catch (ScmItemNotFoundException | ScmUnauthorizedException | ScmCommunicationException e) {
       return Optional.empty();
     }
-  }
-
-  public String getProviderName() {
-    return PROVIDER_NAME;
   }
 }

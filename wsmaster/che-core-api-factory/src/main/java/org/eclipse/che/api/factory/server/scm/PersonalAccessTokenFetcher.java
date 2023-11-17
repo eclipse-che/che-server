@@ -55,9 +55,6 @@ public interface PersonalAccessTokenFetcher {
   Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
       throws ScmCommunicationException, ScmUnauthorizedException;
 
-  /** Returns the scm provider name for which this fetcher is applicable. */
-  String getProviderName();
-
   /**
    * Checks whether the provided personal access token is valid by fetching user info from the scm
    * provider. Also checks whether the token has expected scope of permissions if the provider API

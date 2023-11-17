@@ -39,7 +39,7 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
       ImmutableSet.of("repo", "user:email", "read:user");
 
   private static final String NO_USERNAME_AND_EMAIL_ERROR_MESSAGE =
-      "User name and email is not found in the GitHub profile.";
+      "User name and/or email is not found in the GitHub profile.";
 
   /** Constructor used for testing only. */
   public AbstractGithubUserDataFetcher(
@@ -58,10 +58,11 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
   protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
     GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
-    if (!isNullOrEmpty(user.getName()) && !isNullOrEmpty(user.getEmail())) {
+    if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
+      throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
+    } else {
       return new GitUserData(user.getName(), user.getEmail());
     }
-    throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
   }
 
   @Override
@@ -73,10 +74,11 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
             ? githubApiClient
             : new GithubApiClient(personalAccessToken.getScmProviderUrl());
     GithubUser user = apiClient.getUser(personalAccessToken.getToken());
-    if (!isNullOrEmpty(user.getName()) && !isNullOrEmpty(user.getEmail())) {
+    if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
+      throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
+    } else {
       return new GitUserData(user.getName(), user.getEmail());
     }
-    throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
   }
 
   protected String getLocalAuthenticateUrl() {

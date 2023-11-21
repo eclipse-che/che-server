@@ -90,6 +90,7 @@ public class GithubScmFileResolverTest {
         .when(personalAccessTokenManager.getAndStore(anyString()))
         .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
 
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(
             new GithubCommit()

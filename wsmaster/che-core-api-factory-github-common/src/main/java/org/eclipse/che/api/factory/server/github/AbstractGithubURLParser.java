@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.github;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.server.github.GithubApiClient.GITHUB_SAAS_ENDPOINT;
@@ -46,14 +47,18 @@ public abstract class AbstractGithubURLParser {
   private final PersonalAccessTokenManager tokenManager;
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final GithubApiClient apiClient;
-  private final String oauthEndpoint;
   /**
    * Regexp to find repository details (repository name, project name and branch and subfolder)
    * Examples of valid URLs are in the test class.
    */
   private final Pattern githubPattern;
 
+  private final String githubPatternTemplate =
+      "^%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>.++))|(/pull/(?<pullRequestId>\\d++)))?$";
+
   private final Pattern githubSSHPattern;
+
+  private final String githubSSHPatternTemplate = "^git@%s:(?<repoUser>.*)/(?<repoName>.*)$";
 
   private final boolean disableSubdomainIsolation;
 
@@ -70,26 +75,80 @@ public abstract class AbstractGithubURLParser {
     this.tokenManager = tokenManager;
     this.devfileFilenamesProvider = devfileFilenamesProvider;
     this.apiClient = githubApiClient;
-    this.oauthEndpoint = oauthEndpoint;
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
 
     String endpoint =
         isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
 
-    this.githubPattern =
-        compile(
-            format(
-                "^%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>.++))|(/pull/(?<pullRequestId>\\d++)))?$",
-                endpoint));
+    this.githubPattern = compile(format(githubPatternTemplate, endpoint));
     this.githubSSHPattern =
-        compile(format("^git@%s:(?<repoUser>.*)/(?<repoName>.*)$", URI.create(endpoint).getHost()));
+        compile(format(githubSSHPatternTemplate, URI.create(endpoint).getHost()));
   }
 
   public boolean isValid(@NotNull String url) {
     String trimmedUrl = trimEnd(url, '/');
     return githubPattern.matcher(trimmedUrl).matches()
-        || githubSSHPattern.matcher(trimmedUrl).matches();
+        || githubSSHPattern.matcher(trimmedUrl).matches()
+        // If the GitHub URL is not configured, try to find it in a manually added user namespace
+        // token.
+        || isUserTokenPresent(trimmedUrl)
+        // Try to call an API request to see if the URL matches GitHub.
+        || isApiRequestRelevant(trimmedUrl);
+  }
+
+  private boolean isUserTokenPresent(String repositoryUrl) {
+    Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
+    if (serverUrlOptional.isPresent()) {
+      String serverUrl = serverUrlOptional.get();
+      try {
+        Optional<PersonalAccessToken> token =
+            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+        if (token.isPresent()) {
+          PersonalAccessToken accessToken = token.get();
+          return accessToken.getScmTokenName().equals(providerName);
+        }
+      } catch (ScmConfigurationPersistenceException
+          | ScmUnauthorizedException
+          | ScmCommunicationException exception) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  private boolean isApiRequestRelevant(String repositoryUrl) {
+    Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
+    if (serverUrlOptional.isPresent()) {
+      GithubApiClient GithubApiClient = new GithubApiClient(serverUrlOptional.get());
+      try {
+        // If the user request catches the unauthorised error, it means that the provided url
+        // belongs to GitHub.
+        GithubApiClient.getUser("");
+      } catch (ScmCommunicationException e) {
+        return e.getStatusCode() == HTTP_UNAUTHORIZED;
+      } catch (ScmItemNotFoundException | ScmBadRequestException | IllegalArgumentException e) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  private Optional<String> getServerUrl(String repositoryUrl) {
+    // If the given repository url is an SSH url, generate the base url from the pattern:
+    // https://<hostname extracted from the SSH url>.
+    if (repositoryUrl.startsWith("git@")) {
+      String substring = repositoryUrl.substring(4);
+      return Optional.of("https://" + substring.substring(0, substring.indexOf(":")));
+    }
+    // Otherwise, extract the base url from the given repository url by cutting the url after the
+    // first slash.
+    Matcher serverUrlMatcher = compile("[^/|:]/").matcher(repositoryUrl);
+    if (serverUrlMatcher.find()) {
+      return Optional.of(
+          repositoryUrl.substring(0, repositoryUrl.indexOf(serverUrlMatcher.group()) + 1));
+    }
+    return Optional.empty();
   }
 
   public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
@@ -100,18 +159,27 @@ public abstract class AbstractGithubURLParser {
     return parse(trimEnd(url, '/'), true);
   }
 
+  private IllegalArgumentException buildIllegalArgumentException(String url) {
+    return new IllegalArgumentException(
+        format("The given url %s is not a valid github URL. ", url));
+  }
+
   private GithubUrl parse(String url, boolean authenticationRequired) throws ApiException {
+    Matcher matcher;
     boolean isHTTPSUrl = githubPattern.matcher(url).matches();
-    Matcher matcher = isHTTPSUrl ? githubPattern.matcher(url) : githubSSHPattern.matcher(url);
+    if (isHTTPSUrl) {
+      matcher = githubPattern.matcher(url);
+    } else if (githubSSHPattern.matcher(url).matches()) {
+      matcher = githubSSHPattern.matcher(url);
+    } else {
+      matcher = getPatternMatcherByUrl(url).orElseThrow(() -> buildIllegalArgumentException(url));
+      isHTTPSUrl = url.startsWith("http");
+    }
     if (!matcher.matches()) {
-      throw new IllegalArgumentException(
-          format("The given url %s is not a valid github URL. ", url));
+      throw buildIllegalArgumentException(url);
     }
 
-    String serverUrl =
-        isNullOrEmpty(oauthEndpoint) || trimEnd(oauthEndpoint, '/').equals(GITHUB_SAAS_ENDPOINT)
-            ? null
-            : trimEnd(oauthEndpoint, '/');
+    String serverUrl = getServerUrl(url).orElseThrow(() -> buildIllegalArgumentException(url));
     String repoUser = matcher.group("repoUser");
     String repoName = matcher.group("repoName");
     if (repoName.matches("^[\\w-][\\w.-]*?\\.git$")) {
@@ -127,7 +195,7 @@ public abstract class AbstractGithubURLParser {
 
     if (pullRequestId != null) {
       GithubPullRequest pullRequest =
-          this.getPullRequest(pullRequestId, repoUser, repoName, authenticationRequired);
+          this.getPullRequest(serverUrl, pullRequestId, repoUser, repoName, authenticationRequired);
       if (pullRequest != null) {
         String state = pullRequest.getState();
         if (!"open".equalsIgnoreCase(state)) {
@@ -146,8 +214,12 @@ public abstract class AbstractGithubURLParser {
 
     String latestCommit = null;
     GithubCommit commit =
-        this.getLatestCommit(
-            repoUser, repoName, firstNonNull(branchName, "HEAD"), authenticationRequired);
+        getLatestCommit(
+            serverUrl,
+            repoUser,
+            repoName,
+            firstNonNull(branchName, "HEAD"),
+            authenticationRequired);
     if (commit != null) {
       latestCommit = commit.getSha();
     }
@@ -165,12 +237,14 @@ public abstract class AbstractGithubURLParser {
   }
 
   private GithubPullRequest getPullRequest(
-      String pullRequestId, String repoUser, String repoName, boolean authenticationRequired)
+      String githubEndpoint,
+      String pullRequestId,
+      String repoUser,
+      String repoName,
+      boolean authenticationRequired)
       throws ApiException {
     try {
       // prepare token
-      String githubEndpoint =
-          isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
       Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
@@ -180,8 +254,13 @@ public abstract class AbstractGithubURLParser {
         personalAccessToken = tokenManager.fetchAndSave(subject, githubEndpoint);
       }
 
+      GithubApiClient apiClient =
+          this.apiClient.isConnected(githubEndpoint)
+              ? this.apiClient
+              : new GithubApiClient(githubEndpoint);
+
       // get pull request
-      return this.apiClient.getPullRequest(
+      return apiClient.getPullRequest(
           pullRequestId,
           repoUser,
           repoName,
@@ -190,7 +269,7 @@ public abstract class AbstractGithubURLParser {
 
       // get pull request without authentication
       try {
-        return this.apiClient.getPullRequest(pullRequestId, repoUser, repoName, null);
+        return apiClient.getPullRequest(pullRequestId, repoUser, repoName, null);
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
           | ScmBadRequestException exception) {
@@ -211,12 +290,17 @@ public abstract class AbstractGithubURLParser {
   }
 
   private GithubCommit getLatestCommit(
-      String repoUser, String repoName, String branchName, boolean authenticationRequired)
-      throws ApiException {
+      String githubEndpoint,
+      String repoUser,
+      String repoName,
+      String branchName,
+      boolean authenticationRequired) {
+    GithubApiClient apiClient =
+        this.apiClient.isConnected(githubEndpoint)
+            ? this.apiClient
+            : new GithubApiClient(githubEndpoint);
     try {
       // prepare token
-      String githubEndpoint =
-          isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
       Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
@@ -227,7 +311,7 @@ public abstract class AbstractGithubURLParser {
       }
 
       // get latest commit
-      return this.apiClient.getLatestCommit(
+      return apiClient.getLatestCommit(
           repoUser,
           repoName,
           branchName,
@@ -235,7 +319,7 @@ public abstract class AbstractGithubURLParser {
     } catch (UnknownScmProviderException | ScmUnauthorizedException e) {
       // get latest commit without authentication
       try {
-        return this.apiClient.getLatestCommit(repoUser, repoName, branchName, null);
+        return apiClient.getLatestCommit(repoUser, repoName, branchName, null);
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
           | ScmBadRequestException
@@ -252,5 +336,22 @@ public abstract class AbstractGithubURLParser {
     }
 
     return null;
+  }
+
+  private Optional<Matcher> getPatternMatcherByUrl(String url) {
+    URI uri =
+        URI.create(
+            url.matches(format(githubSSHPatternTemplate, ".*"))
+                ? "ssh://" + url.replace(":", "/")
+                : url);
+    String scheme = uri.getScheme();
+    String host = uri.getHost();
+    Matcher matcher = compile(format(githubPatternTemplate, scheme + "://" + host)).matcher(url);
+    if (matcher.matches()) {
+      return Optional.of(matcher);
+    } else {
+      matcher = compile(format(githubSSHPatternTemplate, host)).matcher(url);
+      return matcher.matches() ? Optional.of(matcher) : Optional.empty();
+    }
   }
 }

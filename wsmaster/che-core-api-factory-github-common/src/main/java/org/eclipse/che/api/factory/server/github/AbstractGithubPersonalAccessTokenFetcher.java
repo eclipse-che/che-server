@@ -205,13 +205,21 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
 
   @Override
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
-    if (!githubApiClient.isConnected(params.getScmProviderUrl())) {
-      LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
-      return Optional.empty();
+    GithubApiClient apiClient;
+    if (githubApiClient.isConnected(params.getScmProviderUrl())) {
+      // The url from the token has the same url as the api client, no need to create a new one.
+      apiClient = githubApiClient;
+    } else {
+      if ("github".equals(params.getScmTokenName())) {
+        apiClient = new GithubApiClient(params.getScmProviderUrl());
+      } else {
+        LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
+        return Optional.empty();
+      }
     }
     try {
       if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
-        Pair<String, String[]> pair = githubApiClient.getTokenScopes(params.getToken());
+        Pair<String, String[]> pair = apiClient.getTokenScopes(params.getToken());
         return Optional.of(
             Pair.of(
                 containsScopes(pair.second, DEFAULT_TOKEN_SCOPES) ? Boolean.TRUE : Boolean.FALSE,
@@ -219,7 +227,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       } else {
         // TODO: add PAT scope validation
         // No REST API for PAT-s in Github found yet. Just try to do some action.
-        GithubUser user = githubApiClient.getUser(params.getToken());
+        GithubUser user = apiClient.getUser(params.getToken());
         return Optional.of(Pair.of(Boolean.TRUE, user.getLogin()));
       }
     } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {

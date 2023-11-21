@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
@@ -36,6 +38,9 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
   public static final Set<String> DEFAULT_TOKEN_SCOPES =
       ImmutableSet.of("repo", "user:email", "read:user");
 
+  private static final String NO_USERNAME_AND_EMAIL_ERROR_MESSAGE =
+      "User name and/or email is not found in the GitHub profile.";
+
   /** Constructor used for testing only. */
   public AbstractGithubUserDataFetcher(
       String apiEndpoint,
@@ -53,15 +58,27 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
   protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
     GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
-    return new GitUserData(user.getName(), user.getEmail());
+    if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
+      throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
+    } else {
+      return new GitUserData(user.getName(), user.getEmail());
+    }
   }
 
   @Override
   protected GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    GithubUser user = githubApiClient.getUser(personalAccessToken.getToken());
-    return new GitUserData(user.getName(), user.getEmail());
+    GithubApiClient apiClient =
+        githubApiClient.isConnected(personalAccessToken.getScmProviderUrl())
+            ? githubApiClient
+            : new GithubApiClient(personalAccessToken.getScmProviderUrl());
+    GithubUser user = apiClient.getUser(personalAccessToken.getToken());
+    if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
+      throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
+    } else {
+      return new GitUserData(user.getName(), user.getEmail());
+    }
   }
 
   protected String getLocalAuthenticateUrl() {

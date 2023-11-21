@@ -39,6 +39,7 @@ public class GithubUrlTest {
   @Test
   public void checkDevfileLocation() throws Exception {
     DevfileFilenamesProvider devfileFilenamesProvider = mock(DevfileFilenamesProvider.class);
+    when(githubApiClient.isConnected("https://github.com")).thenReturn(true);
 
     /** Parser used to create the url. */
     GithubURLParser githubUrlParser =
@@ -67,6 +68,7 @@ public class GithubUrlTest {
   @Test
   public void shouldReturnDevfileLocationFromSSHUrl() throws Exception {
     DevfileFilenamesProvider devfileFilenamesProvider = mock(DevfileFilenamesProvider.class);
+    when(githubApiClient.isConnected("https://github.com")).thenReturn(true);
 
     /** Parser used to create the url. */
     GithubURLParser githubUrlParser =
@@ -139,7 +141,11 @@ public class GithubUrlTest {
   public void testRawFileLocationWithDefaultBranchName() {
     String file = ".che/che-theia-plugins.yaml";
 
-    GithubUrl url = new GithubUrl("github").withUsername("eclipse").withRepository("che");
+    GithubUrl url =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withServerUrl("https://github.com");
 
     assertEquals(
         url.rawFileLocation(file),
@@ -151,7 +157,11 @@ public class GithubUrlTest {
     String file = ".che/che-theia-plugins.yaml";
 
     GithubUrl url =
-        new GithubUrl("github").withUsername("eclipse").withRepository("che").withBranch("main");
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withBranch("main")
+            .withServerUrl("https://github.com");
 
     assertEquals(
         url.rawFileLocation(file),
@@ -166,6 +176,7 @@ public class GithubUrlTest {
         new GithubUrl("github")
             .withUsername("eclipse")
             .withRepository("che")
+            .withServerUrl("https://github.com")
             .withBranch("main")
             .withLatestCommit("c24fd44e0f7296be2e49a380fb8abe2fe4db9100");
 

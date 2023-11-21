@@ -163,6 +163,7 @@ public class GithubFactoryParametersResolverTest {
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.empty());
 
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
 
@@ -182,7 +183,7 @@ public class GithubFactoryParametersResolverTest {
     // given
     when(urlFactoryBuilder.buildDefaultDevfile(any()))
         .thenReturn(generateDevfileFactory().getDevfile());
-
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
 
@@ -205,7 +206,7 @@ public class GithubFactoryParametersResolverTest {
     // given
     when(urlFactoryBuilder.buildDefaultDevfile(any()))
         .thenReturn(generateDevfileFactory().getDevfile());
-
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
 
@@ -231,7 +232,7 @@ public class GithubFactoryParametersResolverTest {
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
-
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("13bbd0d4605a6ed3350f7b15eb02c4d4e6f8df6e"));
 
@@ -262,7 +263,7 @@ public class GithubFactoryParametersResolverTest {
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
-
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
 
@@ -293,7 +294,7 @@ public class GithubFactoryParametersResolverTest {
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
-
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
 
@@ -316,7 +317,7 @@ public class GithubFactoryParametersResolverTest {
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.of(computedFactory));
-
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
 

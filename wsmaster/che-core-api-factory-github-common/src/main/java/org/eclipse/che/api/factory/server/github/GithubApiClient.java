@@ -269,24 +269,25 @@ public class GithubApiClient {
     try {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-      LOG.trace("executeRequest={} response {}", request, response.statusCode());
-      if (response.statusCode() == HTTP_OK) {
+      int statusCode = response.statusCode();
+      LOG.trace("executeRequest={} response {}", request, statusCode);
+      if (statusCode == HTTP_OK) {
         return responseConverter.apply(response);
-      } else if (response.statusCode() == HTTP_NO_CONTENT) {
+      } else if (statusCode == HTTP_NO_CONTENT) {
         return null;
       } else {
         String body =
             response.body() == null
                 ? "Unrecognised error"
                 : CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
-        switch (response.statusCode()) {
+        switch (statusCode) {
           case HTTP_BAD_REQUEST:
             throw new ScmBadRequestException(body);
           case HTTP_NOT_FOUND:
             throw new ScmItemNotFoundException(body);
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + response.statusCode() + " " + response.toString());
+                "Unexpected status code " + statusCode + " " + response.toString(), statusCode);
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {

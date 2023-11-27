@@ -120,11 +120,11 @@ public abstract class AbstractGithubURLParser {
   private boolean isApiRequestRelevant(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
-      GithubApiClient GithubApiClient = new GithubApiClient(serverUrlOptional.get());
+      GithubApiClient githubApiClient = new GithubApiClient(serverUrlOptional.get());
       try {
         // If the user request catches the unauthorised error, it means that the provided url
         // belongs to GitHub.
-        GithubApiClient.getUser("");
+        githubApiClient.getUser("");
       } catch (ScmCommunicationException e) {
         return e.getStatusCode() == HTTP_UNAUTHORIZED;
       } catch (ScmItemNotFoundException | ScmBadRequestException | IllegalArgumentException e) {

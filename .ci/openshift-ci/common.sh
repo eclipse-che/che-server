@@ -102,6 +102,15 @@ testFactoryResolverNoPatOAuth() {
   testFactoryResolverResponse $1 200
 
   echo "[INFO] Check factory resolver for private repository with NO PAT/OAuth setup"
+  testFactoryResolverResponse $2 500
+}
+
+# check that raw devfile url factory resolver returns correct value without any PAT/OAuth setup
+testFactoryResolverNoPatOAuthRaw() {
+  echo "[INFO] Check factory resolver for public repository with NO PAT/OAuth setup"
+  testFactoryResolverResponse $1 200
+
+  echo "[INFO] Check factory resolver for private repository with NO PAT/OAuth setup"
   testFactoryResolverResponse $2 400
 }
 

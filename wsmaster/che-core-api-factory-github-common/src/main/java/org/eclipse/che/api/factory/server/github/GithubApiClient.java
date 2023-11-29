@@ -287,7 +287,7 @@ public class GithubApiClient {
             throw new ScmItemNotFoundException(body);
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + statusCode + " " + response.toString(), statusCode);
+                "Unexpected status code " + statusCode + " " + body, statusCode);
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {

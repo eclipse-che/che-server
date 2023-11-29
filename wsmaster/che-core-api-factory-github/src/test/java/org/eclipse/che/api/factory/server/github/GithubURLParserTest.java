@@ -337,7 +337,12 @@ public class GithubURLParserTest {
   public void shouldValidateGitHubServerUrl() throws Exception {
     // given
     String url = wireMockServer.url("/user/repo");
-    stubFor(get(urlEqualTo("/api/v3/user")).willReturn(aResponse().withStatus(HTTP_UNAUTHORIZED)));
+    stubFor(
+        get(urlEqualTo("/api/v3/user"))
+            .willReturn(
+                aResponse()
+                    .withStatus(HTTP_UNAUTHORIZED)
+                    .withBody("{\"message\": \"Must authenticate to access this API.\",\n}")));
 
     // when
     boolean valid = githubUrlParser.isValid(url);

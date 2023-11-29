@@ -285,8 +285,7 @@ public class GithubApiClientTest {
 
   @Test(
       expectedExceptions = ScmCommunicationException.class,
-      expectedExceptionsMessageRegExp =
-          "Unexpected status code 502 \\(GET http://localhost:\\d*/api/v3/user\\) 502")
+      expectedExceptionsMessageRegExp = "Unexpected status code 502 item not found")
   public void shouldThrowExceptionOnOtherError() throws Exception {
     // given
     stubFor(

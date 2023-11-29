@@ -126,7 +126,10 @@ public abstract class AbstractGithubURLParser {
         // belongs to GitHub.
         githubApiClient.getUser("");
       } catch (ScmCommunicationException e) {
-        return e.getStatusCode() == HTTP_UNAUTHORIZED;
+        return e.getStatusCode() == HTTP_UNAUTHORIZED
+            // Check the error message as well, because other providers might also return 401 for
+            // such requests.
+            && e.getMessage().contains("Must authenticate to access this API.");
       } catch (ScmItemNotFoundException | ScmBadRequestException | IllegalArgumentException e) {
         return false;
       }

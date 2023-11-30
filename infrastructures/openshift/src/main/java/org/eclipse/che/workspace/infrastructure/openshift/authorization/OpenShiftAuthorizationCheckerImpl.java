@@ -30,26 +30,23 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
 
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
-  private final Set<String> allowedUsers;
-  private final Set<String> allowedGroups;
-  private final Set<String> disabledUsers;
-  private final Set<String> disabledGroups;
+  private final Set<String> allowUsers;
+  private final Set<String> allowGroups;
+  private final Set<String> denyUsers;
+  private final Set<String> denyGroups;
 
   @Inject
   public OpenShiftAuthorizationCheckerImpl(
-      @Nullable @Named("che.infra.kubernetes.advanced_authorization.allowed_users")
-          String allowedUsers,
-      @Nullable @Named("che.infra.kubernetes.advanced_authorization.allowed_groups")
-          String allowedGroups,
-      @Nullable @Named("che.infra.kubernetes.advanced_authorization.disabled_users")
-          String disabledUsers,
-      @Nullable @Named("che.infra.kubernetes.advanced_authorization.disabled_groups")
-          String disabledGroups,
+      @Nullable @Named("che.infra.kubernetes.advanced_authorization.allow_users") String allowUsers,
+      @Nullable @Named("che.infra.kubernetes.advanced_authorization.allow_groups")
+          String allowGroups,
+      @Nullable @Named("che.infra.kubernetes.advanced_authorization.deny_users") String denyUsers,
+      @Nullable @Named("che.infra.kubernetes.advanced_authorization.deny_groups") String denyGroups,
       CheServerKubernetesClientFactory cheServerKubernetesClientFactory) {
-    this.allowedUsers = strToSet(allowedUsers);
-    this.allowedGroups = strToSet(allowedGroups);
-    this.disabledUsers = strToSet(disabledUsers);
-    this.disabledGroups = strToSet(disabledGroups);
+    this.allowUsers = strToSet(allowUsers);
+    this.allowGroups = strToSet(allowGroups);
+    this.denyUsers = strToSet(denyUsers);
+    this.denyGroups = strToSet(denyGroups);
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
   }
 
@@ -60,15 +57,15 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
 
   private boolean isAllowedUser(KubernetesClient client, String username) {
     // All users from all groups are allowed by default
-    if (allowedUsers.isEmpty() && allowedGroups.isEmpty()) {
+    if (allowUsers.isEmpty() && allowGroups.isEmpty()) {
       return true;
     }
 
-    if (allowedUsers.contains(username)) {
+    if (allowUsers.contains(username)) {
       return true;
     }
 
-    for (String groupName : allowedGroups) {
+    for (String groupName : allowGroups) {
       Group group = client.resources(Group.class).withName(groupName).get();
       if (group != null && group.getUsers().contains(username)) {
         return true;
@@ -80,15 +77,15 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
 
   private boolean isDisabledUser(KubernetesClient client, String username) {
     // All users from all groups are allowed by default
-    if (disabledUsers.isEmpty() && disabledGroups.isEmpty()) {
+    if (denyUsers.isEmpty() && denyGroups.isEmpty()) {
       return false;
     }
 
-    if (disabledUsers.contains(username)) {
+    if (denyUsers.contains(username)) {
       return true;
     }
 
-    for (String groupName : disabledGroups) {
+    for (String groupName : denyGroups) {
       Group group = client.resources(Group.class).withName(groupName).get();
       if (group != null && group.getUsers().contains(username)) {
         return true;

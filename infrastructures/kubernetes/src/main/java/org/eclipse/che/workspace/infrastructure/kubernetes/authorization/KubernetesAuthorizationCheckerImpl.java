@@ -23,17 +23,15 @@ import org.eclipse.che.commons.annotation.Nullable;
 @Singleton
 public class KubernetesAuthorizationCheckerImpl implements AuthorizationChecker {
 
-  private final Set<String> allowedUsers;
-  private final Set<String> disabledUsers;
+  private final Set<String> allowUsers;
+  private final Set<String> denyUsers;
 
   @Inject
   public KubernetesAuthorizationCheckerImpl(
-      @Nullable @Named("che.infra.kubernetes.advanced_authorization.allowed_users")
-          String allowedUsers,
-      @Nullable @Named("che.infra.kubernetes.advanced_authorization.disabled_users")
-          String disabledUsers) {
-    this.allowedUsers = strToSet(allowedUsers);
-    this.disabledUsers = strToSet(disabledUsers);
+      @Nullable @Named("che.infra.kubernetes.advanced_authorization.allow_users") String allowUsers,
+      @Nullable @Named("che.infra.kubernetes.advanced_authorization.deny_users") String denyUsers) {
+    this.allowUsers = strToSet(allowUsers);
+    this.denyUsers = strToSet(denyUsers);
   }
 
   public boolean isAuthorized(String username) {
@@ -41,10 +39,10 @@ public class KubernetesAuthorizationCheckerImpl implements AuthorizationChecker 
   }
 
   private boolean isAllowedUser(String username) {
-    return allowedUsers.isEmpty() || allowedUsers.contains(username);
+    return allowUsers.isEmpty() || allowUsers.contains(username);
   }
 
   private boolean isDisabledUser(String username) {
-    return !disabledUsers.isEmpty() && disabledUsers.contains(username);
+    return !denyUsers.isEmpty() && denyUsers.contains(username);
   }
 }

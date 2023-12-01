@@ -451,7 +451,7 @@ public class URLFactoryBuilderTest {
     } catch (ApiException e) {
       assertTrue(e.getClass().isAssignableFrom(expectedClass));
       assertEquals(e.getMessage(), expectedMessage);
-      if (e.getServiceError() instanceof ExtendedError)
+      if ("SCM Authentication required".equals(e.getMessage()))
         assertEquals(((ExtendedError) e.getServiceError()).getAttributes(), expectedAttributes);
     }
   }

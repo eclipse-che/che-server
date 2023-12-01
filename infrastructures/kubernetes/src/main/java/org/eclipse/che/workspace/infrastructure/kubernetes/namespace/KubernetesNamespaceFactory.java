@@ -585,15 +585,15 @@ public class KubernetesNamespaceFactory {
     }
   }
 
-  protected void validateAuthorization(String namespaceName, String userName)
+  protected void validateAuthorization(String namespaceName, String username)
       throws InfrastructureException {
-    if (!authorizationChecker.isAuthorized(userName)) {
+    if (!authorizationChecker.isAuthorized(username)) {
       try {
         permissionsCleaner.cleanUp(namespaceName);
       } catch (InfrastructureException | KubernetesClientException e) {
         LOG.error(
             "Failed to clean up permissions for user '{}' in namespace '{}'. Cause: {}",
-            userName,
+            username,
             namespaceName,
             e.getMessage(),
             e);
@@ -602,7 +602,7 @@ public class KubernetesNamespaceFactory {
       throw new AuthorizationException(
           format(
               "User '%s' is not authorized to create a project. Please contact your system administrator.",
-              userName));
+              username));
     }
   }
 

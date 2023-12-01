@@ -15,7 +15,7 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 
 /**
- * An exception thrown by {@link RuntimeInfrastructure} and related components. Indicates that an
+ * An exception thrown by {@link RuntimeInfrastructure} and related components. Indicates that a
  * user is not authorized to use Che.
  *
  * @author Anatolii Bazko

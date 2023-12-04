@@ -50,14 +50,14 @@ public class OpenShiftAuthorizationCheckerTest {
       List<Group> groups,
       String allowedUsers,
       String allowedGroups,
-      String disabledUsers,
-      String disabledGroups,
+      String deniedUsers,
+      String deniedGroups,
       boolean expectedIsAuthorized)
       throws InfrastructureException {
     // give
     OpenShiftAuthorizationCheckerImpl authorizationChecker =
         new OpenShiftAuthorizationCheckerImpl(
-            allowedUsers, allowedGroups, disabledUsers, disabledGroups, clientFactory);
+            allowedUsers, allowedGroups, deniedUsers, deniedGroups, clientFactory);
     groups.forEach(group -> client.resources(Group.class).create(group));
 
     // when

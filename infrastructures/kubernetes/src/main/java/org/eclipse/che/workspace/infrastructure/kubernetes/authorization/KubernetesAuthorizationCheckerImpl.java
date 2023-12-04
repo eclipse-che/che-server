@@ -35,14 +35,14 @@ public class KubernetesAuthorizationCheckerImpl implements AuthorizationChecker 
   }
 
   public boolean isAuthorized(String username) {
-    return isAllowedUser(username) && !isDisabledUser(username);
+    return isAllowedUser(username) && !isDeniedUser(username);
   }
 
   private boolean isAllowedUser(String username) {
     return allowUsers.isEmpty() || allowUsers.contains(username);
   }
 
-  private boolean isDisabledUser(String username) {
+  private boolean isDeniedUser(String username) {
     return !denyUsers.isEmpty() && denyUsers.contains(username);
   }
 }

@@ -52,7 +52,7 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
 
   public boolean isAuthorized(String username) throws InfrastructureException {
     return isAllowedUser(cheServerKubernetesClientFactory.create(), username)
-        && !isDisabledUser(cheServerKubernetesClientFactory.create(), username);
+        && !isDeniedUser(cheServerKubernetesClientFactory.create(), username);
   }
 
   private boolean isAllowedUser(KubernetesClient client, String username) {
@@ -75,7 +75,7 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
     return false;
   }
 
-  private boolean isDisabledUser(KubernetesClient client, String username) {
+  private boolean isDeniedUser(KubernetesClient client, String username) {
     // All users from all groups are allowed by default
     if (denyUsers.isEmpty() && denyGroups.isEmpty()) {
       return false;

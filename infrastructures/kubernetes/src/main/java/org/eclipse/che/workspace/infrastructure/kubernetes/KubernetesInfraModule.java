@@ -36,6 +36,9 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvV
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.KubernetesNamespaceService;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.AuthorizationChecker;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.KubernetesAuthorizationCheckerImpl;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.PermissionsCleaner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.jpa.JpaKubernetesRuntimeCacheModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesComponentToWorkspaceApplier;
@@ -109,6 +112,9 @@ public class KubernetesInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
     namespaceConfigurators.addBinding().to(SshKeysConfigurator.class);
     namespaceConfigurators.addBinding().to(GitconfigUserDataConfigurator.class);
+
+    bind(AuthorizationChecker.class).to(KubernetesAuthorizationCheckerImpl.class);
+    bind(PermissionsCleaner.class).asEagerSingleton();
 
     bind(KubernetesNamespaceService.class);
 

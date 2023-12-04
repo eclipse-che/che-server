@@ -30,6 +30,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLocation;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
@@ -131,7 +132,9 @@ public class URLFactoryBuilder {
         continue;
       } catch (DevfileException e) {
         LOG.debug("Unexpected devfile exception: {}", e.getMessage());
-        throw new ApiException(e.getMessage());
+        throw e.getCause() instanceof ScmUnauthorizedException
+            ? toApiException(e, location)
+            : new ApiException(e.getMessage());
       }
       if (isNullOrEmpty(devfileYamlContent)) {
         return Optional.empty();

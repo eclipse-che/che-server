@@ -22,11 +22,11 @@ import org.testng.annotations.Test;
 public class KubernetesAuthorizationCheckerTest {
   @Test(dataProvider = "advancedAuthorizationData")
   public void advancedAuthorization(
-      String testUserName, String allowedUsers, String disabledUsers, boolean expectedIsAuthorized)
+      String testUserName, String allowedUsers, String deniedUsers, boolean expectedIsAuthorized)
       throws InfrastructureException {
     // give
     AuthorizationChecker authorizationChecker =
-        new KubernetesAuthorizationCheckerImpl(allowedUsers, disabledUsers);
+        new KubernetesAuthorizationCheckerImpl(allowedUsers, deniedUsers);
 
     // when
     boolean isAuthorized = authorizationChecker.isAuthorized(testUserName);

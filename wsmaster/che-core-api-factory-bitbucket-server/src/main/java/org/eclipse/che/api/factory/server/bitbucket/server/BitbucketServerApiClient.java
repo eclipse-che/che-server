@@ -69,7 +69,7 @@ public interface BitbucketServerApiClient {
    * @throws ScmUnauthorizedException
    * @throws ScmCommunicationException
    */
-  void deletePersonalAccessTokens(Long tokenId)
+  void deletePersonalAccessTokens(String tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 
   /**
@@ -103,6 +103,6 @@ public interface BitbucketServerApiClient {
    * @return - Bitbucket personal access token.
    * @throws ScmCommunicationException
    */
-  BitbucketPersonalAccessToken getPersonalAccessToken(Long tokenId)
+  BitbucketPersonalAccessToken getPersonalAccessToken(String tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 }

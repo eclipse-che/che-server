@@ -57,7 +57,7 @@ public class NoopBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public void deletePersonalAccessTokens(Long tokenId)
+  public void deletePersonalAccessTokens(String tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException(
         "The fallback noop api client cannot be used for real operation. Make sure Bitbucket OAuth1 is properly configured.");
@@ -77,7 +77,7 @@ public class NoopBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public BitbucketPersonalAccessToken getPersonalAccessToken(Long tokenId)
+  public BitbucketPersonalAccessToken getPersonalAccessToken(String tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
     throw new RuntimeException("Invalid usage of BitbucketServerApi");
   }

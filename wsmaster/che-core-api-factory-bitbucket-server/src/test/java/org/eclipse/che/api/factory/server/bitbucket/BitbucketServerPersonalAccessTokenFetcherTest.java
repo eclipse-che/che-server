@@ -78,7 +78,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             "User User", "user-name", 32423523, "NORMAL", true, "user-slug", "user@users.com");
     bitbucketPersonalAccessToken =
         new BitbucketPersonalAccessToken(
-            234234,
+            "234234",
             234345345,
             23534534,
             90,
@@ -88,7 +88,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
     bitbucketPersonalAccessToken2 =
         new BitbucketPersonalAccessToken(
-            3647456,
+            "3647456",
             234345345,
             23534534,
             90,
@@ -98,7 +98,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             ImmutableSet.of("REPO_READ"));
     bitbucketPersonalAccessToken3 =
         new BitbucketPersonalAccessToken(
-            132423,
+            "132423",
             234345345,
             23534534,
             90,
@@ -222,7 +222,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     // given
     when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(someBitbucketURL);
     when(personalAccessTokenParams.getScmTokenId())
-        .thenReturn(Long.toString(bitbucketPersonalAccessToken.getId()));
+        .thenReturn(bitbucketPersonalAccessToken.getId());
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
     when(bitbucketServerApiClient.getPersonalAccessToken(eq(bitbucketPersonalAccessToken.getId())))
         .thenReturn(bitbucketPersonalAccessToken);

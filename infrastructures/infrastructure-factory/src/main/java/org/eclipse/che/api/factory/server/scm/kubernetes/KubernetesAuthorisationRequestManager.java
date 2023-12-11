@@ -90,7 +90,10 @@ public class KubernetesAuthorisationRequestManager implements AuthorisationReque
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
     if (errorValues != null && errorValues.contains("access_denied")) {
-      store(getParameter(params, "oauth_provider"));
+      String oauthProvider = getParameter(params, "oauth_provider");
+      if (!isNullOrEmpty(oauthProvider)) {
+        store(oauthProvider);
+      }
     }
   }
 

@@ -29,28 +29,28 @@ jobs:
         java-version: '11'
         cache: 'maven'
     - name: Login to docker.io
-      uses: docker/login-action@v2
+      uses: redhat-actions/podman-login@v1
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
         registry: docker.io
     - name: Login to quay.io
-      uses: docker/login-action@v2
+      uses: redhat-actions/podman-login@v1
       with:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
     - name: Build with Maven
       run: mvn -B clean install -U -Pintegration
-    - name: Build docker images
+    - name: Build images
       id: build
       run: |
           echo "short_sha1=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           ./build/build.sh --tag:next --sha-tag
     - name: Push docker images
       run: |
-        docker push quay.io/eclipse/che-server:next
-        docker push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
+        podman push quay.io/eclipse/che-server:next
+        podman push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
     - name: Create failure MM message
       if: ${{ failure() }}
       run: |

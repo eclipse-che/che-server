@@ -37,23 +37,6 @@ loadMvnSettingsGpgKey() {
     gpg --version
 }
 
-# comment out: why do we think we need nodejs installed for a java build?
-# installDebDeps(){
-#     set +x
-#     curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-#     sudo apt-get install -y nodejs
-# }
-
-# comment out: already installed via GH action so no need to do it again
-# installMaven(){
-#     set -x
-#     mkdir -p /opt/apache-maven && curl -sSL https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz | tar -xz --strip=1 -C /opt/apache-maven
-#     export M2_HOME="/opt/apache-maven"
-#     export PATH="/opt/apache-maven/bin:${PATH}"
-#     mvn -version || die_with "mvn not found in path: ${PATH} !"
-#     set +x
-# }
-
 evaluateCheVariables() {
     echo "Che version: ${CHE_VERSION}"
     # derive branch from version
@@ -392,13 +375,7 @@ updateImageTagsInCheServer() {
     popd >/dev/null
 }
 
-# already installed via GH action so no need to do it again
-# installMaven
-
 loadMvnSettingsGpgKey
-
-# why do we think we need nodejs installed for a java build?
-# installDebDeps 
 
 set -x
 setupGitconfig

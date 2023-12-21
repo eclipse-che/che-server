@@ -20,11 +20,14 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.Set;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -35,7 +38,8 @@ import org.testng.annotations.Test;
 @Listeners(value = MockitoTestNGListener.class)
 public class EmbeddedOAuthAPITest {
 
-  @Mock OAuthAuthenticatorProvider providers;
+  @Mock OAuthAuthenticatorProvider oauth2Providers;
+  @Mock org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
 
   @InjectMocks EmbeddedOAuthAPI embeddedOAuthAPI;
 
@@ -51,13 +55,33 @@ public class EmbeddedOAuthAPITest {
     String provider = "myprovider";
     String token = "token123";
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
-    when(providers.getAuthenticator(eq(provider))).thenReturn(authenticator);
+    when(oauth2Providers.getAuthenticator(eq(provider))).thenReturn(authenticator);
 
     when(authenticator.getToken(anyString())).thenReturn(newDto(OAuthToken.class).withToken(token));
 
     OAuthToken result = embeddedOAuthAPI.getToken(provider);
 
     assertEquals(result.getToken(), token);
+  }
+
+  @Test
+  public void shouldGetRegisteredAuthenticators() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://eclipse.che"));
+    when(oauth2Providers.getRegisteredProviderNames()).thenReturn(Set.of("github"));
+    when(oauth1Providers.getRegisteredProviderNames()).thenReturn(Set.of("bitbucket"));
+    org.eclipse.che.security.oauth1.OAuthAuthenticator authenticator =
+        mock(org.eclipse.che.security.oauth1.OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(mock(OAuthAuthenticator.class));
+    when(oauth1Providers.getAuthenticator("bitbucket")).thenReturn(authenticator);
+
+    // when
+    Set<OAuthAuthenticatorDescriptor> registeredAuthenticators =
+        embeddedOAuthAPI.getRegisteredAuthenticators(uriInfo);
+
+    // then
+    assertEquals(registeredAuthenticators.size(), 2);
   }
 
   @Test

@@ -60,7 +60,8 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Named("che.auth.access_denied_error_page")
   protected String errorPage;
 
-  @Inject protected OAuthAuthenticatorProvider providers;
+  @Inject protected OAuthAuthenticatorProvider oauth2Providers;
+  @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   private String redirectAfterLogin;
 
   @Override
@@ -126,7 +127,10 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     Set<OAuthAuthenticatorDescriptor> result = new HashSet<>();
     final UriBuilder uriBuilder =
         uriInfo.getBaseUriBuilder().clone().path(OAuthAuthenticationService.class);
-    for (String name : providers.getRegisteredProviderNames()) {
+    Set<String> registeredProviderNames =
+        new HashSet<>(oauth2Providers.getRegisteredProviderNames());
+    registeredProviderNames.addAll(oauth1Providers.getRegisteredProviderNames());
+    for (String name : registeredProviderNames) {
       final List<Link> links = new LinkedList<>();
       links.add(
           LinksHelper.createLink(
@@ -147,11 +151,14 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
                   .withName("mode")
                   .withRequired(true)
                   .withDefaultValue("federated_login")));
-      OAuthAuthenticator authenticator = providers.getAuthenticator(name);
+      OAuthAuthenticator authenticator = oauth2Providers.getAuthenticator(name);
       result.add(
           newDto(OAuthAuthenticatorDescriptor.class)
               .withName(name)
-              .withEndpointUrl(authenticator.getEndpointUrl())
+              .withEndpointUrl(
+                  authenticator != null
+                      ? authenticator.getEndpointUrl()
+                      : oauth1Providers.getAuthenticator(name).getEndpointUrl())
               .withLinks(links));
     }
     return result;
@@ -193,7 +200,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   }
 
   protected OAuthAuthenticator getAuthenticator(String oauthProviderName) throws NotFoundException {
-    OAuthAuthenticator oauth = providers.getAuthenticator(oauthProviderName);
+    OAuthAuthenticator oauth = oauth2Providers.getAuthenticator(oauthProviderName);
     if (oauth == null) {
       LOG.warn("Unsupported OAuth provider {} ", oauthProviderName);
       throw new NotFoundException("Unsupported OAuth provider " + oauthProviderName);

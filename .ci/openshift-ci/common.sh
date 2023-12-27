@@ -32,6 +32,8 @@ export PRIVATE_REPO_WORKSPACE_NAME=${PRIVATE_REPO_WORKSPACE_NAME:-"private-repo-
 export PUBLIC_PROJECT_NAME=${PUBLIC_PROJECT_NAME:-"public-repo"}
 export PRIVATE_PROJECT_NAME=${PRIVATE_PROJECT_NAME:-"private-repo"}
 export YAML_FILE_NAME=${YAML_FILE_NAME:-"devfile.yaml"}
+export CUSTOM_CONFIG_MAP_NAME=${CUSTOM_CONFIG_MAP_NAME:-"custom-ca-certificates"}
+export GIT_SSL_CONFIG_MAP_NAME=${GIT_SSL_CONFIG_MAP_NAME:-"che-self-signed-cert"}
 
 provisionOpenShiftOAuthUser() {
   echo -e "[INFO] Provisioning Openshift OAuth user"
@@ -52,15 +54,35 @@ provisionOpenShiftOAuthUser() {
   done
 }
 
+configureGitSelfSignedCertificate() {
+  echo "[INFO] Configure self-signed certificate for Git provider"
+  oc adm new-project ${CHE_NAMESPACE}
+  oc project ${CHE_NAMESPACE}
+
+  echo -e "[INFO] Create ConfigMap with the required TLS certificate"
+  oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt
+  oc label configmap ${CUSTOM_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org app.kubernetes.io/component=ca-bundle
+
+  echo "[INFO] Create ConfigMap to support Git repositories with self-signed certificates"
+  oc create configmap ${GIT_SSL_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt --from-literal=githost=$GIT_PROVIDER_URL
+  oc label configmap ${GIT_SSL_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org
+}
+
 createCustomResourcesFile() {
   cat > custom-resources.yaml <<-END
 apiVersion: org.eclipse.che/v2
 spec:
   devEnvironments:
-  maxNumberOfRunningWorkspacesPerUser: 10000
+    maxNumberOfRunningWorkspacesPerUser: 10000
 END
 
   echo "Generated custom resources file"
+  cat custom-resources.yaml
+}
+
+patchCustomResourcesFile() {
+  yq -y '.spec.devEnvironments.trustedCerts += {"gitTrustedCertsConfigMapName": "'${GIT_SSL_CONFIG_MAP_NAME}'"}' custom-resources.yaml -i
+
   cat custom-resources.yaml
 }
 
@@ -204,6 +226,87 @@ setupSSHKeyPairs() {
   oc apply -f ssh-secret.yaml -n ${USER_CHE_NAMESPACE}
 }
 
+# Only for GitLab server administrator users
+createOAuthApplicationGitLabServer() {
+  ADMIN_ACCESS_TOKEN=$1
+
+  CHE_URL=https://$(oc get route -n ${CHE_NAMESPACE} che -o jsonpath='{.spec.host}')
+
+  echo "[INFO] Create OAuth Application"
+  response=$(curl -k -X POST \
+    ${GIT_PROVIDER_URL}/api/v4/applications \
+    -H "PRIVATE-TOKEN: ${ADMIN_ACCESS_TOKEN}" \
+    -d "name=${APPLICATION_NAME}" \
+    -d "redirect_uri=${CHE_URL}/api/oauth/callback" \
+    -d "scopes=api write_repository openid")
+
+  echo "[INFO] Response of the created OAuth Application"
+
+  OAUTH_ID=$(echo "$response" | jq -r '.id')
+  APPLICATION_ID=$(echo "$response" | jq -r '.application_id')
+  APPLICATION_SECRET=$(echo "$response" | jq -r '.secret')
+
+  echo "[INFO] OAuth ID: ${OAUTH_ID}"
+  echo "[INFO] Application ID: ${APPLICATION_ID}"
+  echo "[INFO] Application Secret: ${APPLICATION_SECRET}"
+}
+
+# Only for GitLab server administrator users
+deleteOAuthApplicationGitLabServer() {
+  OAUTH_ID=$1
+  ADMIN_ACCESS_TOKEN=$2
+
+  echo "[INFO] Delete OAuth Application"
+  curl -i -k -X DELETE \
+    ${GIT_PROVIDER_URL}/api/v4/applications/${OAUTH_ID} \
+    -H "PRIVATE-TOKEN: ${ADMIN_ACCESS_TOKEN}"
+}
+
+# Only for GitLab server
+revokeAuthorizedOAuthApplication() {
+  APPLICATION_ID=$1
+  APPLICATION_SECRET=$2
+
+  echo "[INFO] Revoke authorized OAuth application"
+  oc project ${USER_CHE_NAMESPACE}
+  OAUTH_TOKEN_NAME=$(oc get secret | grep 'personal-access-token'| awk 'NR==1 { print $1 }')
+  echo "[INFO] OAuth token name: "$OAUTH_TOKEN_NAME
+  OAUTH_TOKEN=$(oc get secret $OAUTH_TOKEN_NAME -o jsonpath='{.data.token}' | base64 -d)
+  echo "[INFO] Oauth token: "$OAUTH_TOKEN
+
+  curl -i -k -X POST \
+    ${GIT_PROVIDER_URL}/oauth/revoke \
+    -d "client_id=${APPLICATION_ID}" \
+    -d "client_secret=${APPLICATION_SECRET}" \
+    -d "token=${OAUTH_TOKEN}"
+}
+
+# Only for GitLab server
+setupOAuthSecret() {
+  APPLICATION_ID=$1
+  APPLICATION_SECRET=$2
+
+  echo "[INFO] Setup OAuth Secret"
+  oc login -u=${OCP_ADMIN_USER_NAME} -p=${OCP_LOGIN_PASSWORD} --insecure-skip-tls-verify=false
+  oc project ${CHE_NAMESPACE}
+  SERVER_POD=$(oc get pod -l component=che | grep "che" | awk 'NR==1 { print $1 }')
+
+  ENCODED_APP_ID=$(echo -n "${APPLICATION_ID}" | base64 -w 0)
+  ENCODED_APP_SECRET=$(echo -n "${APPLICATION_SECRET}" | base64 -w 0)
+  cat .ci/openshift-ci/oauth-secret.yaml > oauth-secret.yaml
+
+  # patch the oauth-secret.yaml file
+  sed -i "s#git-provider-url#${GIT_PROVIDER_URL}#g" oauth-secret.yaml
+  sed -i "s#encoded-application-id#${ENCODED_APP_ID}#g" oauth-secret.yaml
+  sed -i "s#encoded-application-secret#${ENCODED_APP_SECRET}#g" oauth-secret.yaml
+
+  cat oauth-secret.yaml
+  oc apply -f oauth-secret.yaml -n ${CHE_NAMESPACE}
+
+  echo "[INFO] Wait updating deployment after create OAuth secret"
+  oc wait --for=delete pod/${SERVER_POD} --timeout=120s
+}
+
 runTestWorkspaceWithGitRepoUrl() {
   WS_NAME=$1
   PROJECT_NAME=$2
@@ -269,8 +372,46 @@ deleteTestWorkspace() {
   oc delete dw ${WS_NAME} -n ${OCP_USER_NAMESPACE}
 }
 
+startOAuthFactoryTest() {
+  CHE_URL=https://$(oc get route -n ${CHE_NAMESPACE} che -o jsonpath='{.spec.host}')
+  # patch oauth-factory-test.yaml
+  cat .ci/openshift-ci/pod-oauth-factory-test.yaml > oauth-factory-test.yaml
+  sed -i "s#CHE_URL#${CHE_URL}#g" oauth-factory-test.yaml
+  sed -i "s#CHE-NAMESPACE#${CHE_NAMESPACE}#g" oauth-factory-test.yaml
+  sed -i "s#OCP_USER_NAME#${OCP_NON_ADMIN_USER_NAME}#g" oauth-factory-test.yaml
+  sed -i "s#OCP_USER_PASSWORD#${OCP_LOGIN_PASSWORD}#g" oauth-factory-test.yaml
+  sed -i "s#FACTORY_REPO_URL#${PRIVATE_REPO_URL}#g" oauth-factory-test.yaml
+  sed -i "s#GIT_BRANCH#${GIT_REPO_BRANCH}#g" oauth-factory-test.yaml
+  sed -i "s#GIT_PROVIDER_TYPE#${GIT_PROVIDER_TYPE}#g" oauth-factory-test.yaml
+  sed -i "s#GIT_PROVIDER_USER_NAME#${GIT_PROVIDER_LOGIN}#g" oauth-factory-test.yaml
+  sed -i "s#GIT_PROVIDER_USER_PASSWORD#${GIT_PROVIDER_PASSWORD}#g" oauth-factory-test.yaml
+
+  echo "[INFO] Applying the following patched OAuth Factory Test Pod:"
+  cat oauth-factory-test.yaml
+  echo "[INFO] --------------------------------------------------"
+  oc apply -f oauth-factory-test.yaml
+  # wait for the pod to start
+  n=0
+  while [ $n -le 120 ]
+  do
+    PHASE=$(oc get pod -n ${CHE_NAMESPACE} ${TEST_POD_NAME} \
+        --template='{{ .status.phase }}')
+    if [[ ${PHASE} == "Running" ]]; then
+      echo "[INFO] Smoke test started successfully."
+      return
+    fi
+
+    sleep 5
+    n=$(( n+1 ))
+  done
+
+  echo "[ERROR] Failed to start smoke test."
+  exit 1
+}
+
 # Catch the finish of the job and write logs in artifacts.
 catchFinish() {
+  echo "[INFO] Terminate the process after finish the test script."
   local RESULT=$?
   killProcessByPort
   if [ "$RESULT" != "0" ]; then
@@ -287,8 +428,37 @@ collectEclipseCheLogs() {
   mkdir -p ${ARTIFACTS_DIR}/che-logs
 
   # Collect all Eclipse Che logs and cluster CR
-  chectl server:logs -n $CHE_NAMESPACE --directory ${ARTIFACTS_DIR}/che-logs --telemetry off
+  oc login -u=${OCP_ADMIN_USER_NAME} -p=${OCP_LOGIN_PASSWORD} --insecure-skip-tls-verify=false
   oc get checluster -o yaml -n $CHE_NAMESPACE > "${ARTIFACTS_DIR}/che-cluster.yaml"
+  chectl server:logs -n $CHE_NAMESPACE --directory ${ARTIFACTS_DIR}/che-logs --telemetry off
+}
+
+collectLogs() {
+  echo "[INFO] Waiting until oauth test pod finished"
+  oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c oauth-test -f
+  sleep 3
+
+  # Download artifacts
+  set +e
+  echo "[INFO] Collect all Eclipse Che logs and cluster CR."
+  collectEclipseCheLogs
+
+  echo "[INFO] Downloading test report."
+  mkdir -p ${ARTIFACTS_DIR}/e2e
+  oc rsync -n ${CHE_NAMESPACE} ${TEST_POD_NAME}:/tmp/e2e/report/ ${ARTIFACTS_DIR}/e2e -c download-reports
+  oc exec -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c download-reports -- touch /tmp/done
+
+  # Revoke and delete the OAuth application
+  revokeAuthorizedOAuthApplication ${APPLICATION_ID} ${APPLICATION_SECRET}
+  deleteOAuthApplicationGitLabServer ${OAUTH_ID} ${ADMIN_ACCESS_TOKEN}
+  set -e
+
+  EXIT_CODE=$(oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c oauth-test | grep EXIT_CODE)
+  if [[ ${EXIT_CODE} != "+ EXIT_CODE=0" ]]; then
+    echo "[ERROR] Factory OAuth test failed. Job failed."
+    exit 1
+  fi
+  echo "[INFO] Job completed successfully."
 }
 
 testCloneGitRepoNoProjectExists() {
@@ -325,4 +495,18 @@ setupTestEnvironment() {
   deployChe
   forwardPortToService
   initUserNamespace ${OCP_USER_NAME}
+}
+
+setupTestEnvironmentOAuthFlow() {
+  ADMIN_ACCESS_TOKEN=$1
+  APPLICATION_ID=$2
+  APPLICATION_SECRET=$3
+
+  provisionOpenShiftOAuthUser
+  configureGitSelfSignedCertificate
+  createCustomResourcesFile
+  patchCustomResourcesFile
+  deployChe
+  createOAuthApplicationGitLabServer ${ADMIN_ACCESS_TOKEN} ${APPLICATION_NAME}
+  setupOAuthSecret ${APPLICATION_ID} ${APPLICATION_SECRET}
 }

@@ -32,3 +32,7 @@ Other modules are deprecated and will be removed in the future.
 
 The Eclipse Che community is globally reachable through public chat rooms, mailing list and weekly calls.
 See the Eclipse Che Documentation about [how you can join our community](https://www.eclipse.org/che/docs/stable/overview/introduction-to-eclipse-che/#_joining_the_community).
+
+## Builds
+
+* [![release latest stable](https://github.com/eclipse-che/che-server/actions/workflows/release.yml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/release.yml)

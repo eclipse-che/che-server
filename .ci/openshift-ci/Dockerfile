@@ -25,8 +25,8 @@ RUN dnf install -y -q --allowerasing --nobest nodejs-devel nodejs-libs psmisc py
     echo -n "node version: "; node -v; \
     echo -n "npm  version: "; npm -v; \
     echo -n "yarn version: "; yarn -v; \
-    go version; \
-    pip3 install --upgrade pip setuptools yq && \
+#    go version; \
+#    pip3 install --upgrade pip setuptools yq && \
 
     # Install kubectl, chectl cli used by olm/olm.sh script.
     curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \

@@ -15,6 +15,7 @@ IMAGE_ALIASES=${IMAGE_ALIASES:-}
 ERROR=${ERROR:-}
 DIR=${DIR:-}
 SHA_TAG=${SHA_TAG:-}
+BUILDER=${BUILDER:-}
 
 skip_tests() {
   if [ $SKIP_TESTS = "true" ]; then
@@ -49,6 +50,7 @@ init() {
   ARGS=""
   OPTIONS=""
   DOCKERFILE=""
+  BUILD_COMMAND="build"
   BUILD_ARGS=""
 
   while [ $# -gt 0 ]; do
@@ -104,6 +106,37 @@ build() {
       DIR=$(cd "$(dirname "$0")"; pwd)
   fi
 
+  BUILD_COMAMAND="build"
+  if [ -z $BUILDER ]; then
+      echo "BUILDER is not specified, trying with podman"
+      BUILDER=$(command -v podman || true)
+      if [[ ! -x $BUILDER ]]; then
+          echo "[WARNING] podman is not installed, trying with buildah"
+          BUILDER=$(command -v buildah || true)
+          if [[ ! -x $BUILDER ]]; then
+              echo "[WARNING] buildah is not installed, trying with docker"
+              BUILDER=$(command -v docker || true)
+              if [[ ! -x $BUILDER ]]; then
+                  echo "[ERROR] This script requires podman, buildah or docker to be installed. Must abort!"; exit 1
+              fi
+          else
+              BUILD_COMMAND="bud"
+          fi
+      fi
+  else
+      if [[ ! -x $(command -v "$BUILDER" || true) ]]; then
+          echo "Builder $BUILDER is missing. Aborting."; exit 1
+      fi
+      if [[ $BUILDER =~ "docker" || $BUILDER =~ "podman" ]]; then
+          if [[ ! $($BUILDER ps) ]]; then
+              echo "Builder $BUILDER is not functioning. Aborting."; exit 1
+          fi
+      fi
+      if [[ $BUILDER =~ "buildah" ]]; then
+          BUILD_COMMAND="bud"
+      fi
+  fi
+
   # If Dockerfile is empty, build all Dockerfiles
   if [ -z ${DOCKERFILE} ]; then
     DOCKERFILES_TO_BUILD="$(ls ${DIR}/Dockerfile*)"
@@ -138,14 +171,14 @@ build_image() {
     -e "s;\${BUILD_PREFIX};${PREFIX};" \
     -e "s;\${BUILD_TAG};${TAG};" \
     > ${DIR}/.Dockerfile
-  cd "${DIR}" && docker build -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
+  cd "${DIR}" && "${BUILDER}" "${BUILD_COMMAND}" -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
   DOCKER_BUILD_STATUS=$?
   rm ${DIR}/.Dockerfile
   if [ $DOCKER_BUILD_STATUS -eq 0 ]; then
     printf "Build of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
     if [ ! -z "${SHA_TAG}" ]; then
       SHA_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:${SHA_TAG}
-      docker tag ${IMAGE_NAME} ${SHA_IMAGE_NAME}
+      "${BUILDER}" tag ${IMAGE_NAME} ${SHA_IMAGE_NAME}
       DOCKER_TAG_STATUS=$?
       if [ $DOCKER_TAG_STATUS -eq 0 ]; then
         printf "Re-tagging with SHA based tag ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
@@ -157,7 +190,7 @@ build_image() {
     if [ ! -z "${IMAGE_ALIASES}" ]; then
       for TMP_IMAGE_NAME in ${IMAGE_ALIASES}
       do
-        docker tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${TAG}
+        "${BUILDER}" tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${TAG}
         DOCKER_TAG_STATUS=$?
         if [ $DOCKER_TAG_STATUS -eq 0 ]; then
           printf "  /alias ${BLUE}${TMP_IMAGE_NAME}:${TAG}${NC} ${GREEN}[OK]${NC}\n"
@@ -172,32 +205,6 @@ build_image() {
   else
     printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"
     exit 1
-  fi
-}
-
-check_docker() {
-  if ! docker ps > /dev/null 2>&1; then
-    output=$(docker ps)
-    printf "${RED}Docker not installed properly: ${output}${NC}\n"
-    exit 1
-  fi
-}
-
-docker_exec() {
-  if has_docker_for_windows_client; then
-    MSYS_NO_PATHCONV=1 docker.exe "$@"
-  else
-    "$(which docker)" "$@"
-  fi
-}
-
-has_docker_for_windows_client() {
-  GLOBAL_HOST_ARCH=$(docker version --format {{.Client}})
-
-  if [[ "${GLOBAL_HOST_ARCH}" = *"windows"* ]]; then
-    return 0
-  else
-    return 1
   fi
 }
 

@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server;
 
 import static java.lang.String.format;
+import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.EDITOR_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
@@ -28,7 +29,6 @@ import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.BadRequestException;
@@ -162,12 +162,11 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     }
   }
 
-  @Test(dataProvider = "devfileNames")
-  public void shouldAcceptRawDevfileUrl(String devfileName) {
+  @Test(dataProvider = "devfileUrls")
+  public void shouldAcceptRawDevfileUrl(String url) {
     // when
     boolean result =
-        rawDevfileUrlFactoryParameterResolver.accept(
-            Collections.singletonMap(URL_PARAMETER_NAME, "https://host/path/" + devfileName));
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
 
     // then
     assertTrue(result);
@@ -178,7 +177,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     // when
     boolean result =
         rawDevfileUrlFactoryParameterResolver.accept(
-            Collections.singletonMap(URL_PARAMETER_NAME, "https://host/user/repo.git"));
+            singletonMap(URL_PARAMETER_NAME, "https://host/user/repo.git"));
 
     // then
     assertFalse(result);
@@ -196,8 +195,17 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     };
   }
 
-  @DataProvider(name = "devfileNames")
-  private Object[] devfileNames() {
-    return new String[] {"devfile.yaml", ".devfile.yaml", "any-name.yaml", "any-name.yml"};
+  @DataProvider(name = "devfileUrls")
+  private Object[] devfileUrls() {
+    return new String[] {
+      "https://host/path/devfile.yaml",
+      "https://host/path/.devfile.yaml",
+      "https://host/path/any-name.yaml",
+      "https://host/path/any-name.yml",
+      "https://host/path/devfile.yaml?token=TOKEN123",
+      "https://host/path/.devfile.yaml?token=TOKEN123",
+      "https://host/path/any-name.yaml?token=TOKEN123",
+      "https://host/path/any-name.yml?token=TOKEN123"
+    };
   }
 }

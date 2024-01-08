@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
@@ -40,6 +41,7 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
     implements FactoryParametersResolver {
 
   private static final String PROVIDER_NAME = "raw-devfile-url";
+  private static final Pattern PATTERN = Pattern.compile("^https?://.*\\.ya?ml(\\?token=.*)?$");
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
@@ -62,7 +64,7 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url) && (url.endsWith(".yaml") || url.endsWith(".yml"));
+    return !isNullOrEmpty(url) && PATTERN.matcher(url).matches();
   }
 
   @Override

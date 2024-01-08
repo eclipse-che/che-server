@@ -122,6 +122,16 @@ public class HttpBitbucketServerApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
 
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
     BitbucketUser user = bitbucketServer.getUser();
     assertNotNull(user);
   }
@@ -219,6 +229,16 @@ public class HttpBitbucketServerApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/response.json")));
 
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
     List<String> page =
         bitbucketServer.getPersonalAccessTokens().stream()
             .map(BitbucketPersonalAccessToken::getName)
@@ -237,9 +257,18 @@ public class HttpBitbucketServerApiClientTest {
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON))
-            .withHeader(HttpHeaders.CONTENT_LENGTH, equalTo("149"))
+            .withHeader(HttpHeaders.CONTENT_LENGTH, equalTo("152"))
             .willReturn(
                 ok().withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/newtoken.json")));
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     // when
     BitbucketPersonalAccessToken result =
@@ -262,8 +291,18 @@ public class HttpBitbucketServerApiClientTest {
             .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON))
             .willReturn(aResponse().withStatus(204)));
 
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
     // when
-    bitbucketServer.deletePersonalAccessTokens(5L);
+    bitbucketServer.deletePersonalAccessTokens("5");
   }
 
   @Test
@@ -278,8 +317,18 @@ public class HttpBitbucketServerApiClientTest {
             .willReturn(
                 ok().withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/newtoken.json")));
 
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
     // when
-    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken(5L);
+    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("5");
     // then
     assertNotNull(result);
     assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
@@ -297,7 +346,18 @@ public class HttpBitbucketServerApiClientTest {
             .willReturn(notFound()));
 
     // when
-    bitbucketServer.getPersonalAccessToken(5L);
+    bitbucketServer.getPersonalAccessToken("5");
+  }
+
+  @Test(expectedExceptions = ScmUnauthorizedException.class)
+  public void shouldBeAbleToThrowScmUnauthorizedExceptionOnGetUser()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+    // given
+    stubFor(
+        get(urlEqualTo("/plugins/servlet/applinks/whoami")).willReturn(aResponse().withBody("")));
+
+    // when
+    bitbucketServer.getUser();
   }
 
   @Test(expectedExceptions = ScmUnauthorizedException.class)
@@ -310,9 +370,18 @@ public class HttpBitbucketServerApiClientTest {
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .willReturn(unauthorized()));
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     // when
-    bitbucketServer.getPersonalAccessToken(5L);
+    bitbucketServer.getPersonalAccessToken("5");
   }
 
   @Test(
@@ -331,7 +400,7 @@ public class HttpBitbucketServerApiClientTest {
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
 
     // when
-    localServer.getPersonalAccessToken(5L);
+    localServer.getPersonalAccessToken("5");
   }
 
   @Test
@@ -353,6 +422,16 @@ public class HttpBitbucketServerApiClientTest {
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
+
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     // when
     bitbucketServer.getUser();

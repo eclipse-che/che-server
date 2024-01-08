@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.urlfactory;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
+import static org.eclipse.che.api.factory.server.scm.exception.ExceptionMessages.getDevfileConnectionErrorMessage;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_TOOLING_EDITOR_ATTRIBUTE;
@@ -29,6 +30,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLocation;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
@@ -130,7 +132,9 @@ public class URLFactoryBuilder {
         continue;
       } catch (DevfileException e) {
         LOG.debug("Unexpected devfile exception: {}", e.getMessage());
-        throw toApiException(e, location);
+        throw e.getCause() instanceof ScmUnauthorizedException
+            ? toApiException(e, location)
+            : new ApiException(e.getMessage());
       }
       if (isNullOrEmpty(devfileYamlContent)) {
         return Optional.empty();
@@ -142,7 +146,7 @@ public class URLFactoryBuilder {
         try {
           devfileVersionDetector.devfileVersion(parsedDevfile);
         } catch (DevfileException e) {
-          throw new ApiException("Failed to fetch devfile");
+          throw new ApiException(getDevfileConnectionErrorMessage(devfileLocation));
         }
         return Optional.of(
             createFactory(parsedDevfile, overrideProperties, fileContentProvider, location));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -10,6 +10,8 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 package org.eclipse.che.security.oauth1;
+
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,5 +45,16 @@ public class OAuthAuthenticatorProvider {
    */
   public OAuthAuthenticator getAuthenticator(String oauthProviderName) {
     return oAuthAuthenticators.get(oauthProviderName);
+  }
+
+  /**
+   * Gets registered OAuth1 provider names
+   *
+   * @return set of registered OAuth1 provider names
+   */
+  public Set<String> getRegisteredProviderNames() {
+    return oAuthAuthenticators.keySet().stream()
+        .filter(key -> !"Noop".equals(key))
+        .collect(toUnmodifiableSet());
   }
 }

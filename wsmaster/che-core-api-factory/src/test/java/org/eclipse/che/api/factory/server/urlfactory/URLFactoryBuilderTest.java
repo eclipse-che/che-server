@@ -441,7 +441,8 @@ public class URLFactoryBuilderTest {
                   }
                 }));
 
-    when(fileContentProvider.fetchContent(anyString())).thenThrow(new DevfileException("", cause));
+    when(fileContentProvider.fetchContent(anyString()))
+        .thenThrow(new DevfileException(expectedMessage, cause));
 
     // when
     try {
@@ -450,14 +451,14 @@ public class URLFactoryBuilderTest {
     } catch (ApiException e) {
       assertTrue(e.getClass().isAssignableFrom(expectedClass));
       assertEquals(e.getMessage(), expectedMessage);
-      if (e.getServiceError() instanceof ExtendedError)
+      if ("SCM Authentication required".equals(e.getMessage()))
         assertEquals(((ExtendedError) e.getServiceError()).getAttributes(), expectedAttributes);
     }
   }
 
   @Test(
       expectedExceptions = ApiException.class,
-      expectedExceptionsMessageRegExp = "Failed to fetch devfile")
+      expectedExceptionsMessageRegExp = "Could not reach devfile at location")
   public void shouldThrowErrorOnUnsupportedDevfileContent()
       throws ApiException, DevfileException, IOException {
     JsonNode jsonNode = mock(JsonNode.class);

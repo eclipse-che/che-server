@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -334,7 +334,7 @@ public class GithubURLParserTest {
   }
 
   @Test
-  public void shouldValidateGitHubServerUrl() throws Exception {
+  public void shouldValidateOldVersionGitHubServerUrl() throws Exception {
     // given
     String url = wireMockServer.url("/user/repo");
     stubFor(
@@ -343,6 +343,24 @@ public class GithubURLParserTest {
                 aResponse()
                     .withStatus(HTTP_UNAUTHORIZED)
                     .withBody("{\"message\": \"Must authenticate to access this API.\",\n}")));
+
+    // when
+    boolean valid = githubUrlParser.isValid(url);
+
+    // then
+    assertTrue(valid);
+  }
+
+  @Test
+  public void shouldValidateGitHubServerUrl() throws Exception {
+    // given
+    String url = wireMockServer.url("/user/repo");
+    stubFor(
+        get(urlEqualTo("/api/v3/user"))
+            .willReturn(
+                aResponse()
+                    .withStatus(HTTP_UNAUTHORIZED)
+                    .withBody("{\"message\": \"Requires authentication\",\n}")));
 
     // when
     boolean valid = githubUrlParser.isValid(url);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -269,15 +269,15 @@ public class DevfileSchemaValidatorTest {
       },
       {
         "devfile/devfile_v2_invalid_schemaVersion.yaml",
-        "Version 'a.b.c' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0]'."
+        "Version 'a.b.c' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0, 2.2.1, 2.2.2]'."
       },
       {
         "devfile/devfile_v2_unsupported_schemaVersion.yaml",
-        "Version '22.33.44' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0]'."
+        "Version '22.33.44' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0, 2.2.1, 2.2.2]'."
       },
       {
         "devfile/devfile_v2-1-0_unsupported_schemaVersion.yaml",
-        "Version '2.1.0-beta' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0]'."
+        "Version '2.1.0-beta' of the devfile is not supported. Supported versions are '[1.0.0, 2.0.0, 2.1.0, 2.2.0, 2.2.1, 2.2.2]'."
       },
       {
         "devfile/devfile_v2-1-0_with_invalid_plugin_definition.yaml",

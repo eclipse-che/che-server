@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,12 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,6 +28,9 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import java.util.Optional;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -49,9 +58,17 @@ public class GithubURLParserTest {
   /** Instance of component that will be tested. */
   private GithubURLParser githubUrlParser;
 
+  WireMockServer wireMockServer;
+  WireMock wireMock;
+
   /** Setup objects/ */
   @BeforeMethod
   protected void start() throws ApiException {
+    wireMockServer =
+        new WireMockServer(wireMockConfig().notifier(new Slf4jNotifier(false)).dynamicPort());
+    wireMockServer.start();
+    WireMock.configureFor("localhost", wireMockServer.port());
+    wireMock = new WireMock("localhost", wireMockServer.port());
     this.personalAccessTokenManager = mock(PersonalAccessTokenManager.class);
     this.githubApiClient = mock(GithubApiClient.class);
 
@@ -314,5 +331,41 @@ public class GithubURLParserTest {
     // then
     verify(personalAccessTokenManager, times(2))
         .get(any(Subject.class), eq("https://github-server.com"));
+  }
+
+  @Test
+  public void shouldValidateOldVersionGitHubServerUrl() throws Exception {
+    // given
+    String url = wireMockServer.url("/user/repo");
+    stubFor(
+        get(urlEqualTo("/api/v3/user"))
+            .willReturn(
+                aResponse()
+                    .withStatus(HTTP_UNAUTHORIZED)
+                    .withBody("{\"message\": \"Must authenticate to access this API.\",\n}")));
+
+    // when
+    boolean valid = githubUrlParser.isValid(url);
+
+    // then
+    assertTrue(valid);
+  }
+
+  @Test
+  public void shouldValidateGitHubServerUrl() throws Exception {
+    // given
+    String url = wireMockServer.url("/user/repo");
+    stubFor(
+        get(urlEqualTo("/api/v3/user"))
+            .willReturn(
+                aResponse()
+                    .withStatus(HTTP_UNAUTHORIZED)
+                    .withBody("{\"message\": \"Requires authentication\",\n}")));
+
+    // when
+    boolean valid = githubUrlParser.isValid(url);
+
+    // then
+    assertTrue(valid);
   }
 }

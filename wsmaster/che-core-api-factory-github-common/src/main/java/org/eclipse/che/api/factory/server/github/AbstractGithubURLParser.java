@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -120,13 +120,18 @@ public abstract class AbstractGithubURLParser {
   private boolean isApiRequestRelevant(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
-      GithubApiClient GithubApiClient = new GithubApiClient(serverUrlOptional.get());
+      GithubApiClient githubApiClient = new GithubApiClient(serverUrlOptional.get());
       try {
         // If the user request catches the unauthorised error, it means that the provided url
         // belongs to GitHub.
-        GithubApiClient.getUser("");
+        githubApiClient.getUser("");
       } catch (ScmCommunicationException e) {
-        return e.getStatusCode() == HTTP_UNAUTHORIZED;
+        return e.getStatusCode() == HTTP_UNAUTHORIZED
+                // Check the error message as well, because other providers might also return 401
+                // for such requests.
+                && e.getMessage().contains("Requires authentication")
+            || // for older GitHub Enterprise versions
+            e.getMessage().contains("Must authenticate to access this API.");
       } catch (ScmItemNotFoundException | ScmBadRequestException | IllegalArgumentException e) {
         return false;
       }

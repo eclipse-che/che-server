@@ -11,8 +11,6 @@
  */
 package org.eclipse.che.api.workspace.server.devfile;
 
-import java.util.List;
-
 public class Constants {
 
   private Constants() {}
@@ -22,9 +20,6 @@ public class Constants {
   public static final String SCHEMA_FILENAME = "devfile.json";
 
   public static final String CURRENT_API_VERSION = "1.0.0";
-
-  public static final List<String> SUPPORTED_VERSIONS =
-      List.of(CURRENT_API_VERSION, "2.0.0", "2.1.0", "2.2.0", "2.2.1", "2.2.2");
 
   public static final String EDITOR_COMPONENT_TYPE = "cheEditor";
 

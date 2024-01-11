@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,11 +38,9 @@ import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.DevfileVersionDetector;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.server.devfile.schema.DevfileSchemaProvider;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -71,11 +69,6 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   @Test
   public void shouldResolveRelativeFiles() throws Exception {
     // given
-
-    // we need to set up an "almost real" devfile converter which is a little bit involved
-    DevfileSchemaValidator validator =
-        new DevfileSchemaValidator(new DevfileSchemaProvider(), new DevfileVersionDetector());
-
     Map<String, ComponentIntegrityValidator> validators = new HashMap<>();
     validators.put(EDITOR_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
     validators.put(PLUGIN_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
@@ -84,7 +77,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
 
     DevfileIntegrityValidator integrityValidator = new DevfileIntegrityValidator(validators);
 
-    DevfileParser devfileParser = new DevfileParser(validator, integrityValidator);
+    DevfileParser devfileParser = new DevfileParser(integrityValidator);
 
     URLFactoryBuilder factoryBuilder =
         new URLFactoryBuilder(

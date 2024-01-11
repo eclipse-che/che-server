@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,13 +16,11 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import org.eclipse.che.multiuser.api.permission.server.SuperPrivilegesChecker;
 import org.eclipse.che.multiuser.api.permission.shared.model.PermissionsDomain;
-import org.eclipse.che.multiuser.permission.devfile.server.filters.UserDevfilePermissionsFilter;
 
 public class UserDevfileApiPermissionsModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(UserDevfilePermissionsFilter.class);
     bind(UserDevfileCreatorPermissionsProvider.class).asEagerSingleton();
 
     Multibinder.newSetBinder(

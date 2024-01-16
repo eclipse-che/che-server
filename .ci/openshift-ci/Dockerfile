@@ -17,7 +17,7 @@ USER 0
 
 # Install yq, kubectl, chectl cli used by olm/olm.sh script.
 # hadolint ignore=DL3041
-RUN dnf install -y -q --allowerasing --nobest nodejs-devel nodejs-libs psmisc python3-pip jq golang httpd-tools \
+RUN set -x && dnf install -v -y -q --allowerasing --nobest nodejs-devel nodejs-libs psmisc python3-pip jq golang httpd-tools \
     # already installed or installed as deps:
     openssl openssl-devel ca-certificates make cmake cpp gcc gcc-c++ zlib zlib-devel brotli brotli-devel python3 nodejs-packaging && \
     dnf update -y && dnf clean all && \

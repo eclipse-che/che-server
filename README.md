@@ -36,4 +36,3 @@ See the Eclipse Che Documentation about [how you can join our community](https:/
 ## Builds
 
 * [![release latest stable](https://github.com/eclipse-che/che-server/actions/workflows/release.yml/badge.svg)](https://github.com/eclipse-che/che-server/actions/workflows/release.yml)
- 

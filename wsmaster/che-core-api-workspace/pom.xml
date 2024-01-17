@@ -127,18 +127,8 @@
             <artifactId>che-core-commons-tracing</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.leadpony.justify</groupId>
             <artifactId>justify</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>jakarta.json-api</artifactId>
-                    <groupId>jakarta.json</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

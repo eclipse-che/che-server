@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -215,7 +215,6 @@ public class WsMasterModule extends AbstractModule {
     bind(WorkspaceEntityProvider.class);
     bind(org.eclipse.che.api.workspace.server.TemporaryWorkspaceRemover.class);
     bind(org.eclipse.che.api.workspace.server.WorkspaceService.class);
-    bind(org.eclipse.che.api.devfile.server.DevfileService.class);
     bind(org.eclipse.che.api.devfile.server.UserDevfileEntityProvider.class);
 
     install(new FactoryModuleBuilder().build(ServersCheckerFactory.class));

@@ -17,7 +17,7 @@ USER 0
 
 # Install yq, kubectl, chectl cli used by olm/olm.sh script.
 # hadolint ignore=DL3041
-RUN dnf install -y -q --allowerasing --nobest nodejs-devel nodejs-libs psmisc python3-pip jq golang httpd-tools \
+RUN set -x && dnf install -y -q --allowerasing --nobest nodejs-devel nodejs-libs psmisc python3-pip jq golang httpd-tools \
     # already installed or installed as deps:
     openssl openssl-devel ca-certificates make cmake cpp gcc gcc-c++ zlib zlib-devel brotli brotli-devel python3 nodejs-packaging && \
     dnf update -y && dnf clean all && \
@@ -33,7 +33,7 @@ RUN dnf install -y -q --allowerasing --nobest nodejs-devel nodejs-libs psmisc py
     chmod +x ./kubectl && \
     mv ./kubectl /usr/local/bin && \
     bash <(curl -sL https://www.eclipse.org/che/chectl/) --channel=next && \
-    curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.12/openshift-client-linux.tar.gz | tar xvzf - -C /usr/local/bin/ oc && \
+    curl -v https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-client-linux.tar.gz | tar xvzf - -C /usr/local/bin/ oc && \
     chmod ug+x /usr/local/bin/oc
 
 SHELL ["/bin/bash", "-c"]

@@ -490,6 +490,7 @@ testCloneGitRepoProjectShouldExists() {
 setupTestEnvironment() {
   OCP_USER_NAME=$1
 
+  installOcClient
   provisionOpenShiftOAuthUser
   createCustomResourcesFile
   deployChe
@@ -502,6 +503,7 @@ setupTestEnvironmentOAuthFlow() {
   APPLICATION_ID=$2
   APPLICATION_SECRET=$3
 
+  installOcClient
   provisionOpenShiftOAuthUser
   configureGitSelfSignedCertificate
   createCustomResourcesFile
@@ -509,4 +511,10 @@ setupTestEnvironmentOAuthFlow() {
   deployChe
   createOAuthApplicationGitLabServer ${ADMIN_ACCESS_TOKEN} ${APPLICATION_NAME}
   setupOAuthSecret ${APPLICATION_ID} ${APPLICATION_SECRET}
+}
+
+installOcClient() {
+  set -x
+  curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-client-linux.tar.gz | tar xvzf - -C /usr/local/bin/ oc && \
+  chmod ug+x /usr/local/bin/oc
 }

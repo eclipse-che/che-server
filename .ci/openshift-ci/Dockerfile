@@ -32,9 +32,7 @@ RUN set -x && dnf install -y -q --allowerasing --nobest nodejs-devel nodejs-libs
     curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
     chmod +x ./kubectl && \
     mv ./kubectl /usr/local/bin && \
-    bash <(curl -sL https://www.eclipse.org/che/chectl/) --channel=next && \
-    curl -v https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-client-linux.tar.gz | tar xvzf - -C /usr/local/bin/ oc && \
-    chmod ug+x /usr/local/bin/oc
+    bash <(curl -sL https://www.eclipse.org/che/chectl/) --channel=next
 
 SHELL ["/bin/bash", "-c"]
 

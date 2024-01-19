@@ -15,6 +15,8 @@ FROM registry.ci.openshift.org/openshift/release:golang-1.18
 # hadolint ignore=DL3002
 USER 0
 
+SHELL ["/bin/bash", "-c"]
+
 # Install yq, kubectl, chectl cli used by olm/olm.sh script.
 # hadolint ignore=DL3041
 # Install yq, kubectl, chectl cli.
@@ -25,5 +27,3 @@ RUN yum install --assumeyes -d1 psmisc python3-pip  httpd-tools nodejs && \
     chmod +x ./kubectl && \
     mv ./kubectl /usr/local/bin && \
     bash <(curl -sL https://www.eclipse.org/che/chectl/) --channel=next
-
-SHELL ["/bin/bash", "-c"]

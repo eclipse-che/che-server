@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,9 +16,7 @@ import static org.eclipse.che.api.system.shared.SystemStatus.PREPARING_TO_SHUTDO
 import static org.eclipse.che.api.system.shared.SystemStatus.READY_TO_SHUTDOWN;
 import static org.eclipse.che.api.system.shared.SystemStatus.RUNNING;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import jakarta.annotation.PreDestroy;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,7 +29,6 @@ import org.eclipse.che.api.system.shared.SystemStatus;
 import org.eclipse.che.api.system.shared.event.SystemStatusChangedEvent;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.eclipse.che.commons.lang.concurrent.ThreadLocalPropagateContext;
-import org.eclipse.che.core.db.DBTermination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,16 +45,13 @@ public class SystemManager {
   private final AtomicReference<SystemStatus> statusRef;
   private final EventService eventService;
   private final ServiceTerminator terminator;
-  private final DBTermination dbTermination;
 
   private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
   @Inject
-  public SystemManager(
-      ServiceTerminator terminator, DBTermination dbTermination, EventService eventService) {
+  public SystemManager(ServiceTerminator terminator, EventService eventService) {
     this.terminator = terminator;
     this.eventService = eventService;
-    this.dbTermination = dbTermination;
     this.statusRef = new AtomicReference<>(RUNNING);
   }
 
@@ -147,17 +141,6 @@ public class SystemManager {
       Thread.currentThread().interrupt();
     } finally {
       shutdownLatch.countDown();
-    }
-  }
-
-  @PreDestroy
-  @VisibleForTesting
-  void shutdown() throws InterruptedException {
-    if (!statusRef.compareAndSet(RUNNING, PREPARING_TO_SHUTDOWN)) {
-      shutdownLatch.await();
-    } else {
-      doSuspendServices();
-      dbTermination.terminate();
     }
   }
 }

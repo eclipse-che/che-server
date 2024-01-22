@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,11 +15,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.api.core.Pages.iterate;
 
 import com.google.inject.persist.Transactional;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,20 +25,15 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.workspace.server.WorkspaceManager;
-import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.eclipse.che.api.workspace.shared.event.WorkspaceRemovedEvent;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 
 /**
  * JPA based implementation of {@link WorkspaceDao}.
@@ -59,11 +51,6 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     requireNonNull(workspace, "Required non-null workspace");
     try {
       doCreate(workspace);
-    } catch (DuplicateKeyException dkEx) {
-      throw new ConflictException(
-          format(
-              "Workspace with id '%s' or name '%s' in namespace '%s' already exists",
-              workspace.getId(), workspace.getName(), workspace.getNamespace()));
     } catch (RuntimeException x) {
       throw new ServerException(x.getMessage(), x);
     }
@@ -76,11 +63,6 @@ public class JpaWorkspaceDao implements WorkspaceDao {
     requireNonNull(update, "Required non-null update");
     try {
       return new WorkspaceImpl(doUpdate(update));
-    } catch (DuplicateKeyException dkEx) {
-      throw new ConflictException(
-          format(
-              "Workspace with name '%s' in namespace '%s' already exists",
-              update.getName(), update.getNamespace()));
     } catch (RuntimeException x) {
       throw new ServerException(x.getMessage(), x);
     }
@@ -240,9 +222,6 @@ public class JpaWorkspaceDao implements WorkspaceDao {
       return Optional.empty();
     }
     final EntityManager manager = managerProvider.get();
-    eventService
-        .publish(new BeforeWorkspaceRemovedEvent(new WorkspaceImpl(workspace)))
-        .propagateException();
     manager.remove(workspace);
     manager.flush();
     return Optional.of(workspace);
@@ -272,35 +251,6 @@ public class JpaWorkspaceDao implements WorkspaceDao {
           .getSingleResult();
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
-    }
-  }
-
-  @Singleton
-  public static class RemoveWorkspaceBeforeAccountRemovedEventSubscriber
-      extends CascadeEventSubscriber<BeforeAccountRemovedEvent> {
-
-    @Inject private EventService eventService;
-    @Inject private WorkspaceManager workspaceManager;
-
-    @PostConstruct
-    public void subscribe() {
-      eventService.subscribe(this, BeforeAccountRemovedEvent.class);
-    }
-
-    @PreDestroy
-    public void unsubscribe() {
-      eventService.unsubscribe(this, BeforeAccountRemovedEvent.class);
-    }
-
-    @Override
-    public void onCascadeEvent(BeforeAccountRemovedEvent event) throws Exception {
-      for (WorkspaceImpl workspace :
-          iterate(
-              (maxItems, skipCount) ->
-                  workspaceManager.getByNamespace(
-                      event.getAccount().getName(), false, maxItems, skipCount))) {
-        workspaceManager.removeWorkspace(workspace.getId());
-      }
     }
   }
 }

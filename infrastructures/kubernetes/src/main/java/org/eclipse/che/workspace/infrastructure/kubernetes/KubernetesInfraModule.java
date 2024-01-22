@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -52,7 +52,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.OAuthTokenSecretsConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.SshKeysConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPermissionConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
@@ -110,7 +109,6 @@ public class KubernetesInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(WorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
-    namespaceConfigurators.addBinding().to(SshKeysConfigurator.class);
     namespaceConfigurators.addBinding().to(GitconfigUserDataConfigurator.class);
 
     bind(AuthorizationChecker.class).to(KubernetesAuthorizationCheckerImpl.class);
@@ -125,7 +123,6 @@ public class KubernetesInfraModule extends AbstractModule {
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
     bind(RuntimeInfrastructure.class).to(KubernetesInfrastructure.class);
-    bind(InconsistentRuntimesDetector.class).asEagerSingleton();
 
     bind(TrustedCAProvisioner.class).to(KubernetesTrustedCAProvisioner.class);
 

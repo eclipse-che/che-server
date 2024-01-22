@@ -21,7 +21,6 @@ public class UserDevfileApiPermissionsModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(UserDevfileCreatorPermissionsProvider.class).asEagerSingleton();
 
     Multibinder.newSetBinder(
             binder(),

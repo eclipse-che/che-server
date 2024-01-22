@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,11 +17,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.api.core.Pages.iterate;
 
 import com.google.inject.persist.Transactional;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,15 +32,10 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
-import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.commons.lang.Pair;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,12 +51,6 @@ public class JpaFactoryDao implements FactoryDao {
     requireNonNull(factory);
     try {
       doCreate(factory);
-    } catch (DuplicateKeyException ex) {
-      throw new ConflictException(
-          format("Factory with name '%s' already exists for current user", factory.getName()));
-    } catch (IntegrityConstraintViolationException ex) {
-      throw new ConflictException(
-          "Could not create factory with creator that refers to a non-existent user");
     } catch (RuntimeException ex) {
       throw new ServerException(ex.getLocalizedMessage(), ex);
     }
@@ -77,9 +63,6 @@ public class JpaFactoryDao implements FactoryDao {
     requireNonNull(update);
     try {
       return new FactoryImpl(doUpdate(update));
-    } catch (DuplicateKeyException ex) {
-      throw new ConflictException(
-          format("Factory with name '%s' already exists for current user", update.getName()));
     } catch (RuntimeException ex) {
       throw new ServerException(ex.getLocalizedMessage(), ex);
     }
@@ -231,33 +214,6 @@ public class JpaFactoryDao implements FactoryDao {
     if (factory != null) {
       manager.remove(factory);
       manager.flush();
-    }
-  }
-
-  @Singleton
-  public static class RemoveFactoriesBeforeUserRemovedEventSubscriber
-      extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
-    @Inject private FactoryDao factoryDao;
-    @Inject private EventService eventService;
-
-    @PostConstruct
-    public void subscribe() {
-      eventService.subscribe(this, BeforeUserRemovedEvent.class);
-    }
-
-    @PreDestroy
-    public void unsubscribe() {
-      eventService.unsubscribe(this, BeforeUserRemovedEvent.class);
-    }
-
-    @Override
-    public void onCascadeEvent(BeforeUserRemovedEvent event) throws ServerException {
-      for (FactoryImpl factory :
-          iterate(
-              (maxItems, skipCount) ->
-                  factoryDao.getByUser(event.getUser().getId(), maxItems, skipCount))) {
-        factoryDao.remove(factory.getId());
-      }
     }
   }
 }

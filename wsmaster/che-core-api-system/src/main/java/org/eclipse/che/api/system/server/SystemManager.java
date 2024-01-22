@@ -16,7 +16,9 @@ import static org.eclipse.che.api.system.shared.SystemStatus.PREPARING_TO_SHUTDO
 import static org.eclipse.che.api.system.shared.SystemStatus.READY_TO_SHUTDOWN;
 import static org.eclipse.che.api.system.shared.SystemStatus.RUNNING;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jakarta.annotation.PreDestroy;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -141,6 +143,16 @@ public class SystemManager {
       Thread.currentThread().interrupt();
     } finally {
       shutdownLatch.countDown();
+    }
+  }
+
+  @PreDestroy
+  @VisibleForTesting
+  void shutdown() throws InterruptedException {
+    if (!statusRef.compareAndSet(RUNNING, PREPARING_TO_SHUTDOWN)) {
+      shutdownLatch.await();
+    } else {
+      doSuspendServices();
     }
   }
 }

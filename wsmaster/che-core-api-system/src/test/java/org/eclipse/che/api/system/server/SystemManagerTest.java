@@ -80,6 +80,21 @@ public class SystemManagerTest {
     systemManager.stopServices();
   }
 
+  @Test
+  public void shutdownDoesNotFailIfServicesAreAlreadyStopped() throws Exception {
+    systemManager.stopServices();
+    systemManager.shutdown();
+
+    verifyShutdownCompleted();
+  }
+
+  @Test
+  public void shutdownStopsServicesIfNotStopped() throws Exception {
+    systemManager.shutdown();
+
+    verifySuspendCompleted();
+  }
+
   private void verifyShutdownCompleted() throws InterruptedException {
     verify(terminator, timeout(2000)).terminateAll();
     verifyEvents();

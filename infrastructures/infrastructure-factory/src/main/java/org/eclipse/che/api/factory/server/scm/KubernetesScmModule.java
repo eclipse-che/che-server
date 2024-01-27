@@ -12,10 +12,10 @@
 package org.eclipse.che.api.factory.server.scm;
 
 import com.google.inject.AbstractModule;
+import org.eclipse.che.api.factory.server.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesAuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesGitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 public class KubernetesScmModule extends AbstractModule {
   @Override

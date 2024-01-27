@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.*;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
@@ -29,7 +28,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.inject.ConfigurationException;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** Gitlab OAuth token retriever. */
 public class GitlabUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -48,9 +46,8 @@ public class GitlabUserDataFetcher extends AbstractGitUserDataFetcher {
       @Nullable @Named("che.integration.gitlab.server_endpoints") String gitlabEndpoints,
       @Nullable @Named("che.integration.gitlab.oauth_endpoint") String oauthEndpoint,
       @Named("che.api") String apiEndpoint,
-      PersonalAccessTokenManager personalAccessTokenManager,
-      OAuthAPI oAuthTokenFetcher) {
-    super(OAUTH_PROVIDER_NAME, personalAccessTokenManager, oAuthTokenFetcher);
+      PersonalAccessTokenManager personalAccessTokenManager) {
+    super(OAUTH_PROVIDER_NAME, personalAccessTokenManager);
     this.apiEndpoint = apiEndpoint;
     if (gitlabEndpoints != null) {
       this.registeredGitlabEndpoints =
@@ -67,16 +64,6 @@ public class GitlabUserDataFetcher extends AbstractGitUserDataFetcher {
             "GitLab OAuth integration endpoint must be present in registered GitLab endpoints list.");
       }
     }
-  }
-
-  @Override
-  protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    for (String gitlabServerEndpoint : this.registeredGitlabEndpoints) {
-      GitlabUser user = new GitlabApiClient(gitlabServerEndpoint).getUser(oAuthToken.getToken());
-      return new GitUserData(user.getName(), user.getEmail());
-    }
-    throw new ScmCommunicationException("Failed to retrieve git user data from Gitlab");
   }
 
   @Override

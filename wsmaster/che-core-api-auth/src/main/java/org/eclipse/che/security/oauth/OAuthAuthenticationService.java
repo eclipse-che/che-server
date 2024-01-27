@@ -29,6 +29,7 @@ import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.*;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Required;
+import org.eclipse.che.api.factory.server.AuthorisationRequestManager;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 
 /** RESTful wrapper for OAuthAuthenticator. */

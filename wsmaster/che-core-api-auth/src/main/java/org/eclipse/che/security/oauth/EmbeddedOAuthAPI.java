@@ -40,6 +40,11 @@ import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
@@ -62,6 +67,8 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
 
   @Inject protected OAuthAuthenticatorProvider oauth2Providers;
   @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
+
+  @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   private String redirectAfterLogin;
 
   @Override
@@ -177,10 +184,20 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       if (token != null) {
         return token;
       }
+      Optional<PersonalAccessToken> tokenOptional =
+          personalAccessTokenManager.get(subject, oauthProvider);
+      if (tokenOptional.isPresent()) {
+        PersonalAccessToken tokenDto = tokenOptional.get();
+        return newDto(OAuthToken.class).withToken(tokenDto.getToken());
+      }
       throw new UnauthorizedException(
           "OAuth token for user " + subject.getUserId() + " was not found");
     } catch (IOException e) {
       throw new ServerException(e.getLocalizedMessage(), e);
+    } catch (ScmCommunicationException
+        | ScmUnauthorizedException
+        | ScmConfigurationPersistenceException e) {
+      throw new RuntimeException(e);
     }
   }
 

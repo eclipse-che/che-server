@@ -19,7 +19,6 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.Map;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;

@@ -82,7 +82,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       oAuthToken = oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME);
-      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
+      String tokenName = NameGenerator.generate(OAUTH_2_SUFFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
@@ -132,8 +132,8 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       AzureDevOpsUser user;
-      if (personalAccessToken.getScmTokenName() != null
-          && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+      if (personalAccessToken.getScmProviderName() != null
+          && personalAccessToken.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
         user = azureDevOpsApiClient.getUserWithOAuthToken(personalAccessToken.getToken());
       } else {
         user =
@@ -155,7 +155,8 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       AzureDevOpsUser user;
-      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+      if (params.getScmProviderName() != null
+          && params.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
         user = azureDevOpsApiClient.getUserWithOAuthToken(params.getToken());
       } else {
         user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());

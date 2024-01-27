@@ -26,7 +26,7 @@ public class PersonalAccessToken {
   /** Organization that user belongs to. Can be null if user is not a member of any organization. */
   @Nullable private final String scmOrganization;
 
-  private final String scmTokenName;
+  private final String scmProviderName;
   private final String scmTokenId;
   private final String token;
   private final String cheUserId;
@@ -36,13 +36,13 @@ public class PersonalAccessToken {
       String cheUserId,
       String scmOrganization,
       String scmUserName,
-      String scmTokenName,
+      String scmProviderName,
       String scmTokenId,
       String token) {
     this.scmProviderUrl = scmProviderUrl;
     this.scmOrganization = scmOrganization;
     this.scmUserName = scmUserName;
-    this.scmTokenName = scmTokenName;
+    this.scmProviderName = scmProviderName;
     this.scmTokenId = scmTokenId;
     this.token = token;
     this.cheUserId = cheUserId;
@@ -52,10 +52,10 @@ public class PersonalAccessToken {
       String scmProviderUrl,
       String cheUserId,
       String scmUserName,
-      String scmTokenName,
+      String scmProviderName,
       String scmTokenId,
       String token) {
-    this(scmProviderUrl, cheUserId, null, scmUserName, scmTokenName, scmTokenId, token);
+    this(scmProviderUrl, cheUserId, null, scmUserName, scmProviderName, scmTokenId, token);
   }
 
   public PersonalAccessToken(String scmProviderUrl, String scmUserName, String token) {
@@ -73,8 +73,8 @@ public class PersonalAccessToken {
     return scmProviderUrl;
   }
 
-  public String getScmTokenName() {
-    return scmTokenName;
+  public String getScmProviderName() {
+    return scmProviderName;
   }
 
   public String getScmTokenId() {
@@ -106,7 +106,7 @@ public class PersonalAccessToken {
     return Objects.equal(scmProviderUrl, that.scmProviderUrl)
         && Objects.equal(scmUserName, that.scmUserName)
         && Objects.equal(scmOrganization, that.scmOrganization)
-        && Objects.equal(scmTokenName, that.scmTokenName)
+        && Objects.equal(scmProviderName, that.scmProviderName)
         && Objects.equal(scmTokenId, that.scmTokenId)
         && Objects.equal(token, that.token)
         && Objects.equal(cheUserId, that.cheUserId);
@@ -115,7 +115,13 @@ public class PersonalAccessToken {
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        scmProviderUrl, scmUserName, scmOrganization, scmTokenName, scmTokenId, token, cheUserId);
+        scmProviderUrl,
+        scmUserName,
+        scmOrganization,
+        scmProviderName,
+        scmTokenId,
+        token,
+        cheUserId);
   }
 
   @Override
@@ -131,7 +137,7 @@ public class PersonalAccessToken {
         + scmOrganization
         + '\''
         + ", scmTokenName='"
-        + scmTokenName
+        + scmProviderName
         + '\''
         + ", scmTokenId='"
         + scmTokenId

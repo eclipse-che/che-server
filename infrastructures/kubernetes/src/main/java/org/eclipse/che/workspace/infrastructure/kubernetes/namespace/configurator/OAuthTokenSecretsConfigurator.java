@@ -69,7 +69,7 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
                     && s.getMetadata()
                         .getAnnotations()
                         .get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME)
-                        .startsWith(PersonalAccessTokenFetcher.OAUTH_2_PREFIX))
+                        .startsWith(PersonalAccessTokenFetcher.OAUTH_2_SUFFIX))
         .forEach(
             s -> {
               try {

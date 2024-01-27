@@ -13,11 +13,11 @@ package org.eclipse.che.api.factory.server.github;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.eclipse.che.api.factory.server.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for github repositories.

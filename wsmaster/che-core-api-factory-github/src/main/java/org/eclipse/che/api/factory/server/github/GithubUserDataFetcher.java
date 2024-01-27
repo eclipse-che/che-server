@@ -26,11 +26,9 @@ public class GithubUserDataFetcher extends AbstractGithubUserDataFetcher {
   public GithubUserDataFetcher(
       @Named("che.api") String apiEndpoint,
       @Nullable @Named("che.integration.github.oauth_endpoint") String oauthEndpoint,
-      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(
         apiEndpoint,
-        oAuthTokenFetcher,
         personalAccessTokenManager,
         new GithubApiClient(oauthEndpoint),
         OAUTH_PROVIDER_NAME);
@@ -41,11 +39,6 @@ public class GithubUserDataFetcher extends AbstractGithubUserDataFetcher {
       OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager,
       GithubApiClient githubApiClient) {
-    super(
-        apiEndpoint,
-        oAuthTokenFetcher,
-        personalAccessTokenManager,
-        githubApiClient,
-        OAUTH_PROVIDER_NAME);
+    super(apiEndpoint, personalAccessTokenManager, githubApiClient, OAUTH_PROVIDER_NAME);
   }
 }

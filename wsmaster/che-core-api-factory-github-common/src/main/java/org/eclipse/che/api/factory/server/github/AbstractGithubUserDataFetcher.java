@@ -13,10 +13,8 @@ package org.eclipse.che.api.factory.server.github;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.AbstractGitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -24,7 +22,6 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** GitHub user data retriever. */
 public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -44,25 +41,13 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
   /** Constructor used for testing only. */
   public AbstractGithubUserDataFetcher(
       String apiEndpoint,
-      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager,
       GithubApiClient githubApiClient,
       String providerName) {
-    super(providerName, personalAccessTokenManager, oAuthTokenFetcher);
+    super(providerName, personalAccessTokenManager);
     this.providerName = providerName;
     this.githubApiClient = githubApiClient;
     this.apiEndpoint = apiEndpoint;
-  }
-
-  @Override
-  protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
-    if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
-      throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
-    } else {
-      return new GitUserData(user.getName(), user.getEmail());
-    }
   }
 
   @Override
@@ -79,14 +64,5 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
     } else {
       return new GitUserData(user.getName(), user.getEmail());
     }
-  }
-
-  protected String getLocalAuthenticateUrl() {
-    return apiEndpoint
-        + "/oauth/authenticate?oauth_provider="
-        + providerName
-        + "&scope="
-        + Joiner.on(',').join(DEFAULT_TOKEN_SCOPES)
-        + "&request_method=POST&signature_method=rsa";
   }
 }

@@ -89,7 +89,7 @@ public class GitlabUrlParser {
             personalAccessTokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
         if (token.isPresent()) {
           PersonalAccessToken accessToken = token.get();
-          return accessToken.getScmTokenName().equals(OAUTH_PROVIDER_NAME);
+          return accessToken.getScmProviderName().equals(OAUTH_PROVIDER_NAME);
         }
       } catch (ScmConfigurationPersistenceException
           | ScmUnauthorizedException

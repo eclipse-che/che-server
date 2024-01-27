@@ -15,7 +15,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** GitHub user data retriever. */
 public class GithubUserDataFetcherSecond extends AbstractGithubUserDataFetcher {
@@ -26,11 +25,9 @@ public class GithubUserDataFetcherSecond extends AbstractGithubUserDataFetcher {
   public GithubUserDataFetcherSecond(
       @Named("che.api") String apiEndpoint,
       @Nullable @Named("che.integration.github.oauth_endpoint_2") String oauthEndpoint,
-      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(
         apiEndpoint,
-        oAuthTokenFetcher,
         personalAccessTokenManager,
         new GithubApiClient(oauthEndpoint),
         OAUTH_PROVIDER_NAME);

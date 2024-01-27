@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.security.oauth;
+package org.eclipse.che.api.factory.server;
 
 import jakarta.ws.rs.core.UriInfo;
 import java.util.List;

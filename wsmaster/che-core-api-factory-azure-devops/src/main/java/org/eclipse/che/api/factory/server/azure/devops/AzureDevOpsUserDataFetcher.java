@@ -15,7 +15,6 @@ import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.getAut
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.AbstractGitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -23,7 +22,6 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /**
  * Azure DevOps user data fetcher.
@@ -37,22 +35,14 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
 
   @Inject
   public AzureDevOpsUserDataFetcher(
-      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager,
       AzureDevOpsApiClient azureDevOpsApiClient,
       @Named("che.api") String cheApiEndpoint,
       @Named("che.integration.azure.devops.application_scopes") String[] scopes) {
-    super(AzureDevOps.PROVIDER_NAME, personalAccessTokenManager, oAuthTokenFetcher);
+    super(AzureDevOps.PROVIDER_NAME, personalAccessTokenManager);
     this.scopes = scopes;
     this.cheApiEndpoint = cheApiEndpoint;
     this.azureDevOpsApiClient = azureDevOpsApiClient;
-  }
-
-  @Override
-  protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(oAuthToken.getToken());
-    return new GitUserData(user.getDisplayName(), user.getEmailAddress());
   }
 
   @Override

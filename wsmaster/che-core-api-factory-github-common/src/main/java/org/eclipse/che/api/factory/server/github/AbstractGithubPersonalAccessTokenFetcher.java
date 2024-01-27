@@ -135,12 +135,11 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     }
     try {
       oAuthToken = oAuthAPI.getToken(providerName);
-      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
               new PersonalAccessTokenParams(
-                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
+                  scmServerUrl, providerName, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
@@ -152,7 +151,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
           scmServerUrl,
           cheSubject.getUserId(),
           valid.get().second,
-          tokenName,
+          providerName,
           tokenId,
           oAuthToken.getToken());
     } catch (UnauthorizedException e) {
@@ -185,8 +184,8 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     }
 
     try {
-      if (personalAccessToken.getScmTokenName() != null
-          && personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+      if (personalAccessToken.getScmProviderName() != null
+          && personalAccessToken.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
         String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken()).second;
         return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
       } else {
@@ -210,7 +209,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       // The url from the token has the same url as the api client, no need to create a new one.
       apiClient = githubApiClient;
     } else {
-      if ("github".equals(params.getScmTokenName())) {
+      if ("github".equals(params.getScmProviderName())) {
         apiClient = new GithubApiClient(params.getScmProviderUrl());
       } else {
         LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
@@ -218,7 +217,8 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       }
     }
     try {
-      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+      if (params.getScmProviderName() != null
+          && params.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
         Pair<String, String[]> pair = apiClient.getTokenScopes(params.getToken());
         return Optional.of(
             Pair.of(

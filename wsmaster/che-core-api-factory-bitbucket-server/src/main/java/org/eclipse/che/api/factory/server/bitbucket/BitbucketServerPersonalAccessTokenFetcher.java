@@ -177,4 +177,9 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       return Optional.empty();
     }
   }
+
+  @Override
+  public String getProviderName(PersonalAccessTokenParams params) {
+    return "bitbucket-server";
+  }
 }

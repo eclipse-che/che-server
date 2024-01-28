@@ -168,6 +168,11 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
     }
   }
 
+  @Override
+  public String getProviderName(PersonalAccessTokenParams params) {
+    return OAUTH_PROVIDER_NAME;
+  }
+
   private String getLocalAuthenticateUrl() {
     return apiEndpoint
         + "/oauth/authenticate?oauth_provider="

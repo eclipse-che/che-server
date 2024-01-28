@@ -235,6 +235,11 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     }
   }
 
+  @Override
+  public String getProviderName(PersonalAccessTokenParams params) {
+    return providerName;
+  }
+
   /**
    * Checks if the tokenScopes array contains the requiredScopes.
    *

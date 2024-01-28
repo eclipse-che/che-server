@@ -167,6 +167,11 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
     }
   }
 
+  @Override
+  public String getProviderName(PersonalAccessTokenParams params) {
+    return "azure-devops";
+  }
+
   private String getLocalAuthenticateUrl() {
     return cheApiEndpoint + getAuthenticateUrlPath(scopes);
   }

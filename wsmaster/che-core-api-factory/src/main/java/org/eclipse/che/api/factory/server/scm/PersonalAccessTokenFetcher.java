@@ -66,4 +66,6 @@ public interface PersonalAccessTokenFetcher {
    *     or deny that token is valid.
    */
   Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params);
+
+  String getProviderName(PersonalAccessTokenParams params);
 }

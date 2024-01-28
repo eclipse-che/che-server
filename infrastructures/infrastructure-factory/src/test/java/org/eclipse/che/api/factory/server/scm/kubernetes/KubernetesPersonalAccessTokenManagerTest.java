@@ -104,7 +104,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user",
@@ -181,7 +181,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -192,7 +192,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -203,7 +203,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user2",
@@ -249,7 +249,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -294,7 +294,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -339,7 +339,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -350,7 +350,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -396,11 +396,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withNamespace("test")
             .withAnnotations(
-                Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
-                    "github",
-                    ANNOTATION_CHE_USERID,
-                    "user1"))
+                Map.of(ANNOTATION_SCM_PROVIDER_NAME, "github", ANNOTATION_CHE_USERID, "user1"))
             .build();
     Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
     when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(secret1));
@@ -433,7 +429,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -480,7 +476,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
@@ -493,7 +489,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new ObjectMetaBuilder()
             .withAnnotations(
                 Map.of(
-                    ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
+                    ANNOTATION_SCM_PROVIDER_NAME,
                     "github",
                     ANNOTATION_CHE_USERID,
                     "user1",

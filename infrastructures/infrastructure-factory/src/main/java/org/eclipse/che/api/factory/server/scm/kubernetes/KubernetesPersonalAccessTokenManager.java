@@ -65,8 +65,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public static final String ANNOTATION_SCM_ORGANIZATION = "che.eclipse.org/scm-organization";
   public static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID =
       "che.eclipse.org/scm-personal-access-token-id";
-  public static final String ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME =
-      "che.eclipse.org/scm-personal-access-provider-name";
+  public static final String ANNOTATION_SCM_PROVIDER_NAME = "che.eclipse.org/scm-provider-name";
   public static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
   public static final String TOKEN_DATA_FIELD = "token";
 
@@ -102,9 +101,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                       .put(
                           ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
                           personalAccessToken.getScmTokenId())
-                      .put(
-                          ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME,
-                          personalAccessToken.getScmProviderName())
+                      .put(ANNOTATION_SCM_PROVIDER_NAME, personalAccessToken.getScmProviderName())
                       .build())
               .withLabels(SECRET_LABELS)
               .build();
@@ -172,8 +169,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   private Optional<PersonalAccessToken> doGetPersonalAccessToken(
       Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
+      throws ScmConfigurationPersistenceException {
     try {
       for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
         List<Secret> secrets =
@@ -202,7 +198,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                       secretAnnotations.get(ANNOTATION_CHE_USERID),
                       personalAccessTokenParams.getOrganization(),
                       scmUsername.get(),
-                      secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME),
+                      secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME),
                       personalAccessTokenParams.getScmTokenId(),
                       personalAccessTokenParams.getToken());
               return Optional.of(personalAccessToken);
@@ -226,18 +222,29 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     return Optional.empty();
   }
 
-  private void migrate(Secret secret, String providerName) throws InfrastructureException {
+  private void migrate(Secret secret, @Nullable String providerName)
+      throws InfrastructureException {
+    ;
     String oldAnnotation =
         secret.getMetadata().getAnnotations().get("che.eclipse.org/scm-personal-access-token-name");
     if (!isNullOrEmpty(oldAnnotation)) {
+      if (isNullOrEmpty(providerName)) {
+        Optional<String> providerNameOptional =
+            scmPersonalAccessTokenFetcher.getScmProviderName(
+                this.secret2PersonalAccessTokenParams(secret));
+        if (providerNameOptional.isPresent()) {
+          providerName = providerNameOptional.get();
+        } else
+          throw new InfrastructureException(
+              "Unable to migrate secret "
+                  + secret.getMetadata().getName()
+                  + " to new format. No provider name found.");
+      }
       secret
           .getMetadata()
           .getAnnotations()
           .remove("che.eclipse.org/scm-personal-access-token-name");
-      secret
-          .getMetadata()
-          .getAnnotations()
-          .put(ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME, providerName);
+      secret.getMetadata().getAnnotations().put(ANNOTATION_SCM_PROVIDER_NAME, providerName);
       cheServerKubernetesClientFactory
           .create()
           .secrets()
@@ -251,8 +258,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
     String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
     String configuredCheUserId = secretAnnotations.get(ANNOTATION_CHE_USERID);
-    String configuredOAuthProviderName =
-        secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME);
+    String configuredOAuthProviderName = secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME);
 
     // if any of the required annotations is missing, the secret is not valid
     if (isNullOrEmpty(configuredScmServerUrl)
@@ -273,8 +279,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
 
     String token = new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
-    String configuredOAuthProviderName =
-        secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME);
+    String configuredOAuthProviderName = secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME);
     String configuredTokenId = secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
     String configuredScmOrganization = secretAnnotations.get(ANNOTATION_SCM_ORGANIZATION);
     String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
@@ -295,8 +300,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
     String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
     String configuredCheUserId = secretAnnotations.get(ANNOTATION_CHE_USERID);
-    String configuredOAuthProviderName =
-        secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_PROVIDER_NAME);
+    String configuredOAuthProviderName = secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME);
 
     return (configuredCheUserId.equals(cheUser.getUserId()))
         && (oAuthProviderName == null || oAuthProviderName.equals(configuredOAuthProviderName))

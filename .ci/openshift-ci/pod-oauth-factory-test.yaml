@@ -12,7 +12,7 @@ spec:
         medium: Memory
   containers:
     # container containing the tests
-    - name: oauth-test
+    - name: test
       image: quay.io/eclipse/che-e2e:next
       imagePullPolicy: Always
       env:

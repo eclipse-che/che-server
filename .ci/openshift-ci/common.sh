@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2023 Red Hat, Inc.
+# Copyright (c) 2023-2024 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -397,6 +397,38 @@ startOAuthFactoryTest() {
     PHASE=$(oc get pod -n ${CHE_NAMESPACE} ${TEST_POD_NAME} \
         --template='{{ .status.phase }}')
     if [[ ${PHASE} == "Running" ]]; then
+      echo "[INFO] Factory test started successfully."
+      return
+    fi
+
+    sleep 5
+    n=$(( n+1 ))
+  done
+
+  echo "[ERROR] Failed to start Factory test."
+  exit 1
+}
+
+startSmokeTest() {
+  CHE_URL=https://$(oc get route -n ${CHE_NAMESPACE} che -o jsonpath='{.spec.host}')
+  # patch che-smoke-test.yaml
+  cat .ci/openshift-ci/pod-che-smoke-test.yaml > che-smoke-test.yaml
+  sed -i "s#CHE_URL#${CHE_URL}#g" che-smoke-test.yaml
+  sed -i "s#CHE-NAMESPACE#${CHE_NAMESPACE}#g" che-smoke-test.yaml
+  sed -i "s#OCP_USER_NAME#${OCP_NON_ADMIN_USER_NAME}#g" che-smoke-test.yaml
+  sed -i "s#OCP_USER_PASSWORD#${OCP_LOGIN_PASSWORD}#g" che-smoke-test.yaml
+
+  echo "[INFO] Applying the following patched Smoke Test Pod:"
+  cat che-smoke-test.yaml
+  echo "[INFO] --------------------------------------------------"
+  oc apply -f che-smoke-test.yaml
+  # wait for the pod to start
+  n=0
+  while [ $n -le 120 ]
+  do
+    PHASE=$(oc get pod -n ${CHE_NAMESPACE} ${TEST_POD_NAME} \
+        --template='{{ .status.phase }}')
+    if [[ ${PHASE} == "Running" ]]; then
       echo "[INFO] Smoke test started successfully."
       return
     fi
@@ -405,7 +437,7 @@ startOAuthFactoryTest() {
     n=$(( n+1 ))
   done
 
-  echo "[ERROR] Failed to start smoke test."
+  echo "[ERROR] Failed to start Smoke test."
   exit 1
 }
 
@@ -434,8 +466,8 @@ collectEclipseCheLogs() {
 }
 
 collectLogs() {
-  echo "[INFO] Waiting until oauth test pod finished"
-  oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c oauth-test -f
+  echo "[INFO] Waiting until test pod finished"
+  oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test -f
   sleep 3
 
   # Download artifacts
@@ -449,13 +481,16 @@ collectLogs() {
   oc exec -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c download-reports -- touch /tmp/done
 
   # Revoke and delete the OAuth application
-  revokeAuthorizedOAuthApplication ${APPLICATION_ID} ${APPLICATION_SECRET}
-  deleteOAuthApplicationGitLabServer ${OAUTH_ID} ${ADMIN_ACCESS_TOKEN}
+  if [[ ${TEST_POD_NAME} == "oauth-factory-test" ]]; then
+    revokeAuthorizedOAuthApplication ${APPLICATION_ID} ${APPLICATION_SECRET}
+    deleteOAuthApplicationGitLabServer ${OAUTH_ID} ${ADMIN_ACCESS_TOKEN}
+  fi
+
   set -e
 
-  EXIT_CODE=$(oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c oauth-test | grep EXIT_CODE)
+  EXIT_CODE=$(oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test | grep EXIT_CODE)
   if [[ ${EXIT_CODE} != "+ EXIT_CODE=0" ]]; then
-    echo "[ERROR] Factory OAuth test failed. Job failed."
+    echo "[ERROR] GUI test failed. Job failed."
     exit 1
   fi
   echo "[INFO] Job completed successfully."

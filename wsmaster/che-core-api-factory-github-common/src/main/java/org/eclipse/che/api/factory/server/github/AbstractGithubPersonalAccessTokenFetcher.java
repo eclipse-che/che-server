@@ -139,7 +139,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       Optional<Pair<Boolean, String>> valid =
           isValid(
               new PersonalAccessTokenParams(
-                  scmServerUrl, providerName, tokenId, oAuthToken.getToken(), null));
+                  true, scmServerUrl, providerName, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
@@ -184,8 +184,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     }
 
     try {
-      if (personalAccessToken.getScmProviderName() != null
-          && personalAccessToken.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
+      if (personalAccessToken.isOAuthToken()) {
         String[] scopes = githubApiClient.getTokenScopes(personalAccessToken.getToken()).second;
         return Optional.of(containsScopes(scopes, DEFAULT_TOKEN_SCOPES));
       } else {
@@ -217,8 +216,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       }
     }
     try {
-      if (params.getScmProviderName() != null
-          && params.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
+      if (params.getScmProviderName() != null && params.isOAuthToken()) {
         Pair<String, String[]> pair = apiClient.getTokenScopes(params.getToken());
         return Optional.of(
             Pair.of(

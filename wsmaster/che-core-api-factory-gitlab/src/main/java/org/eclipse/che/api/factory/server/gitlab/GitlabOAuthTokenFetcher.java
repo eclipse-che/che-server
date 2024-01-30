@@ -106,12 +106,11 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     OAuthToken oAuthToken;
     try {
       oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      String tokenName = NameGenerator.generate(OAUTH_2_SUFFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
               new PersonalAccessTokenParams(
-                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
+                  true, scmServerUrl, OAUTH_PROVIDER_NAME, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
@@ -123,7 +122,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
           scmServerUrl,
           cheSubject.getUserId(),
           valid.get().second,
-          tokenName,
+          OAUTH_PROVIDER_NAME,
           tokenId,
           oAuthToken.getToken());
     } catch (UnauthorizedException e) {
@@ -160,8 +159,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
         return Optional.empty();
       }
     }
-    if (personalAccessToken.getScmProviderName() != null
-        && personalAccessToken.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
+    if (personalAccessToken.getScmProviderName() != null && personalAccessToken.isOAuthToken()) {
       // validation OAuth token by special API call
       try {
         GitlabOauthTokenInfo info =
@@ -199,8 +197,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     }
     try {
       GitlabUser user = gitlabApiClient.getUser(params.getToken());
-      if (params.getScmProviderName() != null
-          && params.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
+      if (params.getScmProviderName() != null && params.isOAuthToken()) {
         // validation OAuth token by special API call
         GitlabOauthTokenInfo info = gitlabApiClient.getOAuthTokenInfo(params.getToken());
         return Optional.of(

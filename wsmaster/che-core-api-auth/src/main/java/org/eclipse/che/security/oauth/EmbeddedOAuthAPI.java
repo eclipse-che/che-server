@@ -184,35 +184,31 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       if (token != null) {
         return token;
       }
-      Optional<PersonalAccessToken> tokenOptional =
-          personalAccessTokenManager.get(subject, oauthProvider, null);
-      if (tokenOptional.isPresent()) {
-        PersonalAccessToken tokenDto = tokenOptional.get();
-        return newDto(OAuthToken.class).withToken(tokenDto.getToken());
-      }
       throw new UnauthorizedException(
           "OAuth token for user " + subject.getUserId() + " was not found");
     } catch (IOException e) {
       throw new ServerException(e.getLocalizedMessage(), e);
-    } catch (ScmCommunicationException
-        | ScmUnauthorizedException
-        | ScmConfigurationPersistenceException e) {
-      throw new RuntimeException(e);
     }
   }
 
   @Override
   public void invalidateToken(String oauthProvider)
-      throws NotFoundException, UnauthorizedException, ServerException {
+      throws NotFoundException, UnauthorizedException {
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
-    OAuthToken oauthToken = getToken(oauthProvider);
     try {
-      if (!oauth.invalidateToken(oauthToken.getToken())) {
+      Optional<PersonalAccessToken> tokenOptional =
+          personalAccessTokenManager.get(
+              EnvironmentContext.getCurrent().getSubject(), oauthProvider, null);
+      if (tokenOptional.isPresent() && !oauth.invalidateToken(tokenOptional.get().getToken())) {
         throw new UnauthorizedException(
             "OAuth token for provider " + oauthProvider + " was not found");
       }
-    } catch (IOException e) {
-      throw new ServerException(e.getMessage());
+    } catch (ScmConfigurationPersistenceException
+        | ScmUnauthorizedException
+        | ScmCommunicationException
+        | IOException e) {
+      throw new UnauthorizedException(
+          "OAuth token for provider " + oauthProvider + " was not found");
     }
   }
 

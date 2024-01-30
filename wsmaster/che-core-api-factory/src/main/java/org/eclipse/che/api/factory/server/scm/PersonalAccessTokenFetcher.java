@@ -19,10 +19,6 @@ import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 
 public interface PersonalAccessTokenFetcher {
-
-  /** Prefix for token names indication it is OAuth token (to differentiate from PAT-s) */
-  String OAUTH_2_SUFFIX = "-oauth2";
-
   /**
    * Retrieve new PersonalAccessToken from concrete scm provider
    *

@@ -82,12 +82,11 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       oAuthToken = oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME);
-      String tokenName = NameGenerator.generate(OAUTH_2_SUFFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
               new PersonalAccessTokenParams(
-                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
+                  true, scmServerUrl, "azure-devops", tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
@@ -99,7 +98,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
           scmServerUrl,
           cheSubject.getUserId(),
           valid.get().second,
-          tokenName,
+          "azure-devops",
           tokenId,
           oAuthToken.getToken());
     } catch (UnauthorizedException e) {
@@ -132,8 +131,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       AzureDevOpsUser user;
-      if (personalAccessToken.getScmProviderName() != null
-          && personalAccessToken.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
+      if (personalAccessToken.getScmProviderName() != null && personalAccessToken.isOAuthToken()) {
         user = azureDevOpsApiClient.getUserWithOAuthToken(personalAccessToken.getToken());
       } else {
         user =
@@ -155,8 +153,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
     try {
       AzureDevOpsUser user;
-      if (params.getScmProviderName() != null
-          && params.getScmProviderName().startsWith(OAUTH_2_SUFFIX)) {
+      if (params.isOAuthToken()) {
         user = azureDevOpsApiClient.getUserWithOAuthToken(params.getToken());
       } else {
         user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());

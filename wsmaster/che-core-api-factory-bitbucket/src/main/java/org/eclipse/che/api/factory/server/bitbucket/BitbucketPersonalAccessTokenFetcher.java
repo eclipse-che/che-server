@@ -97,7 +97,7 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
       Optional<Pair<Boolean, String>> valid =
           isValid(
               new PersonalAccessTokenParams(
-                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
+                  true, scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {

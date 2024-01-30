@@ -95,11 +95,12 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
           bitbucketServerApiClient.createPersonalAccessTokens(tokenName, DEFAULT_TOKEN_SCOPE);
       LOG.debug("Token created = {} for {}", token.getId(), token.getUser());
       return new PersonalAccessToken(
+          true,
           scmServerUrl,
           EnvironmentContext.getCurrent().getSubject().getUserId(),
           user.getName(),
           user.getSlug(),
-          token.getName(),
+          "bitbucket-server",
           valueOf(token.getId()),
           token.getToken());
     } catch (ScmBadRequestException | ScmItemNotFoundException e) {

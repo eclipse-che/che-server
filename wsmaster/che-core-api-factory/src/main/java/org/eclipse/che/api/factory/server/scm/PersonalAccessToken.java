@@ -21,6 +21,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  */
 public class PersonalAccessToken {
 
+  private final boolean isOAuthToken;
   private final String scmProviderUrl;
   private final String scmUserName;
   /** Organization that user belongs to. Can be null if user is not a member of any organization. */
@@ -32,6 +33,7 @@ public class PersonalAccessToken {
   private final String cheUserId;
 
   public PersonalAccessToken(
+      boolean isOAuthToken,
       String scmProviderUrl,
       String cheUserId,
       String scmOrganization,
@@ -39,6 +41,7 @@ public class PersonalAccessToken {
       String scmProviderName,
       String scmTokenId,
       String token) {
+    this.isOAuthToken = isOAuthToken;
     this.scmProviderUrl = scmProviderUrl;
     this.scmOrganization = scmOrganization;
     this.scmUserName = scmUserName;
@@ -55,11 +58,12 @@ public class PersonalAccessToken {
       String scmProviderName,
       String scmTokenId,
       String token) {
-    this(scmProviderUrl, cheUserId, null, scmUserName, scmProviderName, scmTokenId, token);
+    this(true, scmProviderUrl, cheUserId, null, scmUserName, scmProviderName, scmTokenId, token);
   }
 
   public PersonalAccessToken(String scmProviderUrl, String scmUserName, String token) {
     this(
+        true,
         scmProviderUrl,
         EnvironmentContext.getCurrent().getSubject().getUserId(),
         null,
@@ -93,6 +97,10 @@ public class PersonalAccessToken {
     return cheUserId;
   }
 
+  public boolean isOAuthToken() {
+    return isOAuthToken;
+  }
+
   @Nullable
   public String getScmOrganization() {
     return scmOrganization;
@@ -103,7 +111,8 @@ public class PersonalAccessToken {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PersonalAccessToken that = (PersonalAccessToken) o;
-    return Objects.equal(scmProviderUrl, that.scmProviderUrl)
+    return Objects.equal(isOAuthToken, that.isOAuthToken)
+        && Objects.equal(scmProviderUrl, that.scmProviderUrl)
         && Objects.equal(scmUserName, that.scmUserName)
         && Objects.equal(scmOrganization, that.scmOrganization)
         && Objects.equal(scmProviderName, that.scmProviderName)
@@ -115,6 +124,7 @@ public class PersonalAccessToken {
   @Override
   public int hashCode() {
     return Objects.hashCode(
+        isOAuthToken,
         scmProviderUrl,
         scmUserName,
         scmOrganization,
@@ -127,7 +137,9 @@ public class PersonalAccessToken {
   @Override
   public String toString() {
     return "PersonalAccessToken{"
-        + "scmProviderUrl='"
+        + "isOAuthToken="
+        + isOAuthToken
+        + ", scmProviderUrl='"
         + scmProviderUrl
         + '\''
         + ", scmUserName='"
@@ -136,7 +148,7 @@ public class PersonalAccessToken {
         + ", scmOrganization='"
         + scmOrganization
         + '\''
-        + ", scmTokenName='"
+        + ", scmProviderName='"
         + scmProviderName
         + '\''
         + ", scmTokenId='"
@@ -147,6 +159,7 @@ public class PersonalAccessToken {
         + '\''
         + ", cheUserId='"
         + cheUserId
+        + '\''
         + '}';
   }
 }

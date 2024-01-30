@@ -18,7 +18,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
-import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_SUFFIX;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -87,7 +86,12 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                     .withBodyFile("bitbucket/rest/user/response.json")));
     PersonalAccessTokenParams personalAccessTokenParams =
         new PersonalAccessTokenParams(
-            "https://bitbucket.org/", "scmTokenName", "scmTokenId", bitbucketOauthToken, null);
+            true,
+            "https://bitbucket.org/",
+            "scmTokenName",
+            "scmTokenId",
+            bitbucketOauthToken,
+            null);
     assertTrue(
         bitbucketPersonalAccessTokenFetcher.isValid(personalAccessTokenParams).isEmpty(),
         "Should not validate SCM server with trailing /");
@@ -165,7 +169,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            "https://bitbucket.org", "params-name", "tid-23434", bitbucketOauthToken, null);
+            false, "https://bitbucket.org", "params-name", "tid-23434", bitbucketOauthToken, null);
 
     Optional<Pair<Boolean, String>> valid = bitbucketPersonalAccessTokenFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -187,11 +191,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            "https://bitbucket.org",
-            OAUTH_2_SUFFIX + "-params-name",
-            "tid-23434",
-            bitbucketOauthToken,
-            null);
+            true, "https://bitbucket.org", "azure-devops", "tid-23434", bitbucketOauthToken, null);
 
     Optional<Pair<Boolean, String>> valid = bitbucketPersonalAccessTokenFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -204,11 +204,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            "https://bitbucket.org",
-            OAUTH_2_SUFFIX + "-token-name",
-            "tid-23434",
-            bitbucketOauthToken,
-            null);
+            true, "https://bitbucket.org", "azure-devops", "tid-23434", bitbucketOauthToken, null);
 
     assertFalse(bitbucketPersonalAccessTokenFetcher.isValid(params).isPresent());
   }

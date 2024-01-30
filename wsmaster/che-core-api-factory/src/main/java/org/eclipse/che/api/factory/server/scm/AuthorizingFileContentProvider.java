@@ -12,7 +12,6 @@
 package org.eclipse.che.api.factory.server.scm;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_SUFFIX;
 import static org.eclipse.che.api.factory.server.scm.exception.ExceptionMessages.getDevfileConnectionErrorMessage;
 
 import java.io.FileNotFoundException;
@@ -82,11 +81,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         if (isNullOrEmpty(credentials)) {
           PersonalAccessToken token =
               personalAccessTokenManager.getAndStore(remoteFactoryUrl.getProviderUrl());
-          authorization =
-              formatAuthorization(
-                  token.getToken(),
-                  token.getScmProviderName() == null
-                      || !token.getScmProviderName().startsWith(OAUTH_2_SUFFIX));
+          authorization = formatAuthorization(token.getToken(), token.isOAuthToken());
         } else {
           authorization = getCredentialsAuthorization(credentials);
         }

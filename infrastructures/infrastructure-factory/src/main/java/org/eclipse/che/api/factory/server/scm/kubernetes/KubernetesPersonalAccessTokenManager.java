@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.Boolean.parseBoolean;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -62,6 +63,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public static final String NAME_PATTERN = "personal-access-token-";
 
   public static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
+  public static final String ANNOTATION_SCM_IS_OAUTH_TOKEN = "che.eclipse.org/scm-is-oauth-token";
   public static final String ANNOTATION_SCM_ORGANIZATION = "che.eclipse.org/scm-organization";
   public static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID =
       "che.eclipse.org/scm-personal-access-token-id";
@@ -96,6 +98,9 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
               .withName(NameGenerator.generate(NAME_PATTERN, 5))
               .withAnnotations(
                   new ImmutableMap.Builder<String, String>()
+                      .put(
+                          ANNOTATION_SCM_IS_OAUTH_TOKEN,
+                          Boolean.toString(personalAccessToken.isOAuthToken()))
                       .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
                       .put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl())
                       .put(
@@ -194,6 +199,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
               PersonalAccessToken personalAccessToken =
                   new PersonalAccessToken(
+                      parseBoolean(secretAnnotations.get(ANNOTATION_SCM_IS_OAUTH_TOKEN)),
                       personalAccessTokenParams.getScmProviderUrl(),
                       secretAnnotations.get(ANNOTATION_CHE_USERID),
                       personalAccessTokenParams.getOrganization(),
@@ -278,6 +284,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   private PersonalAccessTokenParams secret2PersonalAccessTokenParams(Secret secret) {
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
 
+    boolean isOauth = parseBoolean(secretAnnotations.get(ANNOTATION_SCM_IS_OAUTH_TOKEN));
     String token = new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
     String configuredOAuthProviderName = secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME);
     String configuredTokenId = secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
@@ -285,6 +292,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
 
     return new PersonalAccessTokenParams(
+        isOauth,
         trimEnd(configuredScmServerUrl, '/'),
         configuredOAuthProviderName,
         configuredTokenId,

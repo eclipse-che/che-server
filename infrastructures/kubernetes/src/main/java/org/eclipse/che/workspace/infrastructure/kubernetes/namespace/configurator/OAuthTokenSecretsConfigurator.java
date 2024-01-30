@@ -11,11 +11,12 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
+import static java.lang.Boolean.parseBoolean;
+
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -40,6 +41,7 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
   private static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
   private static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME =
       "che.eclipse.org/scm-personal-access-token-name";
+  public static final String ANNOTATION_SCM_IS_OAUTH_TOKEN = "che.eclipse.org/scm-is-oauth-token";
 
   private static final Map<String, String> SEARCH_LABELS =
       ImmutableMap.of(
@@ -66,10 +68,8 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
                     && s.getMetadata()
                         .getAnnotations()
                         .containsKey(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME)
-                    && s.getMetadata()
-                        .getAnnotations()
-                        .get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME)
-                        .startsWith(PersonalAccessTokenFetcher.OAUTH_2_SUFFIX))
+                    && parseBoolean(
+                        s.getMetadata().getAnnotations().get(ANNOTATION_SCM_IS_OAUTH_TOKEN)))
         .forEach(
             s -> {
               try {

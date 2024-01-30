@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_SUFFIX;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_AUTOMOUNT;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_DEV_WORKSPACE_MOUNT_PATH;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.ANNOTATION_GIT_CREDENTIALS;
@@ -176,7 +175,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   private String getUsernameSegment(PersonalAccessToken personalAccessToken) {
     // Special characters are not allowed in URL username segment, so we need to escape them.
     PercentEscaper percentEscaper = new PercentEscaper("", false);
-    return personalAccessToken.getScmProviderName().startsWith(OAUTH_2_SUFFIX)
+    return personalAccessToken.isOAuthToken()
         ? "oauth2"
         : isNullOrEmpty(personalAccessToken.getScmOrganization())
             ? percentEscaper.escape(personalAccessToken.getScmUserName())

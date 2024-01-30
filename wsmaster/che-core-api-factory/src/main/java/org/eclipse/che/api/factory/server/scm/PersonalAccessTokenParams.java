@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.scm;
 
 /** An object to hold parameters for creating a personal access token. */
 public class PersonalAccessTokenParams {
+  private final boolean isOAuthToken;
   private final String scmProviderUrl;
   private final String scmProviderName;
   private final String scmTokenId;
@@ -20,11 +21,13 @@ public class PersonalAccessTokenParams {
   private final String organization;
 
   public PersonalAccessTokenParams(
+      boolean isOAuthToken,
       String scmProviderUrl,
       String scmProviderName,
       String scmTokenId,
       String token,
       String organization) {
+    this.isOAuthToken = isOAuthToken;
     this.scmProviderUrl = scmProviderUrl;
     this.scmProviderName = scmProviderName;
     this.scmTokenId = scmTokenId;
@@ -50,5 +53,9 @@ public class PersonalAccessTokenParams {
 
   public String getOrganization() {
     return organization;
+  }
+
+  public boolean isOAuthToken() {
+    return isOAuthToken;
   }
 }

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: oauth-factory-test
+  name: che-smoke-test
   namespace: CHE-NAMESPACE
 spec:
   volumes:
@@ -23,7 +23,7 @@ spec:
         - name: TS_SELENIUM_EDITOR
           value: "che-code"
         - name: USERSTORY
-          value: "Factory"
+          value: "SmokeTest"
         - name: NODE_TLS_REJECT_UNAUTHORIZED
           value: "0"
         - name: TS_SELENIUM_BASE_URL
@@ -36,18 +36,6 @@ spec:
           value: "OCP_USER_PASSWORD"
         - name: TS_SELENIUM_VALUE_OPENSHIFT_OAUTH
           value: "true"
-        - name: TS_SELENIUM_FACTORY_GIT_REPO_URL
-          value: "FACTORY_REPO_URL"
-        - name: TS_SELENIUM_FACTORY_GIT_REPO_BRANCH
-          value: "GIT_BRANCH"
-        - name: TS_SELENIUM_FACTORY_GIT_PROVIDER
-          value: "GIT_PROVIDER_TYPE"
-        - name: TS_SELENIUM_GIT_PROVIDER_OAUTH
-          value: "true"
-        - name: TS_SELENIUM_GIT_PROVIDER_USERNAME
-          value: "GIT_PROVIDER_USER_NAME"
-        - name: TS_SELENIUM_GIT_PROVIDER_PASSWORD
-          value: "GIT_PROVIDER_USER_PASSWORD"
         - name: TS_OCP_LOGIN_PAGE_PROVIDER_TITLE
           value: "htpasswd"
         - name: DELETE_WORKSPACE_ON_FAILED_TEST

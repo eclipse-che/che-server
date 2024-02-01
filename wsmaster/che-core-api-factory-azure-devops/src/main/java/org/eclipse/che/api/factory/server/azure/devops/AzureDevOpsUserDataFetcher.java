@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,6 @@ import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.getAut
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.AbstractGitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -23,7 +22,6 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /**
  * Azure DevOps user data fetcher.
@@ -37,21 +35,21 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
 
   @Inject
   public AzureDevOpsUserDataFetcher(
-      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager,
       AzureDevOpsApiClient azureDevOpsApiClient,
       @Named("che.api") String cheApiEndpoint,
+      @Named("che.integration.azure.devops.scm.api_endpoint") String azureDevOpsScmApiEndpoint,
       @Named("che.integration.azure.devops.application_scopes") String[] scopes) {
-    super(AzureDevOps.PROVIDER_NAME, personalAccessTokenManager, oAuthTokenFetcher);
+    super(AzureDevOps.PROVIDER_NAME, azureDevOpsScmApiEndpoint, personalAccessTokenManager);
     this.scopes = scopes;
     this.cheApiEndpoint = cheApiEndpoint;
     this.azureDevOpsApiClient = azureDevOpsApiClient;
   }
 
   @Override
-  protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
+  protected GitUserData fetchGitUserDataWithOAuthToken(String token)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(oAuthToken.getToken());
+    AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(token);
     return new GitUserData(user.getDisplayName(), user.getEmailAddress());
   }
 

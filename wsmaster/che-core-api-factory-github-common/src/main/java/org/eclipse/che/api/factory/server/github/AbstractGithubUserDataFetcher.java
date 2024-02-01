@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.AbstractGitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -24,7 +23,6 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
-import org.eclipse.che.security.oauth.OAuthAPI;
 
 /** GitHub user data retriever. */
 public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -44,20 +42,19 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
   /** Constructor used for testing only. */
   public AbstractGithubUserDataFetcher(
       String apiEndpoint,
-      OAuthAPI oAuthTokenFetcher,
       PersonalAccessTokenManager personalAccessTokenManager,
       GithubApiClient githubApiClient,
       String providerName) {
-    super(providerName, personalAccessTokenManager, oAuthTokenFetcher);
+    super(providerName, githubApiClient.getServerUrl(), personalAccessTokenManager);
     this.providerName = providerName;
     this.githubApiClient = githubApiClient;
     this.apiEndpoint = apiEndpoint;
   }
 
   @Override
-  protected GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
+  protected GitUserData fetchGitUserDataWithOAuthToken(String token)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
-    GithubUser user = githubApiClient.getUser(oAuthToken.getToken());
+    GithubUser user = githubApiClient.getUser(token);
     if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
       throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
     } else {

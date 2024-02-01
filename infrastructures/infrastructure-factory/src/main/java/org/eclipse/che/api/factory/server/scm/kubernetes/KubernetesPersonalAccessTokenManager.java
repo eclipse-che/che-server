@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -142,8 +142,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
+      throws ScmConfigurationPersistenceException {
     return doGetPersonalAccessToken(cheUser, null, scmServerUrl);
   }
 
@@ -165,15 +164,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   @Override
   public Optional<PersonalAccessToken> get(
       Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
+      throws ScmConfigurationPersistenceException {
     return doGetPersonalAccessToken(cheUser, oAuthProviderName, scmServerUrl);
   }
 
   private Optional<PersonalAccessToken> doGetPersonalAccessToken(
       Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
+      throws ScmConfigurationPersistenceException {
     try {
       for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
         List<Secret> secrets =

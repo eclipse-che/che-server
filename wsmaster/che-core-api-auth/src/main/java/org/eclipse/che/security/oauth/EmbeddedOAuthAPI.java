@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -40,6 +40,9 @@ import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
@@ -62,6 +65,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
 
   @Inject protected OAuthAuthenticatorProvider oauth2Providers;
   @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
+  @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   private String redirectAfterLogin;
 
   @Override
@@ -176,6 +180,19 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       }
       if (token != null) {
         return token;
+      } else {
+        Optional<PersonalAccessToken> tokenOptional;
+        try {
+          tokenOptional = personalAccessTokenManager.get(subject, oauthProvider, null);
+          if (tokenOptional.isEmpty()) {
+            tokenOptional = personalAccessTokenManager.get(subject, provider.getEndpointUrl());
+          }
+          if (tokenOptional.isPresent()) {
+            return newDto(OAuthToken.class).withToken(tokenOptional.get().getToken());
+          }
+        } catch (ScmConfigurationPersistenceException e) {
+          throw new RuntimeException(e);
+        }
       }
       throw new UnauthorizedException(
           "OAuth token for user " + subject.getUserId() + " was not found");

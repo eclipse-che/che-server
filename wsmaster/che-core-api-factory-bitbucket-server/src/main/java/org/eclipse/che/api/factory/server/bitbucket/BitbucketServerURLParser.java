@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 
@@ -70,7 +71,7 @@ public class BitbucketServerURLParser {
     this.devfileFilenamesProvider = devfileFilenamesProvider;
     this.oAuthAPI = oAuthAPI;
     this.personalAccessTokenManager = personalAccessTokenManager;
-    if (bitbucketEndpoints != null) {
+    if (!isNullOrEmpty(bitbucketEndpoints)) {
       for (String bitbucketEndpoint : Splitter.on(",").split(bitbucketEndpoints)) {
         String trimmedEndpoint = StringUtils.trimEnd(bitbucketEndpoint, '/');
         URI uri = URI.create(trimmedEndpoint);

@@ -14,6 +14,7 @@ package org.eclipse.che.security.oauth;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
@@ -43,7 +44,10 @@ import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 import org.slf4j.Logger;
@@ -84,7 +88,8 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   }
 
   @Override
-  public Response callback(UriInfo uriInfo, List<String> errorValues) throws NotFoundException {
+  public Response callback(UriInfo uriInfo, @Nullable List<String> errorValues)
+      throws NotFoundException {
     URL requestUrl = getRequestUrl(uriInfo);
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
@@ -97,13 +102,25 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     OAuthAuthenticator oauth = getAuthenticator(providerName);
     final List<String> scopes = params.get("scope");
     try {
-      oauth.callback(requestUrl, scopes == null ? emptyList() : scopes);
+      String token = oauth.callback(requestUrl, scopes == null ? emptyList() : scopes);
+      personalAccessTokenManager.store(
+          new PersonalAccessToken(
+              oauth.getEndpointUrl(),
+              EnvironmentContext.getCurrent().getSubject().getUserId(),
+              null,
+              null,
+              NameGenerator.generate(OAUTH_2_PREFIX, 5),
+              NameGenerator.generate("id-", 5),
+              token));
     } catch (OAuthAuthenticationException e) {
       return Response.temporaryRedirect(
               URI.create(
                   getParameter(params, "redirect_after_login")
                       + String.format("&%s=access_denied", ERROR_QUERY_NAME)))
           .build();
+    } catch (UnsatisfiedScmPreconditionException | ScmConfigurationPersistenceException e) {
+      // Skip exception, the token will be stored in the next request.
+      LOG.error(e.getMessage(), e);
     }
     final String redirectAfterLogin = getParameter(params, "redirect_after_login");
     return Response.temporaryRedirect(URI.create(redirectAfterLogin)).build();

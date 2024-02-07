@@ -105,7 +105,18 @@ public interface PersonalAccessTokenManager {
    * @throws ScmCommunicationException - problem occurred during communication with scm provider.
    * @throws ScmUnauthorizedException - scm authorization required.
    */
-  void store(String scmServerUrl)
+  void storeGitCredentials(String scmServerUrl)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
           ScmCommunicationException, ScmUnauthorizedException;
+
+  /**
+   * Store {@link PersonalAccessToken} in permanent storage.
+   *
+   * @param token personal access token
+   * @throws UnsatisfiedScmPreconditionException - storage preconditions aren't met.
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   */
+  void store(PersonalAccessToken token)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException;
 }

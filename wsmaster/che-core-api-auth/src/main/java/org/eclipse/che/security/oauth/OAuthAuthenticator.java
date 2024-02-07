@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -174,7 +174,7 @@ public abstract class OAuthAuthenticator {
    *     server
    * @param scopes specify exactly what type of access needed. This list must be exactly the same as
    *     list passed to the method {@link #getAuthenticateUrl(URL, java.util.List)}
-   * @return id of authenticated user
+   * @return access token
    * @throws OAuthAuthenticationException if authentication failed or <code>requestUrl</code> does
    *     not contain required parameters, e.g. 'code'
    */
@@ -202,7 +202,7 @@ public abstract class OAuthAuthenticator {
         userId = EnvironmentContext.getCurrent().getSubject().getUserId();
       }
       flow.createAndStoreCredential(tokenResponse, userId);
-      return userId;
+      return tokenResponse.getAccessToken();
     } catch (IOException ioe) {
       throw new OAuthAuthenticationException(ioe.getMessage());
     }

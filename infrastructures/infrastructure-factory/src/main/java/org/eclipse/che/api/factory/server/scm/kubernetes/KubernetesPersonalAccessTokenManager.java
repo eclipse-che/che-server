@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.LabelSelector;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
@@ -87,8 +86,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     this.gitCredentialManager = gitCredentialManager;
   }
 
-  @VisibleForTesting
-  void save(PersonalAccessToken personalAccessToken)
+  @Override
+  public void store(PersonalAccessToken personalAccessToken)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
       String namespace = getFirstNamespace();
@@ -136,7 +135,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     PersonalAccessToken personalAccessToken =
         scmPersonalAccessTokenFetcher.fetchPersonalAccessToken(cheUser, scmServerUrl);
-    save(personalAccessToken);
+    store(personalAccessToken);
     return personalAccessToken;
   }
 
@@ -291,7 +290,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   @Override
-  public void store(String scmServerUrl)
+  public void storeGitCredentials(String scmServerUrl)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
           ScmCommunicationException, ScmUnauthorizedException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();

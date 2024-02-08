@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,10 +28,10 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,7 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
@@ -33,7 +34,6 @@ import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for Gitlab repositories.

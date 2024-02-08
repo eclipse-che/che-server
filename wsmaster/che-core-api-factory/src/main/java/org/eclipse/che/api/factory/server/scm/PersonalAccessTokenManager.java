@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -50,8 +50,7 @@ public interface PersonalAccessTokenManager {
    *     permanent storage.
    */
   Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException;
+      throws ScmConfigurationPersistenceException;
 
   /**
    * Gets {@link PersonalAccessToken} from permanent storage.
@@ -80,13 +79,10 @@ public interface PersonalAccessTokenManager {
    * @return personal access token
    * @throws ScmConfigurationPersistenceException - problem occurred during communication with
    *     permanent storage.
-   * @throws ScmUnauthorizedException - scm authorization required.
-   * @throws ScmCommunicationException - problem occurred during communication with scm provider.
    */
   Optional<PersonalAccessToken> get(
       Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException;
+      throws ScmConfigurationPersistenceException;
 
   /**
    * Gets {@link PersonalAccessToken} from permanent storage. If the token is not found try to fetch
@@ -109,7 +105,18 @@ public interface PersonalAccessTokenManager {
    * @throws ScmCommunicationException - problem occurred during communication with scm provider.
    * @throws ScmUnauthorizedException - scm authorization required.
    */
-  void store(String scmServerUrl)
+  void storeGitCredentials(String scmServerUrl)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
           ScmCommunicationException, ScmUnauthorizedException;
+
+  /**
+   * Store {@link PersonalAccessToken} in permanent storage.
+   *
+   * @param token personal access token
+   * @throws UnsatisfiedScmPreconditionException - storage preconditions aren't met.
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   */
+  void store(PersonalAccessToken token)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException;
 }

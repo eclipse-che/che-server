@@ -108,9 +108,7 @@ public abstract class AbstractGithubURLParser {
           PersonalAccessToken accessToken = token.get();
           return accessToken.getScmTokenName().equals(providerName);
         }
-      } catch (ScmConfigurationPersistenceException
-          | ScmUnauthorizedException
-          | ScmCommunicationException exception) {
+      } catch (ScmConfigurationPersistenceException exception) {
         return false;
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,23 +11,33 @@
  */
 package org.eclipse.che.security.oauth;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.net.URL;
 import java.util.Set;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -40,6 +50,7 @@ public class EmbeddedOAuthAPITest {
 
   @Mock OAuthAuthenticatorProvider oauth2Providers;
   @Mock org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
+  @Mock PersonalAccessTokenManager personalAccessTokenManager;
 
   @InjectMocks EmbeddedOAuthAPI embeddedOAuthAPI;
 
@@ -100,5 +111,33 @@ public class EmbeddedOAuthAPITest {
     assertEquals(
         callback.getLocation().toString(),
         "http://eclipse.che?quary%3Dparam%26error_code%3Daccess_denied");
+  }
+
+  @Test
+  public void shouldStoreTokenOnCallback() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(authenticator.getEndpointUrl()).thenReturn("http://eclipse.che");
+    when(authenticator.callback(any(URL.class), anyList())).thenReturn("token");
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"));
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    ArgumentCaptor<PersonalAccessToken> tokenCapture =
+        ArgumentCaptor.forClass(PersonalAccessToken.class);
+
+    // when
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
+
+    // then
+    verify(personalAccessTokenManager).store(tokenCapture.capture());
+    PersonalAccessToken token = tokenCapture.getValue();
+    assertEquals(token.getScmProviderUrl(), "http://eclipse.che");
+    assertEquals(token.getCheUserId(), "0000-00-0000");
+    assertTrue(token.getScmTokenId().startsWith("id-"));
+    assertTrue(token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
+    assertEquals(token.getToken(), "token");
   }
 }

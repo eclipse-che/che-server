@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,9 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -76,9 +74,7 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
                 Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
                 personalAccessTokenManager.get(
                     cheSubject, s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL));
-              } catch (ScmCommunicationException
-                  | ScmConfigurationPersistenceException
-                  | ScmUnauthorizedException e) {
+              } catch (ScmConfigurationPersistenceException e) {
                 throw new RuntimeException(e);
               }
             });

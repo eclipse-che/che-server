@@ -235,6 +235,11 @@ public class GithubApiClient {
         });
   }
 
+  /** Returns the GitHub endpoint URL. */
+  public String getServerUrl() {
+    return this.scmServerUrl.toString();
+  }
+
   /**
    * Builds and returns HttpRequest to acces the GitHub API.
    *

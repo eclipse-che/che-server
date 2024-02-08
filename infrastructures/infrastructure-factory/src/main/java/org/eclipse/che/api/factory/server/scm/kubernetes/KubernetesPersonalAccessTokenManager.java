@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.LabelSelector;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
@@ -87,8 +86,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     this.gitCredentialManager = gitCredentialManager;
   }
 
-  @VisibleForTesting
-  void save(PersonalAccessToken personalAccessToken)
+  @Override
+  public void store(PersonalAccessToken personalAccessToken)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
       String namespace = getFirstNamespace();
@@ -136,14 +135,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     PersonalAccessToken personalAccessToken =
         scmPersonalAccessTokenFetcher.fetchPersonalAccessToken(cheUser, scmServerUrl);
-    save(personalAccessToken);
+    store(personalAccessToken);
     return personalAccessToken;
   }
 
   @Override
   public Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
+      throws ScmConfigurationPersistenceException {
     return doGetPersonalAccessToken(cheUser, null, scmServerUrl);
   }
 
@@ -165,15 +163,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   @Override
   public Optional<PersonalAccessToken> get(
       Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
+      throws ScmConfigurationPersistenceException {
     return doGetPersonalAccessToken(cheUser, oAuthProviderName, scmServerUrl);
   }
 
   private Optional<PersonalAccessToken> doGetPersonalAccessToken(
       Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException {
+      throws ScmConfigurationPersistenceException {
     try {
       for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
         List<Secret> secrets =
@@ -294,7 +290,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   @Override
-  public void store(String scmServerUrl)
+  public void storeGitCredentials(String scmServerUrl)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
           ScmCommunicationException, ScmUnauthorizedException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();

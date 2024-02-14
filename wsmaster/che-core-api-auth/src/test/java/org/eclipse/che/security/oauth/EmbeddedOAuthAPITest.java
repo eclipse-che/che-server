@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.security.oauth;
 
+import static java.net.URLEncoder.encode;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
@@ -139,5 +141,49 @@ public class EmbeddedOAuthAPITest {
     assertTrue(token.getScmTokenId().startsWith("id-"));
     assertTrue(token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
     assertEquals(token.getToken(), "token");
+  }
+
+  @Test
+  public void shouldEncodeRedirectUrl() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode(
+                        "=github&redirect_after_login=https://redirecturl.com?params="
+                            + encode("{}", UTF_8),
+                        UTF_8)));
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+
+    // when
+    Response callback = embeddedOAuthAPI.callback(uriInfo, emptyList());
+
+    // then
+    assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params%3D%7B%7D");
+  }
+
+  @Test
+  public void shouldNotEncodeRedirectUrl() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode(
+                        "=github&redirect_after_login=https://redirecturl.com?params="
+                            + encode(encode("{}", UTF_8), UTF_8),
+                        UTF_8)));
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+
+    // when
+    Response callback = embeddedOAuthAPI.callback(uriInfo, emptyList());
+
+    // then
+    assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params=%7B%7D");
   }
 }

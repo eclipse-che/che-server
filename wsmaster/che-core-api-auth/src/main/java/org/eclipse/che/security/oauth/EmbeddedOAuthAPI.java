@@ -96,7 +96,9 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
-      return Response.temporaryRedirect(URI.create(encodeRedirectUrl())).build();
+      return Response.temporaryRedirect(
+              URI.create(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied")))
+          .build();
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);
@@ -123,7 +125,14 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       LOG.error(e.getMessage(), e);
     }
     final String redirectAfterLogin = getParameter(params, "redirect_after_login");
-    return Response.temporaryRedirect(URI.create(redirectAfterLogin)).build();
+    URI uri;
+    try {
+      uri = URI.create(redirectAfterLogin);
+    } catch (IllegalArgumentException e) {
+      // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
+      uri = URI.create(encodeRedirectUrl(redirectAfterLogin));
+    }
+    return Response.temporaryRedirect(uri).build();
   }
 
   /**
@@ -131,12 +140,10 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
    * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
    * the {@link URI#create(String)} method.
    */
-  private String encodeRedirectUrl() {
+  private String encodeRedirectUrl(String url) {
     try {
-      URL url = new URL(redirectAfterLogin);
-      String query = url.getQuery();
-      return redirectAfterLogin.substring(0, redirectAfterLogin.indexOf(query))
-          + URLEncoder.encode(query + "&error_code=access_denied", UTF_8);
+      String query = new URL(url).getQuery();
+      return url.substring(0, url.indexOf(query)) + URLEncoder.encode(query, UTF_8);
     } catch (MalformedURLException e) {
       LOG.error(e.getMessage(), e);
       throw new RuntimeException(e);

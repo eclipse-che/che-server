@@ -47,6 +47,8 @@ import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Manages personal access token secrets used for private repositories authentication. */
 @Singleton
@@ -73,6 +75,9 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private final ScmPersonalAccessTokenFetcher scmPersonalAccessTokenFetcher;
   private final GitCredentialManager gitCredentialManager;
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(KubernetesPersonalAccessTokenManager.class);
 
   @Inject
   public KubernetesPersonalAccessTokenManager(
@@ -171,6 +176,10 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
       throws ScmConfigurationPersistenceException {
     try {
+      LOG.debug(
+          "Fetching personal access token for user {} and OAuth provider {}",
+          cheUser.getUserId(),
+          oAuthProviderName);
       for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
         List<Secret> secrets =
             namespaceFactory
@@ -178,17 +187,24 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                 .secrets()
                 .get(KUBERNETES_PERSONAL_ACCESS_TOKEN_LABEL_SELECTOR);
         for (Secret secret : secrets) {
+          LOG.debug("Checking secret {}", secret.getMetadata().getName());
           if (deleteSecretIfMisconfigured(secret)) {
+            LOG.debug("Secret {} is misconfigured and was deleted", secret.getMetadata().getName());
             continue;
           }
 
           if (isSecretMatchesSearchCriteria(cheUser, oAuthProviderName, scmServerUrl, secret)) {
+            LOG.debug("Iterating over secret {}", secret.getMetadata().getName());
             PersonalAccessTokenParams personalAccessTokenParams =
                 this.secret2PersonalAccessTokenParams(secret);
             Optional<String> scmUsername =
                 scmPersonalAccessTokenFetcher.getScmUsername(personalAccessTokenParams);
 
             if (scmUsername.isPresent()) {
+              LOG.debug(
+                  "Creating personal access token for user {} and OAuth provider {}",
+                  cheUser.getUserId(),
+                  oAuthProviderName);
               Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
 
               PersonalAccessToken personalAccessToken =
@@ -212,10 +228,12 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                 .secrets()
                 .inNamespace(namespaceMeta.getName())
                 .delete(secret);
+            LOG.debug("Secret {} is misconfigured and was deleted", secret.getMetadata().getName());
           }
         }
       }
     } catch (InfrastructureException | UnknownScmProviderException e) {
+      LOG.debug("Failed to get personal access token", e);
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
     return Optional.empty();

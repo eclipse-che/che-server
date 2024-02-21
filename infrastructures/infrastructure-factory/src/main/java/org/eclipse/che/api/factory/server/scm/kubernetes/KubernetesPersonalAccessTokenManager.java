@@ -241,16 +241,20 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   private boolean deleteSecretIfMisconfigured(Secret secret) throws InfrastructureException {
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
-
+    LOG.debug("Secret annotations: {}", secretAnnotations);
     String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
+    LOG.debug("SCM server URL: {}", configuredScmServerUrl);
     String configuredCheUserId = secretAnnotations.get(ANNOTATION_CHE_USERID);
+    LOG.debug("Che user ID: {}", configuredCheUserId);
     String configuredOAuthProviderName =
         secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+    LOG.debug("OAuth provider name: {}", configuredOAuthProviderName);
 
     // if any of the required annotations is missing, the secret is not valid
     if (isNullOrEmpty(configuredScmServerUrl)
         || isNullOrEmpty(configuredCheUserId)
         || isNullOrEmpty(configuredOAuthProviderName)) {
+      LOG.debug("deleting secret {}", secret.getMetadata().getName());
       cheServerKubernetesClientFactory
           .create()
           .secrets()

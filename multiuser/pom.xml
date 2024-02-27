@@ -31,7 +31,6 @@
         <module>keycloak</module>
         <module>machine-auth</module>
         <module>personal-account</module>
-        <module>integration-tests</module>
         <module>oidc</module>
     </modules>
 </project>

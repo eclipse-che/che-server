@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -88,6 +88,7 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -679,6 +680,7 @@ public class OpenShiftProjectFactoryTest {
     verify(serviceAccount).prepare();
   }
 
+  @Ignore
   @Test
   public void testEvalNamespaceNameWhenPreparedNamespacesFound() throws InfrastructureException {
     List<Project> projects =

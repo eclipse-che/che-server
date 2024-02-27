@@ -24,8 +24,6 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
-import org.eclipse.che.api.user.server.event.PostUserPersistedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
@@ -57,7 +55,6 @@ public class KeycloakUserManager extends PersonalAccountUserManager {
   protected void doCreate(UserImpl user, boolean isTemporary)
       throws ConflictException, ServerException {
     userDao.create(user);
-    eventService.publish(new PostUserPersistedEvent(new UserImpl(user))).propagateException();
     preferencesDao.setPreferences(
         user.getId(),
         ImmutableMap.of(
@@ -74,7 +71,6 @@ public class KeycloakUserManager extends PersonalAccountUserManager {
       return;
     }
     preferencesDao.remove(id);
-    eventService.publish(new BeforeUserRemovedEvent(user)).propagateException();
     userDao.remove(id);
   }
 }

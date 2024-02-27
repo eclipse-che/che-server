@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,6 @@ import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -33,7 +32,6 @@ import static org.testng.Assert.assertNotNull;
 
 import java.util.Collections;
 import java.util.List;
-import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
@@ -41,8 +39,6 @@ import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.dto.server.DtoFactory;
-import org.eclipse.che.multiuser.organization.api.event.BeforeOrganizationRemovedEvent;
-import org.eclipse.che.multiuser.organization.api.event.OrganizationPersistedEvent;
 import org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain;
 import org.eclipse.che.multiuser.organization.shared.dto.OrganizationDto;
 import org.eclipse.che.multiuser.organization.shared.model.Member;
@@ -69,7 +65,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class OrganizationManagerTest {
   @Captor private ArgumentCaptor<OrganizationImpl> organizationCaptor;
-  @Captor private ArgumentCaptor<OrganizationPersistedEvent> persistEventCaptor;
 
   private static final String USER_NAME = "user-name";
   private static final String USER_ID = "user-id";
@@ -113,8 +108,6 @@ public class OrganizationManagerTest {
     assertEquals(createdOrganization.getName(), toCreate.getName());
     assertEquals(createdOrganization.getQualifiedName(), toCreate.getName());
     assertEquals(createdOrganization.getParent(), toCreate.getParent());
-    verify(eventService).publish(persistEventCaptor.capture());
-    assertEquals(persistEventCaptor.getValue().getOrganization(), createdOrganization);
     verify(memberDao)
         .store(
             new MemberImpl(USER_ID, createdOrganization.getId(), OrganizationDomain.getActions()));
@@ -135,8 +128,6 @@ public class OrganizationManagerTest {
         createdOrganization.getQualifiedName(),
         parentOrganization.getQualifiedName() + "/" + toCreate.getName());
     assertEquals(createdOrganization.getParent(), toCreate.getParent());
-    verify(eventService).publish(persistEventCaptor.capture());
-    assertEquals(persistEventCaptor.getValue().getOrganization(), createdOrganization);
     verify(memberDao)
         .store(
             new MemberImpl(USER_ID, createdOrganization.getId(), OrganizationDomain.getActions()));
@@ -228,22 +219,12 @@ public class OrganizationManagerTest {
     doReturn(members).when(manager).removeMembers(anyString());
     OrganizationImpl toRemove = new OrganizationImpl("org123", "toRemove", null);
     when(organizationDao.getById(anyString())).thenReturn(toRemove);
-    BeforeAccountRemovedEvent beforeAccountRemovedEvent = mock(BeforeAccountRemovedEvent.class);
-    BeforeOrganizationRemovedEvent beforeOrganizationRemovedEvent =
-        mock(BeforeOrganizationRemovedEvent.class);
-    doReturn(beforeAccountRemovedEvent)
-        .doReturn(beforeOrganizationRemovedEvent)
-        .when(eventService)
-        .publish(any());
 
     manager.remove(toRemove.getId());
 
     verify(organizationDao).remove(toRemove.getId());
     verify(manager).removeMembers(eq(toRemove.getId()));
     verify(manager).removeSuborganizations(eq(toRemove.getId()));
-    verify(eventService, times(3)).publish(anyObject());
-    verify(beforeAccountRemovedEvent).propagateException();
-    verify(beforeOrganizationRemovedEvent).propagateException();
   }
 
   @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,8 +15,6 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 import com.google.inject.persist.Transactional;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -25,11 +23,6 @@ import javax.persistence.NoResultException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.model.impl.SignatureKeyPairImpl;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.spi.SignatureKeyDao;
 
@@ -54,15 +47,6 @@ public class JpaSignatureKeyDao implements SignatureKeyDao {
     requireNonNull(keyPair, "Required non-null key pair");
     try {
       doCreate(keyPair);
-    } catch (IntegrityConstraintViolationException x) {
-      throw new ConflictException(
-          format(
-              "Unable to create signature key pair because referenced workspace with id '%s' doesn't exist",
-              keyPair.getWorkspaceId()));
-
-    } catch (DuplicateKeyException dkEx) {
-      throw new ConflictException(
-          format("Signature key pair for workspace '%s' already exists", keyPair.getWorkspaceId()));
     } catch (RuntimeException ex) {
       throw new ServerException(ex.getMessage(), ex);
     }
@@ -111,28 +95,6 @@ public class JpaSignatureKeyDao implements SignatureKeyDao {
           format("Signature key pair for workspace '%s' doesn't exist", workspaceId));
     } catch (RuntimeException ex) {
       throw new ServerException(ex.getMessage(), ex);
-    }
-  }
-
-  @Singleton
-  public static class RemoveKeyPairsBeforeWorkspaceRemovedEventSubscriber
-      extends CascadeEventSubscriber<BeforeWorkspaceRemovedEvent> {
-    @Inject private EventService eventService;
-    @Inject private SignatureKeyDao signatureKeyDao;
-
-    @PostConstruct
-    public void subscribe() {
-      eventService.subscribe(this, BeforeWorkspaceRemovedEvent.class);
-    }
-
-    @PreDestroy
-    public void unsubscribe() {
-      eventService.unsubscribe(this, BeforeWorkspaceRemovedEvent.class);
-    }
-
-    @Override
-    public void onCascadeEvent(BeforeWorkspaceRemovedEvent event) throws Exception {
-      signatureKeyDao.remove(event.getWorkspace().getId());
     }
   }
 }

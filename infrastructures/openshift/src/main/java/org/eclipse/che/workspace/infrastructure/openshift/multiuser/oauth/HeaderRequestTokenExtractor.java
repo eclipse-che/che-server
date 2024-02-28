@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.api.authentication.commons.token;
+package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.BadRequestException;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,9 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.api.authentication.commons.filter;
-
-import static org.eclipse.che.multiuser.api.authentication.commons.Constants.CHE_SUBJECT_ATTRIBUTE;
+package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -28,9 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
-import org.eclipse.che.multiuser.api.authentication.commons.SubjectHttpRequestWrapper;
-import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +47,7 @@ import org.slf4j.LoggerFactory;
  * @author Max Shaposhnyk (mshaposh@redhat.com)
  */
 public abstract class MultiUserEnvironmentInitializationFilter<T> implements Filter {
+  private static final String CHE_SUBJECT_ATTRIBUTE = "che_subject";
 
   private static final Logger LOG =
       LoggerFactory.getLogger(MultiUserEnvironmentInitializationFilter.class);

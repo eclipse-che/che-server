@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,14 +11,12 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.CLIENT_ID_SETTING;
-import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
-import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
+// import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.CLIENT_ID_SETTING;
+// import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
+// import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
 
 import com.google.inject.Provider;
 import io.fabric8.kubernetes.client.Config;
-import io.fabric8.openshift.client.OpenShiftConfig;
-import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 import jakarta.ws.rs.core.UriBuilder;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -27,17 +25,15 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.RuntimeContext;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.multiuser.keycloak.server.KeycloakServiceClient;
-import org.eclipse.che.multiuser.keycloak.server.KeycloakSettings;
-import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
+// import org.eclipse.che.multiuser.keycloak.server.KeycloakServiceClient;
+// import org.eclipse.che.multiuser.keycloak.server.KeycloakSettings;
+// import org.eclipse.che.multiuser.keycloak.shared.dto.KeycloakTokenResponse;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,21 +59,21 @@ public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory
 
   private final String oauthIdentityProvider;
 
-  private final KeycloakServiceClient keycloakServiceClient;
+  //  private final KeycloakServiceClient keycloakServiceClient;
   private final Provider<WorkspaceRuntimes> workspaceRuntimeProvider;
   private final String messageToLinkAccount;
 
   @Inject
   public KeycloakProviderConfigFactory(
-      KeycloakServiceClient keycloakServiceClient,
-      KeycloakSettings keycloakSettings,
+      //      KeycloakServiceClient keycloakServiceClient,
+      //      KeycloakSettings keycloakSettings,
       Provider<WorkspaceRuntimes> workspaceRuntimeProvider,
       @Nullable @Named("che.infra.openshift.oauth_identity_provider") String oauthIdentityProvider,
       @Named("che.api") String apiEndpoint,
       @Nullable @Named("che.infra.kubernetes.master_url") String masterUrl,
       @Nullable @Named("che.infra.kubernetes.trust_certs") Boolean doTrustCerts) {
     super(masterUrl, doTrustCerts);
-    this.keycloakServiceClient = keycloakServiceClient;
+    //    this.keycloakServiceClient = keycloakServiceClient;
     this.workspaceRuntimeProvider = workspaceRuntimeProvider;
     this.oauthIdentityProvider = oauthIdentityProvider;
 
@@ -89,11 +85,11 @@ public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory
             + "<a href='"
             // Here should be used public url. User should have it to make manual actions in the
             // browser.
-            + keycloakSettings.get().get(AUTH_SERVER_URL_SETTING)
+            //            + keycloakSettings.get().get(AUTH_SERVER_URL_SETTING)
             + "/realms/"
-            + keycloakSettings.get().get(REALM_SETTING)
+            //            + keycloakSettings.get().get(REALM_SETTING)
             + "/account/identity?referrer="
-            + keycloakSettings.get().get(CLIENT_ID_SETTING)
+            //            + keycloakSettings.get().get(CLIENT_ID_SETTING)
             + "&referrer_uri="
             + buildReferrerURI(apiEndpoint)
             + "' target='_blank' rel='noopener noreferrer'><strong>Federated Identities</strong></a> page of your Che account";
@@ -173,45 +169,45 @@ public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory
   }
 
   private Config personalizeConfig(Config defaultConfig) throws InfrastructureException {
-    try {
-      KeycloakTokenResponse keycloakTokenInfos =
-          keycloakServiceClient.getIdentityProviderToken(oauthIdentityProvider);
-      if ("user:full".equals(keycloakTokenInfos.getScope())) {
-        return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
-            .withOauthToken(keycloakTokenInfos.getAccessToken())
-            .build();
-      } else {
-        throw new InfrastructureException(
-            "Cannot retrieve user OpenShift token: '"
-                + oauthIdentityProvider
-                + "' identity provider is not granted full rights: "
-                + oauthIdentityProvider);
-      }
-    } catch (UnauthorizedException e) {
-      LOG.error("Cannot retrieve User OpenShift token from the identity provider", e);
-
-      throw new InfrastructureException(messageToLinkAccount);
-    } catch (BadRequestException e) {
-      LOG.error(
-          "Cannot retrieve User OpenShift token from the '"
-              + oauthIdentityProvider
-              + "' identity provider",
-          e);
-      if (e.getMessage().endsWith("Invalid token.")) {
-        throw new InfrastructureException(
-            "Your session has expired. \nPlease "
-                + "<a href='javascript:location.reload();' target='_top'>"
-                + "login"
-                + "</a> to Che again to get access to your OpenShift account");
-      }
-      throw new InfrastructureException(e.getMessage(), e);
-    } catch (Exception e) {
-      LOG.error(
-          "Cannot retrieve User OpenShift token from the  '"
-              + oauthIdentityProvider
-              + "' identity provider",
-          e);
-      throw new InfrastructureException(e.getMessage(), e);
-    }
+    //    try {
+    //      KeycloakTokenResponse keycloakTokenInfos =
+    //          keycloakServiceClient.getIdentityProviderToken(oauthIdentityProvider);
+    //      if ("user:full".equals(keycloakTokenInfos.getScope())) {
+    //        return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
+    //            .withOauthToken(keycloakTokenInfos.getAccessToken())
+    //            .build();
+    //      } else {
+    throw new InfrastructureException(
+        "Cannot retrieve user OpenShift token: '"
+            + oauthIdentityProvider
+            + "' identity provider is not granted full rights: "
+            + oauthIdentityProvider);
+    //      }
+    //    } catch (UnauthorizedException e) {
+    //      LOG.error("Cannot retrieve User OpenShift token from the identity provider", e);
+    //
+    //      throw new InfrastructureException(messageToLinkAccount);
+    //    } catch (BadRequestException e) {
+    //      LOG.error(
+    //          "Cannot retrieve User OpenShift token from the '"
+    //              + oauthIdentityProvider
+    //              + "' identity provider",
+    //          e);
+    //      if (e.getMessage().endsWith("Invalid token.")) {
+    //        throw new InfrastructureException(
+    //            "Your session has expired. \nPlease "
+    //                + "<a href='javascript:location.reload();' target='_top'>"
+    //                + "login"
+    //                + "</a> to Che again to get access to your OpenShift account");
+    //      }
+    //      throw new InfrastructureException(e.getMessage(), e);
+    //    } catch (Exception e) {
+    //      LOG.error(
+    //          "Cannot retrieve User OpenShift token from the  '"
+    //              + oauthIdentityProvider
+    //              + "' identity provider",
+    //          e);
+    //      throw new InfrastructureException(e.getMessage(), e);
+    //    }
   }
 }

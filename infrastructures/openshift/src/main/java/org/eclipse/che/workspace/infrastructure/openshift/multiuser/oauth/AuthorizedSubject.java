@@ -9,14 +9,9 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.api.permission.server;
+package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
-import static java.lang.String.format;
-
-import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.commons.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +26,11 @@ public class AuthorizedSubject implements Subject {
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizedSubject.class);
 
   private final Subject baseSubject;
-  private final PermissionChecker permissionChecker;
+  //  private final PermissionChecker permissionChecker;
 
-  public AuthorizedSubject(Subject baseSubject, PermissionChecker permissionChecker) {
+  public AuthorizedSubject(Subject baseSubject) {
     this.baseSubject = baseSubject;
-    this.permissionChecker = permissionChecker;
+    //    this.permissionChecker = permissionChecker;
   }
 
   @Override
@@ -45,18 +40,19 @@ public class AuthorizedSubject implements Subject {
 
   @Override
   public boolean hasPermission(String domain, String instance, String action) {
-    try {
-      return permissionChecker.hasPermission(getUserId(), domain, instance, action);
-    } catch (NotFoundException nfe) {
-      return false;
-    } catch (ServerException | ConflictException e) {
-      LOG.error(
-          format(
-              "Can't check permissions for user '%s' and instance '%s' of domain '%s'",
-              getUserId(), domain, instance),
-          e);
-      throw new RuntimeException("Can't check user's permissions", e);
-    }
+    //    try {
+    //      return permissionChecker.hasPermission(getUserId(), domain, instance, action);
+    //    } catch (NotFoundException nfe) {
+    //      return false;
+    //    } catch (ServerException | ConflictException e) {
+    //      LOG.error(
+    //          format(
+    //              "Can't check permissions for user '%s' and instance '%s' of domain '%s'",
+    //              getUserId(), domain, instance),
+    //          e);
+    //      throw new RuntimeException("Can't check user's permissions", e);
+    //    }
+    return true;
   }
 
   @Override

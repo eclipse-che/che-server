@@ -95,6 +95,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfraModule
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructure;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.KubernetesOidcProviderConfigFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.RequestTokenExtractor;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.PassThroughProxySecureServerExposer;
@@ -109,7 +110,6 @@ import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructur
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.HeaderRequestTokenExtractor;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
-import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.RequestTokenExtractor;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 
 /** @author andrew00x */
@@ -338,59 +338,9 @@ public class WsMasterModule extends AbstractModule {
         PersistenceUnitProperties.EXCEPTION_HANDLER_CLASS,
         "org.eclipse.che.core.db.postgresql.jpa.eclipselink.PostgreSqlExceptionHandler");
 
-    //    install(
-    //        new
-    // org.eclipse.che.multiuser.permission.workspace.server.WorkspaceApiPermissionsModule());
-    //    install(
-    //        new org.eclipse.che.multiuser.permission.workspace.server.jpa
-    //            .MultiuserWorkspaceJpaModule());
-    //    install(new MultiUserWorkspaceActivityModule());
-    //    install(
-    //        new org.eclipse.che.multiuser.permission.devfile.server.jpa
-    //            .MultiuserUserDevfileJpaModule());
-    //    install(
-    //        new
-    // org.eclipse.che.multiuser.permission.devfile.server.UserDevfileApiPermissionsModule());
-
-    // Permission filters
-    //    bind(org.eclipse.che.multiuser.permission.system.SystemServicePermissionsFilter.class);
-    //    bind(org.eclipse.che.multiuser.permission.system.JvmServicePermissionsFilter.class);
-    //    bind(
-    //
-    // org.eclipse.che.multiuser.permission.system.SystemEventsSubscriptionPermissionsCheck.class);
-
-    //    Multibinder<String> binder =
-    //        Multibinder.newSetBinder(binder(), String.class, Names.named(SYSTEM_DOMAIN_ACTIONS));
-    //    binder.addBinding().toInstance(UserServicePermissionsFilter.MANAGE_USERS_ACTION);
-    //    bind(org.eclipse.che.multiuser.permission.user.UserProfileServicePermissionsFilter.class);
-    //    bind(org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter.class);
-    //    bind(org.eclipse.che.multiuser.permission.logger.LoggerServicePermissionsFilter.class);
-
-    //
-    // bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
-
-    //    bind(
-    //        org.eclipse.che.multiuser.permission.resource.filters.ResourceServicePermissionsFilter
-    //            .class);
-    //    bind(
-    //        org.eclipse.che.multiuser.permission.resource.filters
-    //            .FreeResourcesLimitServicePermissionsFilter.class);
-    //
-    //    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
     bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
-    //      if (KubernetesInfrastructure.NAME.equals(infrastructure)) {
-    //        bind(OIDCInfo.class).toProvider(OIDCInfoProvider.class).asEagerSingleton();
-    //        bind(SigningKeyResolver.class).to(OIDCSigningKeyResolver.class);
-    //        bind(JwtParser.class).toProvider(OIDCJwtParserProvider.class);
-    //        bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);
-    //      }
-    //      bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
     bind(ProfileDao.class).to(JpaProfileDao.class);
     bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
-    //    }
-    //
-
-    //    install(new MachineAuthModule());
 
     install(new WorkspaceJpaModule());
     bind(TokenValidator.class).to(NotImplementedTokenValidator.class);

@@ -17,6 +17,8 @@ import org.eclipse.che.api.core.cors.CheCorsFilter;
 import org.eclipse.che.commons.logback.filter.RequestIdLoggerFilter;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.inject.DynaModule;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructure;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.OidcTokenInitializationFilter;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructure;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.OpenshiftTokenInitializationFilter;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
@@ -76,8 +78,8 @@ public class WsMasterServletModule extends ServletModule {
     final String infrastructure = System.getenv("CHE_INFRASTRUCTURE_ACTIVE");
     if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
       filter("/*").through(OpenshiftTokenInitializationFilter.class);
-      //    } else if (KubernetesInfrastructure.NAME.equals(infrastructure)) {
-      //      filter("/*").through(OidcTokenInitializationFilter.class);
+    } else if (KubernetesInfrastructure.NAME.equals(infrastructure)) {
+      filter("/*").through(OidcTokenInitializationFilter.class);
     } else {
       throw new ConfigurationException("Native user mode is currently supported on on OpenShift.");
     }

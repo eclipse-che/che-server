@@ -26,6 +26,8 @@ import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.RequestTokenExtractor;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.SessionStore;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;

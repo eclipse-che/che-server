@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.HttpHeaders;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.RequestTokenExtractor;
 
 /** Extract sso token from request headers. */
 public class HeaderRequestTokenExtractor implements RequestTokenExtractor {

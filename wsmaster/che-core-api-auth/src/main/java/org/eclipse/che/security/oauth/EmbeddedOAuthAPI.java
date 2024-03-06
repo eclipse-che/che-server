@@ -111,9 +111,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
               EnvironmentContext.getCurrent().getSubject().getUserId(),
               null,
               null,
-              NameGenerator.generate(
-                  // Do not pass oauth2 as a username to Git credentials for Bitbucket
-                  "bitbucket".equals(providerName) ? providerName + "-" : OAUTH_2_PREFIX, 5),
+              generateTokenName(providerName),
               NameGenerator.generate("id-", 5),
               token));
     } catch (OAuthAuthenticationException e) {
@@ -135,6 +133,18 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       uri = URI.create(encodeRedirectUrl(redirectAfterLogin));
     }
     return Response.temporaryRedirect(uri).build();
+  }
+
+  /*
+   * This value is used for generating git credentials. Most of the git providers work with git
+   * credentials with OAuth token in format "ouath2:<oauth token>" but bitbucket requires username
+   * to be explicitly set: "<username>:<oauth token>, see {@link
+   * GitCredentialManager#createOrReplace}
+   * TODO: needs to be moved to the specific bitbucket implementation.
+   */
+  private String generateTokenName(String providerName) {
+    return NameGenerator.generate(
+        "bitbucket".equals(providerName) ? providerName + "-" : OAUTH_2_PREFIX, 5);
   }
 
   /**

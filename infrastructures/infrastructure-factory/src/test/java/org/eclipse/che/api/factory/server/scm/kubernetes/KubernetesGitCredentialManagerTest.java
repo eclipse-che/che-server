@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -188,7 +188,7 @@ public class KubernetesGitCredentialManagerTest {
     assertNotNull(createdSecret);
     assertEquals(
         new String(Base64.getDecoder().decode(createdSecret.getData().get("credentials"))),
-        "https://oauth2:token123@bitbucket.com");
+        "https://username:token123@bitbucket.com");
     assertTrue(createdSecret.getMetadata().getName().startsWith(NAME_PATTERN));
     assertFalse(createdSecret.getMetadata().getName().contains(token.getScmUserName()));
   }

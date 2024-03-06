@@ -144,6 +144,34 @@ public class EmbeddedOAuthAPITest {
   }
 
   @Test
+  public void shouldStoreBitbucketTokenOnCallback() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(authenticator.getEndpointUrl()).thenReturn("http://eclipse.che");
+    when(authenticator.callback(any(URL.class), anyList())).thenReturn("token");
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider%3Dbitbucket%26redirect_after_login%3DredirectUrl"));
+    when(oauth2Providers.getAuthenticator("bitbucket")).thenReturn(authenticator);
+    ArgumentCaptor<PersonalAccessToken> tokenCapture =
+        ArgumentCaptor.forClass(PersonalAccessToken.class);
+
+    // when
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
+
+    // then
+    verify(personalAccessTokenManager).store(tokenCapture.capture());
+    PersonalAccessToken token = tokenCapture.getValue();
+    assertEquals(token.getScmProviderUrl(), "http://eclipse.che");
+    assertEquals(token.getCheUserId(), "0000-00-0000");
+    assertTrue(token.getScmTokenId().startsWith("id-"));
+    assertTrue(token.getScmTokenName().startsWith("bitbucket-"));
+    assertEquals(token.getToken(), "token");
+  }
+
+  @Test
   public void shouldEncodeRedirectUrl() throws Exception {
     // given
     UriInfo uriInfo = mock(UriInfo.class);

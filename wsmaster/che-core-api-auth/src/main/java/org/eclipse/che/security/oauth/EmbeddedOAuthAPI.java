@@ -111,7 +111,9 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
               EnvironmentContext.getCurrent().getSubject().getUserId(),
               null,
               null,
-              NameGenerator.generate(OAUTH_2_PREFIX, 5),
+              NameGenerator.generate(
+                  // Do not pass oauth2 as a username to Git credentials for Bitbucket
+                  "bitbucket".equals(providerName) ? providerName + "-" : OAUTH_2_PREFIX, 5),
               NameGenerator.generate("id-", 5),
               token));
     } catch (OAuthAuthenticationException e) {

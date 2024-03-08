@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,6 +16,7 @@ import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
 import static org.eclipse.che.commons.lang.UrlUtils.getQueryParametersFromState;
 import static org.eclipse.che.commons.lang.UrlUtils.getRequestUrl;
 import static org.eclipse.che.commons.lang.UrlUtils.getState;
+import static org.eclipse.che.security.oauth.EmbeddedOAuthAPI.encodeRedirectUrl;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -73,7 +74,14 @@ public class OAuthAuthenticationService extends Service {
     final Map<String, List<String>> parameters = getQueryParametersFromState(getState(requestUrl));
 
     final String providerName = getParameter(parameters, "oauth_provider");
-    final String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
+    String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
+
+    try {
+      URI.create(redirectAfterLogin);
+    } catch (IllegalArgumentException e) {
+      // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
+      redirectAfterLogin = encodeRedirectUrl(redirectAfterLogin);
+    }
 
     UriBuilder redirectUriBuilder = UriBuilder.fromUri(redirectAfterLogin);
 

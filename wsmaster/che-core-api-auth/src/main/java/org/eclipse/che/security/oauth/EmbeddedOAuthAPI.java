@@ -124,15 +124,25 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       // Skip exception, the token will be stored in the next request.
       LOG.error(e.getMessage(), e);
     }
-    final String redirectAfterLogin = getParameter(params, "redirect_after_login");
-    URI uri;
+    return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params))).build();
+  }
+
+  /**
+   * Returns the redirect after login URL from the query parameters. If the URL is encoded by the
+   * CSM provider, it will be decoded, to avoid unsupported characters in the URL.
+   *
+   * @param parameters the query parameters
+   * @return the redirect after login URL
+   */
+  public static String getRedirectAfterLoginUrl(Map<String, List<String>> parameters) {
+    String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
     try {
-      uri = URI.create(redirectAfterLogin);
+      URI.create(redirectAfterLogin);
     } catch (IllegalArgumentException e) {
       // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
-      uri = URI.create(encodeRedirectUrl(redirectAfterLogin));
+      redirectAfterLogin = encodeRedirectUrl(redirectAfterLogin);
     }
-    return Response.temporaryRedirect(uri).build();
+    return redirectAfterLogin;
   }
 
   /*
@@ -152,7 +162,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
    * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
    * the {@link URI#create(String)} method.
    */
-  public static String encodeRedirectUrl(String url) {
+  private static String encodeRedirectUrl(String url) {
     try {
       String query = new URL(url).getQuery();
       return url.substring(0, url.indexOf(query)) + URLEncoder.encode(query, UTF_8);

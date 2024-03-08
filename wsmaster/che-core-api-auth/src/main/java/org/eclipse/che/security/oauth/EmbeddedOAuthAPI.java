@@ -152,7 +152,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
    * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
    * the {@link URI#create(String)} method.
    */
-  private String encodeRedirectUrl(String url) {
+  public static String encodeRedirectUrl(String url) {
     try {
       String query = new URL(url).getQuery();
       return url.substring(0, url.indexOf(query)) + URLEncoder.encode(query, UTF_8);

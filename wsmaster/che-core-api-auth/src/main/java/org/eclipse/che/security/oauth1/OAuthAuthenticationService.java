@@ -16,7 +16,7 @@ import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
 import static org.eclipse.che.commons.lang.UrlUtils.getQueryParametersFromState;
 import static org.eclipse.che.commons.lang.UrlUtils.getRequestUrl;
 import static org.eclipse.che.commons.lang.UrlUtils.getState;
-import static org.eclipse.che.security.oauth.EmbeddedOAuthAPI.encodeRedirectUrl;
+import static org.eclipse.che.security.oauth.EmbeddedOAuthAPI.getRedirectAfterLoginUrl;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -74,14 +74,7 @@ public class OAuthAuthenticationService extends Service {
     final Map<String, List<String>> parameters = getQueryParametersFromState(getState(requestUrl));
 
     final String providerName = getParameter(parameters, "oauth_provider");
-    String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
-
-    try {
-      URI.create(redirectAfterLogin);
-    } catch (IllegalArgumentException e) {
-      // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
-      redirectAfterLogin = encodeRedirectUrl(redirectAfterLogin);
-    }
+    final String redirectAfterLogin = getRedirectAfterLoginUrl(parameters);
 
     UriBuilder redirectUriBuilder = UriBuilder.fromUri(redirectAfterLogin);
 

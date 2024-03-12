@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -59,7 +59,7 @@ public class BitbucketServerURLParserTest {
   public void setUp() {
     bitbucketURLParser =
         new BitbucketServerURLParser(
-            "https://bitbucket.2mcl.com,https://bbkt.com,https://my-bitbucket.org/bitbucket",
+            "https://bitbucket.2mcl.com,https://bbkt.com",
             devfileFilenamesProvider,
             oAuthAPI,
             mock(PersonalAccessTokenManager.class));
@@ -145,7 +145,6 @@ public class BitbucketServerURLParserTest {
   @DataProvider(name = "UrlsProvider")
   public Object[][] urls() {
     return new Object[][] {
-      {"https://my-bitbucket.org/bitbucket/scm/proj/repo.git"},
       {"https://bitbucket.2mcl.com/scm/~user/repo.git"},
       {"https://bitbucket.2mcl.com/scm/project/test1.git"},
       {"https://bitbucket.2mcl.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch"},

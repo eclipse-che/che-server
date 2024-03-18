@@ -108,6 +108,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       personalAccessTokenManager.store(
           new PersonalAccessToken(
               oauth.getEndpointUrl(),
+              providerName,
               EnvironmentContext.getCurrent().getSubject().getUserId(),
               null,
               null,

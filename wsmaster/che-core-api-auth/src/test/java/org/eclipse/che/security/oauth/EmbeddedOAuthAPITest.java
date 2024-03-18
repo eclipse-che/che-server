@@ -165,6 +165,7 @@ public class EmbeddedOAuthAPITest {
     verify(personalAccessTokenManager).store(tokenCapture.capture());
     PersonalAccessToken token = tokenCapture.getValue();
     assertEquals(token.getScmProviderUrl(), "http://eclipse.che");
+    assertEquals(token.getScmProviderName(), "bitbucket");
     assertEquals(token.getCheUserId(), "0000-00-0000");
     assertTrue(token.getScmTokenId().startsWith("id-"));
     assertTrue(token.getScmTokenName().startsWith("bitbucket-"));

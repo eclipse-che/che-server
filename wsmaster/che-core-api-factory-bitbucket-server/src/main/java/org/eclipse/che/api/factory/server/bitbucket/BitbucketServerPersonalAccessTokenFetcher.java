@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -51,6 +51,8 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   private static final Logger LOG =
       LoggerFactory.getLogger(BitbucketServerPersonalAccessTokenFetcher.class);
 
+  private static final String OAUTH_PROVIDER_NAME = "bitbucket-server";
+
   private static final String TOKEN_NAME_TEMPLATE = "che-token-<%s>-<%s>";
   public static final Set<String> DEFAULT_TOKEN_SCOPE =
       ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE");
@@ -96,6 +98,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       LOG.debug("Token created = {} for {}", token.getId(), token.getUser());
       return new PersonalAccessToken(
           scmServerUrl,
+          OAUTH_PROVIDER_NAME,
           EnvironmentContext.getCurrent().getSubject().getUserId(),
           user.getName(),
           user.getSlug(),

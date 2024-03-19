@@ -142,9 +142,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
           isValid(
               new PersonalAccessTokenParams(
                   scmServerUrl,
-                  providerName.equals(OAUTH_PROVIDER_NAME)
-                      ? OAUTH_PROVIDER_NAME
-                      : OAUTH_PROVIDER_NAME + "-second",
+                  OAUTH_PROVIDER_NAME,
                   tokenName,
                   tokenId,
                   oAuthToken.getToken(),

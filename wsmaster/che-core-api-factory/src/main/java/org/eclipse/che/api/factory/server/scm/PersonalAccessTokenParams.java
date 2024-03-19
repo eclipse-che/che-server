@@ -39,6 +39,14 @@ public class PersonalAccessTokenParams {
     return scmProviderUrl;
   }
 
+  /**
+   * This method returns the provider name if the token is a Personal Access Token, and the token
+   * name in format oauth2-<random string from 5 chars> if the token is an oauth token. Deprecated:
+   * We need to add a new method to distinguish oauth tokens from personal access tokens.
+   *
+   * @return token name
+   */
+  @Deprecated
   public String getScmTokenName() {
     return scmTokenName;
   }

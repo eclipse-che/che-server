@@ -142,6 +142,9 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
           isValid(
               new PersonalAccessTokenParams(
                   scmServerUrl,
+                  // Despite the fact that we may have two GitHub oauth providers, we always set
+                  // "github" to the token provider name. The specific GitHub oauth provider
+                  // references to the specific token by the url parameter.
                   OAUTH_PROVIDER_NAME,
                   tokenName,
                   tokenId,

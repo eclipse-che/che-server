@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -101,7 +101,7 @@ public class K8sContainerResolver {
     }
     // TODO: add 'httpGetAction' and 'tcpSocketAction' support
     io.fabric8.kubernetes.api.model.LifecycleHandler k8SHandler =
-        new io.fabric8.kubernetes.api.model.LifecycleHandler(exec, null, null);
+        new io.fabric8.kubernetes.api.model.LifecycleHandler(exec, null, null, null);
     return k8SHandler;
   }
 

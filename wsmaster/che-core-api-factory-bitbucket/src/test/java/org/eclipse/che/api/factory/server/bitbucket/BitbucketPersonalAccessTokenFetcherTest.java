@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -87,7 +87,12 @@ public class BitbucketPersonalAccessTokenFetcherTest {
                     .withBodyFile("bitbucket/rest/user/response.json")));
     PersonalAccessTokenParams personalAccessTokenParams =
         new PersonalAccessTokenParams(
-            "https://bitbucket.org/", "scmTokenName", "scmTokenId", bitbucketOauthToken, null);
+            "https://bitbucket.org/",
+            "provider",
+            "scmTokenName",
+            "scmTokenId",
+            bitbucketOauthToken,
+            null);
     assertTrue(
         bitbucketPersonalAccessTokenFetcher.isValid(personalAccessTokenParams).isEmpty(),
         "Should not validate SCM server with trailing /");
@@ -165,7 +170,12 @@ public class BitbucketPersonalAccessTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            "https://bitbucket.org", "params-name", "tid-23434", bitbucketOauthToken, null);
+            "https://bitbucket.org",
+            "provider",
+            "params-name",
+            "tid-23434",
+            bitbucketOauthToken,
+            null);
 
     Optional<Pair<Boolean, String>> valid = bitbucketPersonalAccessTokenFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -188,6 +198,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
             "https://bitbucket.org",
+            "provider",
             OAUTH_2_PREFIX + "-params-name",
             "tid-23434",
             bitbucketOauthToken,
@@ -205,6 +216,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
             "https://bitbucket.org",
+            "provider",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             bitbucketOauthToken,

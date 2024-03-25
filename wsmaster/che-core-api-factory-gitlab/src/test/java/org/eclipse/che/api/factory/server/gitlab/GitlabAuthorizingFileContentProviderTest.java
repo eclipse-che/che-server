@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -35,7 +35,7 @@ public class GitlabAuthorizingFileContentProviderTest {
     GitlabUrl gitlabUrl = new GitlabUrl().withHostName("gitlab.net").withSubGroups("eclipse/che");
     FileContentProvider fileContentProvider =
         new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
-    var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
+    var personalAccessToken = new PersonalAccessToken("foo", "provider", "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
     fileContentProvider.fetchContent("devfile.yaml");
     verify(urlFetcher)
@@ -53,7 +53,7 @@ public class GitlabAuthorizingFileContentProviderTest {
         new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
     String url =
         "https://gitlab.net/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw";
-    var personalAccessToken = new PersonalAccessToken(url, "che", "my-token");
+    var personalAccessToken = new PersonalAccessToken(url, "provider", "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     fileContentProvider.fetchContent(url);

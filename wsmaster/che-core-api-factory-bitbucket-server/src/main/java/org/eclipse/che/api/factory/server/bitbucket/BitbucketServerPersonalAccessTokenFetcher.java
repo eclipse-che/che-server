@@ -134,7 +134,8 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     }
     try {
       BitbucketPersonalAccessToken bitbucketPersonalAccessToken =
-          bitbucketServerApiClient.getPersonalAccessToken(personalAccessToken.getScmTokenId());
+          bitbucketServerApiClient.getPersonalAccessToken(
+              personalAccessToken.getScmTokenId(), personalAccessToken.getToken());
       return Optional.of(DEFAULT_TOKEN_SCOPE.equals(bitbucketPersonalAccessToken.getPermissions()));
     } catch (ScmItemNotFoundException e) {
       return Optional.of(Boolean.FALSE);
@@ -169,7 +170,8 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       }
       // Token is added by OAuth. Token id is available.
       BitbucketPersonalAccessToken bitbucketPersonalAccessToken =
-          bitbucketServerApiClient.getPersonalAccessToken(params.getScmTokenId());
+          bitbucketServerApiClient.getPersonalAccessToken(
+              params.getScmTokenId(), params.getToken());
       return Optional.of(
           Pair.of(
               DEFAULT_TOKEN_SCOPE.equals(bitbucketPersonalAccessToken.getPermissions())

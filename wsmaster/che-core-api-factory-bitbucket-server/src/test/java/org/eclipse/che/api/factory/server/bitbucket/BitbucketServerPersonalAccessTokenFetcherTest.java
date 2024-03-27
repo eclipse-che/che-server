@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -221,10 +221,12 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
       throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException {
     // given
     when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(someBitbucketURL);
+    when(personalAccessTokenParams.getToken()).thenReturn(bitbucketPersonalAccessToken.getToken());
     when(personalAccessTokenParams.getScmTokenId())
         .thenReturn(bitbucketPersonalAccessToken.getId());
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
-    when(bitbucketServerApiClient.getPersonalAccessToken(eq(bitbucketPersonalAccessToken.getId())))
+    when(bitbucketServerApiClient.getPersonalAccessToken(
+            eq(bitbucketPersonalAccessToken.getId()), eq(bitbucketPersonalAccessToken.getToken())))
         .thenReturn(bitbucketPersonalAccessToken);
     // when
     Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);

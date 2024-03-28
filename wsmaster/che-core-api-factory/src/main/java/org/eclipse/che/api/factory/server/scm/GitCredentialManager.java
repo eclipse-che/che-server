@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,8 @@ import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditi
 
 public interface GitCredentialManager {
   /**
-   * Persists PersonalAccessToken for the future usage.
+   * Propagates git credentials in format: "username:<oauth token>" if the token is Personal Access
+   * Token or "oauth2:<oauth token> if oAuth token.
    *
    * @param personalAccessToken
    * @throws UnsatisfiedScmPreconditionException - some storage preconditions aren't met.

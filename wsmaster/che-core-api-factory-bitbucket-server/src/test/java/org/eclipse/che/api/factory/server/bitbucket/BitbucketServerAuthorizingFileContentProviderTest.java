@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -43,7 +43,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
             url, urlFetcher, personalAccessTokenManager);
 
     PersonalAccessToken token =
-        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "user1", "token");
+        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "provider", "user1", "token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
@@ -64,7 +64,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
             url, urlFetcher, personalAccessTokenManager);
 
     PersonalAccessToken token =
-        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "user1", "token");
+        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "provider", "user1", "token");
     when(personalAccessTokenManager.getAndStore(eq(TEST_SCHEME + "://" + TEST_HOSTNAME)))
         .thenReturn(token);
 
@@ -95,7 +95,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
         new BitbucketServerAuthorizingFileContentProvider(
             url, urlFetcher, personalAccessTokenManager);
     PersonalAccessToken token =
-        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "user1", "token");
+        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "provider", "user1", "token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
 
     // when

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -91,7 +91,12 @@ public class GithubPersonalAccessTokenFetcherTest {
                     .withBodyFile("github/rest/user/response.json")));
     PersonalAccessTokenParams personalAccessTokenParams =
         new PersonalAccessTokenParams(
-            "https://github.com/", "scmTokenName", "scmTokenId", githubOauthToken, null);
+            "https://github.com/",
+            "provider",
+            "scmTokenName",
+            "scmTokenId",
+            githubOauthToken,
+            null);
     assertTrue(
         githubPATFetcher.isValid(personalAccessTokenParams).isEmpty(),
         "Should not validate SCM server with trailing /");
@@ -213,7 +218,7 @@ public class GithubPersonalAccessTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            wireMockServer.url("/"), "token-name", "tid-23434", githubOauthToken, null);
+            wireMockServer.url("/"), "provider", "token-name", "tid-23434", githubOauthToken, null);
 
     Optional<Pair<Boolean, String>> valid = githubPATFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -236,6 +241,7 @@ public class GithubPersonalAccessTokenFetcherTest {
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
             wireMockServer.url("/"),
+            "provider",
             OAUTH_2_PREFIX + "-params-name",
             "tid-23434",
             githubOauthToken,
@@ -253,6 +259,7 @@ public class GithubPersonalAccessTokenFetcherTest {
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
             wireMockServer.url("/"),
+            "provider",
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             githubOauthToken,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -74,7 +74,7 @@ public class BitbucketServerScmFileResolverTest {
     final String rawContent = "raw_content";
     final String filename = "devfile.yaml";
     when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenReturn(new PersonalAccessToken(SCM_URL, "root", "token123"));
+        .thenReturn(new PersonalAccessToken(SCM_URL, "provider", "root", "token123"));
 
     when(urlFetcher.fetch(anyString(), eq("Bearer token123"))).thenReturn(rawContent);
 

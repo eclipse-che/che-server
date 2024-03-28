@@ -108,10 +108,11 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       personalAccessTokenManager.store(
           new PersonalAccessToken(
               oauth.getEndpointUrl(),
+              providerName,
               EnvironmentContext.getCurrent().getSubject().getUserId(),
               null,
               null,
-              NameGenerator.generate(OAUTH_2_PREFIX, 5),
+              generateTokenName(providerName),
               NameGenerator.generate("id-", 5),
               token));
     } catch (OAuthAuthenticationException e) {
@@ -124,15 +125,37 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       // Skip exception, the token will be stored in the next request.
       LOG.error(e.getMessage(), e);
     }
-    final String redirectAfterLogin = getParameter(params, "redirect_after_login");
-    URI uri;
+    return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params))).build();
+  }
+
+  /**
+   * Returns the redirect after login URL from the query parameters. If the URL is encoded by the
+   * CSM provider, it will be decoded, to avoid unsupported characters in the URL.
+   *
+   * @param parameters the query parameters
+   * @return the redirect after login URL
+   */
+  public static String getRedirectAfterLoginUrl(Map<String, List<String>> parameters) {
+    String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
     try {
-      uri = URI.create(redirectAfterLogin);
+      URI.create(redirectAfterLogin);
     } catch (IllegalArgumentException e) {
       // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
-      uri = URI.create(encodeRedirectUrl(redirectAfterLogin));
+      redirectAfterLogin = encodeRedirectUrl(redirectAfterLogin);
     }
-    return Response.temporaryRedirect(uri).build();
+    return redirectAfterLogin;
+  }
+
+  /*
+   * This value is used for generating git credentials. Most of the git providers work with git
+   * credentials with OAuth token in format "ouath2:<oauth token>" but bitbucket requires username
+   * to be explicitly set: "<username>:<oauth token>, see {@link
+   * GitCredentialManager#createOrReplace}
+   * TODO: needs to be moved to the specific bitbucket implementation.
+   */
+  private String generateTokenName(String providerName) {
+    return NameGenerator.generate(
+        "bitbucket".equals(providerName) ? providerName + "-" : OAUTH_2_PREFIX, 5);
   }
 
   /**
@@ -140,7 +163,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
    * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
    * the {@link URI#create(String)} method.
    */
-  private String encodeRedirectUrl(String url) {
+  private static String encodeRedirectUrl(String url) {
     try {
       String query = new URL(url).getQuery();
       return url.substring(0, url.indexOf(query)) + URLEncoder.encode(query, UTF_8);

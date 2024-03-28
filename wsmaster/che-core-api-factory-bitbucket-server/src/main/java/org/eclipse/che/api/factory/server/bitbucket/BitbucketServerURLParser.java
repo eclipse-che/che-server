@@ -78,7 +78,7 @@ public class BitbucketServerURLParser {
         bitbucketUrlPatternTemplates.forEach(
             t -> {
               String scheme = t.contains("git@") ? "ssh" : uri.getScheme();
-              String host = uri.getHost();
+              String host = uri.getHost() + uri.getPath();
               bitbucketUrlPatterns.add(Pattern.compile(format(t, scheme, host)));
             });
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.security.oauth;
 
+import static java.lang.String.format;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.api.client.util.store.MemoryDataStoreFactory;
@@ -35,11 +36,15 @@ import org.eclipse.che.commons.json.JsonParseException;
 public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   private final String gitlabUserEndpoint;
   private final String cheApiEndpoint;
+  private final String clientId;
+  private final String clientSecret;
   private final String gitlabEndpoint;
 
   public GitLabOAuthAuthenticator(
       String clientId, String clientSecret, String gitlabEndpoint, String cheApiEndpoint)
       throws IOException {
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
     this.gitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     String trimmedGitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     this.gitlabUserEndpoint = trimmedGitlabEndpoint + "/api/v4/user";
@@ -95,6 +100,28 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
       return null;
     }
     return token;
+  }
+
+  @Override
+  public boolean invalidateToken(String token) {
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request =
+        HttpRequest.newBuilder()
+            .uri(
+                URI.create(
+                    format(
+                        "%s/oauth/revoke?client_id=%s&client_secret=%s&token=%s",
+                        gitlabEndpoint, clientId, clientSecret, token)))
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build();
+
+    try {
+      HttpResponse<InputStream> response =
+          client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+      return response.statusCode() == 200;
+    } catch (IOException | InterruptedException e) {
+      return false;
+    }
   }
 
   public String getEndpointUrl() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 public class PersonalAccessToken {
 
   private final String scmProviderUrl;
+  private final String scmProviderName;
   private final String scmUserName;
   /** Organization that user belongs to. Can be null if user is not a member of any organization. */
   @Nullable private final String scmOrganization;
@@ -33,6 +34,7 @@ public class PersonalAccessToken {
 
   public PersonalAccessToken(
       String scmProviderUrl,
+      String scmProviderName,
       String cheUserId,
       String scmOrganization,
       String scmUserName,
@@ -41,6 +43,7 @@ public class PersonalAccessToken {
       String token) {
     this.scmProviderUrl = scmProviderUrl;
     this.scmOrganization = scmOrganization;
+    this.scmProviderName = scmProviderName;
     this.scmUserName = scmUserName;
     this.scmTokenName = scmTokenName;
     this.scmTokenId = scmTokenId;
@@ -50,17 +53,28 @@ public class PersonalAccessToken {
 
   public PersonalAccessToken(
       String scmProviderUrl,
+      String scmProviderName,
       String cheUserId,
       String scmUserName,
       String scmTokenName,
       String scmTokenId,
       String token) {
-    this(scmProviderUrl, cheUserId, null, scmUserName, scmTokenName, scmTokenId, token);
-  }
-
-  public PersonalAccessToken(String scmProviderUrl, String scmUserName, String token) {
     this(
         scmProviderUrl,
+        scmProviderName,
+        cheUserId,
+        null,
+        scmUserName,
+        scmTokenName,
+        scmTokenId,
+        token);
+  }
+
+  public PersonalAccessToken(
+      String scmProviderUrl, String scmProviderName, String scmUserName, String token) {
+    this(
+        scmProviderUrl,
+        scmProviderName,
         EnvironmentContext.getCurrent().getSubject().getUserId(),
         null,
         scmUserName,
@@ -104,6 +118,7 @@ public class PersonalAccessToken {
     if (o == null || getClass() != o.getClass()) return false;
     PersonalAccessToken that = (PersonalAccessToken) o;
     return Objects.equal(scmProviderUrl, that.scmProviderUrl)
+        && Objects.equal(scmProviderName, that.scmProviderName)
         && Objects.equal(scmUserName, that.scmUserName)
         && Objects.equal(scmOrganization, that.scmOrganization)
         && Objects.equal(scmTokenName, that.scmTokenName)
@@ -124,6 +139,9 @@ public class PersonalAccessToken {
         + "scmProviderUrl='"
         + scmProviderUrl
         + '\''
+        + "scmProviderName='"
+        + scmProviderName
+        + '\''
         + ", scmUserName='"
         + scmUserName
         + '\''
@@ -142,5 +160,9 @@ public class PersonalAccessToken {
         + ", cheUserId='"
         + cheUserId
         + '}';
+  }
+
+  public String getScmProviderName() {
+    return scmProviderName;
   }
 }

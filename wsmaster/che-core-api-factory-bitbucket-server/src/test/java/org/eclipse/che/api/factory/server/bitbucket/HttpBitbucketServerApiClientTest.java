@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -312,14 +312,14 @@ public class HttpBitbucketServerApiClientTest {
     // given
     stubFor(
         get(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster/5"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .willReturn(
                 ok().withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/newtoken.json")));
 
     stubFor(
         get(urlPathEqualTo("/rest/api/1.0/users"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .withQueryParam("start", equalTo("0"))
             .withQueryParam("limit", equalTo("25"))
             .willReturn(
@@ -328,7 +328,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     // when
-    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("5");
+    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("5", "token");
     // then
     assertNotNull(result);
     assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
@@ -346,7 +346,7 @@ public class HttpBitbucketServerApiClientTest {
             .willReturn(notFound()));
 
     // when
-    bitbucketServer.getPersonalAccessToken("5");
+    bitbucketServer.getPersonalAccessToken("5", "token");
   }
 
   @Test(expectedExceptions = ScmUnauthorizedException.class)
@@ -361,18 +361,18 @@ public class HttpBitbucketServerApiClientTest {
   }
 
   @Test(expectedExceptions = ScmUnauthorizedException.class)
-  public void shouldBeAbleToThrowScmUnauthorizedExceptionOnGePAT()
+  public void shouldBeAbleToThrowScmUnauthorizedExceptionOnGetPAT()
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
 
     // given
     stubFor(
         get(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster/5"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .willReturn(unauthorized()));
     stubFor(
         get(urlPathEqualTo("/rest/api/1.0/users"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .withQueryParam("start", equalTo("0"))
             .withQueryParam("limit", equalTo("25"))
             .willReturn(
@@ -381,7 +381,7 @@ public class HttpBitbucketServerApiClientTest {
                     .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     // when
-    bitbucketServer.getPersonalAccessToken("5");
+    bitbucketServer.getPersonalAccessToken("5", "token");
   }
 
   @Test(
@@ -400,7 +400,7 @@ public class HttpBitbucketServerApiClientTest {
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
 
     // when
-    localServer.getPersonalAccessToken("5");
+    localServer.getUser();
   }
 
   @Test

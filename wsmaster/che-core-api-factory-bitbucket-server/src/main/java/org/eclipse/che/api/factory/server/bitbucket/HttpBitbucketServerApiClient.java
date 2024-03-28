@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -145,7 +145,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public void deletePersonalAccessTokens(String tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug() + "/" + tokenId);
+    URI uri =
+        serverUri.resolve(
+            "./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()) + "/" + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .DELETE()
@@ -185,7 +187,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           ScmItemNotFoundException {
     BitbucketPersonalAccessToken token =
         new BitbucketPersonalAccessToken(tokenName, permissions, 90);
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug());
+    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()));
 
     try {
       HttpRequest request =
@@ -229,7 +231,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       return doGetItems(
           Optional.empty(),
           BitbucketPersonalAccessToken.class,
-          "./rest/access-tokens/1.0/users/" + getUserSlug(),
+          "./rest/access-tokens/1.0/users/" + getUserSlug(Optional.empty()),
           null);
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
@@ -237,14 +239,19 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   @Override
-  public BitbucketPersonalAccessToken getPersonalAccessToken(String tokenId)
+  public BitbucketPersonalAccessToken getPersonalAccessToken(String tokenId, String oauthToken)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
-    URI uri = serverUri.resolve("./rest/access-tokens/1.0/users/" + getUserSlug() + "/" + tokenId);
+    URI uri =
+        serverUri.resolve(
+            "./rest/access-tokens/1.0/users/"
+                + getUserSlug(Optional.of(oauthToken))
+                + "/"
+                + tokenId);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers(
                 "Authorization",
-                computeAuthorizationHeader("GET", uri.toString()),
+                "Bearer " + oauthToken,
                 HttpHeaders.ACCEPT,
                 MediaType.APPLICATION_JSON)
             .timeout(DEFAULT_HTTP_TIMEOUT)
@@ -269,9 +276,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     }
   }
 
-  private String getUserSlug()
+  private String getUserSlug(Optional<String> token)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmUnauthorizedException {
-    return getUser(Optional.empty()).getSlug();
+    return getUser(token).getSlug();
   }
 
   private BitbucketUser getUser(Optional<String> token)

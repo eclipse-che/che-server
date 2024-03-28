@@ -156,7 +156,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     assertNotNull(result);
     assertEquals(result.getScmProviderUrl(), someBitbucketURL);
     assertEquals(result.getCheUserId(), subject.getUserId());
-    assertEquals(result.getScmOrganization(), bitbucketUser.getName());
+    assertNull(result.getScmOrganization(), bitbucketUser.getName());
     assertEquals(result.getScmTokenId(), valueOf(bitbucketPersonalAccessToken.getId()));
     assertEquals(result.getToken(), bitbucketPersonalAccessToken.getToken());
   }

@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.security.oauth;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
@@ -93,7 +94,8 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
       if (token == null
           || token.getToken() == null
           || token.getToken().isEmpty()
-          || getJson(gitlabUserEndpoint, token.getToken(), GitLabUser.class) == null) {
+          || isNullOrEmpty(
+              getJson(gitlabUserEndpoint, token.getToken(), GitLabUser.class).getId())) {
         return null;
       }
     } catch (OAuthAuthenticationException e) {

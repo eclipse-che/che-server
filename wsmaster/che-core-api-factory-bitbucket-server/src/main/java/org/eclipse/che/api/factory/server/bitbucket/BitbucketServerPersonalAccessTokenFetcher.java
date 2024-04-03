@@ -111,31 +111,34 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   }
 
   @Override
-  public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken)
+  public Optional<Boolean> isValid(PersonalAccessToken accessToken)
       throws ScmCommunicationException, ScmUnauthorizedException {
-    if (!bitbucketServerApiClient.isConnected(personalAccessToken.getScmProviderUrl())) {
+    if (!bitbucketServerApiClient.isConnected(accessToken.getScmProviderUrl())) {
       // If BitBucket oAuth is not configured check the manually added user namespace token.
       HttpBitbucketServerApiClient apiClient =
           new HttpBitbucketServerApiClient(
-              personalAccessToken.getScmProviderUrl(),
+              accessToken.getScmProviderUrl(),
               new NoopOAuthAuthenticator(),
               oAuthAPI,
               apiEndpoint.toString());
       try {
-        apiClient.getUser(personalAccessToken.getToken());
+        apiClient.getUser(accessToken.getToken());
         return Optional.of(Boolean.TRUE);
       } catch (ScmItemNotFoundException
           | ScmUnauthorizedException
           | ScmCommunicationException exception) {
-        LOG.debug(
-            "not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
+        LOG.debug("not a valid url {} for current fetcher ", accessToken.getScmProviderUrl());
         return Optional.empty();
       }
     }
     try {
       BitbucketPersonalAccessToken bitbucketPersonalAccessToken =
           bitbucketServerApiClient.getPersonalAccessToken(
-              personalAccessToken.getScmTokenId(), personalAccessToken.getToken());
+              accessToken.getScmTokenId(),
+              // Pass oauth token to fetch personal access token
+              // TODO: rename the PersonalAccessToken interface to more generic name, so both OAuth
+              // and personal access token implementations would be suitable.
+              accessToken.getToken());
       return Optional.of(DEFAULT_TOKEN_SCOPE.equals(bitbucketPersonalAccessToken.getPermissions()));
     } catch (ScmItemNotFoundException e) {
       return Optional.of(Boolean.FALSE);

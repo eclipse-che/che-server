@@ -285,7 +285,8 @@ public abstract class OAuthAuthenticator {
    *     none token found for user then {@code null} will be returned, when user have expired token
    *     and it can't be refreshed then {@code null} will be returned
    * @throws IOException when error occurs during token loading
-   * @see OAuthTokenProvider#getToken(String, String)
+   * @see OAuthTokenProvider#getToken(String, String) TODO: return Optional<OAuthToken> to avoid
+   *     returning null.
    */
   public OAuthToken getToken(String userId) throws IOException {
     if (!isConfigured()) {

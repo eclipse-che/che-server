@@ -91,11 +91,11 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   public OAuthToken getToken(String userId) throws IOException {
     final OAuthToken token = super.getToken(userId);
     try {
-      if (token == null
-          || token.getToken() == null
-          || token.getToken().isEmpty()
-          || isNullOrEmpty(
-              getJson(gitlabUserEndpoint, token.getToken(), GitLabUser.class).getId())) {
+      if (token == null || token.getToken() == null || token.getToken().isEmpty()) {
+        return null;
+      }
+      GitLabUser user = getJson(gitlabUserEndpoint, token.getToken(), GitLabUser.class);
+      if (user == null || isNullOrEmpty(user.getId())) {
         return null;
       }
     } catch (OAuthAuthenticationException e) {

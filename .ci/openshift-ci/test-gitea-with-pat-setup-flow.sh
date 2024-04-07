@@ -16,6 +16,8 @@ set -ex
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
+echo -e "\e[1;3;4;32m[INFO] OpenShift CI infrastructure is ready.\nTest is run.\e[0m"
+
 export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_RAW_PATH_URL:-"https://${GITEA_PAT}@gitea.com/chepullreq1/private-repo/raw/branch/main/devfile.yaml"}
 
 # import common test functions

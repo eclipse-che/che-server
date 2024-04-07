@@ -16,6 +16,8 @@ set -ex
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
+echo -e "\e[1;3;4;32m[INFO] OpenShift CI infrastructure is ready.\nTest is run.\e[0m"
+
 export TEST_POD_NAME=${TEST_POD_NAME:-"oauth-factory-test"}
 export GIT_PROVIDER_TYPE=${GIT_PROVIDER_TYPE:-"gitlab"}
 export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://gitlab-gitlab-system.apps.git.crw-qe.com"}

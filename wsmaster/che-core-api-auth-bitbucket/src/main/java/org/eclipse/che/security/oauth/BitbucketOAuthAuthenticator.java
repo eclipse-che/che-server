@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.util.store.MemoryDataStoreFactory;
@@ -77,7 +78,7 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   private String getTestRequestUrl() {
     return "https://bitbucket.org".equals(bitbucketEndpoint)
         ? "https://api.bitbucket.org/2.0/user"
-        : bitbucketEndpoint + "/rest/api/1.0/application-properties";
+        : bitbucketEndpoint + "/plugins/servlet/applinks/whoami";
   }
 
   @Override
@@ -89,11 +90,12 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
       throws OAuthAuthenticationException {
     HttpURLConnection urlConnection = null;
     InputStream urlInputStream = null;
-
+    String result;
     try {
       urlConnection = (HttpURLConnection) new URL(requestUrl).openConnection();
       urlConnection.setRequestProperty("Authorization", "Bearer " + accessToken);
       urlInputStream = urlConnection.getInputStream();
+      result = new String(urlInputStream.readAllBytes(), UTF_8);
     } catch (IOException e) {
       throw new OAuthAuthenticationException(e.getMessage(), e);
     } finally {
@@ -107,6 +109,9 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
       if (urlConnection != null) {
         urlConnection.disconnect();
       }
+    }
+    if (isNullOrEmpty(result)) {
+      throw new OAuthAuthenticationException("Empty response from Bitbucket Server API");
     }
   }
 }

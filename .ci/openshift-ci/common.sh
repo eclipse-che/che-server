@@ -65,7 +65,7 @@ configureGitSelfSignedCertificate() {
   oc project ${CHE_NAMESPACE}
 
   echo -e "\e[3;44m[INFO] Create ConfigMap with the required TLS certificate\e[0m"
-  oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=ca.crt
+  oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt
   oc label configmap ${CUSTOM_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org app.kubernetes.io/component=ca-bundle
 
   echo -e "\e[3;44m[INFO] Create ConfigMap to support Git repositories with self-signed certificates\e[0m"

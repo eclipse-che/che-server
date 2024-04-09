@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -100,9 +100,10 @@ public interface BitbucketServerApiClient {
 
   /**
    * @param tokenId - bitbucket personal access token id.
+   * @param oauthToken - bitbucket oauth token.
    * @return - Bitbucket personal access token.
    * @throws ScmCommunicationException
    */
-  BitbucketPersonalAccessToken getPersonalAccessToken(String tokenId)
+  BitbucketPersonalAccessToken getPersonalAccessToken(String tokenId, String oauthToken)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 }

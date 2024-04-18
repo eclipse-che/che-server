@@ -36,47 +36,47 @@ export CUSTOM_CONFIG_MAP_NAME=${CUSTOM_CONFIG_MAP_NAME:-"custom-ca-certificates"
 export GIT_SSL_CONFIG_MAP_NAME=${GIT_SSL_CONFIG_MAP_NAME:-"che-self-signed-cert"}
 
 provisionOpenShiftOAuthUser() {
-  echo -e "\e[3;44m[INFO] Start provisioning Openshift OAuth user\e[0m"
+  echo "------- [INFO] Start provisioning Openshift OAuth user -------"
   htpasswd -c -B -b users.htpasswd ${OCP_ADMIN_USER_NAME} ${OCP_LOGIN_PASSWORD}
   htpasswd -b users.htpasswd ${OCP_NON_ADMIN_USER_NAME} ${OCP_LOGIN_PASSWORD}
   oc create secret generic htpass-secret --from-file=htpasswd="users.htpasswd" -n openshift-config
   oc apply -f ".ci/openshift-ci/htpasswdProvider.yaml"
   oc adm policy add-cluster-role-to-user cluster-admin ${OCP_ADMIN_USER_NAME}
 
-  echo -e "\e[3;44mm[INFO] Waiting for htpasswd auth to be working up to 5 minutes\e[0m"
+  echo "------- [INFO] Waiting for htpasswd auth to be working up to 5 minutes -------"
   CURRENT_TIME=$(date +%s)
   ENDTIME=$((CURRENT_TIME + 300))
   while [ "$(date +%s)" -lt $ENDTIME ]; do
       if oc login -u=${OCP_ADMIN_USER_NAME} -p=${OCP_LOGIN_PASSWORD} --insecure-skip-tls-verify=false; then
-          echo -e "\e[1;32m[INFO] OpenShift OAuth htpasswd is configured.\nLogit to OCP cluster wirh admin user credentials is success.\e[0m"
+          echo "======= [INFO] OpenShift OAuth htpasswd is configured. =======
+======= [INFO] Login to OCP cluster with admin user credentials is success.======="
           return 0
       fi
-      sleep 10
+      sleep 5
   done
 
-  echo -e "\e[1;31m[ERROR] Error occurred while waiting OpenShift OAuth htpasswd setup.
-Cause possible: an infrastructure problem, try to rerun the test.\e[0m"
+  echo "####### [ERROR] Error occurred while waiting OpenShift OAuth htpasswd setup. Try to rerun test. #######"
   exit 1
 }
 
 configureGitSelfSignedCertificate() {
-  echo -e "\e[3;44m[INFO] Configure self-signed certificate for Git provider\e[0m"
+  echo "------- [INFO] Configure self-signed certificate for Git provider -------"
   oc adm new-project ${CHE_NAMESPACE}
   oc project ${CHE_NAMESPACE}
 
-  echo -e "\e[3;44m[INFO] Create ConfigMap with the required TLS certificate\e[0m"
-  oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt
+  echo "------- [INFO] Create ConfigMap with the required TLS certificate -------"
+  oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=ca.crt
   oc label configmap ${CUSTOM_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org app.kubernetes.io/component=ca-bundle
 
-  echo -e "\e[3;44m[INFO] Create ConfigMap to support Git repositories with self-signed certificates\e[0m"
+  echo "------- [INFO] Create ConfigMap to support Git repositories with self-signed certificates -------"
   oc create configmap ${GIT_SSL_CONFIG_MAP_NAME} --from-file=ca.crt --from-literal=githost=${GIT_PROVIDER_URL}
   oc label configmap ${GIT_SSL_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org
 
-  echo -n "\e[1;32m[INFO] ConfigMaps are configured\e[0m"
+  echo "======= [INFO] ConfigMaps are configured ======="
 }
 
 createCustomResourcesFile() {
-  echo -e "\e[3;44m[INFO] Create custom resourses file\e[0m"
+  echo "------- [INFO] Create custom resourses file -------"
   cat > custom-resources.yaml <<-END
 apiVersion: org.eclipse.che/v2
 spec:
@@ -84,32 +84,32 @@ spec:
     maxNumberOfRunningWorkspacesPerUser: 10000
 END
 
-  echo -e "\e[1;32m[INFO] Generated custom resources file\e[0m"
+  echo "======= [INFO] Generated custom resources file ======="
   cat custom-resources.yaml
 }
 
 patchCustomResourcesFile() {
-  echo -e "\e[3;44m[INFO] Edit the custom resources file to add 'gitTrustedCertsConfigMapName'\e[0m"
+  echo "------- [INFO] Edit the custom resources file to add 'gitTrustedCertsConfigMapName' -------"
   yq -y '.spec.devEnvironments.trustedCerts += {"gitTrustedCertsConfigMapName": "'${GIT_SSL_CONFIG_MAP_NAME}'"}' custom-resources.yaml -i
 
-  echo -e "\e[1;32m[INFO] Patched custom resources file\e[0m"
+  echo "======= [INFO] Patched custom resources file ======="
   cat custom-resources.yaml
 }
 
 deployChe() {
-  echo -e "\e[3;44m[INFO] Start installing Eclipse Che\e[0m"
+  echo "------- [INFO] Start installing Eclipse Che -------"
   chectl server:deploy --cheimage=$CHE_SERVER_IMAGE \
                        --che-operator-cr-patch-yaml=custom-resources.yaml \
                        --platform=openshift \
                        --telemetry=off \
                        --batch
 
-  echo -e "\e[1;32m[INFO] Eclipse Che is successfully installed\e[0m"
+  echo "======= [INFO] Eclipse Che is successfully installed ======="
 }
 
 # this command starts port forwarding between the local machine and the che-host service in the OpenShift cluster.
 forwardPortToService() {
-  echo -e "\e[3;44m[INFO] Start forwarding between the local machine and the che-host service\e[0m"
+  echo "------- [INFO] Start forwarding between the local machine and the che-host service -------"
   oc port-forward service/che-host ${CHE_FORWARDED_PORT}:8080 -n ${CHE_NAMESPACE} &
   sleep 10s
 }
@@ -134,28 +134,28 @@ requestFactoryResolverGitRepoUrl() {
 
 # check that factory resolver returns correct value without any PAT/OAuth setup
 testFactoryResolverNoPatOAuth() {
-  echo -e "\e[3;44m[INFO] Check factory resolver for public repository with NO PAT/OAuth setup\e[0m"
+  echo "------- [INFO] Check factory resolver for public repository with NO PAT/OAuth setup -------"
   testFactoryResolverResponse $1 200
 
-  echo -e "\e[3;44m[INFO] Check factory resolver for private repository with NO PAT/OAuth setup\e[0m"
+  echo "------- [INFO] Check factory resolver for private repository with NO PAT/OAuth setup -------"
   testFactoryResolverResponse $2 500
 }
 
 # check that raw devfile url factory resolver returns correct value without any PAT/OAuth setup
 testFactoryResolverNoPatOAuthRaw() {
-  echo -e "\e[3;44m[INFO] Check factory resolver for public repository with NO PAT/OAuth setup\e[0m"
+  echo "------- [INFO] Check factory resolver for public repository with NO PAT/OAuth setup -------"
   testFactoryResolverResponse $1 200
 
-  echo -e "\e[3;44m[INFO] Check factory resolver for private repository with NO PAT/OAuth setup\e[0m"
+  echo "------- [INFO] Check factory resolver for private repository with NO PAT/OAuth setup -------"
   testFactoryResolverResponse $2 400
 }
 
 # check that factory resolver returns correct value with PAT/OAuth setup
 testFactoryResolverWithPatOAuth() {
-  echo -e "\e[3;44m[INFO] Check factory resolver for public repository with PAT/OAuth setup\e[0m"
+  echo "------- [INFO] Check factory resolver for public repository with PAT/OAuth setup -------"
   testFactoryResolverResponse $1 200
 
-  echo -e "\e[3;44m[INFO] Check factory resolver for private repository with PAT/OAuth setup\e[0m"
+  echo "------- [INFO] Check factory resolver for private repository with PAT/OAuth setup -------"
   testFactoryResolverResponse $2 200
 }
 
@@ -164,10 +164,10 @@ testFactoryResolverResponse() {
   RESPONSE_CODE=$2
 
   if [ "$(requestFactoryResolverGitRepoUrl ${URL} | grep "HTTP/1.1 ${RESPONSE_CODE}")" ]; then
-    echo -e "\e[1;32m[INFO] Factory resolver returned 'HTTP/1.1 ${RESPONSE_CODE}' status code. Expected client side response.\e[0m"
+    echo "======= [INFO] Factory resolver returned 'HTTP/1.1 ${RESPONSE_CODE}' status code. Expected client side response. ======="
   else
-    echo -e "\e[1;31m[ERROR] Factory resolver returned wrong status code. Expected: HTTP/1.1 ${RESPONSE_CODE}.
-Cause possible: PR code regress or API is changed. Need to investigate it.\e[0m"
+    echo "####### [ERROR] Factory resolver returned wrong status code. Expected: HTTP/1.1 ${RESPONSE_CODE}. #######
+####### Cause possible: PR code regress or service is changed. Need to investigate it. #######"
     exit 1
   fi
 }
@@ -185,19 +185,19 @@ requestProvisionNamespace() {
 initUserNamespace() {
   OCP_USER_NAME=$1
 
-  echo -e "\e[3;44m[INFO] Initialize user namespace\e[0m"
+  echo "------- [INFO] Initialize user namespace -------"
   oc login -u=${OCP_USER_NAME} -p=${OCP_LOGIN_PASSWORD} --insecure-skip-tls-verify=false
 
-  if [ "$(requestProvisionNamespace | grep "failed to connect to localhost")" ]; then
-    echo -e "\e[1;31m[ERROR] Cause: lost connection to pod.\nThis is an infrastructure problem, rerun the test.\e[0m"
-    exit 1
-  fi
+  request_result=$(requestProvisionNamespace) || true
 
-  if [ "$(requestProvisionNamespace | grep "HTTP/1.1 200")" ]; then
-    echo -e "\e[1;32m[INFO] Request provision user namespace returned 'HTTP/1.1 200' status code.\nUser namespace is created\e[0m"
+  if [ -z "$request_result" ]; then
+    echo "####### [ERROR] Cause possible: lost connection to pod, this is an infrastructure problem. Try to rerun the test. #######"
+    exit 1
+  elif [ "$(echo "$request_result" | grep "HTTP/1.1 200")" ]; then
+    echo "======= [INFO] Request provision user namespace returned 'HTTP/1.1 200' status code. User namespace is created. ======="
   else
-    echo -e "\e[1;31m[ERROR] Request provision user namespace returned wrong status code. Expected: HTTP/1.1 200.
-User namespace creating is fail. Cause possible: PR code regress or API is changed. Need to investigate it.\e[0m"
+    echo "####### [ERROR] Request provision user namespace returned wrong status code. Expected: HTTP/1.1 200. #######
+####### User namespace creation failed. Cause possible: PR code regression or service is changed. Need to investigate. #######"
     exit 1
   fi
 }
@@ -207,7 +207,7 @@ setupPersonalAccessToken() {
   GIT_PROVIDER_URL=$2
   GIT_PROVIDER_PAT=$3
 
-  echo -e "\e[3;44m[INFO] Setup Personal Access Token Secret\e[0m"
+  echo "------- [INFO] Setup Personal Access Token Secret -------"
   oc project ${USER_CHE_NAMESPACE}
   CHE_USER_ID=$(oc get secret user-profile -o jsonpath='{.data.id}' | base64 -d)
   ENCODED_PAT=$(echo -n ${GIT_PROVIDER_PAT} | base64)
@@ -226,14 +226,14 @@ setupPersonalAccessToken() {
   cat pat-secret.yaml
 
   oc apply -f pat-secret.yaml -n ${USER_CHE_NAMESPACE}
-  echo -e "\e[1;32m[INFO] Personal Access Token is created.\e[0m"
+  echo "======= [INFO] Personal Access Token is created. ======="
 }
 
 setupSSHKeyPairs() {
   GIT_PRIVATE_KEY=$1
   GIT_PUBLIC_KEY=$2
 
-  echo -e "\e[3;44m[INFO] Setup SSH Key Pairs Secret\e[0m"
+  echo "------- [INFO] Setup SSH Key Pairs Secret "-------
   oc project ${USER_CHE_NAMESPACE}
   ENCODED_GIT_PRIVATE_KEY=$(echo "${GIT_PRIVATE_KEY}" | base64 -w 0)
   ENCODED_GIT_PUBLIC_KEY=$(echo "${GIT_PUBLIC_KEY}" | base64 -w 0)
@@ -246,7 +246,7 @@ setupSSHKeyPairs() {
   cat ssh-secret.yaml
 
   oc apply -f ssh-secret.yaml -n ${USER_CHE_NAMESPACE}
-  echo -e "\e[1;32m[INFO] SSH Secret is created.\e[0m"
+  echo "======= [INFO] SSH Secret is created. ======="
 }
 
 # Only for GitLab server administrator users
@@ -255,7 +255,7 @@ createOAuthApplicationGitLabServer() {
 
   CHE_URL=https://$(oc get route -n ${CHE_NAMESPACE} che -o jsonpath='{.spec.host}')
 
-  echo -e "\e[3;44m[INFO] Create OAuth Application\e[0m"
+  echo "------- [INFO] Create OAuth Application -------"
   response=$(curl -k -X POST \
     ${GIT_PROVIDER_URL}/api/v4/applications \
     -H "PRIVATE-TOKEN: ${ADMIN_ACCESS_TOKEN}" \
@@ -263,16 +263,11 @@ createOAuthApplicationGitLabServer() {
     -d "redirect_uri=${CHE_URL}/api/oauth/callback" \
     -d "scopes=api write_repository openid")
 
-  echo -e "\e[3;44m[INFO] Response of the created OAuth Application\e[0m"
+  echo "------- [INFO] Response of the created OAuth Application -------"
 
   OAUTH_ID=$(echo "$response" | jq -r '.id')
   APPLICATION_ID=$(echo "$response" | jq -r '.application_id')
   APPLICATION_SECRET=$(echo "$response" | jq -r '.secret')
-
-  echo -e "\e[34m[INFO] OAuth ID: ${OAUTH_ID}\e[0m"
-  echo -e "\e[34m[INFO] Application ID: ${APPLICATION_ID}\e[0m"
-  echo -e "\e[34m[INFO] Application Secret: ${APPLICATION_SECRET}\e[0m"
-  echo -e "\e[1;32m[INFO] OAuth Application is created\e[0m"
 }
 
 # Only for GitLab server administrator users
@@ -280,12 +275,12 @@ deleteOAuthApplicationGitLabServer() {
   OAUTH_ID=$1
   ADMIN_ACCESS_TOKEN=$2
 
-  echo -e "\e[3;44m[INFO] Delete OAuth Application\e[0m"
+  echo "------- [INFO] Delete OAuth Application -------"
   curl -i -k -X DELETE \
     ${GIT_PROVIDER_URL}/api/v4/applications/${OAUTH_ID} \
     -H "PRIVATE-TOKEN: ${ADMIN_ACCESS_TOKEN}"
 
-  echo -e "\e[1;32m[INFO] OAuth Application is deleted\e[0m"
+  echo "======= [INFO] OAuth Application is deleted ======="
 }
 
 # Only for GitLab server
@@ -293,12 +288,10 @@ revokeAuthorizedOAuthApplication() {
   APPLICATION_ID=$1
   APPLICATION_SECRET=$2
 
-  echo -e "\e[3;44m[INFO] Revoke authorized OAuth application\e[0m"
+  echo "------- [INFO] Revoke authorized OAuth application -------"
   oc project ${USER_CHE_NAMESPACE}
   OAUTH_TOKEN_NAME=$(oc get secret | grep 'personal-access-token'| awk 'NR==1 { print $1 }')
-  echo -e "\e[34m[INFO] OAuth token name:\e[0m "$OAUTH_TOKEN_NAME
   OAUTH_TOKEN=$(oc get secret $OAUTH_TOKEN_NAME -o jsonpath='{.data.token}' | base64 -d)
-  echo -e "\e[34m[INFO] Oauth token:\e[0m "$OAUTH_TOKEN
 
   curl -i -k -X POST \
     ${GIT_PROVIDER_URL}/oauth/revoke \
@@ -306,7 +299,7 @@ revokeAuthorizedOAuthApplication() {
     -d "client_secret=${APPLICATION_SECRET}" \
     -d "token=${OAUTH_TOKEN}"
 
-  echo -e "\e[1;32m[INFO] Authorized OAuth application is revoked\e[0m"
+  echo "======= [INFO] Authorized OAuth application is revoked ======="
 }
 
 # Only for GitLab server
@@ -314,7 +307,7 @@ setupOAuthSecret() {
   APPLICATION_ID=$1
   APPLICATION_SECRET=$2
 
-  echo -e "\e[3;44m[INFO] Setup OAuth Secret\e[0m"
+  echo "------- [INFO] Setup OAuth Secret -------"
   oc login -u=${OCP_ADMIN_USER_NAME} -p=${OCP_LOGIN_PASSWORD} --insecure-skip-tls-verify=false
   oc project ${CHE_NAMESPACE}
   SERVER_POD=$(oc get pod -l component=che | grep "che" | awk 'NR==1 { print $1 }')
@@ -331,7 +324,7 @@ setupOAuthSecret() {
   cat oauth-secret.yaml
   oc apply -f oauth-secret.yaml -n ${CHE_NAMESPACE}
 
-  echo -e "\e[3;44m[INFO] Wait updating deployment after create OAuth secret\e[0m"
+  echo "------- [INFO] Wait updating deployment after create OAuth secret -------"
   oc wait --for=delete pod/${SERVER_POD} --timeout=120s
 }
 
@@ -344,7 +337,7 @@ runTestWorkspaceWithGitRepoUrl() {
   oc project ${OCP_USER_NAMESPACE}
   cat .ci/openshift-ci/devworkspace-test.yaml > devworkspace-test.yaml
 
-  echo -e "\e[3;44m[INFO] Preparing 'devworkspace-test.yaml' and run test workspace\e[0m"
+  echo "------- [INFO] Preparing 'devworkspace-test.yaml' and run test workspace -------"
   # patch the devworkspace-test.yaml file
   sed -i "s#ws-name#${WS_NAME}#g" devworkspace-test.yaml
   sed -i "s#project-name#${PROJECT_NAME}#g" devworkspace-test.yaml
@@ -354,7 +347,7 @@ runTestWorkspaceWithGitRepoUrl() {
 
   oc apply -f devworkspace-test.yaml -n ${OCP_USER_NAMESPACE}
   oc wait -n ${OCP_USER_NAMESPACE} --for=condition=Ready dw ${WS_NAME} --timeout=360s
-  echo -e "\e[1;32m[INFO] Test workspace is run\e[0m"
+  echo "======= [INFO] Test workspace is run ======="
 }
 
 testProjectIsCloned() {
@@ -363,9 +356,9 @@ testProjectIsCloned() {
 
   WORKSPACE_POD_NAME=$(oc get pods -n ${OCP_USER_NAMESPACE} | grep workspace | awk '{print $1}')
   if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- test -f /projects/${PROJECT_NAME}/${YAML_FILE_NAME}; then
-    echo -e "\e[1;32m[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} exists.\e[0m"
+    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} exists. ======="
   else
-    echo -e "\e[3;44m[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is absent.\e[0m"
+    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is absent. ======="
     return 1
   fi
 }
@@ -375,7 +368,7 @@ testGitCredentialsData() {
   GIT_PROVIDER_PAT=$2
   GIT_PROVIDER_URL=$3
 
-  echo -e "\e[3;44m[INFO] Check the 'git credentials' is in a workspace\e[0m"
+  echo "------- [INFO] Check the 'git credentials' is in a workspace -------"
   hostName="${GIT_PROVIDER_URL#https://}"
 
   if [ "${GIT_PROVIDER_TYPE}" == "azure-devops" ]; then
@@ -387,10 +380,10 @@ testGitCredentialsData() {
   gitCredentials="https://${userName}:${GIT_PROVIDER_PAT}@${hostName}"
   WORKSPACE_POD_NAME=$(oc get pods -n ${OCP_USER_NAMESPACE} | grep workspace | awk '{print $1}')
   if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- cat /.git-credentials/credentials | grep -q ${gitCredentials}; then
-    echo -e "\e[1;32m[INFO] Git credentials file '/.git-credentials/credentials' exists and has the expected content.\e[0m"
+    echo "======= [INFO] Git credentials file '/.git-credentials/credentials' exists and has the expected content. ======="
   else
-    echo -e "\e[1;31m[ERROR] Git credentials file '/.git-credentials/credentials' does not exist or has incorrect content.
-Cause possible: PR code regress or behavior service is changed. Need to investigate it.\e[0m"
+    echo "####### [ERROR] Git credentials file '/.git-credentials/credentials' does not exist or has incorrect content. ######
+###### Cause possible: PR code regress or service is changed. Need to investigate it. #######"
     exit 1
   fi
 }
@@ -398,7 +391,7 @@ Cause possible: PR code regress or behavior service is changed. Need to investig
 deleteTestWorkspace() {
   WS_NAME=$1
   OCP_USER_NAMESPACE=$2
-  echo -e "\e[3;44m[INFO] Delete test workspace\e[0m"
+  echo "------- [INFO] Delete test workspace -------"
   oc delete dw ${WS_NAME} -n ${OCP_USER_NAMESPACE}
 }
 
@@ -416,7 +409,7 @@ startOAuthFactoryTest() {
   sed -i "s#GIT_PROVIDER_USER_NAME#${GIT_PROVIDER_LOGIN}#g" oauth-factory-test.yaml
   sed -i "s#GIT_PROVIDER_USER_PASSWORD#${GIT_PROVIDER_PASSWORD}#g" oauth-factory-test.yaml
 
-  echo -e "\e[3;44m[INFO] Applying the following patched OAuth Factory Test Pod:\e[0m"
+  echo "------- [INFO] Applying the following patched OAuth Factory Test Pod: -------"
   cat oauth-factory-test.yaml
   echo "[INFO] --------------------------------------------------"
   oc apply -f oauth-factory-test.yaml
@@ -427,7 +420,7 @@ startOAuthFactoryTest() {
     PHASE=$(oc get pod -n ${CHE_NAMESPACE} ${TEST_POD_NAME} \
         --template='{{ .status.phase }}')
     if [[ ${PHASE} == "Running" ]]; then
-      echo -e "\e[1;32m[INFO] Factory test started successfully.\e[0m"
+      echo "======= [INFO] Factory test started successfully. ======="
       return
     fi
 
@@ -435,8 +428,8 @@ startOAuthFactoryTest() {
     n=$(( n+1 ))
   done
 
-  echo -e "\e[1;31m[ERROR] Failed to start Factory test.
-Cause possible: an infrastructure problem, pod could not start, try to rerun the test.\e[0m"
+  echo "####### [ERROR] Failed to start Factory test. #######
+###### Cause possible: an infrastructure problem, pod could not start, try to rerun the test. #######"
   exit 1
 }
 
@@ -449,7 +442,7 @@ startSmokeTest() {
   sed -i "s#OCP_USER_NAME#${OCP_NON_ADMIN_USER_NAME}#g" che-smoke-test.yaml
   sed -i "s#OCP_USER_PASSWORD#${OCP_LOGIN_PASSWORD}#g" che-smoke-test.yaml
 
-  echo -e "\e[3;44m[INFO] Applying the following patched Smoke Test Pod:\e[0m"
+  echo "------- [INFO] Applying the following patched Smoke Test Pod: -------"
   cat che-smoke-test.yaml
   echo "[INFO] --------------------------------------------------"
   oc apply -f che-smoke-test.yaml
@@ -460,7 +453,7 @@ startSmokeTest() {
     PHASE=$(oc get pod -n ${CHE_NAMESPACE} ${TEST_POD_NAME} \
         --template='{{ .status.phase }}')
     if [[ ${PHASE} == "Running" ]]; then
-      echo -e "\e[1;32m[INFO] Smoke test started successfully.\e[0m"
+      echo "======= [INFO] Smoke test started successfully. ======="
       return
     fi
 
@@ -468,23 +461,26 @@ startSmokeTest() {
     n=$(( n+1 ))
   done
 
-  echo -e "\e[1;31m[ERROR] Failed to start Smoke test.
-Cause possible: an infrastructure problem, pod could not start, try to rerun the test.\e[0m"
+  echo "####### [ERROR] Failed to start Smoke test. #######
+####### Cause possible: an infrastructure problem, pod could not start, try to rerun the test. #######"
   exit 1
 }
 
 # Catch the finish of the job and write logs in artifacts.
 catchFinish() {
   local RESULT=$?
-  echo -e "\e[3;44m[INFO] Terminate the process after finish the test script.\e[0m"
-  killProcessByPort
   if [ "$RESULT" != "0" ]; then
     set +e
     collectEclipseCheLogs
     set -e
   fi
 
-  [[ "${RESULT}" != "0" ]] && echo -e "\e[1;31m[ERROR] Job failed.\e[0m" || echo -e "\e[1;32m[INFO] Job completed successfully.\e[0m"
+  echo "------- [INFO] Terminate the process after finish the test script. -------"
+  set +e
+  killProcessByPort
+  set -e
+
+  [[ "${RESULT}" != "0" ]] && echo "####### [ERROR] Job failed. #######" || echo "####### [INFO] Job completed successfully. #######"
   exit $RESULT
 }
 
@@ -498,16 +494,16 @@ collectEclipseCheLogs() {
 }
 
 collectLogs() {
-  echo -e "\e[3;44m[INFO] Waiting until test pod finished.\e[0m"
+  echo "------- [INFO] Waiting until test pod finished. -------"
   oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test -f
   sleep 3
 
   # Download artifacts
   set +e
-  echo -e "\e[3;44m[INFO] Collect all Eclipse Che logs and cluster CR.\e[0m"
+  echo -------" [INFO] Collect all Eclipse Che logs and cluster CR. -------"
   collectEclipseCheLogs
 
-  echo -e "\e[3;44m[INFO] Downloading test report.\e[0m"
+  echo "------- [INFO] Downloading test report. -------"
   mkdir -p ${ARTIFACTS_DIR}/e2e
   oc rsync -n ${CHE_NAMESPACE} ${TEST_POD_NAME}:/tmp/e2e/report/ ${ARTIFACTS_DIR}/e2e -c download-reports
   oc exec -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c download-reports -- touch /tmp/done
@@ -522,11 +518,11 @@ collectLogs() {
 
   EXIT_CODE=$(oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test | grep EXIT_CODE)
   if [[ ${EXIT_CODE} != "+ EXIT_CODE=0" ]]; then
-    echo -e "\e[1;31m[ERROR] GUI test failed. Job failed.
-Cause possible: PR code regress or behavior service is changed. Need to investigate it.\e[0m"
+    echo "####### [ERROR] GUI test failed. Job failed. #######
+###### Cause possible: PR code regress or service is changed. Need to investigate it. #######"
     exit 1
   fi
-  echo -e "\e[1;32m[INFO] Job completed successfully.\e[0m"
+  echo "======= [INFO] Job completed successfully. ======="
 }
 
 testCloneGitRepoNoProjectExists() {
@@ -536,11 +532,11 @@ testCloneGitRepoNoProjectExists() {
     OCP_USER_NAMESPACE=$4
 
     runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
-    echo -e "\e[3;44m[INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup.\e[0m"
+    echo "------- [INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup. -------"
     testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
-    { echo -e "\e[1;31m[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should NOT be present.
-Cause possible: PR code regress or behavior service is changed. Need to investigate it.\e[0m" && exit 1; }
-    echo -e "\e[1;32m[INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is NOT present. This is EXPECTED.\e[0m"
+    { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should NOT be present. #######
+####### Cause possible: PR code regress or service is changed. Need to investigate it. #######" && exit 1; }
+    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is NOT present. This is EXPECTED. ======="
 }
 
 # Test that the repository is cloned when PAT, OAuth or SSH is configured
@@ -551,9 +547,10 @@ testCloneGitRepoProjectShouldExists() {
   OCP_USER_NAMESPACE=$4
 
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
-  echo -e "\e[3;44m[INFO] Check the repository is cloned.\e[0m"
+  echo "------- [INFO] Check the repository is cloned. -------"
   testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
-  { echo -e "\e[1;31m[ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present.\e[0m" && exit 1; }
+  { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present. #######
+###### Cause possible: PR code regress or service is changed. Need to investigate it. #######" && exit 1; }
 }
 
 setupTestEnvironment() {

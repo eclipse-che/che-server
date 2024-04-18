@@ -65,11 +65,11 @@ configureGitSelfSignedCertificate() {
   oc project ${CHE_NAMESPACE}
 
   echo "------- [INFO] Create ConfigMap with the required TLS certificate -------"
-  oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=ca.crt
+  oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt
   oc label configmap ${CUSTOM_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org app.kubernetes.io/component=ca-bundle
 
   echo "------- [INFO] Create ConfigMap to support Git repositories with self-signed certificates -------"
-  oc create configmap ${GIT_SSL_CONFIG_MAP_NAME} --from-file=ca.crt --from-literal=githost=${GIT_PROVIDER_URL}
+  oc create configmap ${GIT_SSL_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt --from-literal=githost=${GIT_PROVIDER_URL}
   oc label configmap ${GIT_SSL_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org
 
   echo "======= [INFO] ConfigMaps are configured ======="
@@ -109,9 +109,10 @@ deployChe() {
 
 # this command starts port forwarding between the local machine and the che-host service in the OpenShift cluster.
 forwardPortToService() {
+  sleep 10s
   echo "------- [INFO] Start forwarding between the local machine and the che-host service -------"
   oc port-forward service/che-host ${CHE_FORWARDED_PORT}:8080 -n ${CHE_NAMESPACE} &
-  sleep 10s
+  sleep 3s
 }
 
 killProcessByPort() {

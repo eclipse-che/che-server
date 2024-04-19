@@ -104,12 +104,32 @@ deployChe() {
                        --telemetry=off \
                        --batch
 
+  waitFinishDeploymentCheServer
   echo "======= [INFO] Eclipse Che is successfully installed ======="
+}
+
+waitFinishDeploymentCheServer() {
+          CURRENT_TIME=$(date +%s)
+          ENDTIME=$((CURRENT_TIME + 60))
+
+          while [ "$(date +%s)" -lt $ENDTIME ]; do
+              podCheServerName=$(oc get pod -n ${CHE_NAMESPACE} -l component=che | grep "che" | awk '{ print $1 }')
+              echo "Pod Che_Server: $podCheServerName"
+              count=$(echo "$podCheServerName" | wc -l)
+              if [ $count -eq 1 ]; then
+                  echo "------- [INFO] Only one Che Server pod is left. -------"
+                  exit 0
+              fi
+              echo "------- [INFO] Waiting until only one Che Server pod remains. -------"
+              sleep 5
+          done
+
+          echo "####### [ERROR] Error occurred while waiting for only one Che Server pod. #######"
+          exit 1
 }
 
 # this command starts port forwarding between the local machine and the che-host service in the OpenShift cluster.
 forwardPortToService() {
-  sleep 10s
   echo "------- [INFO] Start forwarding between the local machine and the che-host service -------"
   oc port-forward service/che-host ${CHE_FORWARDED_PORT}:8080 -n ${CHE_NAMESPACE} &
   sleep 3s

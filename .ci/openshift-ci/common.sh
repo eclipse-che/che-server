@@ -118,7 +118,7 @@ waitFinishDeploymentCheServer() {
               count=$(echo "$podCheServerName" | wc -l)
               if [ $count -eq 1 ]; then
                   echo "------- [INFO] Only one Che Server pod is left. -------"
-                  exit 0
+                  return 0
               fi
               echo "------- [INFO] Waiting until only one Che Server pod remains. -------"
               sleep 5

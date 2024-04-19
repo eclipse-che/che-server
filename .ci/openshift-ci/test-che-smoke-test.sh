@@ -16,6 +16,8 @@ set -ex
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
+echo "======= [INFO] OpenShift CI infrastructure is ready. Running test. ======="
+
 export TEST_POD_NAME=${TEST_POD_NAME:-"che-smoke-test"}
 
 # import common test functions

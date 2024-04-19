@@ -16,6 +16,8 @@ set -ex
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
+echo "======= [INFO] OpenShift CI infrastructure is ready. Running test. ======="
+
 export PUBLIC_REPO_SSH_URL=${PUBLIC_REPO_SSH_URL:-"git@gitea.com:chepullreq1/public-repo.git"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@gitea.com:chepullreq1/private-repo.git"}
 export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://gitea.com/chepullreq1/public-repo/raw/branch/main/devfile.yaml"}

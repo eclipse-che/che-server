@@ -69,7 +69,7 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url) && PATTERN.matcher(url).matches() || containsDevfile(url);
+    return !isNullOrEmpty(url) && (PATTERN.matcher(url).matches() || containsDevfile(url));
   }
 
   private boolean containsDevfile(String requestURL) {

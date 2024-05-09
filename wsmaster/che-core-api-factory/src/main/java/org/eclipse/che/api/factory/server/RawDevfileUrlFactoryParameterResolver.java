@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,8 +31,10 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
+import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 
 /**
  * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a
@@ -45,13 +48,15 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
+  private final DevfileParser devfileParser;
 
   @Inject
   public RawDevfileUrlFactoryParameterResolver(
-      URLFactoryBuilder urlFactoryBuilder, URLFetcher urlFetcher) {
+      URLFactoryBuilder urlFactoryBuilder, URLFetcher urlFetcher, DevfileParser devfileParser) {
     super(null, urlFactoryBuilder, PROVIDER_NAME);
     this.urlFactoryBuilder = urlFactoryBuilder;
     this.urlFetcher = urlFetcher;
+    this.devfileParser = devfileParser;
   }
 
   /**
@@ -64,7 +69,17 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url) && PATTERN.matcher(url).matches();
+    return !isNullOrEmpty(url) && PATTERN.matcher(url).matches() || containsDevfile(url);
+  }
+
+  private boolean containsDevfile(String requestURL) {
+    try {
+      String fetch = urlFetcher.fetch(requestURL);
+      devfileParser.parseYaml(fetch);
+      return true;
+    } catch (IOException | DevfileFormatException e) {
+      return !e.getMessage().startsWith("Cannot construct instance of");
+    }
   }
 
   @Override

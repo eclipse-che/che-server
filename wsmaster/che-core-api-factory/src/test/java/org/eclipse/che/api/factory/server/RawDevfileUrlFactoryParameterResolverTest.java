@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
@@ -38,6 +39,7 @@ import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.DevfileVersionDetector;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
@@ -63,6 +65,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
           + "  reference: ../localfile\n";
 
   @Mock private URLFetcher urlFetcher;
+  @Mock private DevfileParser devfileParser;
 
   @InjectMocks private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
 
@@ -84,7 +87,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
             "editor", "plugin", false, devfileParser, new DevfileVersionDetector());
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher, devfileParser);
 
     // set up our factory with the location of our devfile that is referencing our localfile
     Map<String, String> factoryParameters = new HashMap<>();
@@ -106,7 +109,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher, devfileParser);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, "http://myloc/devfile");
@@ -137,7 +140,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher, devfileParser);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, url);
@@ -166,11 +169,33 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   }
 
   @Test
-  public void shouldNotAcceptRawDevfileUrl() {
+  public void shouldAcceptRawDevfileUrlWithUnrecognizedDevfile() throws Exception {
+    // given
+    String url = "https://host/path/devfile";
+    when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
+    when(devfileParser.parseYaml(eq(DEVFILE)))
+        .thenThrow(new DevfileFormatException("Unrecognized field \"schemaVersion\""));
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotAcceptGitRepositoryUrl() throws Exception {
+    // given
+    String gitRepositoryUrl = "https://host/user/repo.git";
+    when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenReturn("unsupported content");
+    when(devfileParser.parseYaml(eq("unsupported content")))
+        .thenThrow(new DevfileFormatException("Cannot construct instance of ..."));
+
     // when
     boolean result =
         rawDevfileUrlFactoryParameterResolver.accept(
-            singletonMap(URL_PARAMETER_NAME, "https://host/user/repo.git"));
+            singletonMap(URL_PARAMETER_NAME, gitRepositoryUrl));
 
     // then
     assertFalse(result);
@@ -195,10 +220,12 @@ public class RawDevfileUrlFactoryParameterResolverTest {
       "https://host/path/.devfile.yaml",
       "https://host/path/any-name.yaml",
       "https://host/path/any-name.yml",
+      "https://host/path/any-name",
       "https://host/path/devfile.yaml?token=TOKEN123",
       "https://host/path/.devfile.yaml?token=TOKEN123",
       "https://host/path/any-name.yaml?token=TOKEN123",
-      "https://host/path/any-name.yml?token=TOKEN123"
+      "https://host/path/any-name.yml?token=TOKEN123",
+      "https://host/path/any-name?token=TOKEN123"
     };
   }
 }

@@ -30,6 +30,7 @@ import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.BadRequestException;
@@ -185,12 +186,27 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   }
 
   @Test
-  public void shouldNotAcceptGitRepositoryUrl() throws Exception {
+  public void shouldNotAcceptPublicGitRepositoryUrl() throws Exception {
     // given
     String gitRepositoryUrl = "https://host/user/repo.git";
     when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenReturn("unsupported content");
     when(devfileParser.parseYaml(eq("unsupported content")))
         .thenThrow(new DevfileFormatException("Cannot construct instance of ..."));
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(
+            singletonMap(URL_PARAMETER_NAME, gitRepositoryUrl));
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotAcceptPrivateGitRepositoryUrl() throws Exception {
+    // given
+    String gitRepositoryUrl = "https://host/user/private-repo.git";
+    when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenThrow(new FileNotFoundException());
 
     // when
     boolean result =

@@ -77,7 +77,9 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
       String fetch = urlFetcher.fetch(requestURL);
       devfileParser.parseYaml(fetch);
       return true;
-    } catch (IOException | DevfileFormatException e) {
+    } catch (IOException e) {
+      return false;
+    } catch (DevfileFormatException e) {
       return !e.getMessage().startsWith("Cannot construct instance of");
     }
   }

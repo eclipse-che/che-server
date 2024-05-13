@@ -16,6 +16,7 @@ import static java.lang.String.format;
 import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -69,18 +70,16 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url) && (PATTERN.matcher(url).matches() || containsDevfile(url));
+    return !isNullOrEmpty(url) && (PATTERN.matcher(url).matches() || containsYaml(url));
   }
 
-  private boolean containsDevfile(String requestURL) {
+  private boolean containsYaml(String requestURL) {
     try {
       String fetch = urlFetcher.fetch(requestURL);
-      devfileParser.parseYaml(fetch);
-      return true;
-    } catch (IOException e) {
+      JsonNode parsedYaml = devfileParser.parseYamlRaw(fetch);
+      return !parsedYaml.isEmpty();
+    } catch (IOException | DevfileFormatException e) {
       return false;
-    } catch (DevfileFormatException e) {
-      return !e.getMessage().startsWith("Cannot construct instance of");
     }
   }
 

@@ -30,6 +30,7 @@ import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +41,6 @@ import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.DevfileVersionDetector;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
@@ -170,12 +170,13 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   }
 
   @Test
-  public void shouldAcceptRawDevfileUrlWithUnrecognizedDevfile() throws Exception {
+  public void shouldAcceptRawDevfileUrlWithYaml() throws Exception {
     // given
+    JsonNode jsonNode = mock(JsonNode.class);
     String url = "https://host/path/devfile";
     when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
-    when(devfileParser.parseYaml(eq(DEVFILE)))
-        .thenThrow(new DevfileFormatException("Unrecognized field \"schemaVersion\""));
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
 
     // when
     boolean result =
@@ -188,10 +189,11 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   @Test
   public void shouldNotAcceptPublicGitRepositoryUrl() throws Exception {
     // given
+    JsonNode jsonNode = mock(JsonNode.class);
     String gitRepositoryUrl = "https://host/user/repo.git";
     when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenReturn("unsupported content");
-    when(devfileParser.parseYaml(eq("unsupported content")))
-        .thenThrow(new DevfileFormatException("Cannot construct instance of ..."));
+    when(devfileParser.parseYamlRaw(eq("unsupported content"))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(true);
 
     // when
     boolean result =

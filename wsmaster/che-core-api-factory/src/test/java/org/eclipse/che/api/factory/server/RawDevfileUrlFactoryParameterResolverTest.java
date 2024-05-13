@@ -169,6 +169,22 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     assertTrue(result);
   }
 
+  @Test(dataProvider = "devfileUrlsWithoutExtension")
+  public void shouldAcceptRawDevfileUrlWithoutExtension(String url) throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
   @Test
   public void shouldAcceptRawDevfileUrlWithYaml() throws Exception {
     // given
@@ -238,12 +254,15 @@ public class RawDevfileUrlFactoryParameterResolverTest {
       "https://host/path/.devfile.yaml",
       "https://host/path/any-name.yaml",
       "https://host/path/any-name.yml",
-      "https://host/path/any-name",
       "https://host/path/devfile.yaml?token=TOKEN123",
       "https://host/path/.devfile.yaml?token=TOKEN123",
       "https://host/path/any-name.yaml?token=TOKEN123",
-      "https://host/path/any-name.yml?token=TOKEN123",
-      "https://host/path/any-name?token=TOKEN123"
+      "https://host/path/any-name.yml?token=TOKEN123"
     };
+  }
+
+  @DataProvider(name = "devfileUrlsWithoutExtension")
+  private Object[] devfileUrlsWithoutExtension() {
+    return new String[] {"https://host/path/any-name", "https://host/path/any-name?token=TOKEN123"};
   }
 }

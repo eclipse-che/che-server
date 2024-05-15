@@ -24,11 +24,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.BadRequestException;
@@ -63,6 +66,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
           + "  reference: ../localfile\n";
 
   @Mock private URLFetcher urlFetcher;
+  @Mock private DevfileParser devfileParser;
 
   @InjectMocks private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
 
@@ -84,7 +88,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
             "editor", "plugin", false, devfileParser, new DevfileVersionDetector());
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher, devfileParser);
 
     // set up our factory with the location of our devfile that is referencing our localfile
     Map<String, String> factoryParameters = new HashMap<>();
@@ -106,7 +110,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher, devfileParser);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, "http://myloc/devfile");
@@ -137,7 +141,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher, devfileParser);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, url);
@@ -165,12 +169,67 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     assertTrue(result);
   }
 
+  @Test(dataProvider = "devfileUrlsWithoutExtension")
+  public void shouldAcceptRawDevfileUrlWithoutExtension(String url) throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
   @Test
-  public void shouldNotAcceptRawDevfileUrl() {
+  public void shouldAcceptRawDevfileUrlWithYaml() throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    String url = "https://host/path/devfile";
+    when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotAcceptPublicGitRepositoryUrl() throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    String gitRepositoryUrl = "https://host/user/repo.git";
+    when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenReturn("unsupported content");
+    when(devfileParser.parseYamlRaw(eq("unsupported content"))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(true);
+
     // when
     boolean result =
         rawDevfileUrlFactoryParameterResolver.accept(
-            singletonMap(URL_PARAMETER_NAME, "https://host/user/repo.git"));
+            singletonMap(URL_PARAMETER_NAME, gitRepositoryUrl));
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotAcceptPrivateGitRepositoryUrl() throws Exception {
+    // given
+    String gitRepositoryUrl = "https://host/user/private-repo.git";
+    when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenThrow(new FileNotFoundException());
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(
+            singletonMap(URL_PARAMETER_NAME, gitRepositoryUrl));
 
     // then
     assertFalse(result);
@@ -200,5 +259,10 @@ public class RawDevfileUrlFactoryParameterResolverTest {
       "https://host/path/any-name.yaml?token=TOKEN123",
       "https://host/path/any-name.yml?token=TOKEN123"
     };
+  }
+
+  @DataProvider(name = "devfileUrlsWithoutExtension")
+  private Object[] devfileUrlsWithoutExtension() {
+    return new String[] {"https://host/path/any-name", "https://host/path/any-name?token=TOKEN123"};
   }
 }

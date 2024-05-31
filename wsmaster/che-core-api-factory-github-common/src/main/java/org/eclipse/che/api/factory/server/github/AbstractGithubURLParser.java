@@ -63,6 +63,7 @@ public abstract class AbstractGithubURLParser {
   private final boolean disableSubdomainIsolation;
 
   private final String providerName;
+  private final String endpoint;
 
   /** Constructor used for testing only. */
   AbstractGithubURLParser(
@@ -78,8 +79,7 @@ public abstract class AbstractGithubURLParser {
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
 
-    String endpoint =
-        isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
+    endpoint = isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
 
     this.githubPattern = compile(format(githubPatternTemplate, endpoint));
     this.githubSSHPattern =
@@ -93,8 +93,8 @@ public abstract class AbstractGithubURLParser {
         // If the GitHub URL is not configured, try to find it in a manually added user namespace
         // token.
         || isUserTokenPresent(trimmedUrl)
-        // Try to call an API request to see if the URL matches GitHub.
-        || isApiRequestRelevant(trimmedUrl);
+        // Try to call an API request to see if the URL matches self-hosted GitHub Enterprise.
+        || (!GITHUB_SAAS_ENDPOINT.equals(endpoint) && isApiRequestRelevant(trimmedUrl));
   }
 
   private boolean isUserTokenPresent(String repositoryUrl) {

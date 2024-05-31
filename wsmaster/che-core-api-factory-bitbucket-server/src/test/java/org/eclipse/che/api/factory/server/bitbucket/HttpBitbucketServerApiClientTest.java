@@ -394,7 +394,7 @@ public class HttpBitbucketServerApiClientTest {
           NotFoundException, BadRequestException {
 
     // given
-    when(oAuthAPI.getToken(eq("bitbucket"))).thenReturn(mock(OAuthToken.class));
+    when(oAuthAPI.getToken(eq("bitbucket-server"))).thenReturn(mock(OAuthToken.class));
     HttpBitbucketServerApiClient localServer =
         new HttpBitbucketServerApiClient(
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
@@ -411,7 +411,7 @@ public class HttpBitbucketServerApiClientTest {
     // given
     OAuthToken token = mock(OAuthToken.class);
     when(token.getToken()).thenReturn("token");
-    when(oAuthAPI.getToken(eq("bitbucket"))).thenReturn(token);
+    when(oAuthAPI.getToken(eq("bitbucket-server"))).thenReturn(token);
     bitbucketServer =
         new HttpBitbucketServerApiClient(
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
@@ -437,6 +437,6 @@ public class HttpBitbucketServerApiClientTest {
     bitbucketServer.getUser();
 
     // then
-    verify(oAuthAPI, times(2)).getToken(eq("bitbucket"));
+    verify(oAuthAPI, times(2)).getToken(eq("bitbucket-server"));
   }
 }

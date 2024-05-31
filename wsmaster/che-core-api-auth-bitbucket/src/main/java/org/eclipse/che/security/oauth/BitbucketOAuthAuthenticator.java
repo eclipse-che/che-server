@@ -29,6 +29,8 @@ import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   private final String bitbucketEndpoint;
 
+  private static final String BITBUCKET_CLOUD_ENDPOINT = "https://bitbucket.org";
+
   public BitbucketOAuthAuthenticator(
       String bitbucketEndpoint,
       String clientId,
@@ -52,7 +54,7 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public final String getOAuthProvider() {
-    return "bitbucket";
+    return BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint) ? "bitbucket" : "bitbucket-server";
   }
 
   @Override
@@ -76,7 +78,7 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
    * @return Bitbucket Cloud or Server API request URL
    */
   private String getTestRequestUrl() {
-    return "https://bitbucket.org".equals(bitbucketEndpoint)
+    return BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint)
         ? "https://api.bitbucket.org/2.0/user"
         : bitbucketEndpoint + "/plugins/servlet/applinks/whoami";
   }

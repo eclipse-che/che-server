@@ -30,6 +30,8 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   private final String bitbucketEndpoint;
 
   private static final String BITBUCKET_CLOUD_ENDPOINT = "https://bitbucket.org";
+  private static final String BITBUCKET_NAME = "bitbucket";
+  private static final String BITBUCKET_SERVER_NAME = "bitbucket-server";
 
   public BitbucketOAuthAuthenticator(
       String bitbucketEndpoint,
@@ -54,7 +56,10 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public final String getOAuthProvider() {
-    return BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint) ? "bitbucket" : "bitbucket-server";
+    // Bitbucket Cloud and Bitbucket Server have different provider names.
+    return BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint)
+        ? BITBUCKET_NAME
+        : BITBUCKET_SERVER_NAME;
   }
 
   @Override

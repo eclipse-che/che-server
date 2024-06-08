@@ -31,6 +31,7 @@ import static org.testng.Assert.assertTrue;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import java.lang.reflect.Field;
 import java.util.Optional;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -336,6 +337,9 @@ public class GithubURLParserTest {
   @Test
   public void shouldValidateOldVersionGitHubServerUrl() throws Exception {
     // given
+    Field endpoint = AbstractGithubURLParser.class.getDeclaredField("endpoint");
+    endpoint.setAccessible(true);
+    endpoint.set(githubUrlParser, wireMockServer.baseUrl());
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/api/v3/user"))
@@ -354,6 +358,9 @@ public class GithubURLParserTest {
   @Test
   public void shouldValidateGitHubServerUrl() throws Exception {
     // given
+    Field endpoint = AbstractGithubURLParser.class.getDeclaredField("endpoint");
+    endpoint.setAccessible(true);
+    endpoint.set(githubUrlParser, wireMockServer.baseUrl());
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/api/v3/user"))
@@ -367,5 +374,14 @@ public class GithubURLParserTest {
 
     // then
     assertTrue(valid);
+  }
+
+  @Test
+  public void shouldNotRequestGitHubSAASUrl() throws Exception {
+    // when
+    githubUrlParser.isValid("https:github.com/repo/user.git");
+
+    // then
+    verify(githubApiClient, never()).getUser(anyString());
   }
 }

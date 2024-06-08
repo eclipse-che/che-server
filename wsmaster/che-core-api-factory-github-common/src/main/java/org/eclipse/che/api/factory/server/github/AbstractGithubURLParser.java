@@ -63,6 +63,7 @@ public abstract class AbstractGithubURLParser {
   private final boolean disableSubdomainIsolation;
 
   private final String providerName;
+  private final String endpoint;
 
   /** Constructor used for testing only. */
   AbstractGithubURLParser(
@@ -78,25 +79,31 @@ public abstract class AbstractGithubURLParser {
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
 
-    String endpoint =
-        isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
+    endpoint = isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
 
     this.githubPattern = compile(format(githubPatternTemplate, endpoint));
     this.githubSSHPattern =
         compile(format(githubSSHPatternTemplate, URI.create(endpoint).getHost()));
   }
 
+  // Check if the given URL is a valid GitHub URL.
   public boolean isValid(@NotNull String url) {
     String trimmedUrl = trimEnd(url, '/');
-    return githubPattern.matcher(trimmedUrl).matches()
+    return
+    // Check if the given URL matches the GitHub URL patterns. It works if OAuth is configured and
+    // GitHub server URL is known or the repository URL points to GitHub SaaS (https://github.com).
+    githubPattern.matcher(trimmedUrl).matches()
         || githubSSHPattern.matcher(trimmedUrl).matches()
-        // If the GitHub URL is not configured, try to find it in a manually added user namespace
-        // token.
+        // Check whether PAT is configured for the GitHub server URL. It is sufficient to confirm
+        // that the URL is a valid GitHub URL.
         || isUserTokenPresent(trimmedUrl)
-        // Try to call an API request to see if the URL matches GitHub.
-        || isApiRequestRelevant(trimmedUrl);
+        // Check if the given URL is a valid GitHub URL by reaching the endpoint of the GitHub
+        // server and analysing the response. This query basically only needs to be performed if the
+        // specified repository URL does not point to GitHub SaaS.
+        || (!GITHUB_SAAS_ENDPOINT.equals(endpoint) && isApiRequestRelevant(trimmedUrl));
   }
 
+  // Try to find the given url in a manually added user namespace token secret.
   private boolean isUserTokenPresent(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
@@ -115,6 +122,7 @@ public abstract class AbstractGithubURLParser {
     return false;
   }
 
+  // Try to call an API request to see if the given url matches self-hosted GitHub Enterprise.
   private boolean isApiRequestRelevant(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {

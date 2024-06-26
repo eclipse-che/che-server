@@ -95,6 +95,11 @@ public interface PersonalAccessTokenManager {
           UnknownScmProviderException, UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException;
 
+  /** Refresh a personal access token. */
+  void forceRefreshPersonalAccessToken(String scmServerUrl)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
+          ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
+
   /**
    * Set or update git-credentials with {@link PersonalAccessToken} from permanent storage.
    *

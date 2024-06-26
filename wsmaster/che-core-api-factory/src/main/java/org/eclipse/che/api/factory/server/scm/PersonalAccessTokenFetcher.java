@@ -39,6 +39,17 @@ public interface PersonalAccessTokenFetcher {
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
 
   /**
+   * Refresh a PersonalAccessToken.
+   *
+   * @throws ScmUnauthorizedException - in case if user are not authorized che server to create new
+   *     token. Further user interaction is needed before calling next time this method.
+   * @throws ScmCommunicationException - Some unexpected problem occurred during communication with
+   *     scm provider.
+   */
+  PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException;
+
+  /**
    * Checks whether the provided personal access token is valid and has expected scope of
    * permissions.
    *

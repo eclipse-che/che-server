@@ -125,6 +125,16 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     this.providerName = providerName;
   }
 
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException {
+    if (githubApiClient == null || !githubApiClient.isConnected(scmServerUrl)) {
+      LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
+      return null;
+    }
+
+    throw buildScmUnauthorizedException(cheSubject);
+  }
+
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {

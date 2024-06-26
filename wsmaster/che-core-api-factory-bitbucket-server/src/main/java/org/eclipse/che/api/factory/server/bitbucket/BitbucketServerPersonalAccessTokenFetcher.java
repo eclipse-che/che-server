@@ -71,6 +71,13 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   }
 
   @Override
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException {
+    // #fetchPersonalAccessToken does the same thing as #refreshPersonalAccessToken
+    return fetchPersonalAccessToken(cheUser, scmServerUrl);
+  }
+
+  @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheUser, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException {
     if (!bitbucketServerApiClient.isConnected(scmServerUrl)) {

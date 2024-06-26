@@ -82,6 +82,17 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
   }
 
   @Override
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException {
+    if (bitbucketApiClient == null || !bitbucketApiClient.isConnected(scmServerUrl)) {
+      LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
+      return null;
+    }
+
+    throw buildScmUnauthorizedException(cheSubject);
+  }
+
+  @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;

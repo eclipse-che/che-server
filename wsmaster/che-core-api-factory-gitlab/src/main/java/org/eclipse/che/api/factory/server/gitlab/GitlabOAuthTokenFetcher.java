@@ -88,6 +88,26 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
   }
 
   @Override
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException {
+    scmServerUrl = StringUtils.trimEnd(scmServerUrl, '/');
+    if (getApiClient(scmServerUrl) == null) {
+      LOG.debug("not a valid url {} for current fetcher ", scmServerUrl);
+      return null;
+    }
+
+    if (oAuthAPI == null) {
+      throw new ScmCommunicationException(
+          format(
+              "OAuth 2 is not configured for SCM provider [%s]. For details, refer "
+                  + "the documentation in section of SCM providers configuration.",
+              OAUTH_PROVIDER_NAME));
+    }
+
+    throw buildScmUnauthorizedException(cheSubject);
+  }
+
+  @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     scmServerUrl = StringUtils.trimEnd(scmServerUrl, '/');

@@ -330,22 +330,31 @@ public abstract class OAuthAuthenticator {
     if (!isConfigured()) {
       throw new IOException(AUTHENTICATOR_IS_NOT_CONFIGURED);
     }
+
     Credential credential = flow.loadCredential(userId);
     if (credential == null) {
       return null;
     }
 
+    boolean tokenRefreshed;
     try {
-      credential.refreshToken();
-      credential = flow.loadCredential(userId);
-      return newDto(OAuthToken.class).withToken(credential.getAccessToken());
+      tokenRefreshed = credential.refreshToken();
     } catch (IOException ioEx) {
+      tokenRefreshed = false;
+    }
+
+    if (tokenRefreshed) {
+      credential = flow.loadCredential(userId);
+    } else {
+      // if token is not refreshed then old value should be invalidated
+      // and null result should be returned
       try {
         invalidateTokenByUser(userId);
       } catch (IOException ignored) {
       }
       return null;
     }
+    return newDto(OAuthToken.class).withToken(credential.getAccessToken());
   }
 
   /**

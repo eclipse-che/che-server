@@ -102,6 +102,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
@@ -185,6 +186,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
@@ -196,6 +198,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
@@ -207,6 +210,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .build();
     ObjectMeta meta3 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-03T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
@@ -343,6 +347,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
@@ -354,6 +359,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-08-01T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
@@ -475,15 +481,17 @@ public class KubernetesPersonalAccessTokenManagerTest {
                       ? Optional.of("user")
                       : Optional.empty();
                 });
-    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
-    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
-    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    //    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    //    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    //
+    // when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
     Map<String, String> data2 =
         Map.of("token", Base64.getEncoder().encodeToString("token2".getBytes(UTF_8)));
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
@@ -497,6 +505,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,

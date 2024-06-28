@@ -63,8 +63,8 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   }
 
   @Override
-  public OAuthToken getToken(String userId) throws IOException {
-    final OAuthToken token = super.getToken(userId);
+  public OAuthToken getOrRefreshToken(String userId) throws IOException {
+    final OAuthToken token = super.getOrRefreshToken(userId);
     // Need to check if token is valid for requests, if valid - return it to caller.
     try {
       if (token == null || isNullOrEmpty(token.getToken())) {

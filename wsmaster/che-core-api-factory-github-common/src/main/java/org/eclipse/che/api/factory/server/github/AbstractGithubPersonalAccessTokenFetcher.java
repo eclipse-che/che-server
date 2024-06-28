@@ -125,8 +125,19 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     this.providerName = providerName;
   }
 
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return getOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, true);
+  }
+
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return getOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, false);
+  }
+
+  private PersonalAccessToken getOrRefreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, boolean forceRefreshToken)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
@@ -135,7 +146,10 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       return null;
     }
     try {
-      oAuthToken = oAuthAPI.getToken(providerName);
+      oAuthToken =
+          forceRefreshToken
+              ? oAuthAPI.refreshToken(providerName)
+              : oAuthAPI.getOrRefreshToken(providerName);
       String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =

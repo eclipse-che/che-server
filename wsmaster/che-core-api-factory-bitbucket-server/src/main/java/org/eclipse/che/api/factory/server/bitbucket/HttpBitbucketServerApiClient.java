@@ -421,7 +421,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
   private @Nullable String getToken() throws ScmUnauthorizedException {
     try {
-      OAuthToken token = oAuthAPI.getToken("bitbucket-server");
+      OAuthToken token = oAuthAPI.getOrRefreshToken("bitbucket-server");
       return token.getToken();
     } catch (NotFoundException
         | ServerException

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -36,6 +36,17 @@ public interface PersonalAccessTokenFetcher {
    *     scm provider.
    */
   PersonalAccessToken fetchPersonalAccessToken(Subject cheUser, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
+
+  /**
+   * Refresh a PersonalAccessToken.
+   *
+   * @throws ScmUnauthorizedException - in case if user are not authorized che server to create new
+   *     token. Further user interaction is needed before calling next time this method.
+   * @throws ScmCommunicationException - Some unexpected problem occurred during communication with
+   *     scm provider.
+   */
+  PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
 
   /**

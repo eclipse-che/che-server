@@ -60,7 +60,7 @@ public class EmbeddedOAuthAPITest {
       expectedExceptions = NotFoundException.class,
       expectedExceptionsMessageRegExp = "Unsupported OAuth provider unknown")
   public void shouldThrowExceptionIfNoSuchProviderFound() throws Exception {
-    embeddedOAuthAPI.getToken("unknown");
+    embeddedOAuthAPI.getOrRefreshToken("unknown");
   }
 
   @Test
@@ -70,9 +70,10 @@ public class EmbeddedOAuthAPITest {
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(oauth2Providers.getAuthenticator(eq(provider))).thenReturn(authenticator);
 
-    when(authenticator.getToken(anyString())).thenReturn(newDto(OAuthToken.class).withToken(token));
+    when(authenticator.getOrRefreshToken(anyString()))
+        .thenReturn(newDto(OAuthToken.class).withToken(token));
 
-    OAuthToken result = embeddedOAuthAPI.getToken(provider);
+    OAuthToken result = embeddedOAuthAPI.getOrRefreshToken(provider);
 
     assertEquals(result.getToken(), token);
   }

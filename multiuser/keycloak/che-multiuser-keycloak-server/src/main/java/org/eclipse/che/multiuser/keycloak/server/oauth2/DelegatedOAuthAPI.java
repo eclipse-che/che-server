@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -67,7 +67,7 @@ public class DelegatedOAuthAPI implements OAuthAPI {
   }
 
   @Override
-  public OAuthToken getToken(String oauthProvider)
+  public OAuthToken getOrRefreshToken(String oauthProvider)
       throws ForbiddenException, BadRequestException, NotFoundException, ServerException,
           UnauthorizedException {
     try {
@@ -79,6 +79,11 @@ public class DelegatedOAuthAPI implements OAuthAPI {
     } catch (IOException e) {
       throw new ServerException(e.getMessage());
     }
+  }
+
+  @Override
+  public OAuthToken refreshToken(String oauthProvider) throws ForbiddenException {
+    throw new ForbiddenException("Method is not supported in this implementation of OAuth API");
   }
 
   @Override

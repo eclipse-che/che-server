@@ -33,6 +33,19 @@ public class ScmPersonalAccessTokenFetcher {
     this.personalAccessTokenFetchers = personalAccessTokenFetchers;
   }
 
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
+      PersonalAccessToken token = fetcher.refreshPersonalAccessToken(cheUser, scmServerUrl);
+      if (token != null) {
+        return token;
+      }
+    }
+
+    throw new UnknownScmProviderException(
+        "No PersonalAccessTokenFetcher configured for " + scmServerUrl, scmServerUrl);
+  }
+
   /**
    * Iterate over the Set<PersonalAccessTokenFetcher> declared in container and sequentially invoke
    * {@link PersonalAccessTokenFetcher#fetchPersonalAccessToken(Subject, String)} method.

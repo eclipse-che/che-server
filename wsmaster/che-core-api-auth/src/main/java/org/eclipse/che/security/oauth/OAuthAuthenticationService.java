@@ -96,7 +96,7 @@ public class OAuthAuthenticationService extends Service {
   public OAuthToken token(@Required @QueryParam("oauth_provider") String oauthProvider)
       throws ServerException, UnauthorizedException, NotFoundException, ForbiddenException,
           BadRequestException, ConflictException {
-    return oAuthAPI.getToken(oauthProvider);
+    return oAuthAPI.getOrRefreshToken(oauthProvider);
   }
 
   /**

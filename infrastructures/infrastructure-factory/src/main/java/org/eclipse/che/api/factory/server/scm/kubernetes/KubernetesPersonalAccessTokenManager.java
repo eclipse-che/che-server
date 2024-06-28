@@ -24,9 +24,12 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
@@ -188,6 +191,15 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                 .access(null, namespaceMeta.getName())
                 .secrets()
                 .get(KUBERNETES_PERSONAL_ACCESS_TOKEN_LABEL_SELECTOR);
+
+        // sort secrets to get the newest one first
+        // Assign to new list to avoid UnsupportedOperationException (ImmutableList)
+        secrets =
+            secrets.stream()
+                .sorted(Comparator.comparing(secret -> secret.getMetadata().getCreationTimestamp()))
+                .collect(Collectors.toList());
+        Collections.reverse(secrets);
+
         for (Secret secret : secrets) {
           LOG.debug("Checking secret {}", secret.getMetadata().getName());
           if (deleteSecretIfMisconfigured(secret)) {
@@ -328,6 +340,17 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     PersonalAccessToken personalAccessToken = get(scmServerUrl);
     gitCredentialManager.createOrReplace(personalAccessToken);
     return personalAccessToken;
+  }
+
+  @Override
+  public void forceRefreshPersonalAccessToken(String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    PersonalAccessToken personalAccessToken =
+        scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(subject, scmServerUrl);
+    gitCredentialManager.createOrReplace(personalAccessToken);
+    store(personalAccessToken);
   }
 
   @Override

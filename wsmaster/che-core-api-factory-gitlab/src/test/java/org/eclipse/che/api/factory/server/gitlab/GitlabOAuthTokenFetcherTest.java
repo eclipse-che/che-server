@@ -80,7 +80,7 @@ public class GitlabOAuthTokenFetcherTest {
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("oauthtoken").withScope("api repo");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/api/v4/user"))
@@ -106,7 +106,7 @@ public class GitlabOAuthTokenFetcherTest {
       expectedExceptionsMessageRegExp = "Username is not authorized in gitlab OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
-    when(oAuthAPI.getToken(anyString())).thenThrow(UnauthorizedException.class);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
 
     oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
@@ -116,7 +116,7 @@ public class GitlabOAuthTokenFetcherTest {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken =
         newDto(OAuthToken.class).withToken("oauthtoken").withScope("api write_repository openid");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
@@ -198,7 +198,7 @@ public class GitlabOAuthTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("token").withScope("");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/api/v4/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token token"))

@@ -153,7 +153,7 @@ public class FactoryService extends Service {
               singletonMap(URL_PARAMETER_NAME, url));
       if (!authorisationRequestManager.isStored(factoryParametersResolver.getProviderName())) {
         String scmServerUrl = factoryParametersResolver.parseFactoryUrl(url).getProviderUrl();
-        if (!Boolean.parseBoolean(System.getenv("CHE_FORCE_REFRESH_PERSONAL_ACCESS_TOKEN"))) {
+        if (Boolean.parseBoolean(System.getenv("CHE_FORCE_REFRESH_PERSONAL_ACCESS_TOKEN"))) {
           personalAccessTokenManager.forceRefreshPersonalAccessToken(scmServerUrl);
         } else {
           personalAccessTokenManager.getAndStore(scmServerUrl);

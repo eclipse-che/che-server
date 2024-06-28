@@ -260,7 +260,7 @@ public class FactoryServiceTest {
         .post(SERVICE_PATH + "/token/refresh");
 
     // then
-    verify(personalAccessTokenManager).getAndStore(eq(scmServerUrl));
+    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(eq(scmServerUrl));
   }
 
   @Test

@@ -29,6 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
@@ -192,8 +193,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                 .get(KUBERNETES_PERSONAL_ACCESS_TOKEN_LABEL_SELECTOR);
 
         // sort secrets to get the newest one first
-        Collections.sort(
-            secrets, Comparator.comparing(secret -> secret.getMetadata().getCreationTimestamp()));
+        // Assign to new list to avoid UnsupportedOperationException (ImmutableList)
+        secrets =
+            secrets.stream()
+                .sorted(Comparator.comparing(secret -> secret.getMetadata().getCreationTimestamp()))
+                .collect(Collectors.toList());
         Collections.reverse(secrets);
 
         for (Secret secret : secrets) {

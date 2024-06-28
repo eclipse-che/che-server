@@ -142,7 +142,7 @@ public class GithubPersonalAccessTokenFetcherTest {
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/api/v3/user"))
@@ -161,7 +161,7 @@ public class GithubPersonalAccessTokenFetcherTest {
       expectedExceptionsMessageRegExp = "Username is not authorized in github OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
-    when(oAuthAPI.getToken(anyString())).thenThrow(UnauthorizedException.class);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
 
     githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
@@ -172,7 +172,7 @@ public class GithubPersonalAccessTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/api/v3/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + githubOauthToken))
@@ -185,7 +185,7 @@ public class GithubPersonalAccessTokenFetcherTest {
   public void shouldReturnToken() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken);
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/api/v3/user"))

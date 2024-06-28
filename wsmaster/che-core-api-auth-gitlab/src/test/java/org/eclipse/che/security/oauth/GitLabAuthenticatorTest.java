@@ -64,7 +64,7 @@ public class GitLabAuthenticatorTest {
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .willReturn(aResponse().withBody("{\"id\": \"testId\"}")));
     // when
-    OAuthToken token = gitLabOAuthAuthenticator.getToken("userId");
+    OAuthToken token = gitLabOAuthAuthenticator.getOrRefreshToken("userId");
     // then
     assertEquals(token.getToken(), "token");
   }
@@ -89,7 +89,7 @@ public class GitLabAuthenticatorTest {
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .willReturn(aResponse().withBody("{}")));
     // when
-    OAuthToken token = gitLabOAuthAuthenticator.getToken("userId");
+    OAuthToken token = gitLabOAuthAuthenticator.getOrRefreshToken("userId");
     // then
     assertNull(token);
   }

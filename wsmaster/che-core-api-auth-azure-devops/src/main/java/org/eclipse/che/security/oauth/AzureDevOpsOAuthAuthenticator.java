@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -85,8 +85,8 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   }
 
   @Override
-  public OAuthToken getToken(String userId) throws IOException {
-    final OAuthToken token = super.getToken(userId);
+  public OAuthToken getOrRefreshToken(String userId) throws IOException {
+    final OAuthToken token = super.getOrRefreshToken(userId);
     try {
       // check if user's token is valid by requesting user profile data
       if (token == null

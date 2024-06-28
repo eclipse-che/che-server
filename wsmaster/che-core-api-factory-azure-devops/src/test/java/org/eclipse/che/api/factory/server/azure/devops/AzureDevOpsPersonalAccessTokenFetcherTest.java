@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -94,7 +94,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
     personalAccessTokenFetcher =
         new AzureDevOpsPersonalAccessTokenFetcher(
             "localhost", "https://dev.azure.com", new String[] {}, azureDevOpsApiClient, oAuthAPI);
-    when(oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME)).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(AzureDevOps.PROVIDER_NAME)).thenReturn(oAuthToken);
     when(azureDevOpsApiClient.getUserWithOAuthToken(any())).thenReturn(azureDevOpsUser);
     when(azureDevOpsUser.getEmailAddress()).thenReturn("user-email");
 
@@ -112,7 +112,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(azureOauthToken).withScope("");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/_apis/profile/profiles/me?api-version=7.0"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + azureOauthToken))

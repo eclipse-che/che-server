@@ -105,7 +105,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/user"))
@@ -125,7 +125,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
       expectedExceptionsMessageRegExp = "Username is not authorized in bitbucket OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
-    when(oAuthAPI.getToken(anyString())).thenThrow(UnauthorizedException.class);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
 
     bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
         subject, BitbucketApiClient.BITBUCKET_SERVER);
@@ -136,7 +136,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken =
         newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("repo");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/user"))
@@ -231,7 +231,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + bitbucketOauthToken))

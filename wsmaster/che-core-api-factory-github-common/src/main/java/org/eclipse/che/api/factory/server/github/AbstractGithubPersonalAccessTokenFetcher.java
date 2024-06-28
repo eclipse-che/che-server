@@ -126,17 +126,18 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
   }
 
   public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
-      throws ScmUnauthorizedException {
-    if (githubApiClient == null || !githubApiClient.isConnected(scmServerUrl)) {
-      LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
-      return null;
-    }
-
-    throw buildScmUnauthorizedException(cheSubject);
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return getOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, true);
   }
 
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return getOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, false);
+  }
+
+  private PersonalAccessToken getOrRefreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, boolean forceRefreshToken)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
@@ -145,7 +146,10 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       return null;
     }
     try {
-      oAuthToken = oAuthAPI.getToken(providerName);
+      oAuthToken =
+          forceRefreshToken
+              ? oAuthAPI.refreshToken(providerName)
+              : oAuthAPI.getOrRefreshToken(providerName);
       String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =

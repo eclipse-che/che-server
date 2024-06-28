@@ -288,7 +288,7 @@ public abstract class OAuthAuthenticator {
    * @see OAuthTokenProvider#getToken(String, String) TODO: return Optional<OAuthToken> to avoid
    *     returning null.
    */
-  public OAuthToken getToken(String userId) throws IOException {
+  public OAuthToken getOrRefreshToken(String userId) throws IOException {
     if (!isConfigured()) {
       throw new IOException(AUTHENTICATOR_IS_NOT_CONFIGURED);
     }
@@ -317,6 +317,35 @@ public abstract class OAuthAuthenticator {
       }
     }
     return newDto(OAuthToken.class).withToken(credential.getAccessToken());
+  }
+
+  /**
+   * Refresh personal access token.
+   *
+   * @param userId user identifier
+   * @return a refreshed token value or {@code null}
+   * @throws IOException when error occurs during token loading
+   */
+  public OAuthToken refreshToken(String userId) throws IOException {
+    if (!isConfigured()) {
+      throw new IOException(AUTHENTICATOR_IS_NOT_CONFIGURED);
+    }
+    Credential credential = flow.loadCredential(userId);
+    if (credential == null) {
+      return null;
+    }
+
+    try {
+      credential.refreshToken();
+      credential = flow.loadCredential(userId);
+      return newDto(OAuthToken.class).withToken(credential.getAccessToken());
+    } catch (IOException ioEx) {
+      try {
+        invalidateTokenByUser(userId);
+      } catch (IOException ignored) {
+      }
+      return null;
+    }
   }
 
   /**

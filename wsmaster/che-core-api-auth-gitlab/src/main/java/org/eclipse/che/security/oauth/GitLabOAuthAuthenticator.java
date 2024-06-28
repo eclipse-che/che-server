@@ -88,8 +88,8 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   }
 
   @Override
-  public OAuthToken getToken(String userId) throws IOException {
-    final OAuthToken token = super.getToken(userId);
+  public OAuthToken getOrRefreshToken(String userId) throws IOException {
+    final OAuthToken token = super.getOrRefreshToken(userId);
     try {
       if (token == null || token.getToken() == null || token.getToken().isEmpty()) {
         return null;

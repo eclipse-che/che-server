@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -67,7 +67,7 @@ public class BitbucketUserDataFetcher implements GitUserDataFetcher {
   public GitUserData fetchGitUserData() throws ScmUnauthorizedException, ScmCommunicationException {
     OAuthToken oAuthToken;
     try {
-      oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
+      oAuthToken = oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME);
       // Find the user associated to the OAuth token by querying the Bitbucket API.
       BitbucketUser user = bitbucketApiClient.getUser(oAuthToken.getToken());
       BitbucketUserEmail emailResponse = bitbucketApiClient.getEmail(oAuthToken.getToken());

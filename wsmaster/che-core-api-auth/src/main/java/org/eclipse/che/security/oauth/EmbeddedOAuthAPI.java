@@ -216,14 +216,14 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   }
 
   @Override
-  public OAuthToken getToken(String oauthProvider)
+  public OAuthToken getOrRefreshToken(String oauthProvider)
       throws NotFoundException, UnauthorizedException, ServerException {
     OAuthAuthenticator provider = getAuthenticator(oauthProvider);
     Subject subject = EnvironmentContext.getCurrent().getSubject();
     try {
-      OAuthToken token = provider.getToken(subject.getUserId());
+      OAuthToken token = provider.getOrRefreshToken(subject.getUserId());
       if (token == null) {
-        token = provider.getToken(subject.getUserName());
+        token = provider.getOrRefreshToken(subject.getUserName());
       }
       if (token != null) {
         return token;
@@ -249,10 +249,32 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   }
 
   @Override
+  public OAuthToken refreshToken(String oauthProvider)
+      throws NotFoundException, UnauthorizedException, ServerException {
+    OAuthAuthenticator provider = getAuthenticator(oauthProvider);
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    try {
+      OAuthToken token = provider.refreshToken(subject.getUserId());
+      if (token == null) {
+        token = provider.refreshToken(subject.getUserName());
+      }
+
+      if (token != null) {
+        return token;
+      } else {
+        throw new UnauthorizedException(
+            "OAuth token for user " + subject.getUserId() + " was not found");
+      }
+    } catch (IOException e) {
+      throw new ServerException(e.getLocalizedMessage(), e);
+    }
+  }
+
+  @Override
   public void invalidateToken(String oauthProvider)
       throws NotFoundException, UnauthorizedException, ServerException {
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
-    OAuthToken oauthToken = getToken(oauthProvider);
+    OAuthToken oauthToken = getOrRefreshToken(oauthProvider);
     try {
       if (!oauth.invalidateToken(oauthToken.getToken())) {
         throw new UnauthorizedException(

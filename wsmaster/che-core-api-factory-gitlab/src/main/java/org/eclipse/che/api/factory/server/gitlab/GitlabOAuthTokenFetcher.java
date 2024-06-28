@@ -89,26 +89,18 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
 
   @Override
   public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException {
-    scmServerUrl = StringUtils.trimEnd(scmServerUrl, '/');
-    if (getApiClient(scmServerUrl) == null) {
-      LOG.debug("not a valid url {} for current fetcher ", scmServerUrl);
-      return null;
-    }
-
-    if (oAuthAPI == null) {
-      throw new ScmCommunicationException(
-          format(
-              "OAuth 2 is not configured for SCM provider [%s]. For details, refer "
-                  + "the documentation in section of SCM providers configuration.",
-              OAUTH_PROVIDER_NAME));
-    }
-
-    throw buildScmUnauthorizedException(cheSubject);
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, true);
   }
 
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, false);
+  }
+
+  private PersonalAccessToken fetchOrRefreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, boolean forceRefreshToken)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     scmServerUrl = StringUtils.trimEnd(scmServerUrl, '/');
     GitlabApiClient gitlabApiClient = getApiClient(scmServerUrl);
@@ -125,7 +117,10 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
     }
     OAuthToken oAuthToken;
     try {
-      oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
+      oAuthToken =
+          forceRefreshToken
+              ? oAuthAPI.refreshToken(OAUTH_PROVIDER_NAME)
+              : oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME);
       String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =

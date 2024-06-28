@@ -83,17 +83,18 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
 
   @Override
   public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
-      throws ScmUnauthorizedException {
-    if (bitbucketApiClient == null || !bitbucketApiClient.isConnected(scmServerUrl)) {
-      LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
-      return null;
-    }
-
-    throw buildScmUnauthorizedException(cheSubject);
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, true);
   }
 
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, false);
+  }
+
+  private PersonalAccessToken fetchOrRefreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, boolean forceRefreshToken)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
@@ -102,7 +103,10 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
       return null;
     }
     try {
-      oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
+      oAuthToken =
+          forceRefreshToken
+              ? oAuthAPI.refreshToken(OAUTH_PROVIDER_NAME)
+              : oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME);
       String tokenName = NameGenerator.generate(OAUTH_PROVIDER_NAME, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =

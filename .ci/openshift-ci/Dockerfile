@@ -11,7 +11,7 @@
 #   Red Hat, Inc. - initial API and implementation
 
 # Dockerfile to bootstrap build and test in openshift-ci
-FROM registry.ci.openshift.org/openshift/release:golang-1.18
+FROM registry.ci.openshift.org/openshift/release:golang-1.20
 # hadolint ignore=DL3002
 USER 0
 

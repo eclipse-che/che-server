@@ -24,7 +24,7 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
+import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
@@ -60,7 +60,12 @@ public class BaseFactoryParameterResolver {
             contentProvider,
             extractOverrideParams(factoryParameters),
             getSkipAuthorisation(factoryParameters))
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
+        .orElseGet(
+            () ->
+                newDto(FactoryDevfileV2Dto.class)
+                    .withDevfile(Map.of("schemaVersion", "2.3.0"))
+                    .withV(CURRENT_VERSION)
+                    .withSource("repo"))
         .acceptVisitor(factoryVisitor);
   }
 

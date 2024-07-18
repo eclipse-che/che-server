@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static java.util.stream.Collectors.toMap;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.DEFAULT_DEVFILE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import java.util.Collections;
@@ -63,7 +64,7 @@ public class BaseFactoryParameterResolver {
         .orElseGet(
             () ->
                 newDto(FactoryDevfileV2Dto.class)
-                    .withDevfile(Map.of("schemaVersion", "2.3.0"))
+                    .withDevfile(DEFAULT_DEVFILE)
                     .withV(CURRENT_VERSION)
                     .withSource("repo"))
         .acceptVisitor(factoryVisitor);

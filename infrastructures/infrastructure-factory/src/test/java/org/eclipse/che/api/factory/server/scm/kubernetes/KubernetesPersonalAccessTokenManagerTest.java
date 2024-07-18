@@ -464,7 +464,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test(dependsOnMethods = "shouldDeleteInvalidTokensOnGet")
-  public void shouldReturnFirstValidToken() throws Exception {
+  public void shouldReturnFirstValidTokenAndDeleteTheOlderOne() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(singletonList(meta));
@@ -481,10 +481,10 @@ public class KubernetesPersonalAccessTokenManagerTest {
                       ? Optional.of("user")
                       : Optional.empty();
                 });
-    //    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
-    //    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
-    //
-    // when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
     Map<String, String> data2 =
@@ -527,5 +527,6 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // then
     assertTrue(token.isPresent());
     assertEquals(token.get().getScmTokenId(), "id2");
+    verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
   }
 }

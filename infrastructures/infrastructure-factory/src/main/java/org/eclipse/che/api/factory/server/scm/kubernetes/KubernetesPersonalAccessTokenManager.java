@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
@@ -152,7 +153,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   @Override
   public Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
       throws ScmConfigurationPersistenceException {
-    return doGetPersonalAccessToken(cheUser, null, scmServerUrl);
+    return doGetPersonalAccessTokens(cheUser, null, scmServerUrl).stream().findFirst();
   }
 
   @Override
@@ -174,12 +175,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public Optional<PersonalAccessToken> get(
       Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
       throws ScmConfigurationPersistenceException {
-    return doGetPersonalAccessToken(cheUser, oAuthProviderName, scmServerUrl);
+    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl).stream().findFirst();
   }
 
-  private Optional<PersonalAccessToken> doGetPersonalAccessToken(
+  private List<PersonalAccessToken> doGetPersonalAccessTokens(
       Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
       throws ScmConfigurationPersistenceException {
+    List<PersonalAccessToken> result = new ArrayList<>();
     try {
       LOG.debug(
           "Fetching personal access token for user {} and OAuth provider {}",
@@ -231,7 +233,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                       personalAccessTokenParams.getScmTokenName(),
                       personalAccessTokenParams.getScmTokenId(),
                       personalAccessTokenParams.getToken());
-              return Optional.of(personalAccessToken);
+              result.add(personalAccessToken);
+              continue;
             }
 
             // Removing token that is no longer valid. If several tokens exist the next one could
@@ -251,7 +254,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       LOG.debug("Failed to get personal access token", e);
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
-    return Optional.empty();
+    return result;
   }
 
   /**
@@ -351,6 +354,29 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(subject, scmServerUrl);
     gitCredentialManager.createOrReplace(personalAccessToken);
     store(personalAccessToken);
+    removePreviousTokensIfPresent(subject, scmServerUrl);
+  }
+
+  private void removePreviousTokensIfPresent(Subject subject, String scmServerUrl)
+      throws ScmConfigurationPersistenceException, UnsatisfiedScmPreconditionException {
+    List<PersonalAccessToken> personalAccessTokens =
+        doGetPersonalAccessTokens(subject, null, scmServerUrl);
+    for (int i = 1; i < personalAccessTokens.size(); i++) {
+      PersonalAccessToken token = personalAccessTokens.get(i);
+      if (token.getScmProviderUrl().equals(scmServerUrl)) {
+        try {
+          String namespace = getFirstNamespace();
+          cheServerKubernetesClientFactory
+              .create()
+              .secrets()
+              .inNamespace(namespace)
+              .withName(token.getScmTokenId())
+              .delete();
+        } catch (InfrastructureException e) {
+          throw new ScmConfigurationPersistenceException(e.getMessage(), e);
+        }
+      }
+    }
   }
 
   @Override

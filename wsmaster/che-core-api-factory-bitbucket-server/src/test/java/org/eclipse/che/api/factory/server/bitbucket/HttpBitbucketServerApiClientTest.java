@@ -331,7 +331,7 @@ public class HttpBitbucketServerApiClientTest {
     BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("5", "token");
     // then
     assertNotNull(result);
-    assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
+    assertEquals(result.getToken(), "xxxx");
   }
 
   @Test(expectedExceptions = ScmItemNotFoundException.class)

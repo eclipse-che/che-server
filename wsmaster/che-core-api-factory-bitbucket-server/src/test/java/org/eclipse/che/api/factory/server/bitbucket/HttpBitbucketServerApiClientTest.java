@@ -68,10 +68,10 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class HttpBitbucketServerApiClientTest {
   private final String AUTHORIZATION_TOKEN =
-      "OAuth oauth_consumer_key=\"key123321\", oauth_nonce=\"6c0eace252f8dcda\","
-          + " oauth_signature=\"dPCm521TAF56FfGxabBAZDs9YTNeCg%2BiRK49afoJve8Mxk5ILlfkZKH693udqOig5k5ydeVxX%2FTso%2Flxx1pv2bqdbCqj3Nq82do1hJN5eTDLSvbHfGvjFuOGRobHTHwP6oJkaBSafjMUY8i8Vnz6hLfxToPj2ktd6ug4nKc1WGg%3D\", "
+      "OAuth oauth_consumer_key=\"key123321\", oauth_nonce=\"nonce\","
+          + " oauth_signature=\"signature\", "
           + "oauth_signature_method=\"RSA-SHA1\", oauth_timestamp=\"1609250025\", "
-          + "oauth_token=\"JmpyDe9sgYNn6pYHP6eGLaIU0vxdKLCJ\", oauth_version=\"1.0\"";
+          + "oauth_token=\"token\", oauth_version=\"1.0\"";
   WireMockServer wireMockServer;
   WireMock wireMock;
   BitbucketServerApiClient bitbucketServer;
@@ -276,7 +276,7 @@ public class HttpBitbucketServerApiClientTest {
             "myToKen", ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
     // then
     assertNotNull(result);
-    assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
+    assertEquals(result.getToken(), "token");
   }
 
   @Test
@@ -331,7 +331,7 @@ public class HttpBitbucketServerApiClientTest {
     BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("5", "token");
     // then
     assertNotNull(result);
-    assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
+    assertEquals(result.getToken(), "token");
   }
 
   @Test(expectedExceptions = ScmItemNotFoundException.class)

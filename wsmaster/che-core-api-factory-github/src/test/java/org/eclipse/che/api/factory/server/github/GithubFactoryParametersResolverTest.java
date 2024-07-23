@@ -46,6 +46,7 @@ import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
+import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
@@ -155,34 +156,23 @@ public class GithubFactoryParametersResolverTest {
 
     String githubUrl = "https://github.com/eclipse/che";
 
-    FactoryDto computedFactory = generateDevfileFactory();
-
-    when(urlFactoryBuilder.buildDefaultDevfile(any())).thenReturn(computedFactory.getDevfile());
-
-    when(urlFactoryBuilder.createFactoryFromDevfile(
-            any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
-        .thenReturn(Optional.empty());
-
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, githubUrl);
     // when
-    FactoryDto factory = (FactoryDto) abstractGithubFactoryParametersResolver.createFactory(params);
+    FactoryDevfileV2Dto factory =
+        (FactoryDevfileV2Dto) abstractGithubFactoryParametersResolver.createFactory(params);
     // then
-    verify(urlFactoryBuilder).buildDefaultDevfile(eq("che"));
-    assertEquals(factory, computedFactory);
-    SourceDto source = factory.getDevfile().getProjects().get(0).getSource();
-    assertEquals(source.getLocation(), githubUrl + ".git");
-    assertEquals(source.getBranch(), null);
+    ScmInfoDto scmInfo = factory.getScmInfo();
+    assertEquals(scmInfo.getRepositoryUrl(), githubUrl + ".git");
+    assertEquals(scmInfo.getBranch(), null);
   }
 
   @Test
   public void shouldSkipAuthenticationWhenAccessDenied() throws Exception {
     // given
-    when(urlFactoryBuilder.buildDefaultDevfile(any()))
-        .thenReturn(generateDevfileFactory().getDevfile());
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));
@@ -204,8 +194,6 @@ public class GithubFactoryParametersResolverTest {
   @Test
   public void shouldNotSkipAuthenticationWhenNoErrorParameterPassed() throws Exception {
     // given
-    when(urlFactoryBuilder.buildDefaultDevfile(any()))
-        .thenReturn(generateDevfileFactory().getDevfile());
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(new GithubCommit().withSha("test-sha"));

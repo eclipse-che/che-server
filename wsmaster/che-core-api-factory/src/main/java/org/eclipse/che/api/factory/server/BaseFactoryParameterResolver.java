@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static java.util.stream.Collectors.toMap;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.DEFAULT_DEVFILE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import java.util.Collections;
@@ -24,7 +25,7 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
+import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
@@ -60,7 +61,12 @@ public class BaseFactoryParameterResolver {
             contentProvider,
             extractOverrideParams(factoryParameters),
             getSkipAuthorisation(factoryParameters))
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
+        .orElseGet(
+            () ->
+                newDto(FactoryDevfileV2Dto.class)
+                    .withDevfile(DEFAULT_DEVFILE)
+                    .withV(CURRENT_VERSION)
+                    .withSource("repo"))
         .acceptVisitor(factoryVisitor);
   }
 

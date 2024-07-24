@@ -362,7 +362,7 @@ public abstract class OAuthAuthenticator {
    *
    * @param userId user
    */
-  protected void invalidateTokenByUser(String userId) throws IOException {
+  private void invalidateTokenByUser(String userId) throws IOException {
     Credential credential = flow.loadCredential(userId);
     if (credential != null) {
       flow.getCredentialDataStore().delete(userId);

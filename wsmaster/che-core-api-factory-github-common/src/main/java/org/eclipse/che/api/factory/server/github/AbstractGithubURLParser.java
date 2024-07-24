@@ -79,7 +79,8 @@ public abstract class AbstractGithubURLParser {
     this.apiClient = githubApiClient;
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
-    this.isGitHubServer = !isNullOrEmpty(oauthEndpoint);
+    this.isGitHubServer =
+        !isNullOrEmpty(oauthEndpoint) && !GITHUB_SAAS_ENDPOINT.equals(oauthEndpoint);
 
     endpoint = isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
 

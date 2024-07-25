@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 /** Authentication service which allow get access token from OAuth provider site. */
 public abstract class OAuthAuthenticator {
-  private static final String AUTHENTICATOR_IS_NOT_CONFIGURED = "Authenticator is not configured";
+  protected static final String AUTHENTICATOR_IS_NOT_CONFIGURED = "Authenticator is not configured";
 
   private static final Logger LOG = LoggerFactory.getLogger(OAuthAuthenticator.class);
 

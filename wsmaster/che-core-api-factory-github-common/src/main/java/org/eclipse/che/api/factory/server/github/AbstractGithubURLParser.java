@@ -79,6 +79,9 @@ public abstract class AbstractGithubURLParser {
     this.apiClient = githubApiClient;
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
+    // Check if the given OAuth endpoint is a GitHub server URL. If the OAuth endpoint is not
+    // defined, or it equals the GitHub SaaS endpoint, it means that the given URL is a GitHub SaaS
+    // URL (https://github.com). Otherwise, the given URL is a GitHub server URL.
     this.isGitHubServer =
         !isNullOrEmpty(oauthEndpoint) && !GITHUB_SAAS_ENDPOINT.equals(oauthEndpoint);
 

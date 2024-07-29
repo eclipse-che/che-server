@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static java.lang.String.valueOf;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -222,12 +223,8 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     // given
     when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(someBitbucketURL);
     when(personalAccessTokenParams.getToken()).thenReturn(bitbucketPersonalAccessToken.getToken());
-    when(personalAccessTokenParams.getScmTokenId())
-        .thenReturn(bitbucketPersonalAccessToken.getId());
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
-    when(bitbucketServerApiClient.getPersonalAccessToken(
-            eq(bitbucketPersonalAccessToken.getId()), eq(bitbucketPersonalAccessToken.getToken())))
-        .thenReturn(bitbucketPersonalAccessToken);
+    when(bitbucketServerApiClient.getUser(anyString())).thenReturn(bitbucketUser);
     // when
     Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);
     // then

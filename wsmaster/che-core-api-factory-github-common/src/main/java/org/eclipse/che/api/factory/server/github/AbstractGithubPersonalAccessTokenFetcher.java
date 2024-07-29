@@ -227,7 +227,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       // The url from the token has the same url as the api client, no need to create a new one.
       apiClient = githubApiClient;
     } else {
-      if (OAUTH_PROVIDER_NAME.equals(params.getScmTokenName())) {
+      if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
         apiClient = new GithubApiClient(params.getScmProviderUrl());
       } else {
         LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());

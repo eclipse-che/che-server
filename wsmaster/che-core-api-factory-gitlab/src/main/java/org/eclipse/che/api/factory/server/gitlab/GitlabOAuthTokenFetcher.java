@@ -211,7 +211,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
     GitlabApiClient gitlabApiClient = getApiClient(params.getScmProviderUrl());
     if (gitlabApiClient == null || !gitlabApiClient.isConnected(params.getScmProviderUrl())) {
-      if (OAUTH_PROVIDER_NAME.equals(params.getScmTokenName())) {
+      if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
         gitlabApiClient = new GitlabApiClient(params.getScmProviderUrl());
       } else {
         LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());

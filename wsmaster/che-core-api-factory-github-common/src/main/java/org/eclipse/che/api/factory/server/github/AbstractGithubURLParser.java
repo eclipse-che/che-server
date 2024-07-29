@@ -64,6 +64,7 @@ public abstract class AbstractGithubURLParser {
 
   private final String providerName;
   private final String endpoint;
+  private final boolean isGitHubServer;
 
   /** Constructor used for testing only. */
   AbstractGithubURLParser(
@@ -78,6 +79,11 @@ public abstract class AbstractGithubURLParser {
     this.apiClient = githubApiClient;
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
+    // Check if the given OAuth endpoint is a GitHub server URL. If the OAuth endpoint is not
+    // defined, or it equals the GitHub SaaS endpoint, it means that the given URL is a GitHub SaaS
+    // URL (https://github.com). Otherwise, the given URL is a GitHub server URL.
+    this.isGitHubServer =
+        !isNullOrEmpty(oauthEndpoint) && !GITHUB_SAAS_ENDPOINT.equals(oauthEndpoint);
 
     endpoint = isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
 
@@ -100,7 +106,7 @@ public abstract class AbstractGithubURLParser {
         // Check if the given URL is a valid GitHub URL by reaching the endpoint of the GitHub
         // server and analysing the response. This query basically only needs to be performed if the
         // specified repository URL does not point to GitHub SaaS.
-        || (!GITHUB_SAAS_ENDPOINT.equals(endpoint) && isApiRequestRelevant(trimmedUrl));
+        || (!isGitHubServer && isApiRequestRelevant(trimmedUrl));
   }
 
   // Try to find the given url in a manually added user namespace token secret.

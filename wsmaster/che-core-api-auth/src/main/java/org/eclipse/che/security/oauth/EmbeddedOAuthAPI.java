@@ -43,6 +43,7 @@ import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -117,15 +118,17 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
               token));
     } catch (OAuthAuthenticationException e) {
       return Response.temporaryRedirect(
-              URI.create(
-                  getParameter(params, "redirect_after_login")
-                      + String.format("&%s=access_denied", ERROR_QUERY_NAME)))
+              URI.create(getRedirectAfterLoginUrl(params, "access_denied")))
           .build();
     } catch (UnsatisfiedScmPreconditionException | ScmConfigurationPersistenceException e) {
       // Skip exception, the token will be stored in the next request.
       LOG.error(e.getMessage(), e);
+    } catch (ScmCommunicationException e) {
+      return Response.temporaryRedirect(
+              URI.create(getRedirectAfterLoginUrl(params, "ssl_exception")))
+          .build();
     }
-    return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params))).build();
+    return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params, null))).build();
   }
 
   /**
@@ -133,15 +136,20 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
    * CSM provider, it will be decoded, to avoid unsupported characters in the URL.
    *
    * @param parameters the query parameters
+   * @param errorCode the error code or {@code null}
    * @return the redirect after login URL
    */
-  public static String getRedirectAfterLoginUrl(Map<String, List<String>> parameters) {
+  public static String getRedirectAfterLoginUrl(
+      Map<String, List<String>> parameters, @Nullable String errorCode) {
     String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
     try {
       URI.create(redirectAfterLogin);
     } catch (IllegalArgumentException e) {
       // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
       redirectAfterLogin = encodeRedirectUrl(redirectAfterLogin);
+    }
+    if (errorCode != null) {
+      redirectAfterLogin += String.format("&%s=%s", ERROR_QUERY_NAME, errorCode);
     }
     return redirectAfterLogin;
   }

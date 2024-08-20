@@ -33,7 +33,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.net.ssl.SSLHandshakeException;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
@@ -178,7 +180,8 @@ public abstract class OAuthAuthenticator {
    * @throws OAuthAuthenticationException if authentication failed or <code>requestUrl</code> does
    *     not contain required parameters, e.g. 'code'
    */
-  public String callback(URL requestUrl, List<String> scopes) throws OAuthAuthenticationException {
+  public String callback(URL requestUrl, List<String> scopes)
+      throws OAuthAuthenticationException, ScmCommunicationException {
     if (!isConfigured()) {
       throw new OAuthAuthenticationException(AUTHENTICATOR_IS_NOT_CONFIGURED);
     }
@@ -204,6 +207,10 @@ public abstract class OAuthAuthenticator {
       flow.createAndStoreCredential(tokenResponse, userId);
       return tokenResponse.getAccessToken();
     } catch (IOException ioe) {
+      if (ioe instanceof SSLHandshakeException) {
+        throw new ScmCommunicationException(
+            "SSL handshake failed. Please contact your administrator.");
+      }
       throw new OAuthAuthenticationException(ioe.getMessage());
     }
   }

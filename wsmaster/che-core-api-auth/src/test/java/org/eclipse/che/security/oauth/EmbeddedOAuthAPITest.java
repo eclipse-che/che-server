@@ -17,6 +17,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth.OAuthAuthenticator.SSL_ERROR_CODE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -123,7 +124,7 @@ public class EmbeddedOAuthAPITest {
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(authenticator.callback(any(URL.class), anyList()))
-        .thenThrow(new ScmCommunicationException(""));
+        .thenThrow(new ScmCommunicationException("", SSL_ERROR_CODE));
     when(uriInfo.getRequestUri())
         .thenReturn(
             new URI(

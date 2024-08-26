@@ -18,6 +18,7 @@ import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth.OAuthAuthenticator.SSL_ERROR_CODE;
 import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -124,9 +125,13 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       // Skip exception, the token will be stored in the next request.
       LOG.error(e.getMessage(), e);
     } catch (ScmCommunicationException e) {
-      return Response.temporaryRedirect(
-              URI.create(getRedirectAfterLoginUrl(params, "ssl_exception")))
-          .build();
+      if (e.getStatusCode() == SSL_ERROR_CODE) {
+        return Response.temporaryRedirect(
+                URI.create(getRedirectAfterLoginUrl(params, "ssl_exception")))
+            .build();
+      } else {
+        LOG.error(e.getMessage(), e);
+      }
     }
     return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params, null))).build();
   }

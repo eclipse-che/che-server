@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 /** Authentication service which allow get access token from OAuth provider site. */
 public abstract class OAuthAuthenticator {
   protected static final String AUTHENTICATOR_IS_NOT_CONFIGURED = "Authenticator is not configured";
+  protected static final int SSL_ERROR_CODE = 495;
 
   private static final Logger LOG = LoggerFactory.getLogger(OAuthAuthenticator.class);
 
@@ -179,6 +180,7 @@ public abstract class OAuthAuthenticator {
    * @return access token
    * @throws OAuthAuthenticationException if authentication failed or <code>requestUrl</code> does
    *     not contain required parameters, e.g. 'code'
+   * @throws ScmCommunicationException if communication with SCM failed
    */
   public String callback(URL requestUrl, List<String> scopes)
       throws OAuthAuthenticationException, ScmCommunicationException {
@@ -209,7 +211,7 @@ public abstract class OAuthAuthenticator {
     } catch (IOException ioe) {
       if (ioe instanceof SSLHandshakeException) {
         throw new ScmCommunicationException(
-            "SSL handshake failed. Please contact your administrator.");
+            "SSL handshake failed. Please contact your administrator.", SSL_ERROR_CODE);
       }
       throw new OAuthAuthenticationException(ioe.getMessage());
     }

@@ -23,6 +23,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 
 /** GitHub user data retriever. */
 public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -53,7 +54,8 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
 
   @Override
   protected GitUserData fetchGitUserDataWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     GithubUser user = githubApiClient.getUser(token);
     if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
       throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
@@ -65,7 +67,8 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
   @Override
   protected GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     GithubApiClient apiClient =
         githubApiClient.isConnected(personalAccessToken.getScmProviderUrl())
             ? githubApiClient

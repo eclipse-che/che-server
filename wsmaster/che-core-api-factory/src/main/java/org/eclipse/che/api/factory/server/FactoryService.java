@@ -159,13 +159,14 @@ public class FactoryService extends Service {
           personalAccessTokenManager.getAndStore(scmServerUrl);
         }
       }
-    } catch (ScmCommunicationException
-        | ScmConfigurationPersistenceException
-        | UnknownScmProviderException
-        | UnsatisfiedScmPreconditionException e) {
+    } catch (ScmConfigurationPersistenceException | UnsatisfiedScmPreconditionException e) {
       throw new ApiException(e);
     } catch (ScmUnauthorizedException e) {
       throw toApiException(e);
+    } catch (ScmCommunicationException e) {
+      throw toApiException(e);
+    } catch (UnknownScmProviderException e) {
+      // ignore the exception as it is not a problem if the provider from the given URL is unknown
     }
   }
 

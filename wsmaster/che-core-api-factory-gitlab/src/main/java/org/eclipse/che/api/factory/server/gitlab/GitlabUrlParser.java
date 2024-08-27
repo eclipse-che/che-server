@@ -12,7 +12,6 @@
 package org.eclipse.che.api.factory.server.gitlab;
 
 import static java.lang.String.format;
-import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
@@ -31,6 +30,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -90,7 +90,7 @@ public class GitlabUrlParser {
           PersonalAccessToken accessToken = token.get();
           return accessToken.getScmTokenName().equals(OAUTH_PROVIDER_NAME);
         }
-      } catch (ScmConfigurationPersistenceException exception) {
+      } catch (ScmConfigurationPersistenceException | ScmCommunicationException exception) {
         return false;
       }
     }
@@ -115,9 +115,9 @@ public class GitlabUrlParser {
         // If the token request catches the unauthorised error, it means that the provided url
         // belongs to Gitlab.
         gitlabApiClient.getOAuthTokenInfo("");
-      } catch (ScmCommunicationException e) {
-        return e.getStatusCode() == HTTP_UNAUTHORIZED;
-      } catch (ScmItemNotFoundException | IllegalArgumentException e) {
+      } catch (ScmUnauthorizedException e) {
+        return true;
+      } catch (ScmItemNotFoundException | IllegalArgumentException | ScmCommunicationException e) {
         return false;
       }
     }

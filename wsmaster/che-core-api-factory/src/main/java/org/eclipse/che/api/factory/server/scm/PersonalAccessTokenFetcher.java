@@ -75,6 +75,8 @@ public interface PersonalAccessTokenFetcher {
    *     the token has expected scope of permissions, false if the token scopes does not match the
    *     expected ones. Empty optional if {@link PersonalAccessTokenFetcher} is not able to confirm
    *     or deny that token is valid.
+   * @throws ScmCommunicationException - problem occurred during communication with SCM server.
    */
-  Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params);
+  Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException;
 }

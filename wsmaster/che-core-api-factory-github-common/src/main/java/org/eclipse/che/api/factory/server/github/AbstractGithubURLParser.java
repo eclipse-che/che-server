@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.github;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
-import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.server.github.GithubApiClient.GITHUB_SAAS_ENDPOINT;
@@ -121,7 +120,7 @@ public abstract class AbstractGithubURLParser {
           PersonalAccessToken accessToken = token.get();
           return accessToken.getScmTokenName().equals(providerName);
         }
-      } catch (ScmConfigurationPersistenceException exception) {
+      } catch (ScmConfigurationPersistenceException | ScmCommunicationException exception) {
         return false;
       }
     }
@@ -137,14 +136,16 @@ public abstract class AbstractGithubURLParser {
         // If the user request catches the unauthorised error, it means that the provided url
         // belongs to GitHub.
         githubApiClient.getUser("");
-      } catch (ScmCommunicationException e) {
-        return e.getStatusCode() == HTTP_UNAUTHORIZED
-                // Check the error message as well, because other providers might also return 401
-                // for such requests.
-                && e.getMessage().contains("Requires authentication")
+      } catch (ScmUnauthorizedException e) {
+        // Check the error message as well, because other providers might also return 401
+        // for such requests.
+        return e.getMessage().contains("Requires authentication")
             || // for older GitHub Enterprise versions
             e.getMessage().contains("Must authenticate to access this API.");
-      } catch (ScmItemNotFoundException | ScmBadRequestException | IllegalArgumentException e) {
+      } catch (ScmItemNotFoundException
+          | ScmBadRequestException
+          | IllegalArgumentException
+          | ScmCommunicationException e) {
         return false;
       }
     }
@@ -289,7 +290,8 @@ public abstract class AbstractGithubURLParser {
         return apiClient.getPullRequest(pullRequestId, repoUser, repoName, null);
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
-          | ScmBadRequestException exception) {
+          | ScmBadRequestException
+          | ScmUnauthorizedException exception) {
         LOG.error("Failed to authenticate to GitHub", e);
       }
 
@@ -340,7 +342,8 @@ public abstract class AbstractGithubURLParser {
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
           | ScmBadRequestException
-          | URISyntaxException exception) {
+          | URISyntaxException
+          | ScmUnauthorizedException exception) {
         LOG.error("Failed to authenticate to GitHub", e);
       }
     } catch (ScmCommunicationException

@@ -158,7 +158,8 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException {
     if (!bitbucketServerApiClient.isConnected(params.getScmProviderUrl())) {
       // If BitBucket oAuth is not configured check the manually added user namespace token.
       HttpBitbucketServerApiClient apiClient =
@@ -180,7 +181,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     try {
       BitbucketUser user = bitbucketServerApiClient.getUser(params.getToken());
       return Optional.of(Pair.of(Boolean.TRUE, user.getName()));
-    } catch (ScmItemNotFoundException | ScmUnauthorizedException | ScmCommunicationException e) {
+    } catch (ScmItemNotFoundException | ScmUnauthorizedException e) {
       return Optional.empty();
     }
   }

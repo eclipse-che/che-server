@@ -94,7 +94,7 @@ public class ScmPersonalAccessTokenFetcher {
    * fetchers return an scm username, return it. Otherwise, return null.
    */
   public Optional<String> getScmUsername(PersonalAccessTokenParams params)
-      throws UnknownScmProviderException {
+      throws UnknownScmProviderException, ScmCommunicationException {
     for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
       Optional<Pair<Boolean, String>> isValid = fetcher.isValid(params);
       if (isValid.isPresent() && isValid.get().first) {

@@ -166,13 +166,17 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
     try {
       String[] scopes = bitbucketApiClient.getTokenScopes(personalAccessToken.getToken()).second;
       return Optional.of(isValidScope(Sets.newHashSet(scopes)));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException
+        | ScmCommunicationException
+        | ScmBadRequestException
+        | ScmUnauthorizedException e) {
       return Optional.of(Boolean.FALSE);
     }
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException {
     if (!bitbucketApiClient.isConnected(params.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
       return Optional.empty();
@@ -184,7 +188,7 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
           Pair.of(
               isValidScope(Sets.newHashSet(pair.second)) ? Boolean.TRUE : Boolean.FALSE,
               pair.first));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
       return Optional.empty();
     }
   }

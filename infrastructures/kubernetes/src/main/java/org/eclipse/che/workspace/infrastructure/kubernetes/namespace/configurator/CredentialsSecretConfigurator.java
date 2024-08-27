@@ -25,6 +25,8 @@ import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditi
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This {@link NamespaceConfigurator} ensures that Secret {@link
@@ -44,6 +46,8 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
   private static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
   private static final String MERGED_GIT_CREDENTIALS_SECRET_NAME =
       "devworkspace-merged-git-credentials";
+
+  private static final Logger LOG = LoggerFactory.getLogger(CredentialsSecretConfigurator.class);
 
   @Inject
   public CredentialsSecretConfigurator(
@@ -79,7 +83,7 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
                   | ScmConfigurationPersistenceException
                   | UnsatisfiedScmPreconditionException
                   | ScmUnauthorizedException e) {
-                throw new RuntimeException(e);
+                LOG.error(e.getMessage(), e);
               }
             });
   }

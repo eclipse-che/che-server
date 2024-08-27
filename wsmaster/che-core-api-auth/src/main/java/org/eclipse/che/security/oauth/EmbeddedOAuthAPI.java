@@ -43,6 +43,7 @@ import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -237,7 +238,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
           if (tokenOptional.isPresent()) {
             return newDto(OAuthToken.class).withToken(tokenOptional.get().getToken());
           }
-        } catch (ScmConfigurationPersistenceException e) {
+        } catch (ScmConfigurationPersistenceException | ScmCommunicationException e) {
           throw new RuntimeException(e);
         }
       }

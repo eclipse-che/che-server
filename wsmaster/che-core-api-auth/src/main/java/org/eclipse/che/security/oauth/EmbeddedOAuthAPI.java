@@ -119,7 +119,9 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
               token));
     } catch (OAuthAuthenticationException e) {
       return Response.temporaryRedirect(
-              URI.create(getRedirectAfterLoginUrl(params, "access_denied")))
+              URI.create(
+                  getParameter(params, "redirect_after_login")
+                      + String.format("&%s=access_denied", ERROR_QUERY_NAME)))
           .build();
     } catch (UnsatisfiedScmPreconditionException | ScmConfigurationPersistenceException e) {
       // Skip exception, the token will be stored in the next request.

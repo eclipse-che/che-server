@@ -33,7 +33,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.net.ssl.SSLHandshakeException;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 /** Authentication service which allow get access token from OAuth provider site. */
 public abstract class OAuthAuthenticator {
   protected static final String AUTHENTICATOR_IS_NOT_CONFIGURED = "Authenticator is not configured";
+  protected static final int SSL_ERROR_CODE = 495;
 
   private static final Logger LOG = LoggerFactory.getLogger(OAuthAuthenticator.class);
 
@@ -177,8 +180,10 @@ public abstract class OAuthAuthenticator {
    * @return access token
    * @throws OAuthAuthenticationException if authentication failed or <code>requestUrl</code> does
    *     not contain required parameters, e.g. 'code'
+   * @throws ScmCommunicationException if communication with SCM failed
    */
-  public String callback(URL requestUrl, List<String> scopes) throws OAuthAuthenticationException {
+  public String callback(URL requestUrl, List<String> scopes)
+      throws OAuthAuthenticationException, ScmCommunicationException {
     if (!isConfigured()) {
       throw new OAuthAuthenticationException(AUTHENTICATOR_IS_NOT_CONFIGURED);
     }
@@ -204,6 +209,10 @@ public abstract class OAuthAuthenticator {
       flow.createAndStoreCredential(tokenResponse, userId);
       return tokenResponse.getAccessToken();
     } catch (IOException ioe) {
+      if (ioe instanceof SSLHandshakeException) {
+        throw new ScmCommunicationException(
+            "SSL handshake failed. Please contact your administrator.", SSL_ERROR_CODE);
+      }
       throw new OAuthAuthenticationException(ioe.getMessage());
     }
   }

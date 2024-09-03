@@ -74,7 +74,7 @@ public class OAuthAuthenticationService extends Service {
     final Map<String, List<String>> parameters = getQueryParametersFromState(getState(requestUrl));
 
     final String providerName = getParameter(parameters, "oauth_provider");
-    final String redirectAfterLogin = getRedirectAfterLoginUrl(parameters);
+    final String redirectAfterLogin = getRedirectAfterLoginUrl(parameters, null);
 
     UriBuilder redirectUriBuilder = UriBuilder.fromUri(redirectAfterLogin);
 

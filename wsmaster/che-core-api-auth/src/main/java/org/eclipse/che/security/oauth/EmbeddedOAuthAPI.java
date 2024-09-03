@@ -18,6 +18,7 @@ import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.
 import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.eclipse.che.security.oauth.OAuthAuthenticator.SSL_ERROR_CODE;
 import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -124,8 +126,16 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     } catch (UnsatisfiedScmPreconditionException | ScmConfigurationPersistenceException e) {
       // Skip exception, the token will be stored in the next request.
       LOG.error(e.getMessage(), e);
+    } catch (ScmCommunicationException e) {
+      if (e.getStatusCode() == SSL_ERROR_CODE) {
+        return Response.temporaryRedirect(
+                URI.create(getRedirectAfterLoginUrl(params, "ssl_exception")))
+            .build();
+      } else {
+        LOG.error(e.getMessage(), e);
+      }
     }
-    return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params))).build();
+    return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params, null))).build();
   }
 
   /**
@@ -133,15 +143,20 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
    * CSM provider, it will be decoded, to avoid unsupported characters in the URL.
    *
    * @param parameters the query parameters
+   * @param errorCode the error code or {@code null}
    * @return the redirect after login URL
    */
-  public static String getRedirectAfterLoginUrl(Map<String, List<String>> parameters) {
+  public static String getRedirectAfterLoginUrl(
+      Map<String, List<String>> parameters, @Nullable String errorCode) {
     String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
     try {
       URI.create(redirectAfterLogin);
     } catch (IllegalArgumentException e) {
       // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
       redirectAfterLogin = encodeRedirectUrl(redirectAfterLogin);
+    }
+    if (errorCode != null) {
+      redirectAfterLogin += String.format("&%s=%s", ERROR_QUERY_NAME, errorCode);
     }
     return redirectAfterLogin;
   }

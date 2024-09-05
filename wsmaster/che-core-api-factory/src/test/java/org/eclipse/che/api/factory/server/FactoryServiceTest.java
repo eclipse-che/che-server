@@ -12,24 +12,19 @@
 package org.eclipse.che.api.factory.server;
 
 import static io.restassured.RestAssured.given;
-import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static java.lang.String.valueOf;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.server.FactoryResolverPriority.DEFAULT;
 import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
 import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
 import static org.eclipse.che.api.factory.server.FactoryService.VALIDATE_QUERY_PARAMETER;
-import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
-import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -47,17 +42,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
 import org.eclipse.che.api.factory.server.FactoryService.FactoryParametersResolverHolder;
-import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
-import org.eclipse.che.api.factory.server.impl.SourceStorageParametersValidator;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
@@ -108,8 +99,6 @@ public class FactoryServiceTest {
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
   private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
-  private FactoryBuilder factoryBuilderSpy;
-
   private User user;
 
   private FactoryService service;
@@ -129,9 +118,6 @@ public class FactoryServiceTest {
     parametersResolvers.setAccessible(true);
     parametersResolvers.set(factoryParametersResolverHolder, specificFactoryParametersResolvers);
     specificFactoryParametersResolvers.add(rawDevfileUrlFactoryParameterResolver);
-    factoryBuilderSpy = spy(new FactoryBuilder(new SourceStorageParametersValidator()));
-    lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class));
-    lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class), anyBoolean());
     user = new UserImpl(USER_ID, USER_EMAIL, ADMIN_USER_NAME);
     lenient()
         .when(preferenceManager.find(USER_ID))
@@ -183,56 +169,6 @@ public class FactoryServiceTest {
     assertEquals(
         DTO.createDtoFromJson(response.getBody().asString(), ServiceError.class).getMessage(),
         "Cannot build factory with any of the provided parameters. Please check parameters correctness, and resend query.");
-  }
-
-  @Test
-  public void checkValidateResolver() throws Exception {
-    final FactoryParametersResolverHolder dummyHolder = spy(factoryParametersResolverHolder);
-    doReturn(rawDevfileUrlFactoryParameterResolver)
-        .when(dummyHolder)
-        .getFactoryParametersResolver(anyMap());
-    // service instance with dummy holder
-    service =
-        new FactoryService(
-            acceptValidator,
-            dummyHolder,
-            additionalFilenamesProvider,
-            personalAccessTokenManager,
-            authorisationRequestManager);
-
-    // invalid factory
-    final String invalidFactoryMessage = "invalid factory";
-    doThrow(new BadRequestException(invalidFactoryMessage))
-        .when(acceptValidator)
-        .validateOnAccept(any());
-
-    // create factory
-    final FactoryDto expectFactory =
-        newDto(FactoryDto.class).withV(CURRENT_VERSION).withName("matchingResolverFactory");
-
-    // accept resolver
-    when(rawDevfileUrlFactoryParameterResolver.createFactory(anyMap())).thenReturn(expectFactory);
-
-    // when
-    final Map<String, String> map = new HashMap<>();
-    final Response response =
-        given()
-            .contentType(ContentType.JSON)
-            .when()
-            .body(map)
-            .queryParam(VALIDATE_QUERY_PARAMETER, valueOf(true))
-            .post(SERVICE_PATH + "/resolver");
-
-    // then check we have a bad request
-    assertEquals(response.getStatusCode(), BAD_REQUEST.getStatusCode());
-    assertTrue(response.getBody().asString().contains(invalidFactoryMessage));
-
-    // check we call resolvers
-    dummyHolder.getFactoryParametersResolver(anyMap());
-    verify(rawDevfileUrlFactoryParameterResolver).createFactory(anyMap());
-
-    // check we call validator
-    verify(acceptValidator).validateOnAccept(any());
   }
 
   @Test

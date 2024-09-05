@@ -24,17 +24,13 @@ import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 
 /** Provides Factory Parameters resolver for bitbucket repositories. */
 @Singleton
@@ -51,8 +47,6 @@ public class BitbucketFactoryParametersResolver extends BaseFactoryParameterReso
   private final BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder;
 
   private final URLFactoryBuilder urlFactoryBuilder;
-  /** ProjectDtoMerger */
-  private final ProjectConfigDtoMerger projectConfigDtoMerger;
 
   /** Personal Access Token manager used when fetching protected content. */
   private final PersonalAccessTokenManager personalAccessTokenManager;
@@ -65,7 +59,6 @@ public class BitbucketFactoryParametersResolver extends BaseFactoryParameterReso
       URLFetcher urlFetcher,
       BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder,
       URLFactoryBuilder urlFactoryBuilder,
-      ProjectConfigDtoMerger projectConfigDtoMerger,
       PersonalAccessTokenManager personalAccessTokenManager,
       BitbucketApiClient bitbucketApiClient,
       AuthorisationRequestManager authorisationRequestManager) {
@@ -74,7 +67,6 @@ public class BitbucketFactoryParametersResolver extends BaseFactoryParameterReso
     this.urlFetcher = urlFetcher;
     this.bitbucketSourceStorageBuilder = bitbucketSourceStorageBuilder;
     this.urlFactoryBuilder = urlFactoryBuilder;
-    this.projectConfigDtoMerger = projectConfigDtoMerger;
     this.personalAccessTokenManager = personalAccessTokenManager;
     this.bitbucketApiClient = bitbucketApiClient;
   }
@@ -141,40 +133,6 @@ public class BitbucketFactoryParametersResolver extends BaseFactoryParameterReso
         scmInfo.withBranch(bitbucketUrl.getBranch());
       }
       return factoryDto.withScmInfo(scmInfo);
-    }
-
-    @Override
-    public FactoryDto visit(FactoryDto factory) {
-      if (factory.getWorkspace() != null) {
-        return projectConfigDtoMerger.merge(
-            factory,
-            () -> {
-              // Compute project configuration
-              return newDto(ProjectConfigDto.class)
-                  .withSource(
-                      bitbucketSourceStorageBuilder.buildWorkspaceConfigSource(bitbucketUrl))
-                  .withName(bitbucketUrl.getRepository())
-                  .withPath("/".concat(bitbucketUrl.getRepository()));
-            });
-      } else if (factory.getDevfile() == null) {
-        // initialize default devfile
-        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(bitbucketUrl.getRepository()));
-      }
-
-      updateProjects(
-          factory.getDevfile(),
-          () ->
-              newDto(ProjectDto.class)
-                  .withSource(bitbucketSourceStorageBuilder.buildDevfileSource(bitbucketUrl))
-                  .withName(bitbucketUrl.getRepository()),
-          project -> {
-            final String location = project.getSource().getLocation();
-            if (location.equals(bitbucketUrl.repositoryLocation())) {
-              project.getSource().setBranch(bitbucketUrl.getBranch());
-            }
-          });
-
-      return factory;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,9 +18,7 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.Mockito.lenient;
 
 import com.google.common.collect.ImmutableMap;
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
@@ -32,9 +30,8 @@ import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.factory.server.FactoryConstants;
-import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
-import org.eclipse.che.api.factory.shared.dto.AuthorDto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
+import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
+import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.IdeActionDto;
 import org.eclipse.che.api.factory.shared.dto.IdeDto;
 import org.eclipse.che.api.factory.shared.dto.OnAppClosedDto;
@@ -42,11 +39,7 @@ import org.eclipse.che.api.factory.shared.dto.OnAppLoadedDto;
 import org.eclipse.che.api.factory.shared.dto.OnProjectsLoadedDto;
 import org.eclipse.che.api.factory.shared.dto.PoliciesDto;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.user.server.spi.PreferenceDao;
 import org.eclipse.che.api.user.server.spi.UserDao;
-import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
-import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
-import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -63,163 +56,17 @@ public class FactoryBaseValidatorTest {
 
   @Mock private UserDao userDao;
 
-  @Mock private PreferenceDao preferenceDao;
-
-  @Mock private FactoryBuilder builder;
-
-  @Mock private HttpServletRequest request;
-
   private TesterFactoryBaseValidator validator;
 
-  private FactoryDto factory;
+  private FactoryDevfileV2Dto factory;
 
   @BeforeMethod
   public void setUp() throws ParseException, NotFoundException, ServerException {
-    factory =
-        newDto(FactoryDto.class)
-            .withV("4.0")
-            .withCreator(newDto(AuthorDto.class).withUserId("userid"));
+    factory = newDto(FactoryDevfileV2Dto.class).withV("4.0");
     final UserImpl user = new UserImpl("userid", "email", "name");
 
     lenient().when(userDao.getById("userid")).thenReturn(user);
     validator = new TesterFactoryBaseValidator();
-  }
-
-  @Test
-  public void shouldBeAbleToValidateFactoryUrlObject() throws ApiException {
-    factory = prepareFactoryWithGivenStorage("git", VALID_REPOSITORY_URL, VALID_PROJECT_PATH);
-    validator.validateProjects(factory);
-    validator.validateProjects(factory);
-  }
-
-  @Test
-  public void shouldBeAbleToValidateFactoryUrlObjectIfStorageIsESBWSO2() throws ApiException {
-    factory = prepareFactoryWithGivenStorage("esbwso2", VALID_REPOSITORY_URL, VALID_PROJECT_PATH);
-    validator.validateProjects(factory);
-    validator.validateProjects(factory);
-  }
-
-  @Test(
-      expectedExceptions = ApiException.class,
-      expectedExceptionsMessageRegExp =
-          "The parameter project.source.location has a value submitted http://codenvy.com/git/04%2 with a value that is "
-              + "unexpected. "
-              + "For more information, please visit https://www.eclipse.org/che/docs/workspace-data-model.html#projects")
-  public void shouldNotValidateIfStorageLocationContainIncorrectEncodedSymbol()
-      throws ApiException {
-    // given
-    factory =
-        prepareFactoryWithGivenStorage("git", "http://codenvy.com/git/04%2", VALID_PROJECT_PATH);
-
-    // when, then
-    validator.validateProjects(factory);
-  }
-
-  @Test
-  public void shouldValidateIfStorageLocationIsCorrectSsh() throws ApiException {
-    // given
-    factory =
-        prepareFactoryWithGivenStorage(
-            "git",
-            "ssh://codenvy@review.gerrithub.io:29418/codenvy/exampleProject",
-            "example-project");
-
-    // when, then
-    validator.validateProjects(factory);
-  }
-
-  @Test
-  public void shouldValidateIfStorageLocationIsCorrectHttps() throws ApiException {
-    // given
-    factory =
-        prepareFactoryWithGivenStorage("git", "https://github.com/codenvy/example.git", "/example");
-
-    // when, then
-    validator.validateProjects(factory);
-  }
-
-  @Test
-  public void shouldValidateSubProjectWithNoLocation() throws ApiException {
-    // given
-    factory = prepareFactoryWithGivenStorage("git", "null", "/cloudide/core");
-
-    // when, then
-    validator.validateProjects(factory);
-  }
-
-  @Test(dataProvider = "badAdvancedFactoryUrlProvider", expectedExceptions = ApiException.class)
-  public void shouldNotValidateIfStorageOrStorageLocationIsInvalid(FactoryDto factory)
-      throws ApiException {
-    validator.validateProjects(factory);
-  }
-
-  @DataProvider(name = "badAdvancedFactoryUrlProvider")
-  public Object[][] invalidParametersFactoryUrlProvider() throws UnsupportedEncodingException {
-    FactoryDto adv1 =
-        prepareFactoryWithGivenStorage("notagit", VALID_REPOSITORY_URL, VALID_PROJECT_PATH);
-    FactoryDto adv2 = prepareFactoryWithGivenStorage("git", null, VALID_PROJECT_PATH);
-    FactoryDto adv3 = prepareFactoryWithGivenStorage("git", "", VALID_PROJECT_PATH);
-    return new Object[][] {
-      {adv1}, // invalid vcs
-      {adv2}, // invalid vcsurl
-      {adv3} // invalid vcsurl
-    };
-  }
-
-  @Test(
-      dataProvider = "invalidProjectNamesProvider",
-      expectedExceptions = ApiException.class,
-      expectedExceptionsMessageRegExp =
-          "Project name must contain only Latin letters, "
-              + "digits or these following special characters -._.")
-  public void shouldThrowFactoryUrlExceptionIfProjectNameInvalid(String projectName)
-      throws Exception {
-    // given
-    factory.withWorkspace(
-        newDto(WorkspaceConfigDto.class)
-            .withProjects(
-                singletonList(
-                    newDto(ProjectConfigDto.class).withType("type").withName(projectName))));
-    // when, then
-    validator.validateProjects(factory);
-  }
-
-  @Test(dataProvider = "validProjectNamesProvider")
-  public void shouldBeAbleToValidateValidProjectName(String projectName) throws Exception {
-    // given
-    prepareFactoryWithGivenStorage("git", VALID_REPOSITORY_URL, VALID_PROJECT_PATH);
-    factory.withWorkspace(
-        newDto(WorkspaceConfigDto.class)
-            .withProjects(
-                singletonList(
-                    newDto(ProjectConfigDto.class)
-                        .withType("type")
-                        .withName(projectName)
-                        .withSource(
-                            newDto(SourceStorageDto.class)
-                                .withType("git")
-                                .withLocation(VALID_REPOSITORY_URL))
-                        .withPath(VALID_PROJECT_PATH))));
-    // when, then
-    validator.validateProjects(factory);
-  }
-
-  @DataProvider(name = "validProjectNamesProvider")
-  public Object[][] validProjectNames() {
-    return new Object[][] {
-      {"untitled"},
-      {"Untitled"},
-      {"untitled.project"},
-      {"untitled-project"},
-      {"untitled_project"},
-      {"untitled01"},
-      {"000011111"},
-      {"0untitled"},
-      {"UU"},
-      {"untitled-proj12"},
-      {"untitled.pro....111"},
-      {"SampleStruts"}
-    };
   }
 
   @DataProvider(name = "invalidProjectNamesProvider")
@@ -227,40 +74,6 @@ public class FactoryBaseValidatorTest {
     return new Object[][] {
       {"-untitled"}, {"untitled->3"}, {"untitled__2%"}, {"untitled_!@#$%^&*()_+?><"}
     };
-  }
-
-  @Test
-  public void shouldValidateIfCurrentTimeBeforeSinceUntil() throws Exception {
-    Long currentTime = new Date().getTime();
-
-    factory.withPolicies(
-        newDto(PoliciesDto.class).withSince(currentTime + 10000L).withUntil(currentTime + 20000L));
-    validator.validateCurrentTimeAfterSinceUntil(factory);
-  }
-
-  @Test(
-      expectedExceptions = ApiException.class,
-      expectedExceptionsMessageRegExp = FactoryConstants.INVALID_SINCE_MESSAGE)
-  public void shouldNotValidateIfSinceBeforeCurrent() throws ApiException {
-    factory.withPolicies(newDto(PoliciesDto.class).withSince(1L));
-    validator.validateCurrentTimeAfterSinceUntil(factory);
-  }
-
-  @Test(
-      expectedExceptions = ApiException.class,
-      expectedExceptionsMessageRegExp = FactoryConstants.INVALID_UNTIL_MESSAGE)
-  public void shouldNotValidateIfUntilBeforeCurrent() throws ApiException {
-    factory.withPolicies(newDto(PoliciesDto.class).withUntil(1L));
-    validator.validateCurrentTimeAfterSinceUntil(factory);
-  }
-
-  @Test(
-      expectedExceptions = ApiException.class,
-      expectedExceptionsMessageRegExp = FactoryConstants.INVALID_SINCEUNTIL_MESSAGE)
-  public void shouldNotValidateIfUntilBeforeSince() throws ApiException {
-    factory.withPolicies(newDto(PoliciesDto.class).withSince(2L).withUntil(1L));
-
-    validator.validateCurrentTimeAfterSinceUntil(factory);
   }
 
   @Test(
@@ -296,7 +109,7 @@ public class FactoryBaseValidatorTest {
   @Test
   public void shouldValidateTrackedParamsIfOrgIdIsMissingButOnPremisesTrue() throws Exception {
     final DtoFactory dtoFactory = getInstance();
-    FactoryDto factory = dtoFactory.createDto(FactoryDto.class);
+    FactoryDevfileV2Dto factory = dtoFactory.createDto(FactoryDevfileV2Dto.class);
     factory
         .withV("4.0")
         .withPolicies(
@@ -315,7 +128,7 @@ public class FactoryBaseValidatorTest {
     List<IdeActionDto> actions = singletonList(newDto(IdeActionDto.class).withId("openFile"));
     IdeDto ide =
         newDto(IdeDto.class).withOnAppClosed(newDto(OnAppClosedDto.class).withActions(actions));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -327,7 +140,7 @@ public class FactoryBaseValidatorTest {
     List<IdeActionDto> actions = singletonList(newDto(IdeActionDto.class).withId("findReplace"));
     IdeDto ide =
         newDto(IdeDto.class).withOnAppLoaded(newDto(OnAppLoadedDto.class).withActions(actions));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -340,7 +153,7 @@ public class FactoryBaseValidatorTest {
     IdeDto ide =
         newDto(IdeDto.class)
             .withOnProjectsLoaded(newDto(OnProjectsLoadedDto.class).withActions(actions));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -353,7 +166,7 @@ public class FactoryBaseValidatorTest {
     IdeDto ide =
         newDto(IdeDto.class)
             .withOnProjectsLoaded(newDto(OnProjectsLoadedDto.class).withActions(actions));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -366,7 +179,7 @@ public class FactoryBaseValidatorTest {
         singletonList(newDto(IdeActionDto.class).withId("openWelcomePage"));
     IdeDto ide =
         newDto(IdeDto.class).withOnAppLoaded((newDto(OnAppLoadedDto.class).withActions(actions)));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -384,7 +197,7 @@ public class FactoryBaseValidatorTest {
     IdeDto ide =
         newDto(IdeDto.class)
             .withOnProjectsLoaded(newDto(OnProjectsLoadedDto.class).withActions(actions));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -402,7 +215,7 @@ public class FactoryBaseValidatorTest {
     IdeDto ide =
         newDto(IdeDto.class)
             .withOnProjectsLoaded(newDto(OnProjectsLoadedDto.class).withActions(actions));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -418,7 +231,7 @@ public class FactoryBaseValidatorTest {
     IdeDto ide =
         newDto(IdeDto.class)
             .withOnProjectsLoaded(newDto(OnProjectsLoadedDto.class).withActions(actions));
-    FactoryDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
+    FactoryMetaDto factoryWithAccountId = requireNonNull(getInstance().clone(factory)).withIde(ide);
     // when
     validator.validateProjectActions(factoryWithAccountId);
   }
@@ -428,7 +241,7 @@ public class FactoryBaseValidatorTest {
       throws URISyntaxException, IOException, NoSuchMethodException {
     return new Object[][] {
       {
-        newDto(FactoryDto.class)
+        newDto(FactoryMetaDto.class)
             .withV("4.0")
             .withIde(
                 newDto(IdeDto.class)
@@ -449,31 +262,20 @@ public class FactoryBaseValidatorTest {
                                                 .build())))))
       },
       {
-        newDto(FactoryDto.class)
+        newDto(FactoryMetaDto.class)
             .withV("4.0")
             .withPolicies(newDto(PoliciesDto.class).withSince(10000L))
       },
       {
-        newDto(FactoryDto.class)
+        newDto(FactoryMetaDto.class)
             .withV("4.0")
             .withPolicies(newDto(PoliciesDto.class).withUntil(10000L))
       },
       {
-        newDto(FactoryDto.class)
+        newDto(FactoryMetaDto.class)
             .withV("4.0")
             .withPolicies(newDto(PoliciesDto.class).withReferer("host"))
       }
     };
-  }
-
-  private FactoryDto prepareFactoryWithGivenStorage(String type, String location, String path) {
-    return factory.withWorkspace(
-        newDto(WorkspaceConfigDto.class)
-            .withProjects(
-                singletonList(
-                    newDto(ProjectConfigDto.class)
-                        .withSource(
-                            newDto(SourceStorageDto.class).withType(type).withLocation(location))
-                        .withPath(path))));
   }
 }

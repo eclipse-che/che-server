@@ -25,19 +25,14 @@ import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 
 /**
  * Provides Factory Parameters resolver for Azure DevOps repositories.
@@ -56,11 +51,9 @@ public class AzureDevOpsFactoryParametersResolver extends BaseFactoryParameterRe
   private final URLFetcher urlFetcher;
   private final URLFactoryBuilder urlFactoryBuilder;
   private final PersonalAccessTokenManager personalAccessTokenManager;
-  private final ProjectConfigDtoMerger projectConfigDtoMerger;
 
   @Inject
   public AzureDevOpsFactoryParametersResolver(
-      ProjectConfigDtoMerger projectConfigDtoMerger,
       AzureDevOpsURLParser azureDevOpsURLParser,
       URLFetcher urlFetcher,
       URLFactoryBuilder urlFactoryBuilder,
@@ -71,7 +64,6 @@ public class AzureDevOpsFactoryParametersResolver extends BaseFactoryParameterRe
     this.urlFetcher = urlFetcher;
     this.urlFactoryBuilder = urlFactoryBuilder;
     this.personalAccessTokenManager = personalAccessTokenManager;
-    this.projectConfigDtoMerger = projectConfigDtoMerger;
   }
 
   @Override
@@ -121,44 +113,6 @@ public class AzureDevOpsFactoryParametersResolver extends BaseFactoryParameterRe
               .withRepositoryUrl(azureDevOpsUrl.getRepositoryLocation())
               .withBranch(azureDevOpsUrl.getBranch());
       return factoryDto.withScmInfo(scmInfo);
-    }
-
-    @Override
-    public FactoryDto visit(FactoryDto factory) {
-      if (factory.getWorkspace() != null) {
-        return projectConfigDtoMerger.merge(
-            factory,
-            () -> {
-              // Compute project configuration
-              return newDto(ProjectConfigDto.class)
-                  .withSource(buildWorkspaceConfigSource(azureDevOpsUrl))
-                  .withName(azureDevOpsUrl.getRepository())
-                  .withPath("/".concat(azureDevOpsUrl.getRepository()));
-            });
-      } else if (factory.getDevfile() == null) {
-        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(azureDevOpsUrl.getRepository()));
-      }
-
-      updateProjects(
-          factory.getDevfile(),
-          () ->
-              newDto(ProjectDto.class)
-                  .withSource(
-                      newDto(SourceDto.class)
-                          .withLocation(azureDevOpsUrl.getRepositoryLocation())
-                          .withType("git")
-                          .withBranch(azureDevOpsUrl.getBranch())
-                          .withTag(azureDevOpsUrl.getTag()))
-                  .withName(azureDevOpsUrl.getRepository()),
-          project -> {
-            final String location = project.getSource().getLocation();
-            if (location.equals(azureDevOpsUrl.getRepositoryLocation())) {
-              project.getSource().setBranch(azureDevOpsUrl.getBranch());
-              project.getSource().setTag(azureDevOpsUrl.getTag());
-            }
-          });
-
-      return factory;
     }
   }
 

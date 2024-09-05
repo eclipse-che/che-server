@@ -27,13 +27,10 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 
 /**
  * Provides Factory Parameters resolver for both public and private bitbucket repositories.
@@ -133,34 +130,6 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
                 : branch);
       }
       return factoryDto.withScmInfo(scmInfo);
-    }
-
-    @Override
-    public FactoryDto visit(FactoryDto factory) {
-      if (factory.getDevfile() == null) {
-        // initialize default devfile
-        factory.setDevfile(
-            urlFactoryBuilder.buildDefaultDevfile(bitbucketServerUrl.getRepository()));
-      }
-
-      updateProjects(
-          factory.getDevfile(),
-          () ->
-              newDto(ProjectDto.class)
-                  .withSource(
-                      newDto(SourceDto.class)
-                          .withLocation(bitbucketServerUrl.repositoryLocation())
-                          .withType("git")
-                          .withBranch(bitbucketServerUrl.getBranch()))
-                  .withName(bitbucketServerUrl.getRepository()),
-          project -> {
-            final String location = project.getSource().getLocation();
-            if (location.equals(bitbucketServerUrl.repositoryLocation())) {
-              project.getSource().setBranch(bitbucketServerUrl.getBranch());
-            }
-          });
-
-      return factory;
     }
   }
 

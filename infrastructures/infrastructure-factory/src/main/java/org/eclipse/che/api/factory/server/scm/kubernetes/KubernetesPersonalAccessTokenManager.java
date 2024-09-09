@@ -188,19 +188,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           cheUser.getUserId(),
           oAuthProviderName);
       for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
-        List<Secret> secrets =
-            namespaceFactory
-                .access(null, namespaceMeta.getName())
-                .secrets()
-                .get(KUBERNETES_PERSONAL_ACCESS_TOKEN_LABEL_SELECTOR);
-
-        // sort secrets to get the newest one first
-        // Assign to new list to avoid UnsupportedOperationException (ImmutableList)
-        secrets =
-            secrets.stream()
-                .sorted(Comparator.comparing(secret -> secret.getMetadata().getCreationTimestamp()))
-                .collect(Collectors.toList());
-        Collections.reverse(secrets);
+        List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
 
         for (Secret secret : secrets) {
           LOG.debug("Checking secret {}", secret.getMetadata().getName());
@@ -255,6 +243,29 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
     return result;
+  }
+
+  private List<Secret> doGetPersonalAccessTokenSecrets(KubernetesNamespaceMeta namespaceMeta)
+      throws ScmConfigurationPersistenceException {
+    try {
+      List<Secret> secrets =
+          namespaceFactory
+              .access(null, namespaceMeta.getName())
+              .secrets()
+              .get(KUBERNETES_PERSONAL_ACCESS_TOKEN_LABEL_SELECTOR);
+
+      // sort secrets to get the newest one first
+      // Assign to new list to avoid UnsupportedOperationException (ImmutableList)
+      secrets =
+          secrets.stream()
+              .sorted(Comparator.comparing(secret -> secret.getMetadata().getCreationTimestamp()))
+              .collect(Collectors.toList());
+      Collections.reverse(secrets);
+      return secrets;
+    } catch (InfrastructureException e) {
+      LOG.debug("Failed to get personal access token secret", e);
+      throw new ScmConfigurationPersistenceException(e.getMessage(), e);
+    }
   }
 
   /**
@@ -354,28 +365,27 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(subject, scmServerUrl);
     gitCredentialManager.createOrReplace(personalAccessToken);
     store(personalAccessToken);
-    removePreviousTokensIfPresent(subject, scmServerUrl);
+    removePreviousTokenSecretsIfPresent(scmServerUrl);
   }
 
-  private void removePreviousTokensIfPresent(Subject subject, String scmServerUrl)
+  private void removePreviousTokenSecretsIfPresent(String scmServerUrl)
       throws ScmConfigurationPersistenceException, UnsatisfiedScmPreconditionException {
-    List<PersonalAccessToken> personalAccessTokens =
-        doGetPersonalAccessTokens(subject, null, scmServerUrl);
-    for (int i = 1; i < personalAccessTokens.size(); i++) {
-      PersonalAccessToken token = personalAccessTokens.get(i);
-      if (token.getScmProviderUrl().equals(scmServerUrl)) {
-        try {
-          String namespace = getFirstNamespace();
-          cheServerKubernetesClientFactory
-              .create()
-              .secrets()
-              .inNamespace(namespace)
-              .withName(token.getScmTokenId())
-              .delete();
-        } catch (InfrastructureException e) {
-          throw new ScmConfigurationPersistenceException(e.getMessage(), e);
+    try {
+      for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
+        List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
+        for (int i = 1; i < secrets.size(); i++) {
+          Secret secret = secrets.get(i);
+          if (secret.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL).equals(scmServerUrl)) {
+            cheServerKubernetesClientFactory
+                .create()
+                .secrets()
+                .inNamespace(getFirstNamespace())
+                .delete(secret);
+          }
         }
       }
+    } catch (InfrastructureException e) {
+      throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
   }
 

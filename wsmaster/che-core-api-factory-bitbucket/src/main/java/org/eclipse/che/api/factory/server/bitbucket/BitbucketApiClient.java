@@ -236,7 +236,7 @@ public class BitbucketApiClient {
           case HTTP_NOT_FOUND:
             throw new ScmItemNotFoundException(body);
           case HTTP_UNAUTHORIZED:
-            throw new ScmUnauthorizedException(body, "github", "v1", "");
+            throw new ScmUnauthorizedException(body, "bitbucket", "v2", "");
           default:
             throw new ScmCommunicationException(
                 "Unexpected status code " + response.statusCode() + " " + response.toString());

@@ -164,7 +164,7 @@ public class GitlabApiClient {
           case HTTP_NOT_FOUND:
             throw new ScmItemNotFoundException(body);
           case HTTP_UNAUTHORIZED:
-            throw new ScmUnauthorizedException(body, "github", "v1", "");
+            throw new ScmUnauthorizedException(body, "gitlab", "v2", "");
           default:
             throw new ScmCommunicationException(
                 "Unexpected status code " + response.statusCode() + " " + response,

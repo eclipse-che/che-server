@@ -277,6 +277,7 @@ public class GithubApiClient {
       Function<HttpResponse<InputStream>, T> responseConverter)
       throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
           ScmUnauthorizedException {
+    String provider = GITHUB_SAAS_ENDPOINT.equals(getServerUrl()) ? "github" : "github-server";
     try {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -300,11 +301,11 @@ public class GithubApiClient {
             throw new ScmUnauthorizedException(body, "github", "v2", "");
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + statusCode + " " + body, statusCode, "github");
+                "Unexpected status code " + statusCode + " " + body, statusCode, provider);
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
-      throw new ScmCommunicationException(e.getMessage(), e, "github");
+      throw new ScmCommunicationException(e.getMessage(), e, provider);
     }
   }
 

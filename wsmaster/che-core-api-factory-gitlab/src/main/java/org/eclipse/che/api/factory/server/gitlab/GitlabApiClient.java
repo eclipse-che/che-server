@@ -148,6 +148,7 @@ public class GitlabApiClient {
       HttpClient httpClient, HttpRequest request, Function<InputStream, T> bodyConverter)
       throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
           ScmUnauthorizedException {
+    String provider = "http://gitlab.com".equals(serverUrl.toString()) ? "gitlab" : "gitlab-server";
     try {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -169,11 +170,11 @@ public class GitlabApiClient {
             throw new ScmCommunicationException(
                 "Unexpected status code " + response.statusCode() + " " + response,
                 response.statusCode(),
-                "gitlab");
+                provider);
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
-      throw new ScmCommunicationException(e.getMessage(), e, "gitlab");
+      throw new ScmCommunicationException(e.getMessage(), e, provider);
     }
   }
 

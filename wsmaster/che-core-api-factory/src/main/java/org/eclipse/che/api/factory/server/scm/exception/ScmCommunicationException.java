@@ -26,6 +26,11 @@ public class ScmCommunicationException extends Exception {
     this.provider = provider;
   }
 
+  public ScmCommunicationException(String message, int statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+
   public ScmCommunicationException(String message, Throwable cause) {
     super(message, cause);
   }

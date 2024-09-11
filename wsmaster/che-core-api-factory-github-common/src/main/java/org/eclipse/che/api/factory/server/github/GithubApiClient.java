@@ -300,11 +300,11 @@ public class GithubApiClient {
             throw new ScmUnauthorizedException(body, "github", "v2", "");
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + statusCode + " " + body, statusCode);
+                "Unexpected status code " + statusCode + " " + body, statusCode, "github");
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
+      throw new ScmCommunicationException(e.getMessage(), e, "github");
     }
   }
 

@@ -411,7 +411,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
             throw new ScmItemNotFoundException(body);
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + response.statusCode() + " " + response.toString());
+                "Unexpected status code " + response.statusCode() + " " + response,
+                response.statusCode(),
+                "bitbucket");
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {

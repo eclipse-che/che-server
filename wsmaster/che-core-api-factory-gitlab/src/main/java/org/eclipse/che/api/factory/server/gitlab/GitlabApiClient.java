@@ -168,11 +168,12 @@ public class GitlabApiClient {
           default:
             throw new ScmCommunicationException(
                 "Unexpected status code " + response.statusCode() + " " + response,
-                response.statusCode());
+                response.statusCode(),
+                "gitlab");
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
+      throw new ScmCommunicationException(e.getMessage(), e, "gitlab");
     }
   }
 

@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
+import java.util.Collections;
 import java.util.Map;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
@@ -96,7 +97,10 @@ public class ApiExceptionMapper {
                 .withMessage(
                     appendErrorMessage(
                         "Error occurred during SCM communication.", throwable.getMessage()))
-                .withErrorCode(404));
+                .withErrorCode(404)
+                .withAttributes(
+                    Collections.singletonMap(
+                        "provider", ((ScmCommunicationException) throwable).getProvider())));
       }
     }
     return null;

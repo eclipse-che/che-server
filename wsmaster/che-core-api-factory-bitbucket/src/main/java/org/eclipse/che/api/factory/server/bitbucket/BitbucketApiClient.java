@@ -239,11 +239,13 @@ public class BitbucketApiClient {
             throw new ScmUnauthorizedException(body, "bitbucket", "v2", "");
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + response.statusCode() + " " + response.toString());
+                "Unexpected status code " + response.statusCode() + " " + response,
+                response.statusCode(),
+                "bitbucket");
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
+      throw new ScmCommunicationException(e.getMessage(), e, "bitbucket");
     }
   }
 

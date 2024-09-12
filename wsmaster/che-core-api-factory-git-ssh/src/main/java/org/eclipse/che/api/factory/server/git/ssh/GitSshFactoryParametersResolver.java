@@ -29,13 +29,10 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 
 /**
  * Provides Factory Parameters resolver for Git Ssh repositories.
@@ -93,7 +90,8 @@ public class GitSshFactoryParametersResolver extends BaseFactoryParameterResolve
                 gitSshUrl, urlFetcher, personalAccessTokenManager),
             extractOverrideParams(factoryParameters),
             true)
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
+        .orElseGet(
+            () -> newDto(FactoryDevfileV2Dto.class).withV(CURRENT_VERSION).withSource("repo"))
         .acceptVisitor(new GitSshFactoryVisitor(gitSshUrl));
   }
 
@@ -116,26 +114,6 @@ public class GitSshFactoryParametersResolver extends BaseFactoryParameterResolve
               .withScmProviderName(gitSshUrl.getProviderName())
               .withRepositoryUrl(gitSshUrl.getRepositoryLocation());
       return factoryDto.withScmInfo(scmInfo);
-    }
-
-    @Override
-    public FactoryDto visit(FactoryDto factory) {
-      if (factory.getDevfile() == null) {
-        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(gitSshUrl.getRepository()));
-      }
-
-      updateProjects(
-          factory.getDevfile(),
-          () ->
-              newDto(ProjectDto.class)
-                  .withSource(
-                      newDto(SourceDto.class)
-                          .withLocation(gitSshUrl.getRepositoryLocation())
-                          .withType("git"))
-                  .withName(gitSshUrl.getRepository()),
-          project -> {});
-
-      return factory;
     }
   }
 

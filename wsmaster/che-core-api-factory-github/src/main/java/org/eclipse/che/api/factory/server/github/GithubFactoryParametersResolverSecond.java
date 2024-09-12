@@ -15,7 +15,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 
@@ -36,7 +35,6 @@ public class GithubFactoryParametersResolverSecond extends AbstractGithubFactory
       GithubSourceStorageBuilder githubSourceStorageBuilder,
       AuthorisationRequestManager authorisationRequestManager,
       URLFactoryBuilder urlFactoryBuilder,
-      ProjectConfigDtoMerger projectConfigDtoMerger,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(
         githubUrlParser,
@@ -44,7 +42,6 @@ public class GithubFactoryParametersResolverSecond extends AbstractGithubFactory
         githubSourceStorageBuilder,
         authorisationRequestManager,
         urlFactoryBuilder,
-        projectConfigDtoMerger,
         personalAccessTokenManager,
         PROVIDER_NAME);
   }

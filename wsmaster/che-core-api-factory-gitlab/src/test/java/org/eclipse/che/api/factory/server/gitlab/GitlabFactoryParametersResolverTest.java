@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.gitlab;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,12 +39,8 @@ import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -132,7 +127,7 @@ public class GitlabFactoryParametersResolverTest {
 
     String gitlabUrl = "http://gitlab.2mcl.com/test/proj/repo/-/tree/foobar";
 
-    FactoryDto computedFactory = generateDevfileFactory();
+    FactoryDevfileV2Dto computedFactory = generateDevfileV2Factory();
 
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
@@ -140,11 +135,12 @@ public class GitlabFactoryParametersResolverTest {
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, gitlabUrl);
     // when
-    FactoryDto factory = (FactoryDto) gitlabFactoryParametersResolver.createFactory(params);
+    FactoryDevfileV2Dto factory =
+        (FactoryDevfileV2Dto) gitlabFactoryParametersResolver.createFactory(params);
     // then
     assertNotNull(factory.getDevfile());
-    SourceDto source = factory.getDevfile().getProjects().get(0).getSource();
-    assertEquals(source.getLocation(), "http://gitlab.2mcl.com/test/proj/repo.git");
+    ScmInfoDto source = factory.getScmInfo();
+    assertEquals(source.getRepositoryUrl(), "http://gitlab.2mcl.com/test/proj/repo.git");
     assertEquals(source.getBranch(), "foobar");
   }
 
@@ -156,7 +152,7 @@ public class GitlabFactoryParametersResolverTest {
         ImmutableMap.of(URL_PARAMETER_NAME, gitlabUrl, ERROR_QUERY_NAME, "access_denied");
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
-        .thenReturn(Optional.of(generateDevfileFactory()));
+        .thenReturn(Optional.of(generateDevfileV2Factory()));
 
     // when
     gitlabFactoryParametersResolver.createFactory(params);
@@ -191,16 +187,6 @@ public class GitlabFactoryParametersResolverTest {
     assertEquals(scmInfo.getScmProviderName(), "gitlab");
     assertEquals(scmInfo.getRepositoryUrl(), "http://gitlab.2mcl.com/eclipse/che.git");
     assertEquals(scmInfo.getBranch(), "foobar");
-  }
-
-  private FactoryDto generateDevfileFactory() {
-    return newDto(FactoryDto.class)
-        .withV(CURRENT_VERSION)
-        .withSource("repo")
-        .withDevfile(
-            newDto(DevfileDto.class)
-                .withApiVersion(CURRENT_API_VERSION)
-                .withMetadata(newDto(MetadataDto.class).withName("che")));
   }
 
   private FactoryDevfileV2Dto generateDevfileV2Factory() {

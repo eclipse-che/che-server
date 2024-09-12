@@ -23,13 +23,10 @@ import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.*;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 
 /**
  * Provides Factory Parameters resolver for github repositories.
@@ -49,9 +46,6 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
 
   private final URLFactoryBuilder urlFactoryBuilder;
 
-  /** ProjectDtoMerger */
-  private final ProjectConfigDtoMerger projectConfigDtoMerger;
-
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   private final String providerName;
@@ -62,7 +56,6 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
       GithubSourceStorageBuilder githubSourceStorageBuilder,
       AuthorisationRequestManager authorisationRequestManager,
       URLFactoryBuilder urlFactoryBuilder,
-      ProjectConfigDtoMerger projectConfigDtoMerger,
       PersonalAccessTokenManager personalAccessTokenManager,
       String providerName) {
     super(authorisationRequestManager, urlFactoryBuilder, providerName);
@@ -71,7 +64,6 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
     this.urlFetcher = urlFetcher;
     this.githubSourceStorageBuilder = githubSourceStorageBuilder;
     this.urlFactoryBuilder = urlFactoryBuilder;
-    this.projectConfigDtoMerger = projectConfigDtoMerger;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -142,39 +134,6 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
         scmInfo.withBranch(githubUrl.getBranch());
       }
       return factoryDto.withScmInfo(scmInfo);
-    }
-
-    @Override
-    public FactoryDto visit(FactoryDto factory) {
-      if (factory.getWorkspace() != null) {
-        return projectConfigDtoMerger.merge(
-            factory,
-            () -> {
-              // Compute project configuration
-              return newDto(ProjectConfigDto.class)
-                  .withSource(githubSourceStorageBuilder.buildWorkspaceConfigSource(githubUrl))
-                  .withName(githubUrl.getRepository())
-                  .withPath("/".concat(githubUrl.getRepository()));
-            });
-      } else if (factory.getDevfile() == null) {
-        // initialize default devfile
-        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(githubUrl.getRepository()));
-      }
-
-      updateProjects(
-          factory.getDevfile(),
-          () ->
-              newDto(ProjectDto.class)
-                  .withSource(githubSourceStorageBuilder.buildDevfileSource(githubUrl))
-                  .withName(githubUrl.getRepository()),
-          project -> {
-            final String location = project.getSource().getLocation();
-            if (location.equals(githubUrl.repositoryLocation())) {
-              project.getSource().setBranch(githubUrl.getBranch());
-            }
-          });
-
-      return factory;
     }
   }
 

@@ -32,8 +32,6 @@ import org.eclipse.che.api.core.rest.MessageBodyAdapter;
 import org.eclipse.che.api.core.rest.MessageBodyAdapterInterceptor;
 import org.eclipse.che.api.deploy.jsonrpc.CheJsonRpcWebSocketConfigurationModule;
 import org.eclipse.che.api.factory.server.FactoryAcceptValidator;
-import org.eclipse.che.api.factory.server.FactoryCreateValidator;
-import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
@@ -144,10 +142,6 @@ public class WsMasterModule extends AbstractModule {
     // factory
     bind(FactoryAcceptValidator.class)
         .to(org.eclipse.che.api.factory.server.impl.FactoryAcceptValidatorImpl.class);
-    bind(FactoryCreateValidator.class)
-        .to(org.eclipse.che.api.factory.server.impl.FactoryCreateValidatorImpl.class);
-    bind(FactoryEditValidator.class)
-        .to(org.eclipse.che.api.factory.server.impl.FactoryEditValidatorImpl.class);
     bind(org.eclipse.che.api.factory.server.FactoryService.class);
     bind(ScmService.class);
     install(new org.eclipse.che.api.factory.server.jpa.FactoryJpaModule());

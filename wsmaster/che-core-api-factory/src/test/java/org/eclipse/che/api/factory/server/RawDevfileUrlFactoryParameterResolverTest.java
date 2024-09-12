@@ -14,14 +14,9 @@ package org.eclipse.che.api.factory.server;
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.EDITOR_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.PLUGIN_COMPONENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,12 +33,8 @@ import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
-import org.eclipse.che.api.workspace.server.devfile.DevfileVersionDetector;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -56,52 +47,12 @@ import org.testng.annotations.Test;
 public class RawDevfileUrlFactoryParameterResolverTest {
 
   private static final String DEVFILE =
-      ""
-          + "apiVersion: 1.0.0\n"
-          + "metadata:\n"
-          + "  name: test\n"
-          + "components:\n"
-          + "- type: kubernetes\n"
-          + "  alias: component\n"
-          + "  reference: ../localfile\n";
+      "" + "schemaVersion: 2.3.0\n" + "metadata:\n" + "  name: test\n";
 
   @Mock private URLFetcher urlFetcher;
   @Mock private DevfileParser devfileParser;
 
   @InjectMocks private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
-
-  @Test
-  public void shouldResolveRelativeFiles() throws Exception {
-    // given
-    Map<String, ComponentIntegrityValidator> validators = new HashMap<>();
-    validators.put(EDITOR_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-    validators.put(PLUGIN_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-    validators.put(KUBERNETES_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-    validators.put(OPENSHIFT_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-
-    DevfileIntegrityValidator integrityValidator = new DevfileIntegrityValidator(validators);
-
-    DevfileParser devfileParser = new DevfileParser(integrityValidator);
-
-    URLFactoryBuilder factoryBuilder =
-        new URLFactoryBuilder(
-            "editor", "plugin", false, devfileParser, new DevfileVersionDetector());
-
-    RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher, devfileParser);
-
-    // set up our factory with the location of our devfile that is referencing our localfile
-    Map<String, String> factoryParameters = new HashMap<>();
-    factoryParameters.put(URL_PARAMETER_NAME, "http://myloc.com/aa/bb/devfile");
-    doReturn(DEVFILE).when(urlFetcher).fetch(eq("http://myloc.com/aa/bb/devfile"), eq(null));
-    doReturn("localfile").when(urlFetcher).fetch("http://myloc.com/aa/localfile", null);
-
-    // when
-    res.createFactory(factoryParameters);
-
-    // then
-    verify(urlFetcher).fetch(eq("http://myloc.com/aa/localfile"), eq(null));
-  }
 
   @Test
   @SuppressWarnings("unchecked")

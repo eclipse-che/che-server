@@ -96,7 +96,8 @@ public class GithubPersonalAccessTokenFetcherTest {
             "scmTokenName",
             "scmTokenId",
             githubOauthToken,
-            null);
+            null,
+            true);
     assertTrue(
         githubPATFetcher.isValid(personalAccessTokenParams).isEmpty(),
         "Should not validate SCM server with trailing /");
@@ -218,7 +219,13 @@ public class GithubPersonalAccessTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            wireMockServer.url("/"), "provider", "token-name", "tid-23434", githubOauthToken, null);
+            wireMockServer.url("/"),
+            "provider",
+            "token-name",
+            "tid-23434",
+            githubOauthToken,
+            null,
+            true);
 
     Optional<Pair<Boolean, String>> valid = githubPATFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -245,7 +252,8 @@ public class GithubPersonalAccessTokenFetcherTest {
             OAUTH_2_PREFIX + "-params-name",
             "tid-23434",
             githubOauthToken,
-            null);
+            null,
+            true);
 
     Optional<Pair<Boolean, String>> valid = githubPATFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -263,7 +271,8 @@ public class GithubPersonalAccessTokenFetcherTest {
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             githubOauthToken,
-            null);
+            null,
+            true);
 
     assertFalse(githubPATFetcher.isValid(params).isPresent());
   }

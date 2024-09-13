@@ -131,7 +131,8 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
                   tokenName,
                   tokenId,
                   oAuthToken.getToken(),
-                  null));
+                  null,
+                  true));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {

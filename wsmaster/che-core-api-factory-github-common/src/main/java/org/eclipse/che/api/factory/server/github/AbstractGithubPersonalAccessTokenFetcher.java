@@ -156,7 +156,8 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
                   tokenName,
                   tokenId,
                   oAuthToken.getToken(),
-                  null));
+                  null,
+                  true));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
@@ -227,7 +228,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       // The url from the token has the same url as the api client, no need to create a new one.
       apiClient = githubApiClient;
     } else {
-      if (OAUTH_PROVIDER_NAME.equals(params.getScmTokenName())) {
+      if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
         apiClient = new GithubApiClient(params.getScmProviderUrl());
       } else {
         LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
@@ -235,7 +236,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       }
     }
     try {
-      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+      if (params.isOauthToken()) {
         Pair<String, String[]> pair = apiClient.getTokenScopes(params.getToken());
         return Optional.of(
             Pair.of(

@@ -20,19 +20,23 @@ public class PersonalAccessTokenParams {
   private final String token;
   private final String organization;
 
+  private final boolean isOauthToken;
+
   public PersonalAccessTokenParams(
       String scmProviderUrl,
       String scmProviderName,
       String scmTokenName,
       String scmTokenId,
       String token,
-      String organization) {
+      String organization,
+      boolean isOauthToken) {
     this.scmProviderUrl = scmProviderUrl;
     this.scmProviderName = scmProviderName;
     this.scmTokenName = scmTokenName;
     this.scmTokenId = scmTokenId;
     this.token = token;
     this.organization = organization;
+    this.isOauthToken = isOauthToken;
   }
 
   public String getScmProviderUrl() {
@@ -49,6 +53,10 @@ public class PersonalAccessTokenParams {
   @Deprecated
   public String getScmTokenName() {
     return scmTokenName;
+  }
+
+  public boolean isOauthToken() {
+    return isOauthToken;
   }
 
   public String getScmTokenId() {

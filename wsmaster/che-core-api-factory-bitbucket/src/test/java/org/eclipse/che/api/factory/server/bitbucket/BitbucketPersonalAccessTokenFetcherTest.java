@@ -92,7 +92,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             "scmTokenName",
             "scmTokenId",
             bitbucketOauthToken,
-            null);
+            null,
+            true);
     assertTrue(
         bitbucketPersonalAccessTokenFetcher.isValid(personalAccessTokenParams).isEmpty(),
         "Should not validate SCM server with trailing /");
@@ -175,7 +176,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             "params-name",
             "tid-23434",
             bitbucketOauthToken,
-            null);
+            null,
+            true);
 
     Optional<Pair<Boolean, String>> valid = bitbucketPersonalAccessTokenFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -202,7 +204,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             OAUTH_2_PREFIX + "-params-name",
             "tid-23434",
             bitbucketOauthToken,
-            null);
+            null,
+            true);
 
     Optional<Pair<Boolean, String>> valid = bitbucketPersonalAccessTokenFetcher.isValid(params);
     assertTrue(valid.isPresent());
@@ -220,7 +223,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
             OAUTH_2_PREFIX + "-token-name",
             "tid-23434",
             bitbucketOauthToken,
-            null);
+            null,
+            true);
 
     assertFalse(bitbucketPersonalAccessTokenFetcher.isValid(params).isPresent());
   }

@@ -108,7 +108,8 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
                   tokenName,
                   tokenId,
                   oAuthToken.getToken(),
-                  null));
+                  null,
+                  true));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {

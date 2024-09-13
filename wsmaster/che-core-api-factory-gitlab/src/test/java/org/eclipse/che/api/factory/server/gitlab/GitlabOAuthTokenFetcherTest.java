@@ -184,7 +184,8 @@ public class GitlabOAuthTokenFetcherTest {
             "oauth2-token-name",
             "tid-23434",
             "token123",
-            null);
+            null,
+            true);
 
     Optional<Pair<Boolean, String>> valid = oAuthTokenFetcher.isValid(params);
 

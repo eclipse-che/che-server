@@ -152,7 +152,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException {
+      throws ScmConfigurationPersistenceException, ScmCommunicationException {
     return doGetPersonalAccessTokens(cheUser, null, scmServerUrl).stream().findFirst();
   }
 
@@ -174,13 +174,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   @Override
   public Optional<PersonalAccessToken> get(
       Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException {
+      throws ScmConfigurationPersistenceException, ScmCommunicationException {
     return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl).stream().findFirst();
   }
 
   private List<PersonalAccessToken> doGetPersonalAccessTokens(
       Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
-      throws ScmConfigurationPersistenceException {
+      throws ScmConfigurationPersistenceException, ScmCommunicationException {
     List<PersonalAccessToken> result = new ArrayList<>();
     try {
       LOG.debug(

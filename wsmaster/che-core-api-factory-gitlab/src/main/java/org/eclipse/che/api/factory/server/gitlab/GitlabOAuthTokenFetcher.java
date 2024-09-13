@@ -188,7 +188,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
         GitlabOauthTokenInfo info =
             gitlabApiClient.getOAuthTokenInfo(personalAccessToken.getToken());
         return Optional.of(Sets.newHashSet(info.getScope()).containsAll(DEFAULT_TOKEN_SCOPES));
-      } catch (ScmItemNotFoundException | ScmCommunicationException e) {
+      } catch (ScmItemNotFoundException | ScmCommunicationException | ScmUnauthorizedException e) {
         return Optional.of(Boolean.FALSE);
       }
     } else {
@@ -201,14 +201,18 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
         } else {
           return Optional.of(Boolean.FALSE);
         }
-      } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+      } catch (ScmItemNotFoundException
+          | ScmCommunicationException
+          | ScmBadRequestException
+          | ScmUnauthorizedException e) {
         return Optional.of(Boolean.FALSE);
       }
     }
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException {
     GitlabApiClient gitlabApiClient = getApiClient(params.getScmProviderUrl());
     if (gitlabApiClient == null || !gitlabApiClient.isConnected(params.getScmProviderUrl())) {
       if (OAUTH_PROVIDER_NAME.equals(params.getScmTokenName())) {
@@ -234,7 +238,7 @@ public class GitlabOAuthTokenFetcher implements PersonalAccessTokenFetcher {
       // latest GitLab version, we just perform check by accessing something from API.
       // TODO: add PAT scope validation
       return Optional.of(Pair.of(Boolean.TRUE, user.getUsername()));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
       return Optional.empty();
     }
   }

@@ -26,6 +26,7 @@ import org.eclipse.che.api.factory.server.scm.*;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.inject.ConfigurationException;
@@ -72,7 +73,8 @@ public class GitlabUserDataFetcher extends AbstractGitUserDataFetcher {
 
   @Override
   protected GitUserData fetchGitUserDataWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     for (String gitlabServerEndpoint : this.registeredGitlabEndpoints) {
       GitlabUser user = new GitlabApiClient(gitlabServerEndpoint).getUser(token);
       return new GitUserData(user.getName(), user.getEmail());
@@ -83,7 +85,8 @@ public class GitlabUserDataFetcher extends AbstractGitUserDataFetcher {
   @Override
   protected GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     GitlabUser user =
         new GitlabApiClient(personalAccessToken.getScmProviderUrl())
             .getUser(personalAccessToken.getToken());

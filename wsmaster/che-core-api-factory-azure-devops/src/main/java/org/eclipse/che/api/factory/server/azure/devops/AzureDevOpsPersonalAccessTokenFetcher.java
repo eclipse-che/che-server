@@ -169,7 +169,8 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException {
     if (!isValidScmServerUrl(params.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
       return Optional.empty();
@@ -183,7 +184,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
         user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());
       }
       return Optional.of(Pair.of(Boolean.TRUE, user.getEmailAddress()));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException | ScmBadRequestException e) {
       return Optional.empty();
     }
   }

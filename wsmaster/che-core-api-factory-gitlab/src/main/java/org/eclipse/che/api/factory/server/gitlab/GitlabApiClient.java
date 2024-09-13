@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.gitlab;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.time.Duration.ofSeconds;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +34,7 @@ import java.util.function.Function;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +67,8 @@ public class GitlabApiClient {
   }
 
   public GitlabUser getUser(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     final URI uri = serverUrl.resolve("/api/v4/user");
     HttpRequest request =
         HttpRequest.newBuilder(uri)
@@ -88,7 +91,7 @@ public class GitlabApiClient {
   }
 
   public GitlabPersonalAccessTokenInfo getPersonalAccessTokenInfo(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmUnauthorizedException {
     final URI uri = serverUrl.resolve("/api/v4/personal_access_tokens/self");
     HttpRequest request =
         HttpRequest.newBuilder(uri)
@@ -115,7 +118,7 @@ public class GitlabApiClient {
   }
 
   public GitlabOauthTokenInfo getOAuthTokenInfo(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmUnauthorizedException {
     final URI uri = serverUrl.resolve("/oauth/token/info");
     HttpRequest request =
         HttpRequest.newBuilder(uri)
@@ -143,7 +146,9 @@ public class GitlabApiClient {
 
   private <T> T executeRequest(
       HttpClient httpClient, HttpRequest request, Function<InputStream, T> bodyConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException {
+      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+          ScmUnauthorizedException {
+    String provider = "http://gitlab.com".equals(serverUrl.toString()) ? "gitlab" : "gitlab-server";
     try {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -159,14 +164,17 @@ public class GitlabApiClient {
             throw new ScmBadRequestException(body);
           case HTTP_NOT_FOUND:
             throw new ScmItemNotFoundException(body);
+          case HTTP_UNAUTHORIZED:
+            throw new ScmUnauthorizedException(body, "gitlab", "v2", "");
           default:
             throw new ScmCommunicationException(
                 "Unexpected status code " + response.statusCode() + " " + response,
-                response.statusCode());
+                response.statusCode(),
+                provider);
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
+      throw new ScmCommunicationException(e.getMessage(), e, provider);
     }
   }
 

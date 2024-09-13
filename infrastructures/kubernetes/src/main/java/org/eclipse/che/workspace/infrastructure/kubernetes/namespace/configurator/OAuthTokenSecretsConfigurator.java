@@ -17,12 +17,15 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ensures that OAuth token that are represented by Kubernetes Secrets are valid.
@@ -43,6 +46,8 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
       ImmutableMap.of(
           "app.kubernetes.io/part-of", "che.eclipse.org",
           "app.kubernetes.io/component", "scm-personal-access-token");
+
+  private static final Logger LOG = LoggerFactory.getLogger(OAuthTokenSecretsConfigurator.class);
 
   @Inject
   public OAuthTokenSecretsConfigurator(
@@ -74,8 +79,8 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
                 Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
                 personalAccessTokenManager.get(
                     cheSubject, s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL));
-              } catch (ScmConfigurationPersistenceException e) {
-                throw new RuntimeException(e);
+              } catch (ScmConfigurationPersistenceException | ScmCommunicationException e) {
+                LOG.error(e.getMessage(), e);
               }
             });
   }

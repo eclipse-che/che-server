@@ -17,7 +17,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -211,7 +211,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldNotValidateExpiredOauthToken() throws Exception {
-    stubFor(get(urlEqualTo("/user")).willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+    stubFor(get(urlEqualTo("/user")).willReturn(aResponse().withStatus(HTTP_UNAUTHORIZED)));
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
@@ -235,7 +235,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
     stubFor(
         get(urlEqualTo("/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + bitbucketOauthToken))
-            .willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+            .willReturn(aResponse().withStatus(HTTP_UNAUTHORIZED)));
 
     bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
         subject, BitbucketApiClient.BITBUCKET_SERVER);

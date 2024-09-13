@@ -215,13 +215,17 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
           return Optional.of(Boolean.FALSE);
         }
       }
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException
+        | ScmCommunicationException
+        | ScmBadRequestException
+        | ScmUnauthorizedException e) {
       return Optional.of(Boolean.FALSE);
     }
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException {
     GithubApiClient apiClient;
     if (githubApiClient.isConnected(params.getScmProviderUrl())) {
       // The url from the token has the same url as the api client, no need to create a new one.
@@ -247,7 +251,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
         GithubUser user = apiClient.getUser(params.getToken());
         return Optional.of(Pair.of(Boolean.TRUE, user.getLogin()));
       }
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
       return Optional.empty();
     }
   }

@@ -252,7 +252,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
           if (tokenOptional.isPresent()) {
             return newDto(OAuthToken.class).withToken(tokenOptional.get().getToken());
           }
-        } catch (ScmConfigurationPersistenceException e) {
+        } catch (ScmConfigurationPersistenceException | ScmCommunicationException e) {
           throw new RuntimeException(e);
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -147,7 +147,9 @@ public class AzureDevOpsApiClient {
             throw new ScmItemNotFoundException(body);
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + response.statusCode() + " " + response.toString());
+                "Unexpected status code " + response.statusCode() + " " + response,
+                response.statusCode(),
+                "azure-devops");
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {

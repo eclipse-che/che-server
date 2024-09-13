@@ -56,11 +56,13 @@ public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
   }
 
   protected abstract GitUserData fetchGitUserDataWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException;
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException;
 
   protected abstract GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException;
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException;
 
   protected abstract String getLocalAuthenticateUrl();
 }

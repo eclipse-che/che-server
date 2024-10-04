@@ -21,6 +21,8 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Abst
 import com.google.gson.Gson;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.base.PatchContext;
+import io.fabric8.kubernetes.client.dsl.base.PatchType;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URL;
 import java.util.HashSet;
@@ -118,7 +120,7 @@ public class KubernetesAuthorisationRequestManager implements AuthorisationReque
           .configMaps()
           .inNamespace(getFirstNamespace())
           .withName(PREFERENCES_CONFIGMAP_NAME)
-          .patch(configMap);
+          .patch(PatchContext.of(PatchType.STRATEGIC_MERGE), configMap);
     } catch (UnsatisfiedScmPreconditionException
         | ScmConfigurationPersistenceException
         | InfrastructureException e) {

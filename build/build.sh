@@ -52,6 +52,8 @@ init() {
   DOCKERFILE=""
   BUILD_COMMAND="build"
   BUILD_ARGS=""
+  BUILD_PLATFORMS=""
+  BUILD_PLATFORMS_ARG=""
 
   while [ $# -gt 0 ]; do
     case $1 in
@@ -88,6 +90,9 @@ init() {
       --build-arg*:*)
         BUILD_ARGS_CSV="${1#*:}"
         prepare_build_args $BUILD_ARGS_CSV
+        shift ;;
+      --build-platforms*:*)
+        BUILD_PLATFORMS="${1#*:}"
         shift ;;
       --*)
         printf "${RED}Unknown parameter: $1${NC}\n"; exit 2 ;;
@@ -137,6 +142,10 @@ build() {
       fi
   fi
 
+  if [ ! -z $BUILD_PLATFORMS ]; then
+    BUILD_PLATFORMS_ARG="--platform ${BUILD_PLATFORMS}"
+  fi
+
   # If Dockerfile is empty, build all Dockerfiles
   if [ -z ${DOCKERFILE} ]; then
     DOCKERFILES_TO_BUILD="$(ls ${DIR}/Dockerfile*)"
@@ -171,7 +180,7 @@ build_image() {
     -e "s;\${BUILD_PREFIX};${PREFIX};" \
     -e "s;\${BUILD_TAG};${TAG};" \
     > ${DIR}/.Dockerfile
-  cd "${DIR}" && "${BUILDER}" "${BUILD_COMMAND}" -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
+  cd "${DIR}" && "${BUILDER}" "${BUILD_COMMAND}" ${PLATFORMS_ARG} -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
   DOCKER_BUILD_STATUS=$?
   rm ${DIR}/.Dockerfile
   if [ $DOCKER_BUILD_STATUS -eq 0 ]; then

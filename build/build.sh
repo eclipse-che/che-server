@@ -180,7 +180,7 @@ build_image() {
     -e "s;\${BUILD_PREFIX};${PREFIX};" \
     -e "s;\${BUILD_TAG};${TAG};" \
     > ${DIR}/.Dockerfile
-  cd "${DIR}" && "${BUILDER}" "${BUILD_COMMAND}" ${PLATFORMS_ARG} -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
+  cd "${DIR}" && "${BUILDER}" "${BUILD_COMMAND}" ${BUILD_PLATFORMS_ARG} -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
   DOCKER_BUILD_STATUS=$?
   rm ${DIR}/.Dockerfile
   if [ $DOCKER_BUILD_STATUS -eq 0 ]; then

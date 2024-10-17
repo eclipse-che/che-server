@@ -91,7 +91,7 @@ init() {
         BUILD_ARGS_CSV="${1#*:}"
         prepare_build_args $BUILD_ARGS_CSV
         shift ;;
-      --build-platforms*:*)
+      --build-platforms:*)
         BUILD_PLATFORMS="${1#*:}"
         shift ;;
       --*)

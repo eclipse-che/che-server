@@ -29,6 +29,10 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
         cache: 'maven'
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     - name: Login to docker.io
       if: github.event_name == 'pull_request'
       uses: redhat-actions/podman-login@v1
@@ -47,7 +51,7 @@ jobs:
       run: mvn -B clean install -U -Pintegration
     - name: Build images
       if: github.event_name == 'pull_request'
-      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }}
+      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64
     - name: Push images
       if: github.event_name == 'pull_request'
       run: podman push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}

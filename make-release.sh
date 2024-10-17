@@ -7,6 +7,7 @@ REGISTRY="quay.io"
 ORGANIZATION="eclipse"
 
 IMAGE="quay.io/eclipse/che-server"
+BUILD_PLATFORMS="linux/amd64,linux/ppc64le,linux/arm64"
 
 sed_in_place() {
     SHORT_UNAME=$(uname -s)
@@ -275,7 +276,7 @@ buildImages() {
     fi
 
     # BUILD IMAGES
-    bash "$(pwd)/che-server/build/build.sh" --tag:${TAG}
+    bash "$(pwd)/che-server/build/build.sh" --tag:${TAG} --build-platforms:${BUILD_PLATFORMS}
     if [[ $? -ne 0 ]]; then
        echo "ERROR:"
        echo "build of che-server image $TAG is failed!"

@@ -204,7 +204,7 @@ build_image() {
     if [[ $PUSH_IMAGE == "true" ]]; then
       printf "Push image ${BLUE}${IMAGE_NAME} ${NC}\n"
       if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
-        ${BUILDER} manifest push ${IMAGE_NAME}
+        ${BUILDER} manifest push ${IMAGE_NAME} docker://{IMAGE_NAME}
       else
         ${BUILDER} push ${IMAGE_NAME}
       fi

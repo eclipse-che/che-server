@@ -45,6 +45,7 @@ init() {
   ORGANIZATION="quay.io/eclipse"
   PREFIX="che"
   TAG="next"
+  PUSH_IMAGE=false
   SKIP_TESTS=false
   NAME="che"
   ARGS=""
@@ -53,7 +54,6 @@ init() {
   BUILD_COMMAND="build"
   BUILD_ARGS=""
   BUILD_PLATFORMS=""
-  BUILD_PLATFORMS_ARG=""
 
   while [ $# -gt 0 ]; do
     case $1 in
@@ -81,6 +81,9 @@ init() {
       --skip-tests)
         SKIP_TESTS=true
         shift ;;
+      --push-image)
+        PUSH_IMAGE=true
+        shift ;;
       --sha-tag)
         SHA_TAG=$(git rev-parse --short HEAD)
         shift ;;
@@ -93,6 +96,9 @@ init() {
         shift ;;
       --build-platforms:*)
         BUILD_PLATFORMS="${1#*:}"
+        shift ;;
+      --builder:*)
+        BUILDER="${1#*:}"
         shift ;;
       --*)
         printf "${RED}Unknown parameter: $1${NC}\n"; exit 2 ;;
@@ -142,10 +148,6 @@ build() {
       fi
   fi
 
-  if [ ! -z $BUILD_PLATFORMS ]; then
-    BUILD_PLATFORMS_ARG="--platform ${BUILD_PLATFORMS}"
-  fi
-
   # If Dockerfile is empty, build all Dockerfiles
   if [ -z ${DOCKERFILE} ]; then
     DOCKERFILES_TO_BUILD="$(ls ${DIR}/Dockerfile*)"
@@ -180,11 +182,35 @@ build_image() {
     -e "s;\${BUILD_PREFIX};${PREFIX};" \
     -e "s;\${BUILD_TAG};${TAG};" \
     > ${DIR}/.Dockerfile
-  cd "${DIR}" && "${BUILDER}" "${BUILD_COMMAND}" ${BUILD_PLATFORMS_ARG} -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
+  cd "${DIR}"
+
+  if [[ -n $BUILD_PLATFORMS ]]; then
+    if [[ $BUILDER == "podman" ]]; then
+      "${BUILDER}" manifest create ${IMAGE_NAME}
+      "${BUILDER}" "${BUILD_COMMAND}" --platform ${BUILD_PLATFORMS} -f ${DIR}/.Dockerfile --manifest ${IMAGE_NAME} ${BUILD_ARGS} .
+    else
+      printf "${RED}Multi-platform image building is only supported for podman builder${NC}\n"
+      exit 1
+    fi
+  else
+    "${BUILDER}" "${BUILD_COMMAND}" -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
+  fi
+
   DOCKER_BUILD_STATUS=$?
   rm ${DIR}/.Dockerfile
   if [ $DOCKER_BUILD_STATUS -eq 0 ]; then
     printf "Build of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+
+    if [[ $PUSH_IMAGE == "true" ]]; then
+      printf "Push image ${BLUE}${IMAGE_NAME} ${NC}\n"
+      if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
+        ${BUILDER} manifest push ${IMAGE_NAME}
+      else
+        ${BUILDER} push ${IMAGE_NAME}
+      fi
+      printf "Push of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+    fi
+
     if [ ! -z "${SHA_TAG}" ]; then
       SHA_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:${SHA_TAG}
       "${BUILDER}" tag ${IMAGE_NAME} ${SHA_IMAGE_NAME}

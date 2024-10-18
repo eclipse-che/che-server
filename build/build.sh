@@ -219,10 +219,10 @@ build_image() {
 
     if [ ! -z "${SHA_TAG}" ]; then
       SHA_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:${SHA_TAG}
+      printf "Re-tagging with SHA based tag ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
       "${BUILDER}" tag ${IMAGE_NAME} ${SHA_IMAGE_NAME}
       DOCKER_TAG_STATUS=$?
       if [ $DOCKER_TAG_STATUS -eq 0 ]; then
-        printf "Re-tagging with SHA based tag ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
         if [[ $PUSH_IMAGE == "true" ]]; then
           printf "Pushing image ${BLUE}${SHA_IMAGE_NAME} ${NC}\n"
           if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
@@ -238,27 +238,26 @@ build_image() {
       fi
     fi
 
-    if [[ ${TAG_LATEST} == "true" ]]; then
+    if [[ ${LATEST_TAG} == "true" ]]; then
       LATEST_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:latest
+      printf "Re-tagging with latest tag ${BLUE}${LATEST_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
       "${BUILDER}" tag ${IMAGE_NAME} ${LATEST_IMAGE_NAME}
       DOCKER_TAG_STATUS=$?
       if [ $DOCKER_TAG_STATUS -eq 0 ]; then
-        printf "Re-tagging with SHA based tag ${BLUE}${LATEST_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
         if [[ $PUSH_IMAGE == "true" ]]; then
-          printf "Pushing image ${BLUE}${SHA_IMAGE_NAME} ${NC}\n"
+          printf "Pushing image ${BLUE}${LATEST_IMAGE_NAME} ${NC}\n"
           if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
-            ${BUILDER} manifest push ${IMAGE_MANIFEST} docker://{SHA_IMAGE_NAME}
+            ${BUILDER} manifest push ${IMAGE_MANIFEST} docker://{LATEST_IMAGE_NAME}
           else
-            ${BUILDER} push ${SHA_IMAGE_NAME}
+            ${BUILDER} push ${LATEST_IMAGE_NAME}
           fi
-          printf "Push of ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+          printf "Push of ${BLUE}${LATEST_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
         fi
       else
-        printf "${RED}Failure when tagging docker image ${SHA_IMAGE_NAME}${NC}\n"
+        printf "${RED}Failure when tagging docker image ${LATEST_IMAGE_NAME}${NC}\n"
         exit 1
       fi
     fi
-
 
     if [ ! -z "${IMAGE_ALIASES}" ]; then
       for TMP_IMAGE_NAME in ${IMAGE_ALIASES}

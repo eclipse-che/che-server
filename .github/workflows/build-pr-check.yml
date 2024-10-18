@@ -31,13 +31,13 @@ jobs:
         cache: 'maven'
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
-#    - name: Login to docker.io
-#      if: github.event_name == 'pull_request'
-#      uses: redhat-actions/podman-login@v1
-#      with:
-#        username: ${{ secrets.DOCKERHUB_USERNAME }}
-#        password: ${{ secrets.DOCKERHUB_PASSWORD }}
-#        registry: docker.io
+    - name: Login to docker.io
+      if: github.event_name == 'pull_request'
+      uses: redhat-actions/podman-login@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        registry: docker.io
     - name: Login to quay.io
       if: github.event_name == 'pull_request'
       uses: redhat-actions/podman-login@v1
@@ -49,4 +49,4 @@ jobs:
       run: mvn -B clean install -U -Pintegration
     - name: Build and push images
       if: github.event_name == 'pull_request'
-      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --organization:quay.io/abazko --sha-tag --latest-tag  --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image
+      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image

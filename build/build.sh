@@ -205,7 +205,7 @@ build_image() {
     if [[ $PUSH_IMAGE == "true" ]]; then
       if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
         printf "Pushing manifest ${BLUE}${IMAGE_NAME} ${NC}\n"
-        ${BUILDER} manifest push test-manifest docker://quay.io/eclipse/che-operator:mytest
+        ${BUILDER} manifest push test-manifest docker://${IMAGE_NAME}
       else
         printf "Pushing image ${BLUE}${IMAGE_NAME} ${NC}\n"
         ${BUILDER} push ${IMAGE_NAME}

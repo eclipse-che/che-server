@@ -28,6 +28,8 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
         cache: 'maven'
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
     - name: Login to docker.io
       uses: redhat-actions/podman-login@v1
       with:
@@ -42,15 +44,11 @@ jobs:
         registry: quay.io
     - name: Build with Maven
       run: mvn -B clean install -U -Pintegration
-    - name: Build images
+    - name: Build and push images
       id: build
       run: |
           echo "short_sha1=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          ./build/build.sh --tag:next --sha-tag
-    - name: Push docker images
-      run: |
-        podman push quay.io/eclipse/che-server:next
-        podman push quay.io/eclipse/che-server:${{ steps.build.outputs.short_sha1 }}
+          ./build/build.sh --tag:next --sha-tag --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image
     - name: Create failure MM message
       if: ${{ failure() }}
       run: |

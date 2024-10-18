@@ -188,7 +188,7 @@ build_image() {
     if [[ $BUILDER == "podman" ]]; then
       printf "${BOLD}Building Manifest ${IMAGE_NAME}${NC}\n"
       "${BUILDER}" manifest create test-manifest
-      "${BUILDER}" "${BUILD_COMMAND}" --platform ${BUILD_PLATFORMS} -f ${DIR}/.Dockerfile --manifest test-manifest ${BUILD_ARGS} .
+      "${BUILDER}" build --platform ${BUILD_PLATFORMS} -f ${DIR}/.Dockerfile --manifest test-manifest .
     else
       printf "${RED}Multi-platform image building is only supported for podman builder${NC}\n"
       exit 1
@@ -205,7 +205,7 @@ build_image() {
     if [[ $PUSH_IMAGE == "true" ]]; then
       if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
         printf "Pushing manifest ${BLUE}${IMAGE_NAME} ${NC}\n"
-        ${BUILDER} manifest push test-manifest docker://{IMAGE_NAME}
+        ${BUILDER} manifest push test-manifest docker://quay.io/eclipse/che-operator:mytest
       else
         printf "Pushing image ${BLUE}${IMAGE_NAME} ${NC}\n"
         ${BUILDER} push ${IMAGE_NAME}

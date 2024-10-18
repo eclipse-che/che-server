@@ -108,6 +108,7 @@ init() {
   done
 
   IMAGE_NAME="$ORGANIZATION/$PREFIX-$NAME:$TAG"
+  IMAGE_MANIFEST="$NAME-$TAG"
 }
 
 build() {
@@ -187,8 +188,8 @@ build_image() {
   if [[ -n $BUILD_PLATFORMS ]]; then
     if [[ $BUILDER == "podman" ]]; then
       printf "${BOLD}Building Manifest ${IMAGE_NAME}${NC}\n"
-      "${BUILDER}" manifest create test-manifest
-      "${BUILDER}" build --platform ${BUILD_PLATFORMS} -f ${DIR}/.Dockerfile --manifest test-manifest .
+      "${BUILDER}" manifest create ${IMAGE_MANIFEST}
+      "${BUILDER}" build --platform ${BUILD_PLATFORMS} -f ${DIR}/.Dockerfile --manifest ${IMAGE_MANIFEST} .
     else
       printf "${RED}Multi-platform image building is only supported for podman builder${NC}\n"
       exit 1
@@ -203,11 +204,10 @@ build_image() {
     printf "Build of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
 
     if [[ $PUSH_IMAGE == "true" ]]; then
+      printf "Pushing manifest ${BLUE}${IMAGE_NAME} ${NC}\n"
       if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
-        printf "Pushing manifest ${BLUE}${IMAGE_NAME} ${NC}\n"
-        ${BUILDER} manifest push test-manifest docker://${IMAGE_NAME}
+        ${BUILDER} manifest push ${IMAGE_MANIFEST} docker://${IMAGE_NAME}
       else
-        printf "Pushing image ${BLUE}${IMAGE_NAME} ${NC}\n"
         ${BUILDER} push ${IMAGE_NAME}
       fi
       printf "Push of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
@@ -220,11 +220,10 @@ build_image() {
       if [ $DOCKER_TAG_STATUS -eq 0 ]; then
         printf "Re-tagging with SHA based tag ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
         if [[ $PUSH_IMAGE == "true" ]]; then
+          printf "Pushing image ${BLUE}${SHA_IMAGE_NAME} ${NC}\n"
           if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
-            printf "Pushing manifest ${BLUE}${SHA_IMAGE_NAME} ${NC}\n"
-            ${BUILDER} manifest push ${IMAGE_NAME} docker://{SHA_IMAGE_NAME}
+            ${BUILDER} manifest push ${IMAGE_MANIFEST} docker://{SHA_IMAGE_NAME}
           else
-            printf "Pushing image ${BLUE}${SHA_IMAGE_NAME} ${NC}\n"
             ${BUILDER} push ${SHA_IMAGE_NAME}
           fi
           printf "Push of ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
@@ -249,6 +248,12 @@ build_image() {
 
       done
     fi
+
+    if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
+      # Remove manifest list from local storage
+      ${BUILDER} manifest rm ${IMAGE_MANIFEST}
+    fi
+
     printf "${GREEN}Script run successfully: ${BLUE}${IMAGE_NAME}${NC}\n"
   else
     printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"

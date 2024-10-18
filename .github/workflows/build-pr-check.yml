@@ -31,13 +31,13 @@ jobs:
         cache: 'maven'
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
-    - name: Login to docker.io
-      if: github.event_name == 'pull_request'
-      uses: redhat-actions/podman-login@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
-        registry: docker.io
+#    - name: Login to docker.io
+#      if: github.event_name == 'pull_request'
+#      uses: redhat-actions/podman-login@v1
+#      with:
+#        username: ${{ secrets.DOCKERHUB_USERNAME }}
+#        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+#        registry: docker.io
     - name: Login to quay.io
       if: github.event_name == 'pull_request'
       uses: redhat-actions/podman-login@v1

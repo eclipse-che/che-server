@@ -45,6 +45,7 @@ init() {
   ORGANIZATION="quay.io/eclipse"
   PREFIX="che"
   TAG="next"
+  LATEST_TAG=false
   PUSH_IMAGE=false
   SKIP_TESTS=false
   NAME="che"
@@ -86,6 +87,9 @@ init() {
         shift ;;
       --sha-tag)
         SHA_TAG=$(git rev-parse --short HEAD)
+        shift ;;
+      --latest-tag)
+        LATEST_TAG=true
         shift ;;
       --dockerfile:*)
         DOCKERFILE="${1#*:}"
@@ -233,6 +237,28 @@ build_image() {
         exit 1
       fi
     fi
+
+    if [[ ${TAG_LATEST} == "true" ]]; then
+      LATEST_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:latest
+      "${BUILDER}" tag ${IMAGE_NAME} ${LATEST_IMAGE_NAME}
+      DOCKER_TAG_STATUS=$?
+      if [ $DOCKER_TAG_STATUS -eq 0 ]; then
+        printf "Re-tagging with SHA based tag ${BLUE}${LATEST_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+        if [[ $PUSH_IMAGE == "true" ]]; then
+          printf "Pushing image ${BLUE}${SHA_IMAGE_NAME} ${NC}\n"
+          if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
+            ${BUILDER} manifest push ${IMAGE_MANIFEST} docker://{SHA_IMAGE_NAME}
+          else
+            ${BUILDER} push ${SHA_IMAGE_NAME}
+          fi
+          printf "Push of ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+        fi
+      else
+        printf "${RED}Failure when tagging docker image ${SHA_IMAGE_NAME}${NC}\n"
+        exit 1
+      fi
+    fi
+
 
     if [ ! -z "${IMAGE_ALIASES}" ]; then
       for TMP_IMAGE_NAME in ${IMAGE_ALIASES}

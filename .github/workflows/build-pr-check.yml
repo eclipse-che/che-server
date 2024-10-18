@@ -42,4 +42,4 @@ jobs:
       run: mvn -B clean install -U -Pintegration
     - name: Build and push images
       if: github.event_name == 'pull_request'
-      run: ./build/build.sh --tag:testtest --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image
+      run: ./build/build.sh -tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image

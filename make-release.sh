@@ -263,7 +263,7 @@ releaseTypescriptDto() {
     popd >/dev/null
 }
 
-buildImages() {
+buildAndPushImages() {
     echo "Going to build docker images"
     set -e
     set -o pipefail

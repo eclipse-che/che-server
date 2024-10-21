@@ -45,6 +45,8 @@ init() {
   ORGANIZATION="quay.io/eclipse"
   PREFIX="che"
   TAG="next"
+  LATEST_TAG=false
+  PUSH_IMAGE=false
   SKIP_TESTS=false
   NAME="che"
   ARGS=""
@@ -52,6 +54,7 @@ init() {
   DOCKERFILE=""
   BUILD_COMMAND="build"
   BUILD_ARGS=""
+  BUILD_PLATFORMS=""
 
   while [ $# -gt 0 ]; do
     case $1 in
@@ -79,8 +82,14 @@ init() {
       --skip-tests)
         SKIP_TESTS=true
         shift ;;
+      --push-image)
+        PUSH_IMAGE=true
+        shift ;;
       --sha-tag)
         SHA_TAG=$(git rev-parse --short HEAD)
+        shift ;;
+      --latest-tag)
+        LATEST_TAG=true
         shift ;;
       --dockerfile:*)
         DOCKERFILE="${1#*:}"
@@ -88,6 +97,12 @@ init() {
       --build-arg*:*)
         BUILD_ARGS_CSV="${1#*:}"
         prepare_build_args $BUILD_ARGS_CSV
+        shift ;;
+      --build-platforms:*)
+        BUILD_PLATFORMS="${1#*:}"
+        shift ;;
+      --builder:*)
+        BUILDER="${1#*:}"
         shift ;;
       --*)
         printf "${RED}Unknown parameter: $1${NC}\n"; exit 2 ;;
@@ -97,6 +112,7 @@ init() {
   done
 
   IMAGE_NAME="$ORGANIZATION/$PREFIX-$NAME:$TAG"
+  IMAGE_MANIFEST="$NAME-$TAG"
 }
 
 build() {
@@ -171,41 +187,107 @@ build_image() {
     -e "s;\${BUILD_PREFIX};${PREFIX};" \
     -e "s;\${BUILD_TAG};${TAG};" \
     > ${DIR}/.Dockerfile
-  cd "${DIR}" && "${BUILDER}" "${BUILD_COMMAND}" -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
-  DOCKER_BUILD_STATUS=$?
-  rm ${DIR}/.Dockerfile
-  if [ $DOCKER_BUILD_STATUS -eq 0 ]; then
-    printf "Build of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
-    if [ ! -z "${SHA_TAG}" ]; then
-      SHA_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:${SHA_TAG}
-      "${BUILDER}" tag ${IMAGE_NAME} ${SHA_IMAGE_NAME}
-      DOCKER_TAG_STATUS=$?
-      if [ $DOCKER_TAG_STATUS -eq 0 ]; then
-        printf "Re-tagging with SHA based tag ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
-      else
-        printf "${RED}Failure when tagging docker image ${SHA_IMAGE_NAME}${NC}\n"
+  cd "${DIR}"
+
+  if [[ -n $BUILD_PLATFORMS ]]; then
+    if [[ $BUILDER == "podman" ]]; then
+      printf "${BOLD}Creating manifest ${IMAGE_MANIFEST}${NC}\n"
+      "${BUILDER}" manifest create ${IMAGE_MANIFEST}
+      DOCKER_STATUS=$?
+      if [ ! $DOCKER_STATUS -eq 0 ]; then
+        printf "${RED}Failure when creating manifest ${IMAGE_MANIFEST}${NC}\n"
         exit 1
       fi
-    fi
-    if [ ! -z "${IMAGE_ALIASES}" ]; then
-      for TMP_IMAGE_NAME in ${IMAGE_ALIASES}
-      do
-        "${BUILDER}" tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${TAG}
-        DOCKER_TAG_STATUS=$?
-        if [ $DOCKER_TAG_STATUS -eq 0 ]; then
-          printf "  /alias ${BLUE}${TMP_IMAGE_NAME}:${TAG}${NC} ${GREEN}[OK]${NC}\n"
-        else
-          printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"
-          exit 1
-        fi
 
-      done
+      printf "${BOLD}Building image ${IMAGE_NAME}${NC}\n"
+      "${BUILDER}" build --platform ${BUILD_PLATFORMS} -f ${DIR}/.Dockerfile --manifest ${IMAGE_MANIFEST} .
+      DOCKER_STATUS=$?
+      if [ ! $DOCKER_STATUS -eq 0 ]; then
+        printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"
+        exit 1
+      fi
+    else
+      printf "${RED}Multi-platform image building is only supported for podman builder${NC}\n"
+      exit 1
     fi
-    printf "${GREEN}Script run successfully: ${BLUE}${IMAGE_NAME}${NC}\n"
   else
-    printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"
-    exit 1
+    "${BUILDER}" "${BUILD_COMMAND}" -f ${DIR}/.Dockerfile -t ${IMAGE_NAME} ${BUILD_ARGS} .
+    DOCKER_STATUS=$?
+    if [ ! $DOCKER_STATUS -eq 0 ]; then
+      printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"
+      exit 1
+    fi
   fi
+
+  printf "Build of ${BLUE}${IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+
+  if [[ $PUSH_IMAGE == "true" ]]; then
+    push_image ${IMAGE_NAME} ${IMAGE_NAME}
+
+    if [ ! -z "${SHA_TAG}" ]; then
+      SHA_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:${SHA_TAG}
+      printf "Re-tagging with SHA based tag ${BLUE}${SHA_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+      push_image ${IMAGE_NAME} ${SHA_IMAGE_NAME}
+    fi
+
+    if [[ ${LATEST_TAG} == "true" ]]; then
+      LATEST_IMAGE_NAME=${ORGANIZATION}/${PREFIX}-${NAME}:latest
+      printf "Re-tagging with latest tag ${BLUE}${LATEST_IMAGE_NAME} ${GREEN}[OK]${NC}\n"
+      push_image ${IMAGE_NAME} ${LATEST_IMAGE_NAME}
+    fi
+  fi
+
+  if [ ! -z "${IMAGE_ALIASES}" ]; then
+    for TMP_IMAGE_NAME in ${IMAGE_ALIASES}
+    do
+      "${BUILDER}" tag ${IMAGE_NAME} ${TMP_IMAGE_NAME}:${TAG}
+      DOCKER_TAG_STATUS=$?
+      if [ $DOCKER_TAG_STATUS -eq 0 ]; then
+        printf "  /alias ${BLUE}${TMP_IMAGE_NAME}:${TAG}${NC} ${GREEN}[OK]${NC}\n"
+      else
+        printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"
+        exit 1
+      fi
+
+    done
+  fi
+
+  if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
+    # Remove manifest list from local storage
+    ${BUILDER} manifest rm ${IMAGE_MANIFEST}
+  fi
+
+  printf "${GREEN}Script run successfully: ${BLUE}${IMAGE_NAME}${NC}\n"
+}
+
+push_image() {
+  local image=$1
+  local tagged_image=$2
+
+  printf "Pushing manifest ${BLUE}${image} ${NC}\n"
+  if [[ -n $BUILD_PLATFORMS ]] && [[ $BUILDER == "podman" ]]; then
+    ${BUILDER} manifest push ${IMAGE_MANIFEST} docker://${tagged_image}
+    DOCKER_STATUS=$?
+    if [ ! $DOCKER_STATUS -eq 0 ]; then
+      printf "${RED}Failure when pushing image ${image}${NC}\n"
+      exit 1
+    fi
+  else
+    ${BUILDER} tag ${image} ${tagged_image}
+    DOCKER_STATUS=$?
+    if [ ! $DOCKER_STATUS -eq 0 ]; then
+      printf "${RED}Failure when tagging image ${tagged_image}${NC}\n"
+      exit 1
+    fi
+
+    ${BUILDER} push ${image}
+    DOCKER_STATUS=$?
+    if [ ! $DOCKER_STATUS -eq 0 ]; then
+      printf "${RED}Failure when pushing image ${image}${NC}\n"
+      exit 1
+    fi
+  fi
+  printf "Push of ${BLUE}${tagged_image} ${GREEN}[OK]${NC}\n"
 }
 
 get_full_path() {

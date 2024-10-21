@@ -7,6 +7,7 @@ REGISTRY="quay.io"
 ORGANIZATION="eclipse"
 
 IMAGE="quay.io/eclipse/che-server"
+BUILD_PLATFORMS="linux/amd64,linux/ppc64le,linux/arm64"
 
 sed_in_place() {
     SHORT_UNAME=$(uname -s)
@@ -262,42 +263,23 @@ releaseTypescriptDto() {
     popd >/dev/null
 }
 
-buildImages() {
-    export BUILDER="docker"
+buildAndPushImages() {
     echo "Going to build docker images"
     set -e
     set -o pipefail
     TAG=$1
   
     # stop / rm all containers
-    if [[ $(docker ps -aq) != "" ]];then
-        docker rm -f "$(docker ps -aq)"
+    if [[ $(podman ps -aq) != "" ]];then
+        podman rm -f "$(podman ps -aq)"
     fi
 
-    # BUILD IMAGES
-    bash "$(pwd)/che-server/build/build.sh" --tag:${TAG}
+    # BUILD AND PUSH IMAGES
+    bash "$(pwd)/che-server/build/build.sh" --tag:${TAG} --latest-tag --build-platforms:${BUILD_PLATFORMS} --builder:podman --push-image
     if [[ $? -ne 0 ]]; then
        echo "ERROR:"
        echo "build of che-server image $TAG is failed!"
        exit 1
-    fi
-}
-
-tagLatestImages() {
-    echo y | docker tag "${IMAGE}:$1" "${IMAGE}:latest"
-    if [[ $? -ne 0 ]]; then
-      die_with  "docker tag of '${IMAGE}' image is failed!"
-    fi
-}
-
-pushImagesOnQuay() {
-    #PUSH THE IMAGE
-    echo y | docker push "${IMAGE}:$1"
-    if [[ $2 == "pushLatest" ]]; then
-      echo y | docker push "${IMAGE}:latest"
-    fi
-    if [[ $? -ne 0 ]]; then
-      die_with  "docker push of '${IMAGE}' image is failed!"
     fi
 }
 
@@ -404,7 +386,5 @@ releaseCheServer
 releaseTypescriptDto
 
 if [[ "${BUILD_AND_PUSH_IMAGES}" = "true" ]]; then
-    buildImages  ${CHE_VERSION}
-    tagLatestImages ${CHE_VERSION}
-    pushImagesOnQuay ${CHE_VERSION} pushLatest
+    buildAndPushImages  ${CHE_VERSION}
 fi

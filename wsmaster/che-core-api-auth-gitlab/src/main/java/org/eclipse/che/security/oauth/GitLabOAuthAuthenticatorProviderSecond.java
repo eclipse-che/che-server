@@ -23,14 +23,15 @@ import org.eclipse.che.commons.annotation.Nullable;
  * @author Pavol Baran
  */
 @Singleton
-public class GitLabOAuthAuthenticatorProvider extends AbstractGitLabOAuthAuthenticatorProvider {
-  private static final String PROVIDER_NAME = "gitlab";
+public class GitLabOAuthAuthenticatorProviderSecond
+    extends AbstractGitLabOAuthAuthenticatorProvider {
+  private static final String PROVIDER_NAME = "gitlab_2";
 
   @Inject
-  public GitLabOAuthAuthenticatorProvider(
-      @Nullable @Named("che.oauth2.gitlab.clientid_filepath") String clientIdPath,
-      @Nullable @Named("che.oauth2.gitlab.clientsecret_filepath") String clientSecretPath,
-      @Nullable @Named("che.integration.gitlab.oauth_endpoint") String gitlabEndpoint,
+  public GitLabOAuthAuthenticatorProviderSecond(
+      @Nullable @Named("che.oauth2.gitlab.clientid_filepath_2") String clientIdPath,
+      @Nullable @Named("che.oauth2.gitlab.clientsecret_filepath_2") String clientSecretPath,
+      @Nullable @Named("che.integration.gitlab.oauth_endpoint_2") String gitlabEndpoint,
       @Named("che.api") String cheApiEndpoint)
       throws IOException {
     super(clientIdPath, clientSecretPath, gitlabEndpoint, cheApiEndpoint, PROVIDER_NAME);

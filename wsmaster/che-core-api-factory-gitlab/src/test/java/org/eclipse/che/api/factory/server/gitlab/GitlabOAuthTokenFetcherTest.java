@@ -38,7 +38,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
-import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -64,8 +63,7 @@ public class GitlabOAuthTokenFetcherTest {
     WireMock.configureFor("localhost", wireMockServer.port());
     wireMock = new WireMock("localhost", wireMockServer.port());
     oAuthTokenFetcher =
-        new GitlabOAuthTokenFetcher(
-            wireMockServer.url("/"), wireMockServer.url("/"), "http://che.api", oAuthAPI);
+        new GitlabOAuthTokenFetcher(wireMockServer.url("/"), "http://che.api", oAuthAPI);
   }
 
   @AfterMethod
@@ -140,15 +138,6 @@ public class GitlabOAuthTokenFetcherTest {
   }
 
   @Test(
-      expectedExceptions = ConfigurationException.class,
-      expectedExceptionsMessageRegExp =
-          "GitLab OAuth integration endpoint must be present in registered GitLab endpoints list.")
-  public void shouldThrowConfigurationExceptionIfOauthEndpointNotInTheList() throws Exception {
-    new GitlabOAuthTokenFetcher(
-        wireMockServer.url("/"), "http://foo.bar", "http://che.api", oAuthAPI);
-  }
-
-  @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
           "OAuth 2 is not configured for SCM provider \\[gitlab\\]. For details, refer "
@@ -156,7 +145,7 @@ public class GitlabOAuthTokenFetcherTest {
   public void shouldThrowScmCommunicationExceptionWhenNoOauthIsConfigured() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     GitlabOAuthTokenFetcher localFetcher =
-        new GitlabOAuthTokenFetcher(wireMockServer.url("/"), null, "http://che.api", oAuthAPI);
+        new GitlabOAuthTokenFetcher(wireMockServer.url("/"), "http://che.api", null);
     localFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
 

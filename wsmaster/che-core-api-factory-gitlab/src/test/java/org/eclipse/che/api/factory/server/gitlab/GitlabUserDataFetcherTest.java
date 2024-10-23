@@ -60,10 +60,7 @@ public class GitlabUserDataFetcherTest {
     wireMock = new WireMock("localhost", wireMockServer.port());
     gitlabUserDataFetcher =
         new GitlabUserDataFetcher(
-            wireMockServer.url("/"),
-            wireMockServer.url("/"),
-            "http://che.api",
-            personalAccessTokenManager);
+            wireMockServer.url("/"), "http://che.api", personalAccessTokenManager);
 
     stubFor(
         get(urlEqualTo("/api/v4/user"))

@@ -40,13 +40,19 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
   private final String clientId;
   private final String clientSecret;
   private final String gitlabEndpoint;
+  private final String providerName;
 
   public GitLabOAuthAuthenticator(
-      String clientId, String clientSecret, String gitlabEndpoint, String cheApiEndpoint)
+      String clientId,
+      String clientSecret,
+      String gitlabEndpoint,
+      String cheApiEndpoint,
+      String providerName)
       throws IOException {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.gitlabEndpoint = trimEnd(gitlabEndpoint, '/');
+    this.providerName = providerName;
     String trimmedGitlabEndpoint = trimEnd(gitlabEndpoint, '/');
     this.gitlabUserEndpoint = trimmedGitlabEndpoint + "/api/v4/user";
     this.cheApiEndpoint = cheApiEndpoint;
@@ -61,7 +67,7 @@ public class GitLabOAuthAuthenticator extends OAuthAuthenticator {
 
   @Override
   public String getOAuthProvider() {
-    return "gitlab";
+    return providerName;
   }
 
   @Override

@@ -31,6 +31,7 @@
         <module>che-core-api-auth-github</module>
         <module>che-core-api-auth-github-common</module>
         <module>che-core-api-auth-gitlab</module>
+        <module>che-core-api-auth-gitlab-common</module>
         <module>che-core-api-auth-openshift</module>
         <module>che-core-api-workspace-shared</module>
         <module>che-core-api-workspace</module>
@@ -47,6 +48,7 @@
         <module>che-core-api-factory-github</module>
         <module>che-core-api-factory-github-common</module>
         <module>che-core-api-factory-gitlab</module>
+        <module>che-core-api-factory-gitlab-common</module>
         <module>che-core-api-factory-bitbucket</module>
         <module>che-core-api-factory-bitbucket-server</module>
         <module>che-core-api-ssh</module>

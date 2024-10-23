@@ -22,13 +22,13 @@ import org.eclipse.che.commons.annotation.Nullable;
  *
  * @author Max Shaposhnyk
  */
-public class GitlabUrlParser extends AbstractGitlabUrlParser {
+public class GitlabUrlParserSecond extends AbstractGitlabUrlParser {
 
-  private static final String OAUTH_PROVIDER_NAME = "gitlab";
+  private static final String OAUTH_PROVIDER_NAME = "gitlab_2";
 
   @Inject
-  public GitlabUrlParser(
-      @Nullable @Named("che.integration.gitlab.oauth_endpoint") String serverUrl,
+  public GitlabUrlParserSecond(
+      @Nullable @Named("che.integration.gitlab.oauth_endpoint_2") String serverUrl,
       DevfileFilenamesProvider devfileFilenamesProvider,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(serverUrl, devfileFilenamesProvider, personalAccessTokenManager, OAUTH_PROVIDER_NAME);

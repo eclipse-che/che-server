@@ -16,11 +16,11 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 
 /** GitLab specific SCM file resolver. */
-public class GitlabScmFileResolver extends AbstractGitlabScmFileResolver {
+public class GitlabScmFileResolverSecond extends AbstractGitlabScmFileResolver {
 
   @Inject
-  public GitlabScmFileResolver(
-      GitlabUrlParser gitlabUrlParser,
+  public GitlabScmFileResolverSecond(
+      GitlabUrlParserSecond gitlabUrlParser,
       URLFetcher urlFetcher,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(gitlabUrlParser, urlFetcher, personalAccessTokenManager);

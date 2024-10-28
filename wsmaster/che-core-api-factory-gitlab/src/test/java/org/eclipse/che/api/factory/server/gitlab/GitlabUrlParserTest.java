@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -58,7 +58,7 @@ public class GitlabUrlParserTest {
   public void setUp() {
     gitlabUrlParser =
         new GitlabUrlParser(
-            "https://gitlab1.com,https://gitlab.foo.xxx",
+            "https://gitlab1.com",
             devfileFilenamesProvider,
             mock(PersonalAccessTokenManager.class));
   }
@@ -126,14 +126,14 @@ public class GitlabUrlParserTest {
     return new Object[][] {
       {"https://gitlab1.com/user/project/test1.git"},
       {"https://gitlab1.com/user/project1.git"},
-      {"https://gitlab.foo.xxx/scm/project/test1.git"},
+      {"https://gitlab1.com/scm/project/test1.git"},
       {"https://gitlab1.com/user/project/"},
       {"https://gitlab1.com/user/project/repo/"},
       {"https://gitlab1.com/user/project/-/tree/master/"},
       {"https://gitlab1.com/user/project/repo/-/tree/master/subfolder"},
       {"git@gitlab1.com:user/project/test1.git"},
       {"git@gitlab1.com:user/project1.git"},
-      {"git@gitlab.foo.xxx:scm/project/test1.git"},
+      {"git@gitlab1.com:scm/project/test1.git"},
       {"git@gitlab1.com:user/project/"},
       {"git@gitlab1.com:user/project/repo/"},
     };

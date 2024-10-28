@@ -13,20 +13,19 @@ package org.eclipse.che.api.factory.server.gitlab;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import org.eclipse.che.api.factory.server.scm.*;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.security.oauth.OAuthAPI;
 
-/** Gitlab OAuth token retriever. */
-public class GitlabUserDataFetcher extends AbstractGitlabUserDataFetcher {
+/** GitLab OAuth token retriever. */
+public class GitlabOAuthTokenFetcherSecond extends AbstractGitlabOAuthTokenFetcher {
 
-  /** Name of this OAuth provider as found in OAuthAPI. */
-  private static final String OAUTH_PROVIDER_NAME = "gitlab";
+  private static final String OAUTH_PROVIDER_NAME = "gitlab_2";
 
   @Inject
-  public GitlabUserDataFetcher(
-      @Nullable @Named("che.integration.gitlab.oauth_endpoint") String serverUrl,
+  public GitlabOAuthTokenFetcherSecond(
+      @Nullable @Named("che.integration.gitlab.oauth_endpoint_2") String serverUrl,
       @Named("che.api") String apiEndpoint,
-      PersonalAccessTokenManager personalAccessTokenManager) {
-    super(serverUrl, apiEndpoint, personalAccessTokenManager, OAUTH_PROVIDER_NAME);
+      OAuthAPI oAuthAPI) {
+    super(serverUrl, apiEndpoint, oAuthAPI, OAUTH_PROVIDER_NAME);
   }
 }

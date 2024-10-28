@@ -25,16 +25,16 @@ import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
  * @author Max Shaposhnyk
  */
 @Singleton
-public class GitlabFactoryParametersResolver extends AbstractGitlabFactoryParametersResolver
+public class GitlabFactoryParametersResolverSecond extends AbstractGitlabFactoryParametersResolver
     implements FactoryParametersResolver {
 
-  private static final String PROVIDER_NAME = "gitlab";
+  private static final String PROVIDER_NAME = "gitlab_2";
 
   @Inject
-  public GitlabFactoryParametersResolver(
+  public GitlabFactoryParametersResolverSecond(
       URLFactoryBuilder urlFactoryBuilder,
       URLFetcher urlFetcher,
-      GitlabUrlParser gitlabURLParser,
+      GitlabUrlParserSecond gitlabURLParser,
       PersonalAccessTokenManager personalAccessTokenManager,
       AuthorisationRequestManager authorisationRequestManager) {
     super(

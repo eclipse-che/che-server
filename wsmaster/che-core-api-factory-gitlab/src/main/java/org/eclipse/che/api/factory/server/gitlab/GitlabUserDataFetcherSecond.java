@@ -17,14 +17,14 @@ import org.eclipse.che.api.factory.server.scm.*;
 import org.eclipse.che.commons.annotation.Nullable;
 
 /** Gitlab OAuth token retriever. */
-public class GitlabUserDataFetcher extends AbstractGitlabUserDataFetcher {
+public class GitlabUserDataFetcherSecond extends AbstractGitlabUserDataFetcher {
 
   /** Name of this OAuth provider as found in OAuthAPI. */
-  private static final String OAUTH_PROVIDER_NAME = "gitlab";
+  private static final String OAUTH_PROVIDER_NAME = "gitlab_2";
 
   @Inject
-  public GitlabUserDataFetcher(
-      @Nullable @Named("che.integration.gitlab.oauth_endpoint") String serverUrl,
+  public GitlabUserDataFetcherSecond(
+      @Nullable @Named("che.integration.gitlab.oauth_endpoint_2") String serverUrl,
       @Named("che.api") String apiEndpoint,
       PersonalAccessTokenManager personalAccessTokenManager) {
     super(serverUrl, apiEndpoint, personalAccessTokenManager, OAUTH_PROVIDER_NAME);

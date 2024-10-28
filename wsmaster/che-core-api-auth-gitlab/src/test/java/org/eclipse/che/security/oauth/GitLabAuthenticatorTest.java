@@ -49,7 +49,7 @@ public class GitLabAuthenticatorTest {
     // given
     GitLabOAuthAuthenticator gitLabOAuthAuthenticator =
         new GitLabOAuthAuthenticator(
-            "id", "secret", wireMockServer.url("/"), "https://che.api.com");
+            "id", "secret", wireMockServer.url("/"), "https://che.api.com", "gitlab");
     Field flowField = OAuthAuthenticator.class.getDeclaredField("flow");
     Field credentialDataStoreField =
         ((Class) flowField.getGenericType()).getDeclaredField("credentialDataStore");
@@ -74,7 +74,7 @@ public class GitLabAuthenticatorTest {
     // given
     GitLabOAuthAuthenticator gitLabOAuthAuthenticator =
         new GitLabOAuthAuthenticator(
-            "id", "secret", wireMockServer.url("/"), "https://che.api.com");
+            "id", "secret", wireMockServer.url("/"), "https://che.api.com", "gitlab");
     Field flowField = OAuthAuthenticator.class.getDeclaredField("flow");
     Field credentialDataStoreField =
         ((Class) flowField.getGenericType()).getDeclaredField("credentialDataStore");

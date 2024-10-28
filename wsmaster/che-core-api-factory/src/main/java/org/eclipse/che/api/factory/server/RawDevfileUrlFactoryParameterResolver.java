@@ -45,7 +45,8 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
     implements FactoryParametersResolver {
 
   private static final String PROVIDER_NAME = "raw-devfile-url";
-  private static final Pattern PATTERN = Pattern.compile("^https?://.*\\.ya?ml(\\?token=.*)?$");
+  private static final Pattern PATTERN =
+      Pattern.compile("^https?://.*\\.ya?ml((\\?token=.*)|(\\?at=refs/heads/.*))?$");
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;

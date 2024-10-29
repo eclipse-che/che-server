@@ -208,7 +208,11 @@ public class RawDevfileUrlFactoryParameterResolverTest {
       "https://host/path/devfile.yaml?token=TOKEN123",
       "https://host/path/.devfile.yaml?token=TOKEN123",
       "https://host/path/any-name.yaml?token=TOKEN123",
-      "https://host/path/any-name.yml?token=TOKEN123"
+      "https://host/path/any-name.yml?token=TOKEN123",
+      "https://host/path/devfile.yaml?at=refs/heads/branch",
+      "https://host/path/.devfile.yaml?at=refs/heads/branch",
+      "https://host/path/any-name.yaml?at=refs/heads/branch",
+      "https://host/path/any-name.yml?at=refs/heads/branch"
     };
   }
 

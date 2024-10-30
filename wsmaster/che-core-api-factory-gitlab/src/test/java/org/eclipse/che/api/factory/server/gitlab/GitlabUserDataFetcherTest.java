@@ -27,6 +27,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
+import java.lang.reflect.Field;
 import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -87,5 +88,18 @@ public class GitlabUserDataFetcherTest {
     GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData();
     assertEquals(gitUserData.getScmUsername(), "John Smith");
     assertEquals(gitUserData.getScmUserEmail(), "john@example.com");
+  }
+
+  @Test
+  public void shouldSetSAASUrlAsDefault() throws Exception {
+    gitlabUserDataFetcher =
+        new GitlabUserDataFetcher(null, "http://che.api", personalAccessTokenManager);
+
+    Field serverUrlField =
+        gitlabUserDataFetcher.getClass().getSuperclass().getDeclaredField("serverUrl");
+    serverUrlField.setAccessible(true);
+    String serverUrl = (String) serverUrlField.get(gitlabUserDataFetcher);
+
+    assertEquals(serverUrl, "https://gitlab.com");
   }
 }

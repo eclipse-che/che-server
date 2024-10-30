@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.gitlab;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
@@ -19,6 +21,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.commons.annotation.Nullable;
 
 /** Gitlab OAuth token retriever. */
 public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -29,14 +32,15 @@ public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
 
   public static final Set<String> DEFAULT_TOKEN_SCOPES =
       ImmutableSet.of("api", "write_repository", "openid");
+  private static final String GITLAB_SAAS_ENDPOINT = "https://gitlab.com";
 
   public AbstractGitlabUserDataFetcher(
-      String serverUrl,
+      @Nullable String serverUrl,
       String apiEndpoint,
       PersonalAccessTokenManager personalAccessTokenManager,
       String providerName) {
     super(providerName, serverUrl, personalAccessTokenManager);
-    this.serverUrl = serverUrl;
+    this.serverUrl = isNullOrEmpty(serverUrl) ? GITLAB_SAAS_ENDPOINT : serverUrl;
     this.apiEndpoint = apiEndpoint;
     this.providerName = providerName;
   }

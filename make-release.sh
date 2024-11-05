@@ -50,14 +50,9 @@ evaluateCheVariables() {
         BASEBRANCH="${BRANCH}"
     fi
     echo "Basebranch: ${BASEBRANCH}" 
-    echo "Release che-parent: ${RELEASE_CHE_PARENT}"
-    echo "Version che-parent: ${VERSION_CHE_PARENT}"
 }
 
 checkoutProjects() {
-    if [[ ${RELEASE_CHE_PARENT} = "true" ]]; then
-        checkoutProject git@github.com:eclipse/che-parent
-    fi
     checkoutProject git@github.com:eclipse-che/che-server
 }
 
@@ -87,11 +82,6 @@ checkoutProject() {
 }
 
 checkoutTags() {
-    if [[ ${RELEASE_CHE_PARENT} = "true" ]]; then
-        cd che-parent
-        git checkout ${CHE_VERSION}
-        cd ..
-    fi
     cd che-server
     git checkout ${CHE_VERSION}
     cd ..
@@ -145,9 +135,6 @@ commitChangeOrCreatePR() {
 }
 
 createTags() {
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        tagAndCommit che-parent
-    fi
     tagAndCommit che-server
 }
 
@@ -171,23 +158,9 @@ tagAndCommit() {
 }
 
 prepareRelease() {
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        pushd che-parent >/dev/null
-            # Install previous version, in case it is not available in central repo
-            # which is needed for dependent projects
-            mvn clean install
-            mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${VERSION_CHE_PARENT}
-            mvn clean install
-        popd >/dev/null
-        echo "[INFO] Che Parent version has been updated to ${VERSION_CHE_PARENT}"
-    fi
-
     pushd che-server >/dev/null
-        if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-            mvn versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=false -DparentVersion=[${VERSION_CHE_PARENT}]
-        fi
         mvn versions:set -DgenerateBackupPoms=false -DallowSnapshots=false -DnewVersion=${CHE_VERSION}
-        echo "[INFO] Che Server version has been updated to ${CHE_VERSION} (parentVersion = ${VERSION_CHE_PARENT})"
+        echo "[INFO] Che Server version has been updated to ${CHE_VERSION} "
 
         # Replace dependencies in che-server parent
         sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${CHE_VERSION}<\/che.version>#" pom.xml
@@ -196,8 +169,7 @@ prepareRelease() {
         # TODO pull parent pom version from VERSION file, instead of being hardcoded
         pushd typescript-dto >/dev/null
             sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${CHE_VERSION}<\/che.version>#" dto-pom.xml
-            sed -i -e "/<groupId>org.eclipse.che.parent<\/groupId>/ { n; s#<version>.*<\/version>#<version>${VERSION_CHE_PARENT}<\/version>#}" dto-pom.xml
-            echo "[INFO] Dependencies updated in che typescript DTO (parent = ${VERSION_CHE_PARENT}, che server = ${CHE_VERSION})"
+            echo "[INFO] Dependencies updated in che typescript DTO (che server = ${CHE_VERSION})"
         popd >/dev/null
 
         # run mvn license format, in case some files that have old license headers have been updated
@@ -208,29 +180,6 @@ prepareRelease() {
 releaseCheServer() {
     set -x
     tmpmvnlog=/tmp/mvn.log.txt
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        pushd che-parent >/dev/null
-        rm -f $tmpmvnlog || true
-        set +e
-        mvn clean install -ntp -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
-        EXIT_CODE=$?
-        set -e
-        # try maven build again if we receive a server error
-        if grep -q -E "502 - Bad Gateway" $tmpmvnlog; then
-            rm -f $tmpmvnlog || true
-            mvn clean install -ntp -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
-            EXIT_CODE=$?
-        fi
-        # check log for errors if build successful; if failed, no need to check (already failed)
-        if [ $EXIT_CODE -eq 0 ]; then
-            checkLogForErrors $tmpmvnlog
-            echo 'Build of che-parent: Success!'
-        else
-            echo '[ERROR] 2. Build of che-parent: Failed!'
-            exit $EXIT_CODE
-        fi
-        popd >/dev/null
-    fi
 
     pushd che-server >/dev/null
     rm -f $tmpmvnlog || true
@@ -302,27 +251,8 @@ bumpVersion() {
     set -x
     echo "[info]bumping to version $1 in branch $2"
 
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        pushd che-parent >/dev/null
-        git checkout $2
-        #install previous version, in case it is not available in central repo
-        #which is needed for dependent projects
-        
-        mvn clean install
-        mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${CHE_VERSION}
-        mvn clean install
-        # run mvn license format, in case some files that have old license headers have been updated
-        mvn license:format
-        commitChangeOrCreatePR ${CHE_VERSION} $2 "pr-${2}-to-${1}"
-        popd >/dev/null
-    fi
-
     pushd che-server >/dev/null
         git checkout $2
-        if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-            mvn versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=true -DparentVersion=[${VERSION_CHE_PARENT}]
-        fi
-
         # compute current version of root pom
         current_root_pom_version=$(grep "<che.version>" pom.xml | sed -r -e "s#.+<che.version>([^<>]+)</che.version>.*#\1#")
 
@@ -330,7 +260,6 @@ bumpVersion() {
         sed -i -e "s#<che.version>.*<\/che.version>#<che.version>$1<\/che.version>#" pom.xml
         pushd typescript-dto >/dev/null
             sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${1}<\/che.version>#" dto-pom.xml
-            sed -i -e "/<groupId>org.eclipse.che.parent<\/groupId>/ { n; s#<version>.*<\/version>#<version>${VERSION_CHE_PARENT}<\/version>#}" dto-pom.xml
         popd >/dev/null
 
         # update integration tests to new root pom version

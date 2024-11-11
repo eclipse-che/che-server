@@ -15,8 +15,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.FileNotFoundException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.mockito.Mock;
@@ -58,5 +60,24 @@ public class GitlabAuthorizingFileContentProviderTest {
 
     fileContentProvider.fetchContent(url);
     verify(urlFetcher).fetch(eq(url), eq("Bearer my-token"));
+  }
+
+  @Test(expectedExceptions = FileNotFoundException.class)
+  public void shouldThrowFileNotFoundException() throws Exception {
+    // given
+    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
+    when(urlFetcher.fetch(
+            eq(
+                "https://gitlab.com/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=HEAD")))
+        .thenThrow(new FileNotFoundException());
+    when(urlFetcher.fetch(eq("https://gitlab.com/eclipse/che"))).thenReturn("content");
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenThrow(new UnknownScmProviderException("", ""));
+    GitlabUrl gitlabUrl = new GitlabUrl().withHostName("gitlab.com").withSubGroups("eclipse/che");
+    FileContentProvider fileContentProvider =
+        new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
+
+    // when
+    fileContentProvider.fetchContent("devfile.yaml");
   }
 }

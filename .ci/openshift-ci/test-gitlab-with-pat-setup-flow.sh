@@ -25,6 +25,12 @@ export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://gitlab.com"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@gitlab.com:chepullreq1/private-repo.git"}
 export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"}
 
+export PUBLIC_REPO_DOT_DEVFILE_URL=${PUBLIC_REPO_DOT_DEVFILE_URL:-"https://gitlab.com/chepullreq1/public-repo-dot-devfile.git"}
+export PRIVATE_REPO_DOT_DEVFILE_URL=${PRIVATE_REPO_DOT_DEVFILE_URL:-"https://gitlab.com/chepullreq1/private-repo-dot-devfile.git"}
+
+export PUBLIC_PROJECT_DOT_DEVFILE_NAME=${PUBLIC_PROJECT_DOT_DEVFILE_NAME:-"public-repo-dot-devfile"}
+export PRIVATE_PROJECT_DOT_DEVFILE_NAME=${PRIVATE_PROJECT_DOT_DEVFILE_NAME:-"private-repo-dot-devfile"}
+
 # import common test functions
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}"/common.sh
@@ -41,8 +47,18 @@ testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJE
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
 deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
+echo "------- [INFO] Check clone public repository that has .devfile.yaml and with PAT setup -------"
+testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_DOT_DEVFILE_NAME} ${PUBLIC_REPO_DOT_DEVFILE_URL} ${USER_CHE_NAMESPACE}
+testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
+deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
+
 echo "------- [INFO] Check clone private repository with PAT setup -------"
 testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_URL} ${USER_CHE_NAMESPACE}
+testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
+deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
+
+echo "------- [INFO] Check clone private repository that has .devfile.yaml and with PAT setup -------"
+testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_DOT_DEVFILE_NAME} ${PRIVATE_REPO_DOT_DEVFILE_URL} ${USER_CHE_NAMESPACE}
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 

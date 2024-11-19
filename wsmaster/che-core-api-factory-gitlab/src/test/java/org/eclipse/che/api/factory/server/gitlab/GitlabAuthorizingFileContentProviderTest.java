@@ -100,7 +100,6 @@ public class GitlabAuthorizingFileContentProviderTest {
                 wireMockServer.url(
                     "/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=HEAD"))))
         .thenThrow(new FileNotFoundException());
-    when(urlFetcher.fetch(eq("http://gitlab.com/eclipse/che"))).thenReturn("content");
     when(personalAccessTokenManager.getAndStore(anyString()))
         .thenThrow(new UnknownScmProviderException("", ""));
     URI uri = URI.create(wireMockServer.url("/"));
@@ -128,7 +127,6 @@ public class GitlabAuthorizingFileContentProviderTest {
                 wireMockServer.url(
                     "/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=HEAD"))))
         .thenThrow(new FileNotFoundException("test path"));
-    when(urlFetcher.fetch(eq("http://gitlab.com/eclipse/che"))).thenReturn("content");
     when(personalAccessTokenManager.getAndStore(anyString()))
         .thenThrow(new UnknownScmProviderException("", ""));
     URI uri = URI.create(wireMockServer.url("/"));

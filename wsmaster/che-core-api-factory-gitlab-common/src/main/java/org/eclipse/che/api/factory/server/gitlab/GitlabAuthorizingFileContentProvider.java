@@ -46,7 +46,7 @@ class GitlabAuthorizingFileContentProvider extends AuthorizingFileContentProvide
                 Executors.newCachedThreadPool(
                     new ThreadFactoryBuilder()
                         .setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.getInstance())
-                        .setNameFormat(GitlabApiClient.class.getName() + "-%d")
+                        .setNameFormat(GitlabAuthorizingFileContentProvider.class.getName() + "-%d")
                         .setDaemon(true)
                         .build()))
             .connectTimeout(DEFAULT_HTTP_TIMEOUT)

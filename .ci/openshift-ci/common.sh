@@ -560,7 +560,8 @@ testCloneGitRepoNoProjectExists() {
     echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} is NOT present. This is EXPECTED. ======="
 }
 
-# Test that the repository is cloned when a public repositoty, PAT, OAuth or SSH is configured
+# Verify that a public repository is cloned without requiring PAT, OAuth, or SSH configuration.
+# Verify that a public or private repository is cloned when PAT, OAuth, or SSH configuration is provided.
 testCloneGitRepoProjectShouldExists() {
   WS_NAME=$1
   PROJECT_NAME=$2

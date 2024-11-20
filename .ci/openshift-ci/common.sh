@@ -31,7 +31,7 @@ export PUBLIC_REPO_WORKSPACE_NAME=${PUBLIC_REPO_WORKSPACE_NAME:-"public-repo-wks
 export PRIVATE_REPO_WORKSPACE_NAME=${PRIVATE_REPO_WORKSPACE_NAME:-"private-repo-wksp-testname"}
 export PUBLIC_PROJECT_NAME=${PUBLIC_PROJECT_NAME:-"public-repo"}
 export PRIVATE_PROJECT_NAME=${PRIVATE_PROJECT_NAME:-"private-repo"}
-export YAML_FILE_NAME=${YAML_FILE_NAME:-"devfile.yaml"}
+export TEST_FILE_NAME=${TEST_FILE_NAME:-"Date.txt"}
 export CUSTOM_CONFIG_MAP_NAME=${CUSTOM_CONFIG_MAP_NAME:-"custom-ca-certificates"}
 export GIT_SSL_CONFIG_MAP_NAME=${GIT_SSL_CONFIG_MAP_NAME:-"che-self-signed-cert"}
 
@@ -376,10 +376,10 @@ testProjectIsCloned() {
   OCP_USER_NAMESPACE=$2
 
   WORKSPACE_POD_NAME=$(oc get pods -n ${OCP_USER_NAMESPACE} | grep workspace | awk '{print $1}')
-  if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- test -f /projects/${PROJECT_NAME}/${YAML_FILE_NAME}; then
-    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} exists. ======="
+  if oc exec -it -n ${OCP_USER_NAMESPACE} ${WORKSPACE_POD_NAME} -- test -f /projects/${PROJECT_NAME}/${TEST_FILE_NAME}; then
+    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} exists. ======="
   else
-    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is absent. ======="
+    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} is absent. ======="
     return 1
   fi
 }
@@ -555,12 +555,13 @@ testCloneGitRepoNoProjectExists() {
     runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
     echo "------- [INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup. -------"
     testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
-    { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should NOT be present. #######
+    { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} should NOT be present. #######
 ####### Cause possible: PR code regress or service is changed. Need to investigate it. #######" && exit 1; }
-    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} is NOT present. This is EXPECTED. ======="
+    echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} is NOT present. This is EXPECTED. ======="
 }
 
-# Test that the repository is cloned when PAT, OAuth or SSH is configured
+# Verify that a public repository is cloned without requiring PAT, OAuth, or SSH configuration.
+# Verify that a public or private repository is cloned when PAT, OAuth, or SSH configuration is provided.
 testCloneGitRepoProjectShouldExists() {
   WS_NAME=$1
   PROJECT_NAME=$2
@@ -570,7 +571,7 @@ testCloneGitRepoProjectShouldExists() {
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
   echo "------- [INFO] Check the repository is cloned. -------"
   testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
-  { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${YAML_FILE_NAME} should be present. #######
+  { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} should be present. #######
 ###### Cause possible: PR code regress or service is changed. Need to investigate it. #######" && exit 1; }
 }
 

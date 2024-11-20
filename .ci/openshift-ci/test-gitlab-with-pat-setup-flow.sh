@@ -25,6 +25,12 @@ export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://gitlab.com"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@gitlab.com:chepullreq1/private-repo.git"}
 export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"}
 
+export PUBLIC_REPO_WITH_DOT_DEFILE_URL=${PUBLIC_REPO_WITH_DOT_DEFILE_URL:-"https://gitlab.com/chepullreq1/public-repo-dot-devfile.git"}
+export PRIVATE_REPO_WITH_DOT_DEFILE_URL=${PRIVATE_REPO_WITH_DOT_DEFILE_URL:-"https://gitlab.com/chepullreq1/private-repo-dot-devfile.git"}
+
+export NAME_OF_PUBLIC_REPO_WITH_DOT_DEFILE=${NAME_OF_PUBLIC_REPO_WITH_DOT_DEFILE:-"public-repo-dot-devfile"}
+export NAME_OF_PRIVATE_REPO_WITH_DOT_DEFILE=${NAME_OF_PRIVATE_REPO_WITH_DOT_DEFILE:-"private-repo-dot-devfile"}
+
 # import common test functions
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}"/common.sh
@@ -35,14 +41,25 @@ setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 setupPersonalAccessToken  ${GIT_PROVIDER_TYPE} ${GIT_PROVIDER_URL} ${GITLAB_PAT}
 requestProvisionNamespace
 testFactoryResolverWithPatOAuth ${PUBLIC_REPO_URL} ${PRIVATE_REPO_URL}
+testFactoryResolverWithPatOAuth ${PUBLIC_REPO_WITH_DOT_DEFILE_URL} ${PRIVATE_REPO_WITH_DOT_DEFILE_URL}
 
 echo "------- [INFO] Check clone public repository with PAT setup -------"
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_URL} ${USER_CHE_NAMESPACE}
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
 deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
+echo "------- [INFO] Check clone public repository that has .devfile.yaml and with PAT setup -------"
+testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${NAME_OF_PUBLIC_REPO_WITH_DOT_DEFILE} ${PUBLIC_REPO_WITH_DOT_DEFILE_URL} ${USER_CHE_NAMESPACE}
+testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
+deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
+
 echo "------- [INFO] Check clone private repository with PAT setup -------"
 testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_URL} ${USER_CHE_NAMESPACE}
+testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
+deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
+
+echo "------- [INFO] Check clone private repository that has .devfile.yaml and with PAT setup -------"
+testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${NAME_OF_PRIVATE_REPO_WITH_DOT_DEFILE} ${PRIVATE_REPO_WITH_DOT_DEFILE_URL} ${USER_CHE_NAMESPACE}
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 

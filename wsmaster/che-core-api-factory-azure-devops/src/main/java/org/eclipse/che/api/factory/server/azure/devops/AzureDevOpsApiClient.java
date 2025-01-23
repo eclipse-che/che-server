@@ -155,6 +155,7 @@ public class AzureDevOpsApiClient {
             throw new ScmItemNotFoundException(body);
           case HTTP_UNAUTHORIZED:
           case HTTP_FORBIDDEN:
+            // Azure DevOps tries to redirect to the login page if the user is not authorized.
           case HTTP_MOVED_TEMP:
             throw new ScmUnauthorizedException(body, "azure-devops", "v2", "");
           default:

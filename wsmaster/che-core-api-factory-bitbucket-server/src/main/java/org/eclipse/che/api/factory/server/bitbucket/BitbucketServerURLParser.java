@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,14 +30,11 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.security.oauth.OAuthAPI;
-import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
 
 /**
  * Parser of String Bitbucket Server URLs and provide {@link BitbucketServerUrl} objects.
@@ -112,29 +109,8 @@ public class BitbucketServerURLParser {
       return
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
-      isUserTokenPresent(url)
-          // Try to call an API request to see if the URL matches Bitbucket.
-          || isApiRequestRelevant(url);
+      isUserTokenPresent(url);
     }
-  }
-
-  private boolean isApiRequestRelevant(String repositoryUrl) {
-    try {
-      HttpBitbucketServerApiClient bitbucketServerApiClient =
-          new HttpBitbucketServerApiClient(
-              getServerUrl(repositoryUrl),
-              new BitbucketServerOAuthAuthenticator("", "", "", ""),
-              oAuthAPI,
-              "");
-      // If the user request catches the unauthorised error, it means that the provided url
-      // belongs to Bitbucket.
-      bitbucketServerApiClient.getUser();
-    } catch (ScmItemNotFoundException | ScmCommunicationException e) {
-      return false;
-    } catch (ScmUnauthorizedException e) {
-      return true;
-    }
-    return false;
   }
 
   private String getServerUrl(String repositoryUrl) {

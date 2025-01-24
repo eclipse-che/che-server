@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,6 +18,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
+import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -115,8 +116,21 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/_apis/profile/profiles/me?api-version=7.0"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + azureOauthToken))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + azureOauthToken))
             .willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+
+    personalAccessTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
+  }
+
+  @Test(expectedExceptions = ScmUnauthorizedException.class)
+  public void shouldThrowUnauthorizedExceptionOnRedirectResponse() throws Exception {
+    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(azureOauthToken).withScope("");
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    stubFor(
+        get(urlEqualTo("/_apis/profile/profiles/me?api-version=7.0"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + azureOauthToken))
+            .willReturn(aResponse().withStatus(HTTP_MOVED_TEMP)));
 
     personalAccessTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }

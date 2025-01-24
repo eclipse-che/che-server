@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,9 +12,12 @@
 package org.eclipse.che.api.factory.server.azure.devops;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
+import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.time.Duration.ofSeconds;
 import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.formatAuthorizationHeader;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
@@ -40,6 +43,7 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +84,8 @@ public class AzureDevOpsApiClient {
    * <p>https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/get?view=azure-devops-rest-7.0&tabs=HTTP
    */
   public AzureDevOpsUser getUserWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     final String url =
         String.format(
             "%s/_apis/profile/profiles/me?api-version=%s",
@@ -94,7 +99,8 @@ public class AzureDevOpsApiClient {
    * organization.
    */
   public AzureDevOpsUser getUserWithPAT(String pat, String organization)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     final String url =
         String.format(
             "%s/%s/_apis/profile/profiles/me?api-version=%s",
@@ -103,7 +109,8 @@ public class AzureDevOpsApiClient {
   }
 
   private AzureDevOpsUser getUser(String url, String authorizationHeader)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     final HttpRequest userDataRequest =
         HttpRequest.newBuilder(URI.create(url))
             .headers("Authorization", authorizationHeader)
@@ -129,7 +136,8 @@ public class AzureDevOpsApiClient {
       HttpClient httpClient,
       HttpRequest request,
       Function<HttpResponse<InputStream>, T> responseConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException {
+      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+          ScmUnauthorizedException {
     try {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -145,6 +153,11 @@ public class AzureDevOpsApiClient {
             throw new ScmBadRequestException(body);
           case HTTP_NOT_FOUND:
             throw new ScmItemNotFoundException(body);
+          case HTTP_UNAUTHORIZED:
+          case HTTP_FORBIDDEN:
+            // Azure DevOps tries to redirect to the login page if the user is not authorized.
+          case HTTP_MOVED_TEMP:
+            throw new ScmUnauthorizedException(body, "azure-devops", "v2", "");
           default:
             throw new ScmCommunicationException(
                 "Unexpected status code " + response.statusCode() + " " + response,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -163,7 +163,10 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
                 personalAccessToken.getToken(), personalAccessToken.getScmOrganization());
       }
       return Optional.of(personalAccessToken.getScmUserName().equals(user.getEmailAddress()));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException
+        | ScmCommunicationException
+        | ScmBadRequestException
+        | ScmUnauthorizedException e) {
       return Optional.of(Boolean.FALSE);
     }
   }
@@ -184,7 +187,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
         user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());
       }
       return Optional.of(Pair.of(Boolean.TRUE, user.getEmailAddress()));
-    } catch (ScmItemNotFoundException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
       return Optional.empty();
     }
   }

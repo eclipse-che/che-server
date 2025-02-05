@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -74,13 +74,7 @@ public class BitbucketServerURLParser {
     if (!isNullOrEmpty(bitbucketEndpoints)) {
       for (String bitbucketEndpoint : Splitter.on(",").split(bitbucketEndpoints)) {
         String trimmedEndpoint = StringUtils.trimEnd(bitbucketEndpoint, '/');
-        URI uri = URI.create(trimmedEndpoint);
-        bitbucketUrlPatternTemplates.forEach(
-            t -> {
-              String scheme = t.contains("git@") ? "ssh" : uri.getScheme();
-              String host = uri.getHost() + uri.getPath();
-              bitbucketUrlPatterns.add(Pattern.compile(format(t, scheme, host)));
-            });
+        bitbucketUrlPatterns.addAll(getUrlPatterns(trimmedEndpoint));
       }
     }
   }
@@ -113,9 +107,26 @@ public class BitbucketServerURLParser {
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
       isUserTokenPresent(url)
-          // Try to call an API request to see if the URL matches Bitbucket.
-          || isApiRequestRelevant(url);
+          // Try to call an API request to see if the URL matches Bitbucket Server.
+          || (isApiRequestRelevant(url)
+              // Also check if the URL matches the Bitbucket Server url pattern.
+              && getUrlPatterns(getServerUrl(url)).stream()
+                  .anyMatch(pattern -> pattern.matcher(url).matches()));
     }
+  }
+
+  private List<Pattern> getUrlPatterns(String url) {
+    URI uri = URI.create(url);
+    ArrayList<Pattern> patterns = new ArrayList<>();
+    bitbucketUrlPatternTemplates.forEach(
+        t -> {
+          String scheme = t.contains("git@") ? "ssh" : uri.getScheme();
+          String host =
+              uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "") + uri.getPath();
+          ;
+          patterns.add(Pattern.compile(format(t, scheme, host)));
+        });
+    return patterns;
   }
 
   private boolean isApiRequestRelevant(String repositoryUrl) {

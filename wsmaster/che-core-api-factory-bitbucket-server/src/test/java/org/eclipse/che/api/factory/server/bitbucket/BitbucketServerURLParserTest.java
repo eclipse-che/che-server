@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -118,13 +118,31 @@ public class BitbucketServerURLParserTest {
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/plugins/servlet/applinks/whoami"))
-            .willReturn(aResponse().withStatus(401)));
+            .willReturn(aResponse().withStatus(200)));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);
 
     // then
     assertTrue(result);
+  }
+
+  @Test
+  public void shouldValidateUrlByApiRequestButFailOnPatternCheck() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/user/repo");
+    stubFor(
+        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
+            .willReturn(aResponse().withStatus(200)));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
   }
 
   @Test

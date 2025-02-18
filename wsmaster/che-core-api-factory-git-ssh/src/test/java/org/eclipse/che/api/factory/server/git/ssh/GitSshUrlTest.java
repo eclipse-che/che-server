@@ -33,7 +33,7 @@ public class GitSshUrlTest {
             .withDevfileFilenames(Arrays.asList(devfileNames));
     List<DevfileLocation> devfileLocations = sshUrl.devfileFileLocations();
     assertEquals(devfileLocations.size(), 2);
-    assertEquals(devfileLocations.get(0).location(), "https://hostname/repository/devfile.yaml");
-    assertEquals(devfileLocations.get(1).location(), "https://hostname/repository/.devfile.yaml");
+    assertEquals(devfileLocations.get(0).location(), "devfile.yaml");
+    assertEquals(devfileLocations.get(1).location(), ".devfile.yaml");
   }
 }

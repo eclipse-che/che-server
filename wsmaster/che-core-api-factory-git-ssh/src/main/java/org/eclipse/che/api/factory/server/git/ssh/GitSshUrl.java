@@ -73,7 +73,10 @@ public class GitSshUrl extends DefaultFactoryUrl {
 
       @Override
       public String location() {
-        return String.format("https://%s/%s/%s", hostName, repository, devfileFilename);
+        // Since we do not know the location from an SSH URL, we return the filename instead. The
+        // devfile content fetcher will always fail to fetch the devfile in this case.
+        // TODO: throw an error in order to avoid http request to fetch the devfile content.
+        return devfileFilename;
       }
     };
   }

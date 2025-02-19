@@ -47,6 +47,8 @@ jobs:
         registry: quay.io
     - name: Build with Maven
       run: mvn -B clean install -U -Pintegration
+      env:
+        DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_API_TOKEN }}
     - name: Build and push images
       if: github.event_name == 'pull_request'
       run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image

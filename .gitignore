@@ -98,3 +98,6 @@ tests/e2e/load-test-folder
 */.grunt
 */.lock-wscript
 */cypress-tests/dist
+
+# Develocity
+.mvn/.develocity/develocity-workspace-id

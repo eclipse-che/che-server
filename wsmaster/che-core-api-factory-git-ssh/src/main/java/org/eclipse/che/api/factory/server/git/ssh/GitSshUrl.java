@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -73,6 +73,9 @@ public class GitSshUrl extends DefaultFactoryUrl {
 
       @Override
       public String location() {
+        // Since we do not know the location from an SSH URL, we return the filename instead. The
+        // devfile content fetcher will always fail to fetch the devfile in this case.
+        // TODO: throw an error in order to avoid http request to fetch the devfile content.
         return devfileFilename;
       }
     };

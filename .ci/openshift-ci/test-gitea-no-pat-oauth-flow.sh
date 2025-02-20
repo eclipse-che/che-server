@@ -31,8 +31,8 @@ trap "catchFinish" EXIT SIGINT
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 setupSSHKeyPairs "${GITEA_PRIVATE_KEY}" "${GITEA_PUBLIC_KEY}"
 
-testFactoryResolverResponse ${PUBLIC_REPO_SSH_URL} 200
-testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 200
+testFactoryResolverResponse ${PUBLIC_REPO_SSH_URL} 500
+testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 500
 testFactoryResolverResponse ${PUBLIC_REPO_RAW_PATH_URL} 200
 
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_SSH_URL} ${USER_CHE_NAMESPACE}

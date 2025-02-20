@@ -51,7 +51,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.environment.Kubernete
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigConfigmapConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.OAuthTokenSecretsConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
@@ -115,7 +115,7 @@ public class OpenShiftInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(OAuthTokenSecretsConfigurator.class);
     namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
     namespaceConfigurators.addBinding().to(OpenShiftWorkspaceServiceAccountConfigurator.class);
-    namespaceConfigurators.addBinding().to(GitconfigConfigmapConfigurator.class);
+    namespaceConfigurators.addBinding().to(GitconfigConfigurator.class);
 
     bind(AuthorizationChecker.class).to(OpenShiftAuthorizationCheckerImpl.class);
     bind(PermissionsCleaner.class).asEagerSingleton();

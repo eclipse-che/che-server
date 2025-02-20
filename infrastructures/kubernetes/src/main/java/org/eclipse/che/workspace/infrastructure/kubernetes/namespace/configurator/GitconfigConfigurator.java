@@ -38,10 +38,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GitconfigConfigmapConfigurator implements NamespaceConfigurator {
+public class GitconfigConfigurator implements NamespaceConfigurator {
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private final Set<GitUserDataFetcher> gitUserDataFetchers;
-  private static final Logger LOG = LoggerFactory.getLogger(GitconfigConfigmapConfigurator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GitconfigConfigurator.class);
   private static final String CONFIGMAP_DATA_KEY = "gitconfig";
   // TODO: rename to a more generic name, since it is not only for user data
   private static final String GITCONFIG_CONFIGMAP_NAME = "workspace-userdata-gitconfig-configmap";
@@ -63,7 +63,7 @@ public class GitconfigConfigmapConfigurator implements NamespaceConfigurator {
       Pattern.compile("\\[(?<sectionName>[a-zA-Z0-9]+)](\\n\\s*\\S*\\s*=.*)*");
 
   @Inject
-  public GitconfigConfigmapConfigurator(
+  public GitconfigConfigurator(
       CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
       Set<GitUserDataFetcher> gitUserDataFetchers) {
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
@@ -139,10 +139,10 @@ public class GitconfigConfigmapConfigurator implements NamespaceConfigurator {
   private Optional<Pair<String, String>> getUsernameAndEmailFromGitconfig(String gitconfig) {
     if (gitconfig.contains("[user]")) {
       Matcher usernameMatcher = usernmaePattern.matcher(gitconfig);
-      Matcher emailaMatcher = emailPattern.matcher(gitconfig);
-      if (usernameMatcher.find() && emailaMatcher.find()) {
+      Matcher emailMatcher = emailPattern.matcher(gitconfig);
+      if (usernameMatcher.find() && emailMatcher.find()) {
         String username = usernameMatcher.group("username");
-        String email = emailaMatcher.group("email");
+        String email = emailMatcher.group("email");
         if (!emptyStringPattern.matcher(username).matches()
             && !emptyStringPattern.matcher(email).matches()) {
           return Optional.of(new Pair<>(username, email));

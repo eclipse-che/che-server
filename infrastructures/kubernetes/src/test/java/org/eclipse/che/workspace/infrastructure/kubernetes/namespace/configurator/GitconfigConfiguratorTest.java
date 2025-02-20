@@ -37,7 +37,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(MockitoTestNGListener.class)
-public class GitconfigConfigmapConfiguratorTest {
+public class GitconfigConfiguratorTest {
 
   private NamespaceConfigurator configurator;
 
@@ -65,8 +65,7 @@ public class GitconfigConfigmapConfiguratorTest {
   public void setUp()
       throws InfrastructureException, ScmCommunicationException, ScmUnauthorizedException {
     configurator =
-        new GitconfigConfigmapConfigurator(
-            cheServerKubernetesClientFactory, Collections.emptySet());
+        new GitconfigConfigurator(cheServerKubernetesClientFactory, Collections.emptySet());
 
     serverMock = new KubernetesServer(true, true);
     serverMock.before();
@@ -83,8 +82,7 @@ public class GitconfigConfigmapConfiguratorTest {
     when(gitUserDataFetcher.fetchGitUserData())
         .thenReturn(new GitUserData("username", "userEmail"));
     configurator =
-        new GitconfigConfigmapConfigurator(
-            cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
+        new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
     // then
@@ -125,8 +123,7 @@ public class GitconfigConfigmapConfiguratorTest {
         Collections.singletonMap("gitconfig", "[user]\n\tname = \"\"\n\temail= \"\""));
     serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
-        new GitconfigConfigmapConfigurator(
-            cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
+        new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
     when(gitUserDataFetcher.fetchGitUserData())
         .thenReturn(new GitUserData("username", "userEmail"));
     // when
@@ -160,8 +157,7 @@ public class GitconfigConfigmapConfiguratorTest {
             "[other]\n\tkey = value\n[other1]\n\tkey = value\n[user]\n\tname = \"\"\n\temail= \"\""));
     serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
-        new GitconfigConfigmapConfigurator(
-            cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
+        new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
     when(gitUserDataFetcher.fetchGitUserData())
         .thenReturn(new GitUserData("username", "userEmail"));
     // when
@@ -195,8 +191,7 @@ public class GitconfigConfigmapConfiguratorTest {
             "gitconfig", "[user]\n\tname = gitconfig-username\n\temail = gitconfig-email"));
     serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
-        new GitconfigConfigmapConfigurator(
-            cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
+        new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
     when(gitUserDataFetcher.fetchGitUserData())
         .thenReturn(new GitUserData("fetcher-username", "fetcher-userEmail"));
     // when

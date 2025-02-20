@@ -48,7 +48,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.environment.Kubernete
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNamespaceOnWorkspaceRemove;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigConfigmapConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.OAuthTokenSecretsConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
@@ -109,7 +109,7 @@ public class KubernetesInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(WorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
-    namespaceConfigurators.addBinding().to(GitconfigConfigmapConfigurator.class);
+    namespaceConfigurators.addBinding().to(GitconfigConfigurator.class);
 
     bind(AuthorizationChecker.class).to(KubernetesAuthorizationCheckerImpl.class);
     bind(PermissionsCleaner.class).asEagerSingleton();

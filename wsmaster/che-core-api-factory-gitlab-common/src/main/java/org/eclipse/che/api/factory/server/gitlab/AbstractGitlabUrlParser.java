@@ -16,6 +16,7 @@ import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
+import com.google.gson.JsonParser;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.ArrayList;
@@ -112,13 +113,25 @@ public class AbstractGitlabUrlParser {
         // belongs to Gitlab.
         gitlabApiClient.getOAuthTokenInfo("");
       } catch (ScmUnauthorizedException e) {
-        // the error message is a JSON if it is a response from Gitlab.
-        return e.getMessage().startsWith("{");
+        // Some Git providers e.g. Azure Devops Server, may return unauthorized exception on invalid
+        // API request, but Gitlab API returns unauthorized error message in JSON format, so to be
+        // sure that the URL belongs to Gitlab, we need to check if the error message is a valid
+        // JSON.
+        return isJsonValid(e.getMessage());
       } catch (ScmItemNotFoundException | IllegalArgumentException | ScmCommunicationException e) {
         return false;
       }
     }
     return false;
+  }
+
+  private boolean isJsonValid(String message) {
+    try {
+      new JsonParser().parse(message).getAsJsonObject();
+      return true;
+    } catch (Exception exception) {
+      return false;
+    }
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {

@@ -101,13 +101,32 @@ public class GitlabUrlParserTest {
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
-            .willReturn(aResponse().withStatus(401).withBody("{error}")));
+            .willReturn(
+                aResponse()
+                    .withStatus(401)
+                    .withBody(
+                        "{\"error\":\"invalid_token\",\"error_description\":\"The access token is invalid\",\"state\":\"unauthorized\"}")));
 
     // when
     boolean result = gitlabUrlParser.isValid(url);
 
     // then
     assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequestWithPlainStringResponse() {
+    // given
+    String url = wireMockServer.url("/user/repo");
+    stubFor(
+        get(urlEqualTo("/oauth/token/info"))
+            .willReturn(aResponse().withStatus(401).withBody("plain string error")));
+
+    // when
+    boolean result = gitlabUrlParser.isValid(url);
+
+    // then
+    assertFalse(result);
   }
 
   @Test

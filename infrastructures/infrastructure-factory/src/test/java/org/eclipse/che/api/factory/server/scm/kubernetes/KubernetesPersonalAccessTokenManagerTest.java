@@ -120,7 +120,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     PersonalAccessToken token =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user", "t1", false), "http://host1")
+            .get(new SubjectImpl("user", "user", "t1", false), null, "http://host1", null)
             .get();
 
     // then
@@ -231,7 +231,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     PersonalAccessToken token =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user1", "t1", false), "http://host1")
+            .get(new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null)
             .get();
 
     // then
@@ -276,8 +276,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     Optional<PersonalAccessToken> tokenOptional =
         personalAccessTokenManager.get(
-            new SubjectImpl("user", "user1", "t1", false), "http://host1");
-
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
     // then
     assertTrue(tokenOptional.isPresent());
     assertEquals(tokenOptional.get().getCheUserId(), "user1");
@@ -319,7 +318,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     Optional<PersonalAccessToken> tokenOptional =
         personalAccessTokenManager.get(
-            new SubjectImpl("user", "user1", "t1", false), "http://host1");
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
 
     // then
     assertTrue(tokenOptional.isPresent());
@@ -378,11 +377,11 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     PersonalAccessToken token1 =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user1", "t1", false), "http://host1.com")
+            .get(new SubjectImpl("user", "user1", "t1", false), null, "http://host1.com", null)
             .get();
     PersonalAccessToken token2 =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user1", "t1", false), "http://host2.com/")
+            .get(new SubjectImpl("user", "user1", "t1", false), null, "http://host2.com/", null)
             .get();
 
     // then
@@ -419,7 +418,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     Optional<PersonalAccessToken> token =
         personalAccessTokenManager.get(
-            new SubjectImpl("user", "user1", "t1", false), "http://host1");
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
     // then
     assertFalse(token.isPresent());
     verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
@@ -457,7 +456,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     Optional<PersonalAccessToken> token =
         personalAccessTokenManager.get(
-            new SubjectImpl("user", "user1", "t1", false), "http://host1");
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
     // then
     assertFalse(token.isPresent());
     verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
@@ -523,7 +522,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     Optional<PersonalAccessToken> token =
         personalAccessTokenManager.get(
-            new SubjectImpl("user", "user1", "t1", false), "http://host1");
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
     // then
     assertTrue(token.isPresent());
     assertEquals(token.get().getScmTokenId(), "id2");

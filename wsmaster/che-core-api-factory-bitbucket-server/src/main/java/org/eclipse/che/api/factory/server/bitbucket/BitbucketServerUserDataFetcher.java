@@ -73,7 +73,7 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
   }
 
   @Override
-  public GitUserData fetchGitUserData()
+  public GitUserData fetchGitUserData(String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException,
           ScmConfigurationPersistenceException, ScmItemNotFoundException {
     Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
@@ -90,7 +90,7 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
 
     // Try go get user data using personal access token
     Optional<PersonalAccessToken> personalAccessToken =
-        this.personalAccessTokenManager.get(cheSubject, OAUTH_PROVIDER_NAME, null);
+        this.personalAccessTokenManager.get(cheSubject, OAUTH_PROVIDER_NAME, null, namespaceName);
     if (personalAccessToken.isPresent()) {
       PersonalAccessToken token = personalAccessToken.get();
       HttpBitbucketServerApiClient httpBitbucketServerApiClient =

@@ -151,18 +151,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   @Override
-  public Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmCommunicationException {
-    return doGetPersonalAccessTokens(cheUser, null, scmServerUrl).stream().findFirst();
-  }
-
-  @Override
   public PersonalAccessToken get(String scmServerUrl)
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
           ScmCommunicationException, UnknownScmProviderException,
           UnsatisfiedScmPreconditionException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
-    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    Optional<PersonalAccessToken> tokenOptional =
+        doGetPersonalAccessTokens(subject, null, scmServerUrl, null).stream().findFirst();
     if (tokenOptional.isPresent()) {
       return tokenOptional.get();
     } else {
@@ -173,13 +168,21 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public Optional<PersonalAccessToken> get(
-      Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
+      Subject cheUser,
+      String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
       throws ScmConfigurationPersistenceException, ScmCommunicationException {
-    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl).stream().findFirst();
+    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl, namespaceName)
+        .stream()
+        .findFirst();
   }
 
   private List<PersonalAccessToken> doGetPersonalAccessTokens(
-      Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
       throws ScmConfigurationPersistenceException, ScmCommunicationException {
     List<PersonalAccessToken> result = new ArrayList<>();
     try {
@@ -187,7 +190,16 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           "Fetching personal access token for user {} and OAuth provider {}",
           cheUser.getUserId(),
           oAuthProviderName);
-      for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
+
+      // Reduce number of request
+      List<KubernetesNamespaceMeta> namespaceMetas = new ArrayList<>();
+      if (namespaceName != null) {
+        namespaceFactory.fetchNamespace(namespaceName).ifPresent(namespaceMetas::add);
+      } else {
+        namespaceMetas.addAll(namespaceFactory.list());
+      }
+
+      for (KubernetesNamespaceMeta namespaceMeta : namespaceMetas) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
 
         for (Secret secret : secrets) {
@@ -394,7 +406,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
           ScmCommunicationException, ScmUnauthorizedException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
-    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    Optional<PersonalAccessToken> tokenOptional =
+        doGetPersonalAccessTokens(subject, null, scmServerUrl, null).stream().findFirst();
     if (tokenOptional.isPresent()) {
       PersonalAccessToken personalAccessToken = tokenOptional.get();
       gitCredentialManager.createOrReplace(personalAccessToken);

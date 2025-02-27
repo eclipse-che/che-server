@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -78,7 +78,10 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
               try {
                 Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
                 personalAccessTokenManager.get(
-                    cheSubject, s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL));
+                    cheSubject,
+                    null,
+                    s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL),
+                    namespaceName);
               } catch (ScmConfigurationPersistenceException | ScmCommunicationException e) {
                 LOG.error(e.getMessage(), e);
               }

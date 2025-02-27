@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -36,17 +36,17 @@ public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
-  public GitUserData fetchGitUserData()
+  public GitUserData fetchGitUserData(String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException,
           ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException {
     Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
     Optional<PersonalAccessToken> tokenOptional =
-        personalAccessTokenManager.get(cheSubject, oAuthProviderName, null);
+        personalAccessTokenManager.get(cheSubject, oAuthProviderName, null, namespaceName);
     if (tokenOptional.isPresent()) {
       return fetchGitUserDataWithPersonalAccessToken(tokenOptional.get());
     } else {
       Optional<PersonalAccessToken> oAuthTokenOptional =
-          personalAccessTokenManager.get(cheSubject, oAuthProviderUrl);
+          personalAccessTokenManager.get(cheSubject, oAuthProviderUrl, null, namespaceName);
       if (oAuthTokenOptional.isPresent()) {
         return fetchGitUserDataWithOAuthToken(oAuthTokenOptional.get().getToken());
       }

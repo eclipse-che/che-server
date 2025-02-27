@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -115,7 +115,7 @@ public abstract class AbstractGithubURLParser {
       String serverUrl = serverUrlOptional.get();
       try {
         Optional<PersonalAccessToken> token =
-            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), null, serverUrl, null);
         if (token.isPresent()) {
           PersonalAccessToken accessToken = token.get();
           return accessToken.getScmTokenName().equals(providerName);
@@ -265,7 +265,7 @@ public abstract class AbstractGithubURLParser {
       // prepare token
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
-      Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
+      Optional<PersonalAccessToken> token = tokenManager.get(subject, null, githubEndpoint, null);
       if (token.isPresent()) {
         personalAccessToken = token.get();
       } else if (authenticationRequired) {
@@ -322,7 +322,7 @@ public abstract class AbstractGithubURLParser {
       // prepare token
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
-      Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
+      Optional<PersonalAccessToken> token = tokenManager.get(subject, null, githubEndpoint, null);
       if (token.isPresent()) {
         personalAccessToken = token.get();
       } else if (authenticationRequired) {

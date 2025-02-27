@@ -43,19 +43,6 @@ public interface PersonalAccessTokenManager {
   /**
    * Gets {@link PersonalAccessToken} from permanent storage.
    *
-   * @param cheUser Che user object
-   * @param scmServerUrl Git provider endpoint
-   * @return personal access token
-   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
-   *     permanent storage.
-   * @throws ScmCommunicationException - problem occurred during communication with SCM server.
-   */
-  Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmCommunicationException;
-
-  /**
-   * Gets {@link PersonalAccessToken} from permanent storage.
-   *
    * @param scmServerUrl Git provider endpoint
    * @throws ScmConfigurationPersistenceException - problem occurred during communication with
    *     permanent storage.
@@ -83,7 +70,10 @@ public interface PersonalAccessTokenManager {
    * @throws ScmCommunicationException - problem occurred during communication with SCM server.
    */
   Optional<PersonalAccessToken> get(
-      Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
       throws ScmConfigurationPersistenceException, ScmCommunicationException;
 
   /**

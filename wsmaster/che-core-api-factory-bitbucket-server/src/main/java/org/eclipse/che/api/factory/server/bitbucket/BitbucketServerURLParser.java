@@ -94,7 +94,8 @@ public class BitbucketServerURLParser {
         .anyMatch(t -> Pattern.compile(format(t, schema, host)).matcher(repositoryUrl).matches())) {
       try {
         Optional<PersonalAccessToken> token =
-            personalAccessTokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+            personalAccessTokenManager.get(
+                EnvironmentContext.getCurrent().getSubject(), null, serverUrl, null);
         return token.isPresent() && token.get().getScmTokenName().equals(OAUTH_PROVIDER_NAME);
       } catch (ScmConfigurationPersistenceException | ScmCommunicationException exception) {
         return false;

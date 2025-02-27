@@ -78,7 +78,10 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
               try {
                 Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
                 personalAccessTokenManager.get(
-                    cheSubject, s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL));
+                    cheSubject,
+                    null,
+                    s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL),
+                    namespaceName);
               } catch (ScmConfigurationPersistenceException | ScmCommunicationException e) {
                 LOG.error(e.getMessage(), e);
               }

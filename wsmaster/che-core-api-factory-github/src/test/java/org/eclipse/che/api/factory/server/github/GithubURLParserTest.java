@@ -239,7 +239,7 @@ public class GithubURLParserTest {
 
     PersonalAccessToken personalAccessToken = mock(PersonalAccessToken.class);
     when(personalAccessToken.getToken()).thenReturn("token");
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
+    when(personalAccessTokenManager.get(any(Subject.class), anyString(), eq(null), eq(null)))
         .thenReturn(Optional.of(personalAccessToken));
 
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
@@ -288,7 +288,7 @@ public class GithubURLParserTest {
     GithubPullRequest githubPullRequest = mock(GithubPullRequest.class);
     when(githubPullRequest.getState()).thenReturn("merged");
     when(personalAccessToken.getToken()).thenReturn("token");
-    when(personalAccessTokenManager.get(any(Subject.class), anyString()))
+    when(personalAccessTokenManager.get(any(Subject.class), anyString(), eq(null), eq(null)))
         .thenReturn(Optional.of(personalAccessToken));
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(anyString(), anyString(), anyString(), anyString()))
@@ -331,7 +331,7 @@ public class GithubURLParserTest {
 
     // then
     verify(personalAccessTokenManager, times(2))
-        .get(any(Subject.class), eq("https://github-server.com"));
+        .get(any(Subject.class), eq("https://github-server.com"), eq(null), eq(null));
   }
 
   @Test

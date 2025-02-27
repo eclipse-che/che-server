@@ -36,17 +36,17 @@ public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
-  public GitUserData fetchGitUserData()
+  public GitUserData fetchGitUserData(String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException,
           ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException {
     Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
     Optional<PersonalAccessToken> tokenOptional =
-        personalAccessTokenManager.get(cheSubject, oAuthProviderName, null);
+        personalAccessTokenManager.get(cheSubject, oAuthProviderName, null, namespaceName);
     if (tokenOptional.isPresent()) {
       return fetchGitUserDataWithPersonalAccessToken(tokenOptional.get());
     } else {
       Optional<PersonalAccessToken> oAuthTokenOptional =
-          personalAccessTokenManager.get(cheSubject, oAuthProviderUrl);
+          personalAccessTokenManager.get(cheSubject, oAuthProviderUrl, null, namespaceName);
       if (oAuthTokenOptional.isPresent()) {
         return fetchGitUserDataWithOAuthToken(oAuthTokenOptional.get().getToken());
       }

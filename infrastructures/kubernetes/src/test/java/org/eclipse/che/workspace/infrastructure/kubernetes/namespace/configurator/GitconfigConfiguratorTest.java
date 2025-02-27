@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -79,7 +80,7 @@ public class GitconfigConfiguratorTest {
   @Test
   public void shouldCreateGitconfigConfigmapWithUserSection() throws Exception {
     // given
-    when(gitUserDataFetcher.fetchGitUserData())
+    when(gitUserDataFetcher.fetchGitUserData(anyString()))
         .thenReturn(new GitUserData("username", "userEmail"));
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
@@ -124,7 +125,7 @@ public class GitconfigConfiguratorTest {
     serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
-    when(gitUserDataFetcher.fetchGitUserData())
+    when(gitUserDataFetcher.fetchGitUserData(anyString()))
         .thenReturn(new GitUserData("username", "userEmail"));
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
@@ -158,7 +159,7 @@ public class GitconfigConfiguratorTest {
     serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
-    when(gitUserDataFetcher.fetchGitUserData())
+    when(gitUserDataFetcher.fetchGitUserData(anyString()))
         .thenReturn(new GitUserData("username", "userEmail"));
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
@@ -192,7 +193,7 @@ public class GitconfigConfiguratorTest {
     serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
-    when(gitUserDataFetcher.fetchGitUserData())
+    when(gitUserDataFetcher.fetchGitUserData(anyString()))
         .thenReturn(new GitUserData("fetcher-username", "fetcher-userEmail"));
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);

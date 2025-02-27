@@ -115,7 +115,7 @@ public abstract class AbstractGithubURLParser {
       String serverUrl = serverUrlOptional.get();
       try {
         Optional<PersonalAccessToken> token =
-            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), null, serverUrl, null);
         if (token.isPresent()) {
           PersonalAccessToken accessToken = token.get();
           return accessToken.getScmTokenName().equals(providerName);
@@ -265,7 +265,7 @@ public abstract class AbstractGithubURLParser {
       // prepare token
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
-      Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
+      Optional<PersonalAccessToken> token = tokenManager.get(subject, null, githubEndpoint, null);
       if (token.isPresent()) {
         personalAccessToken = token.get();
       } else if (authenticationRequired) {
@@ -322,7 +322,7 @@ public abstract class AbstractGithubURLParser {
       // prepare token
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
-      Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
+      Optional<PersonalAccessToken> token = tokenManager.get(subject, null, githubEndpoint, null);
       if (token.isPresent()) {
         personalAccessToken = token.get();
       } else if (authenticationRequired) {

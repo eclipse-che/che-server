@@ -81,7 +81,8 @@ public class AbstractGitlabUrlParser {
       String serverUrl = serverUrlOptional.get();
       try {
         Optional<PersonalAccessToken> token =
-            personalAccessTokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+            personalAccessTokenManager.get(
+                EnvironmentContext.getCurrent().getSubject(), null, serverUrl, null);
         if (token.isPresent()) {
           PersonalAccessToken accessToken = token.get();
           return accessToken.getScmTokenName().equals(providerName);

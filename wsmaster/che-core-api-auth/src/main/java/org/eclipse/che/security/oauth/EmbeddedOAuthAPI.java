@@ -245,9 +245,10 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       } else {
         Optional<PersonalAccessToken> tokenOptional;
         try {
-          tokenOptional = personalAccessTokenManager.get(subject, oauthProvider, null);
+          tokenOptional = personalAccessTokenManager.get(subject, oauthProvider, null, null);
           if (tokenOptional.isEmpty()) {
-            tokenOptional = personalAccessTokenManager.get(subject, provider.getEndpointUrl());
+            tokenOptional =
+                personalAccessTokenManager.get(subject, null, provider.getEndpointUrl(), null);
           }
           if (tokenOptional.isPresent()) {
             return newDto(OAuthToken.class).withToken(tokenOptional.get().getToken());

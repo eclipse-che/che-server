@@ -77,7 +77,7 @@ public class GitconfigConfigurator implements NamespaceConfigurator {
     Optional<String> gitconfigOptional = getGitconfig(client, namespaceName);
     Optional<Pair<String, String>> usernameAndEmailFromGitconfigOptional = Optional.empty();
     Optional<Pair<String, String>> usernameAndEmailFromFetcherOptional =
-        getUsernameAndEmailFromFetcher();
+        getUsernameAndEmailFromFetcher(namespaceName);
     if (gitconfigOptional.isPresent()) {
       String gitconfig = gitconfigOptional.get();
       usernameAndEmailFromGitconfigOptional = getUsernameAndEmailFromGitconfig(gitconfig);
@@ -152,11 +152,11 @@ public class GitconfigConfigurator implements NamespaceConfigurator {
     return Optional.empty();
   }
 
-  private Optional<Pair<String, String>> getUsernameAndEmailFromFetcher() {
+  private Optional<Pair<String, String>> getUsernameAndEmailFromFetcher(String namespaceName) {
     GitUserData gitUserData;
     for (GitUserDataFetcher fetcher : gitUserDataFetchers) {
       try {
-        gitUserData = fetcher.fetchGitUserData();
+        gitUserData = fetcher.fetchGitUserData(namespaceName);
         if (!isNullOrEmpty(gitUserData.getScmUsername())
             && !isNullOrEmpty(gitUserData.getScmUserEmail())) {
           return Optional.of(

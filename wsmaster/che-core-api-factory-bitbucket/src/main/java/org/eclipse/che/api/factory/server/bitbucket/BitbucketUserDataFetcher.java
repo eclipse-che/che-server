@@ -64,7 +64,8 @@ public class BitbucketUserDataFetcher implements GitUserDataFetcher {
   }
 
   @Override
-  public GitUserData fetchGitUserData() throws ScmUnauthorizedException, ScmCommunicationException {
+  public GitUserData fetchGitUserData(String namespaceName)
+      throws ScmUnauthorizedException, ScmCommunicationException {
     OAuthToken oAuthToken;
     try {
       oAuthToken = oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME);

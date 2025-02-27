@@ -82,7 +82,7 @@ public class GitlabUserDataFetcherTest {
     PersonalAccessToken token = mock(PersonalAccessToken.class);
     when(token.getToken()).thenReturn("oauthtoken");
     when(token.getScmProviderUrl()).thenReturn(wireMockServer.url("/"));
-    when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null)))
+    when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null), eq(null)))
         .thenReturn(Optional.of(token));
 
     GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData();

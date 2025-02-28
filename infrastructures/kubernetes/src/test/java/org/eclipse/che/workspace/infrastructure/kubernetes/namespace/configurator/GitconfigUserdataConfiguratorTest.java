@@ -74,7 +74,8 @@ public class GitconfigUserdataConfiguratorTest {
           InterruptedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
           ScmBadRequestException {
     // given
-    when(gitUserDataFetcher.fetchGitUserData(anyString())).thenReturn(new GitUserData("gitUser", "gitEmail"));
+    when(gitUserDataFetcher.fetchGitUserData(anyString()))
+        .thenReturn(new GitUserData("gitUser", "gitEmail"));
 
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
@@ -96,7 +97,8 @@ public class GitconfigUserdataConfiguratorTest {
           ScmUnauthorizedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
           ScmBadRequestException {
     // given
-    when(gitUserDataFetcher.fetchGitUserData(anyString())).thenReturn(new GitUserData("gitUser", "gitEmail"));
+    when(gitUserDataFetcher.fetchGitUserData(anyString()))
+        .thenReturn(new GitUserData("gitUser", "gitEmail"));
     Map<String, String> annotations =
         ImmutableMap.of(
             "controller.devfile.io/mount-as",

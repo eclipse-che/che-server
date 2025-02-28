@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
 import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.AbstractWorkspaceServiceAccount.GIT_USERDATA_CONFIGMAP_NAME;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -73,7 +74,7 @@ public class GitconfigUserdataConfiguratorTest {
           InterruptedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
           ScmBadRequestException {
     // given
-    when(gitUserDataFetcher.fetchGitUserData()).thenReturn(new GitUserData("gitUser", "gitEmail"));
+    when(gitUserDataFetcher.fetchGitUserData(anyString())).thenReturn(new GitUserData("gitUser", "gitEmail"));
 
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
@@ -95,7 +96,7 @@ public class GitconfigUserdataConfiguratorTest {
           ScmUnauthorizedException, ScmItemNotFoundException, ScmConfigurationPersistenceException,
           ScmBadRequestException {
     // given
-    when(gitUserDataFetcher.fetchGitUserData()).thenReturn(new GitUserData("gitUser", "gitEmail"));
+    when(gitUserDataFetcher.fetchGitUserData(anyString())).thenReturn(new GitUserData("gitUser", "gitEmail"));
     Map<String, String> annotations =
         ImmutableMap.of(
             "controller.devfile.io/mount-as",

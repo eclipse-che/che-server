@@ -172,8 +172,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
-      throws ScmCommunicationException {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
     if (!isValidAzureDevOpsSAASUrl(params.getScmProviderUrl())) {
       if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
         AzureDevOpsServerApiClient azureDevOpsServerApiClient =
@@ -181,7 +180,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
         try {
           AzureDevOpsServerUserProfile user = azureDevOpsServerApiClient.getUser(params.getToken());
           return Optional.of(Pair.of(Boolean.TRUE, user.getIdentity().getAccountName()));
-        } catch (ScmItemNotFoundException | ScmBadRequestException e) {
+        } catch (ScmItemNotFoundException | ScmBadRequestException | ScmCommunicationException e) {
           return Optional.empty();
         }
       } else {
@@ -198,7 +197,10 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
         user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());
       }
       return Optional.of(Pair.of(Boolean.TRUE, user.getEmailAddress()));
-    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
+    } catch (ScmItemNotFoundException
+        | ScmBadRequestException
+        | ScmUnauthorizedException
+        | ScmCommunicationException e) {
       return Optional.empty();
     }
   }

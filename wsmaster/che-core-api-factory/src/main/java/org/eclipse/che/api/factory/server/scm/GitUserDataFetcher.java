@@ -36,22 +36,4 @@ public interface GitUserDataFetcher {
   GitUserData fetchGitUserData(@Nullable String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException,
           ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException;
-
-  /**
-   * Retrieve a {@link GitUserData} object from concrete scm provider. If OAuthProvider is not
-   * configured, then personal access token should be taken into account.
-   *
-   * @return - {@link GitUserData} object.
-   * @throws ScmUnauthorizedException - in case if user is not authorized che server to create a new
-   *     token. Further user interaction is needed before calling this method next time.
-   * @throws ScmCommunicationException - Some unexpected problem occurred during communication with
-   *     scm provider.
-   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
-   *     permanent storage.
-   */
-  default GitUserData fetchGitUserData()
-      throws ScmUnauthorizedException, ScmCommunicationException,
-          ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException {
-    return fetchGitUserData(null);
-  }
 }

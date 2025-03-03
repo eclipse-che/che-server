@@ -85,7 +85,7 @@ public class GitlabUserDataFetcherTest {
     when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null), eq(null)))
         .thenReturn(Optional.of(token));
 
-    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData();
+    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData(null);
     assertEquals(gitUserData.getScmUsername(), "John Smith");
     assertEquals(gitUserData.getScmUserEmail(), "john@example.com");
   }

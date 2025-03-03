@@ -51,7 +51,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
       LoggerFactory.getLogger(AzureDevOpsPersonalAccessTokenFetcher.class);
   private static final String OAUTH_PROVIDER_NAME = "azure-devops";
   private final String cheApiEndpoint;
-  private final String azureDevOpsScmApiEndpoint;
+  private final String azureDevOpsSAASApiEndpoint;
   private final OAuthAPI oAuthAPI;
   private final String[] scopes;
 
@@ -60,12 +60,12 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   @Inject
   public AzureDevOpsPersonalAccessTokenFetcher(
       @Named("che.api") String cheApiEndpoint,
-      @Named("che.integration.azure.devops.scm.api_endpoint") String azureDevOpsScmApiEndpoint,
+      @Named("che.integration.azure.devops.scm.api_endpoint") String azureDevOpsSAASApiEndpoint,
       @Named("che.integration.azure.devops.application_scopes") String[] scopes,
       AzureDevOpsApiClient azureDevOpsApiClient,
       OAuthAPI oAuthAPI) {
     this.cheApiEndpoint = cheApiEndpoint;
-    this.azureDevOpsScmApiEndpoint = trimEnd(azureDevOpsScmApiEndpoint, '/');
+    this.azureDevOpsSAASApiEndpoint = trimEnd(azureDevOpsSAASApiEndpoint, '/');
     this.oAuthAPI = oAuthAPI;
     this.scopes = scopes;
     this.azureDevOpsApiClient = azureDevOpsApiClient;
@@ -88,7 +88,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
-    if (!isValidScmServerUrl(scmServerUrl)) {
+    if (!isValidAzureDevOpsSAASUrl(scmServerUrl)) {
       LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
       return null;
     }
@@ -147,7 +147,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
   @Override
   public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken) {
-    if (!isValidScmServerUrl(personalAccessToken.getScmProviderUrl())) {
+    if (!isValidAzureDevOpsSAASUrl(personalAccessToken.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
       return Optional.empty();
     }
@@ -172,11 +172,21 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
-      throws ScmCommunicationException {
-    if (!isValidScmServerUrl(params.getScmProviderUrl())) {
-      LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
-      return Optional.empty();
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+    if (!isValidAzureDevOpsSAASUrl(params.getScmProviderUrl())) {
+      if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
+        AzureDevOpsServerApiClient azureDevOpsServerApiClient =
+            new AzureDevOpsServerApiClient(params.getScmProviderUrl(), params.getOrganization());
+        try {
+          AzureDevOpsServerUserProfile user = azureDevOpsServerApiClient.getUser(params.getToken());
+          return Optional.of(Pair.of(Boolean.TRUE, user.getIdentity().getAccountName()));
+        } catch (ScmItemNotFoundException | ScmBadRequestException | ScmCommunicationException e) {
+          return Optional.empty();
+        }
+      } else {
+        LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
+        return Optional.empty();
+      }
     }
 
     try {
@@ -187,7 +197,10 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
         user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());
       }
       return Optional.of(Pair.of(Boolean.TRUE, user.getEmailAddress()));
-    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
+    } catch (ScmItemNotFoundException
+        | ScmBadRequestException
+        | ScmUnauthorizedException
+        | ScmCommunicationException e) {
       return Optional.empty();
     }
   }
@@ -196,7 +209,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
     return cheApiEndpoint + getAuthenticateUrlPath(scopes);
   }
 
-  private Boolean isValidScmServerUrl(String scmServerUrl) {
-    return azureDevOpsScmApiEndpoint.equals(trimEnd(scmServerUrl, '/'));
+  private Boolean isValidAzureDevOpsSAASUrl(String url) {
+    return azureDevOpsSAASApiEndpoint.equals(trimEnd(url, '/'));
   }
 }

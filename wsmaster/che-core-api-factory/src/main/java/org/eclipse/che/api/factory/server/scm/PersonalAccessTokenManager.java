@@ -64,6 +64,7 @@ public interface PersonalAccessTokenManager {
    * @param cheUser Che user object
    * @param oAuthProviderName OAuth provider name to get token for
    * @param scmServerUrl Git provider endpoint
+   * @param namespaceName The user's namespace name.
    * @return personal access token
    * @throws ScmConfigurationPersistenceException - problem occurred during communication with
    *     permanent storage.

@@ -191,15 +191,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           cheUser.getUserId(),
           oAuthProviderName);
 
-      // Reduce number of request
-      List<KubernetesNamespaceMeta> namespaceMetas = new ArrayList<>();
-      if (namespaceName != null) {
-        namespaceFactory.fetchNamespace(namespaceName).ifPresent(namespaceMetas::add);
-      } else {
-        namespaceMetas.addAll(namespaceFactory.list());
-      }
-
-      for (KubernetesNamespaceMeta namespaceMeta : namespaceMetas) {
+      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(namespaceName)) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
 
         for (Secret secret : secrets) {
@@ -255,6 +247,23 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
     return result;
+  }
+
+  /**
+   * Returns the list of namespaces to search for the personal access token secrets.
+   *
+   * @param namespaceName the user's namespace name
+   */
+  private List<KubernetesNamespaceMeta> getKubernetesNamespaceMetas(@Nullable String namespaceName)
+      throws InfrastructureException {
+    if (namespaceName != null) {
+      return namespaceFactory
+          .fetchNamespace(namespaceName)
+          .map(List::of)
+          .orElseGet(Collections::emptyList);
+    } else {
+      return namespaceFactory.list();
+    }
   }
 
   private List<Secret> doGetPersonalAccessTokenSecrets(KubernetesNamespaceMeta namespaceMeta)

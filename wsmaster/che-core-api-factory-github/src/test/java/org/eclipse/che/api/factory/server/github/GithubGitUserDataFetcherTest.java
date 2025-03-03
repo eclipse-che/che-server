@@ -88,7 +88,7 @@ public class GithubGitUserDataFetcherTest {
     when(personalAccessTokenManager.get(any(Subject.class), eq("github"), eq(null), eq(null)))
         .thenReturn(Optional.of(token));
 
-    GitUserData gitUserData = githubGUDFetcher.fetchGitUserData();
+    GitUserData gitUserData = githubGUDFetcher.fetchGitUserData(null);
 
     assertEquals(gitUserData.getScmUsername(), "Github User");
     assertEquals(gitUserData.getScmUserEmail(), "github-user@acme.com");

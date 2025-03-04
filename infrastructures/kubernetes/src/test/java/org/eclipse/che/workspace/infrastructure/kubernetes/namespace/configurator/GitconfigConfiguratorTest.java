@@ -19,11 +19,18 @@ import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import okhttp3.mockwebserver.MockWebServer;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.GitUserDataFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.*;
@@ -33,6 +40,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesCl
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -44,7 +52,8 @@ public class GitconfigConfiguratorTest {
 
   @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private GitUserDataFetcher gitUserDataFetcher;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
+  private KubernetesClient kubernetesClient;
 
   private NamespaceResolutionContext namespaceResolutionContext;
   private final String TEST_NAMESPACE_NAME = "namespace123";
@@ -68,13 +77,26 @@ public class GitconfigConfiguratorTest {
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Collections.emptySet());
 
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
-    KubernetesClient client = spy(serverMock.getClient());
-    when(cheServerKubernetesClientFactory.create()).thenReturn(client);
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+    kubernetesClient = spy(kubernetesMockServer.createClient());
+
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubernetesClient);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);
+  }
+
+  @AfterMethod
+  public void cleanUp() {
+    kubernetesMockServer.destroy();
   }
 
   @Test
@@ -87,9 +109,9 @@ public class GitconfigConfiguratorTest {
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
     // then
-    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "POST");
+    Assert.assertEquals(kubernetesMockServer.getLastRequest().getMethod(), "POST");
     List<ConfigMap> configMaps =
-        serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
+        kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
     Assert.assertEquals(configMaps.size(), 1);
     String expected = "[user]\n\tname = username\n\temail = userEmail";
     Assert.assertEquals(configMaps.get(0).getData().get("gitconfig"), expected);
@@ -100,9 +122,9 @@ public class GitconfigConfiguratorTest {
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
     // then
-    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "GET");
+    Assert.assertEquals(kubernetesMockServer.getLastRequest().getMethod(), "GET");
     List<ConfigMap> configMaps =
-        serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
+        kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
     Assert.assertEquals(configMaps.size(), 0);
   }
 
@@ -122,7 +144,7 @@ public class GitconfigConfiguratorTest {
             .build();
     gitconfigConfigmap.setData(
         Collections.singletonMap("gitconfig", "[user]\n\tname = \"\"\n\temail= \"\""));
-    serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
+    kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
     when(gitUserDataFetcher.fetchGitUserData(anyString()))
@@ -130,9 +152,9 @@ public class GitconfigConfiguratorTest {
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
     // then
-    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "PUT");
+    Assert.assertEquals(kubernetesMockServer.getLastRequest().getMethod(), "PUT");
     List<ConfigMap> configMaps =
-        serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
+        kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
     Assert.assertEquals(configMaps.size(), 1);
     String expected = "[user]\n\tname = username\n\temail = userEmail";
     Assert.assertEquals(configMaps.get(0).getData().get("gitconfig"), expected);
@@ -156,7 +178,7 @@ public class GitconfigConfiguratorTest {
         Collections.singletonMap(
             "gitconfig",
             "[other]\n\tkey = value\n[other1]\n\tkey = value\n[user]\n\tname = \"\"\n\temail= \"\""));
-    serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
+    kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
     when(gitUserDataFetcher.fetchGitUserData(anyString()))
@@ -164,9 +186,9 @@ public class GitconfigConfiguratorTest {
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
     // then
-    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "PUT");
+    Assert.assertEquals(kubernetesMockServer.getLastRequest().getMethod(), "PUT");
     List<ConfigMap> configMaps =
-        serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
+        kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
     Assert.assertEquals(configMaps.size(), 1);
     String expected =
         "[user]\n\tname = username\n\temail = userEmail\n[other]\n\tkey = value\n[other1]\n\tkey = value";
@@ -190,7 +212,7 @@ public class GitconfigConfiguratorTest {
     gitconfigConfigmap.setData(
         Collections.singletonMap(
             "gitconfig", "[user]\n\tname = gitconfig-username\n\temail = gitconfig-email"));
-    serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
+    kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
     when(gitUserDataFetcher.fetchGitUserData(anyString()))
@@ -198,9 +220,9 @@ public class GitconfigConfiguratorTest {
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
     // then
-    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "GET");
+    Assert.assertEquals(kubernetesMockServer.getLastRequest().getMethod(), "GET");
     List<ConfigMap> configMaps =
-        serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
+        kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
     Assert.assertEquals(configMaps.size(), 1);
     String expected = "[user]\n\tname = gitconfig-username\n\temail = gitconfig-email";
     Assert.assertEquals(configMaps.get(0).getData().get("gitconfig"), expected);

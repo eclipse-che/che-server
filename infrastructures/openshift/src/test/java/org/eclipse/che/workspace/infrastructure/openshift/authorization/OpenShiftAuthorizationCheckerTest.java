@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,15 +15,24 @@ import static org.mockito.Mockito.*;
 
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
 import io.fabric8.openshift.api.model.Group;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import okhttp3.mockwebserver.MockWebServer;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
@@ -34,14 +43,26 @@ public class OpenShiftAuthorizationCheckerTest {
 
   @Mock private CheServerKubernetesClientFactory clientFactory;
   private KubernetesClient client;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
 
   @BeforeMethod
   public void setUp() throws InfrastructureException {
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
-    client = spy(serverMock.getClient());
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+    client = spy(kubernetesMockServer.createClient());
     lenient().when(clientFactory.create()).thenReturn(client);
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    kubernetesMockServer.destroy();
   }
 
   @Test(dataProvider = "advancedAuthorizationData")

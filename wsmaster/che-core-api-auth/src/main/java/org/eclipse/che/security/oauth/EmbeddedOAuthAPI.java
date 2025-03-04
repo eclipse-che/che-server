@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -245,9 +245,10 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       } else {
         Optional<PersonalAccessToken> tokenOptional;
         try {
-          tokenOptional = personalAccessTokenManager.get(subject, oauthProvider, null);
+          tokenOptional = personalAccessTokenManager.get(subject, oauthProvider, null, null);
           if (tokenOptional.isEmpty()) {
-            tokenOptional = personalAccessTokenManager.get(subject, provider.getEndpointUrl());
+            tokenOptional =
+                personalAccessTokenManager.get(subject, null, provider.getEndpointUrl(), null);
           }
           if (tokenOptional.isPresent()) {
             return newDto(OAuthToken.class).withToken(tokenOptional.get().getToken());

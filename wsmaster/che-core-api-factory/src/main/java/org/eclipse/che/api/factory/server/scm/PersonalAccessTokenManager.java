@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -43,19 +43,6 @@ public interface PersonalAccessTokenManager {
   /**
    * Gets {@link PersonalAccessToken} from permanent storage.
    *
-   * @param cheUser Che user object
-   * @param scmServerUrl Git provider endpoint
-   * @return personal access token
-   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
-   *     permanent storage.
-   * @throws ScmCommunicationException - problem occurred during communication with SCM server.
-   */
-  Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmCommunicationException;
-
-  /**
-   * Gets {@link PersonalAccessToken} from permanent storage.
-   *
    * @param scmServerUrl Git provider endpoint
    * @throws ScmConfigurationPersistenceException - problem occurred during communication with
    *     permanent storage.
@@ -77,13 +64,17 @@ public interface PersonalAccessTokenManager {
    * @param cheUser Che user object
    * @param oAuthProviderName OAuth provider name to get token for
    * @param scmServerUrl Git provider endpoint
+   * @param namespaceName The user's namespace name.
    * @return personal access token
    * @throws ScmConfigurationPersistenceException - problem occurred during communication with
    *     permanent storage.
    * @throws ScmCommunicationException - problem occurred during communication with SCM server.
    */
   Optional<PersonalAccessToken> get(
-      Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
       throws ScmConfigurationPersistenceException, ScmCommunicationException;
 
   /**

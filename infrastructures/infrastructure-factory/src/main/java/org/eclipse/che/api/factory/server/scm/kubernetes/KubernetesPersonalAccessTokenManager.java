@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -151,18 +151,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   @Override
-  public Optional<PersonalAccessToken> get(Subject cheUser, String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmCommunicationException {
-    return doGetPersonalAccessTokens(cheUser, null, scmServerUrl).stream().findFirst();
-  }
-
-  @Override
   public PersonalAccessToken get(String scmServerUrl)
       throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
           ScmCommunicationException, UnknownScmProviderException,
           UnsatisfiedScmPreconditionException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
-    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    Optional<PersonalAccessToken> tokenOptional =
+        doGetPersonalAccessTokens(subject, null, scmServerUrl, null).stream().findFirst();
     if (tokenOptional.isPresent()) {
       return tokenOptional.get();
     } else {
@@ -173,13 +168,21 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public Optional<PersonalAccessToken> get(
-      Subject cheUser, String oAuthProviderName, @Nullable String scmServerUrl)
+      Subject cheUser,
+      String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
       throws ScmConfigurationPersistenceException, ScmCommunicationException {
-    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl).stream().findFirst();
+    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl, namespaceName)
+        .stream()
+        .findFirst();
   }
 
   private List<PersonalAccessToken> doGetPersonalAccessTokens(
-      Subject cheUser, @Nullable String oAuthProviderName, @Nullable String scmServerUrl)
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
       throws ScmConfigurationPersistenceException, ScmCommunicationException {
     List<PersonalAccessToken> result = new ArrayList<>();
     try {
@@ -187,7 +190,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           "Fetching personal access token for user {} and OAuth provider {}",
           cheUser.getUserId(),
           oAuthProviderName);
-      for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
+
+      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(namespaceName)) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
 
         for (Secret secret : secrets) {
@@ -243,6 +247,23 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
     return result;
+  }
+
+  /**
+   * Returns the list of namespaces to search for the personal access token secrets.
+   *
+   * @param namespaceName the user's namespace name
+   */
+  private List<KubernetesNamespaceMeta> getKubernetesNamespaceMetas(@Nullable String namespaceName)
+      throws InfrastructureException {
+    if (namespaceName != null) {
+      return namespaceFactory
+          .fetchNamespace(namespaceName)
+          .map(List::of)
+          .orElseGet(Collections::emptyList);
+    } else {
+      return namespaceFactory.list();
+    }
   }
 
   private List<Secret> doGetPersonalAccessTokenSecrets(KubernetesNamespaceMeta namespaceMeta)
@@ -394,7 +415,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
           ScmCommunicationException, ScmUnauthorizedException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
-    Optional<PersonalAccessToken> tokenOptional = get(subject, scmServerUrl);
+    Optional<PersonalAccessToken> tokenOptional =
+        doGetPersonalAccessTokens(subject, null, scmServerUrl, null).stream().findFirst();
     if (tokenOptional.isPresent()) {
       PersonalAccessToken personalAccessToken = tokenOptional.get();
       gitCredentialManager.createOrReplace(personalAccessToken);

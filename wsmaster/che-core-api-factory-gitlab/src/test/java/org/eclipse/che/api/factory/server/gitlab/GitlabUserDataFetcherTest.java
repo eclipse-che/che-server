@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -82,10 +82,10 @@ public class GitlabUserDataFetcherTest {
     PersonalAccessToken token = mock(PersonalAccessToken.class);
     when(token.getToken()).thenReturn("oauthtoken");
     when(token.getScmProviderUrl()).thenReturn(wireMockServer.url("/"));
-    when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null)))
+    when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null), eq(null)))
         .thenReturn(Optional.of(token));
 
-    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData();
+    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData(null);
     assertEquals(gitUserData.getScmUsername(), "John Smith");
     assertEquals(gitUserData.getScmUserEmail(), "john@example.com");
   }

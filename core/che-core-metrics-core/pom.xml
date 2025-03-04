@@ -35,8 +35,8 @@
             <artifactId>okhttp</artifactId>
             <exclusions>
                 <exclusion>
-                    <artifactId>kotlin-stdlib-jdk8</artifactId>
-                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>okio</artifactId>
+                    <groupId>com.squareup.okio</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

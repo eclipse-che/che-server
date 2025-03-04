@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -32,14 +32,23 @@ import io.fabric8.kubernetes.api.model.rbac.RoleBindingList;
 import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleList;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import okhttp3.mockwebserver.MockWebServer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -54,7 +63,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
   @Mock private KubernetesClientFactory clientFactory;
   private KubernetesClient k8sClient;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
   private KubernetesWorkspaceServiceAccount serviceAccount;
 
   @BeforeMethod
@@ -63,11 +72,23 @@ public class KubernetesWorkspaceServiceAccountTest {
         new KubernetesWorkspaceServiceAccount(
             WORKSPACE_ID, NAMESPACE, SA_NAME, ROLE_NAMES, clientFactory);
 
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
 
-    k8sClient = serverMock.getClient();
+    k8sClient = kubernetesMockServer.createClient();
     when(clientFactory.create(anyString())).thenReturn(k8sClient);
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    kubernetesMockServer.destroy();
   }
 
   @Test
@@ -100,7 +121,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
   @Test
   public void shouldCreateMetricsRoleIfAPIEnabledOnServer() throws Exception {
-    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    KubernetesClient localK8sClient = spy(k8sClient);
     when(localK8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(true);
     when(clientFactory.create(anyString())).thenReturn(localK8sClient);
 
@@ -121,7 +142,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
   @Test
   public void shouldNotCreateMetricsRoleIfAPINotEnabledOnServer() throws Exception {
-    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    KubernetesClient localK8sClient = spy(k8sClient);
     when(localK8sClient.supportsApiPath(eq("/apis/metrics.k8s.io"))).thenReturn(false);
     when(clientFactory.create(anyString())).thenReturn(localK8sClient);
 
@@ -142,7 +163,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
   @Test
   public void shouldCreateCredentialsSecretRole() throws Exception {
-    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    KubernetesClient localK8sClient = spy(k8sClient);
     when(clientFactory.create(anyString())).thenReturn(localK8sClient);
 
     // when
@@ -169,7 +190,7 @@ public class KubernetesWorkspaceServiceAccountTest {
 
   @Test
   public void shouldCreatePreferencesConfigmapRole() throws Exception {
-    KubernetesClient localK8sClient = spy(serverMock.getClient());
+    KubernetesClient localK8sClient = spy(k8sClient);
     when(clientFactory.create(anyString())).thenReturn(localK8sClient);
 
     // when

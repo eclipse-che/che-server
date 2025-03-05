@@ -12,7 +12,9 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableMap;
@@ -193,8 +195,6 @@ public class GitconfigConfiguratorTest {
     serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).create(gitconfigConfigmap);
     configurator =
         new GitconfigConfigurator(cheServerKubernetesClientFactory, Set.of(gitUserDataFetcher));
-    when(gitUserDataFetcher.fetchGitUserData(anyString()))
-        .thenReturn(new GitUserData("fetcher-username", "fetcher-userEmail"));
     // when
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
     // then
@@ -204,5 +204,7 @@ public class GitconfigConfiguratorTest {
     Assert.assertEquals(configMaps.size(), 1);
     String expected = "[user]\n\tname = gitconfig-username\n\temail = gitconfig-email";
     Assert.assertEquals(configMaps.get(0).getData().get("gitconfig"), expected);
+    // Check that fetchGitUserData was not called.
+    verify(gitUserDataFetcher, never()).fetchGitUserData(anyString());
   }
 }

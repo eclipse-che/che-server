@@ -75,25 +75,26 @@ public class GitconfigConfigurator implements NamespaceConfigurator {
       throws InfrastructureException {
     KubernetesClient client = cheServerKubernetesClientFactory.create();
     Optional<String> gitconfigOptional = getGitconfig(client, namespaceName);
-    Optional<Pair<String, String>> usernameAndEmailFromGitconfigOptional = Optional.empty();
-    Optional<Pair<String, String>> usernameAndEmailFromFetcherOptional =
-        getUsernameAndEmailFromFetcher(namespaceName);
-    if (gitconfigOptional.isPresent()) {
-      String gitconfig = gitconfigOptional.get();
-      usernameAndEmailFromGitconfigOptional = getUsernameAndEmailFromGitconfig(gitconfig);
-    }
-    if (needUpdateGitconfigConfigmap(
-        usernameAndEmailFromGitconfigOptional, usernameAndEmailFromFetcherOptional)) {
-      ConfigMap gitconfigConfigmap = buildGitconfigConfigmap();
-      Optional<Pair<String, String>> usernameAndEmailOptional =
-          usernameAndEmailFromGitconfigOptional.isPresent()
-              ? usernameAndEmailFromGitconfigOptional
-              : usernameAndEmailFromFetcherOptional;
-      Optional<String> gitconfigSectionsOptional =
-          generateGitconfigSections(gitconfigOptional, usernameAndEmailOptional);
-      gitconfigConfigmap.setData(
-          ImmutableMap.of(CONFIGMAP_DATA_KEY, gitconfigSectionsOptional.orElse("")));
-      client.configMaps().inNamespace(namespaceName).createOrReplace(gitconfigConfigmap);
+    // Try to get username and email from the gitconfig configmap if present.
+    Optional<Pair<String, String>> usernameAndEmailFromGitconfigOptional =
+        gitconfigOptional.isPresent()
+            ? getUsernameAndEmailFromGitconfig(gitconfigOptional.get())
+            : Optional.empty();
+    // If username and email are not present in the gitconfig configmap, or the values are empty, or
+    // the gitconfig configmap is empty, try to get them from the fetcher.
+    if (usernameAndEmailFromGitconfigOptional.isEmpty()) {
+      Optional<Pair<String, String>> usernameAndEmailFromFetcher =
+          // Fetch username and email from a token secret if it is present.
+          getUsernameAndEmailFromFetcher(namespaceName);
+      // If username and email are present, create or update the gitconfig configmap.
+      if (usernameAndEmailFromFetcher.isPresent()) {
+        ConfigMap gitconfigConfigmap = buildGitconfigConfigmap();
+        Optional<String> gitconfigSectionsOptional =
+            generateGitconfigSections(gitconfigOptional, usernameAndEmailFromFetcher);
+        gitconfigConfigmap.setData(
+            ImmutableMap.of(CONFIGMAP_DATA_KEY, gitconfigSectionsOptional.orElse("")));
+        client.configMaps().inNamespace(namespaceName).createOrReplace(gitconfigConfigmap);
+      }
     }
   }
 
@@ -105,13 +106,6 @@ public class GitconfigConfigurator implements NamespaceConfigurator {
         .withAnnotations(GITCONFIG_CONFIGMAP_ANNOTATIONS)
         .endMetadata()
         .build();
-  }
-
-  private boolean needUpdateGitconfigConfigmap(
-      Optional<Pair<String, String>> usernameAndEmailFromGitconfigOptional,
-      Optional<Pair<String, String>> usernameAndEmailFromFetcher) {
-    return usernameAndEmailFromGitconfigOptional.isEmpty()
-        && usernameAndEmailFromFetcher.isPresent();
   }
 
   private Optional<String> generateGitconfigSections(

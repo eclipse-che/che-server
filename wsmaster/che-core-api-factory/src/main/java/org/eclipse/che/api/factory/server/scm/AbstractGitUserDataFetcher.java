@@ -24,7 +24,7 @@ import org.eclipse.che.commons.subject.Subject;
  */
 public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
   protected final String oAuthProviderName;
-  private final String oAuthProviderUrl;
+  protected final String oAuthProviderUrl;
   protected final PersonalAccessTokenManager personalAccessTokenManager;
 
   public AbstractGitUserDataFetcher(
@@ -46,7 +46,7 @@ public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
       return fetchGitUserDataWithPersonalAccessToken(tokenOptional.get());
     } else {
       Optional<PersonalAccessToken> oAuthTokenOptional =
-          personalAccessTokenManager.get(cheSubject, oAuthProviderUrl, null, namespaceName);
+          personalAccessTokenManager.get(cheSubject, null, oAuthProviderUrl, namespaceName);
       if (oAuthTokenOptional.isPresent()) {
         return fetchGitUserDataWithOAuthToken(oAuthTokenOptional.get().getToken());
       }

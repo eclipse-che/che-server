@@ -33,7 +33,6 @@ import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
@@ -44,7 +43,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class GitlabUserDataFetcherTest {
 
-  @Mock OAuthAPI oAuthTokenFetcher;
   @Mock PersonalAccessTokenManager personalAccessTokenManager;
 
   GitlabUserDataFetcher gitlabUserDataFetcher;
@@ -86,6 +84,23 @@ public class GitlabUserDataFetcherTest {
         .thenReturn(Optional.of(token));
 
     GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData(null);
+    assertEquals(gitUserData.getScmUsername(), "John Smith");
+    assertEquals(gitUserData.getScmUserEmail(), "john@example.com");
+  }
+
+  @Test
+  public void shouldFetchGitUserDataByUrl() throws Exception {
+    // given
+    PersonalAccessToken token = mock(PersonalAccessToken.class);
+    when(token.getToken()).thenReturn("oauthtoken");
+    when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null), eq(null)))
+        .thenReturn(Optional.empty());
+    when(personalAccessTokenManager.get(
+            any(Subject.class), eq(null), eq(wireMockServer.url("/")), eq(null)))
+        .thenReturn(Optional.of(token));
+    // when
+    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData(null);
+    // then
     assertEquals(gitUserData.getScmUsername(), "John Smith");
     assertEquals(gitUserData.getScmUserEmail(), "john@example.com");
   }

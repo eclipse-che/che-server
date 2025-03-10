@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -39,8 +39,11 @@ public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
       String apiEndpoint,
       PersonalAccessTokenManager personalAccessTokenManager,
       String providerName) {
-    super(providerName, serverUrl, personalAccessTokenManager);
-    this.serverUrl = isNullOrEmpty(serverUrl) ? GITLAB_SAAS_ENDPOINT : serverUrl;
+    super(
+        providerName,
+        isNullOrEmpty(serverUrl) ? GITLAB_SAAS_ENDPOINT : serverUrl,
+        personalAccessTokenManager);
+    this.serverUrl = super.oAuthProviderUrl;
     this.apiEndpoint = apiEndpoint;
     this.providerName = providerName;
   }

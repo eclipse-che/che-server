@@ -93,4 +93,21 @@ public class GithubGitUserDataFetcherTest {
     assertEquals(gitUserData.getScmUsername(), "Github User");
     assertEquals(gitUserData.getScmUserEmail(), "github-user@acme.com");
   }
+
+  @Test
+  public void shouldFetchGitUserDataByUrl() throws Exception {
+    // given
+    PersonalAccessToken token = mock(PersonalAccessToken.class);
+    when(token.getToken()).thenReturn(githubOauthToken);
+    when(personalAccessTokenManager.get(any(Subject.class), eq("github"), eq(null), eq(null)))
+        .thenReturn(Optional.empty());
+    when(personalAccessTokenManager.get(
+            any(Subject.class), eq(null), eq(wireMockServer.baseUrl()), eq(null)))
+        .thenReturn(Optional.of(token));
+    // when
+    GitUserData gitUserData = githubGUDFetcher.fetchGitUserData(null);
+    // then
+    assertEquals(gitUserData.getScmUsername(), "Github User");
+    assertEquals(gitUserData.getScmUserEmail(), "github-user@acme.com");
+  }
 }

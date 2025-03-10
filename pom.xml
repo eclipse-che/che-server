@@ -59,7 +59,6 @@
         <com.googlecode.gson.version>2.10.1</com.googlecode.gson.version>
         <com.h2database.version>2.2.224</com.h2database.version>
         <com.jcraft.jsch.version>0.1.55</com.jcraft.jsch.version>
-        <com.squareup.okhttp3.version>4.12.0</com.squareup.okhttp3.version>
         <com.squareup.okio.version>3.6.0</com.squareup.okio.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
         <commons-io.version>2.14.0</commons-io.version>
@@ -270,11 +269,6 @@
                 <groupId>com.jcraft</groupId>
                 <artifactId>jsch</artifactId>
                 <version>${com.jcraft.jsch.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.squareup.okio</groupId>

@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.api.factory.server.azure.devops;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.SAAS_ENDPOINT;
 import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.getAuthenticateUrlPath;
 
 import javax.inject.Inject;
@@ -33,6 +35,8 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
   private final String cheApiEndpoint;
   private final String[] scopes;
   private final AzureDevOpsApiClient azureDevOpsApiClient;
+  private static final String NO_USERNAME_AND_EMAIL_ERROR_MESSAGE =
+      "User name and/or email is not found in the azure devops profile.";
 
   @Inject
   public AzureDevOpsUserDataFetcher(
@@ -60,10 +64,34 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
       PersonalAccessToken personalAccessToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
           ScmUnauthorizedException {
-    AzureDevOpsUser user =
-        azureDevOpsApiClient.getUserWithPAT(
-            personalAccessToken.getToken(), personalAccessToken.getScmOrganization());
-    return new GitUserData(user.getDisplayName(), user.getEmailAddress());
+    if (SAAS_ENDPOINT.equals(personalAccessToken.getScmProviderUrl())) {
+      AzureDevOpsUser user =
+          azureDevOpsApiClient.getUserWithPAT(
+              personalAccessToken.getToken(), personalAccessToken.getScmOrganization());
+      if (isNullOrEmpty(user.getDisplayName()) || isNullOrEmpty(user.getEmailAddress())) {
+        throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
+      } else {
+        return new GitUserData(user.getDisplayName(), user.getEmailAddress());
+      }
+    } else {
+      AzureDevOpsServerApiClient apiClient =
+          new AzureDevOpsServerApiClient(
+              personalAccessToken.getScmProviderUrl(), personalAccessToken.getScmOrganization());
+      AzureDevOpsServerUserProfile user = apiClient.getUser(personalAccessToken.getToken());
+      String defaultMailAddress = user.getDefaultMailAddress();
+      String identityMailAddress = user.getIdentity().getMailAddress();
+      String preferredEmail = user.getUserPreferences().getPreferredEmail();
+      String email =
+          isNullOrEmpty(defaultMailAddress)
+              ? (isNullOrEmpty(identityMailAddress) ? preferredEmail : identityMailAddress)
+              : defaultMailAddress;
+      String name = user.getIdentity().getAccountName();
+      if (isNullOrEmpty(name) || isNullOrEmpty(email)) {
+        throw new ScmItemNotFoundException(NO_USERNAME_AND_EMAIL_ERROR_MESSAGE);
+      } else {
+        return new GitUserData(name, email);
+      }
+    }
   }
 
   protected String getLocalAuthenticateUrl() {

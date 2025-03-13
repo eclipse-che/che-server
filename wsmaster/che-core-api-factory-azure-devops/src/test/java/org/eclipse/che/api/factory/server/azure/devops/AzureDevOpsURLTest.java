@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.mockito.testng.MockitoTestNGListener;
@@ -32,11 +33,29 @@ public class AzureDevOpsURLTest {
   @BeforeMethod
   protected void init() {
     azureDevOpsURLParser =
-        new AzureDevOpsURLParser(mock(DevfileFilenamesProvider.class), "https://dev.azure.com/");
+        new AzureDevOpsURLParser(
+            mock(DevfileFilenamesProvider.class),
+            mock(PersonalAccessTokenManager.class),
+            "https://dev.azure.com/");
   }
 
   @Test(dataProvider = "urlsProvider")
   public void checkDevfileLocation(String repoUrl, String fileUrl) {
+
+    AzureDevOpsUrl azureDevOpsUrl =
+        azureDevOpsURLParser
+            .parse(repoUrl)
+            .withDevfileFilenames(Arrays.asList("devfile.yaml", "foo.bar"));
+    assertEquals(azureDevOpsUrl.devfileFileLocations().size(), 2);
+    Iterator<RemoteFactoryUrl.DevfileLocation> iterator =
+        azureDevOpsUrl.devfileFileLocations().iterator();
+    String location = iterator.next().location();
+    assertEquals(location, format(fileUrl, "devfile.yaml"));
+    assertEquals(location, format(fileUrl, "foo.bar"));
+  }
+
+  @Test(dataProvider = "urlsProviderServer")
+  public void checkDevfileLocationServer(String repoUrl, String fileUrl) {
 
     AzureDevOpsUrl azureDevOpsUrl =
         azureDevOpsURLParser
@@ -132,8 +151,84 @@ public class AzureDevOpsURLTest {
     };
   }
 
+  @DataProvider
+  public static Object[][] urlsProviderServer() {
+    return new Object[][] {
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.git/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo.dot.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.dot.git/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo-with-hypen",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo-with-hypen/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/-",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/-/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/-j.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/-j.git/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.git/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo.dot.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo.dot.git/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo-with-hypen",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo-with-hypen/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/-",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/-/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/-j.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/-j.git/items?path=/devfile.yaml&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain&_a=contents",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&versionType=branch&version=main&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&versionType=branch&version=main&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GTMyTag&_a=contents",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&versionType=tag&version=MyTag&api-version=7.0"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GTMyTag",
+        "https://dev.azure-server.com/MyOrg/MyProject/_apis/git/repositories/MyRepo/items?path=/devfile.yaml&versionType=tag&version=MyTag&api-version=7.0"
+      },
+    };
+  }
+
   @Test(dataProvider = "repoProvider")
   public void checkRepositoryLocation(String rawUrl, String repoUrl) {
+    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(rawUrl);
+    assertEquals(azureDevOpsUrl.getRepositoryLocation(), repoUrl);
+  }
+
+  @Test(dataProvider = "repoProviderServer")
+  public void checkRepositoryLocationServer(String rawUrl, String repoUrl) {
     AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(rawUrl);
     assertEquals(azureDevOpsUrl.getRepositoryLocation(), repoUrl);
   }
@@ -213,6 +308,76 @@ public class AzureDevOpsURLTest {
       {
         "https://MyOrg@dev.azure.com/MyOrg/_git/MyRepo",
         "https://dev.azure.com/MyOrg/MyRepo/_git/MyRepo"
+      }
+    };
+  }
+
+  @DataProvider
+  public static Object[][] repoProviderServer() {
+    return new Object[][] {
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo.git"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo.dot.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo.dot.git"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo-with-hypen",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo-with-hypen"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/-",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/-"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/-j.git",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/-j.git"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo",
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo.git",
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo.git"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo.dot.git",
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo.dot.git"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo-with-hypen",
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo-with-hypen"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/-",
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/-"
+      },
+      {
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/-j.git",
+        "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/-j.git"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain&_a=contents",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GBmain",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GTMyTag&_a=contents",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo"
+      },
+      {
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?path=MyFile&version=GTMyTag",
+        "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo"
       }
     };
   }

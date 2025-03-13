@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -99,13 +99,34 @@ public class GitlabUrlParserTest {
   public void shouldValidateUrlByApiRequest() {
     // given
     String url = wireMockServer.url("/user/repo");
-    stubFor(get(urlEqualTo("/oauth/token/info")).willReturn(aResponse().withStatus(401)));
+    stubFor(
+        get(urlEqualTo("/oauth/token/info"))
+            .willReturn(
+                aResponse()
+                    .withStatus(401)
+                    .withBody(
+                        "{\"error\":\"invalid_token\",\"error_description\":\"The access token is invalid\",\"state\":\"unauthorized\"}")));
 
     // when
     boolean result = gitlabUrlParser.isValid(url);
 
     // then
     assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequestWithPlainStringResponse() {
+    // given
+    String url = wireMockServer.url("/user/repo");
+    stubFor(
+        get(urlEqualTo("/oauth/token/info"))
+            .willReturn(aResponse().withStatus(401).withBody("plain string error")));
+
+    // when
+    boolean result = gitlabUrlParser.isValid(url);
+
+    // then
+    assertFalse(result);
   }
 
   @Test

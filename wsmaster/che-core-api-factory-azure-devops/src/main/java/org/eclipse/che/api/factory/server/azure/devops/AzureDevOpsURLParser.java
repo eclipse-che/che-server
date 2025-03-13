@@ -28,8 +28,10 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
-import org.eclipse.che.commons.env.EnvironmentContext;
 
 /**
  * Parser of String Azure DevOps URLs and provide {@link AzureDevOpsUrl} objects.
@@ -94,13 +96,13 @@ public class AzureDevOpsURLParser {
     if (serverUrlOptional.isPresent()) {
       String serverUrl = serverUrlOptional.get();
       try {
-        Optional<PersonalAccessToken> token =
-            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
-        if (token.isPresent()) {
-          PersonalAccessToken accessToken = token.get();
-          return accessToken.getScmTokenName().equals(PROVIDER_NAME);
-        }
-      } catch (ScmConfigurationPersistenceException | ScmCommunicationException exception) {
+        PersonalAccessToken accessToken = tokenManager.get(serverUrl);
+        return accessToken.getScmTokenName().equals(PROVIDER_NAME);
+      } catch (ScmConfigurationPersistenceException
+          | ScmCommunicationException
+          | ScmUnauthorizedException
+          | UnknownScmProviderException
+          | UnsatisfiedScmPreconditionException exception) {
         return false;
       }
     }

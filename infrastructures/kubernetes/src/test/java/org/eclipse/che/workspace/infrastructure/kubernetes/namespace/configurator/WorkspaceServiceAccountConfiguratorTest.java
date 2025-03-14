@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,13 +19,22 @@ import static org.testng.Assert.assertNotNull;
 
 import io.fabric8.kubernetes.api.model.rbac.ClusterRoleBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import okhttp3.mockwebserver.MockWebServer;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesWorkspaceServiceAccount;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -37,7 +46,7 @@ public class WorkspaceServiceAccountConfiguratorTest {
 
   @Mock private CheServerKubernetesClientFactory clientFactory;
   private KubernetesClient client;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
 
   private NamespaceResolutionContext namespaceResolutionContext;
   @Mock private KubernetesWorkspaceServiceAccount kubeWSA;
@@ -57,18 +66,30 @@ public class WorkspaceServiceAccountConfiguratorTest {
     //    when(configurator.doCreateServiceAccount(TEST_WORKSPACE_ID,
     // TEST_NAMESPACE_NAME)).thenReturn(kubeWSA);
 
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
-    client = spy(serverMock.getClient());
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+    client = spy(kubernetesMockServer.createClient());
     lenient().when(clientFactory.create(TEST_WORKSPACE_ID)).thenReturn(client);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);
   }
 
+  @AfterMethod
+  public void tearDown() {
+    kubernetesMockServer.destroy();
+  }
+
   @Test
   public void createWorkspaceServiceAccountWithBindings()
-      throws InfrastructureException, InterruptedException {
+      throws InfrastructureException {
     // given - cluster roles exists in cluster
     configurator =
         new WorkspaceServiceAccountConfigurator(

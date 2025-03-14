@@ -59,7 +59,6 @@
         <com.googlecode.gson.version>2.10.1</com.googlecode.gson.version>
         <com.h2database.version>2.2.224</com.h2database.version>
         <com.jcraft.jsch.version>0.1.55</com.jcraft.jsch.version>
-        <com.squareup.okhttp3.version>4.12.0</com.squareup.okhttp3.version>
         <com.squareup.okio.version>3.6.0</com.squareup.okio.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
         <commons-io.version>2.14.0</commons-io.version>
@@ -67,7 +66,7 @@
         <enforcer.skip>false</enforcer.skip>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client>6.10.0</io.fabric8.kubernetes-client>
+        <io.fabric8.kubernetes-client.version>7.1.0</io.fabric8.kubernetes-client.version>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
@@ -138,6 +137,7 @@
         <org.apache.maven.version>3.9.4</org.apache.maven.version>
         <org.apache.tomcat.version>10.1.14</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>3.4.1</org.codehaus.plexus.utils.version>
+        <org.eclipse.jetty.version>11.0.24</org.eclipse.jetty.version>
         <org.eclipse.persistence.eclipselink.version>2.7.10</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.3</org.eclipse.persistence.version>
         <org.eclipse.sisu.version>0.9.0.M2</org.eclipse.sisu.version>
@@ -271,31 +271,6 @@
                 <version>${com.jcraft.jsch.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>logging-interceptor</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>mockwebserver</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>kotlin-stdlib-jdk8</artifactId>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>kotlin-stdlib-common</artifactId>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>com.squareup.okio</groupId>
                 <artifactId>okio</artifactId>
                 <version>${com.squareup.okio.version}</version>
@@ -331,11 +306,6 @@
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.fabric8</groupId>
-                <artifactId>openshift-server-mock</artifactId>
-                <version>${io.fabric8.kubernetes-client}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.mweirauch</groupId>
@@ -476,10 +446,6 @@
                     <exclusion>
                         <artifactId>xml-path</artifactId>
                         <groupId>io.rest-assured</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>hamcrest</artifactId>
-                        <groupId>org.hamcrest</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1453,7 +1419,7 @@
             <dependency>
                 <groupId>io.fabric8</groupId>
                 <artifactId>kubernetes-client-api</artifactId>
-                <version>${io.fabric8.kubernetes-client}</version>
+                <version>${io.fabric8.kubernetes-client.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -1479,6 +1445,24 @@
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-commons-test</artifactId>
                 <version>${che.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-security</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -1918,7 +1902,8 @@
                                         <!-- Exclude javax dependencies in favor of Jakarta -->
                                         <exclude>javax.activation:activation</exclude>
                                         <exclude>javax.activation:javax.activation-api</exclude>
-                                        <exclude>javax.annotation:javax.annotation-api</exclude>
+                                        <!-- Uncomment when the dependency is removed from io.fabric8.kubernetes-client -->
+                                        <!-- <exclude>javax.annotation:javax.annotation-api</exclude>-->
                                         <exclude>javax.enterprise:cdi-api</exclude>
                                         <exclude>javax.inject:javax.inject</exclude>
                                         <exclude>javax.json:javax.json-api</exclude>

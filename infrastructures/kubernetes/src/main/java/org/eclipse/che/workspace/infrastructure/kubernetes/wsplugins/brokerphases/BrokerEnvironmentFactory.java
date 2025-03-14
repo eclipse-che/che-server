@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -203,7 +203,7 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
             .withEnv(envVars);
     if (brokerVolumeName != null) {
       cb.withVolumeMounts(
-          new VolumeMount(CONF_FOLDER + "/", null, brokerVolumeName, true, null, null));
+          new VolumeMount(CONF_FOLDER + "/", null, brokerVolumeName, true, null, null, null));
       cb.addToArgs("--metas", CONF_FOLDER + "/" + CONFIG_FILE);
     }
     Container container = cb.build();

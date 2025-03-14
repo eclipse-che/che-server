@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,14 +19,22 @@ import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.MockWebServer;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -36,7 +44,8 @@ public class PreferencesConfigMapConfiguratorTest {
   private NamespaceConfigurator configurator;
 
   @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
+  private KubernetesClient kubernetesClient;
 
   private NamespaceResolutionContext namespaceResolutionContext;
   private final String TEST_NAMESPACE_NAME = "namespace123";
@@ -48,13 +57,25 @@ public class PreferencesConfigMapConfiguratorTest {
   public void setUp() throws InfrastructureException {
     configurator = new PreferencesConfigMapConfigurator(cheServerKubernetesClientFactory);
 
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
-    KubernetesClient client = spy(serverMock.getClient());
-    when(cheServerKubernetesClientFactory.create()).thenReturn(client);
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+    kubernetesClient = spy(kubernetesMockServer.createClient());
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubernetesClient);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    kubernetesMockServer.destroy();
   }
 
   @Test
@@ -66,10 +87,9 @@ public class PreferencesConfigMapConfiguratorTest {
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
 
     // then configmap created
-    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "POST");
+    Assert.assertEquals(kubernetesMockServer.getLastRequest().getMethod(), "POST");
     Assert.assertNotNull(
-        serverMock
-            .getClient()
+        kubernetesClient
             .configMaps()
             .inNamespace(TEST_NAMESPACE_NAME)
             .withName(PREFERENCES_CONFIGMAP_NAME)
@@ -80,8 +100,7 @@ public class PreferencesConfigMapConfiguratorTest {
   @Test
   public void doNothingWhenConfigmapExists() throws InfrastructureException, InterruptedException {
     // given - configmap already exists
-    serverMock
-        .getClient()
+    kubernetesClient
         .configMaps()
         .inNamespace(TEST_NAMESPACE_NAME)
         .create(
@@ -96,9 +115,9 @@ public class PreferencesConfigMapConfiguratorTest {
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
 
     // then - don't create the configmap
-    Assert.assertEquals(serverMock.getLastRequest().getMethod(), "GET");
+    Assert.assertEquals(kubernetesMockServer.getLastRequest().getMethod(), "GET");
     var configmaps =
-        serverMock.getClient().configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
+        kubernetesClient.configMaps().inNamespace(TEST_NAMESPACE_NAME).list().getItems();
     Assert.assertEquals(configmaps.size(), 1);
     Assert.assertEquals(configmaps.get(0).getMetadata().getAnnotations().get("already"), "created");
   }

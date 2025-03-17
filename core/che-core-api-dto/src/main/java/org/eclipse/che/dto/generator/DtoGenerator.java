@@ -170,6 +170,9 @@ public class DtoGenerator {
           new ArrayList<>(reflection.getTypesAnnotatedWith(DTO.class));
       dtosDependencies.removeAll(dtos);
 
+      // We sort alphabetically to ensure deterministic order.
+      Collections.sort(dtosDependencies, new ClassesComparator());
+
       reflection =
           new Reflections(
               new ConfigurationBuilder()
@@ -177,7 +180,10 @@ public class DtoGenerator {
                   .setScanners(new SubTypesScanner()));
 
       for (Class<?> clazz : dtosDependencies) {
-        for (Class impl : reflection.getSubTypesOf(clazz)) {
+        List<Class<?>> impls = new ArrayList<>(reflection.getSubTypesOf(clazz));
+        // We sort alphabetically to ensure deterministic order.
+        Collections.sort(impls, new ClassesComparator());
+        for (Class impl : impls) {
           if (!(impl.isInterface()
               || urls.contains(impl.getProtectionDomain().getCodeSource().getLocation()))) {
             if ("client".equals(dtoTemplate.getImplType())) {

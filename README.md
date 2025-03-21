@@ -41,7 +41,7 @@ See the Eclipse Che Documentation about [how you can join our community](https:/
 
 [![Revved up by Develocity](https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A)](https://develocity-staging.eclipse.org/)
 
-The `che-server` builds are revved up by [Develocity](https://develocity-staging.eclipse.org/scans), which enhances developer productivity through features such as Build Scan for build insights and collaborative troubleshooting, and remote Build Cache for build acceleration. It further provides comprehensive reporting and visualization of build data.
+The `che-server` builds are revved up by [Develocity](https://develocity-staging.eclipse.org/scans), which enhances developer productivity through features such as Build Scan for build insights and collaborative troubleshooting, and remote Build Cache for build acceleration. Develocity also provides comprehensive reporting and visualization of build data.
 
 You can find the Build Scan produced by a build by clicking on the generated link at the end of the build, both locally and on GitHub Action CI (given that you are authenticated to publish). You can find the all scans published by the `che-server` builds on the [Eclipse Develocity dashboard](https://develocity-staging.eclipse.org) by [searching](https://develocity-staging.eclipse.org/scans?search.rootProjectNames=che%20server) for the `che server` project.
 

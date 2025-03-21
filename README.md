@@ -45,7 +45,7 @@ The `che-server` builds are revved up by [Develocity](https://develocity-staging
 
 You can find the Build Scan produced by a build by clicking on the generated link at the end of the build, both locally and on CI (given that you are authenticated to publish). You can find the all scans published by the `che-server` builds on the [Eclipse Develocity dashboard](https://develocity-staging.eclipse.org) by [searching](https://develocity-staging.eclipse.org/scans?search.rootProjectNames=che%20server) for the `che server` project.
 
-Here are also some other useful links with the `che-server` builds data:
+Here are additional useful links with the `che-server` builds data:
 - [Build Scans](https://develocity-staging.eclipse.org/scans?search.rootProjectNames=che%20server)
 - [Trends dashboard](https://develocity-staging.eclipse.org/scans/trends?search.rootProjectNames=che%20server)
 - [Failures dashboard](https://develocity-staging.eclipse.org/scans/failures?search.rootProjectNames=che%20server)

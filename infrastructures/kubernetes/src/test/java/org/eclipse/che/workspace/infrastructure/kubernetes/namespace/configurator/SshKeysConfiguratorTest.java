@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,11 +17,19 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.MockWebServer;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.ssh.server.SshManager;
@@ -48,8 +56,9 @@ public class SshKeysConfiguratorTest {
   @Mock private SshManager sshManager;
 
   @InjectMocks private SshKeysConfigurator sshKeysConfigurator;
+  private KubernetesMockServer kubernetesMockServer;
+  private KubernetesClient kubernetesClient;
 
-  private KubernetesServer kubernetesServer;
   private NamespaceResolutionContext context;
 
   private final SshPairImpl sshPair =
@@ -58,25 +67,31 @@ public class SshKeysConfiguratorTest {
   @BeforeMethod
   public void setUp() throws InfrastructureException, NotFoundException, ServerException {
     context = new NamespaceResolutionContext(null, USER_ID, USER_NAME);
-    kubernetesServer = new KubernetesServer(true, true);
-    kubernetesServer.before();
-
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+    kubernetesClient = kubernetesMockServer.createClient();
     when(sshManager.getPairs(USER_ID, "vcs")).thenReturn(Collections.singletonList(sshPair));
-    when(cheServerKubernetesClientFactory.create()).thenReturn(kubernetesServer.getClient());
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubernetesClient);
   }
 
   @AfterMethod
   public void cleanUp() {
-    kubernetesServer.getClient().secrets().inNamespace(USER_NAMESPACE).delete();
-    kubernetesServer.after();
+    kubernetesClient.secrets().inNamespace(USER_NAMESPACE).delete();
+    kubernetesMockServer.destroy();
   }
 
   @Test
   public void shouldCreateSSHKeysSecret() throws InfrastructureException {
     sshKeysConfigurator.configure(context, USER_NAMESPACE);
     List<Secret> secrets =
-        kubernetesServer
-            .getClient()
+        kubernetesClient
             .secrets()
             .inNamespace(USER_NAMESPACE)
             .withLabels(
@@ -108,8 +123,7 @@ public class SshKeysConfiguratorTest {
     when(sshManager.getPairs(USER_ID, "vcs")).thenReturn(List.of(sshPairLocal));
     sshKeysConfigurator.configure(context, USER_NAMESPACE);
     List<Secret> secrets =
-        kubernetesServer
-            .getClient()
+        kubernetesClient
             .secrets()
             .inNamespace(USER_NAMESPACE)
             .withLabels(

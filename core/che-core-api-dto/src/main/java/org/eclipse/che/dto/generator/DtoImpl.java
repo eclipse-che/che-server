@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -21,7 +21,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -175,7 +174,7 @@ abstract class DtoImpl {
       addSuperGetters(dto, getters);
     }
     List<Method> dtoGetters = new ArrayList<>(getters.values());
-    Collections.sort(dtoGetters, new MethodComparator());
+    dtoGetters.sort(new MethodComparator());
     return dtoGetters;
   }
 
@@ -382,7 +381,7 @@ abstract class DtoImpl {
   private List<Method> calcDtoMethods() {
     if (!compactJson) {
       List<Method> result = new ArrayList<>(Arrays.asList(dtoInterface.getMethods()));
-      Collections.sort(result, new MethodComparator());
+      result.sort(new MethodComparator());
       return result;
     }
 
@@ -422,7 +421,7 @@ abstract class DtoImpl {
     }
 
     List<Method> result = new ArrayList<>(Arrays.asList(methods));
-    Collections.sort(result, new MethodComparator());
+    result.sort(new MethodComparator());
 
     return result;
   }

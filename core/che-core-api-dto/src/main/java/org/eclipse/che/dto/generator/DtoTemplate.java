@@ -16,7 +16,6 @@ package org.eclipse.che.dto.generator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -140,7 +139,7 @@ public class DtoTemplate {
    */
   @Override
   public String toString() {
-    Collections.sort(dtoInterfaces, new DtoImplsComparator());
+    dtoInterfaces.sort(new DtoImplsComparator());
     StringBuilder builder = new StringBuilder();
     emitPreamble(builder);
     emitDtos(builder);

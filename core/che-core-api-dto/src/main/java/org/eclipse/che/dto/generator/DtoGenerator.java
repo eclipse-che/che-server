@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -151,7 +150,7 @@ public class DtoGenerator {
       List<Class<?>> dtos = new ArrayList<>(reflection.getTypesAnnotatedWith(DTO.class));
 
       // We sort alphabetically to ensure deterministic order of routing types.
-      Collections.sort(dtos, new ClassesComparator());
+      dtos.sort(new ClassesComparator());
 
       for (Class<?> clazz : dtos) {
 
@@ -171,7 +170,7 @@ public class DtoGenerator {
       dtosDependencies.removeAll(dtos);
 
       // We sort alphabetically to ensure deterministic order.
-      Collections.sort(dtosDependencies, new ClassesComparator());
+      dtosDependencies.sort(new ClassesComparator());
 
       reflection =
           new Reflections(
@@ -182,7 +181,7 @@ public class DtoGenerator {
       for (Class<?> clazz : dtosDependencies) {
         List<Class<?>> impls = new ArrayList<>(reflection.getSubTypesOf(clazz));
         // We sort alphabetically to ensure deterministic order.
-        Collections.sort(impls, new ClassesComparator());
+        impls.sort(new ClassesComparator());
         for (Class impl : impls) {
           if (!(impl.isInterface()
               || urls.contains(impl.getProtectionDomain().getCodeSource().getLocation()))) {

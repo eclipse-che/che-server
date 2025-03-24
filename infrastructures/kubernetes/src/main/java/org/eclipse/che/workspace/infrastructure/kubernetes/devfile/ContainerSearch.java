@@ -102,8 +102,7 @@ public class ContainerSearch {
     } else if (o instanceof DeploymentConfig) {
       return ((DeploymentConfig) o).getSpec().getTemplate().getSpec().getContainers().stream();
     } else if (o instanceof Template) {
-      return ((Template) o)
-          .getObjects().stream().flatMap((Object t) -> findContainers(((HasMetadata) t)));
+      return ((Template) o).getObjects().stream().flatMap(t -> findContainers((HasMetadata) t));
     } else {
       return Stream.empty();
     }

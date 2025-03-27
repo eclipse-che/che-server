@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -48,6 +48,7 @@ import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
+import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketApplicationProperties;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
@@ -77,6 +78,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpBitbucketServerApiClient.class);
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  public static final String USERNAME_HEADER = "x-ausername";
   private final URI serverUri;
   private final OAuthAuthenticator authenticator;
   private final OAuthAPI oAuthAPI;
@@ -166,10 +169,10 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       executeRequest(
           httpClient,
           request,
-          inputStream -> {
+          response -> {
             try {
               String result =
-                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+                  CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
               return OM.readValue(result, String.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
@@ -210,10 +213,10 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       return executeRequest(
           httpClient,
           request,
-          inputStream -> {
+          response -> {
             try {
               String result =
-                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+                  CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
               return OM.readValue(result, BitbucketPersonalAccessToken.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
@@ -262,10 +265,10 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       return executeRequest(
           httpClient,
           request,
-          inputStream -> {
+          response -> {
             try {
               String result =
-                  CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+                  CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
               return OM.readValue(result, BitbucketPersonalAccessToken.class);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
@@ -283,13 +286,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
   private BitbucketUser getUser(Optional<String> token)
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
-    URI uri;
-    try {
-      uri = serverUri.resolve("./plugins/servlet/applinks/whoami");
-    } catch (IllegalArgumentException e) {
-      // if the slug contains invalid characters (space for example) then the URI will be invalid
-      throw new ScmCommunicationException(e.getMessage(), e);
-    }
+    URI uri = serverUri.resolve("/rest/api/1.0/application-properties");
 
     HttpRequest request =
         HttpRequest.newBuilder(uri)
@@ -301,29 +298,15 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
             .timeout(DEFAULT_HTTP_TIMEOUT)
             .build();
 
-    String username;
+    HttpResponse<InputStream> response;
     try {
       LOG.trace("executeRequest={}", request);
-      username =
-          executeRequest(
-              httpClient,
-              request,
-              inputStream -> {
-                try {
-                  return CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
-                } catch (IOException e) {
-                  throw new UncheckedIOException(e);
-                }
-              });
+      response = executeRequest(httpClient, request, r -> r);
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
 
-    // Only authenticated users can do the request below, so we must ensure that the username is not
-    // empty
-    if (isNullOrEmpty(username)) {
-      throw buildScmUnauthorizedException();
-    }
+    String username = getUsername(response);
 
     try {
       List<BitbucketUser> users =
@@ -337,6 +320,26 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
               () -> new ScmItemNotFoundException("User '" + username + "' not found in Bitbucket"));
     } catch (ScmBadRequestException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
+    }
+  }
+
+  private String getUsername(HttpResponse<InputStream> response)
+      throws ScmCommunicationException, ScmUnauthorizedException {
+    try {
+      // Try to get the username from the response header.
+      if (response.headers().firstValue(USERNAME_HEADER).isPresent()) {
+        return response.headers().firstValue(USERNAME_HEADER).get();
+      } else {
+        String result =
+            CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
+        // Convert the response data to the Bitbucket Server info object.
+        OBJECT_MAPPER.readValue(result, BitbucketApplicationProperties.class);
+        // Throw the unauthorized exception if the response contains the Bitbucket info.
+        throw buildScmUnauthorizedException();
+      }
+    } catch (IOException e) {
+      // The response does not contain the Bitbucket Server info
+      throw new ScmCommunicationException("Bad request");
     }
   }
 
@@ -377,10 +380,10 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     return executeRequest(
         httpClient,
         request,
-        inputStream -> {
+        response -> {
           try {
             String result =
-                CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8));
+                CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
             return OM.readValue(result, typeReference);
           } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -389,7 +392,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   private <T> T executeRequest(
-      HttpClient httpClient, HttpRequest request, Function<InputStream, T> bodyConverter)
+      HttpClient httpClient,
+      HttpRequest request,
+      Function<HttpResponse<InputStream>, T> bodyConverter)
       throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
           ScmUnauthorizedException {
     try {
@@ -397,7 +402,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
       LOG.trace("executeRequest={} response {}", request, response.statusCode());
       if (response.statusCode() == 200) {
-        return bodyConverter.apply(response.body());
+        return bodyConverter.apply(response);
       } else if (response.statusCode() == 204) {
         return null;
       } else {

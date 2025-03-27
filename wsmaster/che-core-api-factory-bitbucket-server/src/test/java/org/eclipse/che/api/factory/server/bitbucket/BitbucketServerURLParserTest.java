@@ -117,8 +117,10 @@ public class BitbucketServerURLParserTest {
             null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
-        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
-            .willReturn(aResponse().withStatus(200)));
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);
@@ -135,8 +137,10 @@ public class BitbucketServerURLParserTest {
             null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
     String url = wireMockServer.url("/user/repo");
     stubFor(
-        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
-            .willReturn(aResponse().withStatus(200)));
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);
@@ -146,12 +150,51 @@ public class BitbucketServerURLParserTest {
   }
 
   @Test
-  public void shouldNotValidateUrlByApiRequest() {
+  public void shouldNotValidateUrlByApiRequestWithBadRequest() {
     // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
-        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
-            .willReturn(aResponse().withStatus(500)));
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withStatus(400)));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequestWithEmptyData() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withBody("")));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequestWithEmptyHeader() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withStatus(200)));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);

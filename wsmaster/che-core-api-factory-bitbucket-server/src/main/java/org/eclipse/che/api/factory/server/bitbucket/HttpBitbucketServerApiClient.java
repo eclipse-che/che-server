@@ -286,6 +286,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
   private BitbucketUser getUser(Optional<String> token)
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+    // We use the application-properties request to obtain the authenticated username from the
+    // response headers. The request does not fail if no authentication is passed, see:
+    // https://developer.atlassian.com/server/bitbucket/rest/v906/api-group-system-maintenance/#api-api-latest-application-properties-get
     URI uri = serverUri.resolve("/rest/api/1.0/application-properties");
 
     HttpRequest request =

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -102,8 +102,8 @@ public class HttpBitbucketServerApiClientTest {
             oAuthAPI,
             apiEndpoint);
     stubFor(
-        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
-            .willReturn(aResponse().withBody("ksmster")));
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withHeader("x-ausername", "ksmster")));
   }
 
   @AfterMethod
@@ -354,7 +354,20 @@ public class HttpBitbucketServerApiClientTest {
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
     // given
     stubFor(
-        get(urlEqualTo("/plugins/servlet/applinks/whoami")).willReturn(aResponse().withBody("")));
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
+
+    // when
+    bitbucketServer.getUser();
+  }
+
+  @Test(expectedExceptions = ScmCommunicationException.class)
+  public void shouldBeAbleToThrowScmCommunicationExceptionOnGetUser()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+    // given
+    stubFor(get(urlEqualTo("/rest/api/1.0/application-properties")).willReturn(aResponse()));
 
     // when
     bitbucketServer.getUser();

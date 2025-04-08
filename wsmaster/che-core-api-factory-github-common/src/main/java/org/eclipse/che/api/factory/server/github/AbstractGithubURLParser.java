@@ -53,7 +53,7 @@ public abstract class AbstractGithubURLParser {
   private final Pattern githubPattern;
 
   private final String githubPatternTemplate =
-      "^%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>.++))|(/pull/(?<pullRequestId>\\d++)))?$";
+      "%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/((tree)|(blob))/(?<path>.++))|(/pull/(?<pullRequestId>\\d++)))?$";
 
   private final Pattern githubSSHPattern;
 
@@ -207,7 +207,7 @@ public abstract class AbstractGithubURLParser {
     String branchName = null;
     String pullRequestId = null;
     if (isHTTPSUrl) {
-      branchName = matcher.group("branchName");
+      branchName = getBranch(matcher.group("path"));
       pullRequestId = matcher.group("pullRequestId");
     }
 
@@ -252,6 +252,21 @@ public abstract class AbstractGithubURLParser {
         .withLatestCommit(latestCommit)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);
+  }
+
+  /*
+   * Get branch from the file path by extracting the segment before the devfile name.
+   * Example of a file path: "branch/devfile.yaml" => "branch"
+   */
+  private String getBranch(String path) {
+    if (path != null && path.contains("/")) {
+      Optional<String> devfileNameOptional =
+          devfileFilenamesProvider.getConfiguredDevfileFilenames().stream()
+              .filter(devfileName -> path.endsWith("/" + devfileName))
+              .findAny();
+      return devfileNameOptional.map(s -> path.substring(0, path.indexOf(s) - 1)).orElse(path);
+    }
+    return path;
   }
 
   private GithubPullRequest getPullRequest(

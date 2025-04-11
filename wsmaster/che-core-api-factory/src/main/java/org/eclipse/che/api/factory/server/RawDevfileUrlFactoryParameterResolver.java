@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,7 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
-import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -128,6 +128,6 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
 
   @Override
   public FactoryResolverPriority priority() {
-    return HIGHEST;
+    return LOWEST;
   }
 }

@@ -17,6 +17,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static java.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,6 +39,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.subject.Subject;
+import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -55,6 +57,7 @@ public class GithubURLParserTest {
   private GithubApiClient githubApiClient;
 
   private PersonalAccessTokenManager personalAccessTokenManager;
+  @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
 
   /** Instance of component that will be tested. */
   private GithubURLParser githubUrlParser;
@@ -75,11 +78,7 @@ public class GithubURLParserTest {
 
     githubUrlParser =
         new GithubURLParser(
-            personalAccessTokenManager,
-            mock(DevfileFilenamesProvider.class),
-            githubApiClient,
-            null,
-            false);
+            personalAccessTokenManager, devfileFilenamesProvider, githubApiClient, null, false);
   }
 
   /** Check invalid url (not a GitHub one) */
@@ -96,13 +95,16 @@ public class GithubURLParserTest {
 
   /** Compare parsing */
   @Test(dataProvider = "parsing")
-  public void checkParsing(String url, String username, String repository, String branch)
+  public void checkParsing(String url, String username, String repository, String path)
       throws ApiException {
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
     GithubUrl githubUrl = githubUrlParser.parse(url);
 
     assertEquals(githubUrl.getUsername(), username);
     assertEquals(githubUrl.getRepository(), repository);
-    assertEquals(githubUrl.getBranch(), branch);
+    assertEquals(githubUrl.getBranch(), path);
   }
 
   /** Compare parsing */
@@ -160,11 +162,25 @@ public class GithubURLParserTest {
       {"https://github.com/eclipse/repositorygit", "eclipse", "repositorygit", null},
       {"https://github.com/eclipse/che/tree/4.2.x", "eclipse", "che", "4.2.x"},
       {"https://github.com/eclipse/che/tree/master", "eclipse", "che", "master"},
+      {"https://github.com/eclipse/che/tree/master/", "eclipse", "che", "master"},
       {
         "https://github.com/eclipse/che/tree/branch/with/slash",
         "eclipse",
         "che",
         "branch/with/slash"
+      },
+      {"https://github.com/eclipse/che/blob/branch/path/to/", "eclipse", "che", "branch/path/to"},
+      {
+        "https://github.com/eclipse/che/blob/branch/path/to/devfile.yaml",
+        "eclipse",
+        "che",
+        "branch/path/to"
+      },
+      {
+        "https://github.com/eclipse/che/blob/branch/path/to/.devfile.yaml",
+        "eclipse",
+        "che",
+        "branch/path/to"
       },
       {"git@github.com:eclipse/che", "eclipse", "che", null},
       {"git@github.com:eclipse/che123", "eclipse", "che123", null},

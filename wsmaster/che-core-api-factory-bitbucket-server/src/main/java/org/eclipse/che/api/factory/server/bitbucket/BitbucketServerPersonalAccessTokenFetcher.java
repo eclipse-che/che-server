@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,28 +11,30 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
-import static java.lang.String.format;
-import static java.lang.String.valueOf;
-
 import com.google.common.collect.ImmutableSet;
 import java.net.URL;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
+import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketPersonalAccessToken;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
-import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
@@ -71,53 +73,42 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
 
   @Override
   public PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException {
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     // #fetchPersonalAccessToken does the same thing as #refreshPersonalAccessToken
-    return fetchOrRefreshPersonalAccessToken(cheUser, scmServerUrl);
+    return fetchPersonalAccessToken(cheUser, scmServerUrl);
   }
 
   @Override
-  public PersonalAccessToken fetchPersonalAccessToken(Subject cheUser, String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException {
-    return fetchOrRefreshPersonalAccessToken(cheUser, scmServerUrl);
-  }
+  public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    OAuthToken oAuthToken;
 
-  private PersonalAccessToken fetchOrRefreshPersonalAccessToken(
-      Subject cheUser, String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException {
-    if (!bitbucketServerApiClient.isConnected(scmServerUrl)) {
+    if (bitbucketServerApiClient == null || !bitbucketServerApiClient.isConnected(scmServerUrl)) {
       LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
       return null;
     }
-
-    final String tokenName =
-        format(TOKEN_NAME_TEMPLATE, cheUser.getUserId(), apiEndpoint.getHost());
     try {
       BitbucketUser user = bitbucketServerApiClient.getUser();
-      LOG.debug("Current bitbucket user {} ", user);
-      // cleanup existed
-      List<BitbucketPersonalAccessToken> existingTokens =
-          bitbucketServerApiClient.getPersonalAccessTokens().stream()
-              .filter(p -> p.getName().equals(tokenName))
-              .collect(Collectors.toList());
-      for (BitbucketPersonalAccessToken existedToken : existingTokens) {
-        LOG.debug("Deleting existed che token {} {}", existedToken.getId(), existedToken.getName());
-        bitbucketServerApiClient.deletePersonalAccessTokens(existedToken.getId());
-      }
-
-      BitbucketPersonalAccessToken token =
-          bitbucketServerApiClient.createPersonalAccessTokens(tokenName, DEFAULT_TOKEN_SCOPE);
-      LOG.debug("Token created = {} for {}", token.getId(), token.getUser());
+      oAuthToken = oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME);
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
+      String tokenId = NameGenerator.generate("id-", 5);
       return new PersonalAccessToken(
           scmServerUrl,
           OAUTH_PROVIDER_NAME,
-          EnvironmentContext.getCurrent().getSubject().getUserId(),
-          null,
+          cheSubject.getUserId(),
           user.getSlug(),
-          token.getName(),
-          valueOf(token.getId()),
-          token.getToken());
-    } catch (ScmBadRequestException | ScmItemNotFoundException e) {
+          tokenName,
+          tokenId,
+          oAuthToken.getToken());
+    } catch (NotFoundException nfe) {
+      throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
+    } catch (ServerException
+        | ForbiddenException
+        | BadRequestException
+        | ConflictException
+        | ScmItemNotFoundException
+        | UnauthorizedException e) {
+      LOG.error(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }

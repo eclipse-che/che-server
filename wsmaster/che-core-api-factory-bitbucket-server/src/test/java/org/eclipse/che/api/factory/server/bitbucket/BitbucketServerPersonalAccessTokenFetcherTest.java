@@ -157,6 +157,24 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
   }
 
   @Test
+  public void shouldRefreshPersonalAccessToken() throws Exception {
+    // given
+    when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
+    when(bitbucketServerApiClient.getUser()).thenReturn(bitbucketUser);
+    when(oAuthToken.getToken()).thenReturn("token");
+    when(oAuthAPI.refreshToken(eq("bitbucket-server"))).thenReturn(oAuthToken);
+    // when
+    PersonalAccessToken result = fetcher.refreshPersonalAccessToken(subject, someBitbucketURL);
+    // then
+    assertNotNull(result);
+    assertEquals(result.getScmProviderUrl(), someBitbucketURL);
+    assertEquals(result.getCheUserId(), subject.getUserId());
+    assertNull(result.getScmOrganization(), bitbucketUser.getName());
+    assertTrue(result.getScmTokenId().startsWith("id-"));
+    assertEquals(result.getToken(), "token");
+  }
+
+  @Test
   public void shouldSkipToValidateTokensWithUnknownUrls()
       throws ScmUnauthorizedException, ScmCommunicationException, ForbiddenException,
           ServerException, ConflictException, UnauthorizedException, NotFoundException,

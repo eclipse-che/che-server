@@ -137,6 +137,27 @@ public class HttpBitbucketServerApiClientTest {
   }
 
   @Test
+  public void shouldGetUserWithSpecialCharacters()
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withHeader("x-ausername", "user%40email.com")));
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/users?start=0&limit=25&filter=user@email.com"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .withQueryParam("filter", equalTo("user@email.com"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/email-user/response.json")));
+
+    BitbucketUser user = bitbucketServer.getUser();
+    assertNotNull(user);
+  }
+
+  @Test
   public void testGetUsers()
       throws ScmCommunicationException, ScmBadRequestException, ScmUnauthorizedException {
     stubFor(

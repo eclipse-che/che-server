@@ -1,0 +1,24 @@
+{
+  "size": 1,
+  "limit": 3,
+  "isLastPage": true,
+  "values": [
+    {
+      "name": "user@email.com",
+      "emailAddress": "user@email.com",
+      "id": 58,
+      "displayName": "user",
+      "active": true,
+      "slug": "user@email.com",
+      "type": "NORMAL",
+      "links": {
+        "self": [
+          {
+            "href": "https://bitbucket-bitbucket.apps.cluster-devtools-c9ac.devtools-c9ac.example.opentlc.com/users/user%40email.com"
+          }
+        ]
+      }
+    }
+  ],
+  "start": 9
+}

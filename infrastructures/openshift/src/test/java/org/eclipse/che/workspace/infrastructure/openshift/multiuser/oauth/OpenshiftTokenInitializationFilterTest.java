@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,9 +26,8 @@ import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
-import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
-import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.RequestTokenExtractor;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.SessionStore;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -41,7 +40,6 @@ public class OpenshiftTokenInitializationFilterTest {
   @Mock private SessionStore sessionStore;
   @Mock private RequestTokenExtractor tokenExtractor;
   @Mock private UserManager userManager;
-  @Mock private PermissionChecker permissionChecker;
 
   @Mock private OpenShiftClientFactory openShiftClientFactory;
   @Mock private OpenShiftClient openShiftClient;
@@ -58,7 +56,7 @@ public class OpenshiftTokenInitializationFilterTest {
   public void setUp() throws InfrastructureException {
     openshiftTokenInitializationFilter =
         new OpenshiftTokenInitializationFilter(
-            sessionStore, tokenExtractor, openShiftClientFactory, userManager, permissionChecker);
+            sessionStore, tokenExtractor, openShiftClientFactory, userManager);
   }
 
   @Test

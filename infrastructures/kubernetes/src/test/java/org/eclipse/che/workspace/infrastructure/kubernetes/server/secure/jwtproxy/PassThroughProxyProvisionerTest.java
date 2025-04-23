@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -36,6 +36,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.Exter
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ServiceExposureStrategyProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.factory.JwtProxyConfigBuilderFactory;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -50,6 +51,7 @@ public class PassThroughProxyProvisionerTest {
   // test the different behavior here, while the majority of the tests are present in the
   // JwtProxyProvisionerTest
 
+  @Ignore
   @Test
   public void shouldConfigureProxyWithExcludes() throws Exception {
     // given

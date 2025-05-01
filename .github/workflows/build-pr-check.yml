@@ -30,6 +30,9 @@ jobs:
         java-version: '11'
         cache: 'maven'
     - name: Set up QEMU
+      # Skip this and other docker related steps, if the PR is from a forked repo. GitHub secrets
+      # are not available for forked repos, so the podman login step will fail.
+      # See https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#using-secrets-in-a-workflow
       if: ${{ ! github.event.pull_request.head.repo.fork }}
       uses: docker/setup-qemu-action@v3
     - name: Login to docker.io

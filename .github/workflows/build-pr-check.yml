@@ -30,17 +30,18 @@ jobs:
         java-version: '11'
         cache: 'maven'
     - name: Set up QEMU
+      if: ${{ ! github.event.pull_request.head.repo.fork }}
       uses: docker/setup-qemu-action@v3
     - name: Login to docker.io
-      if: github.event_name == 'pull_request'
-      uses: redhat-actions/podman-login@v1
+      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
+      uses: redhat-actions/podman-login@v1.7
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
         registry: docker.io
     - name: Login to quay.io
-      if: github.event_name == 'pull_request'
-      uses: redhat-actions/podman-login@v1
+      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
+      uses: redhat-actions/podman-login@v1.7
       with:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
@@ -50,5 +51,5 @@ jobs:
       env:
         DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_API_TOKEN }}
     - name: Build and push images
-      if: github.event_name == 'pull_request'
+      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
       run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image

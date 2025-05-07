@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -111,7 +111,13 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   }
 
   @Test(dataProvider = "devfileUrls")
-  public void shouldAcceptRawDevfileUrl(String url) {
+  public void shouldAcceptRawDevfileUrl(String url) throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
     // when
     boolean result =
         rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));

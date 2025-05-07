@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,14 +12,10 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy;
 
 import com.google.inject.assistedinject.Assisted;
-import java.security.KeyPair;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
-import org.eclipse.che.api.workspace.server.spi.InternalInfrastructureException;
-import org.eclipse.che.multiuser.machine.authentication.server.signature.SignatureKeyManager;
-import org.eclipse.che.multiuser.machine.authentication.server.signature.SignatureKeyManagerException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ServiceExposureStrategyProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.factory.JwtProxyConfigBuilderFactory;
 
@@ -40,14 +36,12 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtprox
  * </ul>
  *
  * @see JwtProxyConfigBuilder
- * @see SignatureKeyManager
  * @author Sergii Leshchenko
  */
 public class JwtProxyProvisioner extends AbstractJwtProxyProvisioner {
 
   @Inject
   public JwtProxyProvisioner(
-      SignatureKeyManager signatureKeyManager,
       JwtProxyConfigBuilderFactory jwtProxyConfigBuilderFactory,
       ServiceExposureStrategyProvider serviceExposureStrategyProvider,
       CookiePathStrategy cookiePathStrategy,
@@ -57,10 +51,8 @@ public class JwtProxyProvisioner extends AbstractJwtProxyProvisioner {
       @Named("che.server.secure_exposer.jwtproxy.memory_limit") String memoryLimitBytes,
       @Named("che.server.secure_exposer.jwtproxy.cpu_request") String cpuRequestCores,
       @Named("che.server.secure_exposer.jwtproxy.cpu_limit") String cpuLimitCores,
-      @Assisted RuntimeIdentity identity)
-      throws InternalInfrastructureException {
+      @Assisted RuntimeIdentity identity) {
     super(
-        constructKeyPair(signatureKeyManager, identity),
         jwtProxyConfigBuilderFactory,
         serviceExposureStrategyProvider.get(),
         serviceExposureStrategyProvider.getMultiHostStrategy(),
@@ -73,18 +65,6 @@ public class JwtProxyProvisioner extends AbstractJwtProxyProvisioner {
         cpuLimitCores,
         identity.getWorkspaceId(),
         true);
-  }
-
-  private static KeyPair constructKeyPair(
-      SignatureKeyManager signatureKeyManager, RuntimeIdentity identity)
-      throws InternalInfrastructureException {
-    try {
-      return signatureKeyManager.getOrCreateKeyPair(identity.getWorkspaceId());
-    } catch (SignatureKeyManagerException e) {
-      throw new InternalInfrastructureException(
-          "Signature key pair for machine authentication cannot be retrieved. Reason: "
-              + e.getMessage());
-    }
   }
 
   @Override

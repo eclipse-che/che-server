@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -43,10 +43,8 @@ public class PassThroughProxyProvisioner extends AbstractJwtProxyProvisioner {
       @Named("che.server.secure_exposer.jwtproxy.memory_limit") String memoryLimitBytes,
       @Named("che.server.secure_exposer.jwtproxy.cpu_request") String cpuRequestCores,
       @Named("che.server.secure_exposer.jwtproxy.cpu_limit") String cpuLimitCores,
-      @Assisted RuntimeIdentity identity)
-      throws InternalInfrastructureException {
+      @Assisted RuntimeIdentity identity) {
     super(
-        constructSignatureKeyPair(),
         jwtProxyConfigBuilderFactory,
         serviceExposureStrategyProvider.get(),
         serviceExposureStrategyProvider.getMultiHostStrategy(),

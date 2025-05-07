@@ -13,17 +13,13 @@ package org.eclipse.che.api.deploy;
 
 import static com.google.inject.matcher.Matchers.subclassesOf;
 import static org.eclipse.che.inject.Matchers.names;
-import static org.eclipse.che.multiuser.api.permission.server.SystemDomain.SYSTEM_DOMAIN_ACTIONS;
 
-import com.auth0.jwk.JwkProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.SigningKeyResolver;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.notification.RemoteSubscriptionStorage;
@@ -67,6 +63,7 @@ import org.eclipse.che.api.workspace.server.WorkspaceLockService;
 import org.eclipse.che.api.workspace.server.WorkspaceStatusCache;
 import org.eclipse.che.api.workspace.server.devfile.DevfileModule;
 import org.eclipse.che.api.workspace.server.hc.ServersCheckerFactory;
+import org.eclipse.che.api.workspace.server.jpa.WorkspaceJpaModule;
 import org.eclipse.che.api.workspace.server.spi.provision.InternalEnvironmentProvisioner;
 import org.eclipse.che.api.workspace.server.spi.provision.MachineNameProvisioner;
 import org.eclipse.che.api.workspace.server.spi.provision.env.AgentAuthEnableEnvVarProvider;
@@ -82,22 +79,11 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.MavenOptsEnvVariab
 import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceIdEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceNameEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceNamespaceNameEnvVarProvider;
+import org.eclipse.che.api.workspace.server.token.MachineTokenProvider;
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.commons.observability.deploy.ExecutorWrapperModule;
 import org.eclipse.che.core.tracing.metrics.TracingMetricsModule;
 import org.eclipse.che.inject.DynaModule;
-import org.eclipse.che.multiuser.api.authentication.commons.token.HeaderRequestTokenExtractor;
-import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
-import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
-import org.eclipse.che.multiuser.api.permission.server.PermissionCheckerImpl;
-import org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivityModule;
-import org.eclipse.che.multiuser.machine.authentication.server.MachineAuthModule;
-import org.eclipse.che.multiuser.oidc.OIDCInfo;
-import org.eclipse.che.multiuser.oidc.OIDCInfoProvider;
-import org.eclipse.che.multiuser.oidc.OIDCJwkProvider;
-import org.eclipse.che.multiuser.oidc.OIDCJwtParserProvider;
-import org.eclipse.che.multiuser.oidc.OIDCSigningKeyResolver;
-import org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter;
 import org.eclipse.che.security.PBKDF2PasswordEncryptor;
 import org.eclipse.che.security.PasswordEncryptor;
 import org.eclipse.che.security.oauth.EmbeddedOAuthAPI;
@@ -108,6 +94,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfraModule
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructure;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.KubernetesOidcProviderConfigFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.RequestTokenExtractor;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.PassThroughProxySecureServerExposer;
@@ -120,7 +107,7 @@ import org.eclipse.che.workspace.infrastructure.metrics.InfrastructureMetricsMod
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfraModule;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructure;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
-import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
+import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.HeaderRequestTokenExtractor;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 
 /** @author andrew00x */
@@ -324,9 +311,6 @@ public class WsMasterModule extends AbstractModule {
     if (OpenShiftInfrastructure.NAME.equals(infrastructure)
         || KubernetesInfrastructure.NAME.equals(infrastructure)) {
       install(new ReplicationModule(persistenceProperties));
-      bind(
-          org.eclipse.che.multiuser.permission.workspace.infra.kubernetes
-              .BrokerServicePermissionFilter.class);
       configureJwtProxySecureProvisioner(infrastructure);
     } else {
       bind(RemoteSubscriptionStorage.class)
@@ -337,70 +321,24 @@ public class WsMasterModule extends AbstractModule {
           .to(org.eclipse.che.api.workspace.server.DefaultWorkspaceStatusCache.class);
     }
 
-    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
-    } else if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
-      bind(KubernetesClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
-    }
+    bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
 
     persistenceProperties.put(
         PersistenceUnitProperties.EXCEPTION_HANDLER_CLASS,
         "org.eclipse.che.core.db.postgresql.jpa.eclipselink.PostgreSqlExceptionHandler");
 
-    install(
-        new org.eclipse.che.multiuser.permission.workspace.server.WorkspaceApiPermissionsModule());
-    install(
-        new org.eclipse.che.multiuser.permission.workspace.server.jpa
-            .MultiuserWorkspaceJpaModule());
-    install(new MultiUserWorkspaceActivityModule());
-    install(
-        new org.eclipse.che.multiuser.permission.devfile.server.jpa
-            .MultiuserUserDevfileJpaModule());
-    install(
-        new org.eclipse.che.multiuser.permission.devfile.server.UserDevfileApiPermissionsModule());
+    bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
+    bind(ProfileDao.class).to(JpaProfileDao.class);
+    bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
 
-    // Permission filters
-    bind(org.eclipse.che.multiuser.permission.system.SystemServicePermissionsFilter.class);
-    bind(org.eclipse.che.multiuser.permission.system.JvmServicePermissionsFilter.class);
-    bind(
-        org.eclipse.che.multiuser.permission.system.SystemEventsSubscriptionPermissionsCheck.class);
-
-    Multibinder<String> binder =
-        Multibinder.newSetBinder(binder(), String.class, Names.named(SYSTEM_DOMAIN_ACTIONS));
-    binder.addBinding().toInstance(UserServicePermissionsFilter.MANAGE_USERS_ACTION);
-    bind(org.eclipse.che.multiuser.permission.user.UserProfileServicePermissionsFilter.class);
-    bind(org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter.class);
-    bind(org.eclipse.che.multiuser.permission.logger.LoggerServicePermissionsFilter.class);
-
-    bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
-
-    bind(
-        org.eclipse.che.multiuser.permission.resource.filters.ResourceServicePermissionsFilter
-            .class);
-    bind(
-        org.eclipse.che.multiuser.permission.resource.filters
-            .FreeResourcesLimitServicePermissionsFilter.class);
-
-    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
-      if (KubernetesInfrastructure.NAME.equals(infrastructure)) {
-        bind(OIDCInfo.class).toProvider(OIDCInfoProvider.class).asEagerSingleton();
-        bind(SigningKeyResolver.class).to(OIDCSigningKeyResolver.class);
-        bind(JwtParser.class).toProvider(OIDCJwtParserProvider.class);
-        bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);
-      }
-      bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
-      bind(ProfileDao.class).to(JpaProfileDao.class);
-      bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
-    }
-
-    install(new MachineAuthModule());
+    install(new WorkspaceJpaModule());
+    bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
+    bind(MachineTokenProvider.class).to(MachineTokenProvider.EmptyMachineTokenProvider.class);
 
     // User and profile - use profile from keycloak and other stuff is JPA
     bind(PasswordEncryptor.class).to(PBKDF2PasswordEncryptor.class);
     bind(UserDao.class).to(JpaUserDao.class);
     bind(PreferenceDao.class).to(JpaPreferenceDao.class);
-    bind(PermissionChecker.class).to(PermissionCheckerImpl.class);
 
     bindConstant().annotatedWith(Names.named("che.agents.auth_enabled")).to(true);
   }

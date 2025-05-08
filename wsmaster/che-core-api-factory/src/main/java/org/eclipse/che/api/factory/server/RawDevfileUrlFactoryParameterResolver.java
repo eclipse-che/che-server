@@ -24,6 +24,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
@@ -34,7 +35,7 @@ import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
 /**
  * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a
@@ -73,10 +74,13 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
 
   private boolean containsYaml(String requestURL) {
     try {
-      String fetch = urlFetcher.fetch(requestURL);
+      Optional<String> credentials = new DefaultFactoryUrl().withUrl(requestURL).getCredentials();
+      URLFileContentProvider urlFileContentProvider =
+          new URLFileContentProvider(new URL(requestURL).toURI(), urlFetcher);
+      String fetch = urlFileContentProvider.fetchContent(requestURL, credentials.orElse(null));
       JsonNode parsedYaml = devfileParser.parseYamlRaw(fetch);
       return !parsedYaml.isEmpty();
-    } catch (IOException | DevfileFormatException e) {
+    } catch (IOException | URISyntaxException | DevfileException e) {
       return false;
     }
   }

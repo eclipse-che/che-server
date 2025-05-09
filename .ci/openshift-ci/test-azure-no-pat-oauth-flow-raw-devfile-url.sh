@@ -29,7 +29,7 @@ trap "catchFinish" EXIT SIGINT
 
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 testFactoryResolverResponse ${PUBLIC_REPO_RAW_PATH_URL} 200
-testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 500
+testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 400
 
 testCloneGitRepoNoProjectExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_RAW_PATH_URL} ${USER_CHE_NAMESPACE}
 deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}

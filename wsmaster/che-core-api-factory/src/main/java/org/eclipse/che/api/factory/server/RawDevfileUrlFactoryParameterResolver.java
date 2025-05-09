@@ -13,7 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
-import static org.eclipse.che.api.factory.server.FactoryResolverPriority.LOWEST;
+import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,7 +24,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.Optional;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
@@ -35,7 +35,7 @@ import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
 /**
  * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a
@@ -45,8 +45,6 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
     implements FactoryParametersResolver {
 
   private static final String PROVIDER_NAME = "raw-devfile-url";
-  private static final Pattern PATTERN =
-      Pattern.compile("^https?://.*\\.ya?ml((\\?token=.*)|(\\?at=refs/heads/.*))?$");
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
@@ -71,15 +69,18 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url) && (PATTERN.matcher(url).matches() || containsYaml(url));
+    return !isNullOrEmpty(url) && containsYaml(url);
   }
 
   private boolean containsYaml(String requestURL) {
     try {
-      String fetch = urlFetcher.fetch(requestURL);
+      Optional<String> credentials = new DefaultFactoryUrl().withUrl(requestURL).getCredentials();
+      URLFileContentProvider urlFileContentProvider =
+          new URLFileContentProvider(new URL(requestURL).toURI(), urlFetcher);
+      String fetch = urlFileContentProvider.fetchContent(requestURL, credentials.orElse(null));
       JsonNode parsedYaml = devfileParser.parseYamlRaw(fetch);
       return !parsedYaml.isEmpty();
-    } catch (IOException | DevfileFormatException e) {
+    } catch (IOException | URISyntaxException | DevfileException e) {
       return false;
     }
   }
@@ -128,6 +129,6 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
 
   @Override
   public FactoryResolverPriority priority() {
-    return LOWEST;
+    return HIGHEST;
   }
 }

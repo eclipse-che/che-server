@@ -17,8 +17,10 @@ import org.eclipse.che.api.core.cors.CheCorsFilter;
 import org.eclipse.che.commons.logback.filter.RequestIdLoggerFilter;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.inject.DynaModule;
+import org.eclipse.che.multiuser.keycloak.server.deploy.KeycloakServletModule;
+import org.eclipse.che.multiuser.machine.authentication.server.MachineLoginFilter;
+import org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructure;
-import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.OidcTokenInitializationFilter;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructure;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.OpenshiftTokenInitializationFilter;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
@@ -45,7 +47,14 @@ public class WsMasterServletModule extends ServletModule {
     // Matching group SHOULD contain forward slash.
     serveRegex("^(?!/websocket.?)(.*)")
         .with(GuiceEverrestServlet.class, ImmutableMap.of("openapi.context.id", "org.eclipse.che"));
-    configureNativeUserMode();
+
+    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
+      LOG.info("Running in native-user mode ...");
+      configureNativeUserMode();
+    } else {
+      LOG.info("Running in classic multi-user mode ...");
+      configureMultiUserMode();
+    }
 
     if (Boolean.valueOf(System.getenv("CHE_METRICS_ENABLED"))) {
       install(new org.eclipse.che.core.metrics.MetricsServletModule());
@@ -60,6 +69,11 @@ public class WsMasterServletModule extends ServletModule {
     } else {
       return Boolean.valueOf(cheCorsEnabledEnvVar);
     }
+  }
+
+  private void configureMultiUserMode() {
+    filterRegex(".*").through(MachineLoginFilter.class);
+    install(new KeycloakServletModule());
   }
 
   private void configureNativeUserMode() {

@@ -25,10 +25,11 @@ import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
-import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.AuthorizedSubject;
-import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.MultiUserEnvironmentInitializationFilter;
-import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.RequestTokenExtractor;
-import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.SessionStore;
+import org.eclipse.che.multiuser.api.authentication.commons.SessionStore;
+import org.eclipse.che.multiuser.api.authentication.commons.filter.MultiUserEnvironmentInitializationFilter;
+import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
+import org.eclipse.che.multiuser.api.permission.server.AuthorizedSubject;
+import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ public class OpenshiftTokenInitializationFilter
   private static final Logger LOG =
       LoggerFactory.getLogger(OpenshiftTokenInitializationFilter.class);
 
+  private final PermissionChecker permissionChecker;
   private final OpenShiftClientFactory clientFactory;
 
   private final UserManager userManager;
@@ -53,10 +55,12 @@ public class OpenshiftTokenInitializationFilter
       SessionStore sessionStore,
       RequestTokenExtractor tokenExtractor,
       OpenShiftClientFactory clientFactory,
-      UserManager userManager) {
+      UserManager userManager,
+      PermissionChecker permissionChecker) {
     super(sessionStore, tokenExtractor);
     this.clientFactory = clientFactory;
     this.userManager = userManager;
+    this.permissionChecker = permissionChecker;
   }
 
   @Override
@@ -88,7 +92,8 @@ public class OpenshiftTokenInitializationFilter
     try {
       ObjectMeta userMeta = osu.getMetadata();
       User user = userManager.getOrCreateUser(getUserId(osu), userMeta.getName());
-      return new AuthorizedSubject(new SubjectImpl(user.getName(), user.getId(), token, false));
+      return new AuthorizedSubject(
+          new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
     } catch (ServerException | ConflictException e) {
       throw new RuntimeException(e);
     }

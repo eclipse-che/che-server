@@ -35,6 +35,7 @@
     <modules>
         <module>core</module>
         <module>wsmaster</module>
+        <module>multiuser</module>
         <module>infrastructures</module>
         <module>assembly</module>
     </modules>

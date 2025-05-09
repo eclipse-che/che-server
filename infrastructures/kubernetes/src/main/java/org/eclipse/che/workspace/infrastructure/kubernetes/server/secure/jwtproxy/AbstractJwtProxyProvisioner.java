@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.CPU_LIMIT_ATTRIBUTE;
 import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.CPU_REQUEST_ATTRIBUTE;
@@ -19,19 +20,25 @@ import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.MEMO
 import static org.eclipse.che.api.workspace.shared.Constants.CONTAINER_SOURCE_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.shared.Constants.TOOL_CONTAINER_SOURCE;
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.CHE_ORIGINAL_NAME_LABEL;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.KubernetesServerExposer.SERVER_PREFIX;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.KubernetesServerExposer.SERVER_UNIQUE_PART_SIZE;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
+import java.security.KeyPair;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +50,7 @@ import org.eclipse.che.commons.lang.Size;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Names;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment.PodData;
+import org.eclipse.che.workspace.infrastructure.kubernetes.server.ServerServiceBuilder;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ExternalServiceExposureStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.ProxyProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.factory.JwtProxyConfigBuilderFactory;
@@ -70,11 +78,13 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
   private final CookiePathStrategy cookiePathStrategy;
   private final MultiHostCookiePathStrategy multihostCookiePathStrategy;
   private int availablePort;
+  private final KeyPair keyPair;
   private final boolean detectCookieAuth;
 
   /**
    * Constructor!
    *
+   * @param signatureKeyPair the key pair for JWT proxy SSH comms
    * @param jwtProxyConfigBuilderFactory factory to create a JWT proxy config builder
    * @param externalServiceExposureStrategy the strategy to expose external servers
    * @param cookiePathStrategy the strategy for the cookie path of the JWT auth cookies, if used
@@ -85,6 +95,7 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
    *     whether to ignore such requirements
    */
   AbstractJwtProxyProvisioner(
+      KeyPair signatureKeyPair,
       JwtProxyConfigBuilderFactory jwtProxyConfigBuilderFactory,
       ExternalServiceExposureStrategy externalServiceExposureStrategy,
       ExternalServiceExposureStrategy multiHostStrategy,
@@ -97,6 +108,7 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
       String cpuLimitCores,
       String workspaceId,
       boolean detectCookieAuth) {
+    this.keyPair = signatureKeyPair;
     this.proxyConfigBuilder = jwtProxyConfigBuilderFactory.create(workspaceId);
     this.jwtProxyImage = jwtProxyImage;
     this.externalServiceExposureStrategy = externalServiceExposureStrategy;
@@ -158,6 +170,7 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
       throws InfrastructureException {
     Preconditions.checkArgument(
         secureServers != null && !secureServers.isEmpty(), "Secure servers are missing");
+    ensureJwtProxyInjected(k8sEnv, machineName, pod);
 
     Set<String> excludes = new HashSet<>();
     Boolean cookiesAuthEnabled = null;
@@ -236,6 +249,44 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
   @VisibleForTesting
   String getConfigMapName() {
     return "jwtproxy-config";
+  }
+
+  private void ensureJwtProxyInjected(KubernetesEnvironment k8sEnv, String machineName, PodData pod)
+      throws InfrastructureException {
+    if (!k8sEnv.getMachines().containsKey(JWT_PROXY_MACHINE_NAME)) {
+      k8sEnv.getMachines().put(JWT_PROXY_MACHINE_NAME, createJwtProxyMachine());
+      Pod jwtProxyPod = createJwtProxyPod();
+      k8sEnv.addInjectablePod(machineName, JWT_PROXY_MACHINE_NAME, jwtProxyPod);
+
+      Map<String, String> initConfigMapData = new HashMap<>();
+      initConfigMapData.put(
+          JWT_PROXY_PUBLIC_KEY_FILE,
+          PUBLIC_KEY_HEADER
+              + java.util.Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded())
+              + PUBLIC_KEY_FOOTER);
+
+      initConfigMapData.put(JWT_PROXY_CONFIG_FILE, proxyConfigBuilder.build());
+
+      ConfigMap jwtProxyConfigMap =
+          new ConfigMapBuilder()
+              .withNewMetadata()
+              .withName(getConfigMapName())
+              .endMetadata()
+              .withData(initConfigMapData)
+              .build();
+      k8sEnv.getConfigMaps().put(jwtProxyConfigMap.getMetadata().getName(), jwtProxyConfigMap);
+
+      Service jwtProxyService =
+          new ServerServiceBuilder()
+              .withName(serviceName)
+              // we're merely injecting the pod, so we need a selector that is going to hit the
+              // pod that runs the server that we're exposing
+              .withSelectorEntry(CHE_ORIGINAL_NAME_LABEL, pod.getMetadata().getName())
+              .withMachineName(JWT_PROXY_MACHINE_NAME)
+              .withPorts(emptyList())
+              .build();
+      k8sEnv.getServices().put(jwtProxyService.getMetadata().getName(), jwtProxyService);
+    }
   }
 
   private InternalMachineConfig createJwtProxyMachine() {

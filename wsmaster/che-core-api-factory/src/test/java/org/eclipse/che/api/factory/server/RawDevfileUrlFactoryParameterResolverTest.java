@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,6 +27,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.FileNotFoundException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.BadRequestException;
@@ -111,7 +112,13 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   }
 
   @Test(dataProvider = "devfileUrls")
-  public void shouldAcceptRawDevfileUrl(String url) {
+  public void shouldAcceptRawDevfileUrl(String url) throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    when(urlFetcher.fetch(eq(url), eq(null))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
     // when
     boolean result =
         rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
@@ -124,7 +131,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   public void shouldAcceptRawDevfileUrlWithoutExtension(String url) throws Exception {
     // given
     JsonNode jsonNode = mock(JsonNode.class);
-    when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
+    when(urlFetcher.fetch(eq(url), eq(null))).thenReturn(DEVFILE);
     when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
     when(jsonNode.isEmpty()).thenReturn(false);
 
@@ -141,7 +148,26 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     // given
     JsonNode jsonNode = mock(JsonNode.class);
     String url = "https://host/path/devfile";
-    when(urlFetcher.fetch(eq(url))).thenReturn(DEVFILE);
+    when(urlFetcher.fetch(eq(url), eq(null))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldAcceptRawDevfileUrlWithCredentials() throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    String url = "https://credentials@host/path/devfile";
+    when(urlFetcher.fetch(
+            eq(url), eq("Basic " + Base64.getEncoder().encodeToString("credentials:".getBytes()))))
+        .thenReturn(DEVFILE);
     when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
     when(jsonNode.isEmpty()).thenReturn(false);
 
@@ -158,7 +184,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     // given
     JsonNode jsonNode = mock(JsonNode.class);
     String gitRepositoryUrl = "https://host/user/repo.git";
-    when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenReturn("unsupported content");
+    when(urlFetcher.fetch(eq(gitRepositoryUrl), eq(null))).thenReturn("unsupported content");
     when(devfileParser.parseYamlRaw(eq("unsupported content"))).thenReturn(jsonNode);
     when(jsonNode.isEmpty()).thenReturn(true);
 
@@ -175,7 +201,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
   public void shouldNotAcceptPrivateGitRepositoryUrl() throws Exception {
     // given
     String gitRepositoryUrl = "https://host/user/private-repo.git";
-    when(urlFetcher.fetch(eq(gitRepositoryUrl))).thenThrow(new FileNotFoundException());
+    when(urlFetcher.fetch(eq(gitRepositoryUrl), eq(null))).thenThrow(new FileNotFoundException());
 
     // when
     boolean result =

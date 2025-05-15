@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.net.URLEncoder.encode;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
@@ -49,7 +50,10 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   @Override
   public String getAuthenticateUrl(URL requestUrl, List<String> scopes) {
     AuthorizationCodeRequestUrl url = flow.newAuthorizationUrl().setScopes(scopes);
-    url.setState(prepareState(requestUrl));
+    String state = prepareState(requestUrl);
+    // Although the state is encoded in the OAuthAuthenticator class, we need to additionally encode
+    // it because Bitbucket Server decodes it on callback request.
+    url.setState(BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint) ? state : encode(state, UTF_8));
     url.set("redirect_uri", findRedirectUrl(requestUrl));
     return url.build();
   }

@@ -269,6 +269,14 @@ public class AzureDevOpsURLParserTest {
         null
       },
       {
+        "ssh://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo",
+        "MyOrg",
+        "MyProject",
+        "MyRepo",
+        null,
+        null
+      },
+      {
         "ssh://dev.azure-server.com:22/MyOrg/MyProject/_git/MyRepo",
         "MyOrg",
         "MyProject",

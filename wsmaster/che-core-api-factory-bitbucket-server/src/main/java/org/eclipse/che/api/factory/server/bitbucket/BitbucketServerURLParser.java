@@ -57,8 +57,8 @@ public class BitbucketServerURLParser {
           "^(?<scheme>%s)://(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/?",
           "^(?<scheme>%s)://(?<host>%s)/scm/(?<project>[^/~]+)/(?<repo>[^/]+).git",
           "^(?<scheme>%s)://(?<host>%s)/projects/(?<project>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?",
-          "^(?<scheme>%s)://git@(?<host>%s):(?<port>\\d*)/~(?<user>[^/]+)/(?<repo>.*).git$",
-          "^(?<scheme>%s)://git@(?<host>%s):(?<port>\\d*)/(?<project>[^/]+)/(?<repo>.*).git$");
+          "^(?<scheme>%s)://git@(?<host>%s):?(?<port>\\d*)?/~(?<user>[^/]+)/(?<repo>.*).git$",
+          "^(?<scheme>%s)://git@(?<host>%s):?(?<port>\\d*)?/(?<project>[^/]+)/(?<repo>.*).git$");
   private final List<Pattern> bitbucketUrlPatterns = new ArrayList<>();
   private static final String OAUTH_PROVIDER_NAME = "bitbucket-server";
 
@@ -152,7 +152,9 @@ public class BitbucketServerURLParser {
   private String getServerUrl(String repositoryUrl) {
     if (repositoryUrl.startsWith("ssh://git@")) {
       String substring = repositoryUrl.substring(10);
-      return "https://" + substring.substring(0, substring.indexOf(":"));
+      return "https://"
+          + substring.substring(
+              0, substring.contains(":") ? substring.indexOf(":") : substring.indexOf("/"));
     }
     return repositoryUrl.substring(
         0,

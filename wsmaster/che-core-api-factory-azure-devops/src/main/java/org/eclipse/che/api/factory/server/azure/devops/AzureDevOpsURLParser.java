@@ -54,7 +54,7 @@ public class AzureDevOpsURLParser {
   private final String azureSSHDevOpsPatternTemplate =
       "^git@ssh\\.%s:v3/(?<organization>.*)/(?<project>.*)/(?<repoName>.*)$";
   private final String azureSSHDevOpsServerPatternTemplate =
-      "^ssh://%s:22/(?<organization>.*)/(?<project>.*)/_git/(?<repoName>.*)$";
+      "^ssh://%s(:\\d*)?/(?<organization>.*)/(?<project>.*)/_git/(?<repoName>.*)$";
   private final String azureDevOpsPatternTemplate =
       "^https?://(?<organizationCanIgnore>[^@]++)?@?%s/(?<organization>[^/]++)/((?<project>[^/]++)/)?_git/"
           + "(?<repoName>[^?]++)"
@@ -119,7 +119,10 @@ public class AzureDevOpsURLParser {
       substring = repositoryUrl.substring(6);
     }
     if (!isNullOrEmpty(substring)) {
-      return Optional.of("https://" + substring.substring(0, substring.indexOf(":")));
+      return Optional.of(
+          "https://"
+              + substring.substring(
+                  0, substring.contains(":") ? substring.indexOf(":") : substring.indexOf("/")));
     }
     // Otherwise, extract the base url from the given repository url by cutting the url after the
     // first slash.

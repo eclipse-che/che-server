@@ -215,7 +215,9 @@ public class BitbucketServerURLParserTest {
       {"https://bitbucket.2mcl.com/users/user/repos/repo/"},
       {"https://bbkt.com/scm/project/test1.git"},
       {"ssh://git@bitbucket.2mcl.com:12345/~user/repo.git"},
-      {"ssh://git@bitbucket.2mcl.com:12345/project/test1.git"}
+      {"ssh://git@bitbucket.2mcl.com:12345/project/test1.git"},
+      {"ssh://git@bitbucket.2mcl.com/~user/repo.git"},
+      {"ssh://git@bitbucket.2mcl.com/project/test1.git"}
     };
   }
 

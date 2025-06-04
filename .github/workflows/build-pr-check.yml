@@ -55,4 +55,4 @@ jobs:
         DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_API_TOKEN }}
     - name: Build and push images
       if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
-      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image
+      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64,linux/s390x --builder:podman --push-image

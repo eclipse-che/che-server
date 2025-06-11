@@ -7,7 +7,7 @@ REGISTRY="quay.io"
 ORGANIZATION="eclipse"
 
 IMAGE="quay.io/eclipse/che-server"
-BUILD_PLATFORMS="linux/amd64,linux/ppc64le,linux/arm64"
+BUILD_PLATFORMS="linux/amd64,linux/ppc64le,linux/arm64,linux/s390x"
 
 sed_in_place() {
     SHORT_UNAME=$(uname -s)

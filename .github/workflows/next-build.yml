@@ -50,7 +50,7 @@ jobs:
       id: build
       run: |
           echo "short_sha1=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          ./build/build.sh --tag:next --sha-tag --build-platforms:linux/amd64,linux/ppc64le,linux/arm64 --builder:podman --push-image
+          ./build/build.sh --tag:next --sha-tag --build-platforms:linux/amd64,linux/ppc64le,linux/arm64,linux/s390x --builder:podman --push-image
     - name: Create failure MM message
       if: ${{ failure() }}
       run: |

@@ -323,8 +323,9 @@ set_truststore_system_variables() {
 }
 
 add_che_cert_to_truststore() {
-  if [ "${CHE_SELF__SIGNED__CERT}" != "" ]; then
-    add_cert_to_truststore "${CHE_SELF__SIGNED__CERT}" "HOSTDOMAIN"
+  cert_path="/self-signed-cert/ca.crt"
+  if [ -e $cert_path ]; then
+    add_cert_to_truststore "$(cat $cert_path)" "HOSTDOMAIN"
   fi
 }
 

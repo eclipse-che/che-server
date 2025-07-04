@@ -153,6 +153,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
         bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
             subject, BitbucketApiClient.BITBUCKET_SERVER);
     assertNotNull(token);
+    assertTrue(token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
   }
 
   @Test

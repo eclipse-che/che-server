@@ -46,7 +46,10 @@ public class AbstractGitlabUrlParser {
   private static final List<String> gitlabUrlPatternTemplates =
       List.of(
           "^(?<scheme>%s)://(?<host>%s)/(?<subgroups>([^/]++/?)+)/-/tree/(?<branch>.++)(/)?",
-          "^(?<scheme>%s)://(?<host>%s)/(?<subgroups>.*)"); // a wider one, should be the last in
+          "^(?<scheme>%s)://(?<host>%s)/(?<subgroups>.*)",
+          "^(?<scheme>%s)://(?<host>%s):(?<port>%s)/(?<subgroups>([^/]++/?)+)/-/tree/(?<branch>.++)(/)?",
+          "^(?<scheme>%s)://(?<host>%s):(?<port>%s)/(?<subgroups>.*)"); // a wider one, should be
+  // the last in
   // the list
   private final String gitlabSSHPatternTemplate = "^git@(?<host>%s):(?<subgroups>.*)$";
   // list
@@ -62,15 +65,17 @@ public class AbstractGitlabUrlParser {
     this.providerName = providerName;
     if (isNullOrEmpty(serverUrl)) {
       gitlabUrlPatternTemplates.forEach(
-          t -> gitlabUrlPatterns.add(compile(format(t, "https", "gitlab.com"))));
+          t -> gitlabUrlPatterns.add(compile(format(t, "https", "gitlab.com", 443))));
       gitlabUrlPatterns.add(compile(format(gitlabSSHPatternTemplate, "gitlab.com")));
     } else {
       String trimmedEndpoint = trimEnd(serverUrl, '/');
+      System.err.println("endpoint: " + trimmedEndpoint);
       URI uri = URI.create(trimmedEndpoint);
       String schema = uri.getScheme();
       String host = uri.getHost();
+      int port = uri.getPort();
       for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
-        gitlabUrlPatterns.add(compile(format(gitlabUrlPatternTemplate, schema, host)));
+        gitlabUrlPatterns.add(compile(format(gitlabUrlPatternTemplate, schema, host, port)));
       }
       gitlabUrlPatterns.add(compile(format(gitlabSSHPatternTemplate, host)));
     }
@@ -143,8 +148,9 @@ public class AbstractGitlabUrlParser {
                 : url);
     String scheme = uri.getScheme();
     String host = uri.getHost();
+    int port = uri.getPort();
     return gitlabUrlPatternTemplates.stream()
-        .map(t -> compile(format(t, scheme, host)).matcher(url))
+        .map(t -> compile(format(t, scheme, host, port)).matcher(url))
         .filter(Matcher::matches)
         .findAny()
         .or(
@@ -176,6 +182,7 @@ public class AbstractGitlabUrlParser {
    */
   public GitlabUrl parse(String url) {
     String trimmedUrl = trimEnd(url, '/');
+    System.err.println("trimmed: " + trimmedUrl);
     Optional<Matcher> matcherOptional =
         gitlabUrlPatterns.stream()
             .map(pattern -> pattern.matcher(trimmedUrl))
@@ -193,12 +200,18 @@ public class AbstractGitlabUrlParser {
 
   private GitlabUrl parse(Matcher matcher) {
     String scheme = null;
+    String port = null;
     try {
       scheme = matcher.group("scheme");
     } catch (IllegalArgumentException e) {
       // ok no such group
     }
     String host = matcher.group("host");
+    try {
+      port = matcher.group("port");
+    } catch (IllegalArgumentException e) {
+      // ok no such group
+    }
     String subGroups = trimEnd(matcher.group("subgroups"), '/');
     if (subGroups.endsWith(".git")) {
       subGroups = subGroups.substring(0, subGroups.length() - 4);
@@ -213,6 +226,7 @@ public class AbstractGitlabUrlParser {
 
     return new GitlabUrl()
         .withHostName(host)
+        .withPort(port)
         .withScheme(scheme)
         .withSubGroups(subGroups)
         .withBranch(branch)

@@ -37,6 +37,9 @@ public class GitlabUrl extends DefaultFactoryUrl {
   /** Hostname of the gitlab URL */
   private String hostName;
 
+  /** Port of the gitlab URL */
+  private String port;
+
   /** Scheme of the gitlab URL */
   private String scheme;
 
@@ -68,7 +71,10 @@ public class GitlabUrl extends DefaultFactoryUrl {
 
   @Override
   public String getProviderUrl() {
-    return (isNullOrEmpty(scheme) ? "https" : scheme) + "://" + hostName;
+    return (isNullOrEmpty(scheme) ? "https" : scheme)
+        + "://"
+        + hostName
+        + (isNullOrEmpty(port) ? "" : ":" + port);
   }
 
   /**
@@ -82,6 +88,11 @@ public class GitlabUrl extends DefaultFactoryUrl {
 
   public GitlabUrl withHostName(String hostName) {
     this.hostName = hostName;
+    return this;
+  }
+
+  public GitlabUrl withPort(String port) {
+    this.port = port;
     return this;
   }
 
@@ -171,7 +182,11 @@ public class GitlabUrl extends DefaultFactoryUrl {
   public String rawFileLocation(String fileName) {
     String resultUrl =
         new StringJoiner("/")
-            .add((isNullOrEmpty(scheme) ? "https" : scheme) + "://" + hostName)
+            .add(
+                (isNullOrEmpty(scheme) ? "https" : scheme)
+                    + "://"
+                    + hostName
+                    + (isNullOrEmpty(port) ? "" : ":" + port))
             .add("api/v4/projects")
             // use URL-encoded path to the project as a selector instead of id
             .add(encode(subGroups, Charsets.UTF_8))
@@ -193,6 +208,12 @@ public class GitlabUrl extends DefaultFactoryUrl {
     if (isNullOrEmpty(scheme)) {
       return "git@" + hostName + ":" + subGroups + ".git";
     }
-    return scheme + "://" + hostName + "/" + subGroups + ".git";
+    return scheme
+        + "://"
+        + hostName
+        + (isNullOrEmpty(port) ? "" : ":" + port)
+        + "/"
+        + subGroups
+        + ".git";
   }
 }

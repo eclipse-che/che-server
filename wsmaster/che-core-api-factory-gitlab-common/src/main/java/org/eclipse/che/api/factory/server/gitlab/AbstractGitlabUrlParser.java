@@ -71,7 +71,8 @@ public class AbstractGitlabUrlParser {
       String schema = uri.getScheme();
       String host = uri.getHost();
       for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
-        gitlabUrlPatterns.add(compile(format(gitlabUrlPatternTemplate, schema, host, uri.getPort())));
+        gitlabUrlPatterns.add(
+            compile(format(gitlabUrlPatternTemplate, schema, host, uri.getPort())));
       }
       gitlabUrlPatterns.add(compile(format(gitlabSSHPatternTemplate, host)));
     }

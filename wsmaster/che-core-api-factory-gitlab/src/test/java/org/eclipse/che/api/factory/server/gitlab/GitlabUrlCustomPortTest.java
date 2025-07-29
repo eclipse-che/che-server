@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -49,7 +49,9 @@ public class GitlabUrlCustomPortTest {
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
     gitlabUrlParser =
         new GitlabUrlParser(
-            "https://gitlab.net:3120", devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+            "https://gitlab.net:3120",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
   }
 
   /** Check when there is devfile in the repository */
@@ -92,7 +94,8 @@ public class GitlabUrlCustomPortTest {
       // },
       // {
       //   "git@gitlab.net:eclipse/fooproj/che.git",
-      //   "https://gitlab.net:3120/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=HEAD"
+      //
+      // "https://gitlab.net:3120/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=HEAD"
       // },
       {
         "https://gitlab.net:3120/eclipse/fooproj/-/tree/master/",
@@ -116,7 +119,9 @@ public class GitlabUrlCustomPortTest {
   public static Object[][] repoProvider2() {
     return new Object[][] {
       {"https://gitlab.net:3120/eclipse/che.git", "https://gitlab.net:3120/eclipse/che.git"},
-      {"https://gitlab.net:3120/eclipse/foo/che.git", "https://gitlab.net:3120/eclipse/foo/che.git"},
+      {
+        "https://gitlab.net:3120/eclipse/foo/che.git", "https://gitlab.net:3120/eclipse/foo/che.git"
+      },
       {"git@gitlab.net:eclipse/che.git", "git@gitlab.net:eclipse/che.git"},
       {"git@gitlab.net:eclipse/foo/che.git", "git@gitlab.net:eclipse/foo/che.git"},
       {

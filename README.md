@@ -50,3 +50,7 @@ Here are additional useful links with the `che-server` builds data:
 - [Trends dashboard](https://develocity-staging.eclipse.org/scans/trends?search.rootProjectNames=che%20server)
 - [Failures dashboard](https://develocity-staging.eclipse.org/scans/failures?search.rootProjectNames=che%20server)
 - Failed and flaky [Tests dashboard](https://develocity-staging.eclipse.org/scans/tests?search.rootProjectNames=che%20server)
+
+## SBOM
+
+To enhance supply chain security and offer users clear insight into project  components, Eclipse Che now generates a Software Bill of Materials (SBOM) for every release. These are published to the Eclipse Foundation SBOM registry, with access instructions and usage details available in this [documentation](https://eclipse-csi.github.io/security-handbook/sbom/registry.html).

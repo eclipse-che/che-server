@@ -196,7 +196,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
       } else {
         user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());
       }
-      return Optional.of(Pair.of(Boolean.TRUE, user.getEmailAddress()));
+      return Optional.of(Pair.of(Boolean.TRUE, user.getDisplayName()));
     } catch (ScmItemNotFoundException
         | ScmBadRequestException
         | ScmUnauthorizedException

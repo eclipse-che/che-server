@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.util.store.MemoryDataStoreFactory;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
@@ -51,6 +52,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   private final String[] redirectUris;
   private final String API_VERSION = "7.0";
   private final String PROVIDER_NAME = "azure-devops";
+  private final String clientId;
   private final String clientSecret;
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -66,6 +68,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       String[] redirectUris)
       throws IOException {
     this.cheApiEndpoint = cheApiEndpoint;
+    this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.azureDevOpsScmApiEndpoint = trimEnd(azureDevOpsScmApiEndpoint, '/');
     this.azureDevOpsUserProfileDataApiUrl =
@@ -87,7 +90,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   @Override
   public String getAuthenticateUrl(URL requestUrl, List<String> scopes) {
     AuthorizationCodeRequestUrl url = flow.newAuthorizationUrl().setScopes(scopes);
-    url.set("response_type", "Assertion");
+    //    url.set("response_type", "Assertion");
     url.set("redirect_uri", format("%s/oauth/callback", cheApiEndpoint));
     url.setState(prepareState(requestUrl));
     return url.build();
@@ -200,11 +203,14 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       URL requestUrl, List<String> scopes, String code) {
     AuthorizationCodeTokenRequest request =
         super.getAuthorizationCodeTokenRequest(requestUrl, scopes, code);
-    request.set("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
-    request.set("assertion", code);
-    request.set("client_assertion", clientSecret);
-    request.set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
-    request.setResponseClass(AzureDevOpsTokenResponse.class);
+    request.set("client_id", clientId);
+    request.set("code", code);
+    request.set("redirect_uri", redirectUris[0]);
+    request.set("grant_type", "authorization_code");
+    request.set("client_secret", clientSecret);
+    //    request.set("client_assertion_type",
+    // "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+    request.setResponseClass(TokenResponse.class);
     return request;
   }
 }

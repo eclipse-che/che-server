@@ -86,10 +86,7 @@ public class AzureDevOpsApiClient {
   public AzureDevOpsUser getUserWithOAuthToken(String token)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
           ScmUnauthorizedException {
-    final String url =
-        String.format(
-            "%s/_apis/profile/profiles/me?api-version=%s",
-            azureDevOpsApiEndpoint, AzureDevOps.API_VERSION);
+    final String url = "https://graph.microsoft.com/v1.0/me";
     return getUser(url, formatAuthorizationHeader(token, false));
   }
 

@@ -15,6 +15,7 @@ import static org.eclipse.che.commons.lang.StringUtils.strToSet;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.openshift.api.model.Group;
+import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -67,8 +68,11 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
 
     for (String groupName : allowGroups) {
       Group group = client.resources(Group.class).withName(groupName).get();
-      if (group != null && group.getUsers().contains(username)) {
-        return true;
+      if (group != null) {
+        List<String> users = group.getUsers();
+        if (users != null && users.contains(username)) {
+          return true;
+        }
       }
     }
 
@@ -87,8 +91,11 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
 
     for (String groupName : denyGroups) {
       Group group = client.resources(Group.class).withName(groupName).get();
-      if (group != null && group.getUsers().contains(username)) {
-        return true;
+      if (group != null) {
+        List<String> users = group.getUsers();
+        if (users != null && users.contains(username)) {
+          return true;
+        }
       }
     }
 

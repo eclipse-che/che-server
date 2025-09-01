@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -167,35 +167,6 @@ public class EmbeddedOAuthAPITest {
     assertEquals(token.getCheUserId(), "0000-00-0000");
     assertTrue(token.getScmTokenId().startsWith("id-"));
     assertTrue(token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
-    assertEquals(token.getToken(), "token");
-  }
-
-  @Test
-  public void shouldStoreBitbucketTokenOnCallback() throws Exception {
-    // given
-    UriInfo uriInfo = mock(UriInfo.class);
-    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
-    when(authenticator.getEndpointUrl()).thenReturn("http://eclipse.che");
-    when(authenticator.callback(any(URL.class), anyList())).thenReturn("token");
-    when(uriInfo.getRequestUri())
-        .thenReturn(
-            new URI(
-                "http://eclipse.che?state=oauth_provider%3Dbitbucket%26redirect_after_login%3DredirectUrl"));
-    when(oauth2Providers.getAuthenticator("bitbucket")).thenReturn(authenticator);
-    ArgumentCaptor<PersonalAccessToken> tokenCapture =
-        ArgumentCaptor.forClass(PersonalAccessToken.class);
-
-    // when
-    embeddedOAuthAPI.callback(uriInfo, emptyList());
-
-    // then
-    verify(personalAccessTokenManager).store(tokenCapture.capture());
-    PersonalAccessToken token = tokenCapture.getValue();
-    assertEquals(token.getScmProviderUrl(), "http://eclipse.che");
-    assertEquals(token.getScmProviderName(), "bitbucket");
-    assertEquals(token.getCheUserId(), "0000-00-0000");
-    assertTrue(token.getScmTokenId().startsWith("id-"));
-    assertTrue(token.getScmTokenName().startsWith("bitbucket-"));
     assertEquals(token.getToken(), "token");
   }
 

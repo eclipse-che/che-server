@@ -225,7 +225,7 @@ setupPersonalAccessToken() {
   sed -i "s#che-user-id#${CHE_USER_ID}#g" pat-secret.yaml
   sed -i "s#git-provider-name#${GIT_PROVIDER_TYPE}#g" pat-secret.yaml
   sed -i "s#git-provider-url#${GIT_PROVIDER_URL}#g" pat-secret.yaml
-  sed -i "s#access-token#${GIT_PROVIDER_PAT}#g" pat-secret.yaml
+  sed -i "s#content-access-token#${GIT_PROVIDER_PAT}#g" pat-secret.yaml
 
   if [ "${GIT_PROVIDER_TYPE}" == "azure-devops" ]; then
     sed -i "s#''#${GIT_PROVIDER_USERNAME}#g" pat-secret.yaml

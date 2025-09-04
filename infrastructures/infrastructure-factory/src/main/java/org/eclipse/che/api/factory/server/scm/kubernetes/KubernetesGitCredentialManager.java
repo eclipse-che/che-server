@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -177,6 +177,11 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
     // Special characters are not allowed in URL username segment, so we need to escape them.
     PercentEscaper percentEscaper = new PercentEscaper("", false);
     return personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
+            // Most of the git providers work with git credentials with OAuth token in format
+            // "ouath2:<oauth token>"
+            // but bitbucket requires username to be explicitly set: "<username>:<oauth token>
+            // TODO: needs to be moved to the specific bitbucket implementation.
+            && !personalAccessToken.getScmProviderName().equals("bitbucket")
         ? "oauth2"
         : isNullOrEmpty(personalAccessToken.getScmOrganization())
             ? percentEscaper.escape(personalAccessToken.getScmUserName())

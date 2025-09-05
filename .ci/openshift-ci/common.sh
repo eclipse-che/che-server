@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2023-2024 Red Hat, Inc.
+# Copyright (c) 2023-2025 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -68,11 +68,7 @@ configureGitSelfSignedCertificate() {
   oc create configmap ${CUSTOM_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt
   oc label configmap ${CUSTOM_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org app.kubernetes.io/component=ca-bundle
 
-  echo "------- [INFO] Create ConfigMap to support Git repositories with self-signed certificates -------"
-  oc create configmap ${GIT_SSL_CONFIG_MAP_NAME} --from-file=.ci/openshift-ci/ca.crt --from-literal=githost=${GIT_PROVIDER_URL}
-  oc label configmap ${GIT_SSL_CONFIG_MAP_NAME} app.kubernetes.io/part-of=che.eclipse.org
-
-  echo "======= [INFO] ConfigMaps are configured ======="
+  echo "======= [INFO] ConfigMap is configured ======="
 }
 
 createCustomResourcesFile() {
@@ -85,14 +81,6 @@ spec:
 END
 
   echo "======= [INFO] Generated custom resources file ======="
-  cat custom-resources.yaml
-}
-
-patchCustomResourcesFile() {
-  echo "------- [INFO] Edit the custom resources file to add 'gitTrustedCertsConfigMapName' -------"
-  yq -y '.spec.devEnvironments.trustedCerts += {"gitTrustedCertsConfigMapName": "'${GIT_SSL_CONFIG_MAP_NAME}'"}' custom-resources.yaml -i
-
-  echo "======= [INFO] Patched custom resources file ======="
   cat custom-resources.yaml
 }
 
@@ -231,14 +219,13 @@ setupPersonalAccessToken() {
   echo "------- [INFO] Setup Personal Access Token Secret -------"
   oc project ${USER_CHE_NAMESPACE}
   CHE_USER_ID=$(oc get secret user-profile -o jsonpath='{.data.id}' | base64 -d)
-  ENCODED_PAT=$(echo -n ${GIT_PROVIDER_PAT} | base64)
   cat .ci/openshift-ci/pat-secret.yaml > pat-secret.yaml
 
   # patch the pat-secret.yaml file
   sed -i "s#che-user-id#${CHE_USER_ID}#g" pat-secret.yaml
   sed -i "s#git-provider-name#${GIT_PROVIDER_TYPE}#g" pat-secret.yaml
   sed -i "s#git-provider-url#${GIT_PROVIDER_URL}#g" pat-secret.yaml
-  sed -i "s#encoded-access-token#${ENCODED_PAT}#g" pat-secret.yaml
+  sed -i "s#content-access-token#${GIT_PROVIDER_PAT}#g" pat-secret.yaml
 
   if [ "${GIT_PROVIDER_TYPE}" == "azure-devops" ]; then
     sed -i "s#''#${GIT_PROVIDER_USERNAME}#g" pat-secret.yaml
@@ -333,14 +320,12 @@ setupOAuthSecret() {
   oc project ${CHE_NAMESPACE}
   SERVER_POD=$(oc get pod -l component=che | grep "che" | awk 'NR==1 { print $1 }')
 
-  ENCODED_APP_ID=$(echo -n "${APPLICATION_ID}" | base64 -w 0)
-  ENCODED_APP_SECRET=$(echo -n "${APPLICATION_SECRET}" | base64 -w 0)
   cat .ci/openshift-ci/oauth-secret.yaml > oauth-secret.yaml
 
   # patch the oauth-secret.yaml file
   sed -i "s#git-provider-url#${GIT_PROVIDER_URL}#g" oauth-secret.yaml
-  sed -i "s#encoded-application-id#${ENCODED_APP_ID}#g" oauth-secret.yaml
-  sed -i "s#encoded-application-secret#${ENCODED_APP_SECRET}#g" oauth-secret.yaml
+  sed -i "s#application-id#${APPLICATION_ID}#g" oauth-secret.yaml
+  sed -i "s#application-secret#${APPLICATION_SECRET}#g" oauth-secret.yaml
 
   cat oauth-secret.yaml
   oc apply -f oauth-secret.yaml -n ${CHE_NAMESPACE}
@@ -367,7 +352,7 @@ runTestWorkspaceWithGitRepoUrl() {
   cat devworkspace-test.yaml
 
   oc apply -f devworkspace-test.yaml -n ${OCP_USER_NAMESPACE}
-  oc wait -n ${OCP_USER_NAMESPACE} --for=condition=Ready dw ${WS_NAME} --timeout=360s
+  oc wait -n ${OCP_USER_NAMESPACE} --for=condition=Ready dw ${WS_NAME} --timeout=420s
   echo "======= [INFO] Test workspace is run ======="
 }
 
@@ -593,7 +578,6 @@ setupTestEnvironmentOAuthFlow() {
   provisionOpenShiftOAuthUser
   configureGitSelfSignedCertificate
   createCustomResourcesFile
-  patchCustomResourcesFile
   deployChe
   createOAuthApplicationGitLabServer ${ADMIN_ACCESS_TOKEN} ${APPLICATION_NAME}
   setupOAuthSecret ${APPLICATION_ID} ${APPLICATION_SECRET}

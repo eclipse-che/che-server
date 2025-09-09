@@ -84,7 +84,20 @@ public class GithubURLParserTest {
   /** Check invalid url (not a GitHub one) */
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void invalidUrl() throws ApiException {
-    githubUrlParser.parse("http://www.eclipse.org");
+    githubUrlParser.parse("http://www.eclipse.org", null);
+  }
+
+  @Test
+  public void shouldParseWithBranch() throws ApiException {
+    GithubUrl githubUrl = githubUrlParser.parse("https://github.com/eclipse/che", "branch");
+    assertEquals(githubUrl.getBranch(), "branch");
+  }
+
+  @Test
+  public void shouldParseWithUrlBranch() throws ApiException {
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/master/", "branch");
+    assertEquals(githubUrl.getBranch(), "master");
   }
 
   /** Check URLs are valid with regexp */
@@ -100,7 +113,7 @@ public class GithubURLParserTest {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
 
-    GithubUrl githubUrl = githubUrlParser.parse(url);
+    GithubUrl githubUrl = githubUrlParser.parse(url, null);
 
     assertEquals(githubUrl.getUsername(), username);
     assertEquals(githubUrl.getRepository(), repository);
@@ -115,7 +128,7 @@ public class GithubURLParserTest {
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
 
     // when
-    GithubUrl githubUrl = githubUrlParser.parse(url);
+    GithubUrl githubUrl = githubUrlParser.parse(url, null);
 
     // then
     assertEquals(githubUrl.getRepository(), repository);
@@ -234,7 +247,7 @@ public class GithubURLParserTest {
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
 
-    GithubUrl githubUrl = githubUrlParser.parse(url);
+    GithubUrl githubUrl = githubUrlParser.parse(url, null);
 
     assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");
@@ -263,7 +276,7 @@ public class GithubURLParserTest {
         .thenReturn(pr);
 
     String url = "https://github.com/eclipse/che/pull/20189";
-    GithubUrl githubUrl = githubUrlParser.parse(url);
+    GithubUrl githubUrl = githubUrlParser.parse(url, null);
 
     assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");
@@ -311,7 +324,7 @@ public class GithubURLParserTest {
         .thenReturn(githubPullRequest);
 
     String url = "https://github.com/eclipse/che/pull/11103";
-    githubUrlParser.parse(url);
+    githubUrlParser.parse(url, null);
   }
 
   @Test
@@ -320,7 +333,7 @@ public class GithubURLParserTest {
     String url = "https://github-server.com/user/repo";
 
     // when
-    GithubUrl githubUrl = githubUrlParser.parse(url);
+    GithubUrl githubUrl = githubUrlParser.parse(url, null);
 
     // then
     assertEquals(githubUrl.getUsername(), "user");
@@ -343,7 +356,7 @@ public class GithubURLParserTest {
     when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
 
     // when
-    githubUrlParser.parse(url);
+    githubUrlParser.parse(url, null);
 
     // then
     verify(personalAccessTokenManager, times(2))

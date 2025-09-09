@@ -32,6 +32,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
+import org.eclipse.che.commons.annotation.Nullable;
 
 /**
  * Parser of String Azure DevOps URLs and provide {@link AzureDevOpsUrl} objects.
@@ -155,7 +156,7 @@ public class AzureDevOpsURLParser {
         format("The given url %s is not a valid Azure DevOps URL. ", url));
   }
 
-  public AzureDevOpsUrl parse(String url) {
+  public AzureDevOpsUrl parse(String url, @Nullable String branch) {
     Matcher matcher;
     boolean isHTTPSUrl = azureDevOpsPattern.matcher(url).matches();
     if (isHTTPSUrl) {
@@ -179,13 +180,13 @@ public class AzureDevOpsURLParser {
       project = repoName;
     }
 
-    String branch = null;
+    String branchFromUrl = null;
     String tag = null;
 
     String organization = matcher.group("organization");
     String urlToReturn = url;
     if (isHTTPSUrl) {
-      branch = matcher.group("branch");
+      branchFromUrl = matcher.group("branch");
       tag = matcher.group("tag");
       // The url might have the following formats:
       // - https://<organization>@<host>/<organization>/<project>/_git/<repoName>
@@ -207,7 +208,7 @@ public class AzureDevOpsURLParser {
         .withProject(project)
         .withRepository(repoName)
         .withOrganization(organization)
-        .withBranch(branch)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? branch : branchFromUrl)
         .withTag(tag)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withServerUrl(serverUrl)

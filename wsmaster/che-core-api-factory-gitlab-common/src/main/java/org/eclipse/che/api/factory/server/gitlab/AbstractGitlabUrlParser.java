@@ -31,6 +31,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersiste
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 
 /**
@@ -176,7 +177,7 @@ public class AbstractGitlabUrlParser {
    * Parses url-s like https://gitlab.apps.cluster-327a.327a.example.opentlc.com/root/proj1.git into
    * {@link GitlabUrl} objects.
    */
-  public GitlabUrl parse(String url) {
+  public GitlabUrl parse(String url, @Nullable String branch) {
     String trimmedUrl = trimEnd(url, '/');
     Optional<Matcher> matcherOptional =
         gitlabUrlPatterns.stream()
@@ -185,7 +186,7 @@ public class AbstractGitlabUrlParser {
             .findFirst()
             .or(() -> getPatternMatcherByUrl(trimmedUrl));
     if (matcherOptional.isPresent()) {
-      return parse(matcherOptional.get()).withUrl(trimmedUrl);
+      return parse(matcherOptional.get(), branch).withUrl(trimmedUrl);
     } else {
       throw new UnsupportedOperationException(
           "The gitlab integration is not configured properly and cannot be used at this moment."
@@ -193,7 +194,7 @@ public class AbstractGitlabUrlParser {
     }
   }
 
-  private GitlabUrl parse(Matcher matcher) {
+  private GitlabUrl parse(Matcher matcher, @Nullable String branch) {
     String scheme = null;
     String port = null;
     try {
@@ -212,9 +213,9 @@ public class AbstractGitlabUrlParser {
       subGroups = subGroups.substring(0, subGroups.length() - 4);
     }
 
-    String branch = null;
+    String branchFromUrl = null;
     try {
-      branch = matcher.group("branch");
+      branchFromUrl = matcher.group("branch");
     } catch (IllegalArgumentException e) {
       // ok no such group
     }
@@ -224,7 +225,7 @@ public class AbstractGitlabUrlParser {
         .withPort(port)
         .withScheme(scheme)
         .withSubGroups(subGroups)
-        .withBranch(branch)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? branch : branchFromUrl)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
   }
 }

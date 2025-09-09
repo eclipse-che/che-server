@@ -61,7 +61,7 @@ public class GitlabUrlCustomPortTest {
         .when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl, null);
     assertEquals(gitlabUrl.devfileFileLocations().size(), 2);
     Iterator<DevfileLocation> iterator = gitlabUrl.devfileFileLocations().iterator();
     assertEquals(iterator.next().location(), format(fileUrl, "devfile.yaml"));
@@ -71,7 +71,7 @@ public class GitlabUrlCustomPortTest {
   @Test(dataProvider = "urlsProvider")
   public void shouldReturnProviderUrl(String repoUrl, String ignored) {
     // when
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl, null);
 
     // then
     assertEquals(gitlabUrl.getProviderUrl(), "https://gitlab.net:3120");
@@ -111,7 +111,7 @@ public class GitlabUrlCustomPortTest {
   /** Check the original repository */
   @Test(dataProvider = "repoProvider2")
   public void checkRepositoryLocation(String rawUrl, String repoUrl) {
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(rawUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(rawUrl, null);
     assertEquals(gitlabUrl.repositoryLocation(), repoUrl);
   }
 

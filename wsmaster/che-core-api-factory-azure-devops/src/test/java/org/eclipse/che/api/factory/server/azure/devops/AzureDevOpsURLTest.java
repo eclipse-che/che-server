@@ -44,7 +44,7 @@ public class AzureDevOpsURLTest {
 
     AzureDevOpsUrl azureDevOpsUrl =
         azureDevOpsURLParser
-            .parse(repoUrl)
+            .parse(repoUrl, null)
             .withDevfileFilenames(Arrays.asList("devfile.yaml", "foo.bar"));
     assertEquals(azureDevOpsUrl.devfileFileLocations().size(), 2);
     Iterator<RemoteFactoryUrl.DevfileLocation> iterator =
@@ -59,7 +59,7 @@ public class AzureDevOpsURLTest {
 
     AzureDevOpsUrl azureDevOpsUrl =
         azureDevOpsURLParser
-            .parse(repoUrl)
+            .parse(repoUrl, null)
             .withDevfileFilenames(Arrays.asList("devfile.yaml", "foo.bar"));
     assertEquals(azureDevOpsUrl.devfileFileLocations().size(), 2);
     Iterator<RemoteFactoryUrl.DevfileLocation> iterator =
@@ -223,13 +223,13 @@ public class AzureDevOpsURLTest {
 
   @Test(dataProvider = "repoProvider")
   public void checkRepositoryLocation(String rawUrl, String repoUrl) {
-    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(rawUrl);
+    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(rawUrl, null);
     assertEquals(azureDevOpsUrl.getRepositoryLocation(), repoUrl);
   }
 
   @Test(dataProvider = "repoProviderServer")
   public void checkRepositoryLocationServer(String rawUrl, String repoUrl) {
-    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(rawUrl);
+    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(rawUrl, null);
     assertEquals(azureDevOpsUrl.getRepositoryLocation(), repoUrl);
   }
 

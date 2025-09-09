@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,6 +30,7 @@ public final class Constants {
 
   // url factory parameter names
   public static final String URL_PARAMETER_NAME = "url";
+  public static final String REVISION_PARAMETER_NAME = "revision";
 
   public static final Map<String, Object> DEFAULT_DEVFILE = Map.of("schemaVersion", "2.3.0");
 

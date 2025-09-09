@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.github;
 
 import static java.util.Collections.emptyMap;
+import static org.eclipse.che.api.factory.shared.Constants.REVISION_PARAMETER_NAME;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
@@ -101,7 +102,10 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
       githubUrl =
           githubUrlParser.parseWithoutAuthentication(factoryParameters.get(URL_PARAMETER_NAME));
     } else {
-      githubUrl = githubUrlParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+      githubUrl =
+          githubUrlParser.parse(
+              factoryParameters.get(URL_PARAMETER_NAME),
+              factoryParameters.get(REVISION_PARAMETER_NAME));
     }
 
     return createFactory(
@@ -142,7 +146,7 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
     if (getSkipAuthorisation(emptyMap())) {
       return githubUrlParser.parseWithoutAuthentication(factoryUrl);
     } else {
-      return githubUrlParser.parse(factoryUrl);
+      return githubUrlParser.parse(factoryUrl, null);
     }
   }
 }

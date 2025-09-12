@@ -100,7 +100,9 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
     final GithubUrl githubUrl;
     if (getSkipAuthorisation(factoryParameters)) {
       githubUrl =
-          githubUrlParser.parseWithoutAuthentication(factoryParameters.get(URL_PARAMETER_NAME));
+          githubUrlParser.parseWithoutAuthentication(
+              factoryParameters.get(URL_PARAMETER_NAME),
+              factoryParameters.get(REVISION_PARAMETER_NAME));
     } else {
       githubUrl =
           githubUrlParser.parse(
@@ -144,7 +146,7 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
     if (getSkipAuthorisation(emptyMap())) {
-      return githubUrlParser.parseWithoutAuthentication(factoryUrl);
+      return githubUrlParser.parseWithoutAuthentication(factoryUrl, null);
     } else {
       return githubUrlParser.parse(factoryUrl, null);
     }

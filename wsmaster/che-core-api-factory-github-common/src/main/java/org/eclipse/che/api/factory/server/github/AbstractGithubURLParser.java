@@ -170,8 +170,9 @@ public abstract class AbstractGithubURLParser {
     return Optional.empty();
   }
 
-  public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
-    return parse(trimEnd(url, '/'), false, null);
+  public GithubUrl parseWithoutAuthentication(String url, @Nullable String branch)
+      throws ApiException {
+    return parse(trimEnd(url, '/'), false, branch);
   }
 
   public GithubUrl parse(String url, @Nullable String branch) throws ApiException {

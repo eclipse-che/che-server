@@ -299,7 +299,7 @@ public class GithubURLParserTest {
     when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
 
-    GithubUrl githubUrl = githubUrlParser.parseWithoutAuthentication(url);
+    GithubUrl githubUrl = githubUrlParser.parseWithoutAuthentication(url, null);
 
     assertEquals(githubUrl.getUsername(), "eclipse");
     assertEquals(githubUrl.getRepository(), "che");

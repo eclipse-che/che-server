@@ -259,7 +259,7 @@ public class GithubFactoryParametersResolverTest {
     // when
     abstractGithubFactoryParametersResolver.parseFactoryUrl("url");
     // then
-    verify(githubUrlParser).parseWithoutAuthentication("url");
+    verify(githubUrlParser).parseWithoutAuthentication("url", null);
     verify(githubUrlParser, never()).parse("url", null);
   }
 
@@ -281,7 +281,7 @@ public class GithubFactoryParametersResolverTest {
     abstractGithubFactoryParametersResolver.parseFactoryUrl("url");
     // then
     verify(githubUrlParser).parse("url", null);
-    verify(githubUrlParser, never()).parseWithoutAuthentication("url");
+    verify(githubUrlParser, never()).parseWithoutAuthentication("url", null);
   }
 
   private FactoryDevfileV2Dto generateDevfileV2Factory() {

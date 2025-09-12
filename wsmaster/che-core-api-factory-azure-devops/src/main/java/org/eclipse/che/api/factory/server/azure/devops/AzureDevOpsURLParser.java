@@ -156,7 +156,7 @@ public class AzureDevOpsURLParser {
         format("The given url %s is not a valid Azure DevOps URL. ", url));
   }
 
-  public AzureDevOpsUrl parse(String url, @Nullable String branch) {
+  public AzureDevOpsUrl parse(String url, @Nullable String revision) {
     Matcher matcher;
     boolean isHTTPSUrl = azureDevOpsPattern.matcher(url).matches();
     if (isHTTPSUrl) {
@@ -208,7 +208,7 @@ public class AzureDevOpsURLParser {
         .withProject(project)
         .withRepository(repoName)
         .withOrganization(organization)
-        .withBranch(isNullOrEmpty(branchFromUrl) ? branch : branchFromUrl)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withTag(tag)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withServerUrl(serverUrl)

@@ -46,7 +46,7 @@ public class BitbucketURLParser {
     return BITBUCKET_PATTERN.matcher(url).matches() || BITBUCKET_SSH_PATTERN.matcher(url).matches();
   }
 
-  public BitbucketUrl parse(String url, @Nullable String branch) {
+  public BitbucketUrl parse(String url, @Nullable String revision) {
     // Apply bitbucket url to the regexp
     boolean isHTTPSUrl = BITBUCKET_PATTERN.matcher(url).matches();
     Matcher matcher =
@@ -72,7 +72,7 @@ public class BitbucketURLParser {
         .withUsername(username)
         .withRepository(repoName)
         .setIsHTTPSUrl(isHTTPSUrl)
-        .withBranch(isNullOrEmpty(branchFromUrl) ? branch : branchFromUrl)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withWorkspaceId(workspaceId)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);

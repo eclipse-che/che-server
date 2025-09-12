@@ -170,13 +170,13 @@ public abstract class AbstractGithubURLParser {
     return Optional.empty();
   }
 
-  public GithubUrl parseWithoutAuthentication(String url, @Nullable String branch)
+  public GithubUrl parseWithoutAuthentication(String url, @Nullable String revision)
       throws ApiException {
-    return parse(trimEnd(url, '/'), false, branch);
+    return parse(trimEnd(url, '/'), false, revision);
   }
 
-  public GithubUrl parse(String url, @Nullable String branch) throws ApiException {
-    return parse(trimEnd(url, '/'), true, branch);
+  public GithubUrl parse(String url, @Nullable String revision) throws ApiException {
+    return parse(trimEnd(url, '/'), true, revision);
   }
 
   private IllegalArgumentException buildIllegalArgumentException(String url) {
@@ -184,7 +184,7 @@ public abstract class AbstractGithubURLParser {
         format("The given url %s is not a valid github URL. ", url));
   }
 
-  private GithubUrl parse(String url, boolean authenticationRequired, @Nullable String branch)
+  private GithubUrl parse(String url, boolean authenticationRequired, @Nullable String revision)
       throws ApiException {
     Matcher matcher;
     boolean isHTTPSUrl = githubPattern.matcher(url).matches();
@@ -239,7 +239,7 @@ public abstract class AbstractGithubURLParser {
             serverUrl,
             repoUser,
             repoName,
-            isNullOrEmpty(branch) ? firstNonNull(branchFromUrl, "HEAD") : branch,
+            isNullOrEmpty(revision) ? firstNonNull(branchFromUrl, "HEAD") : revision,
             authenticationRequired);
     if (commit != null) {
       latestCommit = commit.getSha();
@@ -251,7 +251,7 @@ public abstract class AbstractGithubURLParser {
         .setIsHTTPSUrl(isHTTPSUrl)
         .withServerUrl(serverUrl)
         .withDisableSubdomainIsolation(disableSubdomainIsolation)
-        .withBranch(isNullOrEmpty(branchFromUrl) ? branch : branchFromUrl)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withLatestCommit(latestCommit)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);

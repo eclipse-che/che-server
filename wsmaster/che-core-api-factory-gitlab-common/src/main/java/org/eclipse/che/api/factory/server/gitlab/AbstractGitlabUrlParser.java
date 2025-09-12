@@ -177,7 +177,7 @@ public class AbstractGitlabUrlParser {
    * Parses url-s like https://gitlab.apps.cluster-327a.327a.example.opentlc.com/root/proj1.git into
    * {@link GitlabUrl} objects.
    */
-  public GitlabUrl parse(String url, @Nullable String branch) {
+  public GitlabUrl parse(String url, @Nullable String revision) {
     String trimmedUrl = trimEnd(url, '/');
     Optional<Matcher> matcherOptional =
         gitlabUrlPatterns.stream()
@@ -186,7 +186,7 @@ public class AbstractGitlabUrlParser {
             .findFirst()
             .or(() -> getPatternMatcherByUrl(trimmedUrl));
     if (matcherOptional.isPresent()) {
-      return parse(matcherOptional.get(), branch).withUrl(trimmedUrl);
+      return parse(matcherOptional.get(), revision).withUrl(trimmedUrl);
     } else {
       throw new UnsupportedOperationException(
           "The gitlab integration is not configured properly and cannot be used at this moment."
@@ -194,7 +194,7 @@ public class AbstractGitlabUrlParser {
     }
   }
 
-  private GitlabUrl parse(Matcher matcher, @Nullable String branch) {
+  private GitlabUrl parse(Matcher matcher, @Nullable String revision) {
     String scheme = null;
     String port = null;
     try {
@@ -225,7 +225,7 @@ public class AbstractGitlabUrlParser {
         .withPort(port)
         .withScheme(scheme)
         .withSubGroups(subGroups)
-        .withBranch(isNullOrEmpty(branchFromUrl) ? branch : branchFromUrl)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
   }
 }

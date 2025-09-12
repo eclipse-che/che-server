@@ -200,7 +200,7 @@ build_image() {
       fi
 
       printf "${BOLD}Building image ${IMAGE_NAME}${NC}\n"
-      "${BUILDER}" build --platform ${BUILD_PLATFORMS} -f ${DIR}/.Dockerfile --manifest ${IMAGE_MANIFEST} .
+      "${BUILDER}" build --platform ${BUILD_PLATFORMS} -t ${IMAGE_NAME} -f ${DIR}/.Dockerfile --manifest ${IMAGE_MANIFEST} .
       DOCKER_STATUS=$?
       if [ ! $DOCKER_STATUS -eq 0 ]; then
         printf "${RED}Failure when building docker image ${IMAGE_NAME}${NC}\n"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.azure.devops;
 
+import static org.eclipse.che.api.factory.shared.Constants.REVISION_PARAMETER_NAME;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
@@ -82,7 +83,9 @@ public class AzureDevOpsFactoryParametersResolver extends BaseFactoryParameterRe
       throws ApiException {
     // no need to check null value of url parameter as accept() method has performed the check
     final AzureDevOpsUrl azureDevOpsUrl =
-        azureDevOpsURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+        azureDevOpsURLParser.parse(
+            factoryParameters.get(URL_PARAMETER_NAME),
+            factoryParameters.get(REVISION_PARAMETER_NAME));
 
     // create factory from the following location if location exists, else create default factory
     return createFactory(
@@ -118,7 +121,7 @@ public class AzureDevOpsFactoryParametersResolver extends BaseFactoryParameterRe
 
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
-    return azureDevOpsURLParser.parse(factoryUrl);
+    return azureDevOpsURLParser.parse(factoryUrl, null);
   }
 
   private SourceStorageDto buildWorkspaceConfigSource(AzureDevOpsUrl azureDevOpsUrl) {

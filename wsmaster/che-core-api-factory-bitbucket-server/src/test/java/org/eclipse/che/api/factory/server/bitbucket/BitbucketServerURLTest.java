@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -53,7 +53,7 @@ public class BitbucketServerURLTest {
         .when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    BitbucketServerUrl gitlabUrl = bitbucketServerURLParser.parse(repoUrl);
+    BitbucketServerUrl gitlabUrl = bitbucketServerURLParser.parse(repoUrl, null);
     assertEquals(gitlabUrl.devfileFileLocations().size(), 2);
     Iterator<RemoteFactoryUrl.DevfileLocation> iterator =
         gitlabUrl.devfileFileLocations().iterator();
@@ -97,14 +97,14 @@ public class BitbucketServerURLTest {
 
   @Test(dataProvider = "repoProvider")
   public void checkRepositoryLocation(String rawUrl, String repoUrl) {
-    BitbucketServerUrl bitbucketServerUrl = bitbucketServerURLParser.parse(rawUrl);
+    BitbucketServerUrl bitbucketServerUrl = bitbucketServerURLParser.parse(rawUrl, null);
     assertEquals(bitbucketServerUrl.repositoryLocation(), repoUrl);
   }
 
   @Test(dataProvider = "urlsProvider")
   public void shouldReturnProviderUrl(String repoUrl, String ignored) {
     // when
-    BitbucketServerUrl bitbucketServerUrl = bitbucketServerURLParser.parse(repoUrl);
+    BitbucketServerUrl bitbucketServerUrl = bitbucketServerURLParser.parse(repoUrl, null);
 
     // then
     assertEquals(bitbucketServerUrl.getProviderUrl(), "https://bitbucket.net");

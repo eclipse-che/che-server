@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static org.eclipse.che.api.factory.shared.Constants.REVISION_PARAMETER_NAME;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
@@ -101,7 +102,9 @@ public class BitbucketFactoryParametersResolver extends BaseFactoryParameterReso
       throws ApiException {
     // no need to check null value of url parameter as accept() method has performed the check
     final BitbucketUrl bitbucketUrl =
-        bitbucketURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+        bitbucketURLParser.parse(
+            factoryParameters.get(URL_PARAMETER_NAME),
+            factoryParameters.get(REVISION_PARAMETER_NAME));
     // create factory from the following location if location exists, else create default factory
     return createFactory(
         factoryParameters,
@@ -138,6 +141,6 @@ public class BitbucketFactoryParametersResolver extends BaseFactoryParameterReso
 
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) {
-    return bitbucketURLParser.parse(factoryUrl);
+    return bitbucketURLParser.parse(factoryUrl, null);
   }
 }

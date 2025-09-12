@@ -72,7 +72,7 @@ public class GitlabCustomPortUrlParserTest {
   /** Compare parsing */
   @Test(dataProvider = "parsing")
   public void checkParsing(String url, String project, String subGroups, String branch) {
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url, null);
 
     assertEquals(gitlabUrl.getProject(), project);
     assertEquals(gitlabUrl.getSubGroups(), subGroups);
@@ -87,7 +87,7 @@ public class GitlabCustomPortUrlParserTest {
     gitlabUrlParser =
         new GitlabUrlParser(null, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
     // when
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url, null);
 
     // then
     assertEquals(gitlabUrl.getProject(), project);

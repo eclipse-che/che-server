@@ -40,7 +40,22 @@ public class AzureDevOpsURLParserTest {
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testParseInvalidUrl() {
-    azureDevOpsURLParser.parse("http://www.eclipse.org");
+    azureDevOpsURLParser.parse("http://www.eclipse.org", null);
+  }
+
+  @Test
+  public void shouldParseWithBranch() {
+    AzureDevOpsUrl azureDevOpsUrl =
+        azureDevOpsURLParser.parse("https://dev.azure.com/MyOrg/MyProject/_git/MyRepo", "branch");
+    assertEquals(azureDevOpsUrl.getBranch(), "branch");
+  }
+
+  @Test
+  public void shouldParseWithUrlBranch() {
+    AzureDevOpsUrl azureDevOpsUrl =
+        azureDevOpsURLParser.parse(
+            "https://dev.azure-server.com/MyOrg/MyProject/_git/MyRepo?version=GBmain", "branch");
+    assertEquals(azureDevOpsUrl.getBranch(), "main");
   }
 
   @Test(dataProvider = "parsing")
@@ -51,7 +66,7 @@ public class AzureDevOpsURLParserTest {
       String repository,
       String branch,
       String tag) {
-    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(url);
+    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(url, null);
 
     assertEquals(azureDevOpsUrl.getOrganization(), organization);
     assertEquals(azureDevOpsUrl.getProject(), project);
@@ -68,7 +83,7 @@ public class AzureDevOpsURLParserTest {
       String repository,
       String branch,
       String tag) {
-    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(url);
+    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(url, null);
 
     assertEquals(azureDevOpsUrl.getOrganization(), organization);
     assertEquals(azureDevOpsUrl.getProject(), project);
@@ -362,7 +377,7 @@ public class AzureDevOpsURLParserTest {
 
   @Test(dataProvider = "url")
   public void testCredentials(String url, String organization, Optional<String> credentials) {
-    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(url);
+    AzureDevOpsUrl azureDevOpsUrl = azureDevOpsURLParser.parse(url, null);
 
     assertEquals(azureDevOpsUrl.getOrganization(), organization);
     assertEquals(azureDevOpsUrl.getCredentials(), credentials);

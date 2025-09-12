@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -259,8 +259,8 @@ public class GithubFactoryParametersResolverTest {
     // when
     abstractGithubFactoryParametersResolver.parseFactoryUrl("url");
     // then
-    verify(githubUrlParser).parseWithoutAuthentication("url");
-    verify(githubUrlParser, never()).parse("url");
+    verify(githubUrlParser).parseWithoutAuthentication("url", null);
+    verify(githubUrlParser, never()).parse("url", null);
   }
 
   @Test
@@ -280,8 +280,8 @@ public class GithubFactoryParametersResolverTest {
     // when
     abstractGithubFactoryParametersResolver.parseFactoryUrl("url");
     // then
-    verify(githubUrlParser).parse("url");
-    verify(githubUrlParser, never()).parseWithoutAuthentication("url");
+    verify(githubUrlParser).parse("url", null);
+    verify(githubUrlParser, never()).parseWithoutAuthentication("url", null);
   }
 
   private FactoryDevfileV2Dto generateDevfileV2Factory() {

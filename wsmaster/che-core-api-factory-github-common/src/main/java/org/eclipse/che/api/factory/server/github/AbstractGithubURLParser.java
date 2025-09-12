@@ -30,6 +30,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.slf4j.Logger;
@@ -169,12 +170,13 @@ public abstract class AbstractGithubURLParser {
     return Optional.empty();
   }
 
-  public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
-    return parse(trimEnd(url, '/'), false);
+  public GithubUrl parseWithoutAuthentication(String url, @Nullable String revision)
+      throws ApiException {
+    return parse(trimEnd(url, '/'), false, revision);
   }
 
-  public GithubUrl parse(String url) throws ApiException {
-    return parse(trimEnd(url, '/'), true);
+  public GithubUrl parse(String url, @Nullable String revision) throws ApiException {
+    return parse(trimEnd(url, '/'), true, revision);
   }
 
   private IllegalArgumentException buildIllegalArgumentException(String url) {
@@ -182,7 +184,8 @@ public abstract class AbstractGithubURLParser {
         format("The given url %s is not a valid github URL. ", url));
   }
 
-  private GithubUrl parse(String url, boolean authenticationRequired) throws ApiException {
+  private GithubUrl parse(String url, boolean authenticationRequired, @Nullable String revision)
+      throws ApiException {
     Matcher matcher;
     boolean isHTTPSUrl = githubPattern.matcher(url).matches();
     if (isHTTPSUrl) {
@@ -204,10 +207,10 @@ public abstract class AbstractGithubURLParser {
       repoName = repoName.substring(0, repoName.length() - 4);
     }
 
-    String branchName = null;
+    String branchFromUrl = null;
     String pullRequestId = null;
     if (isHTTPSUrl) {
-      branchName = getBranch(matcher.group("path"));
+      branchFromUrl = getBranch(matcher.group("path"));
       pullRequestId = matcher.group("pullRequestId");
     }
 
@@ -226,7 +229,7 @@ public abstract class AbstractGithubURLParser {
         GithubHead pullRequestHead = pullRequest.getHead();
         repoUser = pullRequestHead.getUser().getLogin();
         repoName = pullRequestHead.getRepo().getName();
-        branchName = pullRequestHead.getRef();
+        branchFromUrl = pullRequestHead.getRef();
       }
     }
 
@@ -236,7 +239,7 @@ public abstract class AbstractGithubURLParser {
             serverUrl,
             repoUser,
             repoName,
-            firstNonNull(branchName, "HEAD"),
+            isNullOrEmpty(revision) ? firstNonNull(branchFromUrl, "HEAD") : revision,
             authenticationRequired);
     if (commit != null) {
       latestCommit = commit.getSha();
@@ -248,7 +251,7 @@ public abstract class AbstractGithubURLParser {
         .setIsHTTPSUrl(isHTTPSUrl)
         .withServerUrl(serverUrl)
         .withDisableSubdomainIsolation(disableSubdomainIsolation)
-        .withBranch(branchName)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withLatestCommit(latestCommit)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -45,7 +45,7 @@ public class BitbucketUrlTest {
   protected void init() {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
-    this.bitbucketUrl = this.bitbucketURLParser.parse("https://bitbucket.org/eclipse/che");
+    this.bitbucketUrl = this.bitbucketURLParser.parse("https://bitbucket.org/eclipse/che", null);
     assertNotNull(this.bitbucketUrl);
   }
 
@@ -66,7 +66,7 @@ public class BitbucketUrlTest {
 
   @Test
   public void shouldReturnDevfileLocationBySSHUrl() {
-    bitbucketUrl = bitbucketURLParser.parse("git@bitbucket.org:eclipse/che");
+    bitbucketUrl = bitbucketURLParser.parse("git@bitbucket.org:eclipse/che", null);
 
     lenient()
         .when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
@@ -83,7 +83,8 @@ public class BitbucketUrlTest {
   @Test
   public void shouldReturnEmptyCredentials() {
     // when
-    BitbucketUrl url = this.bitbucketURLParser.parse("https://user@bitbucket.org/eclipse/che");
+    BitbucketUrl url =
+        this.bitbucketURLParser.parse("https://user@bitbucket.org/eclipse/che", null);
     // then
     assertTrue(url.getCredentials().isEmpty());
   }
@@ -96,7 +97,7 @@ public class BitbucketUrlTest {
 
   @Test
   public void shouldReturnRepositoryLocationBySSHUrl() {
-    bitbucketUrl = bitbucketURLParser.parse("git@bitbucket.org:eclipse/che");
+    bitbucketUrl = bitbucketURLParser.parse("git@bitbucket.org:eclipse/che", null);
 
     assertEquals(bitbucketUrl.repositoryLocation(), "git@bitbucket.org:eclipse/che.git");
   }

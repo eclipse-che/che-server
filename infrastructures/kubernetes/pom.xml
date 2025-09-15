@@ -215,6 +215,14 @@
                     <groupId>io.netty</groupId>
                 </exclusion>
                 <exclusion>
+                    <artifactId>netty-handler-proxy</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-codec-http</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
                     <artifactId>netty-resolver</artifactId>
                     <groupId>io.netty</groupId>
                 </exclusion>
@@ -249,6 +257,11 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler-proxy</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

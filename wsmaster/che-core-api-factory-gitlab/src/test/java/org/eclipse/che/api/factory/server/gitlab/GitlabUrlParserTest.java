@@ -24,6 +24,7 @@ import static org.testng.Assert.assertTrue;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.mockito.Mock;
@@ -69,10 +70,24 @@ public class GitlabUrlParserTest {
     assertTrue(gitlabUrlParser.isValid(url), "url " + url + " is invalid");
   }
 
+  @Test
+  public void shouldParseWithBranch() throws ApiException {
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://gitlab.com/user/project/test.git", "branch");
+    assertEquals(gitlabUrl.getBranch(), "branch");
+  }
+
+  @Test
+  public void shouldParseWithUrlBranch() throws ApiException {
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://gitlab.com/user/project/-/tree/master/", "branch");
+    assertEquals(gitlabUrl.getBranch(), "master");
+  }
+
   /** Compare parsing */
   @Test(dataProvider = "parsing")
   public void checkParsing(String url, String project, String subGroups, String branch) {
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url, null);
 
     assertEquals(gitlabUrl.getProject(), project);
     assertEquals(gitlabUrl.getSubGroups(), subGroups);
@@ -87,7 +102,7 @@ public class GitlabUrlParserTest {
     gitlabUrlParser =
         new GitlabUrlParser(null, devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
     // when
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(url, null);
 
     // then
     assertEquals(gitlabUrl.getProject(), project);

@@ -71,11 +71,27 @@ public class BitbucketServerURLParserTest {
     assertTrue(bitbucketURLParser.isValid(url), "url " + url + " is invalid");
   }
 
+  @Test
+  public void shouldParseWithBranch() {
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("https://my-bitbucket.org/bitbucket/scm/proj/repo.git", "branch");
+    assertEquals(bitbucketServerUrl.getBranch(), "branch");
+  }
+
+  @Test
+  public void shouldParseWithUrlBranch() {
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse(
+            "https://my-bitbucket.org/bitbucket/projects/proj/repos/repo/browse?at=master",
+            "branch");
+    assertEquals(bitbucketServerUrl.getBranch(), "master");
+  }
+
   /** Compare parsing */
   @Test(dataProvider = "parsing")
   public void checkParsing(
       String url, String user, String project, String repository, String branch) {
-    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url);
+    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url, null);
 
     assertEquals(bitbucketServerUrl.getUser(), user);
     assertEquals(bitbucketServerUrl.getProject(), project);
@@ -92,7 +108,7 @@ public class BitbucketServerURLParserTest {
             null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
 
     // when
-    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url);
+    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url, null);
 
     // then
     assertEquals(bitbucketServerUrl.getUser(), user);
@@ -106,7 +122,7 @@ public class BitbucketServerURLParserTest {
       expectedExceptionsMessageRegExp =
           "The given url https://github.com/org/repo is not a valid Bitbucket server URL. Check either URL or server configuration.")
   public void shouldThrowExceptionWhenURLDintMatchAnyConfiguredServer() {
-    bitbucketURLParser.parse("https://github.com/org/repo");
+    bitbucketURLParser.parse("https://github.com/org/repo", null);
   }
 
   @Test

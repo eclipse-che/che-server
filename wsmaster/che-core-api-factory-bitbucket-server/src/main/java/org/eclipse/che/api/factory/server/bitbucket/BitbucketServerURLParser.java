@@ -182,12 +182,12 @@ public class BitbucketServerURLParser {
    * https://bitbucket.apps.cluster-cb82.cb82.example.opentlc.com/scm/test/test1.git into
    * BitbucketUrl objects.
    */
-  public BitbucketServerUrl parse(String url) {
+  public BitbucketServerUrl parse(String url, @Nullable String revision) {
 
     if (bitbucketUrlPatterns.isEmpty()) {
       Optional<Matcher> matcherOptional = getPatternMatcherByUrl(url);
       if (matcherOptional.isPresent()) {
-        return parse(matcherOptional.get());
+        return parse(matcherOptional.get(), revision);
       }
       throw new UnsupportedOperationException(
           "The Bitbucket integration is not configured properly and cannot be used at this moment."
@@ -205,10 +205,10 @@ public class BitbucketServerURLParser {
                         format(
                             "The given url %s is not a valid Bitbucket server URL. Check either URL or server configuration.",
                             url)));
-    return parse(matcher).withUrl(url);
+    return parse(matcher, revision).withUrl(url);
   }
 
-  private BitbucketServerUrl parse(Matcher matcher) {
+  private BitbucketServerUrl parse(Matcher matcher, @Nullable String revision) {
     String scheme = matcher.group("scheme");
     String host = matcher.group("host");
     String port = null;
@@ -225,9 +225,9 @@ public class BitbucketServerURLParser {
       project = matcher.group("project");
     }
     String repoName = matcher.group("repo");
-    String branch = null;
+    String branchFromUrl = null;
     try {
-      branch = matcher.group("branch");
+      branchFromUrl = matcher.group("branch");
     } catch (IllegalArgumentException e) {
       // keep branch with null, as the pattern doesn't have the branch group
     }
@@ -239,7 +239,7 @@ public class BitbucketServerURLParser {
         .withProject(project)
         .withUser(user)
         .withRepository(repoName)
-        .withBranch(branch)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
   }
 }

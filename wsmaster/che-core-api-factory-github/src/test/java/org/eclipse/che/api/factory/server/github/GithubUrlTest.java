@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -53,7 +53,7 @@ public class GithubUrlTest {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    GithubUrl githubUrl = githubUrlParser.parse("https://github.com/eclipse/che");
+    GithubUrl githubUrl = githubUrlParser.parse("https://github.com/eclipse/che", null);
 
     assertEquals(githubUrl.devfileFileLocations().size(), 2);
     Iterator<DevfileLocation> iterator = githubUrl.devfileFileLocations().iterator();
@@ -82,7 +82,7 @@ public class GithubUrlTest {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    GithubUrl githubUrl = githubUrlParser.parse("git@github.com:eclipse/che");
+    GithubUrl githubUrl = githubUrlParser.parse("git@github.com:eclipse/che", null);
 
     assertEquals(githubUrl.devfileFileLocations().size(), 2);
     Iterator<DevfileLocation> iterator = githubUrl.devfileFileLocations().iterator();
@@ -111,7 +111,7 @@ public class GithubUrlTest {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    GithubUrl githubUrl = githubUrlParser.parse("https://github.com/eclipse/che");
+    GithubUrl githubUrl = githubUrlParser.parse("https://github.com/eclipse/che", null);
 
     assertEquals(githubUrl.repositoryLocation(), "https://github.com/eclipse/che.git");
   }
@@ -132,7 +132,7 @@ public class GithubUrlTest {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    GithubUrl githubUrl = githubUrlParser.parse("git@github.com:eclipse/che.git");
+    GithubUrl githubUrl = githubUrlParser.parse("git@github.com:eclipse/che.git", null);
 
     assertEquals(githubUrl.repositoryLocation(), "git@github.com:eclipse/che.git");
   }

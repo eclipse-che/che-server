@@ -70,7 +70,7 @@ public class AbstractGitlabUrlParser {
       String trimmedEndpoint = trimEnd(serverUrl, '/');
       URI uri = URI.create(trimmedEndpoint);
       String schema = uri.getScheme();
-      String host = uri.getHost();
+      String host = trimmedEndpoint.substring(trimmedEndpoint.indexOf("://") + 3);
       for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
         gitlabUrlPatterns.add(
             compile(format(gitlabUrlPatternTemplate, schema, host, uri.getPort())));

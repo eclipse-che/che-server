@@ -1,3 +1,5 @@
+[![Contribute](https://www.eclipse.org/che/contribute.svg)](https://workspaces.openshift.com#https://github.com/eclipse-che/che-server)
+
 # What is Che server
 Che Server provides an API for managing Kubernetes namespaces and to retrieve devfile content from repositories,
 hosted on GitHub, GitLab, Bitbucket and Microsoft Azure Repos.

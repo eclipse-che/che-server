@@ -13,10 +13,13 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurat
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -32,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
@@ -113,6 +117,35 @@ public class CredentialsSecretConfiguratorTest {
 
     // then
     verify(personalAccessTokenManager).storeGitCredentials(eq("test-url"));
+  }
+
+  @Test
+  public void shouldRemovePersonalAccessToken() throws Exception {
+    // given
+    doThrow(new ScmCommunicationException("test error", 495))
+        .when(personalAccessTokenManager)
+        .storeGitCredentials(eq("test-url"));
+    kubernetesClient
+        .secrets()
+        .inNamespace(TEST_NAMESPACE_NAME)
+        .create(
+            new SecretBuilder()
+                .withNewMetadata()
+                .withName(PAT_SECRET_NAME)
+                .withLabels(SEARCH_LABELS)
+                .withAnnotations(Map.of("che.eclipse.org/scm-url", "test-url"))
+                .endMetadata()
+                .build());
+    // when
+    try {
+      configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
+    } catch (Exception e) {
+      assertTrue(e instanceof InfrastructureException);
+      assertEquals(e.getMessage(), "test error");
+    }
+
+    // then
+    verify(personalAccessTokenManager).remove(eq("test-url"));
   }
 
   @Test

@@ -117,4 +117,11 @@ public interface PersonalAccessTokenManager {
    */
   void store(PersonalAccessToken token)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException;
+
+  /**
+   * Remove {@link PersonalAccessToken} from permanent storage.
+   *
+   * @param scmUrl Git provider endpoint permanent storage.
+   */
+  void remove(String scmUrl);
 }

@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import javax.net.ssl.SSLHandshakeException;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
@@ -87,6 +88,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   private final OAuthAPI oAuthAPI;
   private final String apiEndpoint;
   private final HttpClient httpClient;
+  private static final int SSL_ERROR_CODE = 495;
 
   public HttpBitbucketServerApiClient(
       String serverUrl, OAuthAuthenticator authenticator, OAuthAPI oAuthAPI, String apiEndpoint) {
@@ -427,6 +429,10 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
+      if (e instanceof SSLHandshakeException) {
+        throw new ScmCommunicationException(
+            "SSL handshake failed. Please contact your administrator.", SSL_ERROR_CODE);
+      }
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }

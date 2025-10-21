@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -25,8 +25,6 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 
 /**
  * JPA workspaces expiration times storage.
@@ -257,16 +255,6 @@ public class JpaWorkspaceActivityDao implements WorkspaceActivityDao {
   public void createActivity(WorkspaceActivity activity) throws ConflictException, ServerException {
     try {
       doCreate(activity);
-    } catch (IntegrityConstraintViolationException e) {
-      throw new ServerException(
-          String.format(
-              "Can not create activity record since the specified workspace with "
-                  + "id '%s' does not exist.",
-              activity.getWorkspaceId()),
-          e);
-    } catch (DuplicateKeyException e) {
-      throw new ConflictException(
-          "Activity record for workspace ID " + activity.getWorkspaceId() + " already exists.", e);
     } catch (RuntimeException e) {
       throw new ServerException(e.getMessage(), e);
     }
@@ -283,13 +271,6 @@ public class JpaWorkspaceActivityDao implements WorkspaceActivityDao {
       throws ServerException {
     try {
       doUpdate(false, workspaceId, updater);
-    } catch (IntegrityConstraintViolationException e) {
-      throw new ServerException(
-          String.format(
-              "Can not create activity record since the specified workspace with "
-                  + "id '%s' does not exist.",
-              workspaceId),
-          e);
     } catch (RuntimeException x) {
       throw new ServerException(x.getMessage(), x);
     }
@@ -299,13 +280,6 @@ public class JpaWorkspaceActivityDao implements WorkspaceActivityDao {
       throws ServerException {
     try {
       doUpdate(true, workspaceId, updater);
-    } catch (IntegrityConstraintViolationException e) {
-      throw new ServerException(
-          String.format(
-              "Can not create activity record since the specified workspace with "
-                  + "id '%s' does not exist.",
-              workspaceId),
-          e);
     } catch (RuntimeException x) {
       throw new ServerException(x.getMessage(), x);
     }

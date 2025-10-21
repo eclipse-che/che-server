@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.api.user.server;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.util.concurrent.Striped;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -95,7 +96,7 @@ public class PreferenceManager {
    */
   public Map<String, String> find(String userId) throws ServerException {
     requireNonNull(userId, "Required non-null user id");
-    return preferenceDao.getPreferences(userId);
+    return Collections.emptyMap();
   }
 
   /**
@@ -111,7 +112,7 @@ public class PreferenceManager {
    */
   public Map<String, String> find(String userId, String keyFilter) throws ServerException {
     requireNonNull(userId, "Required non-null user id");
-    return preferenceDao.getPreferences(userId, keyFilter);
+    return Collections.emptyMap();
   }
 
   /**

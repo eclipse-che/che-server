@@ -244,6 +244,13 @@ public abstract class OAuthAuthenticator {
   public abstract String getLocalAuthenticateUrl();
 
   /**
+   * Get endpoint URL.
+   *
+   * @return provider's endpoint URL
+   */
+  public abstract String getEndpointUrl();
+
+  /**
    * Compute the Authorization header to sign the OAuth 1 request.
    *
    * @param userId the user id.

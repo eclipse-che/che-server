@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -35,7 +35,6 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.user.Profile;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.event.UserCreatedEvent;
 import org.eclipse.che.api.user.server.event.UserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
@@ -283,26 +282,7 @@ public class UserManager {
    */
   public User getOrCreateUser(String id, String email, String username)
       throws ServerException, ConflictException {
-    Optional<User> userById = getUserById(id);
-    if (!userById.isPresent()) {
-      synchronized (this) {
-        userById = getUserById(id);
-        if (!userById.isPresent()) {
-          Optional<User> userByEmail = getUserByEmail(email);
-          if (userByEmail.isPresent()) {
-            remove(userByEmail.get().getId());
-          }
-          final UserImpl cheUser = new UserImpl(id, email, username, generate("", 12), emptyList());
-          try {
-            return create(cheUser, false);
-          } catch (ConflictException ex) {
-            cheUser.setName(generate(cheUser.getName(), 4));
-            return create(cheUser, false);
-          }
-        }
-      }
-    }
-    return actualizeUserEmail(userById.get(), email);
+    return new UserImpl(id, email, username, generate("", 12), emptyList());
   }
 
   /**
@@ -324,23 +304,7 @@ public class UserManager {
    */
   public User getOrCreateUser(String id, String username)
       throws ServerException, ConflictException {
-    Optional<User> userById = getUserById(id);
-    if (!userById.isPresent()) {
-      synchronized (this) {
-        userById = getUserById(id);
-        if (!userById.isPresent()) {
-          final UserImpl cheUser =
-              new UserImpl(id, username + "@che", username, generate("", 12), emptyList());
-          try {
-            return create(cheUser, false);
-          } catch (ConflictException ex) {
-            cheUser.setName(generate(cheUser.getName(), 4));
-            return create(cheUser, false);
-          }
-        }
-      }
-    }
-    return userById.get();
+    return new UserImpl(id, username + "@che", username, generate("", 12), emptyList());
   }
 
   @Transactional(
@@ -354,14 +318,6 @@ public class UserManager {
     }
     preferencesDao.remove(id);
     profileDao.remove(id);
-    try {
-      eventService.publish(new BeforeUserRemovedEvent(user)).propagateException();
-    } catch (ServerException e) {
-      if (e.getCause() instanceof ConflictException) {
-        throw (ConflictException) e.getCause();
-      }
-      throw e;
-    }
     userDao.remove(id);
   }
 

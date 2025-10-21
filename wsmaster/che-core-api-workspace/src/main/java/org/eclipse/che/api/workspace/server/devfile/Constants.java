@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,8 +11,6 @@
  */
 package org.eclipse.che.api.workspace.server.devfile;
 
-import java.util.List;
-
 public class Constants {
 
   private Constants() {}
@@ -22,13 +20,6 @@ public class Constants {
   public static final String SCHEMA_FILENAME = "devfile.json";
 
   public static final String CURRENT_API_VERSION = "1.0.0";
-
-  public static final List<String> SUPPORTED_VERSIONS =
-      List.of(
-          CURRENT_API_VERSION,
-          "2.0.0",
-          "2.1.0",
-          "2.2.0"); // note 2.2.0 is not released and is just a snapshot
 
   public static final String EDITOR_COMPONENT_TYPE = "cheEditor";
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,22 +15,16 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
 
 import com.google.inject.persist.Transactional;
-import jakarta.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import org.eclipse.che.api.core.model.workspace.runtime.MachineStatus;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.core.model.workspace.runtime.ServerStatus;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.workspace.infrastructure.kubernetes.cache.BeforeKubernetesRuntimeStateRemovedEvent;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesMachineCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.model.KubernetesMachineImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.model.KubernetesMachineImpl.MachineId;
@@ -56,8 +50,6 @@ public class JpaKubernetesMachineCache implements KubernetesMachineCache {
       throws InfrastructureException {
     try {
       doPutMachine(machine);
-    } catch (DuplicateKeyException e) {
-      throw new InfrastructureException("Machine is already in cache", e);
     } catch (RuntimeException e) {
       throw new InfrastructureException(e.getMessage(), e);
     }
@@ -187,23 +179,5 @@ public class JpaKubernetesMachineCache implements KubernetesMachineCache {
       return true;
     }
     return false;
-  }
-
-  @Singleton
-  public static class RemoveKubernetesMachinesBeforeRuntimesRemoved
-      extends CascadeEventSubscriber<BeforeKubernetesRuntimeStateRemovedEvent> {
-
-    @Inject private EventService eventService;
-    @Inject private JpaKubernetesMachineCache k8sMachines;
-
-    @PostConstruct
-    public void subscribe() {
-      eventService.subscribe(this, BeforeKubernetesRuntimeStateRemovedEvent.class);
-    }
-
-    @Override
-    public void onCascadeEvent(BeforeKubernetesRuntimeStateRemovedEvent event) throws Exception {
-      k8sMachines.remove(event.getRuntimeState().getRuntimeId());
-    }
   }
 }

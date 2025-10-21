@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static java.util.stream.Collectors.toMap;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.DEFAULT_DEVFILE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import java.util.Collections;
@@ -21,15 +22,15 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
+import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 public class BaseFactoryParameterResolver {
 
@@ -60,7 +61,12 @@ public class BaseFactoryParameterResolver {
             contentProvider,
             extractOverrideParams(factoryParameters),
             getSkipAuthorisation(factoryParameters))
-        .orElseGet(() -> newDto(FactoryDto.class).withV(CURRENT_VERSION).withSource("repo"))
+        .orElseGet(
+            () ->
+                newDto(FactoryDevfileV2Dto.class)
+                    .withDevfile(DEFAULT_DEVFILE)
+                    .withV(CURRENT_VERSION)
+                    .withSource("repo"))
         .acceptVisitor(factoryVisitor);
   }
 

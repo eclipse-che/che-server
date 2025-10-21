@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -32,7 +32,6 @@ import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.convert.component.ComponentToWorkspaceApplier;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
-import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl;
@@ -175,38 +174,6 @@ public class DevfileConverterTest {
 
     // then
     verify(componentToWorkspaceApplier).apply(workspaceConfig, component, fileContentProvider);
-  }
-
-  @Test(
-      expectedExceptions = DevfileFormatException.class,
-      expectedExceptionsMessageRegExp = "Provided Devfile has no API version specified")
-  public void
-      shouldThrowAnExceptionIfDevfileApiVersionIsMissingDuringConvertingDevfileToWorkspaceConfig()
-          throws Exception {
-    // given
-    FileContentProvider fileContentProvider = mock(FileContentProvider.class);
-    DevfileImpl devfile = new DevfileImpl();
-    devfile.setName("petclinic");
-
-    // when
-    devfileConverter.devFileToWorkspaceConfig(devfile, fileContentProvider);
-  }
-
-  @Test(
-      expectedExceptions = DevfileFormatException.class,
-      expectedExceptionsMessageRegExp =
-          "Provided Devfile has unsupported version '1\\.0\\.0-non-supported'. The following versions are supported: .*")
-  public void
-      shouldThrowAnExceptionIfDevfileApiVersionIsNotSupportedDuringConvertingDevfileToWorkspaceConfig()
-          throws Exception {
-    // given
-    FileContentProvider fileContentProvider = mock(FileContentProvider.class);
-    DevfileImpl devfile = new DevfileImpl();
-    devfile.setApiVersion("1.0.0-non-supported");
-    devfile.setName("petclinic");
-
-    // when
-    devfileConverter.devFileToWorkspaceConfig(devfile, fileContentProvider);
   }
 
   @Test

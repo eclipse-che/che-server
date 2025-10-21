@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,8 +17,6 @@ import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SE
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,11 +24,8 @@ import javax.inject.Singleton;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
-import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.slf4j.Logger;
@@ -121,36 +116,6 @@ public class KeycloakUserRemover {
     } catch (ApiException e) {
       LOG.warn("Exception during removing user from Keycloak", e);
       throw new ServerException("Exception during removing user from Keycloak", e);
-    }
-  }
-
-  @Singleton
-  public static class RemoveUserListener extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
-    @Inject private EventService eventService;
-    @Inject private KeycloakUserRemover keycloakUserRemover;
-
-    @Inject
-    @Nullable
-    @Named("che.keycloak.cascade_user_removal_enabled")
-    boolean userRemovalEnabled;
-
-    @PostConstruct
-    public void subscribe() {
-      if (userRemovalEnabled) {
-        eventService.subscribe(this, BeforeUserRemovedEvent.class);
-      }
-    }
-
-    @PreDestroy
-    public void unsubscribe() {
-      if (userRemovalEnabled) {
-        eventService.unsubscribe(this, BeforeUserRemovedEvent.class);
-      }
-    }
-
-    @Override
-    public void onCascadeEvent(BeforeUserRemovedEvent event) throws Exception {
-      keycloakUserRemover.removeUserFromKeycloak(event.getUser().getId());
     }
   }
 }

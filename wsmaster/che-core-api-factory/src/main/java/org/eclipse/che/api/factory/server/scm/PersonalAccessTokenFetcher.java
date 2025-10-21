@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -39,6 +39,17 @@ public interface PersonalAccessTokenFetcher {
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
 
   /**
+   * Refresh a PersonalAccessToken.
+   *
+   * @throws ScmUnauthorizedException - in case if user are not authorized che server to create new
+   *     token. Further user interaction is needed before calling next time this method.
+   * @throws ScmCommunicationException - Some unexpected problem occurred during communication with
+   *     scm provider.
+   */
+  PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
+
+  /**
    * Checks whether the provided personal access token is valid and has expected scope of
    * permissions.
    *
@@ -64,6 +75,8 @@ public interface PersonalAccessTokenFetcher {
    *     the token has expected scope of permissions, false if the token scopes does not match the
    *     expected ones. Empty optional if {@link PersonalAccessTokenFetcher} is not able to confirm
    *     or deny that token is valid.
+   * @throws ScmCommunicationException - problem occurred during communication with SCM server.
    */
-  Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params);
+  Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException;
 }

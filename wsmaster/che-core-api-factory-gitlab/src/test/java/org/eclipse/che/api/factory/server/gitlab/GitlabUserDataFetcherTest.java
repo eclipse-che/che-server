@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,8 +17,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -26,10 +27,12 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import java.lang.reflect.Field;
+import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.security.oauth.OAuthAPI;
+import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
@@ -40,7 +43,6 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class GitlabUserDataFetcherTest {
 
-  @Mock OAuthAPI oAuthTokenFetcher;
   @Mock PersonalAccessTokenManager personalAccessTokenManager;
 
   GitlabUserDataFetcher gitlabUserDataFetcher;
@@ -57,11 +59,7 @@ public class GitlabUserDataFetcherTest {
     wireMock = new WireMock("localhost", wireMockServer.port());
     gitlabUserDataFetcher =
         new GitlabUserDataFetcher(
-            wireMockServer.url("/"),
-            wireMockServer.url("/"),
-            "http://che.api",
-            personalAccessTokenManager,
-            oAuthTokenFetcher);
+            wireMockServer.url("/"), "http://che.api", personalAccessTokenManager);
 
     stubFor(
         get(urlEqualTo("/api/v4/user"))
@@ -79,12 +77,44 @@ public class GitlabUserDataFetcherTest {
 
   @Test
   public void shouldFetchGitUserData() throws Exception {
-    OAuthToken oAuthToken =
-        newDto(OAuthToken.class).withToken("oauthtoken").withScope("api write_repository openid");
-    when(oAuthTokenFetcher.getToken(anyString())).thenReturn(oAuthToken);
+    PersonalAccessToken token = mock(PersonalAccessToken.class);
+    when(token.getToken()).thenReturn("oauthtoken");
+    when(token.getScmProviderUrl()).thenReturn(wireMockServer.url("/"));
+    when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null), eq(null)))
+        .thenReturn(Optional.of(token));
 
-    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData();
+    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData(null);
     assertEquals(gitUserData.getScmUsername(), "John Smith");
     assertEquals(gitUserData.getScmUserEmail(), "john@example.com");
+  }
+
+  @Test
+  public void shouldFetchGitUserDataByUrl() throws Exception {
+    // given
+    PersonalAccessToken token = mock(PersonalAccessToken.class);
+    when(token.getToken()).thenReturn("oauthtoken");
+    when(personalAccessTokenManager.get(any(Subject.class), eq("gitlab"), eq(null), eq(null)))
+        .thenReturn(Optional.empty());
+    when(personalAccessTokenManager.get(
+            any(Subject.class), eq(null), eq(wireMockServer.url("/")), eq(null)))
+        .thenReturn(Optional.of(token));
+    // when
+    GitUserData gitUserData = gitlabUserDataFetcher.fetchGitUserData(null);
+    // then
+    assertEquals(gitUserData.getScmUsername(), "John Smith");
+    assertEquals(gitUserData.getScmUserEmail(), "john@example.com");
+  }
+
+  @Test
+  public void shouldSetSAASUrlAsDefault() throws Exception {
+    gitlabUserDataFetcher =
+        new GitlabUserDataFetcher(null, "http://che.api", personalAccessTokenManager);
+
+    Field serverUrlField =
+        gitlabUserDataFetcher.getClass().getSuperclass().getDeclaredField("serverUrl");
+    serverUrlField.setAccessible(true);
+    String serverUrl = (String) serverUrlField.get(gitlabUserDataFetcher);
+
+    assertEquals(serverUrl, "https://gitlab.com");
   }
 }

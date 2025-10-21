@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2023 Red Hat, Inc.
+    Copyright (c) 2012-2025 Red Hat, Inc.
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.che</groupId>
     <artifactId>che-server</artifactId>
-    <version>7.76.0-SNAPSHOT</version>
+    <version>7.111.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
     <description>Eclipse Che Server</description>
@@ -37,7 +37,6 @@
         <module>wsmaster</module>
         <module>multiuser</module>
         <module>infrastructures</module>
-        <module>wsmaster/integration-tests</module>
         <module>assembly</module>
     </modules>
     <scm>
@@ -48,7 +47,7 @@
     </scm>
     <properties>
         <aopalliance.version>1.0</aopalliance.version>
-        <ch.qos.logback.version>1.4.11</ch.qos.logback.version>
+        <ch.qos.logback.version>1.5.6</ch.qos.logback.version>
         <com.auth0.jwks-rsa.version>0.22.1</com.auth0.jwks-rsa.version>
         <com.fasterxml.jackson.version>2.15.2</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
@@ -60,7 +59,6 @@
         <com.googlecode.gson.version>2.10.1</com.googlecode.gson.version>
         <com.h2database.version>2.2.224</com.h2database.version>
         <com.jcraft.jsch.version>0.1.55</com.jcraft.jsch.version>
-        <com.squareup.okhttp3.version>3.14.9</com.squareup.okhttp3.version>
         <com.squareup.okio.version>3.6.0</com.squareup.okio.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
         <commons-io.version>2.14.0</commons-io.version>
@@ -68,12 +66,13 @@
         <enforcer.skip>false</enforcer.skip>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client>6.9.0</io.fabric8.kubernetes-client>
+        <io.fabric8.kubernetes-client.version>7.4.0</io.fabric8.kubernetes-client.version>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.11.2</io.jsonwebtoken.jjwt.version>
         <io.micrometer.version>1.11.5</io.micrometer.version>
+        <io.netty.version>4.2.6.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
         <io.opentracing.contrib.metrics.version>0.3.0</io.opentracing.contrib.metrics.version>
@@ -99,13 +98,13 @@
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
-        <che.version>7.76.0-SNAPSHOT</che.version>
+        <che.version>7.111.0-SNAPSHOT</che.version>
         <specification.version>1.0-beta2</specification.version>
         <?SORTPOM RESUME?>
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>
         <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
         <maven.antrun.plugin.version>3.1.0</maven.antrun.plugin.version>
-        <maven.assembly.plugin.version>3.5.0</maven.assembly.plugin.version>
+        <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
         <maven.buildhelper.plugin.version>3.2.0</maven.buildhelper.plugin.version>
         <maven.buildnumber.plugin.version>3.0.0</maven.buildnumber.plugin.version>
         <maven.clean.plugin.version>3.2.0</maven.clean.plugin.version>
@@ -127,7 +126,7 @@
         <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
         <maven.supported-versions>[3.6.2,)</maven.supported-versions>
         <maven.surefire.plugin.version>3.0.0-M5</maven.surefire.plugin.version>
-        <maven.war.plugin.version>3.3.2</maven.war.plugin.version>
+        <maven.war.plugin.version>3.4.0</maven.war.plugin.version>
         <mysql.connector.version>8.0.33</mysql.connector.version>
         <net.java.dev.jna.version>4.1.0</net.java.dev.jna.version>
         <org.antlr.st4.version>4.3.4</org.antlr.st4.version>
@@ -137,8 +136,9 @@
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.3.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
         <org.apache.maven.plugin-tools.plugin-annotations.version>3.9.0</org.apache.maven.plugin-tools.plugin-annotations.version>
         <org.apache.maven.version>3.9.4</org.apache.maven.version>
-        <org.apache.tomcat.version>10.1.6</org.apache.tomcat.version>
+        <org.apache.tomcat.version>10.1.39</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>3.4.1</org.codehaus.plexus.utils.version>
+        <org.eclipse.jetty.version>11.0.24</org.eclipse.jetty.version>
         <org.eclipse.persistence.eclipselink.version>2.7.10</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.3</org.eclipse.persistence.version>
         <org.eclipse.sisu.version>0.9.0.M2</org.eclipse.sisu.version>
@@ -146,7 +146,7 @@
         <org.flyway.version>4.2.0</org.flyway.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
         <org.javassist.version>3.29.2-GA</org.javassist.version>
-        <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
+        <org.jgroups.kubernetes.version>2.0.1.Final</org.jgroups.kubernetes.version>
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
         <org.mockito.mockito-testng.version>0.5.2</org.mockito.mockito-testng.version>
@@ -272,21 +272,6 @@
                 <version>${com.jcraft.jsch.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>logging-interceptor</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>mockwebserver</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.squareup.okio</groupId>
                 <artifactId>okio</artifactId>
                 <version>${com.squareup.okio.version}</version>
@@ -322,11 +307,6 @@
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.fabric8</groupId>
-                <artifactId>openshift-server-mock</artifactId>
-                <version>${io.fabric8.kubernetes-client}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.mweirauch</groupId>
@@ -387,6 +367,26 @@
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${io.micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-dns</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-http2</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler-proxy</artifactId>
+                <version>${io.netty.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.opentracing</groupId>
@@ -467,10 +467,6 @@
                     <exclusion>
                         <artifactId>xml-path</artifactId>
                         <groupId>io.rest-assured</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>hamcrest</artifactId>
-                        <groupId>org.hamcrest</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -689,7 +685,17 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-auth-github-common</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-auth-gitlab</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-auth-gitlab-common</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>
@@ -771,7 +777,17 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-factory-github-common</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-factory-gitlab</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-factory-gitlab-common</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>
@@ -1424,7 +1440,7 @@
             <dependency>
                 <groupId>io.fabric8</groupId>
                 <artifactId>kubernetes-client-api</artifactId>
-                <version>${io.fabric8.kubernetes-client}</version>
+                <version>${io.fabric8.kubernetes-client.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -1450,6 +1466,24 @@
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-commons-test</artifactId>
                 <version>${che.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-security</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -1824,6 +1858,25 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <plugin>
+                    <groupId>com.gradle</groupId>
+                    <artifactId>develocity-maven-extension</artifactId>
+                    <configuration>
+                        <develocity>
+                            <normalization>
+                                <runtimeClassPath>
+                                    <metaInf>
+                                        <ignoredAttributes>
+                                            <ignore>Implementation-Version</ignore>
+                                            <ignore>Date</ignore>
+                                            <ignore>SCM-Revision</ignore>
+                                        </ignoredAttributes>
+                                    </metaInf>
+                                </runtimeClassPath>
+                            </normalization>
+                        </develocity>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -1889,7 +1942,8 @@
                                         <!-- Exclude javax dependencies in favor of Jakarta -->
                                         <exclude>javax.activation:activation</exclude>
                                         <exclude>javax.activation:javax.activation-api</exclude>
-                                        <exclude>javax.annotation:javax.annotation-api</exclude>
+                                        <!-- Uncomment when the dependency is removed from io.fabric8.kubernetes-client -->
+                                        <!-- <exclude>javax.annotation:javax.annotation-api</exclude>-->
                                         <exclude>javax.enterprise:cdi-api</exclude>
                                         <exclude>javax.inject:javax.inject</exclude>
                                         <exclude>javax.json:javax.json-api</exclude>

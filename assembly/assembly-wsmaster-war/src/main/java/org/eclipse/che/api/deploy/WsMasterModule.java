@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,15 +26,12 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.SigningKeyResolver;
 import java.util.HashMap;
 import java.util.Map;
-import javax.sql.DataSource;
 import org.eclipse.che.api.core.notification.RemoteSubscriptionStorage;
 import org.eclipse.che.api.core.rest.CheJsonProvider;
 import org.eclipse.che.api.core.rest.MessageBodyAdapter;
 import org.eclipse.che.api.core.rest.MessageBodyAdapterInterceptor;
 import org.eclipse.che.api.deploy.jsonrpc.CheJsonRpcWebSocketConfigurationModule;
 import org.eclipse.che.api.factory.server.FactoryAcceptValidator;
-import org.eclipse.che.api.factory.server.FactoryCreateValidator;
-import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
@@ -48,10 +45,13 @@ import org.eclipse.che.api.factory.server.bitbucket.BitbucketServerScmFileResolv
 import org.eclipse.che.api.factory.server.git.ssh.GitSshFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.git.ssh.GitSshScmFileResolver;
 import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.github.GithubFactoryParametersResolverSecond;
 import org.eclipse.che.api.factory.server.github.GithubScmFileResolver;
+import org.eclipse.che.api.factory.server.github.GithubScmFileResolverSecond;
 import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolver;
+import org.eclipse.che.api.factory.server.gitlab.GitlabFactoryParametersResolverSecond;
 import org.eclipse.che.api.factory.server.gitlab.GitlabScmFileResolver;
-import org.eclipse.che.api.metrics.WsMasterMetricsModule;
+import org.eclipse.che.api.factory.server.gitlab.GitlabScmFileResolverSecond;
 import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.system.server.SystemModule;
 import org.eclipse.che.api.user.server.NotImplementedTokenValidator;
@@ -84,13 +84,10 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceNameEnvVa
 import org.eclipse.che.api.workspace.server.spi.provision.env.WorkspaceNamespaceNameEnvVarProvider;
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.commons.observability.deploy.ExecutorWrapperModule;
-import org.eclipse.che.core.db.DBTermination;
-import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.tracing.metrics.TracingMetricsModule;
 import org.eclipse.che.inject.DynaModule;
 import org.eclipse.che.multiuser.api.authentication.commons.token.HeaderRequestTokenExtractor;
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
-import org.eclipse.che.multiuser.api.permission.server.AdminPermissionInitializer;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 import org.eclipse.che.multiuser.api.permission.server.PermissionCheckerImpl;
 import org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivityModule;
@@ -104,7 +101,6 @@ import org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter;
 import org.eclipse.che.security.PBKDF2PasswordEncryptor;
 import org.eclipse.che.security.PasswordEncryptor;
 import org.eclipse.che.security.oauth.EmbeddedOAuthAPI;
-import org.eclipse.che.security.oauth.GitLabModule;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth.OpenShiftOAuthModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
@@ -126,7 +122,6 @@ import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructur
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
-import org.flywaydb.core.internal.util.PlaceholderReplacer;
 
 /** @author andrew00x */
 @DynaModule
@@ -142,25 +137,13 @@ public class WsMasterModule extends AbstractModule {
     }
 
     // db related components modules
-    install(new org.eclipse.che.account.api.AccountModule());
     install(new org.eclipse.che.api.ssh.server.jpa.SshJpaModule());
     install(new org.eclipse.che.api.core.jsonrpc.impl.JsonRpcModule());
     install(new org.eclipse.che.api.core.websocket.impl.WebSocketModule());
 
-    // db configuration
-    bind(SchemaInitializer.class)
-        .to(org.eclipse.che.core.db.schema.impl.flyway.FlywaySchemaInitializer.class);
-    bind(org.eclipse.che.core.db.DBInitializer.class).asEagerSingleton();
-    bind(PlaceholderReplacer.class)
-        .toProvider(org.eclipse.che.core.db.schema.impl.flyway.PlaceholderReplacerProvider.class);
-
     // factory
     bind(FactoryAcceptValidator.class)
         .to(org.eclipse.che.api.factory.server.impl.FactoryAcceptValidatorImpl.class);
-    bind(FactoryCreateValidator.class)
-        .to(org.eclipse.che.api.factory.server.impl.FactoryCreateValidatorImpl.class);
-    bind(FactoryEditValidator.class)
-        .to(org.eclipse.che.api.factory.server.impl.FactoryEditValidatorImpl.class);
     bind(org.eclipse.che.api.factory.server.FactoryService.class);
     bind(ScmService.class);
     install(new org.eclipse.che.api.factory.server.jpa.FactoryJpaModule());
@@ -171,8 +154,14 @@ public class WsMasterModule extends AbstractModule {
     factoryParametersResolverMultibinder.addBinding().to(GithubFactoryParametersResolver.class);
     factoryParametersResolverMultibinder
         .addBinding()
+        .to(GithubFactoryParametersResolverSecond.class);
+    factoryParametersResolverMultibinder
+        .addBinding()
         .to(BitbucketServerAuthorizingFactoryParametersResolver.class);
     factoryParametersResolverMultibinder.addBinding().to(GitlabFactoryParametersResolver.class);
+    factoryParametersResolverMultibinder
+        .addBinding()
+        .to(GitlabFactoryParametersResolverSecond.class);
     factoryParametersResolverMultibinder.addBinding().to(BitbucketFactoryParametersResolver.class);
     factoryParametersResolverMultibinder
         .addBinding()
@@ -185,8 +174,10 @@ public class WsMasterModule extends AbstractModule {
     Multibinder<ScmFileResolver> scmFileResolverResolverMultibinder =
         Multibinder.newSetBinder(binder(), ScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GithubScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(GithubScmFileResolverSecond.class);
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GitlabScmFileResolver.class);
+    scmFileResolverResolverMultibinder.addBinding().to(GitlabScmFileResolverSecond.class);
     scmFileResolverResolverMultibinder.addBinding().to(BitbucketServerScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(AzureDevOpsScmFileResolver.class);
     scmFileResolverResolverMultibinder.addBinding().to(GitSshScmFileResolver.class);
@@ -208,9 +199,7 @@ public class WsMasterModule extends AbstractModule {
     install(new DevfileModule());
 
     bind(WorkspaceEntityProvider.class);
-    bind(org.eclipse.che.api.workspace.server.TemporaryWorkspaceRemover.class);
     bind(org.eclipse.che.api.workspace.server.WorkspaceService.class);
-    bind(org.eclipse.che.api.devfile.server.DevfileService.class);
     bind(org.eclipse.che.api.devfile.server.UserDevfileEntityProvider.class);
 
     install(new FactoryModuleBuilder().build(ServersCheckerFactory.class));
@@ -277,10 +266,6 @@ public class WsMasterModule extends AbstractModule {
     terminationMultiBinder
         .addBinding()
         .to(org.eclipse.che.api.system.server.CronThreadPullTermination.class);
-    terminationMultiBinder
-        .addBinding()
-        .to(org.eclipse.che.api.workspace.server.hc.probe.ProbeSchedulerTermination.class);
-    bind(DBTermination.class);
 
     final Map<String, String> persistenceProperties = new HashMap<>();
     persistenceProperties.put(PersistenceUnitProperties.TARGET_SERVER, "None");
@@ -296,8 +281,9 @@ public class WsMasterModule extends AbstractModule {
     install(new FactoryModuleBuilder().build(PassThroughProxyProvisionerFactory.class));
     installDefaultSecureServerExposer(infrastructure);
     install(new org.eclipse.che.security.BitbucketModule());
-    install(new GitLabModule());
+    install(new org.eclipse.che.security.oauth.GitLabModule());
     install(new org.eclipse.che.security.oauth.AzureDevOpsModule());
+    install(new org.eclipse.che.security.oauth.GithubModule());
 
     configureMultiUserMode(persistenceProperties, infrastructure);
 
@@ -322,10 +308,7 @@ public class WsMasterModule extends AbstractModule {
     }
     if (Boolean.valueOf(System.getenv("CHE_METRICS_ENABLED"))) {
       install(new org.eclipse.che.core.metrics.MetricsModule());
-      install(new WsMasterMetricsModule());
       install(new InfrastructureMetricsModule());
-    } else {
-      install(new org.eclipse.che.core.metrics.NoopMetricsModule());
     }
     if (Boolean.valueOf(System.getenv("CHE_TRACING_ENABLED"))
         && Boolean.valueOf(System.getenv("CHE_METRICS_ENABLED"))) {
@@ -363,9 +346,6 @@ public class WsMasterModule extends AbstractModule {
     persistenceProperties.put(
         PersistenceUnitProperties.EXCEPTION_HANDLER_CLASS,
         "org.eclipse.che.core.db.postgresql.jpa.eclipselink.PostgreSqlExceptionHandler");
-    bind(DataSource.class).toProvider(org.eclipse.che.core.db.JndiDataSourceProvider.class);
-
-    install(new org.eclipse.che.multiuser.api.permission.server.jpa.SystemPermissionsJpaModule());
 
     install(
         new org.eclipse.che.multiuser.permission.workspace.server.WorkspaceApiPermissionsModule());
@@ -414,7 +394,6 @@ public class WsMasterModule extends AbstractModule {
       bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
     }
 
-    bind(AdminPermissionInitializer.class).asEagerSingleton();
     install(new MachineAuthModule());
 
     // User and profile - use profile from keycloak and other stuff is JPA

@@ -1,11 +1,8 @@
 # Global Owners
-* @l0rd @ibuziuk @vinokurig @nickboldt @tolusha
+* @SDawley @ibuziuk @vinokurig @tolusha
 
 # che.properties file is quasi-documentation, so in future we might grant access to this 
 # assembly/assembly-wsmaster-war/src/main/webapp/WEB-INF/classes/che/** @osslate 
-
-# workspace runtime infrastructure implementations
-infrastructures/** @amisevsk 
 
 # deploy
 deploy/** @tolusha @dkwon17

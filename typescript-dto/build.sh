@@ -15,9 +15,11 @@ set -u
 rm -f ./index.d.ts
 
 set +e
-docker run -i --rm -v "$HOME/.m2:/root/.m2" \
+BUILDER=$(command -v podman)
+if [ ! -x "$BUILDER" ]; then BUILDER=$(command -v docker); fi
+$BUILDER run -i --rm -v "$HOME/.m2:/root/.m2" \
                    -v "$(pwd)/dto-pom.xml:/usr/src/mymaven/pom.xml" \
-                   -w /usr/src/mymaven maven:3.6.1-jdk-11 \
+                   -w /usr/src/mymaven docker.io/maven:3.8-jdk-11 \
                     /bin/bash -c "mvn -q -U -DskipTests=true -Dfindbugs.skip=true -Dskip-validate-sources install \
                     && cat target/dts-dto-typescript.d.ts" >> index.d.ts
 
@@ -31,4 +33,4 @@ fi
 
 CHE_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args="\${project.version}" --non-recursive exec:exec -f ../pom.xml)
 
-docker build -t eclipse-che-ts-api --build-arg CHE_VERSION="${CHE_VERSION}" --build-arg NPM_AUTH_TOKEN="${CHE_NPM_AUTH_TOKEN}" .
+$BUILDER build -t eclipse-che-ts-api --build-arg CHE_VERSION="${CHE_VERSION}" --build-arg NPM_AUTH_TOKEN="${CHE_NPM_AUTH_TOKEN}" .

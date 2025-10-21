@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,7 +30,6 @@ import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.security.PasswordEncryptor;
 
 /**
@@ -80,9 +79,6 @@ public class JpaUserDao implements UserDao {
         user.setPassword(encryptor.encrypt(user.getPassword()));
       }
       doCreate(user);
-    } catch (DuplicateKeyException x) {
-      // TODO make more concrete
-      throw new ConflictException("User with such id/name/email/alias already exists");
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
     }
@@ -93,9 +89,6 @@ public class JpaUserDao implements UserDao {
     requireNonNull(update, "Required non-null update");
     try {
       doUpdate(update);
-    } catch (DuplicateKeyException x) {
-      // TODO make more concrete
-      throw new ConflictException("User with such name/email/alias already exists");
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
     }

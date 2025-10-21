@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.testng.Assert.assertEquals;
 
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.NotFoundException;
@@ -27,7 +26,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -50,25 +48,17 @@ public class UserPreferencesConfiguratorTest {
 
   @InjectMocks private UserPreferencesConfigurator userPreferencesConfigurator;
 
-  private KubernetesServer kubernetesServer;
   private NamespaceResolutionContext context;
 
   @BeforeMethod
   public void setUp() throws InfrastructureException, NotFoundException, ServerException {
     context = new NamespaceResolutionContext(null, USER_ID, USER_NAME);
-    kubernetesServer = new KubernetesServer(true, true);
-    kubernetesServer.before();
 
     Map<String, String> preferences = new HashMap<>();
     preferences.put("preference-name", "preference");
 
     lenient().when(namespaceFactory.evaluateNamespaceName(any())).thenReturn(USER_NAMESPACE);
     lenient().when(preferenceManager.find(USER_ID)).thenReturn(preferences);
-  }
-
-  @AfterMethod
-  public void cleanUp() {
-    kubernetesServer.after();
   }
 
   @Test

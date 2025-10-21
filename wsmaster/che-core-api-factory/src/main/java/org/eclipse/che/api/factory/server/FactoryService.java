@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -42,7 +43,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Defines Factory REST API.
@@ -152,16 +152,21 @@ public class FactoryService extends Service {
           factoryParametersResolverHolder.getFactoryParametersResolver(
               singletonMap(URL_PARAMETER_NAME, url));
       if (!authorisationRequestManager.isStored(factoryParametersResolver.getProviderName())) {
-        personalAccessTokenManager.getAndStore(
-            factoryParametersResolver.parseFactoryUrl(url).getHostName());
+        String scmServerUrl = factoryParametersResolver.parseFactoryUrl(url).getProviderUrl();
+        if (Boolean.parseBoolean(System.getenv("CHE_FORCE_REFRESH_PERSONAL_ACCESS_TOKEN"))) {
+          personalAccessTokenManager.forceRefreshPersonalAccessToken(scmServerUrl);
+        } else {
+          personalAccessTokenManager.getAndStore(scmServerUrl);
+        }
       }
-    } catch (ScmCommunicationException
-        | ScmConfigurationPersistenceException
-        | UnknownScmProviderException
-        | UnsatisfiedScmPreconditionException e) {
+    } catch (ScmConfigurationPersistenceException | UnsatisfiedScmPreconditionException e) {
       throw new ApiException(e);
     } catch (ScmUnauthorizedException e) {
       throw toApiException(e);
+    } catch (ScmCommunicationException e) {
+      throw toApiException(e);
+    } catch (UnknownScmProviderException e) {
+      // ignore the exception as it is not a problem if the provider from the given URL is unknown
     }
   }
 

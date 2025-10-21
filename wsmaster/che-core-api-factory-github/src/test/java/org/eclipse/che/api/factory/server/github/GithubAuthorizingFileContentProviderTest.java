@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -45,17 +45,18 @@ public class GithubAuthorizingFileContentProviderTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     GithubUrl githubUrl =
-        new GithubUrl()
+        new GithubUrl("github")
             .withUsername("eclipse")
             .withRepository("che")
             .withBranch("main")
+            .withServerUrl("https://github.com")
             .withLatestCommit("d74923ebf968454cf13251f17df69dcd87d3b932");
 
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
     when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
+        .thenReturn(new PersonalAccessToken("foo", "provider", "che", "my-token"));
 
     fileContentProvider.fetchContent("devfile.yaml");
 
@@ -71,9 +72,10 @@ public class GithubAuthorizingFileContentProviderTest {
     String raw_url = "https://raw.githubusercontent.com/foo/bar/branch-name/devfile.yaml";
 
     GithubUrl githubUrl =
-        new GithubUrl()
+        new GithubUrl("github")
             .withUsername("eclipse")
             .withRepository("che")
+            .withServerUrl("https://github.com")
             .withBranch("main")
             .withLatestCommit("9ac2f42ed62944d164f189afd57f14a2793a7e4b");
 
@@ -82,7 +84,7 @@ public class GithubAuthorizingFileContentProviderTest {
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
     when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenReturn(new PersonalAccessToken(raw_url, "che", "my-token"));
+        .thenReturn(new PersonalAccessToken(raw_url, "provider", "che", "my-token"));
 
     fileContentProvider.fetchContent(raw_url);
     verify(urlFetcher).fetch(eq(raw_url), eq("token my-token"));
@@ -92,7 +94,11 @@ public class GithubAuthorizingFileContentProviderTest {
   public void shouldThrowNotFoundForPublicRepos() throws Exception {
     String url = "https://raw.githubusercontent.com/foo/bar/branch-name/devfile.yaml";
 
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withServerUrl("https://github.com");
 
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     FileContentProvider fileContentProvider =
@@ -109,7 +115,11 @@ public class GithubAuthorizingFileContentProviderTest {
   @Test(expectedExceptions = DevfileException.class)
   public void shouldThrowDevfileException() throws Exception {
     String url = "https://raw.githubusercontent.com/foo/bar/branch-name/devfile.yaml";
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withServerUrl("https://github.com");
 
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     FileContentProvider fileContentProvider =
@@ -128,10 +138,14 @@ public class GithubAuthorizingFileContentProviderTest {
     String raw_url = "https://ghserver.com/foo/bar/branch-name/devfile.yaml";
 
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
-    GithubUrl githubUrl = new GithubUrl().withUsername("eclipse").withRepository("che");
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withServerUrl("https://github.com");
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
-    var personalAccessToken = new PersonalAccessToken(raw_url, "che", "my-token");
+    var personalAccessToken = new PersonalAccessToken(raw_url, "provider", "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     fileContentProvider.fetchContent(raw_url);

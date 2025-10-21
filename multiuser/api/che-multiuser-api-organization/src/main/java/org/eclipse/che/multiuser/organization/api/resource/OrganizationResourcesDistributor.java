@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,11 +26,8 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.commons.lang.concurrent.Unlocker;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.multiuser.organization.api.OrganizationManager;
-import org.eclipse.che.multiuser.organization.api.event.BeforeOrganizationRemovedEvent;
 import org.eclipse.che.multiuser.organization.shared.model.OrganizationDistributedResources;
 import org.eclipse.che.multiuser.organization.spi.OrganizationDistributedResourcesDao;
 import org.eclipse.che.multiuser.organization.spi.impl.OrganizationDistributedResourcesImpl;
@@ -68,13 +65,6 @@ public class OrganizationResourcesDistributor {
     this.resourcesLocks = resourcesLocks;
     this.resourceManager = resourceManager;
     this.resourceAggregator = resourceAggregator;
-  }
-
-  @Inject
-  public void subscribe(EventService eventService) {
-    eventService.subscribe(
-        new RemoveOrganizationDistributedResourcesSubscriber(),
-        BeforeOrganizationRemovedEvent.class);
   }
 
   /**
@@ -223,15 +213,5 @@ public class OrganizationResourcesDistributor {
       throw new ConflictException("It is not allowed to cap resources for root organization.");
     }
     return parentOrganization;
-  }
-
-  class RemoveOrganizationDistributedResourcesSubscriber
-      extends CascadeEventSubscriber<BeforeOrganizationRemovedEvent> {
-    @Override
-    public void onCascadeEvent(BeforeOrganizationRemovedEvent event) throws ServerException {
-      if (event.getOrganization().getParent() != null) {
-        organizationDistributedResourcesDao.remove(event.getOrganization().getId());
-      }
-    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -37,7 +38,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
-import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -63,8 +63,7 @@ public class GitlabOAuthTokenFetcherTest {
     WireMock.configureFor("localhost", wireMockServer.port());
     wireMock = new WireMock("localhost", wireMockServer.port());
     oAuthTokenFetcher =
-        new GitlabOAuthTokenFetcher(
-            wireMockServer.url("/"), wireMockServer.url("/"), "http://che.api", oAuthAPI);
+        new GitlabOAuthTokenFetcher(wireMockServer.url("/"), "http://che.api", oAuthAPI);
   }
 
   @AfterMethod
@@ -75,11 +74,11 @@ public class GitlabOAuthTokenFetcherTest {
   @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
-          "Current token doesn't have the necessary  privileges. Please make sure Che app scopes are correct and containing at least: \\[api, write_repository\\]")
+          "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[api, write_repository]")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("oauthtoken").withScope("api repo");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/api/v4/user"))
@@ -105,7 +104,7 @@ public class GitlabOAuthTokenFetcherTest {
       expectedExceptionsMessageRegExp = "Username is not authorized in gitlab OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
-    when(oAuthAPI.getToken(anyString())).thenThrow(UnauthorizedException.class);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
 
     oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
@@ -115,7 +114,7 @@ public class GitlabOAuthTokenFetcherTest {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     OAuthToken oAuthToken =
         newDto(OAuthToken.class).withToken("oauthtoken").withScope("api write_repository openid");
-    when(oAuthAPI.getToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
@@ -139,15 +138,6 @@ public class GitlabOAuthTokenFetcherTest {
   }
 
   @Test(
-      expectedExceptions = ConfigurationException.class,
-      expectedExceptionsMessageRegExp =
-          "GitLab OAuth integration endpoint must be present in registered GitLab endpoints list.")
-  public void shouldThrowConfigurationExceptionIfOauthEndpointNotInTheList() throws Exception {
-    new GitlabOAuthTokenFetcher(
-        wireMockServer.url("/"), "http://foo.bar", "http://che.api", oAuthAPI);
-  }
-
-  @Test(
       expectedExceptions = ScmCommunicationException.class,
       expectedExceptionsMessageRegExp =
           "OAuth 2 is not configured for SCM provider \\[gitlab\\]. For details, refer "
@@ -155,7 +145,7 @@ public class GitlabOAuthTokenFetcherTest {
   public void shouldThrowScmCommunicationExceptionWhenNoOauthIsConfigured() throws Exception {
     Subject subject = new SubjectImpl("Username", "id1", "token", false);
     GitlabOAuthTokenFetcher localFetcher =
-        new GitlabOAuthTokenFetcher(wireMockServer.url("/"), null, "http://che.api", oAuthAPI);
+        new GitlabOAuthTokenFetcher(wireMockServer.url("/"), "http://che.api", null);
     localFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
 
@@ -178,11 +168,31 @@ public class GitlabOAuthTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            wireMockServer.baseUrl(), "oauth2-token-name", "tid-23434", "token123", null);
+            wireMockServer.baseUrl(),
+            "provider",
+            "oauth2-token-name",
+            "tid-23434",
+            "token123",
+            null);
 
     Optional<Pair<Boolean, String>> valid = oAuthTokenFetcher.isValid(params);
 
     assertTrue(valid.isPresent());
     assertTrue(valid.get().first);
+  }
+
+  @Test(
+      expectedExceptions = ScmUnauthorizedException.class,
+      expectedExceptionsMessageRegExp = "Username is not authorized in gitlab OAuth provider.")
+  public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
+    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("token").withScope("");
+    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    stubFor(
+        get(urlEqualTo("/api/v4/user"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token token"))
+            .willReturn(aResponse().withStatus(HTTP_FORBIDDEN)));
+
+    oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
 }

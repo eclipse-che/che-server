@@ -13,13 +13,23 @@ components:
   - name: m2
     volume: {}
 commands:
-  - id: build
+  - id: buildsources
     exec:
-      label: "1. Build"
+      label: "1. Build sources"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: |
-        mvn clean install -DskipTests
+        mvn clean install -V -e -Pfast -DskipTests -Dskip-validate-sources -Denforcer.skip=true
+      group:
+        kind: build
+        isDefault: true
+  - id: buildimage
+    exec:
+      label: "2. Build image"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: |
+        ./build/build.sh
       group:
         kind: build
         isDefault: true

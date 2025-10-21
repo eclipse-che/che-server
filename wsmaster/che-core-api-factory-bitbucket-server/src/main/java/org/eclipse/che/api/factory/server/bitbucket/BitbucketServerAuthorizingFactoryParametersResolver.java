@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static org.eclipse.che.api.factory.shared.Constants.REVISION_PARAMETER_NAME;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
@@ -22,18 +23,15 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryVisitor;
 import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for both public and private bitbucket repositories.
@@ -97,7 +95,9 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
 
     // no need to check null value of url parameter as accept() method has performed the check
     final BitbucketServerUrl bitbucketServerUrl =
-        bitbucketURLParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+        bitbucketURLParser.parse(
+            factoryParameters.get(URL_PARAMETER_NAME),
+            factoryParameters.get(REVISION_PARAMETER_NAME));
     // create factory from the following location if location exists, else create default factory
     return createFactory(
         factoryParameters,
@@ -134,38 +134,10 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
       }
       return factoryDto.withScmInfo(scmInfo);
     }
-
-    @Override
-    public FactoryDto visit(FactoryDto factory) {
-      if (factory.getDevfile() == null) {
-        // initialize default devfile
-        factory.setDevfile(
-            urlFactoryBuilder.buildDefaultDevfile(bitbucketServerUrl.getRepository()));
-      }
-
-      updateProjects(
-          factory.getDevfile(),
-          () ->
-              newDto(ProjectDto.class)
-                  .withSource(
-                      newDto(SourceDto.class)
-                          .withLocation(bitbucketServerUrl.repositoryLocation())
-                          .withType("git")
-                          .withBranch(bitbucketServerUrl.getBranch()))
-                  .withName(bitbucketServerUrl.getRepository()),
-          project -> {
-            final String location = project.getSource().getLocation();
-            if (location.equals(bitbucketServerUrl.repositoryLocation())) {
-              project.getSource().setBranch(bitbucketServerUrl.getBranch());
-            }
-          });
-
-      return factory;
-    }
   }
 
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
-    return bitbucketURLParser.parse(factoryUrl);
+    return bitbucketURLParser.parse(factoryUrl, null);
   }
 }

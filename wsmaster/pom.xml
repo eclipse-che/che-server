@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2023 Red Hat, Inc.
+    Copyright (c) 2012-2025 Red Hat, Inc.
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-core-parent</artifactId>
         <groupId>org.eclipse.che.core</groupId>
-        <version>7.76.0-SNAPSHOT</version>
+        <version>7.111.0-SNAPSHOT</version>
         <relativePath>../core/pom.xml</relativePath>
     </parent>
     <artifactId>che-master-parent</artifactId>
@@ -29,7 +29,9 @@
         <module>che-core-api-auth-azure-devops</module>
         <module>che-core-api-auth-bitbucket</module>
         <module>che-core-api-auth-github</module>
+        <module>che-core-api-auth-github-common</module>
         <module>che-core-api-auth-gitlab</module>
+        <module>che-core-api-auth-gitlab-common</module>
         <module>che-core-api-auth-openshift</module>
         <module>che-core-api-workspace-shared</module>
         <module>che-core-api-workspace</module>
@@ -44,7 +46,9 @@
         <module>che-core-api-factory-shared</module>
         <module>che-core-api-factory</module>
         <module>che-core-api-factory-github</module>
+        <module>che-core-api-factory-github-common</module>
         <module>che-core-api-factory-gitlab</module>
+        <module>che-core-api-factory-gitlab-common</module>
         <module>che-core-api-factory-bitbucket</module>
         <module>che-core-api-factory-bitbucket-server</module>
         <module>che-core-api-ssh</module>

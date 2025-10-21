@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -24,8 +24,6 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.model.impl.ProfileImpl;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 
 @Singleton
 public class JpaProfileDao implements ProfileDao {
@@ -37,12 +35,6 @@ public class JpaProfileDao implements ProfileDao {
     requireNonNull(profile, "Required non-null profile");
     try {
       doCreate(profile);
-    } catch (DuplicateKeyException x) {
-      throw new ConflictException(
-          format("Profile for user with id '%s' already exists", profile.getUserId()));
-    } catch (IntegrityConstraintViolationException x) {
-      throw new ConflictException(
-          format("User with id '%s' referenced by profile doesn't exist", profile.getUserId()));
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
     }

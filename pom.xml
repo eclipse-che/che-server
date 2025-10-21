@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2023 Red Hat, Inc.
+    Copyright (c) 2012-2025 Red Hat, Inc.
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.che</groupId>
     <artifactId>che-server</artifactId>
-    <version>7.68.0-SNAPSHOT</version>
+    <version>7.111.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
     <description>Eclipse Che Server</description>
@@ -37,7 +37,6 @@
         <module>wsmaster</module>
         <module>multiuser</module>
         <module>infrastructures</module>
-        <module>wsmaster/integration-tests</module>
         <module>assembly</module>
     </modules>
     <scm>
@@ -48,33 +47,32 @@
     </scm>
     <properties>
         <aopalliance.version>1.0</aopalliance.version>
-        <ch.qos.logback.version>1.2.11</ch.qos.logback.version>
-        <com.auth0.jwks-rsa.version>0.20.0</com.auth0.jwks-rsa.version>
-        <com.fasterxml.jackson.version>2.14.1</com.fasterxml.jackson.version>
+        <ch.qos.logback.version>1.5.6</ch.qos.logback.version>
+        <com.auth0.jwks-rsa.version>0.22.1</com.auth0.jwks-rsa.version>
+        <com.fasterxml.jackson.version>2.15.2</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
-        <com.github.tomakehurst.wiremock-jre8-standalone.version>2.32.0</com.github.tomakehurst.wiremock-jre8-standalone.version>
         <com.google.code.guice.version>5.0.1</com.google.code.guice.version>
         <com.google.errorprone>2.3.4</com.google.errorprone>
-        <com.google.guava.version>31.1-jre</com.google.guava.version>
-        <com.google.http-client.version>1.40.1</com.google.http-client.version>
+        <com.google.guava.version>32.1.2-jre</com.google.guava.version>
+        <com.google.http-client.version>1.43.3</com.google.http-client.version>
         <com.google.oauth-client.version>1.34.1</com.google.oauth-client.version>
-        <com.googlecode.gson.version>2.8.9</com.googlecode.gson.version>
-        <com.h2database.version>2.1.210</com.h2database.version>
+        <com.googlecode.gson.version>2.10.1</com.googlecode.gson.version>
+        <com.h2database.version>2.2.224</com.h2database.version>
         <com.jcraft.jsch.version>0.1.55</com.jcraft.jsch.version>
-        <com.squareup.okhttp3.version>3.14.9</com.squareup.okhttp3.version>
-        <com.squareup.okio.version>1.17.2</com.squareup.okio.version>
+        <com.squareup.okio.version>3.6.0</com.squareup.okio.version>
         <commons-fileupload.version>1.5</commons-fileupload.version>
-        <commons-io.version>2.11.0</commons-io.version>
+        <commons-io.version>2.14.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <enforcer.skip>false</enforcer.skip>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client>5.12.4</io.fabric8.kubernetes-client>
+        <io.fabric8.kubernetes-client.version>7.4.0</io.fabric8.kubernetes-client.version>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.11.2</io.jsonwebtoken.jjwt.version>
-        <io.micrometer.version>1.10.5</io.micrometer.version>
+        <io.micrometer.version>1.11.4</io.micrometer.version>
+        <io.netty.version>4.2.6.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
         <io.opentracing.contrib.metrics.version>0.3.0</io.opentracing.contrib.metrics.version>
@@ -84,28 +82,28 @@
         <io.opentracing.web-servlet-filter.version>0.4.1</io.opentracing.web-servlet-filter.version>
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
         <io.rest-assured.version>4.4.0</io.rest-assured.version>
-        <io.swagger.version>2.1.11</io.swagger.version>
-        <jakarta.activation.version>2.0.1</jakarta.activation.version>
-        <jakarta.annotation.version>2.0.0</jakarta.annotation.version>
+        <io.swagger.version>2.2.16</io.swagger.version>
+        <jakarta.activation.version>2.1.2</jakarta.activation.version>
+        <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
-        <jakarta.json.version>2.0.0</jakarta.json.version>
+        <jakarta.json.version>2.0.1</jakarta.json.version>
         <jakarta.mail.version>2.0.1</jakarta.mail.version>
-        <jakarta.servlet.version>5.0.0</jakarta.servlet.version>
-        <jakarta.validatio-api.version>3.0.0</jakarta.validatio-api.version>
+        <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
+        <jakarta.validatio-api.version>3.0.2</jakarta.validatio-api.version>
         <jakarta.websocket.version>2.0.0</jakarta.websocket.version>
-        <jakarta.ws.rs.version>3.0.0</jakarta.ws.rs.version>
+        <jakarta.ws.rs.version>3.1.0</jakarta.ws.rs.version>
         <java.target.version>11</java.target.version>
         <jdk.min.version>${java.target.version}</jdk.min.version>
-        <junit.junit.version>4.12</junit.junit.version>
+        <junit.junit.version>4.13.2</junit.junit.version>
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
-        <che.version>7.68.0-SNAPSHOT</che.version>
+        <che.version>7.111.0-SNAPSHOT</che.version>
         <specification.version>1.0-beta2</specification.version>
         <?SORTPOM RESUME?>
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>
-        <logstash.logback.encoder.version>7.0.1</logstash.logback.encoder.version>
-        <maven.antrun.plugin.version>3.0.0</maven.antrun.plugin.version>
+        <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
+        <maven.antrun.plugin.version>3.1.0</maven.antrun.plugin.version>
         <maven.assembly.plugin.version>3.5.0</maven.assembly.plugin.version>
         <maven.buildhelper.plugin.version>3.2.0</maven.buildhelper.plugin.version>
         <maven.buildnumber.plugin.version>3.0.0</maven.buildnumber.plugin.version>
@@ -117,7 +115,7 @@
         <maven.fabric8io.docker.plugin.version>0.37.0</maven.fabric8io.docker.plugin.version>
         <maven.failsafe.plugin.version>3.0.0-M5</maven.failsafe.plugin.version>
         <maven.fmt.plugin.version>2.13</maven.fmt.plugin.version>
-        <maven.install.plugin.version>3.0.0-M1</maven.install.plugin.version>
+        <maven.install.plugin.version>3.1.1</maven.install.plugin.version>
         <maven.jacoco.plugin.version>0.8.7</maven.jacoco.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <maven.mycila.license.plugin.version>4.1</maven.mycila.license.plugin.version>
@@ -129,33 +127,35 @@
         <maven.supported-versions>[3.6.2,)</maven.supported-versions>
         <maven.surefire.plugin.version>3.0.0-M5</maven.surefire.plugin.version>
         <maven.war.plugin.version>3.3.2</maven.war.plugin.version>
-        <mysql.connector.version>8.0.27</mysql.connector.version>
+        <mysql.connector.version>8.0.33</mysql.connector.version>
         <net.java.dev.jna.version>4.1.0</net.java.dev.jna.version>
-        <org.antlr.st4.version>4.3.1</org.antlr.st4.version>
-        <org.apache.commons.lang3.version>3.12.0</org.apache.commons.lang3.version>
-        <org.apache.httpcomponents.httpclient.version>4.5.13</org.apache.httpcomponents.httpclient.version>
-        <org.apache.httpcomponents.httpcore.version>4.4.15</org.apache.httpcomponents.httpcore.version>
+        <org.antlr.st4.version>4.3.4</org.antlr.st4.version>
+        <org.apache.commons.lang3.version>3.13.0</org.apache.commons.lang3.version>
+        <org.apache.httpcomponents.httpclient.version>4.5.14</org.apache.httpcomponents.httpclient.version>
+        <org.apache.httpcomponents.httpcore.version>4.4.16</org.apache.httpcomponents.httpcore.version>
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.3.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
-        <org.apache.maven.plugin-tools.plugin-annotations.version>3.6.2</org.apache.maven.plugin-tools.plugin-annotations.version>
-        <org.apache.maven.verson>3.8.4</org.apache.maven.verson>
-        <org.apache.tomcat.version>10.1.6</org.apache.tomcat.version>
+        <org.apache.maven.plugin-tools.plugin-annotations.version>3.9.0</org.apache.maven.plugin-tools.plugin-annotations.version>
+        <org.apache.maven.version>3.9.4</org.apache.maven.version>
+        <org.apache.tomcat.version>10.1.39</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>4.0.0</org.codehaus.plexus.utils.version>
+        <org.eclipse.jetty.version>11.0.24</org.eclipse.jetty.version>
         <org.eclipse.persistence.eclipselink.version>2.7.10</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.3</org.eclipse.persistence.version>
-        <org.eclipse.sisu.version>0.3.5</org.eclipse.sisu.version>
+        <org.eclipse.sisu.version>0.9.0.M2</org.eclipse.sisu.version>
         <org.everrest.version>1.15.0</org.everrest.version>
         <org.flyway.version>4.2.0</org.flyway.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
         <org.javassist.version>3.29.2-GA</org.javassist.version>
-        <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
+        <org.jgroups.kubernetes.version>2.0.1.Final</org.jgroups.kubernetes.version>
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
-        <org.mockito.mockito-testng.version>0.4.13</org.mockito.mockito-testng.version>
+        <org.mockito.mockito-testng.version>0.5.2</org.mockito.mockito-testng.version>
         <org.mockito.version>3.11.2</org.mockito.version>
-        <org.postgresql.version>42.5.1</org.postgresql.version>
+        <org.postgresql.version>42.6.0</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>
-        <org.slf4j.version>1.7.36</org.slf4j.version>
-        <org.testng.version>7.4.0</org.testng.version>
+        <org.slf4j.version>2.0.9</org.slf4j.version>
+        <org.testng.version>7.8.0</org.testng.version>
+        <org.wiremock.version>3.0.1</org.wiremock.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -187,7 +187,7 @@
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
                 <artifactId>wiremock-jre8-standalone</artifactId>
-                <version>${com.github.tomakehurst.wiremock-jre8-standalone.version}</version>
+                <version>${org.wiremock.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.gson</groupId>
@@ -272,21 +272,6 @@
                 <version>${com.jcraft.jsch.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>logging-interceptor</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>mockwebserver</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>${com.squareup.okhttp3.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.squareup.okio</groupId>
                 <artifactId>okio</artifactId>
                 <version>${com.squareup.okio.version}</version>
@@ -322,11 +307,6 @@
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>${commons-lang.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.fabric8</groupId>
-                <artifactId>openshift-server-mock</artifactId>
-                <version>${io.fabric8.kubernetes-client}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.mweirauch</groupId>
@@ -387,6 +367,26 @@
                 <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${io.micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-dns</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-http2</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${io.netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler-proxy</artifactId>
+                <version>${io.netty.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.opentracing</groupId>
@@ -467,10 +467,6 @@
                     <exclusion>
                         <artifactId>xml-path</artifactId>
                         <groupId>io.rest-assured</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>hamcrest</artifactId>
-                        <groupId>org.hamcrest</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -558,27 +554,27 @@
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-artifact</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-compat</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-core</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-model</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
-                <version>${org.apache.maven.verson}</version>
+                <version>${org.apache.maven.version}</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>jsr250-api</artifactId>
@@ -689,7 +685,17 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-auth-github-common</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-auth-gitlab</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-auth-gitlab-common</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>
@@ -771,7 +777,17 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-factory-github-common</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-factory-gitlab</artifactId>
+                <version>${che.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-factory-gitlab-common</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>
@@ -1410,6 +1426,11 @@
                 <version>${org.testng.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.wiremock</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>${org.wiremock.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>${com.fasterxml.jackson.version}</version>
@@ -1418,8 +1439,8 @@
             </dependency>
             <dependency>
                 <groupId>io.fabric8</groupId>
-                <artifactId>kubernetes-client</artifactId>
-                <version>${io.fabric8.kubernetes-client}</version>
+                <artifactId>kubernetes-client-api</artifactId>
+                <version>${io.fabric8.kubernetes-client.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -1445,6 +1466,24 @@
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-commons-test</artifactId>
                 <version>${che.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-security</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -1819,6 +1858,25 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <plugin>
+                    <groupId>com.gradle</groupId>
+                    <artifactId>develocity-maven-extension</artifactId>
+                    <configuration>
+                        <develocity>
+                            <normalization>
+                                <runtimeClassPath>
+                                    <metaInf>
+                                        <ignoredAttributes>
+                                            <ignore>Implementation-Version</ignore>
+                                            <ignore>Date</ignore>
+                                            <ignore>SCM-Revision</ignore>
+                                        </ignoredAttributes>
+                                    </metaInf>
+                                </runtimeClassPath>
+                            </normalization>
+                        </develocity>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -1884,7 +1942,8 @@
                                         <!-- Exclude javax dependencies in favor of Jakarta -->
                                         <exclude>javax.activation:activation</exclude>
                                         <exclude>javax.activation:javax.activation-api</exclude>
-                                        <exclude>javax.annotation:javax.annotation-api</exclude>
+                                        <!-- Uncomment when the dependency is removed from io.fabric8.kubernetes-client -->
+                                        <!-- <exclude>javax.annotation:javax.annotation-api</exclude>-->
                                         <exclude>javax.enterprise:cdi-api</exclude>
                                         <exclude>javax.inject:javax.inject</exclude>
                                         <exclude>javax.json:javax.json-api</exclude>

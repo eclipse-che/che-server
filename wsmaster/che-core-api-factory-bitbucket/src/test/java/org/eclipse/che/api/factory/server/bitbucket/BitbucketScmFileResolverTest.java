@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -75,7 +75,7 @@ public class BitbucketScmFileResolverTest {
     when(bitbucketApiClient.getFileContent(
             eq("test"), eq("repo"), eq("HEAD"), eq("devfile.yaml"), eq("my-token")))
         .thenReturn(rawContent);
-    var personalAccessToken = new PersonalAccessToken("foo", "che", "my-token");
+    var personalAccessToken = new PersonalAccessToken("foo", "provider", "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     String content =

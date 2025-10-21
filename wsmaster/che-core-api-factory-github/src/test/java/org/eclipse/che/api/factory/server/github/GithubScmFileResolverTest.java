@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.github;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -85,9 +86,11 @@ public class GithubScmFileResolverTest {
             anyString()))
         .thenReturn(rawContent);
 
-    when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
+    lenient()
+        .when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenReturn(new PersonalAccessToken("foo", "provider", "che", "my-token"));
 
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
     when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
         .thenReturn(
             new GithubCommit()
@@ -103,7 +106,8 @@ public class GithubScmFileResolverTest {
   @Test
   public void shouldReturnContentWithoutAuthentication() throws Exception {
     // given
-    when(personalAccessTokenManager.getAndStore(anyString()))
+    lenient()
+        .when(personalAccessTokenManager.getAndStore(anyString()))
         .thenThrow(new ScmUnauthorizedException("message", "github", "v1", "url"));
 
     // when

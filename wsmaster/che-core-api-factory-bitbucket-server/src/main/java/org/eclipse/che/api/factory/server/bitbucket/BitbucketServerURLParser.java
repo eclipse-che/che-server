@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,11 +11,13 @@
  */
 package org.eclipse.che.api.factory.server.bitbucket;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 
 import com.google.common.base.Splitter;
 import jakarta.validation.constraints.NotNull;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -50,11 +52,13 @@ public class BitbucketServerURLParser {
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private static final List<String> bitbucketUrlPatternTemplates =
       List.of(
-          "^(?<host>%s)/scm/~(?<user>[^/]+)/(?<repo>.*).git$",
-          "^(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?",
-          "^(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/?",
-          "^(?<host>%s)/scm/(?<project>[^/~]+)/(?<repo>[^/]+).git",
-          "^(?<host>%s)/projects/(?<project>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?");
+          "^(?<scheme>%s)://(?<host>%s)/scm/~(?<user>[^/]+)/(?<repo>.*).git$",
+          "^(?<scheme>%s)://(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?",
+          "^(?<scheme>%s)://(?<host>%s)/users/(?<user>[^/]+)/repos/(?<repo>[^/]+)/?",
+          "^(?<scheme>%s)://(?<host>%s)/scm/(?<project>[^/~]+)/(?<repo>[^/]+).git",
+          "^(?<scheme>%s)://(?<host>%s)/projects/(?<project>[^/]+)/repos/(?<repo>[^/]+)/browse(\\?at=(?<branch>.*))?",
+          "^(?<scheme>%s)://git@(?<host>%s):?(?<port>\\d*)?/~(?<user>[^/]+)/(?<repo>.*).git$",
+          "^(?<scheme>%s)://git@(?<host>%s):?(?<port>\\d*)?/(?<project>[^/]+)/(?<repo>.*).git$");
   private final List<Pattern> bitbucketUrlPatterns = new ArrayList<>();
   private static final String OAUTH_PROVIDER_NAME = "bitbucket-server";
 
@@ -67,26 +71,27 @@ public class BitbucketServerURLParser {
     this.devfileFilenamesProvider = devfileFilenamesProvider;
     this.oAuthAPI = oAuthAPI;
     this.personalAccessTokenManager = personalAccessTokenManager;
-    if (bitbucketEndpoints != null) {
+    if (!isNullOrEmpty(bitbucketEndpoints)) {
       for (String bitbucketEndpoint : Splitter.on(",").split(bitbucketEndpoints)) {
         String trimmedEndpoint = StringUtils.trimEnd(bitbucketEndpoint, '/');
-        bitbucketUrlPatternTemplates.forEach(
-            t -> bitbucketUrlPatterns.add(Pattern.compile(format(t, trimmedEndpoint))));
+        bitbucketUrlPatterns.addAll(getUrlPatterns(trimmedEndpoint));
       }
     }
   }
 
   private boolean isUserTokenPresent(String repositoryUrl) {
     String serverUrl = getServerUrl(repositoryUrl);
+    URI uri = URI.create(repositoryUrl);
+    String schema = uri.getScheme();
+    String host = uri.getHost();
     if (bitbucketUrlPatternTemplates.stream()
-        .anyMatch(t -> Pattern.compile(format(t, serverUrl)).matcher(repositoryUrl).matches())) {
+        .anyMatch(t -> Pattern.compile(format(t, schema, host)).matcher(repositoryUrl).matches())) {
       try {
         Optional<PersonalAccessToken> token =
-            personalAccessTokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+            personalAccessTokenManager.get(
+                EnvironmentContext.getCurrent().getSubject(), null, serverUrl, null);
         return token.isPresent() && token.get().getScmTokenName().equals(OAUTH_PROVIDER_NAME);
-      } catch (ScmConfigurationPersistenceException
-          | ScmUnauthorizedException
-          | ScmCommunicationException exception) {
+      } catch (ScmConfigurationPersistenceException | ScmCommunicationException exception) {
         return false;
       }
     }
@@ -94,16 +99,35 @@ public class BitbucketServerURLParser {
   }
 
   public boolean isValid(@NotNull String url) {
-    if (!bitbucketUrlPatterns.isEmpty()) {
+    if (!url.contains("://")) {
+      return false;
+    } else if (!bitbucketUrlPatterns.isEmpty()) {
       return bitbucketUrlPatterns.stream().anyMatch(pattern -> pattern.matcher(url).matches());
     } else {
       return
       // If Bitbucket server URL is not configured try to find it in a manually added user namespace
       // token.
       isUserTokenPresent(url)
-          // Try to call an API request to see if the URL matches Bitbucket.
-          || isApiRequestRelevant(url);
+          // Try to call an API request to see if the URL matches Bitbucket Server.
+          || (isApiRequestRelevant(url)
+              // Also check if the URL matches the Bitbucket Server url pattern.
+              && getUrlPatterns(getServerUrl(url)).stream()
+                  .anyMatch(pattern -> pattern.matcher(url).matches()));
     }
+  }
+
+  private List<Pattern> getUrlPatterns(String url) {
+    URI uri = URI.create(url);
+    ArrayList<Pattern> patterns = new ArrayList<>();
+    bitbucketUrlPatternTemplates.forEach(
+        t -> {
+          String scheme = t.contains("git@") ? "ssh" : uri.getScheme();
+          String host =
+              uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "") + uri.getPath();
+          ;
+          patterns.add(Pattern.compile(format(t, scheme, host)));
+        });
+    return patterns;
   }
 
   private boolean isApiRequestRelevant(String repositoryUrl) {
@@ -114,9 +138,9 @@ public class BitbucketServerURLParser {
               new BitbucketServerOAuthAuthenticator("", "", "", ""),
               oAuthAPI,
               "");
-      // If the token request catches the unauthorised error, it means that the provided url
+      // If the user request catches the unauthorised error, it means that the provided url
       // belongs to Bitbucket.
-      bitbucketServerApiClient.getPersonalAccessToken("", 0L);
+      bitbucketServerApiClient.getUser();
     } catch (ScmItemNotFoundException | ScmCommunicationException e) {
       return false;
     } catch (ScmUnauthorizedException e) {
@@ -126,18 +150,29 @@ public class BitbucketServerURLParser {
   }
 
   private String getServerUrl(String repositoryUrl) {
+    if (repositoryUrl.startsWith("ssh://git@")) {
+      String substring = repositoryUrl.substring(10);
+      return "https://"
+          + substring.substring(
+              0, substring.contains(":") ? substring.indexOf(":") : substring.indexOf("/"));
+    }
     return repositoryUrl.substring(
         0,
         repositoryUrl.indexOf("/scm") > 0
             ? repositoryUrl.indexOf("/scm")
             : repositoryUrl.indexOf("/users") > 0
                 ? repositoryUrl.indexOf("/users")
-                : repositoryUrl.length());
+                : repositoryUrl.indexOf("/projects") > 0
+                    ? repositoryUrl.indexOf("/projects")
+                    : repositoryUrl.length());
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
+    URI uri = URI.create(url);
+    String scheme = uri.getScheme();
+    String host = uri.getHost();
     return bitbucketUrlPatternTemplates.stream()
-        .map(t -> compile(format(t, getServerUrl(url))).matcher(url))
+        .map(t -> compile(format(t, scheme, host)).matcher(url))
         .filter(Matcher::matches)
         .findAny();
   }
@@ -147,12 +182,12 @@ public class BitbucketServerURLParser {
    * https://bitbucket.apps.cluster-cb82.cb82.example.opentlc.com/scm/test/test1.git into
    * BitbucketUrl objects.
    */
-  public BitbucketServerUrl parse(String url) {
+  public BitbucketServerUrl parse(String url, @Nullable String revision) {
 
     if (bitbucketUrlPatterns.isEmpty()) {
       Optional<Matcher> matcherOptional = getPatternMatcherByUrl(url);
       if (matcherOptional.isPresent()) {
-        return parse(matcherOptional.get());
+        return parse(matcherOptional.get(), revision);
       }
       throw new UnsupportedOperationException(
           "The Bitbucket integration is not configured properly and cannot be used at this moment."
@@ -170,11 +205,18 @@ public class BitbucketServerURLParser {
                         format(
                             "The given url %s is not a valid Bitbucket server URL. Check either URL or server configuration.",
                             url)));
-    return parse(matcher).withUrl(url);
+    return parse(matcher, revision).withUrl(url);
   }
 
-  private BitbucketServerUrl parse(Matcher matcher) {
+  private BitbucketServerUrl parse(Matcher matcher, @Nullable String revision) {
+    String scheme = matcher.group("scheme");
     String host = matcher.group("host");
+    String port = null;
+    try {
+      port = matcher.group("port");
+    } catch (IllegalArgumentException e) {
+      // keep port with null, as the pattern doesn't have the port group
+    }
     String user = null;
     String project = null;
     try {
@@ -183,19 +225,21 @@ public class BitbucketServerURLParser {
       project = matcher.group("project");
     }
     String repoName = matcher.group("repo");
-    String branch = null;
+    String branchFromUrl = null;
     try {
-      branch = matcher.group("branch");
+      branchFromUrl = matcher.group("branch");
     } catch (IllegalArgumentException e) {
       // keep branch with null, as the pattern doesn't have the branch group
     }
 
     return new BitbucketServerUrl()
+        .withScheme(scheme)
         .withHostName(host)
+        .withPort(port)
         .withProject(project)
         .withUser(user)
         .withRepository(repoName)
-        .withBranch(branch)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
   }
 }

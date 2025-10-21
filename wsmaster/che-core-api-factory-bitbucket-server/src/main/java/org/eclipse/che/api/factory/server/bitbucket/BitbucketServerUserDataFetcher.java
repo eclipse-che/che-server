@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -73,14 +73,14 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
   }
 
   @Override
-  public GitUserData fetchGitUserData()
+  public GitUserData fetchGitUserData(String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException,
           ScmConfigurationPersistenceException, ScmItemNotFoundException {
     Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
     for (String bitbucketServerEndpoint : this.registeredBitbucketEndpoints) {
       if (bitbucketServerApiClient.isConnected(bitbucketServerEndpoint)) {
         try {
-          BitbucketUser user = bitbucketServerApiClient.getUser(cheSubject);
+          BitbucketUser user = bitbucketServerApiClient.getUser();
           return new GitUserData(user.getDisplayName(), user.getEmailAddress());
         } catch (ScmItemNotFoundException e) {
           throw new ScmCommunicationException(e.getMessage(), e);
@@ -90,7 +90,7 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
 
     // Try go get user data using personal access token
     Optional<PersonalAccessToken> personalAccessToken =
-        this.personalAccessTokenManager.get(cheSubject, OAUTH_PROVIDER_NAME, null);
+        this.personalAccessTokenManager.get(cheSubject, OAUTH_PROVIDER_NAME, null, namespaceName);
     if (personalAccessToken.isPresent()) {
       PersonalAccessToken token = personalAccessToken.get();
       HttpBitbucketServerApiClient httpBitbucketServerApiClient =
@@ -100,8 +100,7 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
               oAuthAPI,
               this.apiEndpoint);
 
-      BitbucketUser user =
-          httpBitbucketServerApiClient.getUser(token.getScmUserName(), token.getToken());
+      BitbucketUser user = httpBitbucketServerApiClient.getUser(token.getToken());
       return new GitUserData(user.getDisplayName(), user.getEmailAddress());
     }
 

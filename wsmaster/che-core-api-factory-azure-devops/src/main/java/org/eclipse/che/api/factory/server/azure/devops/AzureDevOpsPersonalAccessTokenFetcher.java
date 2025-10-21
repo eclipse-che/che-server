@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,12 +27,14 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.lang.NameGenerator;
+import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
@@ -47,8 +49,9 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
 
   private static final Logger LOG =
       LoggerFactory.getLogger(AzureDevOpsPersonalAccessTokenFetcher.class);
+  private static final String OAUTH_PROVIDER_NAME = "azure-devops";
   private final String cheApiEndpoint;
-  private final String azureDevOpsScmApiEndpoint;
+  private final String azureDevOpsSAASApiEndpoint;
   private final OAuthAPI oAuthAPI;
   private final String[] scopes;
 
@@ -57,78 +60,94 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
   @Inject
   public AzureDevOpsPersonalAccessTokenFetcher(
       @Named("che.api") String cheApiEndpoint,
-      @Named("che.integration.azure.devops.scm.api_endpoint") String azureDevOpsScmApiEndpoint,
+      @Named("che.integration.azure.devops.scm.api_endpoint") String azureDevOpsSAASApiEndpoint,
       @Named("che.integration.azure.devops.application_scopes") String[] scopes,
       AzureDevOpsApiClient azureDevOpsApiClient,
       OAuthAPI oAuthAPI) {
     this.cheApiEndpoint = cheApiEndpoint;
-    this.azureDevOpsScmApiEndpoint = trimEnd(azureDevOpsScmApiEndpoint, '/');
+    this.azureDevOpsSAASApiEndpoint = trimEnd(azureDevOpsSAASApiEndpoint, '/');
     this.oAuthAPI = oAuthAPI;
     this.scopes = scopes;
     this.azureDevOpsApiClient = azureDevOpsApiClient;
   }
 
   @Override
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, true);
+  }
+
+  @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, false);
+  }
+
+  private PersonalAccessToken fetchOrRefreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, boolean forceRefreshToken)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
-    if (!isValidScmServerUrl(scmServerUrl)) {
+    if (!isValidAzureDevOpsSAASUrl(scmServerUrl)) {
       LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
       return null;
     }
 
     try {
-      oAuthToken = oAuthAPI.getToken(AzureDevOps.PROVIDER_NAME);
-      // Find the user associated to the OAuth token by querying the Azure DevOps API.
-      AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(oAuthToken.getToken());
-      PersonalAccessToken token =
-          new PersonalAccessToken(
-              scmServerUrl,
-              cheSubject.getUserId(),
-              user.getEmailAddress(),
-              NameGenerator.generate(OAUTH_2_PREFIX, 5),
-              NameGenerator.generate("id-", 5),
-              oAuthToken.getToken());
-      Optional<Boolean> valid = isValid(token);
+      oAuthToken =
+          forceRefreshToken
+              ? oAuthAPI.refreshToken(AzureDevOps.PROVIDER_NAME)
+              : oAuthAPI.getOrRefreshToken(AzureDevOps.PROVIDER_NAME);
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
+      String tokenId = NameGenerator.generate("id-", 5);
+      Optional<Pair<Boolean, String>> valid =
+          isValid(
+              new PersonalAccessTokenParams(
+                  scmServerUrl,
+                  OAUTH_PROVIDER_NAME,
+                  tokenName,
+                  tokenId,
+                  oAuthToken.getToken(),
+                  null));
       if (valid.isEmpty()) {
-        throw new ScmCommunicationException(
-            "Unable to verify if current token is a valid Azure DevOps token.  Token's scm-url needs to be '"
-                + azureDevOpsScmApiEndpoint
-                + "' and was '"
-                + token.getScmProviderUrl()
-                + "'");
-      } else if (!valid.get()) {
+        throw buildScmUnauthorizedException(cheSubject);
+      } else if (!valid.get().first) {
         throw new ScmCommunicationException(
             "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: "
                 + Arrays.toString(scopes));
       }
-      return token;
+      return new PersonalAccessToken(
+          scmServerUrl,
+          OAUTH_PROVIDER_NAME,
+          cheSubject.getUserId(),
+          valid.get().second,
+          tokenName,
+          tokenId,
+          oAuthToken.getToken());
     } catch (UnauthorizedException e) {
-      throw new ScmUnauthorizedException(
-          cheSubject.getUserName()
-              + " is not authorized in "
-              + AzureDevOps.PROVIDER_NAME
-              + " OAuth provider.",
-          AzureDevOps.PROVIDER_NAME,
-          "2.0",
-          getLocalAuthenticateUrl());
+      throw buildScmUnauthorizedException(cheSubject);
     } catch (NotFoundException nfe) {
       throw new UnknownScmProviderException(nfe.getMessage(), scmServerUrl);
-    } catch (ServerException
-        | ForbiddenException
-        | BadRequestException
-        | ScmItemNotFoundException
-        | ScmBadRequestException
-        | ConflictException e) {
+    } catch (ServerException | ForbiddenException | BadRequestException | ConflictException e) {
       LOG.error(e.getMessage());
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }
 
+  private ScmUnauthorizedException buildScmUnauthorizedException(Subject cheSubject) {
+    return new ScmUnauthorizedException(
+        cheSubject.getUserName()
+            + " is not authorized in "
+            + AzureDevOps.PROVIDER_NAME
+            + " OAuth provider.",
+        AzureDevOps.PROVIDER_NAME,
+        "2.0",
+        getLocalAuthenticateUrl());
+  }
+
   @Override
   public Optional<Boolean> isValid(PersonalAccessToken personalAccessToken) {
-    if (!isValidScmServerUrl(personalAccessToken.getScmProviderUrl())) {
+    if (!isValidAzureDevOpsSAASUrl(personalAccessToken.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", personalAccessToken.getScmProviderUrl());
       return Optional.empty();
     }
@@ -144,8 +163,45 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
                 personalAccessToken.getToken(), personalAccessToken.getScmOrganization());
       }
       return Optional.of(personalAccessToken.getScmUserName().equals(user.getEmailAddress()));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException
+        | ScmCommunicationException
+        | ScmBadRequestException
+        | ScmUnauthorizedException e) {
       return Optional.of(Boolean.FALSE);
+    }
+  }
+
+  @Override
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+    if (!isValidAzureDevOpsSAASUrl(params.getScmProviderUrl())) {
+      if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
+        AzureDevOpsServerApiClient azureDevOpsServerApiClient =
+            new AzureDevOpsServerApiClient(params.getScmProviderUrl(), params.getOrganization());
+        try {
+          AzureDevOpsServerUserProfile user = azureDevOpsServerApiClient.getUser(params.getToken());
+          return Optional.of(Pair.of(Boolean.TRUE, user.getIdentity().getAccountName()));
+        } catch (ScmItemNotFoundException | ScmBadRequestException | ScmCommunicationException e) {
+          return Optional.empty();
+        }
+      } else {
+        LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
+        return Optional.empty();
+      }
+    }
+
+    try {
+      AzureDevOpsUser user;
+      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
+        user = azureDevOpsApiClient.getUserWithOAuthToken(params.getToken());
+      } else {
+        user = azureDevOpsApiClient.getUserWithPAT(params.getToken(), params.getOrganization());
+      }
+      return Optional.of(Pair.of(Boolean.TRUE, user.getEmailAddress()));
+    } catch (ScmItemNotFoundException
+        | ScmBadRequestException
+        | ScmUnauthorizedException
+        | ScmCommunicationException e) {
+      return Optional.empty();
     }
   }
 
@@ -153,7 +209,7 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
     return cheApiEndpoint + getAuthenticateUrlPath(scopes);
   }
 
-  private Boolean isValidScmServerUrl(String scmServerUrl) {
-    return azureDevOpsScmApiEndpoint.equals(trimEnd(scmServerUrl, '/'));
+  private Boolean isValidAzureDevOpsSAASUrl(String url) {
+    return azureDevOpsSAASApiEndpoint.equals(trimEnd(url, '/'));
   }
 }

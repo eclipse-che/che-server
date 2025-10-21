@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,8 +17,6 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.commons.subject.Subject;
 
 /** Bitbucket Server API client. */
 public interface BitbucketServerApiClient {
@@ -27,24 +25,19 @@ public interface BitbucketServerApiClient {
    * @return - true if client is connected to the given bitbucket server.
    */
   boolean isConnected(String bitbucketServerUrl);
-  /**
-   * @param cheUser - Che user.
-   * @return - {@link BitbucketUser} that is linked with given {@link Subject}
-   * @throws ScmUnauthorizedException - in case if {@link Subject} is not linked to any {@link
-   *     BitbucketUser}
-   */
-  BitbucketUser getUser(Subject cheUser)
-      throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException;
 
   /**
-   * @param slug scm username.
-   * @param token token to override. Pass {@code null} to use token from the authentication flow.
-   * @return - Retrieve the {@link BitbucketUser} matching the supplied userSlug.
-   * @throws ScmItemNotFoundException
-   * @throws ScmUnauthorizedException
-   * @throws ScmCommunicationException
+   * @param token token to authorise the user request.
+   * @return - authenticated {@link BitbucketUser}.
    */
-  BitbucketUser getUser(String slug, @Nullable String token)
+  BitbucketUser getUser(String token)
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
+
+  /**
+   * @return Retrieve the authenticated {@link BitbucketUser} using an OAuth token.
+   * @return - authenticated {@link BitbucketUser}.
+   */
+  BitbucketUser getUser()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 
   /**
@@ -71,19 +64,17 @@ public interface BitbucketServerApiClient {
    * Modify an access token for the user according to the given request. Any fields not specified
    * will not be altered
    *
-   * @param userSlug
    * @param tokenId - the token id
    * @throws ScmItemNotFoundException
    * @throws ScmUnauthorizedException
    * @throws ScmCommunicationException
    */
-  void deletePersonalAccessTokens(String userSlug, Long tokenId)
+  void deletePersonalAccessTokens(String tokenId)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 
   /**
    * Create an access token for the user according to the given request.
    *
-   * @param userSlug
    * @param tokenName
    * @param permissions
    * @return
@@ -91,29 +82,28 @@ public interface BitbucketServerApiClient {
    * @throws ScmUnauthorizedException
    * @throws ScmCommunicationException
    */
-  BitbucketPersonalAccessToken createPersonalAccessTokens(
-      String userSlug, String tokenName, Set<String> permissions)
-      throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException;
+  BitbucketPersonalAccessToken createPersonalAccessTokens(String tokenName, Set<String> permissions)
+      throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException,
+          ScmItemNotFoundException;
 
   /**
    * Get all personal access tokens associated with the given user
    *
-   * @param userSlug
    * @return
    * @throws ScmItemNotFoundException
    * @throws ScmUnauthorizedException
    * @throws ScmBadRequestException
    * @throws ScmCommunicationException
    */
-  List<BitbucketPersonalAccessToken> getPersonalAccessTokens(String userSlug)
+  List<BitbucketPersonalAccessToken> getPersonalAccessTokens()
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 
   /**
-   * @param userSlug - user's slug.
    * @param tokenId - bitbucket personal access token id.
+   * @param oauthToken - bitbucket oauth token.
    * @return - Bitbucket personal access token.
    * @throws ScmCommunicationException
    */
-  BitbucketPersonalAccessToken getPersonalAccessToken(String userSlug, Long tokenId)
+  BitbucketPersonalAccessToken getPersonalAccessToken(String tokenId, String oauthToken)
       throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException;
 }

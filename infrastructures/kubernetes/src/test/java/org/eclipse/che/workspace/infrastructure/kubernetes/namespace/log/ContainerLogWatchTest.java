@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace.log;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,15 +25,14 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.ContainerResource;
-import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.RuntimeEventsPublisher;
@@ -57,22 +57,10 @@ public class ContainerLogWatchTest {
 
   @Mock PodLogHandler podLogHandler;
 
-  @Mock MixedOperation<Pod, PodList, PodResource<Pod>> pods;
-  @Mock PodResource<Pod> podResource;
+  @Mock MixedOperation<Pod, PodList, PodResource> pods;
+  @Mock PodResource podResource;
 
-  @Mock
-  ContainerResource<
-          LogWatch,
-          InputStream,
-          PipedOutputStream,
-          OutputStream,
-          PipedInputStream,
-          String,
-          ExecWatch,
-          Boolean,
-          InputStream,
-          Boolean>
-      containerResource;
+  @Mock ContainerResource containerResource;
 
   LogWatchMock logWatch;
 
@@ -367,6 +355,11 @@ public class ContainerLogWatchTest {
     @Override
     public InputStream getOutput() {
       return inputStream;
+    }
+
+    @Override
+    public CompletionStage<Throwable> onClose() {
+      return mock(CompletionStage.class);
     }
 
     @Override

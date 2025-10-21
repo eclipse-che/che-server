@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,6 +30,7 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
  */
 public class AzureDevOpsUrl extends DefaultFactoryUrl {
 
+  private boolean isHTTPSUrl;
   private String hostName;
 
   private String repository;
@@ -41,6 +42,8 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
   private String branch;
 
   private String tag;
+
+  private String serverUrl;
 
   private final List<String> devfileFilenames = new ArrayList<>();
 
@@ -97,8 +100,18 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
     return this;
   }
 
+  @Override
+  public String getProviderUrl() {
+    return isNullOrEmpty(serverUrl) ? "https://" + hostName : serverUrl;
+  }
+
   protected AzureDevOpsUrl withDevfileFilenames(List<String> devfileFilenames) {
     this.devfileFilenames.addAll(devfileFilenames);
+    return this;
+  }
+
+  public AzureDevOpsUrl withServerUrl(String serverUrl) {
+    this.serverUrl = serverUrl;
     return this;
   }
 
@@ -145,15 +158,18 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
   }
 
   public String getRepositoryLocation() {
-    return getRepoPathJoiner().add("_git").add(repository).toString();
+    if (isHTTPSUrl) {
+      return getRepoPathJoiner().add("_git").add(repository).toString();
+    }
+    if ("dev.azure.com".equals(hostName)) {
+      return "git@ssh." + hostName + ":v3/" + organization + "/" + project + "/" + repository;
+    } else {
+      return "ssh://" + hostName + ":22/" + organization + "/" + project + "/_git/" + repository;
+    }
   }
 
   private StringJoiner getRepoPathJoiner() {
-    StringJoiner repoPath = new StringJoiner("/").add(hostName).add(organization);
-    if (project != null) {
-      repoPath.add("_git");
-    }
-    return repoPath;
+    return new StringJoiner("/").add(getProviderUrl()).add(organization).add(project);
   }
 
   @Override
@@ -161,8 +177,13 @@ public class AzureDevOpsUrl extends DefaultFactoryUrl {
     return hostName;
   }
 
+  public AzureDevOpsUrl setIsHTTPSUrl(boolean isHTTPSUrl) {
+    this.isHTTPSUrl = isHTTPSUrl;
+    return this;
+  }
+
   public AzureDevOpsUrl withHostName(String hostName) {
-    this.hostName = "https://" + hostName;
+    this.hostName = hostName;
     return this;
   }
 }

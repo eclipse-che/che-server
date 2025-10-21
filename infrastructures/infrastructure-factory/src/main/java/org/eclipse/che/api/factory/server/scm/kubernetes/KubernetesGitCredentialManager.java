@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
@@ -22,6 +23,7 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secr
 import static org.eclipse.che.workspace.infrastructure.kubernetes.provision.secret.KubernetesSecretAnnotationNames.DEV_WORKSPACE_PREFIX;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.PercentEscaper;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -125,11 +127,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                                       '/'))
                           && personalAccessToken
                               .getCheUserId()
-                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID))
-                          && personalAccessToken
-                              .getScmUserName()
-                              .equals(
-                                  s.getMetadata().getAnnotations().get(ANNOTATION_SCM_USERNAME)))
+                              .equals(s.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID)))
               .findFirst();
 
       Secret secret =
@@ -137,7 +135,6 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
               () -> {
                 Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
                 annotations.put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl());
-                annotations.put(ANNOTATION_SCM_USERNAME, personalAccessToken.getScmUserName());
                 annotations.put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId());
                 ObjectMeta meta =
                     new ObjectMetaBuilder()
@@ -156,9 +153,7 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
                       format(
                               "%s://%s:%s@%s%s",
                               scmUrl.getProtocol(),
-                              personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
-                                  ? "oauth2"
-                                  : personalAccessToken.getScmUserName(),
+                              getUsernameSegment(personalAccessToken),
                               URLEncoder.encode(personalAccessToken.getToken(), UTF_8),
                               scmUrl.getHost(),
                               scmUrl.getPort() != 80 && scmUrl.getPort() != -1
@@ -169,6 +164,28 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
     } catch (InfrastructureException | MalformedURLException e) {
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
+  }
+
+  /**
+   * Returns username URL segment for git credentials. For OAuth2 tokens it is "oauth2", for others
+   * - {@param personalAccessToken#getScmUserName()} or just "username" string if the token has a
+   * non-null {@param personalAccessToken#getScmOrganization()}. This is needed to support providers
+   * that do not have username in their user object. Such providers have an additional organization
+   * field.
+   */
+  private String getUsernameSegment(PersonalAccessToken personalAccessToken) {
+    // Special characters are not allowed in URL username segment, so we need to escape them.
+    PercentEscaper percentEscaper = new PercentEscaper("", false);
+    return personalAccessToken.getScmTokenName().startsWith(OAUTH_2_PREFIX)
+            // Most of the git providers work with git credentials with OAuth token in format
+            // "ouath2:<oauth token>"
+            // but bitbucket requires username to be explicitly set: "<username>:<oauth token>
+            // TODO: needs to be moved to the specific bitbucket implementation.
+            && !personalAccessToken.getScmProviderName().equals("bitbucket")
+        ? "oauth2"
+        : isNullOrEmpty(personalAccessToken.getScmOrganization())
+            ? percentEscaper.escape(personalAccessToken.getScmUserName())
+            : "username";
   }
 
   /**

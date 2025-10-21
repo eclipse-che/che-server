@@ -6,20 +6,8 @@
 REGISTRY="quay.io"
 ORGANIZATION="eclipse"
 
- # KEEP RIGHT ORDER!!!
-DOCKER_FILES_LOCATIONS=(
-    che-server/dockerfiles/endpoint-watcher
-    che-server/dockerfiles/keycloak
-    che-server/dockerfiles/postgres
-    che-server/dockerfiles/che
-)
-
-IMAGES_LIST=(
-    quay.io/eclipse/che-endpoint-watcher
-    quay.io/eclipse/che-keycloak
-    quay.io/eclipse/che-postgres
-    quay.io/eclipse/che-server
-)
+IMAGE="quay.io/eclipse/che-server"
+BUILD_PLATFORMS="linux/amd64,linux/ppc64le,linux/arm64,linux/s390x"
 
 sed_in_place() {
     SHORT_UNAME=$(uname -s)
@@ -50,22 +38,6 @@ loadMvnSettingsGpgKey() {
     gpg --version
 }
 
-installDebDeps(){
-    set +x
-    # TODO should this be node 12?
-    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-    sudo apt-get install -y nodejs
-}
-
-installMaven(){
-    set -x
-    mkdir -p /opt/apache-maven && curl -sSL https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar -xz --strip=1 -C /opt/apache-maven
-    export M2_HOME="/opt/apache-maven"
-    export PATH="/opt/apache-maven/bin:${PATH}"
-    mvn -version || die_with "mvn not found in path: ${PATH} !"
-    set +x
-}
-
 evaluateCheVariables() {
     echo "Che version: ${CHE_VERSION}"
     # derive branch from version
@@ -78,14 +50,9 @@ evaluateCheVariables() {
         BASEBRANCH="${BRANCH}"
     fi
     echo "Basebranch: ${BASEBRANCH}" 
-    echo "Release che-parent: ${RELEASE_CHE_PARENT}"
-    echo "Version che-parent: ${VERSION_CHE_PARENT}"
 }
 
 checkoutProjects() {
-    if [[ ${RELEASE_CHE_PARENT} = "true" ]]; then
-        checkoutProject git@github.com:eclipse/che-parent
-    fi
     checkoutProject git@github.com:eclipse-che/che-server
 }
 
@@ -115,11 +82,6 @@ checkoutProject() {
 }
 
 checkoutTags() {
-    if [[ ${RELEASE_CHE_PARENT} = "true" ]]; then
-        cd che-parent
-        git checkout ${CHE_VERSION}
-        cd ..
-    fi
     cd che-server
     git checkout ${CHE_VERSION}
     cd ..
@@ -167,16 +129,12 @@ commitChangeOrCreatePR() {
         git checkout "${PR_BRANCH}"
         git pull origin "${PR_BRANCH}" || true
         git push origin "${PR_BRANCH}"
-        lastCommitComment="$(git log -1 --pretty=%B)"
-        hub pull-request -f -m "${lastCommitComment}" -b "${aBRANCH}" -h "${PR_BRANCH}"
+        gh pr create -f -B "${aBRANCH}" -H "${PR_BRANCH}"
     fi
     set -e
 }
 
 createTags() {
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        tagAndCommit che-parent
-    fi
     tagAndCommit che-server
 }
 
@@ -200,23 +158,9 @@ tagAndCommit() {
 }
 
 prepareRelease() {
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        pushd che-parent >/dev/null
-            # Install previous version, in case it is not available in central repo
-            # which is needed for dependent projects
-            mvn clean install
-            mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${VERSION_CHE_PARENT}
-            mvn clean install
-        popd >/dev/null
-        echo "[INFO] Che Parent version has been updated to ${VERSION_CHE_PARENT}"
-    fi
-
     pushd che-server >/dev/null
-        if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-            mvn versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=false -DparentVersion=[${VERSION_CHE_PARENT}]
-        fi
         mvn versions:set -DgenerateBackupPoms=false -DallowSnapshots=false -DnewVersion=${CHE_VERSION}
-        echo "[INFO] Che Server version has been updated to ${CHE_VERSION} (parentVersion = ${VERSION_CHE_PARENT})"
+        echo "[INFO] Che Server version has been updated to ${CHE_VERSION} "
 
         # Replace dependencies in che-server parent
         sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${CHE_VERSION}<\/che.version>#" pom.xml
@@ -225,8 +169,7 @@ prepareRelease() {
         # TODO pull parent pom version from VERSION file, instead of being hardcoded
         pushd typescript-dto >/dev/null
             sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${CHE_VERSION}<\/che.version>#" dto-pom.xml
-            sed -i -e "/<groupId>org.eclipse.che.parent<\/groupId>/ { n; s#<version>.*<\/version>#<version>${VERSION_CHE_PARENT}<\/version>#}" dto-pom.xml
-            echo "[INFO] Dependencies updated in che typescript DTO (parent = ${VERSION_CHE_PARENT}, che server = ${CHE_VERSION})"
+            echo "[INFO] Dependencies updated in che typescript DTO (che server = ${CHE_VERSION})"
         popd >/dev/null
 
         # run mvn license format, in case some files that have old license headers have been updated
@@ -237,29 +180,6 @@ prepareRelease() {
 releaseCheServer() {
     set -x
     tmpmvnlog=/tmp/mvn.log.txt
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        pushd che-parent >/dev/null
-        rm -f $tmpmvnlog || true
-        set +e
-        mvn clean install -ntp -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
-        EXIT_CODE=$?
-        set -e
-        # try maven build again if we receive a server error
-        if grep -q -E "502 - Bad Gateway" $tmpmvnlog; then
-            rm -f $tmpmvnlog || true
-            mvn clean install -ntp -U -Pcodenvy-release -Dgpg.passphrase=$CHE_OSS_SONATYPE_PASSPHRASE | tee $tmpmvnlog
-            EXIT_CODE=$?
-        fi
-        # check log for errors if build successful; if failed, no need to check (already failed)
-        if [ $EXIT_CODE -eq 0 ]; then
-            checkLogForErrors $tmpmvnlog
-            echo 'Build of che-parent: Success!'
-        else
-            echo '[ERROR] 2. Build of che-parent: Failed!'
-            exit $EXIT_CODE
-        fi
-        popd >/dev/null
-    fi
 
     pushd che-server >/dev/null
     rm -f $tmpmvnlog || true
@@ -292,51 +212,24 @@ releaseTypescriptDto() {
     popd >/dev/null
 }
 
-buildImages() {
+buildAndPushImages() {
     echo "Going to build docker images"
     set -e
     set -o pipefail
     TAG=$1
   
     # stop / rm all containers
-    if [[ $(docker ps -aq) != "" ]];then
-        docker rm -f "$(docker ps -aq)"
+    if [[ $(podman ps -aq) != "" ]];then
+        podman rm -f "$(podman ps -aq)"
     fi
 
-    # BUILD IMAGES
-    for image_dir in ${DOCKER_FILES_LOCATIONS[@]}
-      do
-        bash "$(pwd)/${image_dir}/build.sh" --tag:${TAG}
-        if [[ $? -ne 0 ]]; then
-           echo "ERROR:"
-           echo "build of '${image_dir}' image is failed!"
-           exit 1
-        fi
-      done
-}
-
-tagLatestImages() {
-    for image in ${IMAGES_LIST[@]}
-     do
-         echo y | docker tag "${image}:$1" "${image}:latest"
-         if [[ $? -ne 0 ]]; then
-           die_with  "docker tag of '${image}' image is failed!"
-         fi
-     done
-}
-
-pushImagesOnQuay() {
-    #PUSH IMAGES
-    for image in ${IMAGES_LIST[@]}
-        do
-            echo y | docker push "${image}:$1"
-            if [[ $2 == "pushLatest" ]]; then
-                echo y | docker push "${image}:latest"
-            fi
-            if [[ $? -ne 0 ]]; then
-            die_with  "docker push of '${image}' image is failed!"
-            fi
-        done
+    # BUILD AND PUSH IMAGES
+    bash "$(pwd)/che-server/build/build.sh" --tag:${TAG} --latest-tag --build-platforms:${BUILD_PLATFORMS} --builder:podman --push-image
+    if [[ $? -ne 0 ]]; then
+       echo "ERROR:"
+       echo "build of che-server image $TAG is failed!"
+       exit 1
+    fi
 }
 
 bumpVersions() {
@@ -358,27 +251,8 @@ bumpVersion() {
     set -x
     echo "[info]bumping to version $1 in branch $2"
 
-    if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-        pushd che-parent >/dev/null
-        git checkout $2
-        #install previous version, in case it is not available in central repo
-        #which is needed for dependent projects
-        
-        mvn clean install
-        mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${CHE_VERSION}
-        mvn clean install
-        # run mvn license format, in case some files that have old license headers have been updated
-        mvn license:format
-        commitChangeOrCreatePR ${CHE_VERSION} $2 "pr-${2}-to-${1}"
-        popd >/dev/null
-    fi
-
     pushd che-server >/dev/null
         git checkout $2
-        if [[ $RELEASE_CHE_PARENT = "true" ]]; then
-            mvn versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=true -DparentVersion=[${VERSION_CHE_PARENT}]
-        fi
-
         # compute current version of root pom
         current_root_pom_version=$(grep "<che.version>" pom.xml | sed -r -e "s#.+<che.version>([^<>]+)</che.version>.*#\1#")
 
@@ -386,7 +260,6 @@ bumpVersion() {
         sed -i -e "s#<che.version>.*<\/che.version>#<che.version>$1<\/che.version>#" pom.xml
         pushd typescript-dto >/dev/null
             sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${1}<\/che.version>#" dto-pom.xml
-            sed -i -e "/<groupId>org.eclipse.che.parent<\/groupId>/ { n; s#<version>.*<\/version>#<version>${VERSION_CHE_PARENT}<\/version>#}" dto-pom.xml
         popd >/dev/null
 
         # update integration tests to new root pom version
@@ -414,9 +287,8 @@ updateImageTagsInCheServer() {
     popd >/dev/null
 }
 
-installMaven
 loadMvnSettingsGpgKey
-installDebDeps
+
 set -x
 setupGitconfig
 
@@ -443,7 +315,5 @@ releaseCheServer
 releaseTypescriptDto
 
 if [[ "${BUILD_AND_PUSH_IMAGES}" = "true" ]]; then
-    buildImages  ${CHE_VERSION}
-    tagLatestImages ${CHE_VERSION}
-    pushImagesOnQuay ${CHE_VERSION} pushLatest
+    buildAndPushImages  ${CHE_VERSION}
 fi

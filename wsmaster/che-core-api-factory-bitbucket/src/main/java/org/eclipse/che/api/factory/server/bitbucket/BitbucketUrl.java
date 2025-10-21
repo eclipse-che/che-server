@@ -41,6 +41,8 @@ public class BitbucketUrl extends DefaultFactoryUrl {
   /** Repository part of the URL. */
   private String repository;
 
+  private boolean isHTTPSUrl;
+
   /** Branch name */
   private String branch;
 
@@ -78,6 +80,11 @@ public class BitbucketUrl extends DefaultFactoryUrl {
 
   protected BitbucketUrl withRepository(String repository) {
     this.repository = repository;
+    return this;
+  }
+
+  public BitbucketUrl setIsHTTPSUrl(boolean isHTTPSUrl) {
+    this.isHTTPSUrl = isHTTPSUrl;
     return this;
   }
 
@@ -164,13 +171,16 @@ public class BitbucketUrl extends DefaultFactoryUrl {
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    return "https://"
-        + (this.username != null ? this.username + '@' : "")
-        + HOSTNAME
-        + "/"
-        + this.workspaceId
-        + "/"
-        + this.repository
-        + ".git";
+    if (isHTTPSUrl) {
+      return "https://"
+          + (this.username != null ? this.username + '@' : "")
+          + HOSTNAME
+          + "/"
+          + workspaceId
+          + "/"
+          + repository
+          + ".git";
+    }
+    return String.format("git@%s:%s/%s.git", HOSTNAME, workspaceId, repository);
   }
 }

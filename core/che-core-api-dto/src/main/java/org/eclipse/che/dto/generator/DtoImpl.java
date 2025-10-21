@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,11 +20,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.eclipse.che.dto.shared.CompactJsonDto;
 import org.eclipse.che.dto.shared.DTO;
 import org.eclipse.che.dto.shared.DelegateTo;
@@ -170,7 +173,9 @@ abstract class DtoImpl {
       addDtoGetters(dto, getters);
       addSuperGetters(dto, getters);
     }
-    return new ArrayList<>(getters.values());
+    List<Method> dtoGetters = new ArrayList<>(getters.values());
+    dtoGetters.sort(new MethodComparator());
+    return dtoGetters;
   }
 
   /** Get the names of all the getters in the super DTO interface and upper ancestors. */
@@ -373,9 +378,11 @@ abstract class DtoImpl {
     return dtoMethods;
   }
 
-  private Method[] calcDtoMethods() {
+  private List<Method> calcDtoMethods() {
     if (!compactJson) {
-      return dtoInterface.getMethods();
+      List<Method> result = new ArrayList<>(Arrays.asList(dtoInterface.getMethods()));
+      result.sort(new MethodComparator());
+      return result;
     }
 
     Map<Integer, Method> methodsMap = new HashMap<>();
@@ -408,10 +415,13 @@ abstract class DtoImpl {
       methodsMap.put(index, method);
     }
 
-    Method[] result = new Method[maxIndex];
+    Method[] methods = new Method[maxIndex];
     for (int index = 0; index < maxIndex; index++) {
-      result[index] = methodsMap.get(index + 1);
+      methods[index] = methodsMap.get(index + 1);
     }
+
+    List<Method> result = new ArrayList<>(Arrays.asList(methods));
+    result.sort(new MethodComparator());
 
     return result;
   }
@@ -436,4 +446,22 @@ abstract class DtoImpl {
 
   /** @return String representing the source definition for the DTO impl as an inner class. */
   abstract String serialize();
+
+  private static class MethodComparator implements Comparator<Method> {
+    @Override
+    public int compare(Method o1, Method o2) {
+      return getMethodSignature(o1).compareTo(getMethodSignature(o2));
+    }
+
+    private String getMethodSignature(Method method) {
+      return method.getReturnType().getName()
+          + " "
+          + method.getName()
+          + "("
+          + Arrays.stream(method.getParameterTypes())
+              .map(Class::getName)
+              .collect(Collectors.joining(", "))
+          + ")";
+    }
+  }
 }

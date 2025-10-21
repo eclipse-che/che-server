@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,12 +17,16 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.eclipse.che.api.factory.server.gitlab.GitlabOAuthTokenFetcher.DEFAULT_TOKEN_SCOPES;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import com.google.common.collect.Sets;
 import com.google.common.net.HttpHeaders;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
@@ -64,6 +68,26 @@ public class GitlabApiClientTest {
 
     GitlabUser user = client.getUser("token1");
     assertNotNull(user);
+  }
+
+  @Test
+  public void shouldGetPersonalAccessTokenInfo() throws Exception {
+    // given
+    stubFor(
+        get(urlEqualTo("/api/v4/personal_access_tokens/self"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token1"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("gitlab/rest/api/v4/user/PAT_info.json")));
+
+    // when
+    GitlabPersonalAccessTokenInfo tokenInfo = client.getPersonalAccessTokenInfo("token1");
+
+    // then
+    assertNotNull(tokenInfo);
+    assertEquals(tokenInfo.getId(), 1);
+    assertTrue(Sets.newHashSet(tokenInfo.getScopes()).containsAll(DEFAULT_TOKEN_SCOPES));
   }
 
   @Test

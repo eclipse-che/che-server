@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,7 +20,6 @@ import org.eclipse.che.multiuser.api.permission.server.account.AccountPermission
 import org.eclipse.che.multiuser.api.permission.shared.model.PermissionsDomain;
 import org.eclipse.che.multiuser.organization.api.listener.MemberEventsPublisher;
 import org.eclipse.che.multiuser.organization.api.listener.OrganizationEventsWebsocketBroadcaster;
-import org.eclipse.che.multiuser.organization.api.listener.RemoveOrganizationOnLastUserRemovedEventSubscriber;
 import org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain;
 import org.eclipse.che.multiuser.organization.api.permissions.OrganizationPermissionsFilter;
 import org.eclipse.che.multiuser.organization.api.permissions.OrganizationRemoteSubscriptionPermissionsChecks;
@@ -43,7 +42,6 @@ public class OrganizationApiModule extends AbstractModule {
 
     bind(OrganizationPermissionsFilter.class);
     bind(OrganizationRemoteSubscriptionPermissionsChecks.class);
-    bind(RemoveOrganizationOnLastUserRemovedEventSubscriber.class).asEagerSingleton();
 
     Multibinder.newSetBinder(binder(), DefaultResourcesProvider.class)
         .addBinding()

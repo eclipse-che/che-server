@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright (c) 2020-2023 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,14 +16,6 @@ on:
         description: 'The version that is going to be released. Should be in format 7.y.z'
         required: true
         default: ''
-      releaseParent:
-        description: 'If true, will also release Che Parent.'
-        required: false
-        default: 'false'
-      versionParent:
-        description: 'Specify Che Parent version here'
-        required: false
-        default: '7.15.0'
       forceRecreateTags:
         description: 'If true, tags will be overriden and regenerated. Use with caution.'
         required: false
@@ -49,19 +41,14 @@ jobs:
         with: 
           path: che-server
           fetch-depth: 0
-      - uses: actions/checkout@v3
-        if: ${{ github.event.inputs.releaseParent == 'true' }}
-        with:
-          repository: eclipse/che-parent
-          token: ${{ secrets.CHE_BOT_GITHUB_TOKEN }}
-          path: che-parent
-          fetch-depth: 0
       - name: Check existing tag
         run: |
           if [[ "$FORCE_RECREATE_TAGS" == "false" ]] && [[ $(cd che && git ls-remote --exit-code origin refs/tags/${{ github.event.inputs.version }}) ]]; then
             echo "cannot create release, when tag already exists"
             exit 1
           fi
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
       - name: Login to docker.io
         uses: docker/login-action@v2
         with:
@@ -88,11 +75,10 @@ jobs:
         run: |
           sudo apt-get update -y || true
           # install more dependencies
-          sudo apt-get -y -q install wget curl bash git 
+          sudo apt-get -y -q install wget curl bash git
           java -version
-
-          # want git >=2.24, hub >=2
-          hub --version # hub reports git version too
+          git --version
+          gh --version
 
           # want >=5
           bash --version
@@ -112,8 +98,6 @@ jobs:
           export CHE_GITHUB_SSH_KEY=${{ secrets.CHE_GITHUB_SSH_KEY}}
           export CHE_NPM_AUTH_TOKEN=${{ secrets.CHE_NPM_AUTH_TOKEN}}
 
-          export RELEASE_CHE_PARENT="${{ github.event.inputs.releaseParent }}"
-          export VERSION_CHE_PARENT="${{ github.event.inputs.versionParent }}"
           export DEPLOY_TO_NEXUS="${{ github.event.inputs.deployOnNexus }}"
           export AUTORELEASE_ON_NEXUS="${{ github.event.inputs.autoReleaseOnNexus }}"
           export REBUILD_FROM_EXISTING_TAGS="${{ github.event.inputs.rebuildFromExistingTags }}"
@@ -145,17 +129,17 @@ jobs:
           prerelease: false
           tag: ${{ github.event.inputs.version }}
           token: ${{ secrets.CHE_BOT_GITHUB_TOKEN }}
-      - name: Create failure MM message
-        if: ${{ failure() }}
-        run: |
-          echo "{\"text\":\":no_entry_sign: Che Server ${{ github.event.inputs.version }} release has failed: https://github.com/eclipse-che/che-server/actions/workflows/release.yml\"}" > mattermost.json
-      - name: Create success MM message
-        run: |
-          echo "{\"text\":\":white_check_mark: Che Server ${{ github.event.inputs.version }} has been released: https://quay.io/eclipse/che-server:${{ github.event.inputs.version }}\"}" > mattermost.json
-      - name: Send MM message
-        if: ${{ success() }} || ${{ failure() }}
-        uses: mattermost/action-mattermost-notify@1.1.0
-        env:
-          MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
-          MATTERMOST_CHANNEL: eclipse-che-releases
-          MATTERMOST_USERNAME: che-bot
+      #- name: Create failure MM message
+        #if: ${{ failure() }}
+        #run: |
+          #echo "{\"text\":\":no_entry_sign: Che Server ${{ github.event.inputs.version }} release has failed: https://github.com/eclipse-che/che-server/actions/workflows/release.yml\"}" > mattermost.json
+      #- name: Create success MM message
+        #run: |
+          #echo "{\"text\":\":white_check_mark: Che Server ${{ github.event.inputs.version }} has been released: https://quay.io/eclipse/che-server:${{ github.event.inputs.version }}\"}" > mattermost.json
+      #- name: Send MM message
+        #if: ${{ success() }} || ${{ failure() }}
+        #uses: mattermost/action-mattermost-notify@1.1.0
+        #env:
+          #MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+          #MATTERMOST_CHANNEL: eclipse-che-releases
+          #MATTERMOST_USERNAME: che-bot

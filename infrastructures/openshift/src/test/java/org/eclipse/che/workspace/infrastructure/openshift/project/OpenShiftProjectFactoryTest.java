@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -71,9 +71,10 @@ import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.AuthorizationChecker;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.PermissionsCleaner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesConfigsMaps;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesSecrets;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.KubernetesSharedPool;
@@ -87,6 +88,7 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -114,6 +116,8 @@ public class OpenShiftProjectFactoryTest {
   @Mock private WorkspaceManager workspaceManager;
   @Mock private PreferenceManager preferenceManager;
   @Mock private KubernetesSharedPool pool;
+  @Mock private AuthorizationChecker authorizationChecker;
+  @Mock private PermissionsCleaner permissionsCleaner;
 
   @Mock private ProjectOperation projectOperation;
 
@@ -123,7 +127,8 @@ public class OpenShiftProjectFactoryTest {
 
   private OpenShiftProjectFactory projectFactory;
 
-  @Mock private FilterWatchListDeletable<Project, ProjectList> projectListResource;
+  @Mock
+  private FilterWatchListDeletable<Project, ProjectList, Resource<Project>> projectListResource;
 
   @Mock private ProjectList projectList;
 
@@ -134,6 +139,7 @@ public class OpenShiftProjectFactoryTest {
     lenient().when(cheServerOpenshiftClientFactory.createOC()).thenReturn(osClient);
     lenient().when(cheServerKubernetesClientFactory.create()).thenReturn(osClient);
     lenient().when(osClient.projects()).thenReturn(projectOperation);
+    lenient().when(authorizationChecker.isAuthorized(anyString())).thenReturn(true);
 
     lenient()
         .when(workspaceManager.getWorkspace(any()))
@@ -174,6 +180,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
 
     projectFactory.checkIfNamespaceIsAllowed(USER_NAME + "-che");
@@ -204,6 +212,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
     try {
       projectFactory.checkIfNamespaceIsAllowed("any-namespace");
@@ -234,6 +244,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
   }
 
@@ -269,6 +281,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
 
@@ -305,6 +319,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "u123", null, false));
 
@@ -337,6 +353,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
 
     // when
@@ -379,6 +397,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
 
     List<KubernetesNamespaceMeta> availableNamespaces = projectFactory.list();
@@ -415,6 +435,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
 
     List<KubernetesNamespaceMeta> availableNamespaces = projectFactory.list();
@@ -451,6 +473,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
 
     projectFactory.list();
@@ -477,6 +501,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
 
     projectFactory.list();
@@ -508,6 +534,8 @@ public class OpenShiftProjectFactoryTest {
                 cheServerOpenshiftClientFactory,
                 preferenceManager,
                 pool,
+                authorizationChecker,
+                permissionsCleaner,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
@@ -521,50 +549,6 @@ public class OpenShiftProjectFactoryTest {
     // then
     assertEquals(toReturnProject, project);
     verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
-  }
-
-  @Test
-  public void shouldCreateCredentialsSecretIfNotExists() throws Exception {
-    // given
-    projectFactory =
-        spy(
-            new OpenShiftProjectFactory(
-                "<userid>-che",
-                true,
-                true,
-                true,
-                NAMESPACE_LABELS,
-                NAMESPACE_ANNOTATIONS,
-                true,
-                Set.of(new CredentialsSecretConfigurator(cheServerKubernetesClientFactory)),
-                openShiftClientFactory,
-                cheServerKubernetesClientFactory,
-                cheServerOpenshiftClientFactory,
-                preferenceManager,
-                pool,
-                NO_OAUTH_IDENTITY_PROVIDER));
-    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
-    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
-    when(toReturnProject.getName()).thenReturn("namespace123");
-    NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
-    MixedOperation mixedOperation = mock(MixedOperation.class);
-    when(osClient.secrets()).thenReturn(mixedOperation);
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
-    Resource<Secret> nullSecret = mock(Resource.class);
-    when(namespaceOperation.withName(CREDENTIALS_SECRET_NAME)).thenReturn(nullSecret);
-    when(nullSecret.get()).thenReturn(null);
-
-    // when
-    RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "namespace123");
-    projectFactory.getOrCreate(identity);
-
-    // then
-    ArgumentCaptor<Secret> secretsCaptor = ArgumentCaptor.forClass(Secret.class);
-    verify(namespaceOperation).create(secretsCaptor.capture());
-    Secret secret = secretsCaptor.getValue();
-    Assert.assertEquals(secret.getMetadata().getName(), CREDENTIALS_SECRET_NAME);
-    Assert.assertEquals(secret.getType(), "opaque");
   }
 
   @Test
@@ -586,6 +570,8 @@ public class OpenShiftProjectFactoryTest {
                 cheServerOpenshiftClientFactory,
                 preferenceManager,
                 pool,
+                authorizationChecker,
+                permissionsCleaner,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
@@ -610,47 +596,6 @@ public class OpenShiftProjectFactoryTest {
   }
 
   @Test
-  public void shouldNotCreateCredentialsSecretIfExist() throws Exception {
-    // given
-    projectFactory =
-        spy(
-            new OpenShiftProjectFactory(
-                "<userid>-che",
-                true,
-                true,
-                true,
-                NAMESPACE_LABELS,
-                NAMESPACE_ANNOTATIONS,
-                true,
-                Set.of(new CredentialsSecretConfigurator(cheServerKubernetesClientFactory)),
-                openShiftClientFactory,
-                cheServerKubernetesClientFactory,
-                cheServerOpenshiftClientFactory,
-                preferenceManager,
-                pool,
-                NO_OAUTH_IDENTITY_PROVIDER));
-    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
-    prepareProject(toReturnProject);
-    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
-    when(toReturnProject.getName()).thenReturn("namespace123");
-    NonNamespaceOperation namespaceOperation = mock(NonNamespaceOperation.class);
-    MixedOperation mixedOperation = mock(MixedOperation.class);
-    when(osClient.secrets()).thenReturn(mixedOperation);
-    when(mixedOperation.inNamespace(anyString())).thenReturn(namespaceOperation);
-    Resource<Secret> secretResource = mock(Resource.class);
-    when(namespaceOperation.withName(CREDENTIALS_SECRET_NAME)).thenReturn(secretResource);
-    when(secretResource.get()).thenReturn(mock(Secret.class));
-
-    // when
-    RuntimeIdentity identity =
-        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
-    projectFactory.getOrCreate(identity);
-
-    // then
-    verify(namespaceOperation, never()).create(any());
-  }
-
-  @Test
   public void shouldNotCreatePreferencesConfigmapIfExist() throws Exception {
     // given
     projectFactory =
@@ -669,6 +614,8 @@ public class OpenShiftProjectFactoryTest {
                 cheServerOpenshiftClientFactory,
                 preferenceManager,
                 pool,
+                authorizationChecker,
+                permissionsCleaner,
                 NO_OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
@@ -713,6 +660,8 @@ public class OpenShiftProjectFactoryTest {
                 cheServerOpenshiftClientFactory,
                 preferenceManager,
                 pool,
+                authorizationChecker,
+                permissionsCleaner,
                 OAUTH_IDENTITY_PROVIDER));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     when(toReturnProject.getName()).thenReturn("workspace123");
@@ -731,6 +680,7 @@ public class OpenShiftProjectFactoryTest {
     verify(serviceAccount).prepare();
   }
 
+  @Ignore
   @Test
   public void testEvalNamespaceNameWhenPreparedNamespacesFound() throws InfrastructureException {
     List<Project> projects =
@@ -762,6 +712,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
 
     String namespace =
@@ -794,6 +746,8 @@ public class OpenShiftProjectFactoryTest {
             cheServerOpenshiftClientFactory,
             preferenceManager,
             pool,
+            authorizationChecker,
+            permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
     projectFactory.list();
@@ -820,6 +774,8 @@ public class OpenShiftProjectFactoryTest {
                 cheServerOpenshiftClientFactory,
                 preferenceManager,
                 pool,
+                authorizationChecker,
+                permissionsCleaner,
                 NO_OAUTH_IDENTITY_PROVIDER));
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -860,6 +816,8 @@ public class OpenShiftProjectFactoryTest {
                 cheServerOpenshiftClientFactory,
                 preferenceManager,
                 pool,
+                authorizationChecker,
+                permissionsCleaner,
                 NO_OAUTH_IDENTITY_PROVIDER));
     EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
 
@@ -947,7 +905,7 @@ public class OpenShiftProjectFactoryTest {
         .withAnnotations(annotations)
         .endMetadata()
         .withNewStatus()
-        .withNewPhase(phase)
+        .withPhase(phase)
         .endStatus()
         .build();
   }

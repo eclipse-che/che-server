@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.singletonMap;
+import static java.util.Comparator.comparingInt;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.server.FactoryLinksHelper.createLinks;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
@@ -28,11 +29,13 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -62,17 +65,20 @@ public class FactoryService extends Service {
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
   private final AdditionalFilenamesProvider additionalFilenamesProvider;
   private final PersonalAccessTokenManager personalAccessTokenManager;
+  private final AuthorisationRequestManager authorisationRequestManager;
 
   @Inject
   public FactoryService(
       FactoryAcceptValidator acceptValidator,
       FactoryParametersResolverHolder factoryParametersResolverHolder,
       AdditionalFilenamesProvider additionalFilenamesProvider,
-      PersonalAccessTokenManager personalAccessTokenManager) {
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
     this.acceptValidator = acceptValidator;
     this.factoryParametersResolverHolder = factoryParametersResolverHolder;
     this.additionalFilenamesProvider = additionalFilenamesProvider;
     this.personalAccessTokenManager = personalAccessTokenManager;
+    this.authorisationRequestManager = authorisationRequestManager;
   }
 
   @POST
@@ -145,15 +151,22 @@ public class FactoryService extends Service {
       FactoryParametersResolver factoryParametersResolver =
           factoryParametersResolverHolder.getFactoryParametersResolver(
               singletonMap(URL_PARAMETER_NAME, url));
-      personalAccessTokenManager.getAndStore(
-          factoryParametersResolver.parseFactoryUrl(url).getHostName());
-    } catch (ScmCommunicationException
-        | ScmConfigurationPersistenceException
-        | UnknownScmProviderException
-        | UnsatisfiedScmPreconditionException e) {
+      if (!authorisationRequestManager.isStored(factoryParametersResolver.getProviderName())) {
+        String scmServerUrl = factoryParametersResolver.parseFactoryUrl(url).getProviderUrl();
+        if (Boolean.parseBoolean(System.getenv("CHE_FORCE_REFRESH_PERSONAL_ACCESS_TOKEN"))) {
+          personalAccessTokenManager.forceRefreshPersonalAccessToken(scmServerUrl);
+        } else {
+          personalAccessTokenManager.getAndStore(scmServerUrl);
+        }
+      }
+    } catch (ScmConfigurationPersistenceException | UnsatisfiedScmPreconditionException e) {
       throw new ApiException(e);
     } catch (ScmUnauthorizedException e) {
       throw toApiException(e);
+    } catch (ScmCommunicationException e) {
+      throw toApiException(e);
+    } catch (UnknownScmProviderException e) {
+      // ignore the exception as it is not a problem if the provider from the given URL is unknown
     }
   }
 
@@ -175,8 +188,6 @@ public class FactoryService extends Service {
     @SuppressWarnings("unused")
     private Set<FactoryParametersResolver> specificFactoryParametersResolvers;
 
-    @Inject private DefaultFactoryParameterResolver defaultFactoryResolver;
-
     /**
      * Provides a suitable resolver for the given parameters. If there is no at least one resolver
      * able to process parameters,then {@link BadRequestException} will be thrown
@@ -185,22 +196,21 @@ public class FactoryService extends Service {
      */
     public FactoryParametersResolver getFactoryParametersResolver(Map<String, String> parameters)
         throws BadRequestException {
-      for (FactoryParametersResolver factoryParametersResolver :
-          specificFactoryParametersResolvers) {
-        try {
-          if (factoryParametersResolver.accept(parameters)) {
-            return factoryParametersResolver;
-          }
-        } catch (IllegalArgumentException e) {
-          // ignore and try next resolver
-        }
+      Optional<FactoryParametersResolver> resolverOptional =
+          specificFactoryParametersResolvers.stream()
+              .filter(
+                  r -> {
+                    try {
+                      return r.accept(parameters);
+                    } catch (IllegalArgumentException e) {
+                      return false;
+                    }
+                  })
+              .max(comparingInt(r -> r.priority().getValue()));
+      if (resolverOptional.isPresent()) {
+        return resolverOptional.get();
       }
-
-      if (defaultFactoryResolver.accept(parameters)) {
-        return defaultFactoryResolver;
-      } else {
-        throw new BadRequestException(FACTORY_NOT_RESOLVABLE);
-      }
+      throw new BadRequestException(FACTORY_NOT_RESOLVABLE);
     }
   }
 

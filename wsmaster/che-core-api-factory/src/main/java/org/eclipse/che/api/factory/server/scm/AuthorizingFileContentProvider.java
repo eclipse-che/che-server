@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.scm;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
+import static org.eclipse.che.api.factory.server.scm.exception.ExceptionMessages.getDevfileConnectionErrorMessage;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -80,7 +81,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         String authorization;
         if (isNullOrEmpty(credentials)) {
           PersonalAccessToken token =
-              personalAccessTokenManager.getAndStore(remoteFactoryUrl.getHostName());
+              personalAccessTokenManager.getAndStore(remoteFactoryUrl.getProviderUrl());
           authorization =
               formatAuthorization(
                   token.getToken(),
@@ -92,7 +93,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         return urlFetcher.fetch(requestURL, authorization);
       }
     } catch (UnknownScmProviderException e) {
-      return fetchContentWithoutToken(requestURL, e);
+      return fetchContentWithoutToken(requestURL);
     } catch (ScmCommunicationException e) {
       return toIOException(fileURL, e);
     } catch (ScmUnauthorizedException
@@ -102,7 +103,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     }
   }
 
-  protected String fetchContentWithoutToken(String requestURL, UnknownScmProviderException e)
+  protected String fetchContentWithoutToken(String requestURL)
       throws DevfileException, IOException {
     // we don't have any provider matching this SCM provider
     // so try without secrets being configured
@@ -123,7 +124,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         }
       }
       throw new DevfileException(
-          String.format("%s: %s", e.getMessage(), exception.getMessage()), exception);
+          getDevfileConnectionErrorMessage(exception.getMessage()), exception);
     }
   }
 

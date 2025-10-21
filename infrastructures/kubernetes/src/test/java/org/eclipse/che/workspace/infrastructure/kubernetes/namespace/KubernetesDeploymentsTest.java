@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static io.fabric8.kubernetes.api.model.DeletionPropagation.BACKGROUND;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.POD_STATUS_PHASE_FAILED;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.Constants.POD_STATUS_PHASE_RUNNING;
@@ -55,12 +56,12 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
+import io.fabric8.kubernetes.client.GracePeriodConfigurable;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.AppsAPIGroupDSL;
-import io.fabric8.kubernetes.client.dsl.EditReplacePatchDeletable;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
@@ -68,13 +69,21 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1APIGroupDSL;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.MockWebServer;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -89,6 +98,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -119,12 +129,12 @@ public class KubernetesDeploymentsTest {
   @Mock private Deployment deployment;
   @Mock private ObjectMeta deploymentMetadata;
   @Mock private DeploymentSpec deploymentSpec;
-  @Mock private EditReplacePatchDeletable<Deployment> deploymentEditReplacePatchDeletable;
+  @Mock private GracePeriodConfigurable gracePeriodConfigurable;
 
   // Pod Mocks
   @Mock private Pod pod;
   @Mock private PodStatus status;
-  @Mock private PodResource<Pod> podResource;
+  @Mock private PodResource podResource;
   @Mock private ObjectMeta metadata;
   @Mock private MixedOperation podsMixedOperation;
   @Mock private NonNamespaceOperation podsNamespaceOperation;
@@ -145,7 +155,7 @@ public class KubernetesDeploymentsTest {
   @Mock private V1APIGroupDSL v1APIGroupDSL;
 
   private KubernetesDeployments kubernetesDeployments;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -193,8 +203,20 @@ public class KubernetesDeploymentsTest {
 
     kubernetesDeployments =
         new KubernetesDeployments("namespace", "workspace123", clientFactory, executor);
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+  }
+
+  @AfterMethod
+  public void cleanUp() {
+    kubernetesMockServer.destroy();
   }
 
   @Test
@@ -491,7 +513,7 @@ public class KubernetesDeploymentsTest {
   public void testDeleteNonExistingPodBeforeWatch() throws Exception {
     final String POD_NAME = "nonExistingPod";
 
-    doReturn(Boolean.FALSE).when(podResource).delete();
+    doReturn(emptyList()).when(podResource).delete();
     doReturn(podResource).when(podResource).withPropagationPolicy(eq(BACKGROUND));
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
@@ -527,7 +549,7 @@ public class KubernetesDeploymentsTest {
   public void testDeleteNonExistingDeploymentBeforeWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
     doReturn(deploymentResource).when(deploymentResource).withPropagationPolicy(eq(BACKGROUND));
-    doReturn(Boolean.FALSE).when(deploymentResource).delete();
+    doReturn(emptyList()).when(deploymentResource).delete();
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
 
@@ -587,9 +609,9 @@ public class KubernetesDeploymentsTest {
   public void testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch() throws Exception {
     final String DEPLOYMENT_NAME = "nonExistingPod";
     when(deploymentResource.withPropagationPolicy(eq(BACKGROUND)))
-        .thenReturn(deploymentEditReplacePatchDeletable);
+        .thenReturn(gracePeriodConfigurable);
     doThrow(new RuntimeException("testDeleteDeploymentThrowingAnyExceptionShouldCloseWatch msg"))
-        .when(deploymentEditReplacePatchDeletable)
+        .when(gracePeriodConfigurable)
         .delete();
     Watch watch = mock(Watch.class);
     doReturn(watch).when(podResource).watch(any());
@@ -695,7 +717,8 @@ public class KubernetesDeploymentsTest {
 
   @Test
   public void deploymentShouldHaveImagePullSecretsOfSAAndSelf() throws InfrastructureException {
-    doReturn(serverMock.getClient()).when(clientFactory).create(anyString());
+    final var client = kubernetesMockServer.createClient();
+    doReturn(client).when(clientFactory).create(anyString());
 
     final String serviceAccountName = "workspace-sa";
     LocalObjectReference pullSecretOfSA =
@@ -714,11 +737,7 @@ public class KubernetesDeploymentsTest {
                     .build())
             .withImagePullSecrets(pullSecretOfSA)
             .build();
-    serverMock
-        .getClient()
-        .serviceAccounts()
-        .inNamespace(kubernetesDeployments.namespace)
-        .create(serviceAccount);
+    client.serviceAccounts().inNamespace(kubernetesDeployments.namespace).create(serviceAccount);
 
     ObjectMeta objectMeta =
         new ObjectMetaBuilder()
@@ -755,7 +774,7 @@ public class KubernetesDeploymentsTest {
   @Test
   public void deploymentShouldHavePullSecretsOnlyOfSelfWithNonexistentSA()
       throws InfrastructureException {
-    doReturn(serverMock.getClient()).when(clientFactory).create(anyString());
+    doReturn(kubernetesMockServer.createClient()).when(clientFactory).create(anyString());
 
     LocalObjectReference pullSecretOfPod =
         new LocalObjectReferenceBuilder().withName("pullsecret-pod").build();

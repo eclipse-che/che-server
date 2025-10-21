@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,7 +11,10 @@
  */
 package org.eclipse.che.api.core.rest;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -19,6 +22,7 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
@@ -42,11 +46,18 @@ public class RuntimeExceptionMapper implements ExceptionMapper<RuntimeException>
     final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     final String utcTime = dateFormat.format(new Date());
-    final String errorMessage = format("Internal Server Error occurred, error time: %s", utcTime);
+    String message = exception.getMessage();
+    final String errorMessage =
+        isNullOrEmpty(message)
+            ? format("Internal Server Error occurred, error time: %s", utcTime)
+            : message;
 
     LOG.error(errorMessage, exception);
 
-    ServiceError serviceError = DtoFactory.newDto(ServiceError.class).withMessage(errorMessage);
+    List<String> trace =
+        stream(exception.getStackTrace()).map(StackTraceElement::toString).collect(toList());
+    ServiceError serviceError =
+        DtoFactory.newDto(ServiceError.class).withMessage(errorMessage).withTrace(trace);
     return Response.serverError()
         .entity(DtoFactory.getInstance().toJson(serviceError))
         .type(MediaType.APPLICATION_JSON)

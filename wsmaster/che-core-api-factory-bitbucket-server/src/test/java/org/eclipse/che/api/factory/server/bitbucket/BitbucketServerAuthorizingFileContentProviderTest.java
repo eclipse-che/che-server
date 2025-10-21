@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,18 +29,21 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class BitbucketServerAuthorizingFileContentProviderTest {
 
-  public static final String TEST_HOSTNAME = "https://foo.bar";
+  public static final String TEST_HOSTNAME = "foo.bar";
+  public static final String TEST_SCHEME = "https";
   @Mock private URLFetcher urlFetcher;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
 
   @Test
   public void shouldFetchContentWithTokenIfPresent() throws Exception {
-    BitbucketServerUrl url = new BitbucketServerUrl().withHostName(TEST_HOSTNAME);
+    BitbucketServerUrl url =
+        new BitbucketServerUrl().withHostName(TEST_HOSTNAME).withScheme(TEST_SCHEME);
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
             url, urlFetcher, personalAccessTokenManager);
 
-    PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
+    PersonalAccessToken token =
+        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "provider", "user1", "token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
@@ -54,13 +57,16 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
 
   @Test
   public void shouldFetchTokenIfNotYetPresent() throws Exception {
-    BitbucketServerUrl url = new BitbucketServerUrl().withHostName(TEST_HOSTNAME);
+    BitbucketServerUrl url =
+        new BitbucketServerUrl().withHostName(TEST_HOSTNAME).withScheme(TEST_SCHEME);
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
             url, urlFetcher, personalAccessTokenManager);
 
-    PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
-    when(personalAccessTokenManager.getAndStore(eq(TEST_HOSTNAME))).thenReturn(token);
+    PersonalAccessToken token =
+        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "provider", "user1", "token");
+    when(personalAccessTokenManager.getAndStore(eq(TEST_SCHEME + "://" + TEST_HOSTNAME)))
+        .thenReturn(token);
 
     String fileURL = "https://foo.bar/scm/repo/.devfile";
 
@@ -68,7 +74,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     fileContentProvider.fetchContent(fileURL);
 
     // then
-    verify(personalAccessTokenManager).getAndStore(eq(TEST_HOSTNAME));
+    verify(personalAccessTokenManager).getAndStore(eq(TEST_SCHEME + "://" + TEST_HOSTNAME));
     verify(urlFetcher).fetch(eq(fileURL), eq("Bearer token"));
   }
 
@@ -78,6 +84,7 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     BitbucketServerUrl url =
         new BitbucketServerUrl()
             .withHostName(TEST_HOSTNAME)
+            .withScheme(TEST_SCHEME)
             .withProject("proj")
             .withRepository("repo")
             .withDevfileFilenames(Collections.singletonList(".devfile"));
@@ -87,7 +94,8 @@ public class BitbucketServerAuthorizingFileContentProviderTest {
     BitbucketServerAuthorizingFileContentProvider fileContentProvider =
         new BitbucketServerAuthorizingFileContentProvider(
             url, urlFetcher, personalAccessTokenManager);
-    PersonalAccessToken token = new PersonalAccessToken(TEST_HOSTNAME, "user1", "token");
+    PersonalAccessToken token =
+        new PersonalAccessToken(TEST_SCHEME + "://" + TEST_HOSTNAME, "provider", "user1", "token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(token);
 
     // when

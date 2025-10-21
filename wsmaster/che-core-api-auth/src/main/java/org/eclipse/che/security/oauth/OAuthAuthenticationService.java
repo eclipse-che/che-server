@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,6 +29,7 @@ import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.*;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Required;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 
 /** RESTful wrapper for OAuthAuthenticator. */
@@ -38,6 +39,7 @@ public class OAuthAuthenticationService extends Service {
   @Context protected SecurityContext security;
 
   @Inject private OAuthAPI oAuthAPI;
+  @Inject private AuthorisationRequestManager authorisationRequestManager;
 
   /**
    * Redirect request to OAuth provider site for authentication|authorization. Client must provide
@@ -66,6 +68,7 @@ public class OAuthAuthenticationService extends Service {
   /** Process OAuth callback */
   public Response callback(@QueryParam("errorValues") List<String> errorValues)
       throws OAuthAuthenticationException, NotFoundException, ForbiddenException {
+    authorisationRequestManager.callback(uriInfo, errorValues);
     return oAuthAPI.callback(uriInfo, errorValues);
   }
 
@@ -93,7 +96,7 @@ public class OAuthAuthenticationService extends Service {
   public OAuthToken token(@Required @QueryParam("oauth_provider") String oauthProvider)
       throws ServerException, UnauthorizedException, NotFoundException, ForbiddenException,
           BadRequestException, ConflictException {
-    return oAuthAPI.getToken(oauthProvider);
+    return oAuthAPI.getOrRefreshToken(oauthProvider);
   }
 
   /**

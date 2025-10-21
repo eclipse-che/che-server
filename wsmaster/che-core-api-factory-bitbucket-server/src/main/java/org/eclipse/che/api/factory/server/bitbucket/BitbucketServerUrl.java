@@ -29,6 +29,9 @@ public class BitbucketServerUrl extends DefaultFactoryUrl {
   /** Hostname of bitbucket URL */
   private String hostName;
 
+  private String scheme;
+  private String port;
+
   /** Project part of bitbucket URL */
   private String project;
 
@@ -54,6 +57,11 @@ public class BitbucketServerUrl extends DefaultFactoryUrl {
     return NAME;
   }
 
+  @Override
+  public String getProviderUrl() {
+    return (scheme.equals("ssh") ? "https" : scheme) + "://" + hostName;
+  }
+
   /**
    * Gets hostname of this bitbucket server url
    *
@@ -65,6 +73,16 @@ public class BitbucketServerUrl extends DefaultFactoryUrl {
 
   public BitbucketServerUrl withHostName(String hostName) {
     this.hostName = hostName;
+    return this;
+  }
+
+  public BitbucketServerUrl withScheme(String scheme) {
+    this.scheme = scheme;
+    return this;
+  }
+
+  public BitbucketServerUrl withPort(String port) {
+    this.port = port;
     return this;
   }
 
@@ -171,7 +189,7 @@ public class BitbucketServerUrl extends DefaultFactoryUrl {
   public String rawFileLocation(String fileName) {
     StringJoiner joiner =
         new StringJoiner("/")
-            .add(hostName)
+            .add((scheme.equals("ssh") ? "https" : scheme) + "://" + hostName)
             .add("rest/api/1.0")
             .add(!isNullOrEmpty(user) && isNullOrEmpty(project) ? "users" : "projects")
             .add(firstNonNull(user, project))
@@ -192,7 +210,14 @@ public class BitbucketServerUrl extends DefaultFactoryUrl {
    * @return location of the repository.
    */
   protected String repositoryLocation() {
-    return hostName
+    if (scheme.equals("ssh")) {
+      return String.format(
+          "%s://git@%s:%s/%s/%s.git",
+          scheme, hostName, port, (isNullOrEmpty(user) ? project : "~" + user), repository);
+    }
+    return scheme
+        + "://"
+        + hostName
         + "/scm/"
         + (isNullOrEmpty(user) ? project : "~" + user)
         + "/"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
@@ -24,6 +25,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -66,10 +68,10 @@ import org.testng.annotations.Test;
 @Listeners(MockitoTestNGListener.class)
 public class HttpBitbucketServerApiClientTest {
   private final String AUTHORIZATION_TOKEN =
-      "OAuth oauth_consumer_key=\"key123321\", oauth_nonce=\"6c0eace252f8dcda\","
-          + " oauth_signature=\"dPCm521TAF56FfGxabBAZDs9YTNeCg%2BiRK49afoJve8Mxk5ILlfkZKH693udqOig5k5ydeVxX%2FTso%2Flxx1pv2bqdbCqj3Nq82do1hJN5eTDLSvbHfGvjFuOGRobHTHwP6oJkaBSafjMUY8i8Vnz6hLfxToPj2ktd6ug4nKc1WGg%3D\", "
+      "OAuth oauth_consumer_key=\"key123321\", oauth_nonce=\"nonce\","
+          + " oauth_signature=\"signature\", "
           + "oauth_signature_method=\"RSA-SHA1\", oauth_timestamp=\"1609250025\", "
-          + "oauth_token=\"JmpyDe9sgYNn6pYHP6eGLaIU0vxdKLCJ\", oauth_version=\"1.0\"";
+          + "oauth_token=\"token\", oauth_version=\"1.0\"";
   WireMockServer wireMockServer;
   WireMock wireMock;
   BitbucketServerApiClient bitbucketServer;
@@ -99,6 +101,9 @@ public class HttpBitbucketServerApiClientTest {
             },
             oAuthAPI,
             apiEndpoint);
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withHeader("x-ausername", "ksmster")));
   }
 
   @AfterMethod
@@ -117,7 +122,38 @@ public class HttpBitbucketServerApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
 
-    BitbucketUser user = bitbucketServer.getUser("ksmster", null);
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
+    BitbucketUser user = bitbucketServer.getUser();
+    assertNotNull(user);
+  }
+
+  @Test
+  public void shouldGetUserWithSpecialCharacters()
+      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException {
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withHeader("x-ausername", "user%40email.com")));
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/users?start=0&limit=25&filter=user@email.com"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .withQueryParam("filter", equalTo("user@email.com"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/email-user/response.json")));
+
+    BitbucketUser user = bitbucketServer.getUser();
     assertNotNull(user);
   }
 
@@ -214,8 +250,18 @@ public class HttpBitbucketServerApiClientTest {
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/response.json")));
 
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
     List<String> page =
-        bitbucketServer.getPersonalAccessTokens("ksmster").stream()
+        bitbucketServer.getPersonalAccessTokens().stream()
             .map(BitbucketPersonalAccessToken::getName)
             .collect(Collectors.toList());
     assertEquals(page, ImmutableList.of("che", "t2"));
@@ -223,7 +269,8 @@ public class HttpBitbucketServerApiClientTest {
 
   @Test
   public void shouldBeAbleToCreatePAT()
-      throws ScmCommunicationException, ScmBadRequestException, ScmUnauthorizedException {
+      throws ScmCommunicationException, ScmBadRequestException, ScmUnauthorizedException,
+          ScmItemNotFoundException {
 
     // given
     stubFor(
@@ -231,17 +278,52 @@ public class HttpBitbucketServerApiClientTest {
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON))
-            .withHeader(HttpHeaders.CONTENT_LENGTH, equalTo("149"))
+            .withHeader(HttpHeaders.CONTENT_LENGTH, equalTo("152"))
             .willReturn(
                 ok().withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/newtoken.json")));
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     // when
     BitbucketPersonalAccessToken result =
         bitbucketServer.createPersonalAccessTokens(
-            "ksmster", "myToKen", ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
+            "myToKen", ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
     // then
     assertNotNull(result);
-    assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
+    assertEquals(result.getToken(), "token");
+  }
+
+  @Test
+  public void shouldBeAbleToDeletePAT()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+
+    // given
+    stubFor(
+        delete(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster/5"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
+            .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON))
+            .willReturn(aResponse().withStatus(204)));
+
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
+    // when
+    bitbucketServer.deletePersonalAccessTokens("5");
   }
 
   @Test
@@ -251,16 +333,26 @@ public class HttpBitbucketServerApiClientTest {
     // given
     stubFor(
         get(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster/5"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .willReturn(
                 ok().withBodyFile("bitbucket/rest/access-tokens/1.0/users/ksmster/newtoken.json")));
 
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
     // when
-    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("ksmster", 5L);
+    BitbucketPersonalAccessToken result = bitbucketServer.getPersonalAccessToken("5", "token");
     // then
     assertNotNull(result);
-    assertEquals(result.getToken(), "MTU4OTEwNTMyOTA5Ohc88HcY8k7gWOzl2mP5TtdtY5Qs");
+    assertEquals(result.getToken(), "token");
   }
 
   @Test(expectedExceptions = ScmItemNotFoundException.class)
@@ -275,22 +367,55 @@ public class HttpBitbucketServerApiClientTest {
             .willReturn(notFound()));
 
     // when
-    bitbucketServer.getPersonalAccessToken("ksmster", 5L);
+    bitbucketServer.getPersonalAccessToken("5", "token");
   }
 
   @Test(expectedExceptions = ScmUnauthorizedException.class)
-  public void shouldBeAbleToThrowScmUnauthorizedExceptionOnGePAT()
+  public void shouldBeAbleToThrowScmUnauthorizedExceptionOnGetUser()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+    // given
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
+
+    // when
+    bitbucketServer.getUser();
+  }
+
+  @Test(expectedExceptions = ScmCommunicationException.class)
+  public void shouldBeAbleToThrowScmCommunicationExceptionOnGetUser()
+      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
+    // given
+    stubFor(get(urlEqualTo("/rest/api/1.0/application-properties")).willReturn(aResponse()));
+
+    // when
+    bitbucketServer.getUser();
+  }
+
+  @Test(expectedExceptions = ScmUnauthorizedException.class)
+  public void shouldBeAbleToThrowScmUnauthorizedExceptionOnGetPAT()
       throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException {
 
     // given
     stubFor(
         get(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster/5"))
-            .withHeader(HttpHeaders.AUTHORIZATION, equalTo(AUTHORIZATION_TOKEN))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .withHeader(HttpHeaders.ACCEPT, equalTo(MediaType.APPLICATION_JSON))
             .willReturn(unauthorized()));
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
 
     // when
-    bitbucketServer.getPersonalAccessToken("ksmster", 5L);
+    bitbucketServer.getPersonalAccessToken("5", "token");
   }
 
   @Test(
@@ -303,13 +428,13 @@ public class HttpBitbucketServerApiClientTest {
           NotFoundException, BadRequestException {
 
     // given
-    when(oAuthAPI.getToken(eq("bitbucket"))).thenReturn(mock(OAuthToken.class));
+    when(oAuthAPI.getOrRefreshToken(eq("bitbucket-server"))).thenReturn(mock(OAuthToken.class));
     HttpBitbucketServerApiClient localServer =
         new HttpBitbucketServerApiClient(
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
 
     // when
-    localServer.getPersonalAccessToken("ksmster", 5L);
+    localServer.getUser();
   }
 
   @Test
@@ -320,22 +445,32 @@ public class HttpBitbucketServerApiClientTest {
     // given
     OAuthToken token = mock(OAuthToken.class);
     when(token.getToken()).thenReturn("token");
-    when(oAuthAPI.getToken(eq("bitbucket"))).thenReturn(token);
+    when(oAuthAPI.getOrRefreshToken(eq("bitbucket-server"))).thenReturn(token);
     bitbucketServer =
         new HttpBitbucketServerApiClient(
             wireMockServer.url("/"), new NoopOAuthAuthenticator(), oAuthAPI, apiEndpoint);
     stubFor(
-        get(urlEqualTo("/rest/api/1.0/users/user"))
+        get(urlEqualTo("/rest/api/1.0/users/ksmster"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
             .willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json; charset=utf-8")
                     .withBodyFile("bitbucket/rest/api/1.0/users/ksmster/response.json")));
 
+    stubFor(
+        get(urlPathEqualTo("/rest/api/1.0/users"))
+            .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
+            .withQueryParam("start", equalTo("0"))
+            .withQueryParam("limit", equalTo("25"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json; charset=utf-8")
+                    .withBodyFile("bitbucket/rest/api/1.0/users/filtered/response.json")));
+
     // when
-    bitbucketServer.getUser("user", null);
+    bitbucketServer.getUser();
 
     // then
-    verify(oAuthAPI).getToken(eq("bitbucket"));
+    verify(oAuthAPI, times(2)).getOrRefreshToken(eq("bitbucket-server"));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -59,11 +59,20 @@ public class GitlabUrlTest {
         .when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl, null);
     assertEquals(gitlabUrl.devfileFileLocations().size(), 2);
     Iterator<DevfileLocation> iterator = gitlabUrl.devfileFileLocations().iterator();
     assertEquals(iterator.next().location(), format(fileUrl, "devfile.yaml"));
     assertEquals(iterator.next().location(), format(fileUrl, "foo.bar"));
+  }
+
+  @Test(dataProvider = "urlsProvider")
+  public void shouldReturnProviderUrl(String repoUrl, String ignored) {
+    // when
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl, null);
+
+    // then
+    assertEquals(gitlabUrl.getProviderUrl(), "https://gitlab.net");
   }
 
   @DataProvider
@@ -71,11 +80,19 @@ public class GitlabUrlTest {
     return new Object[][] {
       {
         "https://gitlab.net/eclipse/che.git",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw"
+        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw?ref=HEAD"
       },
       {
         "https://gitlab.net/eclipse/fooproj/che.git",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw"
+        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=HEAD"
+      },
+      {
+        "git@gitlab.net:eclipse/che.git",
+        "https://gitlab.net/api/v4/projects/eclipse%%2Fche/repository/files/%s/raw?ref=HEAD"
+      },
+      {
+        "git@gitlab.net:eclipse/fooproj/che.git",
+        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=HEAD"
       },
       {
         "https://gitlab.net/eclipse/fooproj/-/tree/master/",
@@ -85,17 +102,13 @@ public class GitlabUrlTest {
         "https://gitlab.net/eclipse/fooproj/che/-/tree/foobranch/",
         "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=foobranch"
       },
-      {
-        "https://gitlab.net/eclipse/fooproj/che/-/tree/foobranch/subfolder",
-        "https://gitlab.net/api/v4/projects/eclipse%%2Ffooproj%%2Fche/repository/files/%s/raw?ref=foobranch"
-      },
     };
   }
 
   /** Check the original repository */
   @Test(dataProvider = "repoProvider")
   public void checkRepositoryLocation(String rawUrl, String repoUrl) {
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(rawUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(rawUrl, null);
     assertEquals(gitlabUrl.repositoryLocation(), repoUrl);
   }
 
@@ -104,6 +117,8 @@ public class GitlabUrlTest {
     return new Object[][] {
       {"https://gitlab.net/eclipse/che.git", "https://gitlab.net/eclipse/che.git"},
       {"https://gitlab.net/eclipse/foo/che.git", "https://gitlab.net/eclipse/foo/che.git"},
+      {"git@gitlab.net:eclipse/che.git", "git@gitlab.net:eclipse/che.git"},
+      {"git@gitlab.net:eclipse/foo/che.git", "git@gitlab.net:eclipse/foo/che.git"},
       {
         "https://gitlab.net/eclipse/fooproj/che/-/tree/master/",
         "https://gitlab.net/eclipse/fooproj/che.git"

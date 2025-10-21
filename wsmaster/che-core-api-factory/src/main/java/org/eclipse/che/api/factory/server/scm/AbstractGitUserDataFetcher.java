@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,8 +12,6 @@
 package org.eclipse.che.api.factory.server.scm;
 
 import java.util.Optional;
-import org.eclipse.che.api.auth.shared.dto.OAuthToken;
-import org.eclipse.che.api.core.*;
 import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -26,53 +24,45 @@ import org.eclipse.che.commons.subject.Subject;
  */
 public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
   protected final String oAuthProviderName;
+  protected final String oAuthProviderUrl;
   protected final PersonalAccessTokenManager personalAccessTokenManager;
-  protected final OAuthTokenFetcher oAuthTokenFetcher;
 
   public AbstractGitUserDataFetcher(
       String oAuthProviderName,
-      PersonalAccessTokenManager personalAccessTokenManager,
-      OAuthTokenFetcher oAuthTokenFetcher) {
+      String oAuthProviderUrl,
+      PersonalAccessTokenManager personalAccessTokenManager) {
     this.oAuthProviderName = oAuthProviderName;
+    this.oAuthProviderUrl = oAuthProviderUrl;
     this.personalAccessTokenManager = personalAccessTokenManager;
-    this.oAuthTokenFetcher = oAuthTokenFetcher;
   }
 
-  public GitUserData fetchGitUserData()
+  public GitUserData fetchGitUserData(String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException,
           ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException {
     Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
-    try {
-      OAuthToken oAuthToken = oAuthTokenFetcher.getToken(oAuthProviderName);
-      return fetchGitUserDataWithOAuthToken(oAuthToken);
-    } catch (UnauthorizedException e) {
-      throw new ScmUnauthorizedException(
-          cheSubject.getUserName()
-              + " is not authorized in "
-              + oAuthProviderName
-              + " OAuth provider.",
-          oAuthProviderName,
-          "2.0",
-          getLocalAuthenticateUrl());
-    } catch (NotFoundException e) {
-      Optional<PersonalAccessToken> personalAccessToken =
-          personalAccessTokenManager.get(cheSubject, oAuthProviderName, null);
-      if (personalAccessToken.isPresent()) {
-        return fetchGitUserDataWithPersonalAccessToken(personalAccessToken.get());
+    Optional<PersonalAccessToken> tokenOptional =
+        personalAccessTokenManager.get(cheSubject, oAuthProviderName, null, namespaceName);
+    if (tokenOptional.isPresent()) {
+      return fetchGitUserDataWithPersonalAccessToken(tokenOptional.get());
+    } else {
+      Optional<PersonalAccessToken> oAuthTokenOptional =
+          personalAccessTokenManager.get(cheSubject, null, oAuthProviderUrl, namespaceName);
+      if (oAuthTokenOptional.isPresent()) {
+        return fetchGitUserDataWithOAuthToken(oAuthTokenOptional.get().getToken());
       }
-      throw new ScmCommunicationException(
-          "There are no tokes for the user " + cheSubject.getUserId());
-    } catch (ServerException | ForbiddenException | BadRequestException | ConflictException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
     }
+    throw new ScmCommunicationException(
+        "There are no tokes for the user " + cheSubject.getUserId());
   }
 
-  protected abstract GitUserData fetchGitUserDataWithOAuthToken(OAuthToken oAuthToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException;
+  protected abstract GitUserData fetchGitUserDataWithOAuthToken(String token)
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException;
 
   protected abstract GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException;
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException;
 
   protected abstract String getLocalAuthenticateUrl();
 }

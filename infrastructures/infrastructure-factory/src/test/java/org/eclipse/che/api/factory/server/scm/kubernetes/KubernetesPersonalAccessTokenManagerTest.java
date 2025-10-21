@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,9 +12,8 @@
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.ANNOTATION_CHE_USERID;
-import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID;
-import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.ANNOTATION_SCM_URL;
+import static java.util.Collections.singletonList;
+import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesPersonalAccessTokenManager.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -37,12 +36,12 @@ import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
@@ -90,20 +89,28 @@ public class KubernetesPersonalAccessTokenManagerTest {
   @Test
   public void shouldTrimBlankCharsInToken() throws Exception {
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
     KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(true);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data =
         Map.of("token", Base64.getEncoder().encodeToString(" token_value \n".getBytes(UTF_8)));
 
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user", ANNOTATION_SCM_URL, "http://host1"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
             .build();
 
     Secret secret = new SecretBuilder().withMetadata(meta1).withData(data).build();
@@ -113,7 +120,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     PersonalAccessToken token =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user", "t1", false), "http://host1")
+            .get(new SubjectImpl("user", "user", "t1", false), null, "http://host1", null)
             .get();
 
     // then
@@ -124,7 +131,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   public void testSavingOfPersonalAccessToken() throws Exception {
 
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
 
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
@@ -133,10 +140,16 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://bitbucket.com", "cheUser", "username", "token-name", "tid-24", "token123");
+            "https://bitbucket.com",
+            "provider",
+            "cheUser",
+            "username",
+            "token-name",
+            "tid-24",
+            "token123");
 
     // when
-    personalAccessTokenManager.save(token);
+    personalAccessTokenManager.store(token);
 
     // then
     verify(nonNamespaceOperation).createOrReplace(captor.capture());
@@ -156,12 +169,13 @@ public class KubernetesPersonalAccessTokenManagerTest {
   public void testGetTokenFromNamespace() throws Exception {
 
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
     KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(true);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -172,18 +186,39 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host1"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host2"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host2"))
             .build();
     ObjectMeta meta3 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-03T12:00:00Z")
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user2", ANNOTATION_SCM_URL, "http://host3"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user2",
+                    ANNOTATION_SCM_URL,
+                    "http://host3"))
             .build();
 
     Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
@@ -196,7 +231,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     PersonalAccessToken token =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user1", "t1", false), "http://host1")
+            .get(new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null)
             .get();
 
     // then
@@ -206,15 +241,103 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
-  public void testGetTokenFromNamespaceWithTrailingSlashMismatch() throws Exception {
+  public void shouldGetTokenFromASecretWithSCMUsername() throws Exception {
 
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
     KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(true);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    "che.eclipse.org/scm-username",
+                    "scm-username"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    Optional<PersonalAccessToken> tokenOptional =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
+    // then
+    assertTrue(tokenOptional.isPresent());
+    assertEquals(tokenOptional.get().getCheUserId(), "user1");
+    assertEquals(tokenOptional.get().getScmProviderUrl(), "http://host1");
+    assertEquals(tokenOptional.get().getToken(), "token1");
+  }
+
+  @Test
+  public void shouldGetTokenFromASecretWithoutSCMUsername() throws Exception {
+
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    Optional<PersonalAccessToken> tokenOptional =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
+
+    // then
+    assertTrue(tokenOptional.isPresent());
+    assertEquals(tokenOptional.get().getCheUserId(), "user1");
+    assertEquals(tokenOptional.get().getScmProviderUrl(), "http://host1");
+    assertEquals(tokenOptional.get().getToken(), "token1");
+  }
+
+  @Test
+  public void testGetTokenFromNamespaceWithTrailingSlashMismatch() throws Exception {
+
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
 
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -223,13 +346,27 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host1.com/"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1.com/"))
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-08-01T12:00:00Z")
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host2.com"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host2.com"))
             .build();
 
     Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
@@ -240,11 +377,11 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     PersonalAccessToken token1 =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user1", "t1", false), "http://host1.com")
+            .get(new SubjectImpl("user", "user1", "t1", false), null, "http://host1.com", null)
             .get();
     PersonalAccessToken token2 =
         personalAccessTokenManager
-            .get(new SubjectImpl("user", "user1", "t1", false), "http://host2.com/")
+            .get(new SubjectImpl("user", "user1", "t1", false), null, "http://host2.com/", null)
             .get();
 
     // then
@@ -253,15 +390,51 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
-  public void shouldDeleteInvalidTokensOnGet() throws Exception {
+  public void shouldDeleteMisconfiguredTokensOnGet() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
     KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class))).thenReturn(false);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    Map<String, String> data1 =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+    ObjectMeta meta1 =
+        new ObjectMetaBuilder()
+            .withNamespace("test")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1"))
+            .build();
+    Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(secret1));
+    // when
+    Optional<PersonalAccessToken> token =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
+    // then
+    assertFalse(token.isPresent());
+    verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
+  }
+
+  @Test
+  public void shouldDeleteInvalidTokensOnGet() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.empty());
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
@@ -270,37 +443,46 @@ public class KubernetesPersonalAccessTokenManagerTest {
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
             .withAnnotations(
-                Map.of(ANNOTATION_CHE_USERID, "user1", ANNOTATION_SCM_URL, "http://host1"))
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
             .build();
     Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
     when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(secret1));
     // when
     Optional<PersonalAccessToken> token =
         personalAccessTokenManager.get(
-            new SubjectImpl("user", "user1", "t1", false), "http://host1");
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
     // then
     assertFalse(token.isPresent());
     verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
   }
 
   @Test(dependsOnMethods = "shouldDeleteInvalidTokensOnGet")
-  public void shouldReturnFirstValidToken() throws Exception {
+  public void shouldReturnFirstValidTokenAndDeleteTheInvalidOne() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(Collections.singletonList(meta));
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
     KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.isValid(any(PersonalAccessToken.class)))
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenAnswer(
-            (Answer<Boolean>)
+            (Answer<Optional<String>>)
                 invocation -> {
-                  PersonalAccessToken token = invocation.getArgument(0);
-                  return "id2".equals(token.getScmTokenId());
+                  PersonalAccessTokenParams params = invocation.getArgument(0);
+                  return "id2".equals(params.getScmTokenId())
+                      ? Optional.of("user")
+                      : Optional.empty();
                 });
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     Map<String, String> data1 =
         Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
@@ -308,8 +490,11 @@ public class KubernetesPersonalAccessTokenManagerTest {
         Map.of("token", Base64.getEncoder().encodeToString("token2".getBytes(UTF_8)));
     ObjectMeta meta1 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
             .withAnnotations(
                 Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,
@@ -319,8 +504,11 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .build();
     ObjectMeta meta2 =
         new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
             .withAnnotations(
                 Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,
@@ -334,9 +522,74 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // when
     Optional<PersonalAccessToken> token =
         personalAccessTokenManager.get(
-            new SubjectImpl("user", "user1", "t1", false), "http://host1");
+            new SubjectImpl("user", "user1", "t1", false), null, "http://host1", null);
     // then
     assertTrue(token.isPresent());
     assertEquals(token.get().getScmTokenId(), "id2");
+    verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
+  }
+
+  @Test
+  public void shouldReturnFirstValidTokenAndDeleteTheOlderOne() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    Map<String, String> data1 =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+    Map<String, String> data2 =
+        Map.of("token", Base64.getEncoder().encodeToString("token2".getBytes(UTF_8)));
+    ObjectMeta meta1 =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "id1"))
+            .build();
+    ObjectMeta meta2 =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "id2"))
+            .build();
+    Secret secret1 = new SecretBuilder().withMetadata(meta1).withData(data1).build();
+    Secret secret2 = new SecretBuilder().withMetadata(meta2).withData(data2).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(secret1, secret2));
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "http://host1", "provider", "cheUser", "username", "token-name", "tid-24", "token123");
+    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+            any(org.eclipse.che.commons.subject.Subject.class), eq("http://host1")))
+        .thenReturn(token);
+
+    // when
+    personalAccessTokenManager.forceRefreshPersonalAccessToken("http://host1");
+
+    // then
+    verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
   }
 }

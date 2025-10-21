@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -47,10 +47,24 @@ public class BitbucketURLParserTest {
     assertTrue(bitbucketURLParser.isValid(url), "url " + url + " is invalid");
   }
 
+  @Test
+  public void shouldParseWithBranch() {
+    BitbucketUrl bitbucketUrl =
+        bitbucketURLParser.parse("https://bitbucket.org/eclipse/che", "branch");
+    assertEquals(bitbucketUrl.getBranch(), "branch");
+  }
+
+  @Test
+  public void shouldParseWithUrlBranch() {
+    BitbucketUrl bitbucketUrl =
+        bitbucketURLParser.parse("https://bitbucket.org/eclipse/che/src/master/", "branch");
+    assertEquals(bitbucketUrl.getBranch(), "master");
+  }
+
   /** Compare parsing */
   @Test(dataProvider = "parsing")
   public void checkParsing(String url, String username, String repository, String branch) {
-    BitbucketUrl bitbucketUrl = bitbucketURLParser.parse(url);
+    BitbucketUrl bitbucketUrl = bitbucketURLParser.parse(url, null);
 
     assertEquals(bitbucketUrl.getWorkspaceId(), username);
     assertEquals(bitbucketUrl.getRepository(), repository);
@@ -60,7 +74,7 @@ public class BitbucketURLParserTest {
   /** Compare parsing */
   @Test(dataProvider = "parsingBadRepository")
   public void checkParsingBadRepositoryDoNotModifiesInitialInput(String url, String repository) {
-    BitbucketUrl bitbucketUrl = bitbucketURLParser.parse(url);
+    BitbucketUrl bitbucketUrl = bitbucketURLParser.parse(url, null);
     assertEquals(bitbucketUrl.getRepository(), repository);
   }
 

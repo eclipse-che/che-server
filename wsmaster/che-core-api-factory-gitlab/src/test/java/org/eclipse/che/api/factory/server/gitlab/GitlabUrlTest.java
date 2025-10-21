@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -59,7 +59,7 @@ public class GitlabUrlTest {
         .when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(Arrays.asList("devfile.yaml", "foo.bar"));
 
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl, null);
     assertEquals(gitlabUrl.devfileFileLocations().size(), 2);
     Iterator<DevfileLocation> iterator = gitlabUrl.devfileFileLocations().iterator();
     assertEquals(iterator.next().location(), format(fileUrl, "devfile.yaml"));
@@ -69,7 +69,7 @@ public class GitlabUrlTest {
   @Test(dataProvider = "urlsProvider")
   public void shouldReturnProviderUrl(String repoUrl, String ignored) {
     // when
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(repoUrl, null);
 
     // then
     assertEquals(gitlabUrl.getProviderUrl(), "https://gitlab.net");
@@ -108,7 +108,7 @@ public class GitlabUrlTest {
   /** Check the original repository */
   @Test(dataProvider = "repoProvider")
   public void checkRepositoryLocation(String rawUrl, String repoUrl) {
-    GitlabUrl gitlabUrl = gitlabUrlParser.parse(rawUrl);
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse(rawUrl, null);
     assertEquals(gitlabUrl.repositoryLocation(), repoUrl);
   }
 

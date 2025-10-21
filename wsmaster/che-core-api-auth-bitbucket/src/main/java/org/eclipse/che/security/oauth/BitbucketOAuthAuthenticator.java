@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,8 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.net.URLEncoder.encode;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.util.store.MemoryDataStoreFactory;
@@ -27,6 +29,10 @@ import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 @Singleton
 public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   private final String bitbucketEndpoint;
+
+  private static final String BITBUCKET_CLOUD_ENDPOINT = "https://bitbucket.org";
+  private static final String BITBUCKET_NAME = "bitbucket";
+  private static final String BITBUCKET_SERVER_NAME = "bitbucket-server";
 
   public BitbucketOAuthAuthenticator(
       String bitbucketEndpoint,
@@ -44,19 +50,25 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
   @Override
   public String getAuthenticateUrl(URL requestUrl, List<String> scopes) {
     AuthorizationCodeRequestUrl url = flow.newAuthorizationUrl().setScopes(scopes);
-    url.setState(prepareState(requestUrl));
+    String state = prepareState(requestUrl);
+    // Although the state is encoded in the OAuthAuthenticator class, we need to additionally encode
+    // it because Bitbucket Server decodes it on callback request.
+    url.setState(BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint) ? state : encode(state, UTF_8));
     url.set("redirect_uri", findRedirectUrl(requestUrl));
     return url.build();
   }
 
   @Override
   public final String getOAuthProvider() {
-    return "bitbucket";
+    // Bitbucket Cloud and Bitbucket Server have different provider names.
+    return BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint)
+        ? BITBUCKET_NAME
+        : BITBUCKET_SERVER_NAME;
   }
 
   @Override
-  public OAuthToken getToken(String userId) throws IOException {
-    final OAuthToken token = super.getToken(userId);
+  public OAuthToken getOrRefreshToken(String userId) throws IOException {
+    final OAuthToken token = super.getOrRefreshToken(userId);
     // Need to check if token is valid for requests, if valid - return it to caller.
     try {
       if (token == null || isNullOrEmpty(token.getToken())) {
@@ -75,9 +87,9 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
    * @return Bitbucket Cloud or Server API request URL
    */
   private String getTestRequestUrl() {
-    return "https://bitbucket.org".equals(bitbucketEndpoint)
+    return BITBUCKET_CLOUD_ENDPOINT.equals(bitbucketEndpoint)
         ? "https://api.bitbucket.org/2.0/user"
-        : bitbucketEndpoint + "/rest/api/1.0/application-properties";
+        : bitbucketEndpoint + "/plugins/servlet/applinks/whoami";
   }
 
   @Override
@@ -89,11 +101,12 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
       throws OAuthAuthenticationException {
     HttpURLConnection urlConnection = null;
     InputStream urlInputStream = null;
-
+    String result;
     try {
       urlConnection = (HttpURLConnection) new URL(requestUrl).openConnection();
       urlConnection.setRequestProperty("Authorization", "Bearer " + accessToken);
       urlInputStream = urlConnection.getInputStream();
+      result = new String(urlInputStream.readAllBytes(), UTF_8);
     } catch (IOException e) {
       throw new OAuthAuthenticationException(e.getMessage(), e);
     } finally {
@@ -107,6 +120,9 @@ public class BitbucketOAuthAuthenticator extends OAuthAuthenticator {
       if (urlConnection != null) {
         urlConnection.disconnect();
       }
+    }
+    if (isNullOrEmpty(result)) {
+      throw new OAuthAuthenticationException("Empty response from Bitbucket Server API");
     }
   }
 }

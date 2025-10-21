@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,6 +31,19 @@ public class ScmPersonalAccessTokenFetcher {
   public ScmPersonalAccessTokenFetcher(
       Set<PersonalAccessTokenFetcher> personalAccessTokenFetchers) {
     this.personalAccessTokenFetchers = personalAccessTokenFetchers;
+  }
+
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
+      PersonalAccessToken token = fetcher.refreshPersonalAccessToken(cheUser, scmServerUrl);
+      if (token != null) {
+        return token;
+      }
+    }
+
+    throw new UnknownScmProviderException(
+        "No PersonalAccessTokenFetcher configured for " + scmServerUrl, scmServerUrl);
   }
 
   /**
@@ -81,7 +94,7 @@ public class ScmPersonalAccessTokenFetcher {
    * fetchers return an scm username, return it. Otherwise, return null.
    */
   public Optional<String> getScmUsername(PersonalAccessTokenParams params)
-      throws UnknownScmProviderException, ScmUnauthorizedException, ScmCommunicationException {
+      throws UnknownScmProviderException, ScmCommunicationException {
     for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
       Optional<Pair<Boolean, String>> isValid = fetcher.isValid(params);
       if (isValid.isPresent() && isValid.get().first) {

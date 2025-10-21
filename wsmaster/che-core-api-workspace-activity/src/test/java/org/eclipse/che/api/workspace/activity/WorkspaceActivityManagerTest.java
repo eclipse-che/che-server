@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,7 +28,6 @@ import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
-import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
@@ -55,7 +54,6 @@ public class WorkspaceActivityManagerTest {
 
   @Captor private ArgumentCaptor<EventSubscriber<WorkspaceCreatedEvent>> createEventCaptor;
   @Captor private ArgumentCaptor<EventSubscriber<WorkspaceStatusEvent>> statusChangeEventCaptor;
-  @Captor private ArgumentCaptor<EventSubscriber<BeforeWorkspaceRemovedEvent>> removeEventCaptor;
 
   @Mock private Account account;
   @Mock private WorkspaceImpl workspace;
@@ -150,19 +148,6 @@ public class WorkspaceActivityManagerTest {
   }
 
   @Test
-  public void shouldRemoveActivityWhenWorkspaceRemoved() throws Exception {
-    String wsId = "1";
-
-    EventSubscriber<BeforeWorkspaceRemovedEvent> subscriber = subscribeAndGetRemoveSubscriber();
-
-    subscriber.onEvent(
-        new BeforeWorkspaceRemovedEvent(
-            new WorkspaceImpl(DtoFactory.newDto(WorkspaceDto.class).withId(wsId), null)));
-
-    verify(workspaceActivityDao, times(1)).removeActivity(eq(wsId));
-  }
-
-  @Test
   public void shouldCountWorkspacesInStatus() throws Exception {
     // given
     when(workspaceActivityDao.countWorkspacesInStatus(eq(WorkspaceStatus.STARTING), eq(0L)))
@@ -193,17 +178,10 @@ public class WorkspaceActivityManagerTest {
     return createEventCaptor.getValue();
   }
 
-  private EventSubscriber<BeforeWorkspaceRemovedEvent> subscribeAndGetRemoveSubscriber() {
-    subscribeToEventService();
-    return removeEventCaptor.getValue();
-  }
-
   private void subscribeToEventService() {
     activityManager.subscribe();
     verify(eventService).subscribe(createEventCaptor.capture(), eq(WorkspaceCreatedEvent.class));
     verify(eventService)
         .subscribe(statusChangeEventCaptor.capture(), eq(WorkspaceStatusEvent.class));
-    verify(eventService)
-        .subscribe(removeEventCaptor.capture(), eq(BeforeWorkspaceRemovedEvent.class));
   }
 }

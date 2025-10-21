@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,6 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import java.util.List;
 import org.eclipse.che.api.core.model.factory.Action;
 import org.eclipse.che.api.core.model.factory.Author;
-import org.eclipse.che.api.core.model.factory.Factory;
 import org.eclipse.che.api.core.model.factory.Ide;
 import org.eclipse.che.api.core.model.factory.OnAppClosed;
 import org.eclipse.che.api.core.model.factory.OnAppLoaded;
@@ -25,7 +24,6 @@ import org.eclipse.che.api.core.model.factory.OnProjectsLoaded;
 import org.eclipse.che.api.core.model.factory.Policies;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.factory.shared.dto.AuthorDto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.IdeActionDto;
 import org.eclipse.che.api.factory.shared.dto.IdeDto;
 import org.eclipse.che.api.factory.shared.dto.OnAppClosedDto;
@@ -39,29 +37,6 @@ import org.eclipse.che.api.factory.shared.dto.PoliciesDto;
  * @author Anton Korneta
  */
 public final class DtoConverter {
-
-  public static FactoryDto asDto(Factory factory, User user) {
-    final FactoryDto factoryDto =
-        newDto(FactoryDto.class)
-            .withId(factory.getId())
-            .withName(factory.getName())
-            .withV(factory.getV());
-
-    if (factory.getWorkspace() != null) {
-      factoryDto.withWorkspace(
-          org.eclipse.che.api.workspace.server.DtoConverter.asDto(factory.getWorkspace()));
-    }
-    if (factory.getCreator() != null) {
-      factoryDto.withCreator(asDto(factory.getCreator(), user));
-    }
-    if (factory.getIde() != null) {
-      factoryDto.withIde(asDto(factory.getIde()));
-    }
-    if (factory.getPolicies() != null) {
-      factoryDto.withPolicies(asDto(factory.getPolicies()));
-    }
-    return factoryDto;
-  }
 
   public static IdeDto asDto(Ide ide) {
     final IdeDto ideDto = newDto(IdeDto.class);

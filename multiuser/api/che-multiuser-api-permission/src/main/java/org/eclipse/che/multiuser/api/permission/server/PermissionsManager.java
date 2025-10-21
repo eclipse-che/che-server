@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -59,29 +59,11 @@ public class PermissionsManager {
   private final StripedLocks updateLocks;
 
   @Inject
-  public PermissionsManager(
-      EventService eventService, Set<PermissionsDao<? extends AbstractPermissions>> daos)
-      throws ServerException {
+  public PermissionsManager(EventService eventService) throws ServerException {
     this.eventService = eventService;
     final Map<String, PermissionsDao<? extends AbstractPermissions>> domainToDao = new HashMap<>();
     final List<AbstractPermissionsDomain<? extends AbstractPermissions>> domains =
         new ArrayList<>();
-    for (PermissionsDao<? extends AbstractPermissions> dao : daos) {
-      final AbstractPermissionsDomain<? extends AbstractPermissions> domain = dao.getDomain();
-      final PermissionsDao<? extends AbstractPermissions> oldStorage =
-          domainToDao.put(domain.getId(), dao);
-      domains.add(domain);
-      if (oldStorage != null) {
-        throw new ServerException(
-            "Permissions Domain '"
-                + domain.getId()
-                + "' should be stored in only one storage. "
-                + "Duplicated in "
-                + dao.getClass()
-                + " and "
-                + oldStorage.getClass());
-      }
-    }
     this.domains = ImmutableList.copyOf(domains);
     this.domainToDao = ImmutableMap.copyOf(domainToDao);
     this.updateLocks = new StripedLocks(16);

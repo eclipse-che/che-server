@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -69,13 +69,21 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.RollableScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1APIGroupDSL;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.MockWebServer;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -90,6 +98,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -146,7 +155,7 @@ public class KubernetesDeploymentsTest {
   @Mock private V1APIGroupDSL v1APIGroupDSL;
 
   private KubernetesDeployments kubernetesDeployments;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -194,8 +203,20 @@ public class KubernetesDeploymentsTest {
 
     kubernetesDeployments =
         new KubernetesDeployments("namespace", "workspace123", clientFactory, executor);
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+  }
+
+  @AfterMethod
+  public void cleanUp() {
+    kubernetesMockServer.destroy();
   }
 
   @Test
@@ -696,7 +717,8 @@ public class KubernetesDeploymentsTest {
 
   @Test
   public void deploymentShouldHaveImagePullSecretsOfSAAndSelf() throws InfrastructureException {
-    doReturn(serverMock.getClient()).when(clientFactory).create(anyString());
+    final var client = kubernetesMockServer.createClient();
+    doReturn(client).when(clientFactory).create(anyString());
 
     final String serviceAccountName = "workspace-sa";
     LocalObjectReference pullSecretOfSA =
@@ -715,11 +737,7 @@ public class KubernetesDeploymentsTest {
                     .build())
             .withImagePullSecrets(pullSecretOfSA)
             .build();
-    serverMock
-        .getClient()
-        .serviceAccounts()
-        .inNamespace(kubernetesDeployments.namespace)
-        .create(serviceAccount);
+    client.serviceAccounts().inNamespace(kubernetesDeployments.namespace).create(serviceAccount);
 
     ObjectMeta objectMeta =
         new ObjectMetaBuilder()
@@ -756,7 +774,7 @@ public class KubernetesDeploymentsTest {
   @Test
   public void deploymentShouldHavePullSecretsOnlyOfSelfWithNonexistentSA()
       throws InfrastructureException {
-    doReturn(serverMock.getClient()).when(clientFactory).create(anyString());
+    doReturn(kubernetesMockServer.createClient()).when(clientFactory).create(anyString());
 
     LocalObjectReference pullSecretOfPod =
         new LocalObjectReferenceBuilder().withName("pullsecret-pod").build();

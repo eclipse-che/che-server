@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -64,17 +65,20 @@ public class FactoryService extends Service {
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
   private final AdditionalFilenamesProvider additionalFilenamesProvider;
   private final PersonalAccessTokenManager personalAccessTokenManager;
+  private final AuthorisationRequestManager authorisationRequestManager;
 
   @Inject
   public FactoryService(
       FactoryAcceptValidator acceptValidator,
       FactoryParametersResolverHolder factoryParametersResolverHolder,
       AdditionalFilenamesProvider additionalFilenamesProvider,
-      PersonalAccessTokenManager personalAccessTokenManager) {
+      PersonalAccessTokenManager personalAccessTokenManager,
+      AuthorisationRequestManager authorisationRequestManager) {
     this.acceptValidator = acceptValidator;
     this.factoryParametersResolverHolder = factoryParametersResolverHolder;
     this.additionalFilenamesProvider = additionalFilenamesProvider;
     this.personalAccessTokenManager = personalAccessTokenManager;
+    this.authorisationRequestManager = authorisationRequestManager;
   }
 
   @POST
@@ -147,15 +151,22 @@ public class FactoryService extends Service {
       FactoryParametersResolver factoryParametersResolver =
           factoryParametersResolverHolder.getFactoryParametersResolver(
               singletonMap(URL_PARAMETER_NAME, url));
-      personalAccessTokenManager.getAndStore(
-          factoryParametersResolver.parseFactoryUrl(url).getHostName());
-    } catch (ScmCommunicationException
-        | ScmConfigurationPersistenceException
-        | UnknownScmProviderException
-        | UnsatisfiedScmPreconditionException e) {
+      if (!authorisationRequestManager.isStored(factoryParametersResolver.getProviderName())) {
+        String scmServerUrl = factoryParametersResolver.parseFactoryUrl(url).getProviderUrl();
+        if (Boolean.parseBoolean(System.getenv("CHE_FORCE_REFRESH_PERSONAL_ACCESS_TOKEN"))) {
+          personalAccessTokenManager.forceRefreshPersonalAccessToken(scmServerUrl);
+        } else {
+          personalAccessTokenManager.getAndStore(scmServerUrl);
+        }
+      }
+    } catch (ScmConfigurationPersistenceException | UnsatisfiedScmPreconditionException e) {
       throw new ApiException(e);
     } catch (ScmUnauthorizedException e) {
       throw toApiException(e);
+    } catch (ScmCommunicationException e) {
+      throw toApiException(e);
+    } catch (UnknownScmProviderException e) {
+      // ignore the exception as it is not a problem if the provider from the given URL is unknown
     }
   }
 

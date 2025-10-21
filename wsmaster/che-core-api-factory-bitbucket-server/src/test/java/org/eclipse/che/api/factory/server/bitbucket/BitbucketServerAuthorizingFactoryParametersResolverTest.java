@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.bitbucket;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,7 +26,6 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
@@ -35,16 +33,14 @@ import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.model.factory.ScmInfo;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
+import org.eclipse.che.api.factory.shared.dto.ScmInfoDto;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.SourceDto;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -61,6 +57,8 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
   @Mock private URLFetcher urlFetcher;
 
   @Mock private DevfileFilenamesProvider devfileFilenamesProvider;
+
+  @Mock private AuthorisationRequestManager authorisationRequestManager;
 
   BitbucketServerURLParser bitbucketURLParser;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
@@ -79,7 +77,11 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
     assertNotNull(this.bitbucketURLParser);
     bitbucketServerFactoryParametersResolver =
         new BitbucketServerAuthorizingFactoryParametersResolver(
-            urlFactoryBuilder, urlFetcher, bitbucketURLParser, personalAccessTokenManager);
+            urlFactoryBuilder,
+            urlFetcher,
+            bitbucketURLParser,
+            personalAccessTokenManager,
+            authorisationRequestManager);
     assertNotNull(this.bitbucketServerFactoryParametersResolver);
   }
 
@@ -105,23 +107,17 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
 
     String bitbucketUrl = "http://bitbucket.2mcl.com/scm/test/repo.git";
 
-    FactoryDto computedFactory = generateDevfileFactory();
-
-    when(urlFactoryBuilder.buildDefaultDevfile(any())).thenReturn(computedFactory.getDevfile());
-
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
         .thenReturn(Optional.empty());
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
     // when
-    FactoryDto factory =
-        (FactoryDto) bitbucketServerFactoryParametersResolver.createFactory(params);
+    FactoryDevfileV2Dto factory =
+        (FactoryDevfileV2Dto) bitbucketServerFactoryParametersResolver.createFactory(params);
     // then
-    verify(urlFactoryBuilder).buildDefaultDevfile(eq("repo"));
-    assertEquals(factory, computedFactory);
-    SourceDto source = factory.getDevfile().getProjects().get(0).getSource();
-    assertEquals(source.getLocation(), bitbucketUrl);
-    assertNull(source.getBranch());
+    ScmInfoDto scmInfo = factory.getScmInfo();
+    assertEquals(scmInfo.getRepositoryUrl(), bitbucketUrl);
+    assertEquals(scmInfo.getBranch(), null);
   }
 
   @Test
@@ -130,21 +126,21 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
     String bitbucketUrl =
         "http://bitbucket.2mcl.com/users/test/repos/repo/browse?at=refs%2Fheads%2Ffoobar";
 
-    FactoryDto computedFactory = generateDevfileFactory();
+    FactoryDevfileV2Dto factoryDevfileV2Dto = generateDevfileV2Factory();
 
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
-        .thenReturn(Optional.of(computedFactory));
+        .thenReturn(Optional.of(factoryDevfileV2Dto));
 
     Map<String, String> params = ImmutableMap.of(URL_PARAMETER_NAME, bitbucketUrl);
     // when
-    FactoryDto factory =
-        (FactoryDto) bitbucketServerFactoryParametersResolver.createFactory(params);
+    FactoryDevfileV2Dto factory =
+        (FactoryDevfileV2Dto) bitbucketServerFactoryParametersResolver.createFactory(params);
     // then
     assertNotNull(factory.getDevfile());
-    SourceDto source = factory.getDevfile().getProjects().get(0).getSource();
-    assertEquals(source.getLocation(), "http://bitbucket.2mcl.com/scm/~test/repo.git");
-    assertEquals(source.getBranch(), "refs%2Fheads%2Ffoobar");
+    ScmInfoDto source = factory.getScmInfo();
+    assertEquals(source.getRepositoryUrl(), "http://bitbucket.2mcl.com/scm/~test/repo.git");
+    assertEquals(source.getBranch(), "foobar");
   }
 
   @Test
@@ -171,16 +167,6 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
     assertEquals(scmInfo.getBranch(), "foobar");
   }
 
-  private FactoryDto generateDevfileFactory() {
-    return newDto(FactoryDto.class)
-        .withV(CURRENT_VERSION)
-        .withSource("repo")
-        .withDevfile(
-            newDto(DevfileDto.class)
-                .withApiVersion(CURRENT_API_VERSION)
-                .withMetadata(newDto(MetadataDto.class).withName("che")));
-  }
-
   private FactoryDevfileV2Dto generateDevfileV2Factory() {
     return newDto(FactoryDevfileV2Dto.class)
         .withV(CURRENT_VERSION)
@@ -196,7 +182,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolverTest {
         ImmutableMap.of(URL_PARAMETER_NAME, bitbucketServerUrl, ERROR_QUERY_NAME, "access_denied");
     when(urlFactoryBuilder.createFactoryFromDevfile(
             any(RemoteFactoryUrl.class), any(), anyMap(), anyBoolean()))
-        .thenReturn(Optional.of(generateDevfileFactory()));
+        .thenReturn(Optional.of(generateDevfileV2Factory()));
 
     // when
     bitbucketServerFactoryParametersResolver.createFactory(params);

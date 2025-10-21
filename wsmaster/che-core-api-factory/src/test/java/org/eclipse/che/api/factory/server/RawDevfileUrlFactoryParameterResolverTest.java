@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,37 +12,30 @@
 package org.eclipse.che.api.factory.server;
 
 import static java.lang.String.format;
+import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.EDITOR_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.PLUGIN_COMPONENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Collections;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.io.FileNotFoundException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
-import org.eclipse.che.api.workspace.server.devfile.DevfileVersionDetector;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.server.devfile.schema.DevfileSchemaProvider;
-import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -55,56 +48,12 @@ import org.testng.annotations.Test;
 public class RawDevfileUrlFactoryParameterResolverTest {
 
   private static final String DEVFILE =
-      ""
-          + "apiVersion: 1.0.0\n"
-          + "metadata:\n"
-          + "  name: test\n"
-          + "components:\n"
-          + "- type: kubernetes\n"
-          + "  alias: component\n"
-          + "  reference: ../localfile\n";
+      "" + "schemaVersion: 2.3.0\n" + "metadata:\n" + "  name: test\n";
 
   @Mock private URLFetcher urlFetcher;
+  @Mock private DevfileParser devfileParser;
 
   @InjectMocks private RawDevfileUrlFactoryParameterResolver rawDevfileUrlFactoryParameterResolver;
-
-  @Test
-  public void shouldResolveRelativeFiles() throws Exception {
-    // given
-
-    // we need to set up an "almost real" devfile converter which is a little bit involved
-    DevfileSchemaValidator validator =
-        new DevfileSchemaValidator(new DevfileSchemaProvider(), new DevfileVersionDetector());
-
-    Map<String, ComponentIntegrityValidator> validators = new HashMap<>();
-    validators.put(EDITOR_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-    validators.put(PLUGIN_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-    validators.put(KUBERNETES_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-    validators.put(OPENSHIFT_COMPONENT_TYPE, new NoopComponentIntegrityValidator());
-
-    DevfileIntegrityValidator integrityValidator = new DevfileIntegrityValidator(validators);
-
-    DevfileParser devfileParser = new DevfileParser(validator, integrityValidator);
-
-    URLFactoryBuilder factoryBuilder =
-        new URLFactoryBuilder(
-            "editor", "plugin", false, devfileParser, new DevfileVersionDetector());
-
-    RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(factoryBuilder, urlFetcher);
-
-    // set up our factory with the location of our devfile that is referencing our localfile
-    Map<String, String> factoryParameters = new HashMap<>();
-    factoryParameters.put(URL_PARAMETER_NAME, "http://myloc.com/aa/bb/devfile");
-    doReturn(DEVFILE).when(urlFetcher).fetch(eq("http://myloc.com/aa/bb/devfile"), eq(null));
-    doReturn("localfile").when(urlFetcher).fetch("http://myloc.com/aa/localfile", null);
-
-    // when
-    res.createFactory(factoryParameters);
-
-    // then
-    verify(urlFetcher).fetch(eq("http://myloc.com/aa/localfile"), eq(null));
-  }
 
   @Test
   @SuppressWarnings("unchecked")
@@ -113,7 +62,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher, devfileParser);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, "http://myloc/devfile");
@@ -144,7 +93,7 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     URLFetcher urlFetcher = mock(URLFetcher.class);
 
     RawDevfileUrlFactoryParameterResolver res =
-        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher);
+        new RawDevfileUrlFactoryParameterResolver(urlFactoryBuilder, urlFetcher, devfileParser);
 
     Map<String, String> factoryParameters = new HashMap<>();
     factoryParameters.put(URL_PARAMETER_NAME, url);
@@ -162,23 +111,102 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     }
   }
 
-  @Test(dataProvider = "devfileNames")
-  public void shouldAcceptRawDevfileUrl(String devfileName) {
+  @Test(dataProvider = "devfileUrls")
+  public void shouldAcceptRawDevfileUrl(String url) throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    when(urlFetcher.fetch(eq(url), eq(null))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
     // when
     boolean result =
-        rawDevfileUrlFactoryParameterResolver.accept(
-            Collections.singletonMap(URL_PARAMETER_NAME, "https://host/path/" + devfileName));
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test(dataProvider = "devfileUrlsWithoutExtension")
+  public void shouldAcceptRawDevfileUrlWithoutExtension(String url) throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    when(urlFetcher.fetch(eq(url), eq(null))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
 
     // then
     assertTrue(result);
   }
 
   @Test
-  public void shouldNotAcceptRawDevfileUrl() {
+  public void shouldAcceptRawDevfileUrlWithYaml() throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    String url = "https://host/path/devfile";
+    when(urlFetcher.fetch(eq(url), eq(null))).thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldAcceptRawDevfileUrlWithCredentials() throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    String url = "https://credentials@host/path/devfile";
+    when(urlFetcher.fetch(
+            eq(url), eq("Basic " + Base64.getEncoder().encodeToString("credentials:".getBytes()))))
+        .thenReturn(DEVFILE);
+    when(devfileParser.parseYamlRaw(eq(DEVFILE))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(false);
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(singletonMap(URL_PARAMETER_NAME, url));
+
+    // then
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldNotAcceptPublicGitRepositoryUrl() throws Exception {
+    // given
+    JsonNode jsonNode = mock(JsonNode.class);
+    String gitRepositoryUrl = "https://host/user/repo.git";
+    when(urlFetcher.fetch(eq(gitRepositoryUrl), eq(null))).thenReturn("unsupported content");
+    when(devfileParser.parseYamlRaw(eq("unsupported content"))).thenReturn(jsonNode);
+    when(jsonNode.isEmpty()).thenReturn(true);
+
     // when
     boolean result =
         rawDevfileUrlFactoryParameterResolver.accept(
-            Collections.singletonMap(URL_PARAMETER_NAME, "https://host/user/repo.git"));
+            singletonMap(URL_PARAMETER_NAME, gitRepositoryUrl));
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotAcceptPrivateGitRepositoryUrl() throws Exception {
+    // given
+    String gitRepositoryUrl = "https://host/user/private-repo.git";
+    when(urlFetcher.fetch(eq(gitRepositoryUrl), eq(null))).thenThrow(new FileNotFoundException());
+
+    // when
+    boolean result =
+        rawDevfileUrlFactoryParameterResolver.accept(
+            singletonMap(URL_PARAMETER_NAME, gitRepositoryUrl));
 
     // then
     assertFalse(result);
@@ -196,8 +224,26 @@ public class RawDevfileUrlFactoryParameterResolverTest {
     };
   }
 
-  @DataProvider(name = "devfileNames")
-  private Object[] devfileNames() {
-    return new String[] {"devfile.yaml", ".devfile.yaml", "any-name.yaml", "any-name.yml"};
+  @DataProvider(name = "devfileUrls")
+  private Object[] devfileUrls() {
+    return new String[] {
+      "https://host/path/devfile.yaml",
+      "https://host/path/.devfile.yaml",
+      "https://host/path/any-name.yaml",
+      "https://host/path/any-name.yml",
+      "https://host/path/devfile.yaml?token=TOKEN123",
+      "https://host/path/.devfile.yaml?token=TOKEN123",
+      "https://host/path/any-name.yaml?token=TOKEN123",
+      "https://host/path/any-name.yml?token=TOKEN123",
+      "https://host/path/devfile.yaml?at=refs/heads/branch",
+      "https://host/path/.devfile.yaml?at=refs/heads/branch",
+      "https://host/path/any-name.yaml?at=refs/heads/branch",
+      "https://host/path/any-name.yml?at=refs/heads/branch"
+    };
+  }
+
+  @DataProvider(name = "devfileUrlsWithoutExtension")
+  private Object[] devfileUrlsWithoutExtension() {
+    return new String[] {"https://host/path/any-name", "https://host/path/any-name?token=TOKEN123"};
   }
 }

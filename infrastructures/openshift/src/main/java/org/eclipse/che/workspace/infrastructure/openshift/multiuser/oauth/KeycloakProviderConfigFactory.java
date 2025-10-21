@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth;
 
+import static io.fabric8.openshift.client.OpenShiftConfig.wrap;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.CLIENT_ID_SETTING;
 import static org.eclipse.che.multiuser.keycloak.shared.KeycloakConstants.REALM_SETTING;
 import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SETTING;
@@ -18,7 +19,6 @@ import static org.eclipse.che.multiuser.oidc.OIDCInfoProvider.AUTH_SERVER_URL_SE
 import com.google.inject.Provider;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.openshift.client.OpenShiftConfig;
-import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 import jakarta.ws.rs.core.UriBuilder;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -177,9 +177,9 @@ public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory
       KeycloakTokenResponse keycloakTokenInfos =
           keycloakServiceClient.getIdentityProviderToken(oauthIdentityProvider);
       if ("user:full".equals(keycloakTokenInfos.getScope())) {
-        return new OpenShiftConfigBuilder(OpenShiftConfig.wrap(defaultConfig))
-            .withOauthToken(keycloakTokenInfos.getAccessToken())
-            .build();
+        OpenShiftConfig openShiftConfig = wrap(defaultConfig);
+        openShiftConfig.setOauthToken(keycloakTokenInfos.getAccessToken());
+        return openShiftConfig;
       } else {
         throw new InfrastructureException(
             "Cannot retrieve user OpenShift token: '"

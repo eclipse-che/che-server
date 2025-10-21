@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.scm;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
+import static org.eclipse.che.api.factory.server.scm.exception.ExceptionMessages.getDevfileConnectionErrorMessage;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -123,7 +124,7 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         }
       }
       throw new DevfileException(
-          "Could not reach devfile at " + "`" + exception.getMessage() + "`", exception);
+          getDevfileConnectionErrorMessage(exception.getMessage()), exception);
     }
   }
 

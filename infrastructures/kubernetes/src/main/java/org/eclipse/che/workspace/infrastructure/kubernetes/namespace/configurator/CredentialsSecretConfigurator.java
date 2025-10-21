@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -25,6 +25,8 @@ import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditi
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This {@link NamespaceConfigurator} ensures that Secret {@link
@@ -44,6 +46,8 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
   private static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
   private static final String MERGED_GIT_CREDENTIALS_SECRET_NAME =
       "devworkspace-merged-git-credentials";
+
+  private static final Logger LOG = LoggerFactory.getLogger(CredentialsSecretConfigurator.class);
 
   @Inject
   public CredentialsSecretConfigurator(
@@ -73,13 +77,13 @@ public class CredentialsSecretConfigurator implements NamespaceConfigurator {
         .forEach(
             s -> {
               try {
-                personalAccessTokenManager.store(
+                personalAccessTokenManager.storeGitCredentials(
                     s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL));
               } catch (ScmCommunicationException
                   | ScmConfigurationPersistenceException
                   | UnsatisfiedScmPreconditionException
                   | ScmUnauthorizedException e) {
-                throw new RuntimeException(e);
+                LOG.error(e.getMessage(), e);
               }
             });
   }

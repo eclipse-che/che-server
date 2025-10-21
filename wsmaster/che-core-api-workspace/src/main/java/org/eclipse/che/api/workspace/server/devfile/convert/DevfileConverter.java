@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,11 +12,8 @@
 package org.eclipse.che.api.workspace.server.devfile.convert;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.String.format;
 import static org.eclipse.che.api.workspace.server.devfile.Components.getIdentifiableComponentName;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.SUPPORTED_VERSIONS;
 
-import com.google.common.base.Strings;
 import java.util.Map;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ServerException;
@@ -104,8 +101,6 @@ public class DevfileConverter {
     // make copy to avoid modification of original devfile
     devfile = new DevfileImpl(devfile);
 
-    validateCurrentVersion(devfile);
-
     defaultEditorProvisioner.apply(devfile, contentProvider);
 
     WorkspaceConfigImpl config = new WorkspaceConfigImpl();
@@ -142,18 +137,5 @@ public class DevfileConverter {
     config.setDevfile(devfile);
 
     return config;
-  }
-
-  private static void validateCurrentVersion(Devfile devFile) throws DevfileFormatException {
-    if (Strings.isNullOrEmpty(devFile.getApiVersion())) {
-      throw new DevfileFormatException("Provided Devfile has no API version specified");
-    }
-    if (SUPPORTED_VERSIONS.stream().noneMatch(v -> v.equals(devFile.getApiVersion()))) {
-      throw new DevfileFormatException(
-          format(
-              "Provided Devfile has unsupported version '%s'. The following versions are"
-                  + " supported: %s",
-              devFile.getApiVersion(), SUPPORTED_VERSIONS));
-    }
   }
 }

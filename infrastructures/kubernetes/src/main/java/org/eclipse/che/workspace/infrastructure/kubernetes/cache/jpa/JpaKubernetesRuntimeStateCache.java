@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,11 +11,9 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.cache.jpa;
 
-import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 
 import com.google.inject.persist.Transactional;
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,19 +21,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.model.workspace.config.Command;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
-import org.eclipse.che.core.db.jpa.DuplicateKeyException;
-import org.eclipse.che.workspace.infrastructure.kubernetes.cache.BeforeKubernetesRuntimeStateRemovedEvent;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.KubernetesRuntimeStateCache;
 import org.eclipse.che.workspace.infrastructure.kubernetes.model.KubernetesRuntimeCommandImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.model.KubernetesRuntimeState;
@@ -65,8 +57,6 @@ public class JpaKubernetesRuntimeStateCache implements KubernetesRuntimeStateCac
     try {
       doPutIfAbsent(runtimeState);
       return true;
-    } catch (DuplicateKeyException | EntityExistsException e) {
-      return false;
     } catch (RuntimeException e) {
       throw new InfrastructureException(e.getMessage(), e);
     }
@@ -187,11 +177,6 @@ public class JpaKubernetesRuntimeStateCache implements KubernetesRuntimeStateCac
         em.find(KubernetesRuntimeState.class, runtimeIdentity.getWorkspaceId());
 
     if (runtime != null) {
-      eventService
-          .publish(
-              new BeforeKubernetesRuntimeStateRemovedEvent(new KubernetesRuntimeState(runtime)))
-          .propagateException();
-
       em.remove(runtime);
     }
   }
@@ -253,40 +238,5 @@ public class JpaKubernetesRuntimeStateCache implements KubernetesRuntimeStateCac
     EntityManager em = managerProvider.get();
     em.persist(runtimeState);
     em.flush();
-  }
-
-  @Singleton
-  public static class RemoveKubernetesRuntimeBeforeWorkspaceRemoved
-      extends CascadeEventSubscriber<BeforeWorkspaceRemovedEvent> {
-
-    @Inject private EventService eventService;
-    @Inject private JpaKubernetesRuntimeStateCache k8sRuntimes;
-
-    @PostConstruct
-    public void subscribe() {
-      eventService.subscribe(this, BeforeWorkspaceRemovedEvent.class);
-    }
-
-    @Override
-    public void onCascadeEvent(BeforeWorkspaceRemovedEvent event) throws Exception {
-      Optional<KubernetesRuntimeState> k8sRuntimeStateOpt =
-          k8sRuntimes.find(event.getWorkspace().getId());
-      if (k8sRuntimeStateOpt.isPresent()) {
-        KubernetesRuntimeState existingK8sRuntimeState = k8sRuntimeStateOpt.get();
-        RuntimeIdentity runtimeId = existingK8sRuntimeState.getRuntimeId();
-
-        // It is not normal case when non STOPPED workspace is going to be removed.
-        // Need to log error to investigate why it may happen
-        // and clean up existing runtime not to lock removing of workspace.
-        LOG.error(
-            format(
-                "Workspace is being removed while Kubernetes runtime state '%s:%s:%s' exists. "
-                    + "This situation indicates a bug that needs to be reported. Runtime state "
-                    + "will be removed from DB, but Kubernetes resources (pods, pvcs, etc.) "
-                    + "won't be cleaned up.",
-                runtimeId.getWorkspaceId(), runtimeId.getEnvName(), runtimeId.getOwnerId()));
-        k8sRuntimes.remove(runtimeId);
-      }
-    }
   }
 }

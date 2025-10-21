@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -36,7 +36,6 @@ import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.devfile.exception.OverrideParameterException;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 
@@ -51,27 +50,19 @@ public class DevfileParser {
 
   private final ObjectMapper yamlMapper;
   private final ObjectMapper jsonMapper;
-  private final DevfileSchemaValidator schemaValidator;
   private final DevfileIntegrityValidator integrityValidator;
   private final OverridePropertiesApplier overridePropertiesApplier;
 
   @Inject
-  public DevfileParser(
-      DevfileSchemaValidator schemaValidator, DevfileIntegrityValidator integrityValidator) {
-    this(
-        schemaValidator,
-        integrityValidator,
-        new ObjectMapper(new YAMLFactory()),
-        new ObjectMapper());
+  public DevfileParser(DevfileIntegrityValidator integrityValidator) {
+    this(integrityValidator, new ObjectMapper(new YAMLFactory()), new ObjectMapper());
   }
 
   @VisibleForTesting
   DevfileParser(
-      DevfileSchemaValidator schemaValidator,
       DevfileIntegrityValidator integrityValidator,
       ObjectMapper yamlMapper,
       ObjectMapper jsonMapper) {
-    this.schemaValidator = schemaValidator;
     this.integrityValidator = integrityValidator;
     this.yamlMapper = yamlMapper;
     this.jsonMapper = jsonMapper;
@@ -120,8 +111,7 @@ public class DevfileParser {
    * @param devfileJson json with devfile content
    * @return devfile in simple Map structure
    */
-  public Map<String, Object> convertYamlToMap(JsonNode devfileJson) throws DevfileFormatException {
-    schemaValidator.validate(devfileJson);
+  public Map<String, Object> convertYamlToMap(JsonNode devfileJson) {
     return yamlMapper.convertValue(devfileJson, new TypeReference<>() {});
   }
 
@@ -215,7 +205,6 @@ public class DevfileParser {
     DevfileImpl devfile;
     try {
       parsed = overridePropertiesApplier.applyPropertiesOverride(parsed, overrideProperties);
-      schemaValidator.validate(parsed);
       devfile = mapper.treeToValue(parsed, DevfileImpl.class);
     } catch (JsonProcessingException e) {
       throw new DevfileFormatException(e.getMessage());

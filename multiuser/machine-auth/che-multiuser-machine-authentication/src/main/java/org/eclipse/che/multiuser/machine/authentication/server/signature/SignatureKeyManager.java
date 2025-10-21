@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -35,7 +35,6 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent;
-import org.eclipse.che.core.db.DBInitializer;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.model.impl.SignatureKeyPairImpl;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.spi.SignatureKeyDao;
 import org.slf4j.Logger;
@@ -61,10 +60,6 @@ public class SignatureKeyManager {
   private final SignatureKeyDao signatureKeyDao;
   private final EventService eventService;
   private final EventSubscriber<?> workspaceEventsSubscriber;
-
-  @Inject
-  @SuppressWarnings("unused")
-  private DBInitializer dbInitializer;
 
   @Inject
   public SignatureKeyManager(

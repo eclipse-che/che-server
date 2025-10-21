@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static java.lang.String.valueOf;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -78,7 +79,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             "User User", "user-name", 32423523, "NORMAL", true, "user-slug", "user@users.com");
     bitbucketPersonalAccessToken =
         new BitbucketPersonalAccessToken(
-            234234,
+            "234234",
             234345345,
             23534534,
             90,
@@ -88,7 +89,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             ImmutableSet.of("PROJECT_WRITE", "REPO_WRITE"));
     bitbucketPersonalAccessToken2 =
         new BitbucketPersonalAccessToken(
-            3647456,
+            "3647456",
             234345345,
             23534534,
             90,
@@ -98,7 +99,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             ImmutableSet.of("REPO_READ"));
     bitbucketPersonalAccessToken3 =
         new BitbucketPersonalAccessToken(
-            132423,
+            "132423",
             234345345,
             23534534,
             90,
@@ -156,7 +157,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     assertNotNull(result);
     assertEquals(result.getScmProviderUrl(), someBitbucketURL);
     assertEquals(result.getCheUserId(), subject.getUserId());
-    assertEquals(result.getScmOrganization(), bitbucketUser.getName());
+    assertNull(result.getScmOrganization(), bitbucketUser.getName());
     assertEquals(result.getScmTokenId(), valueOf(bitbucketPersonalAccessToken.getId()));
     assertEquals(result.getToken(), bitbucketPersonalAccessToken.getToken());
   }
@@ -221,11 +222,9 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
       throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException {
     // given
     when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(someBitbucketURL);
-    when(personalAccessTokenParams.getScmTokenId())
-        .thenReturn(Long.toString(bitbucketPersonalAccessToken.getId()));
+    when(personalAccessTokenParams.getToken()).thenReturn(bitbucketPersonalAccessToken.getToken());
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
-    when(bitbucketServerApiClient.getPersonalAccessToken(eq(bitbucketPersonalAccessToken.getId())))
-        .thenReturn(bitbucketPersonalAccessToken);
+    when(bitbucketServerApiClient.getUser(anyString())).thenReturn(bitbucketUser);
     // when
     Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);
     // then

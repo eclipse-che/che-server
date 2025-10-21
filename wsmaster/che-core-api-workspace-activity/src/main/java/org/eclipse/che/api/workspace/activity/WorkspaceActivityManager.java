@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,11 +27,9 @@ import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
-import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.api.workspace.shared.dto.event.WorkspaceStatusEvent;
 import org.eclipse.che.api.workspace.shared.event.WorkspaceCreatedEvent;
-import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +57,6 @@ public class WorkspaceActivityManager {
   private final EventService eventService;
   private final EventSubscriber<WorkspaceStatusEvent> updateStatusChangedTimestampSubscriber;
   private final EventSubscriber<WorkspaceCreatedEvent> setCreatedTimestampSubscriber;
-  private final EventSubscriber<BeforeWorkspaceRemovedEvent> workspaceActivityRemover;
 
   protected final WorkspaceManager workspaceManager;
 
@@ -118,14 +115,6 @@ public class WorkspaceActivityManager {
             }
           }
         };
-
-    this.workspaceActivityRemover =
-        new CascadeEventSubscriber<BeforeWorkspaceRemovedEvent>() {
-          @Override
-          public void onCascadeEvent(BeforeWorkspaceRemovedEvent event) throws Exception {
-            activityDao.removeActivity(event.getWorkspace().getId());
-          }
-        };
     this.updateStatusChangedTimestampSubscriber = new UpdateStatusChangedTimestampSubscriber();
   }
 
@@ -134,7 +123,6 @@ public class WorkspaceActivityManager {
   void subscribe() {
     eventService.subscribe(updateStatusChangedTimestampSubscriber, WorkspaceStatusEvent.class);
     eventService.subscribe(setCreatedTimestampSubscriber, WorkspaceCreatedEvent.class);
-    eventService.subscribe(workspaceActivityRemover, BeforeWorkspaceRemovedEvent.class);
   }
 
   /**

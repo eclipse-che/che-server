@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -36,6 +36,9 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvV
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.KubernetesNamespaceService;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.AuthorizationChecker;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.KubernetesAuthorizationCheckerImpl;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.PermissionsCleaner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.jpa.JpaKubernetesRuntimeCacheModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesComponentToWorkspaceApplier;
@@ -45,10 +48,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.environment.Kubernete
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNamespaceOnWorkspaceRemove;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigUserDataConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.OAuthTokenSecretsConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
-import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.SshKeysConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPermissionConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
@@ -101,12 +104,15 @@ public class KubernetesInfraModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), NamespaceConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPermissionConfigurator.class);
     namespaceConfigurators.addBinding().to(CredentialsSecretConfigurator.class);
+    namespaceConfigurators.addBinding().to(OAuthTokenSecretsConfigurator.class);
     namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
     namespaceConfigurators.addBinding().to(WorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(UserProfileConfigurator.class);
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
-    namespaceConfigurators.addBinding().to(SshKeysConfigurator.class);
-    namespaceConfigurators.addBinding().to(GitconfigUserDataConfigurator.class);
+    namespaceConfigurators.addBinding().to(GitconfigConfigurator.class);
+
+    bind(AuthorizationChecker.class).to(KubernetesAuthorizationCheckerImpl.class);
+    bind(PermissionsCleaner.class).asEagerSingleton();
 
     bind(KubernetesNamespaceService.class);
 
@@ -117,7 +123,6 @@ public class KubernetesInfraModule extends AbstractModule {
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
     bind(RuntimeInfrastructure.class).to(KubernetesInfrastructure.class);
-    bind(InconsistentRuntimesDetector.class).asEagerSingleton();
 
     bind(TrustedCAProvisioner.class).to(KubernetesTrustedCAProvisioner.class);
 

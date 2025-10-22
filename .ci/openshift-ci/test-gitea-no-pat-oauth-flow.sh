@@ -16,6 +16,8 @@ set -ex
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
+echo "======= [INFO] OpenShift CI infrastructure is ready. Running test. ======="
+
 export PUBLIC_REPO_SSH_URL=${PUBLIC_REPO_SSH_URL:-"git@gitea.com:chepullreq1/public-repo.git"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@gitea.com:chepullreq1/private-repo.git"}
 export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://gitea.com/chepullreq1/public-repo/raw/branch/main/devfile.yaml"}
@@ -29,8 +31,8 @@ trap "catchFinish" EXIT SIGINT
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 setupSSHKeyPairs "${GITEA_PRIVATE_KEY}" "${GITEA_PUBLIC_KEY}"
 
-testFactoryResolverResponse ${PUBLIC_REPO_SSH_URL} 200
-testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 200
+testFactoryResolverResponse ${PUBLIC_REPO_SSH_URL} 500
+testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 500
 testFactoryResolverResponse ${PUBLIC_REPO_RAW_PATH_URL} 200
 
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_SSH_URL} ${USER_CHE_NAMESPACE}

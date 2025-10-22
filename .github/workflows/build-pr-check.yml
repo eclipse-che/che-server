@@ -29,25 +29,30 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
         cache: 'maven'
+    - name: Set up QEMU
+      # Skip this and other docker related steps, if the PR is from a forked repo. GitHub secrets
+      # are not available for forked repos, so the podman login step will fail.
+      # See https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#using-secrets-in-a-workflow
+      if: ${{ ! github.event.pull_request.head.repo.fork }}
+      uses: docker/setup-qemu-action@v3
     - name: Login to docker.io
-      if: github.event_name == 'pull_request'
-      uses: docker/login-action@v2
+      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
+      uses: redhat-actions/podman-login@v1.7
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
         registry: docker.io
     - name: Login to quay.io
-      if: github.event_name == 'pull_request'
-      uses: docker/login-action@v2
+      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
+      uses: redhat-actions/podman-login@v1.7
       with:
         username: ${{ secrets.QUAY_USERNAME }}
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
     - name: Build with Maven
       run: mvn -B clean install -U -Pintegration
-    - name: Build docker images
-      if: github.event_name == 'pull_request'
-      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }}
-    - name: Push docker images
-      if: github.event_name == 'pull_request'
-      run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}
+      env:
+        DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_API_TOKEN }}
+    - name: Build and push images
+      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
+      run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64,linux/s390x --builder:podman --push-image

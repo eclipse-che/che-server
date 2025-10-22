@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,15 +27,11 @@ import org.eclipse.che.multiuser.resource.api.usage.tracker.RamResourceUsageTrac
 import org.eclipse.che.multiuser.resource.api.usage.tracker.RuntimeResourceUsageTracker;
 import org.eclipse.che.multiuser.resource.api.usage.tracker.WorkspaceResourceUsageTracker;
 import org.eclipse.che.multiuser.resource.api.workspace.LimitsCheckingWorkspaceManager;
-import org.eclipse.che.multiuser.resource.spi.FreeResourcesLimitDao;
-import org.eclipse.che.multiuser.resource.spi.jpa.JpaFreeResourcesLimitDao;
 
 /** @author Sergii Leschenko */
 public class ResourceModule extends AbstractModule {
   @Override
   protected void configure() {
-    bind(FreeResourcesLimitDao.class).to(JpaFreeResourcesLimitDao.class);
-    bind(JpaFreeResourcesLimitDao.RemoveFreeResourcesLimitSubscriber.class).asEagerSingleton();
 
     bind(WorkspaceManager.class).to(LimitsCheckingWorkspaceManager.class);
 

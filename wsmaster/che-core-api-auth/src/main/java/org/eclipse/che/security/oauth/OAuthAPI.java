@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -49,9 +49,18 @@ public interface OAuthAPI {
       throws ForbiddenException;
 
   /** Implementation of method {@link OAuthAuthenticationService#token(String)} */
-  OAuthToken getToken(String oauthProvider)
+  OAuthToken getOrRefreshToken(String oauthProvider)
       throws NotFoundException, UnauthorizedException, ServerException, ForbiddenException,
           BadRequestException, ConflictException;
+
+  /**
+   * Refreshes the token for the given OAuth provider.
+   *
+   * @param oauthProvider - the OAuth provider name
+   * @return the refreshed token
+   */
+  OAuthToken refreshToken(String oauthProvider)
+      throws NotFoundException, UnauthorizedException, ServerException, ForbiddenException;
 
   /** Implementation of method {@link OAuthAuthenticationService#invalidate(String)}} */
   void invalidateToken(String oauthProvider)

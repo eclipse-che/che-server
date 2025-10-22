@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,7 +28,6 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
-import okhttp3.EventListener;
 
 @Beta
 public class MetricsModule extends AbstractModule {
@@ -56,7 +55,5 @@ public class MetricsModule extends AbstractModule {
     meterMultibinder.addBinding().to(ApiResponseCounter.class);
     meterMultibinder.addBinding().to(ProcessMemoryMetrics.class);
     meterMultibinder.addBinding().to(ProcessThreadMetrics.class);
-
-    bind(EventListener.class).toProvider(OkHttpMetricsEventListenerProvider.class);
   }
 }

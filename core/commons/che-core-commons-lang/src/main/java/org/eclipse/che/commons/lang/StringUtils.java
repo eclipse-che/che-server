@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2023 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -10,6 +10,13 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 package org.eclipse.che.commons.lang;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Sets;
+import java.util.Collections;
+import java.util.Set;
 
 /** Set of useful String methods */
 public class StringUtils {
@@ -90,5 +97,14 @@ public class StringUtils {
       }
     }
     return -1;
+  }
+
+  /** Parse string to set of strings. String should be comma separated. Whitespaces are trimmed. */
+  public static Set<String> strToSet(String str) {
+    if (!isNullOrEmpty(str)) {
+      return Sets.newHashSet(Splitter.on(",").trimResults().omitEmptyStrings().split(str));
+    } else {
+      return Collections.emptySet();
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,12 +19,13 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
-import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ensures that OAuth token that are represented by Kubernetes Secrets are valid.
@@ -45,6 +46,8 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
       ImmutableMap.of(
           "app.kubernetes.io/part-of", "che.eclipse.org",
           "app.kubernetes.io/component", "scm-personal-access-token");
+
+  private static final Logger LOG = LoggerFactory.getLogger(OAuthTokenSecretsConfigurator.class);
 
   @Inject
   public OAuthTokenSecretsConfigurator(
@@ -75,11 +78,12 @@ public class OAuthTokenSecretsConfigurator implements NamespaceConfigurator {
               try {
                 Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
                 personalAccessTokenManager.get(
-                    cheSubject, s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL));
-              } catch (ScmCommunicationException
-                  | ScmConfigurationPersistenceException
-                  | ScmUnauthorizedException e) {
-                throw new RuntimeException(e);
+                    cheSubject,
+                    null,
+                    s.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL),
+                    namespaceName);
+              } catch (ScmConfigurationPersistenceException | ScmCommunicationException e) {
+                LOG.error(e.getMessage(), e);
               }
             });
   }

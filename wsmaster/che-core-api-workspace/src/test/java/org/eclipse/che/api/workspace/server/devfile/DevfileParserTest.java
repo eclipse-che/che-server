@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,7 +31,6 @@ import java.io.IOException;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
-import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
@@ -47,8 +46,6 @@ import org.testng.annotations.Test;
 public class DevfileParserTest {
 
   private static final String DEVFILE_YAML_CONTENT = "devfile yaml stub";
-
-  @Mock private DevfileSchemaValidator schemaValidator;
   @Mock private DevfileIntegrityValidator integrityValidator;
   @Mock private ObjectMapper jsonMapper;
   @Mock private ObjectMapper yamlMapper;
@@ -62,7 +59,7 @@ public class DevfileParserTest {
   @BeforeMethod
   public void setUp() throws Exception {
     devfile = new DevfileImpl();
-    devfileParser = new DevfileParser(schemaValidator, integrityValidator, yamlMapper, jsonMapper);
+    devfileParser = new DevfileParser(integrityValidator, yamlMapper, jsonMapper);
 
     lenient().when(jsonMapper.treeToValue(any(), eq(DevfileImpl.class))).thenReturn(devfile);
     lenient().when(yamlMapper.treeToValue(any(), eq(DevfileImpl.class))).thenReturn(devfile);
@@ -77,7 +74,6 @@ public class DevfileParserTest {
     // then
     assertEquals(parsed, devfile);
     verify(yamlMapper).treeToValue(devfileJsonNode, DevfileImpl.class);
-    verify(schemaValidator).validate(eq(devfileJsonNode));
     verify(integrityValidator).validateDevfile(devfile);
   }
 
@@ -178,17 +174,6 @@ public class DevfileParserTest {
   @Test(
       expectedExceptions = DevfileFormatException.class,
       expectedExceptionsMessageRegExp = "non valid")
-  public void shouldThrowExceptionWhenExceptionOccurredDuringSchemaValidation() throws Exception {
-    // given
-    doThrow(new DevfileFormatException("non valid")).when(schemaValidator).validate(any());
-
-    // when
-    devfileParser.parseYaml(DEVFILE_YAML_CONTENT);
-  }
-
-  @Test(
-      expectedExceptions = DevfileFormatException.class,
-      expectedExceptionsMessageRegExp = "non valid")
   public void shouldThrowExceptionWhenErrorOccurredDuringDevfileParsing() throws Exception {
     // given
     JsonProcessingException jsonException = mock(JsonProcessingException.class);
@@ -206,7 +191,6 @@ public class DevfileParserTest {
     devfileParser.convertYamlToMap(devfileJsonNode);
 
     // then
-    verify(schemaValidator).validate(eq(devfileJsonNode));
     verify(yamlMapper).convertValue(eq(devfileJsonNode), any(TypeReference.class));
   }
 }

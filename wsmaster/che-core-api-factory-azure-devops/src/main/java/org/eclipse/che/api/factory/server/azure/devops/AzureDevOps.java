@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,6 +23,8 @@ import java.util.Base64;
 public class AzureDevOps {
   /** Name of this OAuth provider as found in OAuthAPI. */
   public static final String PROVIDER_NAME = "azure-devops";
+  /** Azure DevOps SAAS endpoint. */
+  public static final String SAAS_ENDPOINT = "https://dev.azure.com";
   /** Azure DevOps Service API version calls. */
   public static final String API_VERSION = "7.0";
 

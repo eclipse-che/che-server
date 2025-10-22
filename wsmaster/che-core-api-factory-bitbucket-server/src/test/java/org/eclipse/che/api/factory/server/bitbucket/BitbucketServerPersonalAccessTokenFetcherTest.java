@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static java.lang.String.valueOf;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -156,7 +157,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     assertNotNull(result);
     assertEquals(result.getScmProviderUrl(), someBitbucketURL);
     assertEquals(result.getCheUserId(), subject.getUserId());
-    assertEquals(result.getScmOrganization(), bitbucketUser.getName());
+    assertNull(result.getScmOrganization(), bitbucketUser.getName());
     assertEquals(result.getScmTokenId(), valueOf(bitbucketPersonalAccessToken.getId()));
     assertEquals(result.getToken(), bitbucketPersonalAccessToken.getToken());
   }
@@ -221,11 +222,9 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
       throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException {
     // given
     when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(someBitbucketURL);
-    when(personalAccessTokenParams.getScmTokenId())
-        .thenReturn(bitbucketPersonalAccessToken.getId());
+    when(personalAccessTokenParams.getToken()).thenReturn(bitbucketPersonalAccessToken.getToken());
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
-    when(bitbucketServerApiClient.getPersonalAccessToken(eq(bitbucketPersonalAccessToken.getId())))
-        .thenReturn(bitbucketPersonalAccessToken);
+    when(bitbucketServerApiClient.getUser(anyString())).thenReturn(bitbucketUser);
     // when
     Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);
     // then

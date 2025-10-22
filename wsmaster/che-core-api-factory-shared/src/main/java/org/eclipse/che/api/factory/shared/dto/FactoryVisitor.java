@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,17 +16,6 @@ package org.eclipse.che.api.factory.shared.dto;
  * project url, set branch of the project etc.
  */
 public interface FactoryVisitor {
-
-  /**
-   * Visit factory with devfile v1.
-   *
-   * <p>Implementation should update given factory with needed changes and give it back.
-   *
-   * @param factoryDto factory to visit
-   * @return updated factory
-   */
-  @Deprecated
-  FactoryDto visit(FactoryDto factoryDto);
 
   /**
    * Visit factory with devfile v2.

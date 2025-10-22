@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.github;
 
 import static java.util.Collections.emptyMap;
+import static org.eclipse.che.api.factory.shared.Constants.REVISION_PARAMETER_NAME;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
@@ -21,15 +22,12 @@ import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.factory.server.BaseFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
-import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.*;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 
 /**
  * Provides Factory Parameters resolver for github repositories.
@@ -49,9 +47,6 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
 
   private final URLFactoryBuilder urlFactoryBuilder;
 
-  /** ProjectDtoMerger */
-  private final ProjectConfigDtoMerger projectConfigDtoMerger;
-
   private final PersonalAccessTokenManager personalAccessTokenManager;
 
   private final String providerName;
@@ -62,7 +57,6 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
       GithubSourceStorageBuilder githubSourceStorageBuilder,
       AuthorisationRequestManager authorisationRequestManager,
       URLFactoryBuilder urlFactoryBuilder,
-      ProjectConfigDtoMerger projectConfigDtoMerger,
       PersonalAccessTokenManager personalAccessTokenManager,
       String providerName) {
     super(authorisationRequestManager, urlFactoryBuilder, providerName);
@@ -71,7 +65,6 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
     this.urlFetcher = urlFetcher;
     this.githubSourceStorageBuilder = githubSourceStorageBuilder;
     this.urlFactoryBuilder = urlFactoryBuilder;
-    this.projectConfigDtoMerger = projectConfigDtoMerger;
     this.personalAccessTokenManager = personalAccessTokenManager;
   }
 
@@ -107,9 +100,14 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
     final GithubUrl githubUrl;
     if (getSkipAuthorisation(factoryParameters)) {
       githubUrl =
-          githubUrlParser.parseWithoutAuthentication(factoryParameters.get(URL_PARAMETER_NAME));
+          githubUrlParser.parseWithoutAuthentication(
+              factoryParameters.get(URL_PARAMETER_NAME),
+              factoryParameters.get(REVISION_PARAMETER_NAME));
     } else {
-      githubUrl = githubUrlParser.parse(factoryParameters.get(URL_PARAMETER_NAME));
+      githubUrl =
+          githubUrlParser.parse(
+              factoryParameters.get(URL_PARAMETER_NAME),
+              factoryParameters.get(REVISION_PARAMETER_NAME));
     }
 
     return createFactory(
@@ -143,47 +141,14 @@ public abstract class AbstractGithubFactoryParametersResolver extends BaseFactor
       }
       return factoryDto.withScmInfo(scmInfo);
     }
-
-    @Override
-    public FactoryDto visit(FactoryDto factory) {
-      if (factory.getWorkspace() != null) {
-        return projectConfigDtoMerger.merge(
-            factory,
-            () -> {
-              // Compute project configuration
-              return newDto(ProjectConfigDto.class)
-                  .withSource(githubSourceStorageBuilder.buildWorkspaceConfigSource(githubUrl))
-                  .withName(githubUrl.getRepository())
-                  .withPath("/".concat(githubUrl.getRepository()));
-            });
-      } else if (factory.getDevfile() == null) {
-        // initialize default devfile
-        factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(githubUrl.getRepository()));
-      }
-
-      updateProjects(
-          factory.getDevfile(),
-          () ->
-              newDto(ProjectDto.class)
-                  .withSource(githubSourceStorageBuilder.buildDevfileSource(githubUrl))
-                  .withName(githubUrl.getRepository()),
-          project -> {
-            final String location = project.getSource().getLocation();
-            if (location.equals(githubUrl.repositoryLocation())) {
-              project.getSource().setBranch(githubUrl.getBranch());
-            }
-          });
-
-      return factory;
-    }
   }
 
   @Override
   public RemoteFactoryUrl parseFactoryUrl(String factoryUrl) throws ApiException {
     if (getSkipAuthorisation(emptyMap())) {
-      return githubUrlParser.parseWithoutAuthentication(factoryUrl);
+      return githubUrlParser.parseWithoutAuthentication(factoryUrl, null);
     } else {
-      return githubUrlParser.parse(factoryUrl);
+      return githubUrlParser.parse(factoryUrl, null);
     }
   }
 }

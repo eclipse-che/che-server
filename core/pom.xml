@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2023 Red Hat, Inc.
+    Copyright (c) 2012-2025 Red Hat, Inc.
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-server</artifactId>
         <groupId>org.eclipse.che</groupId>
-        <version>7.79.0-SNAPSHOT</version>
+        <version>7.111.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>org.eclipse.che.core</groupId>
@@ -31,10 +31,6 @@
         <module>che-core-typescript-dto-maven-plugin</module>
         <module>che-core-api-core</module>
         <module>che-core-api-model</module>
-        <module>che-core-db</module>
-        <module>che-core-db-vendor-h2</module>
-        <module>che-core-db-vendor-mysql</module>
-        <module>che-core-db-vendor-postgresql</module>
         <module>che-core-logback</module>
         <module>che-core-tracing-core</module>
         <module>che-core-tracing-web</module>

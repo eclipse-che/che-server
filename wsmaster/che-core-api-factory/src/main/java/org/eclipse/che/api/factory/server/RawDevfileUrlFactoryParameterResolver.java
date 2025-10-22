@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,13 +16,15 @@ import static java.lang.String.format;
 import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.Optional;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.BadRequestException;
@@ -30,8 +32,10 @@ import org.eclipse.che.api.factory.server.urlfactory.DefaultFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
+import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 
 /**
  * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a
@@ -41,17 +45,18 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
     implements FactoryParametersResolver {
 
   private static final String PROVIDER_NAME = "raw-devfile-url";
-  private static final Pattern PATTERN = Pattern.compile("^https?://.*\\.ya?ml(\\?token=.*)?$");
 
   protected final URLFactoryBuilder urlFactoryBuilder;
   protected final URLFetcher urlFetcher;
+  private final DevfileParser devfileParser;
 
   @Inject
   public RawDevfileUrlFactoryParameterResolver(
-      URLFactoryBuilder urlFactoryBuilder, URLFetcher urlFetcher) {
+      URLFactoryBuilder urlFactoryBuilder, URLFetcher urlFetcher, DevfileParser devfileParser) {
     super(null, urlFactoryBuilder, PROVIDER_NAME);
     this.urlFactoryBuilder = urlFactoryBuilder;
     this.urlFetcher = urlFetcher;
+    this.devfileParser = devfileParser;
   }
 
   /**
@@ -64,7 +69,20 @@ public class RawDevfileUrlFactoryParameterResolver extends BaseFactoryParameterR
   @Override
   public boolean accept(Map<String, String> factoryParameters) {
     String url = factoryParameters.get(URL_PARAMETER_NAME);
-    return !isNullOrEmpty(url) && PATTERN.matcher(url).matches();
+    return !isNullOrEmpty(url) && containsYaml(url);
+  }
+
+  private boolean containsYaml(String requestURL) {
+    try {
+      Optional<String> credentials = new DefaultFactoryUrl().withUrl(requestURL).getCredentials();
+      URLFileContentProvider urlFileContentProvider =
+          new URLFileContentProvider(new URL(requestURL).toURI(), urlFetcher);
+      String fetch = urlFileContentProvider.fetchContent(requestURL, credentials.orElse(null));
+      JsonNode parsedYaml = devfileParser.parseYamlRaw(fetch);
+      return !parsedYaml.isEmpty();
+    } catch (IOException | URISyntaxException | DevfileException e) {
+      return false;
+    }
   }
 
   @Override

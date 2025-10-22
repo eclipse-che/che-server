@@ -431,7 +431,8 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
     } catch (IOException | InterruptedException | UncheckedIOException e) {
       if (e instanceof SSLHandshakeException) {
         throw new ScmCommunicationException(
-            "SSL handshake failed. Please contact your administrator.", SSL_ERROR_CODE);
+            "The required SSL certificate is missing or not trusted by the system. Please contact your administrator.",
+            SSL_ERROR_CODE);
       }
       throw new ScmCommunicationException(e.getMessage(), e);
     }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2023 Red Hat, Inc.
+    Copyright (c) 2012-2025 Red Hat, Inc.
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-infrastructures-parent</artifactId>
         <groupId>org.eclipse.che.infrastructure</groupId>
-        <version>7.79.0-SNAPSHOT</version>
+        <version>7.111.0-SNAPSHOT</version>
     </parent>
     <artifactId>infrastructure-kubernetes</artifactId>
     <name>Infrastructure :: Kubernetes</name>
@@ -115,10 +115,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-api-account</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-core</artifactId>
         </dependency>
         <dependency>
@@ -182,10 +178,6 @@
             <artifactId>che-core-commons-tracing</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-db</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.che.multiuser</groupId>
             <artifactId>che-multiuser-machine-authentication</artifactId>
         </dependency>
@@ -213,20 +205,64 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>mockwebserver</artifactId>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
             <scope>test</scope>
+            <!-- Fix CVE-2025-24970 -->
+            <exclusions>
+                <exclusion>
+                    <artifactId>netty-handler</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-handler-proxy</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-codec-http</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-resolver</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-buffer</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-transport</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-codec</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty-common</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-server-mock</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>junit-jupiter-api</artifactId>
-                    <groupId>org.junit.jupiter</groupId>
-                </exclusion>
-            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler-proxy</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
@@ -236,11 +272,6 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-commons-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-db-vendor-h2</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

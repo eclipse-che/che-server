@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -37,6 +37,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
 
   private static final Logger LOG =
       LoggerFactory.getLogger(AbstractGithubPersonalAccessTokenFetcher.class);
+  private static final String OAUTH_PROVIDER_NAME = "github";
   private final String apiEndpoint;
   private final OAuthAPI oAuthAPI;
 
@@ -124,6 +125,13 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     this.providerName = providerName;
   }
 
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    // Tokens generated via GitHub OAuth app do not have an expiration date, so we don't need to
+    // refresh them.
+    return fetchPersonalAccessToken(cheSubject, scmServerUrl);
+  }
+
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
@@ -134,13 +142,21 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       return null;
     }
     try {
-      oAuthToken = oAuthAPI.getToken(providerName);
+      oAuthToken = oAuthAPI.getOrRefreshToken(providerName);
       String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
               new PersonalAccessTokenParams(
-                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
+                  scmServerUrl,
+                  // Despite the fact that we may have two GitHub oauth providers, we always set
+                  // "github" to the token provider name. The specific GitHub oauth provider
+                  // references to the specific token by the url parameter.
+                  OAUTH_PROVIDER_NAME,
+                  tokenName,
+                  tokenId,
+                  oAuthToken.getToken(),
+                  null));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
@@ -150,6 +166,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       }
       return new PersonalAccessToken(
           scmServerUrl,
+          OAUTH_PROVIDER_NAME,
           cheSubject.getUserId(),
           valid.get().second,
           tokenName,
@@ -198,19 +215,23 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
           return Optional.of(Boolean.FALSE);
         }
       }
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException
+        | ScmCommunicationException
+        | ScmBadRequestException
+        | ScmUnauthorizedException e) {
       return Optional.of(Boolean.FALSE);
     }
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException {
     GithubApiClient apiClient;
     if (githubApiClient.isConnected(params.getScmProviderUrl())) {
       // The url from the token has the same url as the api client, no need to create a new one.
       apiClient = githubApiClient;
     } else {
-      if ("github".equals(params.getScmTokenName())) {
+      if (OAUTH_PROVIDER_NAME.equals(params.getScmTokenName())) {
         apiClient = new GithubApiClient(params.getScmProviderUrl());
       } else {
         LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());
@@ -230,7 +251,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
         GithubUser user = apiClient.getUser(params.getToken());
         return Optional.of(Pair.of(Boolean.TRUE, user.getLogin()));
       }
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
       return Optional.empty();
     }
   }

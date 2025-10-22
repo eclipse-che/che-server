@@ -323,8 +323,13 @@ set_truststore_system_variables() {
 }
 
 add_che_cert_to_truststore() {
+  # Deprecated, CHE_SELF__SIGNED__CERT environment variable is not used after 7.105.0
   if [ "${CHE_SELF__SIGNED__CERT}" != "" ]; then
     add_cert_to_truststore "${CHE_SELF__SIGNED__CERT}" "HOSTDOMAIN"
+  fi
+  CERT_PATH="/self-signed-cert/ca.crt"
+  if [ -e $CERT_PATH ]; then
+    add_cert_to_truststore "$(cat $CERT_PATH)" "HOSTDOMAIN"
   fi
 }
 

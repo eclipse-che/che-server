@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,11 +15,6 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_TOOLING_EDITOR_ATTRIBUTE;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_TOOLING_PLUGINS_ATTRIBUTE;
-import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -34,7 +29,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,20 +41,17 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl.DevfileLocation;
 import org.eclipse.che.api.factory.shared.dto.FactoryDevfileV2Dto;
-import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryMetaDto;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.DevfileVersionDetector;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
-import org.eclipse.che.api.workspace.server.devfile.exception.OverrideParameterException;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.RecipeImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
-import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -99,20 +90,6 @@ public class URLFactoryBuilderTest {
   }
 
   @Test
-  public void checkDefaultConfiguration() throws Exception {
-    Map<String, String> attributes = new HashMap<>();
-    attributes.put(WORKSPACE_TOOLING_EDITOR_ATTRIBUTE, defaultEditor);
-    attributes.put(WORKSPACE_TOOLING_PLUGINS_ATTRIBUTE, defaultPlugin);
-    // setup environment
-    WorkspaceConfigDto expectedWsConfig =
-        newDto(WorkspaceConfigDto.class).withAttributes(attributes).withName("foo");
-
-    WorkspaceConfigDto actualWsConfigDto = urlFactoryBuilder.buildDefaultWorkspaceConfig("foo");
-
-    assertEquals(actualWsConfigDto, expectedWsConfig);
-  }
-
-  @Test
   public void checkWithCustomDevfileAndRecipe() throws Exception {
 
     DevfileImpl devfile = new DevfileImpl();
@@ -126,8 +103,6 @@ public class URLFactoryBuilderTest {
 
     when(devfileParser.parseYamlRaw(anyString()))
         .thenReturn(new ObjectNode(JsonNodeFactory.instance));
-    when(devfileParser.parseJsonNode(any(JsonNode.class), anyMap())).thenReturn(devfile);
-    when(devfileVersionDetector.devfileMajorVersion(any(JsonNode.class))).thenReturn(1);
     when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     FactoryMetaDto factory =
@@ -141,7 +116,7 @@ public class URLFactoryBuilderTest {
 
     assertNotNull(factory);
     assertNull(factory.getSource());
-    assertTrue(factory instanceof FactoryDto);
+    assertTrue(factory instanceof FactoryDevfileV2Dto);
   }
 
   @Test
@@ -152,7 +127,6 @@ public class URLFactoryBuilderTest {
     JsonNode devfile = new ObjectNode(JsonNodeFactory.instance);
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
-    when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
     when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     FactoryMetaDto factory =
@@ -178,7 +152,6 @@ public class URLFactoryBuilderTest {
     JsonNode devfile = new ObjectNode(JsonNodeFactory.instance);
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
-    when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
     when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     RemoteFactoryUrl githubLikeRemoteUrl =
@@ -252,7 +225,6 @@ public class URLFactoryBuilderTest {
     JsonNode devfile = new ObjectNode(JsonNodeFactory.instance);
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
-    when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
     when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     RemoteFactoryUrl githubLikeRemoteUrl =
@@ -337,7 +309,6 @@ public class URLFactoryBuilderTest {
     JsonNode devfile = new ObjectNode(JsonNodeFactory.instance);
     when(devfileParser.parseYamlRaw(anyString())).thenReturn(devfile);
     when(devfileParser.convertYamlToMap(devfile)).thenReturn(devfileAsMap);
-    when(devfileVersionDetector.devfileMajorVersion(devfile)).thenReturn(2);
     when(fileContentProvider.fetchContent(anyString())).thenReturn("content");
 
     URLFactoryBuilder localUrlFactoryBuilder =
@@ -381,40 +352,6 @@ public class URLFactoryBuilderTest {
     DevfileImpl bothNames = new DevfileImpl(devfileTemplate);
 
     return new Object[][] {{justName, NAME}, {justGenerateName, GEN_NAME}, {bothNames, GEN_NAME}};
-  }
-
-  @Test(dataProvider = "devfiles")
-  public void checkThatDtoHasCorrectNames(DevfileImpl devfile, String expectedGenerateName)
-      throws ApiException, IOException, OverrideParameterException, DevfileException {
-    DefaultFactoryUrl defaultFactoryUrl = mock(DefaultFactoryUrl.class);
-    FileContentProvider fileContentProvider = mock(FileContentProvider.class);
-    when(defaultFactoryUrl.devfileFileLocations())
-        .thenReturn(
-            singletonList(
-                new DevfileLocation() {
-                  @Override
-                  public Optional<String> filename() {
-                    return Optional.empty();
-                  }
-
-                  @Override
-                  public String location() {
-                    return "http://foo.bar/anything";
-                  }
-                }));
-    when(fileContentProvider.fetchContent(anyString())).thenReturn("anything");
-    when(devfileParser.parseYamlRaw("anything"))
-        .thenReturn(new ObjectNode(JsonNodeFactory.instance));
-    when(devfileParser.parseJsonNode(any(JsonNode.class), anyMap())).thenReturn(devfile);
-    when(devfileVersionDetector.devfileMajorVersion(any(JsonNode.class))).thenReturn(1);
-    FactoryDto factory =
-        (FactoryDto)
-            urlFactoryBuilder
-                .createFactoryFromDevfile(defaultFactoryUrl, fileContentProvider, emptyMap(), false)
-                .get();
-
-    assertNull(factory.getDevfile().getMetadata().getName());
-    assertEquals(factory.getDevfile().getMetadata().getGenerateName(), expectedGenerateName);
   }
 
   @Test(dataProvider = "devfileExceptions")

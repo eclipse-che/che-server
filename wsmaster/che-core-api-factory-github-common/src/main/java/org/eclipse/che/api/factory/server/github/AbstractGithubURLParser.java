@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.github;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
-import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.server.github.GithubApiClient.GITHUB_SAAS_ENDPOINT;
@@ -31,6 +30,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public abstract class AbstractGithubURLParser {
   private final Pattern githubPattern;
 
   private final String githubPatternTemplate =
-      "^%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/tree/(?<branchName>.++))|(/pull/(?<pullRequestId>\\d++)))?$";
+      "%s/(?<repoUser>[^/]+)/(?<repoName>[^/]++)((/)|(?:/((tree)|(blob))/(?<path>.++))|(/pull/(?<pullRequestId>\\d++)))?$";
 
   private final Pattern githubSSHPattern;
 
@@ -63,6 +63,8 @@ public abstract class AbstractGithubURLParser {
   private final boolean disableSubdomainIsolation;
 
   private final String providerName;
+  private final String endpoint;
+  private final boolean isGitHubServer;
 
   /** Constructor used for testing only. */
   AbstractGithubURLParser(
@@ -77,57 +79,74 @@ public abstract class AbstractGithubURLParser {
     this.apiClient = githubApiClient;
     this.disableSubdomainIsolation = disableSubdomainIsolation;
     this.providerName = providerName;
+    // Check if the given OAuth endpoint is a GitHub server URL. If the OAuth endpoint is not
+    // defined, or it equals the GitHub SaaS endpoint, it means that the given URL is a GitHub SaaS
+    // URL (https://github.com). Otherwise, the given URL is a GitHub server URL.
+    this.isGitHubServer =
+        !isNullOrEmpty(oauthEndpoint) && !GITHUB_SAAS_ENDPOINT.equals(oauthEndpoint);
 
-    String endpoint =
-        isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
+    endpoint = isNullOrEmpty(oauthEndpoint) ? GITHUB_SAAS_ENDPOINT : trimEnd(oauthEndpoint, '/');
 
     this.githubPattern = compile(format(githubPatternTemplate, endpoint));
     this.githubSSHPattern =
         compile(format(githubSSHPatternTemplate, URI.create(endpoint).getHost()));
   }
 
+  // Check if the given URL is a valid GitHub URL.
   public boolean isValid(@NotNull String url) {
     String trimmedUrl = trimEnd(url, '/');
-    return githubPattern.matcher(trimmedUrl).matches()
+    return
+    // Check if the given URL matches the GitHub URL patterns. It works if OAuth is configured and
+    // GitHub server URL is known or the repository URL points to GitHub SaaS (https://github.com).
+    githubPattern.matcher(trimmedUrl).matches()
         || githubSSHPattern.matcher(trimmedUrl).matches()
-        // If the GitHub URL is not configured, try to find it in a manually added user namespace
-        // token.
+        // Check whether PAT is configured for the GitHub server URL. It is sufficient to confirm
+        // that the URL is a valid GitHub URL.
         || isUserTokenPresent(trimmedUrl)
-        // Try to call an API request to see if the URL matches GitHub.
-        || isApiRequestRelevant(trimmedUrl);
+        // Check if the given URL is a valid GitHub URL by reaching the endpoint of the GitHub
+        // server and analysing the response. This query basically only needs to be performed if the
+        // specified repository URL does not point to GitHub SaaS.
+        || (!isGitHubServer && isApiRequestRelevant(trimmedUrl));
   }
 
+  // Try to find the given url in a manually added user namespace token secret.
   private boolean isUserTokenPresent(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
       String serverUrl = serverUrlOptional.get();
       try {
         Optional<PersonalAccessToken> token =
-            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), serverUrl);
+            tokenManager.get(EnvironmentContext.getCurrent().getSubject(), null, serverUrl, null);
         if (token.isPresent()) {
           PersonalAccessToken accessToken = token.get();
           return accessToken.getScmTokenName().equals(providerName);
         }
-      } catch (ScmConfigurationPersistenceException
-          | ScmUnauthorizedException
-          | ScmCommunicationException exception) {
+      } catch (ScmConfigurationPersistenceException | ScmCommunicationException exception) {
         return false;
       }
     }
     return false;
   }
 
+  // Try to call an API request to see if the given url matches self-hosted GitHub Enterprise.
   private boolean isApiRequestRelevant(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
-      GithubApiClient GithubApiClient = new GithubApiClient(serverUrlOptional.get());
+      GithubApiClient githubApiClient = new GithubApiClient(serverUrlOptional.get());
       try {
         // If the user request catches the unauthorised error, it means that the provided url
         // belongs to GitHub.
-        GithubApiClient.getUser("");
-      } catch (ScmCommunicationException e) {
-        return e.getStatusCode() == HTTP_UNAUTHORIZED;
-      } catch (ScmItemNotFoundException | ScmBadRequestException | IllegalArgumentException e) {
+        githubApiClient.getUser("");
+      } catch (ScmUnauthorizedException e) {
+        // Check the error message as well, because other providers might also return 401
+        // for such requests.
+        return e.getMessage().contains("Requires authentication")
+            || // for older GitHub Enterprise versions
+            e.getMessage().contains("Must authenticate to access this API.");
+      } catch (ScmItemNotFoundException
+          | ScmBadRequestException
+          | IllegalArgumentException
+          | ScmCommunicationException e) {
         return false;
       }
     }
@@ -151,12 +170,13 @@ public abstract class AbstractGithubURLParser {
     return Optional.empty();
   }
 
-  public GithubUrl parseWithoutAuthentication(String url) throws ApiException {
-    return parse(trimEnd(url, '/'), false);
+  public GithubUrl parseWithoutAuthentication(String url, @Nullable String revision)
+      throws ApiException {
+    return parse(trimEnd(url, '/'), false, revision);
   }
 
-  public GithubUrl parse(String url) throws ApiException {
-    return parse(trimEnd(url, '/'), true);
+  public GithubUrl parse(String url, @Nullable String revision) throws ApiException {
+    return parse(trimEnd(url, '/'), true, revision);
   }
 
   private IllegalArgumentException buildIllegalArgumentException(String url) {
@@ -164,7 +184,8 @@ public abstract class AbstractGithubURLParser {
         format("The given url %s is not a valid github URL. ", url));
   }
 
-  private GithubUrl parse(String url, boolean authenticationRequired) throws ApiException {
+  private GithubUrl parse(String url, boolean authenticationRequired, @Nullable String revision)
+      throws ApiException {
     Matcher matcher;
     boolean isHTTPSUrl = githubPattern.matcher(url).matches();
     if (isHTTPSUrl) {
@@ -186,10 +207,10 @@ public abstract class AbstractGithubURLParser {
       repoName = repoName.substring(0, repoName.length() - 4);
     }
 
-    String branchName = null;
+    String branchFromUrl = null;
     String pullRequestId = null;
     if (isHTTPSUrl) {
-      branchName = matcher.group("branchName");
+      branchFromUrl = getBranch(matcher.group("path"));
       pullRequestId = matcher.group("pullRequestId");
     }
 
@@ -208,7 +229,7 @@ public abstract class AbstractGithubURLParser {
         GithubHead pullRequestHead = pullRequest.getHead();
         repoUser = pullRequestHead.getUser().getLogin();
         repoName = pullRequestHead.getRepo().getName();
-        branchName = pullRequestHead.getRef();
+        branchFromUrl = pullRequestHead.getRef();
       }
     }
 
@@ -218,7 +239,7 @@ public abstract class AbstractGithubURLParser {
             serverUrl,
             repoUser,
             repoName,
-            firstNonNull(branchName, "HEAD"),
+            isNullOrEmpty(revision) ? firstNonNull(branchFromUrl, "HEAD") : revision,
             authenticationRequired);
     if (commit != null) {
       latestCommit = commit.getSha();
@@ -230,10 +251,25 @@ public abstract class AbstractGithubURLParser {
         .setIsHTTPSUrl(isHTTPSUrl)
         .withServerUrl(serverUrl)
         .withDisableSubdomainIsolation(disableSubdomainIsolation)
-        .withBranch(branchName)
+        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
         .withLatestCommit(latestCommit)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);
+  }
+
+  /*
+   * Get branch from the file path by extracting the segment before the devfile name.
+   * Example of a file path: "branch/devfile.yaml" => "branch"
+   */
+  private String getBranch(String path) {
+    if (path != null && path.contains("/")) {
+      Optional<String> devfileNameOptional =
+          devfileFilenamesProvider.getConfiguredDevfileFilenames().stream()
+              .filter(devfileName -> path.endsWith("/" + devfileName))
+              .findAny();
+      return devfileNameOptional.map(s -> path.substring(0, path.indexOf(s) - 1)).orElse(path);
+    }
+    return path;
   }
 
   private GithubPullRequest getPullRequest(
@@ -247,7 +283,7 @@ public abstract class AbstractGithubURLParser {
       // prepare token
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
-      Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
+      Optional<PersonalAccessToken> token = tokenManager.get(subject, null, githubEndpoint, null);
       if (token.isPresent()) {
         personalAccessToken = token.get();
       } else if (authenticationRequired) {
@@ -272,7 +308,8 @@ public abstract class AbstractGithubURLParser {
         return apiClient.getPullRequest(pullRequestId, repoUser, repoName, null);
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
-          | ScmBadRequestException exception) {
+          | ScmBadRequestException
+          | ScmUnauthorizedException exception) {
         LOG.error("Failed to authenticate to GitHub", e);
       }
 
@@ -303,7 +340,7 @@ public abstract class AbstractGithubURLParser {
       // prepare token
       Subject subject = EnvironmentContext.getCurrent().getSubject();
       PersonalAccessToken personalAccessToken = null;
-      Optional<PersonalAccessToken> token = tokenManager.get(subject, githubEndpoint);
+      Optional<PersonalAccessToken> token = tokenManager.get(subject, null, githubEndpoint, null);
       if (token.isPresent()) {
         personalAccessToken = token.get();
       } else if (authenticationRequired) {
@@ -323,7 +360,8 @@ public abstract class AbstractGithubURLParser {
       } catch (ScmItemNotFoundException
           | ScmCommunicationException
           | ScmBadRequestException
-          | URISyntaxException exception) {
+          | URISyntaxException
+          | ScmUnauthorizedException exception) {
         LOG.error("Failed to authenticate to GitHub", e);
       }
     } catch (ScmCommunicationException

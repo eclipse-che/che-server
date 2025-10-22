@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,10 +15,7 @@ import static java.util.Objects.requireNonNull;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
 import org.eclipse.che.account.shared.model.Account;
-import org.eclipse.che.account.spi.AccountDao;
-import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -32,13 +29,10 @@ import org.eclipse.che.api.core.notification.EventService;
 @Deprecated
 @Singleton
 public class AccountManager {
-
-  private final AccountDao accountDao;
   private final EventService eventService;
 
   @Inject
-  public AccountManager(AccountDao accountDao, EventService eventService) {
-    this.accountDao = accountDao;
+  public AccountManager(EventService eventService) {
     this.eventService = eventService;
   }
 
@@ -65,7 +59,6 @@ public class AccountManager {
    */
   public void update(Account account) throws NotFoundException, ConflictException, ServerException {
     requireNonNull(account, "Required non-null account");
-    accountDao.update(new AccountImpl(account));
   }
 
   /**
@@ -79,7 +72,7 @@ public class AccountManager {
    */
   public Account getById(String id) throws NotFoundException, ServerException {
     requireNonNull(id, "Required non-null account id");
-    return accountDao.getById(id);
+    return null;
   }
 
   /**
@@ -93,7 +86,7 @@ public class AccountManager {
    */
   public Account getByName(String name) throws NotFoundException, ServerException {
     requireNonNull(name, "Required non-null account name");
-    return accountDao.getByName(name);
+    return null;
   }
 
   /**
@@ -105,12 +98,5 @@ public class AccountManager {
    */
   public void remove(String id) throws ServerException {
     requireNonNull(id, "Required non-null account id");
-    try {
-      AccountImpl toRemove = accountDao.getById(id);
-      eventService.publish(new BeforeAccountRemovedEvent(toRemove)).propagateException();
-      accountDao.remove(id);
-    } catch (NotFoundException ignored) {
-      // account is already removed
-    }
   }
 }

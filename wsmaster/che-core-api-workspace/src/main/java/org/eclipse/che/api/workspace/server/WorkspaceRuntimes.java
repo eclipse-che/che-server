@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -37,7 +37,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
-import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -94,7 +93,6 @@ import org.eclipse.che.commons.lang.concurrent.ThreadLocalPropagateContext;
 import org.eclipse.che.commons.lang.concurrent.Unlocker;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.tracing.TracingTags;
-import org.eclipse.che.core.db.DBInitializer;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +131,6 @@ public class WorkspaceRuntimes {
       RuntimeInfrastructure infra,
       WorkspaceSharedPool sharedPool,
       WorkspaceDao workspaceDao,
-      @SuppressWarnings("unused") DBInitializer ignored,
       ProbeScheduler probeScheduler,
       WorkspaceStatusCache statuses,
       WorkspaceLockService lockService,
@@ -145,7 +142,6 @@ public class WorkspaceRuntimes {
         infra,
         sharedPool,
         workspaceDao,
-        ignored,
         probeScheduler,
         statuses,
         lockService,
@@ -161,7 +157,6 @@ public class WorkspaceRuntimes {
       RuntimeInfrastructure infra,
       WorkspaceSharedPool sharedPool,
       WorkspaceDao workspaceDao,
-      @SuppressWarnings("unused") DBInitializer ignored,
       ProbeScheduler probeScheduler,
       WorkspaceStatusCache statuses,
       WorkspaceLockService lockService,
@@ -189,18 +184,6 @@ public class WorkspaceRuntimes {
           notSupportedByInfra);
     }
     workspaceRuntimesId = NameGenerator.generate("runtimes", 16);
-  }
-
-  @PostConstruct
-  void init() {
-    subscribeAbnormalRuntimeStopListener();
-    // When 'DevWorskpace' engine is enabled all che-server based workspaces should be stopped -
-    // https://github.com/eclipse/che/issues/20631
-    if (cheDevWorkspacesEnabled) {
-      stop();
-    } else {
-      recover();
-    }
   }
 
   private static RuntimeImpl asRuntime(InternalRuntime<?> runtime) throws ServerException {

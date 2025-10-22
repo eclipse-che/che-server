@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,7 +23,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -33,8 +32,6 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
-import org.eclipse.che.multiuser.organization.api.event.BeforeOrganizationRemovedEvent;
-import org.eclipse.che.multiuser.organization.api.event.OrganizationPersistedEvent;
 import org.eclipse.che.multiuser.organization.api.event.OrganizationRemovedEvent;
 import org.eclipse.che.multiuser.organization.api.event.OrganizationRenamedEvent;
 import org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain;
@@ -102,7 +99,6 @@ public class OrganizationManager {
             NameGenerator.generate("organization", 16), qualifiedName, newOrganization.getParent());
     organizationDao.create(organization);
     addFirstMember(organization);
-    eventService.publish(new OrganizationPersistedEvent(organization)).propagateException();
     return organization;
   }
 
@@ -157,10 +153,6 @@ public class OrganizationManager {
     requireNonNull(organizationId, "Required non-null organization id");
     try {
       OrganizationImpl organization = organizationDao.getById(organizationId);
-      eventService
-          .publish(new BeforeAccountRemovedEvent(organization.getAccount()))
-          .propagateException();
-      eventService.publish(new BeforeOrganizationRemovedEvent(organization)).propagateException();
       removeSuborganizations(organizationId);
       final List<String> members = removeMembers(organizationId);
       organizationDao.remove(organizationId);

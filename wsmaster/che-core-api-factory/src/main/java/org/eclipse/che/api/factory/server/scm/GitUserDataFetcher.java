@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,6 +16,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationExceptio
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.commons.annotation.Nullable;
 
 public interface GitUserDataFetcher {
 
@@ -23,6 +24,7 @@ public interface GitUserDataFetcher {
    * Retrieve a {@link GitUserData} object from concrete scm provider. If OAuthProvider is not
    * configured, then personal access token should be taken into account.
    *
+   * @param namespaceName - the user's namespace name.
    * @return - {@link GitUserData} object.
    * @throws ScmUnauthorizedException - in case if user is not authorized che server to create a new
    *     token. Further user interaction is needed before calling this method next time.
@@ -31,7 +33,7 @@ public interface GitUserDataFetcher {
    * @throws ScmConfigurationPersistenceException - problem occurred during communication with
    *     permanent storage.
    */
-  GitUserData fetchGitUserData()
+  GitUserData fetchGitUserData(@Nullable String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException,
           ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException;
 }

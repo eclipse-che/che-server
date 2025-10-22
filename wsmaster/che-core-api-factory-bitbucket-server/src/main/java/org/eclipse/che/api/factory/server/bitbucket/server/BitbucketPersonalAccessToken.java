@@ -17,7 +17,7 @@ import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BitbucketPersonalAccessToken {
-  private long id;
+  private String id;
   private long createdDate;
   private long lastAuthenticated;
   private int expiryDays;
@@ -35,7 +35,7 @@ public class BitbucketPersonalAccessToken {
   public BitbucketPersonalAccessToken() {}
 
   public BitbucketPersonalAccessToken(
-      long id,
+      String id,
       long createdDate,
       long lastAuthenticated,
       int expiryDays,
@@ -53,11 +53,11 @@ public class BitbucketPersonalAccessToken {
     this.permissions = permissions;
   }
 
-  public long getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(long id) {
+  public void setId(String id) {
     this.id = id;
   }
 
@@ -146,7 +146,7 @@ public class BitbucketPersonalAccessToken {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     BitbucketPersonalAccessToken that = (BitbucketPersonalAccessToken) o;
-    return id == that.id
+    return id.equals(that.id)
         && createdDate == that.createdDate
         && lastAuthenticated == that.lastAuthenticated
         && expiryDays == that.expiryDays

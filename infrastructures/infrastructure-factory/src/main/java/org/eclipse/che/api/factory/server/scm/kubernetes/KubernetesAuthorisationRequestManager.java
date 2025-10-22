@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -21,6 +21,8 @@ import static org.eclipse.che.workspace.infrastructure.kubernetes.namespace.Abst
 import com.google.gson.Gson;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.base.PatchContext;
+import io.fabric8.kubernetes.client.dsl.base.PatchType;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URL;
 import java.util.HashSet;
@@ -28,10 +30,10 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.security.oauth.AuthorisationRequestManager;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
@@ -90,7 +92,10 @@ public class KubernetesAuthorisationRequestManager implements AuthorisationReque
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
     if (errorValues != null && errorValues.contains("access_denied")) {
-      store(getParameter(params, "oauth_provider"));
+      String oauthProvider = getParameter(params, "oauth_provider");
+      if (!isNullOrEmpty(oauthProvider)) {
+        store(oauthProvider);
+      }
     }
   }
 
@@ -115,7 +120,7 @@ public class KubernetesAuthorisationRequestManager implements AuthorisationReque
           .configMaps()
           .inNamespace(getFirstNamespace())
           .withName(PREFERENCES_CONFIGMAP_NAME)
-          .patch(configMap);
+          .patch(PatchContext.of(PatchType.STRATEGIC_MERGE), configMap);
     } catch (UnsatisfiedScmPreconditionException
         | ScmConfigurationPersistenceException
         | InfrastructureException e) {

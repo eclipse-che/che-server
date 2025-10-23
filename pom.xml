@@ -104,7 +104,7 @@
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>
         <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
         <maven.antrun.plugin.version>3.1.0</maven.antrun.plugin.version>
-        <maven.assembly.plugin.version>3.5.0</maven.assembly.plugin.version>
+        <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
         <maven.buildhelper.plugin.version>3.2.0</maven.buildhelper.plugin.version>
         <maven.buildnumber.plugin.version>3.0.0</maven.buildnumber.plugin.version>
         <maven.clean.plugin.version>3.2.0</maven.clean.plugin.version>
@@ -121,12 +121,11 @@
         <maven.mycila.license.plugin.version>4.1</maven.mycila.license.plugin.version>
         <maven.plugin.plugin.version>3.6.2</maven.plugin.plugin.version>
         <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
-        <maven.sonar.plugin.version>3.9.1.2184</maven.sonar.plugin.version>
         <maven.sortpom.plugin.version>2.3.1</maven.sortpom.plugin.version>
         <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
         <maven.supported-versions>[3.6.2,)</maven.supported-versions>
         <maven.surefire.plugin.version>3.0.0-M5</maven.surefire.plugin.version>
-        <maven.war.plugin.version>3.3.2</maven.war.plugin.version>
+        <maven.war.plugin.version>3.4.0</maven.war.plugin.version>
         <mysql.connector.version>8.0.33</mysql.connector.version>
         <net.java.dev.jna.version>4.1.0</net.java.dev.jna.version>
         <org.antlr.st4.version>4.3.4</org.antlr.st4.version>
@@ -146,7 +145,7 @@
         <org.flyway.version>4.2.0</org.flyway.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
         <org.javassist.version>3.29.2-GA</org.javassist.version>
-        <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
+        <org.jgroups.kubernetes.version>2.0.1.Final</org.jgroups.kubernetes.version>
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
         <org.mockito.mockito-testng.version>0.5.2</org.mockito.mockito-testng.version>
@@ -1842,11 +1841,6 @@
                     <version>${maven.jacoco.plugin.version}</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.sonarsource.scanner.maven</groupId>
-                    <artifactId>sonar-maven-plugin</artifactId>
-                    <version>${maven.sonar.plugin.version}</version>
-                </plugin>
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>${maven.enforcer.plugin.version}</version>
@@ -2002,48 +1996,6 @@
                 <license.skip>true</license.skip>
                 <mdep.analyze.skip>true</mdep.analyze.skip>
                 <skipTests>true</skipTests>
-            </properties>
-        </profile>
-        <profile>
-            <id>sonar</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>default-prepare-agent</id>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>default-report</id>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>default-check</id>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                                <configuration>
-                                    <rules />
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            <properties>
-                <sonar.branch.name>main</sonar.branch.name>
-                <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-                <sonar.organization>eclipse</sonar.organization>
             </properties>
         </profile>
         <profile>

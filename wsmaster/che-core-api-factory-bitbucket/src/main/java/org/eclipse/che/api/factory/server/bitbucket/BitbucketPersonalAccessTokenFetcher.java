@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -82,7 +82,19 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
   }
 
   @Override
+  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, true);
+  }
+
+  @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, false);
+  }
+
+  private PersonalAccessToken fetchOrRefreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, boolean forceRefreshToken)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
@@ -91,13 +103,21 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
       return null;
     }
     try {
-      oAuthToken = oAuthAPI.getToken(OAUTH_PROVIDER_NAME);
-      String tokenName = NameGenerator.generate(OAUTH_PROVIDER_NAME, 5);
+      oAuthToken =
+          forceRefreshToken
+              ? oAuthAPI.refreshToken(OAUTH_PROVIDER_NAME)
+              : oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME);
+      String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =
           isValid(
               new PersonalAccessTokenParams(
-                  scmServerUrl, tokenName, tokenId, oAuthToken.getToken(), null));
+                  scmServerUrl,
+                  OAUTH_PROVIDER_NAME,
+                  tokenName,
+                  tokenId,
+                  oAuthToken.getToken(),
+                  null));
       if (valid.isEmpty()) {
         throw buildScmUnauthorizedException(cheSubject);
       } else if (!valid.get().first) {
@@ -109,6 +129,7 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
       }
       return new PersonalAccessToken(
           scmServerUrl,
+          OAUTH_PROVIDER_NAME,
           cheSubject.getUserId(),
           valid.get().second,
           tokenName,
@@ -145,13 +166,17 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
     try {
       String[] scopes = bitbucketApiClient.getTokenScopes(personalAccessToken.getToken()).second;
       return Optional.of(isValidScope(Sets.newHashSet(scopes)));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException
+        | ScmCommunicationException
+        | ScmBadRequestException
+        | ScmUnauthorizedException e) {
       return Optional.of(Boolean.FALSE);
     }
   }
 
   @Override
-  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
+  public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
+      throws ScmCommunicationException {
     if (!bitbucketApiClient.isConnected(params.getScmProviderUrl())) {
       LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
       return Optional.empty();
@@ -163,7 +188,7 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
           Pair.of(
               isValidScope(Sets.newHashSet(pair.second)) ? Boolean.TRUE : Boolean.FALSE,
               pair.first));
-    } catch (ScmItemNotFoundException | ScmCommunicationException | ScmBadRequestException e) {
+    } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
       return Optional.empty();
     }
   }

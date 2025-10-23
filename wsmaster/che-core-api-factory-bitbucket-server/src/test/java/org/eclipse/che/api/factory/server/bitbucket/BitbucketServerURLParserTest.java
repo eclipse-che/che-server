@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -59,7 +59,7 @@ public class BitbucketServerURLParserTest {
   public void setUp() {
     bitbucketURLParser =
         new BitbucketServerURLParser(
-            "https://bitbucket.2mcl.com,https://bbkt.com",
+            "https://bitbucket.2mcl.com,https://bbkt.com,https://my-bitbucket.org/bitbucket",
             devfileFilenamesProvider,
             oAuthAPI,
             mock(PersonalAccessTokenManager.class));
@@ -71,11 +71,27 @@ public class BitbucketServerURLParserTest {
     assertTrue(bitbucketURLParser.isValid(url), "url " + url + " is invalid");
   }
 
+  @Test
+  public void shouldParseWithBranch() {
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("https://my-bitbucket.org/bitbucket/scm/proj/repo.git", "branch");
+    assertEquals(bitbucketServerUrl.getBranch(), "branch");
+  }
+
+  @Test
+  public void shouldParseWithUrlBranch() {
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse(
+            "https://my-bitbucket.org/bitbucket/projects/proj/repos/repo/browse?at=master",
+            "branch");
+    assertEquals(bitbucketServerUrl.getBranch(), "master");
+  }
+
   /** Compare parsing */
   @Test(dataProvider = "parsing")
   public void checkParsing(
       String url, String user, String project, String repository, String branch) {
-    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url);
+    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url, null);
 
     assertEquals(bitbucketServerUrl.getUser(), user);
     assertEquals(bitbucketServerUrl.getProject(), project);
@@ -92,7 +108,7 @@ public class BitbucketServerURLParserTest {
             null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
 
     // when
-    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url);
+    BitbucketServerUrl bitbucketServerUrl = bitbucketURLParser.parse(url, null);
 
     // then
     assertEquals(bitbucketServerUrl.getUser(), user);
@@ -106,7 +122,7 @@ public class BitbucketServerURLParserTest {
       expectedExceptionsMessageRegExp =
           "The given url https://github.com/org/repo is not a valid Bitbucket server URL. Check either URL or server configuration.")
   public void shouldThrowExceptionWhenURLDintMatchAnyConfiguredServer() {
-    bitbucketURLParser.parse("https://github.com/org/repo");
+    bitbucketURLParser.parse("https://github.com/org/repo", null);
   }
 
   @Test
@@ -117,8 +133,10 @@ public class BitbucketServerURLParserTest {
             null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
-        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
-            .willReturn(aResponse().withStatus(401)));
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);
@@ -128,12 +146,71 @@ public class BitbucketServerURLParserTest {
   }
 
   @Test
-  public void shouldNotValidateUrlByApiRequest() {
+  public void shouldValidateUrlByApiRequestButFailOnPatternCheck() {
     // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/user/repo");
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequestWithBadRequest() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
-        get(urlEqualTo("/plugins/servlet/applinks/whoami"))
-            .willReturn(aResponse().withStatus(500)));
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withStatus(400)));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequestWithEmptyData() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withBody("")));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotValidateUrlByApiRequestWithEmptyHeader() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(aResponse().withStatus(200)));
 
     // when
     boolean result = bitbucketURLParser.isValid(url);
@@ -145,6 +222,7 @@ public class BitbucketServerURLParserTest {
   @DataProvider(name = "UrlsProvider")
   public Object[][] urls() {
     return new Object[][] {
+      {"https://my-bitbucket.org/bitbucket/scm/proj/repo.git"},
       {"https://bitbucket.2mcl.com/scm/~user/repo.git"},
       {"https://bitbucket.2mcl.com/scm/project/test1.git"},
       {"https://bitbucket.2mcl.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch"},
@@ -153,7 +231,9 @@ public class BitbucketServerURLParserTest {
       {"https://bitbucket.2mcl.com/users/user/repos/repo/"},
       {"https://bbkt.com/scm/project/test1.git"},
       {"ssh://git@bitbucket.2mcl.com:12345/~user/repo.git"},
-      {"ssh://git@bitbucket.2mcl.com:12345/project/test1.git"}
+      {"ssh://git@bitbucket.2mcl.com:12345/project/test1.git"},
+      {"ssh://git@bitbucket.2mcl.com/~user/repo.git"},
+      {"ssh://git@bitbucket.2mcl.com/project/test1.git"}
     };
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,7 +14,6 @@ package org.eclipse.che.api.workspace.server;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.Pages;
@@ -22,7 +21,6 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
-import org.eclipse.che.commons.schedule.ScheduleDelay;
 import org.slf4j.Logger;
 
 /**
@@ -42,18 +40,6 @@ public class TemporaryWorkspaceRemover {
   public TemporaryWorkspaceRemover(WorkspaceDao workspaceDao, WorkspaceRuntimes runtimes) {
     this.workspaceDao = workspaceDao;
     this.runtimes = runtimes;
-  }
-
-  @ScheduleDelay(
-      initialDelayParameterName = "che.workspace.cleanup_temporary_initial_delay_min",
-      delayParameterName = "che.workspace.cleanup_temporary_period_min",
-      unit = TimeUnit.MINUTES)
-  void initialize() {
-    try {
-      removeTemporaryWs();
-    } catch (ServerException e) {
-      LOG.warn("Unable to cleanup temporary workspaces on startup: " + e.getMessage(), e);
-    }
   }
 
   void shutdown() {

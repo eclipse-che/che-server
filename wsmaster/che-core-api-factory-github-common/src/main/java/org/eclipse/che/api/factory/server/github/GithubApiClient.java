@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,6 +16,7 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.time.Duration.ofSeconds;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
@@ -40,6 +41,7 @@ import java.util.function.Function;
 import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
@@ -103,7 +105,8 @@ public class GithubApiClient {
    * @throws ScmBadRequestException
    */
   public GithubUser getUser(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     final URI uri = apiServerUrl.resolve("./user");
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
     LOG.trace("executeRequest={}", request);
@@ -133,7 +136,8 @@ public class GithubApiClient {
    */
   public GithubPullRequest getPullRequest(
       String id, String username, String repoName, String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     final URI uri =
         apiServerUrl.resolve(String.format("./repos/%s/%s/pulls/%s", username, repoName, id));
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
@@ -167,7 +171,7 @@ public class GithubApiClient {
   public GithubCommit getLatestCommit(
       String user, String repository, String branch, @Nullable String authenticationToken)
       throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
-          URISyntaxException {
+          URISyntaxException, ScmUnauthorizedException {
 
     final URI uri = apiServerUrl.resolve(String.format("./repos/%s/%s/commits", user, repository));
 
@@ -208,7 +212,8 @@ public class GithubApiClient {
    * @throws ScmBadRequestException
    */
   public Pair<String, String[]> getTokenScopes(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException {
+      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+          ScmUnauthorizedException {
     final URI uri = apiServerUrl.resolve("./user");
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
     LOG.trace("executeRequest={}", request);
@@ -233,6 +238,11 @@ public class GithubApiClient {
             throw new UncheckedIOException(e);
           }
         });
+  }
+
+  /** Returns the GitHub endpoint URL. */
+  public String getServerUrl() {
+    return this.scmServerUrl.toString();
   }
 
   /**
@@ -265,32 +275,37 @@ public class GithubApiClient {
       HttpClient httpClient,
       HttpRequest request,
       Function<HttpResponse<InputStream>, T> responseConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException {
+      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+          ScmUnauthorizedException {
+    String provider = GITHUB_SAAS_ENDPOINT.equals(getServerUrl()) ? "github" : "github-server";
     try {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-      LOG.trace("executeRequest={} response {}", request, response.statusCode());
-      if (response.statusCode() == HTTP_OK) {
+      int statusCode = response.statusCode();
+      LOG.trace("executeRequest={} response {}", request, statusCode);
+      if (statusCode == HTTP_OK) {
         return responseConverter.apply(response);
-      } else if (response.statusCode() == HTTP_NO_CONTENT) {
+      } else if (statusCode == HTTP_NO_CONTENT) {
         return null;
       } else {
         String body =
             response.body() == null
                 ? "Unrecognised error"
                 : CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
-        switch (response.statusCode()) {
+        switch (statusCode) {
           case HTTP_BAD_REQUEST:
             throw new ScmBadRequestException(body);
           case HTTP_NOT_FOUND:
             throw new ScmItemNotFoundException(body);
+          case HTTP_UNAUTHORIZED:
+            throw new ScmUnauthorizedException(body, "github", "v2", "");
           default:
             throw new ScmCommunicationException(
-                "Unexpected status code " + response.statusCode() + " " + response.toString());
+                "Unexpected status code " + statusCode + " " + body, statusCode, provider);
         }
       }
     } catch (IOException | InterruptedException | UncheckedIOException e) {
-      throw new ScmCommunicationException(e.getMessage(), e);
+      throw new ScmCommunicationException(e.getMessage(), e, provider);
     }
   }
 

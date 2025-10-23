@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,13 +20,22 @@ import static org.mockito.Mockito.verify;
 import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.Subject;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.MockWebServer;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -38,7 +47,7 @@ public class UserPermissionConfiguratorTest {
 
   @Mock private CheServerKubernetesClientFactory clientFactory;
   private KubernetesClient client;
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
 
   private NamespaceResolutionContext namespaceResolutionContext;
   private final String TEST_NAMESPACE_NAME = "namespace123";
@@ -51,13 +60,25 @@ public class UserPermissionConfiguratorTest {
   public void setUp() throws InfrastructureException {
     configurator = new UserPermissionConfigurator(TEST_CLUSTER_ROLES, clientFactory);
 
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
-    client = spy(serverMock.getClient());
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+    client = spy(kubernetesMockServer.createClient());
     lenient().when(clientFactory.create()).thenReturn(client);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    kubernetesMockServer.destroy();
   }
 
   @Test
@@ -70,13 +91,12 @@ public class UserPermissionConfiguratorTest {
     configurator.configure(namespaceResolutionContext, TEST_NAMESPACE_NAME);
 
     // then - do nothing
-    Assert.assertNull(serverMock.getLastRequest());
+    Assert.assertNull(kubernetesMockServer.getLastRequest());
     verify(clientFactory, never()).create();
   }
 
   @Test
-  public void bindAllClusterRolesWhenEmptyEnv()
-      throws InfrastructureException, InterruptedException {
+  public void bindAllClusterRolesWhenEmptyEnv() throws InfrastructureException {
     // given - clean env
 
     // when
@@ -84,7 +104,7 @@ public class UserPermissionConfiguratorTest {
 
     // then - create all role bindings
     var roleBindings =
-        serverMock.getClient().rbac().roleBindings().inNamespace(TEST_NAMESPACE_NAME);
+        kubernetesMockServer.createClient().rbac().roleBindings().inNamespace(TEST_NAMESPACE_NAME);
     Assert.assertEquals(roleBindings.list().getItems().size(), 2);
 
     var cr1 = roleBindings.withName("cr1").get();

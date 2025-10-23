@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -56,7 +56,7 @@ public class GithubAuthorizingFileContentProviderTest {
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
     when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenReturn(new PersonalAccessToken("foo", "che", "my-token"));
+        .thenReturn(new PersonalAccessToken("foo", "provider", "che", "my-token"));
 
     fileContentProvider.fetchContent("devfile.yaml");
 
@@ -84,7 +84,7 @@ public class GithubAuthorizingFileContentProviderTest {
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
     when(personalAccessTokenManager.getAndStore(anyString()))
-        .thenReturn(new PersonalAccessToken(raw_url, "che", "my-token"));
+        .thenReturn(new PersonalAccessToken(raw_url, "provider", "che", "my-token"));
 
     fileContentProvider.fetchContent(raw_url);
     verify(urlFetcher).fetch(eq(raw_url), eq("token my-token"));
@@ -145,7 +145,7 @@ public class GithubAuthorizingFileContentProviderTest {
             .withServerUrl("https://github.com");
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
-    var personalAccessToken = new PersonalAccessToken(raw_url, "che", "my-token");
+    var personalAccessToken = new PersonalAccessToken(raw_url, "provider", "che", "my-token");
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     fileContentProvider.fetchContent(raw_url);

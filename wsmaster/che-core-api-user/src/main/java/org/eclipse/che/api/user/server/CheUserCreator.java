@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2022 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -21,7 +21,6 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.core.db.DBInitializer;
 
 /**
  * Creates 'che' default user.
@@ -35,10 +34,6 @@ public class CheUserCreator {
   @Inject private UserManager userManager;
 
   @Inject private AccountManager accountManager;
-
-  @SuppressWarnings("unused")
-  @Inject
-  private DBInitializer initializer;
 
   @PostConstruct
   public void createCheUser() throws ServerException {

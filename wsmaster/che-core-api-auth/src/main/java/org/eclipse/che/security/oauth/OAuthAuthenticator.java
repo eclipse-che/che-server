@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2024 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -33,7 +33,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import javax.net.ssl.SSLHandshakeException;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.json.JsonParseException;
@@ -43,7 +45,8 @@ import org.slf4j.LoggerFactory;
 
 /** Authentication service which allow get access token from OAuth provider site. */
 public abstract class OAuthAuthenticator {
-  private static final String AUTHENTICATOR_IS_NOT_CONFIGURED = "Authenticator is not configured";
+  protected static final String AUTHENTICATOR_IS_NOT_CONFIGURED = "Authenticator is not configured";
+  protected static final int SSL_ERROR_CODE = 495;
 
   private static final Logger LOG = LoggerFactory.getLogger(OAuthAuthenticator.class);
 
@@ -174,11 +177,13 @@ public abstract class OAuthAuthenticator {
    *     server
    * @param scopes specify exactly what type of access needed. This list must be exactly the same as
    *     list passed to the method {@link #getAuthenticateUrl(URL, java.util.List)}
-   * @return id of authenticated user
+   * @return access token
    * @throws OAuthAuthenticationException if authentication failed or <code>requestUrl</code> does
    *     not contain required parameters, e.g. 'code'
+   * @throws ScmCommunicationException if communication with SCM failed
    */
-  public String callback(URL requestUrl, List<String> scopes) throws OAuthAuthenticationException {
+  public String callback(URL requestUrl, List<String> scopes)
+      throws OAuthAuthenticationException, ScmCommunicationException {
     if (!isConfigured()) {
       throw new OAuthAuthenticationException(AUTHENTICATOR_IS_NOT_CONFIGURED);
     }
@@ -202,8 +207,12 @@ public abstract class OAuthAuthenticator {
         userId = EnvironmentContext.getCurrent().getSubject().getUserId();
       }
       flow.createAndStoreCredential(tokenResponse, userId);
-      return userId;
+      return tokenResponse.getAccessToken();
     } catch (IOException ioe) {
+      if (ioe instanceof SSLHandshakeException) {
+        throw new ScmCommunicationException(
+            "SSL handshake failed. Please contact your administrator.", SSL_ERROR_CODE);
+      }
       throw new OAuthAuthenticationException(ioe.getMessage());
     }
   }
@@ -285,9 +294,10 @@ public abstract class OAuthAuthenticator {
    *     none token found for user then {@code null} will be returned, when user have expired token
    *     and it can't be refreshed then {@code null} will be returned
    * @throws IOException when error occurs during token loading
-   * @see OAuthTokenProvider#getToken(String, String)
+   * @see OAuthTokenProvider#getToken(String, String) TODO: return Optional<OAuthToken> to avoid
+   *     returning null.
    */
-  public OAuthToken getToken(String userId) throws IOException {
+  public OAuthToken getOrRefreshToken(String userId) throws IOException {
     if (!isConfigured()) {
       throw new IOException(AUTHENTICATOR_IS_NOT_CONFIGURED);
     }
@@ -314,6 +324,44 @@ public abstract class OAuthAuthenticator {
         }
         return null;
       }
+    }
+    return newDto(OAuthToken.class).withToken(credential.getAccessToken());
+  }
+
+  /**
+   * Refresh personal access token.
+   *
+   * @param userId user identifier
+   * @return a refreshed token value or {@code null}
+   * @throws IOException when error occurs during token loading
+   */
+  public OAuthToken refreshToken(String userId) throws IOException {
+    if (!isConfigured()) {
+      throw new IOException(AUTHENTICATOR_IS_NOT_CONFIGURED);
+    }
+
+    Credential credential = flow.loadCredential(userId);
+    if (credential == null) {
+      return null;
+    }
+
+    boolean tokenRefreshed;
+    try {
+      tokenRefreshed = credential.refreshToken();
+    } catch (IOException ioEx) {
+      tokenRefreshed = false;
+    }
+
+    if (tokenRefreshed) {
+      credential = flow.loadCredential(userId);
+    } else {
+      // if token is not refreshed then old value should be invalidated
+      // and null result should be returned
+      try {
+        invalidateTokenByUser(userId);
+      } catch (IOException ignored) {
+      }
+      return null;
     }
     return newDto(OAuthToken.class).withToken(credential.getAccessToken());
   }

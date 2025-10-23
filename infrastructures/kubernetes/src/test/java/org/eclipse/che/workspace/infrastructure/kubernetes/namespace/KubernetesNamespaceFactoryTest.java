@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -62,13 +62,19 @@ import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.mockwebserver.Context;
+import io.fabric8.mockwebserver.MockWebServer;
+import io.fabric8.mockwebserver.ServerRequest;
+import io.fabric8.mockwebserver.ServerResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -135,7 +141,7 @@ public class KubernetesNamespaceFactoryTest {
 
   @Mock private Resource<Namespace> namespaceResource;
 
-  private KubernetesServer serverMock;
+  private KubernetesMockServer kubernetesMockServer;
 
   private KubernetesNamespaceFactory namespaceFactory;
 
@@ -147,9 +153,16 @@ public class KubernetesNamespaceFactoryTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    serverMock = new KubernetesServer(true, true);
-    serverMock.before();
-    k8sClient = spy(serverMock.getClient());
+    final Map<ServerRequest, Queue<ServerResponse>> responses = new HashMap<>();
+    kubernetesMockServer =
+        new KubernetesMockServer(
+            new Context(),
+            new MockWebServer(),
+            responses,
+            new KubernetesMixedDispatcher(responses),
+            true);
+    kubernetesMockServer.init();
+    k8sClient = spy(kubernetesMockServer.createClient());
     lenient().when(cheServerKubernetesClientFactory.create()).thenReturn(k8sClient);
     lenient().when(k8sClient.namespaces()).thenReturn(namespaceOperation);
 
@@ -167,7 +180,7 @@ public class KubernetesNamespaceFactoryTest {
   @AfterMethod
   public void tearDown() {
     EnvironmentContext.reset();
-    serverMock.after();
+    kubernetesMockServer.destroy();
   }
 
   @Test

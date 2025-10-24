@@ -162,6 +162,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       return tokenOptional.get();
     } else {
       // try to authenticate for the given URL
+      LOG.info(
+          ">>>>>> KubernetesPersonalAccessTokenManager get 165 scmServerUrl = " + scmServerUrl);
       return fetchAndSave(subject, scmServerUrl);
     }
   }

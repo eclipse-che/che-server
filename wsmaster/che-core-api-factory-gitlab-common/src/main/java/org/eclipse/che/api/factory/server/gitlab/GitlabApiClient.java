@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,6 +15,7 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.time.Duration.ofSeconds;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -51,7 +52,8 @@ public class GitlabApiClient {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public GitlabApiClient(String serverUrl) {
-    this.serverUrl = URI.create(serverUrl);
+    this.serverUrl = URI.create(serverUrl + (serverUrl.endsWith("/") ? "" : "/"));
+    LOG.info(">>>>>> GitlabApiClient constructor 55 serverUrl = " + serverUrl);
     this.httpClient =
         HttpClient.newBuilder()
             .executor(
@@ -70,6 +72,7 @@ public class GitlabApiClient {
       throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri = serverUrl.resolve("/api/v4/user");
+    LOG.info(">>>>>> GitlabApiClient getUser 73 uri = " + uri);
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers("Authorization", "Bearer " + authenticationToken)
@@ -179,6 +182,6 @@ public class GitlabApiClient {
   }
 
   public boolean isConnected(String scmServerUrl) {
-    return serverUrl.equals(URI.create(scmServerUrl));
+    return trimEnd(serverUrl.toString(), '/').equals(scmServerUrl);
   }
 }

@@ -32,6 +32,8 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Parser of String Gitlab URLs and provide {@link GitlabUrl} objects.
@@ -40,6 +42,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  */
 public class AbstractGitlabUrlParser {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractGitlabUrlParser.class);
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private final String providerName;
@@ -69,7 +72,8 @@ public class AbstractGitlabUrlParser {
       String trimmedEndpoint = trimEnd(serverUrl, '/');
       URI uri = URI.create(trimmedEndpoint);
       String schema = uri.getScheme();
-      String host = uri.getHost();
+      String host = trimmedEndpoint.substring(trimmedEndpoint.indexOf("://") + 3);
+      LOG.info(">>>>>> AbstractGitlabUrlParser 76 host = " + host);
       for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
         gitlabUrlPatterns.add(
             compile(format(gitlabUrlPatternTemplate, schema, host, uri.getPort())));

@@ -77,6 +77,9 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     scmServerUrl = trimEnd(scmServerUrl, '/');
     GitlabApiClient gitlabApiClient = getApiClient(scmServerUrl);
+    LOG.info(
+        ">>>>>> AbstractGitlabOAuthTokenFetcher fetchOrRefreshPersonalAccessToken 80 scmServerUrl = "
+            + scmServerUrl);
     if (gitlabApiClient == null || !gitlabApiClient.isConnected(scmServerUrl)) {
       LOG.debug("not a  valid url {} for current fetcher ", scmServerUrl);
       return null;
@@ -218,6 +221,12 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
   }
 
   private GitlabApiClient getApiClient(String serverUrl) {
+    LOG.info(
+        ">>>>>> AbstractGitlabOAuthTokenFetcher fetchOrRefreshPersonalAccessToken 222 serverUrl = "
+            + serverUrl);
+    LOG.info(
+        ">>>>>> AbstractGitlabOAuthTokenFetcher fetchOrRefreshPersonalAccessToken 222 this.serverUrl = "
+            + this.serverUrl);
     return serverUrl.equals(this.serverUrl) ? new GitlabApiClient(serverUrl) : null;
   }
 }

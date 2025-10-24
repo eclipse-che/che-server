@@ -108,7 +108,7 @@
         <maven.buildhelper.plugin.version>3.2.0</maven.buildhelper.plugin.version>
         <maven.buildnumber.plugin.version>3.0.0</maven.buildnumber.plugin.version>
         <maven.clean.plugin.version>3.3.2</maven.clean.plugin.version>
-        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+        <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
         <maven.dependency.plugin.version>3.1.2</maven.dependency.plugin.version>
         <maven.enforcer.plugin.version>3.0.0</maven.enforcer.plugin.version>
         <maven.exec.plugin.version>3.0.0</maven.exec.plugin.version>

@@ -149,7 +149,7 @@
         <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
-        <org.mockito.mockito-testng.version>0.5.2</org.mockito.mockito-testng.version>
+        <org.mockito.mockito-testng.version>0.5.4</org.mockito.mockito-testng.version>
         <org.mockito.version>3.11.2</org.mockito.version>
         <org.postgresql.version>42.7.8</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>

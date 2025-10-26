@@ -51,7 +51,7 @@
         <com.auth0.jwks-rsa.version>0.22.1</com.auth0.jwks-rsa.version>
         <com.fasterxml.jackson.version>2.15.2</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
-        <com.google.code.guice.version>5.0.1</com.google.code.guice.version>
+        <com.google.code.guice.version>7.0.0</com.google.code.guice.version>
         <com.google.errorprone>2.3.4</com.google.errorprone>
         <com.google.guava.version>32.1.2-jre</com.google.guava.version>
         <com.google.http-client.version>1.43.3</com.google.http-client.version>

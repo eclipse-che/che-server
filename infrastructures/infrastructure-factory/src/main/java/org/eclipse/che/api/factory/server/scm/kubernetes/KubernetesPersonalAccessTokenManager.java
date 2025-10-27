@@ -141,6 +141,39 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   @Override
+  public void remove(String scmServerUrl) {
+    try {
+      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(null)) {
+        List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
+        Optional<Secret> optionalSecret =
+            secrets.stream()
+                .filter(
+                    secret ->
+                        isSecretMatchesSearchCriteria(
+                            EnvironmentContext.getCurrent().getSubject(),
+                            null,
+                            scmServerUrl,
+                            secret))
+                .findFirst();
+        if (optionalSecret.isPresent()
+            && isSecretMatchesSearchCriteria(
+                EnvironmentContext.getCurrent().getSubject(),
+                null,
+                scmServerUrl,
+                optionalSecret.get())) {
+          cheServerKubernetesClientFactory
+              .create()
+              .secrets()
+              .inNamespace(namespaceMeta.getName())
+              .delete(optionalSecret.get());
+        }
+      }
+    } catch (InfrastructureException | ScmConfigurationPersistenceException e) {
+      LOG.debug("Failed to remove personal access token", e);
+    }
+  }
+
+  @Override
   public PersonalAccessToken fetchAndSave(Subject cheUser, String scmServerUrl)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
           ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {

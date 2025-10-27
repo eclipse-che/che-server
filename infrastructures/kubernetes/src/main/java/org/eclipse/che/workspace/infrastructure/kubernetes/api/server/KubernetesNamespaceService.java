@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.api.server;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import com.google.common.annotations.Beta;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,7 +28,10 @@ import jakarta.ws.rs.Produces;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.api.core.rest.shared.dto.ExtendedError;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -90,10 +94,14 @@ public class KubernetesNamespaceService extends Service {
             responseCode = "500",
             description = "Internal server error occurred during namespace provisioning")
       })
-  public KubernetesNamespaceMetaDto provision() throws InfrastructureException {
-    return asDto(
-        namespaceProvisioner.provision(
-            new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject())));
+  public KubernetesNamespaceMetaDto provision() throws ApiException {
+    try {
+      return asDto(
+          namespaceProvisioner.provision(
+              new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject())));
+    } catch (InfrastructureException e) {
+      throw new ServerException(newDto(ExtendedError.class).withMessage(e.getMessage()));
+    }
   }
 
   private KubernetesNamespaceMetaDto asDto(KubernetesNamespaceMeta kubernetesNamespaceMeta) {

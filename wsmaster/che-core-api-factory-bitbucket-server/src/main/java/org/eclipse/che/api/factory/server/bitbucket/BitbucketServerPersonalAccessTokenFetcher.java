@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -174,6 +174,13 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       } catch (ScmItemNotFoundException
           | ScmUnauthorizedException
           | ScmCommunicationException exception) {
+        if (exception instanceof ScmCommunicationException) {
+          ScmCommunicationException scmCommunicationException =
+              (ScmCommunicationException) exception;
+          if (scmCommunicationException.getStatusCode() == 495) {
+            throw scmCommunicationException;
+          }
+        }
         LOG.debug("not a valid url {} for current fetcher ", params.getScmProviderUrl());
         return Optional.empty();
       }

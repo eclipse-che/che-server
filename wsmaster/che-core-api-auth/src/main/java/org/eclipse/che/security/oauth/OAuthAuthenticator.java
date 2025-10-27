@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -211,7 +211,8 @@ public abstract class OAuthAuthenticator {
     } catch (IOException ioe) {
       if (ioe instanceof SSLHandshakeException) {
         throw new ScmCommunicationException(
-            "SSL handshake failed. Please contact your administrator.", SSL_ERROR_CODE);
+            "The required SSL certificate is missing or not trusted by the system. Please contact your administrator.",
+            SSL_ERROR_CODE);
       }
       throw new OAuthAuthenticationException(ioe.getMessage());
     }

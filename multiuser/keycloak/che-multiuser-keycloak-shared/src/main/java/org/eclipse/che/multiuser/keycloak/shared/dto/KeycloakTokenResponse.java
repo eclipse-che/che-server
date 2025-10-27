@@ -14,7 +14,9 @@ package org.eclipse.che.multiuser.keycloak.shared.dto;
 import org.eclipse.che.dto.shared.DTO;
 import org.eclipse.che.dto.shared.JsonFieldName;
 
-/** @author Max Shaposhnik (mshaposh@redhat.com) */
+/**
+ * @author Max Shaposhnik (mshaposh@redhat.com)
+ */
 @DTO
 public interface KeycloakTokenResponse {
 

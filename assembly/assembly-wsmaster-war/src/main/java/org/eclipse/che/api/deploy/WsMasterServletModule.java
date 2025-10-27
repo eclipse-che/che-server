@@ -27,7 +27,9 @@ import org.everrest.guice.servlet.GuiceEverrestServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** @author andrew00x */
+/**
+ * @author andrew00x
+ */
 @DynaModule
 public class WsMasterServletModule extends ServletModule {
   private static final Logger LOG = LoggerFactory.getLogger(WsMasterServletModule.class);

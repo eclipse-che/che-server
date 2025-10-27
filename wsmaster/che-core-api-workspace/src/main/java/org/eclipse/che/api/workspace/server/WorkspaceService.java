@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -199,7 +199,10 @@ public class WorkspaceService extends Service {
           @QueryParam("namespace")
           String namespace,
       @HeaderParam(CONTENT_TYPE) MediaType contentType)
-      throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
+      throws ConflictException,
+          BadRequestException,
+          ForbiddenException,
+          NotFoundException,
           ServerException {
     requiredNotNull(devfile, "Devfile");
     final Map<String, String> attributes = parseAttrs(attrsList);
@@ -362,7 +365,10 @@ public class WorkspaceService extends Service {
   public WorkspaceDto update(
       @Parameter(description = "The workspace id") @PathParam("id") String id,
       @Parameter(description = "The workspace update", required = true) WorkspaceDto update)
-      throws BadRequestException, ServerException, ForbiddenException, NotFoundException,
+      throws BadRequestException,
+          ServerException,
+          ForbiddenException,
+          NotFoundException,
           ConflictException {
     checkArgument(
         update.getConfig() != null ^ update.getDevfile() != null,
@@ -388,7 +394,10 @@ public class WorkspaceService extends Service {
         @ApiResponse(responseCode = "500", description = "Internal server error occurred")
       })
   public void delete(@Parameter(description = "The workspace id") @PathParam("id") String id)
-      throws BadRequestException, ServerException, NotFoundException, ConflictException,
+      throws BadRequestException,
+          ServerException,
+          NotFoundException,
+          ConflictException,
           ForbiddenException {
     workspaceManager.removeWorkspace(id);
   }
@@ -421,7 +430,10 @@ public class WorkspaceService extends Service {
           @QueryParam("environment")
           String envName,
       @QueryParam(DEBUG_WORKSPACE_START) @DefaultValue("false") Boolean debugWorkspaceStart)
-      throws ServerException, BadRequestException, NotFoundException, ForbiddenException,
+      throws ServerException,
+          BadRequestException,
+          NotFoundException,
+          ForbiddenException,
           ConflictException {
 
     Map<String, String> options = new HashMap<>();

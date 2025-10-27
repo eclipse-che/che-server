@@ -34,6 +34,9 @@ public interface GitUserDataFetcher {
    *     permanent storage.
    */
   GitUserData fetchGitUserData(@Nullable String namespaceName)
-      throws ScmUnauthorizedException, ScmCommunicationException,
-          ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException;
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmConfigurationPersistenceException,
+          ScmItemNotFoundException,
+          ScmBadRequestException;
 }

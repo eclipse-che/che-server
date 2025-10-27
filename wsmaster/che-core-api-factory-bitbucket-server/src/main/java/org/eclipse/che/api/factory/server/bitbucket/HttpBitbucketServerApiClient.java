@@ -190,7 +190,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   @Override
   public BitbucketPersonalAccessToken createPersonalAccessTokens(
       String tokenName, Set<String> permissions)
-      throws ScmBadRequestException, ScmUnauthorizedException, ScmCommunicationException,
+      throws ScmBadRequestException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
           ScmItemNotFoundException {
     BitbucketPersonalAccessToken token =
         new BitbucketPersonalAccessToken(tokenName, permissions, 90);
@@ -351,7 +353,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
   }
 
   private <T> List<T> doGetItems(Optional<String> token, Class<T> tClass, String api, String filter)
-      throws ScmUnauthorizedException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmItemNotFoundException {
     Page<T> currentPage = doGetPage(token, tClass, api, 0, 25, filter);
     List<T> result = new ArrayList<>(currentPage.getValues());
@@ -364,7 +368,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
   private <T> Page<T> doGetPage(
       Optional<String> token, Class<T> tClass, String api, int start, int limit, String filter)
-      throws ScmUnauthorizedException, ScmBadRequestException, ScmCommunicationException,
+      throws ScmUnauthorizedException,
+          ScmBadRequestException,
+          ScmCommunicationException,
           ScmItemNotFoundException {
     String suffix = api + "?start=" + start + "&limit=" + limit;
     if (!isNullOrEmpty(filter)) {
@@ -402,7 +408,9 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
       HttpClient httpClient,
       HttpRequest request,
       Function<HttpResponse<InputStream>, T> bodyConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+      throws ScmBadRequestException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
           ScmUnauthorizedException {
     try {
       HttpResponse<InputStream> response =

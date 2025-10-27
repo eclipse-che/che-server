@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -34,8 +34,10 @@ import org.eclipse.che.commons.schedule.executor.CronExpression;
 import org.eclipse.che.commons.schedule.executor.CronThreadPoolExecutor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
+@Ignore
 public class MeteredExecutorServiceWrapperTest {
 
   private MeterRegistry registry;

@@ -19,7 +19,9 @@ import org.eclipse.che.multiuser.permission.workspace.server.WorkspaceDomain;
 import org.eclipse.che.multiuser.permission.workspace.server.model.impl.WorkerImpl;
 import org.eclipse.che.multiuser.permission.workspace.server.spi.jpa.MultiuserJpaWorkspaceDao;
 
-/** @author Yevhenii Voevodin */
+/**
+ * @author Yevhenii Voevodin
+ */
 public class MultiuserWorkspaceJpaModule extends AbstractModule {
 
   @Override

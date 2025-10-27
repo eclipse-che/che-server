@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -67,7 +67,9 @@ public class GitlabApiClient {
   }
 
   public GitlabUser getUser(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri = serverUrl.resolve("/api/v4/user");
     HttpRequest request =
@@ -146,7 +148,9 @@ public class GitlabApiClient {
 
   private <T> T executeRequest(
       HttpClient httpClient, HttpRequest request, Function<InputStream, T> bodyConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+      throws ScmBadRequestException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
           ScmUnauthorizedException {
     String provider = "http://gitlab.com".equals(serverUrl.toString()) ? "gitlab" : "gitlab-server";
     try {

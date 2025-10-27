@@ -132,8 +132,12 @@ public class GitconfigConfiguratorTest {
 
   @Test
   public void shouldUpdateGitconfigConfigmapWithUserSection()
-      throws InfrastructureException, InterruptedException, ScmItemNotFoundException,
-          ScmCommunicationException, ScmUnauthorizedException, ScmConfigurationPersistenceException,
+      throws InfrastructureException,
+          InterruptedException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmUnauthorizedException,
+          ScmConfigurationPersistenceException,
           ScmBadRequestException {
     // given
     ConfigMap gitconfigConfigmap =
@@ -164,8 +168,12 @@ public class GitconfigConfiguratorTest {
 
   @Test
   public void shouldUpdateGitconfigConfigmapWithStoredSectionsWithUserSection()
-      throws InfrastructureException, InterruptedException, ScmItemNotFoundException,
-          ScmCommunicationException, ScmUnauthorizedException, ScmConfigurationPersistenceException,
+      throws InfrastructureException,
+          InterruptedException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmUnauthorizedException,
+          ScmConfigurationPersistenceException,
           ScmBadRequestException {
     // given
     ConfigMap gitconfigConfigmap =
@@ -199,8 +207,12 @@ public class GitconfigConfiguratorTest {
 
   @Test
   public void shouldNotUpdateGitconfigConfigmapWithUserSection()
-      throws InfrastructureException, InterruptedException, ScmItemNotFoundException,
-          ScmCommunicationException, ScmUnauthorizedException, ScmConfigurationPersistenceException,
+      throws InfrastructureException,
+          InterruptedException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmUnauthorizedException,
+          ScmConfigurationPersistenceException,
           ScmBadRequestException {
     // given
     ConfigMap gitconfigConfigmap =

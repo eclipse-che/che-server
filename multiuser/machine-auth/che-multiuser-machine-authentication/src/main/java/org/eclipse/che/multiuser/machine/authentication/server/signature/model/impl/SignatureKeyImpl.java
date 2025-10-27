@@ -21,7 +21,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.SignatureKey;
 
-/** @author Anton Korneta */
+/**
+ * @author Anton Korneta
+ */
 @Entity(name = "SignKey")
 @Table(name = "che_sign_key")
 public class SignatureKeyImpl implements SignatureKey {

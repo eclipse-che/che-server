@@ -19,7 +19,9 @@ import org.eclipse.che.multiuser.api.permission.shared.model.PermissionsDomain;
 import org.eclipse.che.multiuser.permission.workspace.server.filters.WorkspacePermissionsFilter;
 import org.eclipse.che.multiuser.permission.workspace.server.filters.WorkspaceRemoteSubscriptionPermissionFilter;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 public class WorkspaceApiPermissionsModule extends AbstractModule {
 
   @Override

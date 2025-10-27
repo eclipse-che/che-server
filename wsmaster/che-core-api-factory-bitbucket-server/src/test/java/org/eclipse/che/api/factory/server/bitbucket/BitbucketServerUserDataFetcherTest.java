@@ -60,8 +60,11 @@ public class BitbucketServerUserDataFetcherTest {
 
   @Test
   public void shouldBeAbleToFetchPersonalAccessToken()
-      throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException,
-          ScmBadRequestException, ScmConfigurationPersistenceException {
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmItemNotFoundException,
+          ScmBadRequestException,
+          ScmConfigurationPersistenceException {
     // given
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
     when(bitbucketServerApiClient.getUser()).thenReturn(bitbucketUser);

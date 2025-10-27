@@ -28,7 +28,9 @@ import org.eclipse.che.multiuser.resource.api.usage.tracker.RuntimeResourceUsage
 import org.eclipse.che.multiuser.resource.api.usage.tracker.WorkspaceResourceUsageTracker;
 import org.eclipse.che.multiuser.resource.api.workspace.LimitsCheckingWorkspaceManager;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 public class ResourceModule extends AbstractModule {
   @Override
   protected void configure() {

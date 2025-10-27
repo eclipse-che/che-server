@@ -50,7 +50,10 @@ public class GetPermissionsFilter extends CheMethodInvokerFilter {
 
   @Override
   public void filter(GenericResourceMethod genericResourceMethod, Object[] arguments)
-      throws BadRequestException, NotFoundException, ConflictException, ForbiddenException,
+      throws BadRequestException,
+          NotFoundException,
+          ConflictException,
+          ForbiddenException,
           ServerException {
 
     final String methodName = genericResourceMethod.getMethod().getName();

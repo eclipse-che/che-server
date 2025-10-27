@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -76,7 +76,9 @@ public interface Subject {
    */
   String getUserId();
 
-  /** @return name of user */
+  /**
+   * @return name of user
+   */
   String getUserName();
 
   /**
@@ -94,7 +96,9 @@ public interface Subject {
    */
   void checkPermission(String domain, String instance, String action) throws ForbiddenException;
 
-  /** @return subject auth token to be able to execute request as subject */
+  /**
+   * @return subject auth token to be able to execute request as subject
+   */
   String getToken();
 
   /**
@@ -105,6 +109,8 @@ public interface Subject {
     return false;
   }
 
-  /** @return - true if subject is temporary, false if this is a real persistent subject. */
+  /**
+   * @return - true if subject is temporary, false if this is a real persistent subject.
+   */
   boolean isTemporary();
 }

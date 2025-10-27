@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,7 +14,9 @@ package org.eclipse.che.api.factory.server.jpa;
 import com.google.inject.AbstractModule;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
 
-/** @author Yevhenii Voevodin */
+/**
+ * @author Yevhenii Voevodin
+ */
 public class FactoryJpaModule extends AbstractModule {
   @Override
   protected void configure() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,17 +23,23 @@ import org.eclipse.che.dto.shared.DTO;
 @DTO
 public interface RuntimeStatusEvent {
 
-  /** @return new status */
+  /**
+   * @return new status
+   */
   String getStatus();
 
   RuntimeStatusEvent withStatus(String status);
 
-  /** @return previous status */
+  /**
+   * @return previous status
+   */
   String getPrevStatus();
 
   RuntimeStatusEvent withPrevStatus(String status);
 
-  /** @return runtime identity */
+  /**
+   * @return runtime identity
+   */
   RuntimeIdentityDto getIdentity();
 
   RuntimeStatusEvent withIdentity(RuntimeIdentityDto identity);
@@ -47,7 +53,9 @@ public interface RuntimeStatusEvent {
 
   RuntimeStatusEvent withError(String error);
 
-  /** @return whether Runtime is not workable anymore */
+  /**
+   * @return whether Runtime is not workable anymore
+   */
   boolean isFailed();
 
   RuntimeStatusEvent withFailed(boolean failed);

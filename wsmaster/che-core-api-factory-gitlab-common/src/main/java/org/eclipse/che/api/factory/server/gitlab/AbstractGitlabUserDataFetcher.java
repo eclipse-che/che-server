@@ -50,7 +50,9 @@ public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
 
   @Override
   protected GitUserData fetchGitUserDataWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     GitlabUser user = new GitlabApiClient(serverUrl).getUser(token);
     return new GitUserData(user.getName(), user.getEmail());
@@ -59,7 +61,9 @@ public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
   @Override
   protected GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     GitlabUser user =
         new GitlabApiClient(personalAccessToken.getScmProviderUrl())

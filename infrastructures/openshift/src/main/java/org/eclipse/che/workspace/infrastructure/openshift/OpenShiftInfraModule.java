@@ -98,7 +98,9 @@ import org.eclipse.che.workspace.infrastructure.openshift.server.RouteServerExpo
 import org.eclipse.che.workspace.infrastructure.openshift.server.external.OpenShiftExternalServerExposerProvider;
 import org.eclipse.che.workspace.infrastructure.openshift.wsplugins.brokerphases.OpenshiftBrokerEnvironmentFactory;
 
-/** @author Sergii Leshchenko */
+/**
+ * @author Sergii Leshchenko
+ */
 public class OpenShiftInfraModule extends AbstractModule {
   @Override
   protected void configure() {

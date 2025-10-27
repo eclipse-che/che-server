@@ -48,7 +48,9 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-/** @author Mykhailo Kuznietsov */
+/**
+ * @author Mykhailo Kuznietsov
+ */
 @Listeners(value = MockitoTestNGListener.class)
 public class EmbeddedOAuthAPITest {
 

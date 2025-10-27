@@ -30,7 +30,9 @@ import org.eclipse.che.multiuser.api.permission.server.model.impl.AbstractPermis
  */
 public interface PermissionsDao<T extends AbstractPermissions> {
 
-  /** @return store of domains this storage is able to maintain */
+  /**
+   * @return store of domains this storage is able to maintain
+   */
   AbstractPermissionsDomain<T> getDomain();
 
   /**

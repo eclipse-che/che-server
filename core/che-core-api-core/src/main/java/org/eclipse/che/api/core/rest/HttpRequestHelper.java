@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -49,15 +49,23 @@ public class HttpRequestHelper {
 
   public static String requestString(
       String url, String method, Object body, Pair<String, ?>... parameters)
-      throws IOException, ServerException, ForbiddenException, NotFoundException,
-          UnauthorizedException, ConflictException {
+      throws IOException,
+          ServerException,
+          ForbiddenException,
+          NotFoundException,
+          UnauthorizedException,
+          ConflictException {
     return requestString(-1, url, method, body, parameters);
   }
 
   public static String requestString(
       int timeout, String url, String method, Object body, Pair<String, ?>... parameters)
-      throws IOException, ServerException, ForbiddenException, NotFoundException,
-          UnauthorizedException, ConflictException {
+      throws IOException,
+          ServerException,
+          ForbiddenException,
+          NotFoundException,
+          UnauthorizedException,
+          ConflictException {
     final String authToken = EnvironmentContext.getCurrent().getSubject().getToken();
     if ((parameters != null && parameters.length > 0) || authToken != null) {
       final UriBuilder ub = UriBuilder.fromUri(url);

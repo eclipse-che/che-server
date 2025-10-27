@@ -41,7 +41,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.dto.Kubern
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.NamespaceProvisioner;
 
-/** @author Sergii Leshchenko */
+/**
+ * @author Sergii Leshchenko
+ */
 @Tag(name = "kubernetes-namespace", description = "Kubernetes REST API for working with Namespaces")
 @Path("/kubernetes/namespace")
 @Beta

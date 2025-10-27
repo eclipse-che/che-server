@@ -123,7 +123,9 @@ import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftE
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 
-/** @author andrew00x */
+/**
+ * @author andrew00x
+ */
 @DynaModule
 public class WsMasterModule extends AbstractModule {
 

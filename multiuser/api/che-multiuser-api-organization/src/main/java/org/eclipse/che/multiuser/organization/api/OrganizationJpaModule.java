@@ -17,7 +17,9 @@ import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain
 import org.eclipse.che.multiuser.organization.api.permissions.OrganizationDomain;
 import org.eclipse.che.multiuser.organization.spi.impl.MemberImpl;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 public class OrganizationJpaModule extends AbstractModule {
   @Override
   protected void configure() {

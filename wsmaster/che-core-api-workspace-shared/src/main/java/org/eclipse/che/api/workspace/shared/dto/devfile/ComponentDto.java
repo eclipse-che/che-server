@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,7 +17,9 @@ import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.devfile.Component;
 import org.eclipse.che.dto.shared.DTO;
 
-/** @author Sergii Leshchenko */
+/**
+ * @author Sergii Leshchenko
+ */
 @DTO
 public interface ComponentDto extends Component {
 

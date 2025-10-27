@@ -19,7 +19,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import org.eclipse.che.multiuser.resource.model.Resource;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 @Entity(name = "Resource")
 @Table(name = "che_resource")
 public class ResourceImpl implements Resource {

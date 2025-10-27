@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,7 +31,9 @@ public class CheServerKubernetesClientFactory extends KubernetesClientFactory {
     super(configBuilder);
   }
 
-  /** @param workspaceId ignored */
+  /**
+   * @param workspaceId ignored
+   */
   @Override
   public KubernetesClient create(String workspaceId) throws InfrastructureException {
     return create();

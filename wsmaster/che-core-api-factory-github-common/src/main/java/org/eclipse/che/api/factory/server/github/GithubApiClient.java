@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -105,7 +105,9 @@ public class GithubApiClient {
    * @throws ScmBadRequestException
    */
   public GithubUser getUser(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri = apiServerUrl.resolve("./user");
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
@@ -136,7 +138,9 @@ public class GithubApiClient {
    */
   public GithubPullRequest getPullRequest(
       String id, String username, String repoName, String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri =
         apiServerUrl.resolve(String.format("./repos/%s/%s/pulls/%s", username, repoName, id));
@@ -170,8 +174,11 @@ public class GithubApiClient {
    */
   public GithubCommit getLatestCommit(
       String user, String repository, String branch, @Nullable String authenticationToken)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
-          URISyntaxException, ScmUnauthorizedException {
+      throws ScmBadRequestException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
+          URISyntaxException,
+          ScmUnauthorizedException {
 
     final URI uri = apiServerUrl.resolve(String.format("./repos/%s/%s/commits", user, repository));
 
@@ -212,7 +219,9 @@ public class GithubApiClient {
    * @throws ScmBadRequestException
    */
   public Pair<String, String[]> getTokenScopes(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri = apiServerUrl.resolve("./user");
     HttpRequest request = buildGithubApiRequest(uri, authenticationToken);
@@ -275,7 +284,9 @@ public class GithubApiClient {
       HttpClient httpClient,
       HttpRequest request,
       Function<HttpResponse<InputStream>, T> responseConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+      throws ScmBadRequestException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
           ScmUnauthorizedException {
     String provider = GITHUB_SAAS_ENDPOINT.equals(getServerUrl()) ? "github" : "github-server";
     try {

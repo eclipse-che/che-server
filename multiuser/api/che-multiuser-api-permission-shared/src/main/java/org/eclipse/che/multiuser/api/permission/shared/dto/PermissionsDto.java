@@ -15,7 +15,9 @@ import java.util.List;
 import org.eclipse.che.dto.shared.DTO;
 import org.eclipse.che.multiuser.api.permission.shared.model.Permissions;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 @DTO
 public interface PermissionsDto extends Permissions {
   @Override

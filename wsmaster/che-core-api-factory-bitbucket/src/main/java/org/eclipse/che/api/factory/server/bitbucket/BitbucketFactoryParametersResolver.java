@@ -44,6 +44,7 @@ public class BitbucketFactoryParametersResolver extends BaseFactoryParameterReso
   private final BitbucketURLParser bitbucketURLParser;
 
   private final URLFetcher urlFetcher;
+
   /** Builder allowing to build objects from bitbucket URL. */
   private final BitbucketSourceStorageBuilder bitbucketSourceStorageBuilder;
 

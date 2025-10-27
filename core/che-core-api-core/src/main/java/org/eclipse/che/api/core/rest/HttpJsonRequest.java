@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -158,8 +158,13 @@ public interface HttpJsonRequest {
    * @throws BadRequestException when response code is 400
    */
   HttpJsonResponse request()
-      throws IOException, ServerException, UnauthorizedException, ForbiddenException,
-          NotFoundException, ConflictException, BadRequestException;
+      throws IOException,
+          ServerException,
+          UnauthorizedException,
+          ForbiddenException,
+          NotFoundException,
+          ConflictException,
+          BadRequestException;
 
   /**
    * Uses {@link HttpMethod#GET} as a request method.

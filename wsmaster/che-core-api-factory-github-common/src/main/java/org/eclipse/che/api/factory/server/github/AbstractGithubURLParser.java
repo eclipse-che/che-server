@@ -47,6 +47,7 @@ public abstract class AbstractGithubURLParser {
   private final PersonalAccessTokenManager tokenManager;
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final GithubApiClient apiClient;
+
   /**
    * Regexp to find repository details (repository name, project name and branch and subfolder)
    * Examples of valid URLs are in the test class.

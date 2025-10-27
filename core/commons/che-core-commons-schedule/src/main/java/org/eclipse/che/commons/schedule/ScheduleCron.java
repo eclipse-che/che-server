@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -24,9 +24,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ScheduleCron {
 
-  /** @return - cron expression. */
+  /**
+   * @return - cron expression.
+   */
   String cron() default "";
 
-  /** @return name of guice parameter with cron expression. */
+  /**
+   * @return name of guice parameter with cron expression.
+   */
   String cronParameterName() default "";
 }

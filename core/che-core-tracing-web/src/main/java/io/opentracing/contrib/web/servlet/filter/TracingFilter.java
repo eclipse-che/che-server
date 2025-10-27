@@ -68,6 +68,7 @@ public class TracingFilter implements Filter {
 
   /** Use as a key of {@link ServletContext#setAttribute(String, Object)} to set span decorators */
   public static final String SPAN_DECORATORS = TracingFilter.class.getName() + ".spanDecorators";
+
   /** Use as a key of {@link ServletContext#setAttribute(String, Object)} to skip pattern */
   public static final String SKIP_PATTERN = TracingFilter.class.getName() + ".skipPattern";
 
@@ -89,7 +90,9 @@ public class TracingFilter implements Filter {
     this(GlobalTracer.get());
   }
 
-  /** @param tracer */
+  /**
+   * @param tracer
+   */
   public TracingFilter(Tracer tracer) {
     this(tracer, Collections.singletonList(ServletFilterSpanDecorator.STANDARD_TAGS), null);
   }

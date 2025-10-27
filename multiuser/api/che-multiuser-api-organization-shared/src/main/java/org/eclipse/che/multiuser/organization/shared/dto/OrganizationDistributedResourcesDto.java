@@ -16,7 +16,9 @@ import org.eclipse.che.dto.shared.DTO;
 import org.eclipse.che.multiuser.organization.shared.model.OrganizationDistributedResources;
 import org.eclipse.che.multiuser.resource.shared.dto.ResourceDto;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 @DTO
 public interface OrganizationDistributedResourcesDto extends OrganizationDistributedResources {
   @Override

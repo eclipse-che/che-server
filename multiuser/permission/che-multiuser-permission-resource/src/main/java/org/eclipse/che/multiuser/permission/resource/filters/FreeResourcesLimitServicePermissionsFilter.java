@@ -51,8 +51,8 @@ public class FreeResourcesLimitServicePermissionsFilter extends CheMethodInvoker
             SystemDomain.DOMAIN_ID, null, SystemDomain.MANAGE_SYSTEM_ACTION)) {
           return;
         }
-        // fall through
-        // user doesn't have permissions and request should not be processed
+      // fall through
+      // user doesn't have permissions and request should not be processed
       default:
         throw new ForbiddenException("The user does not have permission to perform this operation");
     }

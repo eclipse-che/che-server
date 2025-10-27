@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -156,8 +156,13 @@ public class DefaultHttpJsonRequest implements HttpJsonRequest {
 
   @Override
   public HttpJsonResponse request()
-      throws IOException, ServerException, UnauthorizedException, ForbiddenException,
-          NotFoundException, ConflictException, BadRequestException {
+      throws IOException,
+          ServerException,
+          UnauthorizedException,
+          ForbiddenException,
+          NotFoundException,
+          ConflictException,
+          BadRequestException {
     if (method == null) {
       throw new IllegalStateException("Could not perform request, request method was not set.");
     }
@@ -196,8 +201,13 @@ public class DefaultHttpJsonRequest implements HttpJsonRequest {
       List<Pair<String, ?>> parameters,
       String authorizationHeaderValue,
       List<Pair<String, String>> headers)
-      throws IOException, ServerException, ForbiddenException, NotFoundException,
-          UnauthorizedException, ConflictException, BadRequestException {
+      throws IOException,
+          ServerException,
+          ForbiddenException,
+          NotFoundException,
+          UnauthorizedException,
+          ConflictException,
+          BadRequestException {
     final String authToken = EnvironmentContext.getCurrent().getSubject().getToken();
     final boolean hasQueryParams = parameters != null && !parameters.isEmpty();
     if (hasQueryParams || authToken != null) {

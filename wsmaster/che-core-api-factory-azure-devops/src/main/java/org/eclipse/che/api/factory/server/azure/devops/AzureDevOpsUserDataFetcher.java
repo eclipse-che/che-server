@@ -53,7 +53,9 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
 
   @Override
   protected GitUserData fetchGitUserDataWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     AzureDevOpsUser user = azureDevOpsApiClient.getUserWithOAuthToken(token);
     return new GitUserData(user.getDisplayName(), user.getEmailAddress());
@@ -62,7 +64,9 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
   @Override
   protected GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     if (SAAS_ENDPOINT.equals(personalAccessToken.getScmProviderUrl())) {
       AzureDevOpsUser user =

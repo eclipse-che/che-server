@@ -444,7 +444,9 @@ abstract class DtoImpl {
     return sw.toString();
   }
 
-  /** @return String representing the source definition for the DTO impl as an inner class. */
+  /**
+   * @return String representing the source definition for the DTO impl as an inner class.
+   */
   abstract String serialize();
 
   private static class MethodComparator implements Comparator<Method> {

@@ -48,7 +48,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-/** @author Anatalii Bazko */
+/**
+ * @author Anatalii Bazko
+ */
 @Listeners(MockitoTestNGListener.class)
 public class AzureDevOpsPersonalAccessTokenFetcherTest {
 

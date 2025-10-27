@@ -78,8 +78,13 @@ public class TokenController {
   @GET
   @Path("/github")
   public Response getGitHubToken(@HeaderParam(HttpHeaders.AUTHORIZATION) String keycloakToken)
-      throws ForbiddenException, NotFoundException, ConflictException, BadRequestException,
-          ServerException, UnauthorizedException, IOException {
+      throws ForbiddenException,
+          NotFoundException,
+          ConflictException,
+          BadRequestException,
+          ServerException,
+          UnauthorizedException,
+          IOException {
     String token = null;
     try {
       validator.validate(keycloakToken);
@@ -93,8 +98,13 @@ public class TokenController {
   @GET
   @Path("/oso")
   public Response getOpenShiftToken(@HeaderParam(HttpHeaders.AUTHORIZATION) String keycloakToken)
-      throws ForbiddenException, NotFoundException, ConflictException, BadRequestException,
-          ServerException, UnauthorizedException, IOException {
+      throws ForbiddenException,
+          NotFoundException,
+          ConflictException,
+          BadRequestException,
+          ServerException,
+          UnauthorizedException,
+          IOException {
     String token = null;
     try {
       validator.validate(keycloakToken);

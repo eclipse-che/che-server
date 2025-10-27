@@ -135,8 +135,12 @@ public class KeycloakServiceClient {
    * @throws UnauthorizedException when no token present for user or user not linked to provider
    */
   public KeycloakTokenResponse getIdentityProviderToken(String oauthProvider)
-      throws ForbiddenException, BadRequestException, IOException, NotFoundException,
-          ServerException, UnauthorizedException {
+      throws ForbiddenException,
+          BadRequestException,
+          IOException,
+          NotFoundException,
+          ServerException,
+          UnauthorizedException {
     String url =
         UriBuilder.fromUri(oidcInfo.getAuthServerURL())
             .path("/realms/{realm}/broker/{provider}/token")
@@ -158,8 +162,12 @@ public class KeycloakServiceClient {
   }
 
   private String doRequest(String url, String method, List<Pair<String, ?>> parameters)
-      throws IOException, ServerException, ForbiddenException, NotFoundException,
-          UnauthorizedException, BadRequestException {
+      throws IOException,
+          ServerException,
+          ForbiddenException,
+          NotFoundException,
+          UnauthorizedException,
+          BadRequestException {
     final String authToken = EnvironmentContext.getCurrent().getSubject().getToken();
     final boolean hasQueryParams = parameters != null && !parameters.isEmpty();
     if (hasQueryParams) {

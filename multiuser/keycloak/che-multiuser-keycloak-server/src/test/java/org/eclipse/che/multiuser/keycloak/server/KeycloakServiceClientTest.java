@@ -57,7 +57,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-/** @author Max Shaposhnik (mshaposh@redhat.com) */
+/**
+ * @author Max Shaposhnik (mshaposh@redhat.com)
+ */
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class KeycloakServiceClientTest {
 

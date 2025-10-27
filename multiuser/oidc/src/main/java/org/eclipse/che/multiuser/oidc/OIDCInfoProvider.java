@@ -61,7 +61,9 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
     this.oidcProviderUrl = oidcProviderUrl;
   }
 
-  /** @return OIDCInfo with OIDC settings information. */
+  /**
+   * @return OIDCInfo with OIDC settings information.
+   */
   @Override
   public OIDCInfo get() {
     this.validate();

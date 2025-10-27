@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -34,7 +34,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.NamespaceNa
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProjectFactory;
 
-/** @author Sergii Leshchenko */
+/**
+ * @author Sergii Leshchenko
+ */
 @Singleton
 public class OpenShiftInfrastructure extends RuntimeInfrastructure {
 

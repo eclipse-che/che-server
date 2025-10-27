@@ -45,27 +45,37 @@ public class OIDCInfo {
     this.authServerPublicURL = authServerPublicURL;
   }
 
-  /** @return public url to retrieve token */
+  /**
+   * @return public url to retrieve token
+   */
   public String getTokenPublicEndpoint() {
     return tokenPublicEndpoint;
   }
 
-  /** @return public url to get user profile information. */
+  /**
+   * @return public url to get user profile information.
+   */
   public String getUserInfoPublicEndpoint() {
     return userInfoPublicEndpoint;
   }
 
-  /** @return internal network url to get user profile information. */
+  /**
+   * @return internal network url to get user profile information.
+   */
   public String getUserInfoInternalEndpoint() {
     return userInfoInternalEndpoint;
   }
 
-  /** @return public url to retrieve JWK public key for token validation. */
+  /**
+   * @return public url to retrieve JWK public key for token validation.
+   */
   public String getJwksPublicUri() {
     return jwksPublicUri;
   }
 
-  /** @return internal network url to retrieve JWK public key for token validation. */
+  /**
+   * @return internal network url to retrieve JWK public key for token validation.
+   */
   public String getJwksInternalUri() {
     return jwksInternalUri;
   }
@@ -78,7 +88,9 @@ public class OIDCInfo {
     return authServerURL;
   }
 
-  /** @return public OIDC auth endpoint url. */
+  /**
+   * @return public OIDC auth endpoint url.
+   */
   public String getAuthServerPublicURL() {
     return authServerPublicURL;
   }

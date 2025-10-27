@@ -46,6 +46,7 @@ public class BitbucketServerAuthorizingFactoryParametersResolver
 
   private final URLFactoryBuilder urlFactoryBuilder;
   private final URLFetcher urlFetcher;
+
   /** Parser which will allow to check validity of URLs and create objects. */
   private final BitbucketServerURLParser bitbucketURLParser;
 

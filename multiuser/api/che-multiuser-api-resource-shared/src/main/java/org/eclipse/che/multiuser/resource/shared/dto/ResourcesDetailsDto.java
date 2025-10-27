@@ -15,7 +15,9 @@ import java.util.List;
 import org.eclipse.che.dto.shared.DTO;
 import org.eclipse.che.multiuser.resource.model.ResourcesDetails;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 @DTO
 public interface ResourcesDetailsDto extends ResourcesDetails {
   @Override

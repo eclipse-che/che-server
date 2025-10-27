@@ -64,8 +64,13 @@ public class KeycloakTokenProvider {
    * @throws ServerException
    */
   public String obtainGitHubToken(String keycloakToken)
-      throws ServerException, UnauthorizedException, ForbiddenException, NotFoundException,
-          ConflictException, BadRequestException, IOException {
+      throws ServerException,
+          UnauthorizedException,
+          ForbiddenException,
+          NotFoundException,
+          ConflictException,
+          BadRequestException,
+          IOException {
     String responseBody = getResponseBody(gitHubEndpoint, keycloakToken);
     Map<String, String> parameter = UrlHelper.splitQuery(responseBody);
     String token = parameter.get(ACCESS_TOKEN);
@@ -88,8 +93,13 @@ public class KeycloakTokenProvider {
    * @throws ServerException
    */
   public String obtainOsoToken(String keycloakToken)
-      throws IOException, ServerException, UnauthorizedException, ForbiddenException,
-          NotFoundException, ConflictException, BadRequestException {
+      throws IOException,
+          ServerException,
+          UnauthorizedException,
+          ForbiddenException,
+          NotFoundException,
+          ConflictException,
+          BadRequestException {
     String responseBody = getResponseBody(openShiftEndpoint, keycloakToken);
     ObjectMapper mapper = new ObjectMapper();
     JsonNode json = mapper.readTree(responseBody);
@@ -98,8 +108,13 @@ public class KeycloakTokenProvider {
   }
 
   private String getResponseBody(final String endpoint, final String keycloakToken)
-      throws ServerException, UnauthorizedException, ForbiddenException, NotFoundException,
-          ConflictException, BadRequestException, IOException {
+      throws ServerException,
+          UnauthorizedException,
+          ForbiddenException,
+          NotFoundException,
+          ConflictException,
+          BadRequestException,
+          IOException {
     HttpJsonResponse request =
         httpJsonRequestFactory
             .fromUrl(endpoint)

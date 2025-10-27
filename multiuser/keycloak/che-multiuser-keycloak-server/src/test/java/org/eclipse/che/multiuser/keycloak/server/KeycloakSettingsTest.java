@@ -41,7 +41,9 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-/** @author Ilya Buziuk */
+/**
+ * @author Ilya Buziuk
+ */
 @Listeners(value = {MockitoTestNGListener.class})
 public class KeycloakSettingsTest {
 

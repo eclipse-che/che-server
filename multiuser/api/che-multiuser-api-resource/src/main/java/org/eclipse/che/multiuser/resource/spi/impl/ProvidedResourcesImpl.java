@@ -19,7 +19,9 @@ import java.util.stream.Collectors;
 import org.eclipse.che.multiuser.resource.model.ProvidedResources;
 import org.eclipse.che.multiuser.resource.model.Resource;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 public class ProvidedResourcesImpl implements ProvidedResources {
   private String provider;
   private String id;

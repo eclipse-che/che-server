@@ -35,7 +35,9 @@ import org.eclipse.che.multiuser.resource.api.ResourceLockKeyProvider;
 import org.eclipse.che.multiuser.resource.api.ResourcesProvider;
 import org.eclipse.che.multiuser.resource.api.free.DefaultResourcesProvider;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 public class OrganizationApiModule extends AbstractModule {
   @Override
   protected void configure() {

@@ -23,7 +23,9 @@ import org.eclipse.che.multiuser.api.permission.server.filter.check.RemovePermis
 import org.eclipse.che.multiuser.api.permission.server.filter.check.SetPermissionsChecker;
 import org.eclipse.che.multiuser.api.permission.server.jsonrpc.RemoteSubscriptionPermissionManager;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 public class PermissionsModule extends AbstractModule {
   @Override
   protected void configure() {

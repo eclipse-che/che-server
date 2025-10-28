@@ -128,7 +128,9 @@ public class DtoTemplate {
     getDtoInterfaces().add(createDtoImplTemplate(i));
   }
 
-  /** @return the dtoInterfaces */
+  /**
+   * @return the dtoInterfaces
+   */
   public List<DtoImpl> getDtoInterfaces() {
     return dtoInterfaces;
   }

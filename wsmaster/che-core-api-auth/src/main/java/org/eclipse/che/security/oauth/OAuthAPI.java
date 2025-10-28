@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -37,7 +37,9 @@ public interface OAuthAPI {
       List<String> scopes,
       String redirectAfterLogin,
       HttpServletRequest request)
-      throws NotFoundException, OAuthAuthenticationException, ForbiddenException,
+      throws NotFoundException,
+          OAuthAuthenticationException,
+          ForbiddenException,
           BadRequestException;
 
   /** Implementation of method {@link OAuthAuthenticationService#callback(List)} */
@@ -50,8 +52,12 @@ public interface OAuthAPI {
 
   /** Implementation of method {@link OAuthAuthenticationService#token(String)} */
   OAuthToken getOrRefreshToken(String oauthProvider)
-      throws NotFoundException, UnauthorizedException, ServerException, ForbiddenException,
-          BadRequestException, ConflictException;
+      throws NotFoundException,
+          UnauthorizedException,
+          ServerException,
+          ForbiddenException,
+          BadRequestException,
+          ConflictException;
 
   /**
    * Refreshes the token for the given OAuth provider.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -56,7 +56,9 @@ public class ExecutorServiceBuilder {
     return this;
   }
 
-  /** @param maxPoolSize - configure the maximum number of threads to allow in the pool. */
+  /**
+   * @param maxPoolSize - configure the maximum number of threads to allow in the pool.
+   */
   public ExecutorServiceBuilder maxPoolSize(int maxPoolSize) {
     if (maxPoolSize < corePoolSize) {
       throw new IllegalArgumentException("maxPoolSize must be greater than corePoolSize");
@@ -65,13 +67,17 @@ public class ExecutorServiceBuilder {
     return this;
   }
 
-  /** @param allowCoreThreadTimeOut - allow core threads to time out an terminate. */
+  /**
+   * @param allowCoreThreadTimeOut - allow core threads to time out an terminate.
+   */
   public ExecutorServiceBuilder allowCoreThreadTimeOut(boolean allowCoreThreadTimeOut) {
     this.allowCoreThreadTimeOut = allowCoreThreadTimeOut;
     return this;
   }
 
-  /** @param time - configure keepAliveTime parameter of {@code ThreadPoolExecutor} */
+  /**
+   * @param time - configure keepAliveTime parameter of {@code ThreadPoolExecutor}
+   */
   public ExecutorServiceBuilder keepAliveTime(Duration time) {
     this.keepAliveTime = time;
     return this;

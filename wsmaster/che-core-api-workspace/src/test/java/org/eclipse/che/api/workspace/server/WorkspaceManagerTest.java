@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -200,7 +200,10 @@ public class WorkspaceManagerTest {
 
   @Test
   public void createsWorkspaceFromDevfile()
-      throws ValidationException, ConflictException, NotFoundException, ServerException,
+      throws ValidationException,
+          ConflictException,
+          NotFoundException,
+          ServerException,
           InfrastructureException {
     final DevfileImpl devfile = new DevfileImpl();
     devfile.setApiVersion(CURRENT_API_VERSION);
@@ -212,7 +215,10 @@ public class WorkspaceManagerTest {
 
   @Test
   public void createsWorkspaceFromDevfileWithGenerateName()
-      throws ValidationException, ConflictException, NotFoundException, ServerException,
+      throws ValidationException,
+          ConflictException,
+          NotFoundException,
+          ServerException,
           InfrastructureException {
     final String testDevfileGenerateName = "ws-";
     final DevfileImpl devfile = new DevfileImpl();
@@ -264,7 +270,10 @@ public class WorkspaceManagerTest {
 
   @Test
   public void nameIsUsedWhenNameAndGenerateNameSet()
-      throws ValidationException, ConflictException, NotFoundException, ServerException,
+      throws ValidationException,
+          ConflictException,
+          NotFoundException,
+          ServerException,
           InfrastructureException {
     final String devfileName = "workspacename";
     final DevfileImpl devfile = new DevfileImpl();

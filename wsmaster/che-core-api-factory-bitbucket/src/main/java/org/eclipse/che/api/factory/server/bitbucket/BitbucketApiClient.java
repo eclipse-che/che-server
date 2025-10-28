@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -102,7 +102,9 @@ public class BitbucketApiClient {
    * @throws ScmBadRequestException
    */
   public BitbucketUser getUser(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri = apiServerUrl.resolve("user");
     HttpRequest request = buildBitbucketApiRequest(uri, authenticationToken);
@@ -123,7 +125,9 @@ public class BitbucketApiClient {
 
   public String getFileContent(
       String workspace, String repository, String source, String path, String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri =
         apiServerUrl.resolve(
@@ -152,7 +156,9 @@ public class BitbucketApiClient {
    * @throws ScmBadRequestException
    */
   public BitbucketUserEmail getEmail(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri = apiServerUrl.resolve("user/emails");
     HttpRequest request = buildBitbucketApiRequest(uri, authenticationToken);
@@ -179,7 +185,9 @@ public class BitbucketApiClient {
    *     scopes.
    */
   public Pair<String, String[]> getTokenScopes(String authenticationToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final URI uri = apiServerUrl.resolve("user");
     HttpRequest request = buildBitbucketApiRequest(uri, authenticationToken);
@@ -218,7 +226,9 @@ public class BitbucketApiClient {
       HttpClient httpClient,
       HttpRequest request,
       Function<HttpResponse<InputStream>, T> responseConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+      throws ScmBadRequestException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
           ScmUnauthorizedException {
     try {
       HttpResponse<InputStream> response =

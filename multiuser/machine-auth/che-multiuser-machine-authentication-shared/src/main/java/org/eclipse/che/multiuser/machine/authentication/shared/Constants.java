@@ -11,7 +11,9 @@
  */
 package org.eclipse.che.multiuser.machine.authentication.shared;
 
-/** @author Anton Korneta */
+/**
+ * @author Anton Korneta
+ */
 public class Constants {
 
   public static final String USER_ID_CLAIM = "uid";

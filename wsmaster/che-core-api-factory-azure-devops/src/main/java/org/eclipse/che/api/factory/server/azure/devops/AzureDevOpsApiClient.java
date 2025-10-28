@@ -84,7 +84,9 @@ public class AzureDevOpsApiClient {
    * <p>https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/get?view=azure-devops-rest-7.0&tabs=HTTP
    */
   public AzureDevOpsUser getUserWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final String url =
         String.format(
@@ -99,7 +101,9 @@ public class AzureDevOpsApiClient {
    * organization.
    */
   public AzureDevOpsUser getUserWithPAT(String pat, String organization)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final String url =
         String.format(
@@ -109,7 +113,9 @@ public class AzureDevOpsApiClient {
   }
 
   private AzureDevOpsUser getUser(String url, String authorizationHeader)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     final HttpRequest userDataRequest =
         HttpRequest.newBuilder(URI.create(url))
@@ -136,7 +142,9 @@ public class AzureDevOpsApiClient {
       HttpClient httpClient,
       HttpRequest request,
       Function<HttpResponse<InputStream>, T> responseConverter)
-      throws ScmBadRequestException, ScmItemNotFoundException, ScmCommunicationException,
+      throws ScmBadRequestException,
+          ScmItemNotFoundException,
+          ScmCommunicationException,
           ScmUnauthorizedException {
     try {
       HttpResponse<InputStream> response =
@@ -155,7 +163,7 @@ public class AzureDevOpsApiClient {
             throw new ScmItemNotFoundException(body);
           case HTTP_UNAUTHORIZED:
           case HTTP_FORBIDDEN:
-            // Azure DevOps tries to redirect to the login page if the user is not authorized.
+          // Azure DevOps tries to redirect to the login page if the user is not authorized.
           case HTTP_MOVED_TEMP:
             throw new ScmUnauthorizedException(body, "azure-devops", "v2", "");
           default:

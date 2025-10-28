@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,6 +30,7 @@ public class SHA512PasswordEncryptor implements PasswordEncryptor {
    * 64 bit salt length is based on the <a href="https://www.ietf.org/rfc/rfc2898.txt">source</a>.
    */
   private static final int SALT_BYTES_LENGTH = 64 / 8;
+
   /** SHA-512 produces 512 bits. */
   private static final int ENCRYPTED_PASSWORD_BYTES_LENGTH = 512 / 8;
 

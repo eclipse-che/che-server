@@ -14,7 +14,9 @@ package org.eclipse.che.multiuser.resource.shared.dto;
 import org.eclipse.che.dto.shared.DTO;
 import org.eclipse.che.multiuser.resource.model.Resource;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 @DTO
 public interface ResourceDto extends Resource {
   @Override

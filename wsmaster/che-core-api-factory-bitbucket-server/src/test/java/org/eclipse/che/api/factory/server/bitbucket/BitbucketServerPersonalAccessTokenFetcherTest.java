@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -140,7 +140,9 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldBeAbleToFetchPersonalAccessToken()
-      throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException,
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmItemNotFoundException,
           ScmBadRequestException {
     // given
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
@@ -164,7 +166,9 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldDeleteExistedCheTokenBeforeCreatingNew()
-      throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException,
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmItemNotFoundException,
           ScmBadRequestException {
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
     when(bitbucketServerApiClient.getUser()).thenReturn(bitbucketUser);
@@ -186,7 +190,9 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
 
   @Test(expectedExceptions = {ScmCommunicationException.class})
   public void shouldRethrowUnExceptionsOnCreatePersonalAccessTokens()
-      throws ScmUnauthorizedException, ScmCommunicationException, ScmItemNotFoundException,
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmItemNotFoundException,
           ScmBadRequestException {
     // given
     when(bitbucketServerApiClient.isConnected(eq(someBitbucketURL))).thenReturn(true);
@@ -204,8 +210,13 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldSkipToValidateTokensWithUnknownUrls()
-      throws ScmUnauthorizedException, ScmCommunicationException, ForbiddenException,
-          ServerException, ConflictException, UnauthorizedException, NotFoundException,
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ForbiddenException,
+          ServerException,
+          ConflictException,
+          UnauthorizedException,
+          NotFoundException,
           BadRequestException {
     // given
     when(personalAccessTokenParams.getToken()).thenReturn("token");

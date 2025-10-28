@@ -68,7 +68,10 @@ public class DelegatedOAuthAPI implements OAuthAPI {
 
   @Override
   public OAuthToken getOrRefreshToken(String oauthProvider)
-      throws ForbiddenException, BadRequestException, NotFoundException, ServerException,
+      throws ForbiddenException,
+          BadRequestException,
+          NotFoundException,
+          ServerException,
           UnauthorizedException {
     try {
       KeycloakTokenResponse response =

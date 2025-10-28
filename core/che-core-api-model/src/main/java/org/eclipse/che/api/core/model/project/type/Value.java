@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,12 +20,18 @@ import java.util.List;
  */
 public interface Value {
 
-  /** @return value as String. If attribute has multiple values it returns first one. */
+  /**
+   * @return value as String. If attribute has multiple values it returns first one.
+   */
   String getString();
 
-  /** @return value as list of strings */
+  /**
+   * @return value as list of strings
+   */
   List<String> getList();
 
-  /** @return whether the value is not initialized */
+  /**
+   * @return whether the value is not initialized
+   */
   boolean isEmpty();
 }

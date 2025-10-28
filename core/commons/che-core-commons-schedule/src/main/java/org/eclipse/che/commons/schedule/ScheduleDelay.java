@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,16 +31,24 @@ import java.util.concurrent.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ScheduleDelay {
 
-  /** @return - the time to delay first execution */
+  /**
+   * @return - the time to delay first execution
+   */
   long initialDelay() default 0;
 
-  /** @return the delay between the termination of one execution and the commencement of the next */
+  /**
+   * @return the delay between the termination of one execution and the commencement of the next
+   */
   long delay() default 0;
 
-  /** @return the time unit of the initialDelay and delay parameters */
+  /**
+   * @return the time unit of the initialDelay and delay parameters
+   */
   TimeUnit unit() default TimeUnit.SECONDS;
 
-  /** @return - name of configuration parameter for initialDelay */
+  /**
+   * @return - name of configuration parameter for initialDelay
+   */
   String initialDelayParameterName() default "";
 
   /**

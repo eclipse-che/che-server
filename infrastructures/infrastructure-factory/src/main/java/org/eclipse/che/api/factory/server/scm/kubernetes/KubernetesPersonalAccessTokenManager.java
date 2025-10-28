@@ -175,8 +175,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public PersonalAccessToken fetchAndSave(Subject cheUser, String scmServerUrl)
-      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
-          ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+      throws UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException {
     PersonalAccessToken personalAccessToken =
         scmPersonalAccessTokenFetcher.fetchPersonalAccessToken(cheUser, scmServerUrl);
     store(personalAccessToken);
@@ -185,8 +188,10 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public PersonalAccessToken get(String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException, UnknownScmProviderException,
+      throws ScmConfigurationPersistenceException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException,
           UnsatisfiedScmPreconditionException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
     Optional<PersonalAccessToken> tokenOptional =
@@ -402,8 +407,10 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public PersonalAccessToken getAndStore(String scmServerUrl)
-      throws ScmCommunicationException, ScmConfigurationPersistenceException,
-          UnknownScmProviderException, UnsatisfiedScmPreconditionException,
+      throws ScmCommunicationException,
+          ScmConfigurationPersistenceException,
+          UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException {
     PersonalAccessToken personalAccessToken = get(scmServerUrl);
     gitCredentialManager.createOrReplace(personalAccessToken);
@@ -412,8 +419,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public void forceRefreshPersonalAccessToken(String scmServerUrl)
-      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException,
-          UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
     PersonalAccessToken personalAccessToken =
         scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(subject, scmServerUrl);
@@ -445,8 +455,10 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   @Override
   public void storeGitCredentials(String scmServerUrl)
-      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
-          ScmCommunicationException, ScmUnauthorizedException {
+      throws UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException,
+          ScmCommunicationException,
+          ScmUnauthorizedException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
     Optional<PersonalAccessToken> tokenOptional =
         doGetPersonalAccessTokens(subject, null, scmServerUrl, null).stream().findFirst();

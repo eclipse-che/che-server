@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -296,42 +296,58 @@ public interface ServerConfig {
     attributes.put(UNSECURED_PATHS_ATTRIBUTE, join(",", value));
   }
 
-  /** @see #isInternal(Map) */
+  /**
+   * @see #isInternal(Map)
+   */
   default boolean isInternal() {
     return isInternal(getAttributes());
   }
 
-  /** @see #isSecure(Map) */
+  /**
+   * @see #isSecure(Map)
+   */
   default boolean isSecure() {
     return isSecure(getAttributes());
   }
 
-  /** @see #isUnique(Map) */
+  /**
+   * @see #isUnique(Map)
+   */
   default boolean isUnique() {
     return isUnique(getAttributes());
   }
 
-  /** @see #isCookiesAuthEnabled(Map) */
+  /**
+   * @see #isCookiesAuthEnabled(Map)
+   */
   default @Nullable Boolean isCookiesAuthEnabled() {
     return isCookiesAuthEnabled(getAttributes());
   }
 
-  /** @see #getUnsecuredPaths(Map) */
+  /**
+   * @see #getUnsecuredPaths(Map)
+   */
   default List<String> getUnsecuredPaths() {
     return getUnsecuredPaths(getAttributes());
   }
 
-  /** @see #isDiscoverable(Map) */
+  /**
+   * @see #isDiscoverable(Map)
+   */
   default boolean isDiscoverable() {
     return isDiscoverable(getAttributes());
   }
 
-  /** @see #isRequireSubdomain(Map) */
+  /**
+   * @see #isRequireSubdomain(Map)
+   */
   default boolean isRequireSubdomain() {
     return isRequireSubdomain(getAttributes());
   }
 
-  /** @see #getEndpointOrigin(Map) */
+  /**
+   * @see #getEndpointOrigin(Map)
+   */
   default String getEndpointOrigin() {
     return getEndpointOrigin(getAttributes());
   }

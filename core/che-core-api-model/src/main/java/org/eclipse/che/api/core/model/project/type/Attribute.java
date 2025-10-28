@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,22 +18,34 @@ package org.eclipse.che.api.core.model.project.type;
  */
 public interface Attribute {
 
-  /** @return attribute unique Id */
+  /**
+   * @return attribute unique Id
+   */
   String getId();
 
-  /** @return attribute name */
+  /**
+   * @return attribute name
+   */
   String getName();
 
-  /** @return project type this attribute belongs to */
+  /**
+   * @return project type this attribute belongs to
+   */
   String getProjectType();
 
-  /** @return value for this attribute */
+  /**
+   * @return value for this attribute
+   */
   Value getValue();
 
-  /** @return some test description of this attribute */
+  /**
+   * @return some test description of this attribute
+   */
   String getDescription();
 
-  /** @return true if the attribute is mandatory */
+  /**
+   * @return true if the attribute is mandatory
+   */
   boolean isRequired();
 
   /*

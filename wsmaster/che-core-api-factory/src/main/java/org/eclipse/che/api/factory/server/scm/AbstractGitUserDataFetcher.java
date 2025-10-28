@@ -37,8 +37,11 @@ public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
   }
 
   public GitUserData fetchGitUserData(String namespaceName)
-      throws ScmUnauthorizedException, ScmCommunicationException,
-          ScmConfigurationPersistenceException, ScmItemNotFoundException, ScmBadRequestException {
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmConfigurationPersistenceException,
+          ScmItemNotFoundException,
+          ScmBadRequestException {
     Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
     Optional<PersonalAccessToken> tokenOptional =
         personalAccessTokenManager.get(cheSubject, oAuthProviderName, null, namespaceName);
@@ -56,12 +59,16 @@ public abstract class AbstractGitUserDataFetcher implements GitUserDataFetcher {
   }
 
   protected abstract GitUserData fetchGitUserDataWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException;
 
   protected abstract GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException;
 
   protected abstract String getLocalAuthenticateUrl();

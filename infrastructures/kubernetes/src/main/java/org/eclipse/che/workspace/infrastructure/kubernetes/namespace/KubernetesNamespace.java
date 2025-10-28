@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -57,6 +57,7 @@ public class KubernetesNamespace {
 
   /** An experimental value used to determine how long to wait for the 'default' service account. */
   private static final int SERVICE_ACCOUNT_READINESS_TIMEOUT_SEC = 3;
+
   /**
    * Default service account is used to get access to the API server so we need to be sure that it
    * is accessible, more detailed information about service accounts by default you can find here:
@@ -73,6 +74,7 @@ public class KubernetesNamespace {
   private final KubernetesServices services;
   private final KubernetesPersistentVolumeClaims pvcs;
   private final KubernetesIngresses ingresses;
+
   /** Factory for cluster related operations clients (like labeling the namespaces) */
   private final CheServerKubernetesClientFactory cheSAClientFactory;
 

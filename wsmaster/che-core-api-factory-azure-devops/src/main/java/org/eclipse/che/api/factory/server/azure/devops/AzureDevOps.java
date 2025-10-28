@@ -23,8 +23,10 @@ import java.util.Base64;
 public class AzureDevOps {
   /** Name of this OAuth provider as found in OAuthAPI. */
   public static final String PROVIDER_NAME = "azure-devops";
+
   /** Azure DevOps SAAS endpoint. */
   public static final String SAAS_ENDPOINT = "https://dev.azure.com";
+
   /** Azure DevOps Service API version calls. */
   public static final String API_VERSION = "7.0";
 

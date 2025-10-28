@@ -99,7 +99,7 @@ public class OrganizationPermissionsFilter extends CheMethodInvokerFilter {
         // user specified his user id or has super privileges
         return;
 
-        // methods accessible to every user
+      // methods accessible to every user
       case GET_BY_ID_METHOD:
       case FIND_METHOD:
         return;

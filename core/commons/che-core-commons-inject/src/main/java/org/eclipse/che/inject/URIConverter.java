@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,9 @@ import com.google.inject.spi.TypeConverter;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-/** @author andrew00x */
+/**
+ * @author andrew00x
+ */
 public class URIConverter extends AbstractModule implements TypeConverter {
   @Override
   public Object convert(String value, TypeLiteral<?> toType) {

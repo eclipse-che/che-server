@@ -17,7 +17,9 @@ import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.dto.shared.DTO;
 import org.eclipse.che.multiuser.organization.shared.model.Organization;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 @DTO
 public interface OrganizationDto extends Organization, Hyperlinks {
   @Override

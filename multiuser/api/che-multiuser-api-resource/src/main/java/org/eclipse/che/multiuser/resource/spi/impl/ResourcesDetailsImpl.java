@@ -19,7 +19,9 @@ import org.eclipse.che.multiuser.resource.model.ProvidedResources;
 import org.eclipse.che.multiuser.resource.model.Resource;
 import org.eclipse.che.multiuser.resource.model.ResourcesDetails;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 public class ResourcesDetailsImpl implements ResourcesDetails {
   private String accountId;
   private List<ProvidedResourcesImpl> providedResources;

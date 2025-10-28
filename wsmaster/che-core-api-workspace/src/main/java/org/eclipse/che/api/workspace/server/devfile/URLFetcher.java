@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -87,6 +87,7 @@ public class URLFetcher {
   public String fetch(@NotNull final String url) throws IOException {
     return fetch(url, CONNECTION_READ_TIMEOUT);
   }
+
   /**
    * Fetches the url provided and return its content. Uses default read connection timeout {@link
    * URLFetcher#CONNECTION_READ_TIMEOUT}

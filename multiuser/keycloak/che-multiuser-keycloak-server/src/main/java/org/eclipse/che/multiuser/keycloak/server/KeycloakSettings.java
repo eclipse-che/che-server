@@ -39,7 +39,9 @@ import javax.inject.Singleton;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.multiuser.oidc.OIDCInfo;
 
-/** @author Max Shaposhnik (mshaposh@redhat.com) */
+/**
+ * @author Max Shaposhnik (mshaposh@redhat.com)
+ */
 @Singleton
 public class KeycloakSettings {
   protected static final String DEFAULT_USERNAME_CLAIM = "preferred_username";

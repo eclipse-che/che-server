@@ -23,11 +23,11 @@ jobs:
         fetch-depth: 0
     - name: Check all properties have description
       run: ./check_properties_description.sh
-    - name: Set up JDK 11
+    - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
-        java-version: '11'
+        java-version: '17'
         cache: 'maven'
     - name: Set up QEMU
       # Skip this and other docker related steps, if the PR is from a forked repo. GitHub secrets

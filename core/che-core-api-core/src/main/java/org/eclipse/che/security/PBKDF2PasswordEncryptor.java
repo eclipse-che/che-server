@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -41,11 +41,13 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 
   private static final String SECRET_KEY_FACTORY_NAME = "PBKDF2WithHmacSHA512";
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
   /**
    * Minimum number of iterations required is 1_000(rfc2898), pick greater as potentially safer in
    * the case of brute-force attacks .
    */
   private static final int ITERATIONS_COUNT = 10_000;
+
   /** 64bit salt length based on the rfc2898 spec . */
   private static final int SALT_LENGTH = 64 / 8;
 

@@ -26,7 +26,9 @@ import javax.persistence.Table;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.SignatureKeyPair;
 
-/** @author Anton Korneta */
+/**
+ * @author Anton Korneta
+ */
 @Entity(name = "SignKeyPair")
 @Table(name = "che_sign_key_pair")
 @NamedQueries({

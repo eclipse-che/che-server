@@ -13,7 +13,9 @@ package org.eclipse.che.multiuser.api.authentication.commons.token;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-/** @author Max Shaposhnik (mshaposh@redhat.com) */
+/**
+ * @author Max Shaposhnik (mshaposh@redhat.com)
+ */
 public class QueryRequestTokenExtractor implements RequestTokenExtractor {
   @Override
   public String getToken(HttpServletRequest req) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,7 +27,9 @@ import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProje
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** @author Sergii Leshchenko */
+/**
+ * @author Sergii Leshchenko
+ */
 public class OpenShiftRuntimeContext extends KubernetesRuntimeContext<OpenShiftEnvironment> {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpenShiftRuntimeContext.class);

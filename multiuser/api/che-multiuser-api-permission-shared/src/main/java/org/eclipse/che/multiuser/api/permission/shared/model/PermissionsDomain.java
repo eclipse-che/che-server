@@ -20,12 +20,18 @@ import java.util.List;
  * @author gazarenkov
  */
 public interface PermissionsDomain {
-  /** @return id of permissions domain */
+  /**
+   * @return id of permissions domain
+   */
   String getId();
 
-  /** @return true if domain requires non nullable value for instance field or false otherwise */
+  /**
+   * @return true if domain requires non nullable value for instance field or false otherwise
+   */
   Boolean isInstanceRequired();
 
-  /** @return list actions which are allowed for domain */
+  /**
+   * @return list actions which are allowed for domain
+   */
   List<String> getAllowedActions();
 }

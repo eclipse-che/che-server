@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -25,7 +25,9 @@ import org.eclipse.che.dto.shared.DTO;
 @DTO
 public interface IdeDto extends Ide {
 
-  /** @return configuration of IDE on application loaded event. */
+  /**
+   * @return configuration of IDE on application loaded event.
+   */
   @Override
   @FactoryParameter(obligation = OPTIONAL)
   OnAppLoadedDto getOnAppLoaded();
@@ -34,7 +36,9 @@ public interface IdeDto extends Ide {
 
   IdeDto withOnAppLoaded(OnAppLoadedDto onAppLoaded);
 
-  /** @return configuration of IDE on application closed event. */
+  /**
+   * @return configuration of IDE on application closed event.
+   */
   @Override
   @FactoryParameter(obligation = OPTIONAL)
   OnAppClosedDto getOnAppClosed();
@@ -43,7 +47,9 @@ public interface IdeDto extends Ide {
 
   IdeDto withOnAppClosed(OnAppClosedDto onAppClosed);
 
-  /** @return configuration of IDE on projects loaded event. */
+  /**
+   * @return configuration of IDE on projects loaded event.
+   */
   @Override
   @FactoryParameter(obligation = OPTIONAL)
   OnProjectsLoadedDto getOnProjectsLoaded();

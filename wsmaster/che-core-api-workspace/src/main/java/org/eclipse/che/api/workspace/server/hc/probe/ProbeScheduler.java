@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -40,6 +40,7 @@ public class ProbeScheduler {
   private static final Logger LOG = LoggerFactory.getLogger(ProbeScheduler.class);
 
   private final ScheduledExecutorService probesExecutor;
+
   /**
    * Use single thread for a scheduling of tasks interruption by timeout. Single thread can be used
    * since it is supposed that interruption is a very quick call. Separate thread is needed to
@@ -47,6 +48,7 @@ public class ProbeScheduler {
    * time them out.
    */
   private final Timer timeouts;
+
   /** Mapping of workspaceId to a list of futures with probes of a workspace. */
   private final Map<String, List<ScheduledFuture>> probesFutures;
 

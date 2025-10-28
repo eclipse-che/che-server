@@ -74,8 +74,10 @@ public class BitbucketServerUserDataFetcher implements GitUserDataFetcher {
 
   @Override
   public GitUserData fetchGitUserData(String namespaceName)
-      throws ScmUnauthorizedException, ScmCommunicationException,
-          ScmConfigurationPersistenceException, ScmItemNotFoundException {
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          ScmConfigurationPersistenceException,
+          ScmItemNotFoundException {
     Subject cheSubject = EnvironmentContext.getCurrent().getSubject();
     for (String bitbucketServerEndpoint : this.registeredBitbucketEndpoints) {
       if (bitbucketServerApiClient.isConnected(bitbucketServerEndpoint)) {

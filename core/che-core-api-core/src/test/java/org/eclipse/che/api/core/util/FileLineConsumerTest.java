@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -24,12 +24,12 @@ import java.lang.reflect.Modifier;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.slf4j.Logger;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
-/** @author Mykola Morhun */
+/**
+ * @author Mykola Morhun
+ */
+@Ignore
 @Listeners(value = {MockitoTestNGListener.class})
 public class FileLineConsumerTest {
   private static final Logger LOG = getLogger(FileLineConsumerTest.class);

@@ -238,7 +238,9 @@ public class HttpBitbucketServerApiClientTest {
 
   @Test
   public void testGetPersonalAccessTokens()
-      throws ScmCommunicationException, ScmBadRequestException, ScmItemNotFoundException,
+      throws ScmCommunicationException,
+          ScmBadRequestException,
+          ScmItemNotFoundException,
           ScmUnauthorizedException {
     stubFor(
         get(urlPathEqualTo("/rest/access-tokens/1.0/users/ksmster"))
@@ -269,7 +271,9 @@ public class HttpBitbucketServerApiClientTest {
 
   @Test
   public void shouldBeAbleToCreatePAT()
-      throws ScmCommunicationException, ScmBadRequestException, ScmUnauthorizedException,
+      throws ScmCommunicationException,
+          ScmBadRequestException,
+          ScmUnauthorizedException,
           ScmItemNotFoundException {
 
     // given
@@ -423,9 +427,15 @@ public class HttpBitbucketServerApiClientTest {
       expectedExceptionsMessageRegExp =
           "The fallback noop authenticator cannot be used for authentication. Make sure OAuth is properly configured.")
   public void shouldThrowScmCommunicationExceptionInNoOauthAuthenticator()
-      throws ScmCommunicationException, ScmUnauthorizedException, ScmItemNotFoundException,
-          ForbiddenException, ServerException, ConflictException, UnauthorizedException,
-          NotFoundException, BadRequestException {
+      throws ScmCommunicationException,
+          ScmUnauthorizedException,
+          ScmItemNotFoundException,
+          ForbiddenException,
+          ServerException,
+          ConflictException,
+          UnauthorizedException,
+          NotFoundException,
+          BadRequestException {
 
     // given
     when(oAuthAPI.getOrRefreshToken(eq("bitbucket-server"))).thenReturn(mock(OAuthToken.class));
@@ -439,9 +449,15 @@ public class HttpBitbucketServerApiClientTest {
 
   @Test
   public void shouldGetOauth2Token()
-      throws ScmItemNotFoundException, ScmUnauthorizedException, ScmCommunicationException,
-          ForbiddenException, ServerException, ConflictException, UnauthorizedException,
-          NotFoundException, BadRequestException {
+      throws ScmItemNotFoundException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
+          ForbiddenException,
+          ServerException,
+          ConflictException,
+          UnauthorizedException,
+          NotFoundException,
+          BadRequestException {
     // given
     OAuthToken token = mock(OAuthToken.class);
     when(token.getToken()).thenReturn("token");

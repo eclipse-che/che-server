@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,7 +30,9 @@ import javax.persistence.Table;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.core.model.workspace.devfile.Endpoint;
 
-/** @author Alexander Garagatyi */
+/**
+ * @author Alexander Garagatyi
+ */
 @Entity(name = "ServerConf")
 @Table(name = "serverconf")
 public class ServerConfigImpl implements ServerConfig {

@@ -19,7 +19,9 @@ import org.eclipse.che.multiuser.api.permission.server.account.AccountPermission
 import org.eclipse.che.multiuser.permission.account.PersonalAccountPermissionsChecker;
 import org.eclipse.che.multiuser.resource.api.free.DefaultResourcesProvider;
 
-/** @author Sergii Leschenko */
+/**
+ * @author Sergii Leschenko
+ */
 @DynaModule
 public class PersonalAccountModule extends AbstractModule {
   @Override

@@ -11,7 +11,9 @@
  */
 package org.eclipse.che.multiuser.keycloak.shared;
 
-/** @author Max Shaposhnik (mshaposh@redhat.com) */
+/**
+ * @author Max Shaposhnik (mshaposh@redhat.com)
+ */
 public class KeycloakConstants {
 
   private static final String KEYCLOAK_SETTING_PREFIX = "che.keycloak.";

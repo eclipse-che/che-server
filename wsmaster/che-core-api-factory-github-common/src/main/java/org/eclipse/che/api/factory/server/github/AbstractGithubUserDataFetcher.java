@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,11 +28,13 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 /** GitHub user data retriever. */
 public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataFetcher {
   private final String apiEndpoint;
+
   /** GitHub API client. */
   private final GithubApiClient githubApiClient;
 
   /** Name of this OAuth provider as found in OAuthAPI. */
   private final String providerName;
+
   /** Collection of OAuth scopes required to make integration with GitHub work. */
   public static final Set<String> DEFAULT_TOKEN_SCOPES =
       ImmutableSet.of("repo", "user:email", "read:user");
@@ -54,7 +56,9 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
 
   @Override
   protected GitUserData fetchGitUserDataWithOAuthToken(String token)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     GithubUser user = githubApiClient.getUser(token);
     if (isNullOrEmpty(user.getName()) || isNullOrEmpty(user.getEmail())) {
@@ -67,7 +71,9 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
   @Override
   protected GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
-      throws ScmItemNotFoundException, ScmCommunicationException, ScmBadRequestException,
+      throws ScmItemNotFoundException,
+          ScmCommunicationException,
+          ScmBadRequestException,
           ScmUnauthorizedException {
     GithubApiClient apiClient =
         githubApiClient.isConnected(personalAccessToken.getScmProviderUrl())

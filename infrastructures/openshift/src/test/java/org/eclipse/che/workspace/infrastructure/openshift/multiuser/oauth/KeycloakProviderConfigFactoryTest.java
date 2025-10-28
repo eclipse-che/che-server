@@ -49,7 +49,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-/** @author David Festal */
+/**
+ * @author David Festal
+ */
 @Listeners(MockitoTestNGListener.class)
 public class KeycloakProviderConfigFactoryTest {
   private static final String PROVIDER = "openshift-v3";

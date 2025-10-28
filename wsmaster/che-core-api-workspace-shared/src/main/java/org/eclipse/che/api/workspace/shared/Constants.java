@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -74,26 +74,31 @@ public final class Constants {
 
   /** Name for environment variable of machine name */
   public static final String CHE_MACHINE_NAME_ENV_VAR = "CHE_MACHINE_NAME";
+
   /**
    * Describes time when workspace was created. Should be set/read from {@link
    * Workspace#getAttributes}
    */
   public static final String CREATED_ATTRIBUTE_NAME = "created";
+
   /**
    * Describes time when workspace was last updated or started. Should be set/read from {@link
    * Workspace#getAttributes}
    */
   public static final String UPDATED_ATTRIBUTE_NAME = "updated";
+
   /**
    * Describes time when workspace was last stopped. Should be set/read from {@link
    * Workspace#getAttributes}
    */
   public static final String STOPPED_ATTRIBUTE_NAME = "stopped";
+
   /**
    * Indicates that last workspace stop was abnormal. Should be set/read from {@link
    * Workspace#getAttributes}
    */
   public static final String STOPPED_ABNORMALLY_ATTRIBUTE_NAME = "stoppedAbnormally";
+
   /**
    * Describes latest workspace runtime error message. Should be set/read from {@link
    * Workspace#getAttributes}

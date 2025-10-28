@@ -59,7 +59,7 @@ public class OrganizationResourceDistributionServicePermissionsFilter
           // user is able to see information about all organizations
           return;
         }
-        // fall through
+      // fall through
       case CAP_RESOURCES_METHOD:
         // we should check permissions on parent organization level
         Organization organization = organizationManager.getById((String) arguments[0]);

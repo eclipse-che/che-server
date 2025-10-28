@@ -37,8 +37,11 @@ public interface PersonalAccessTokenManager {
    * @throws UnknownScmProviderException - scm provider is unknown.
    */
   PersonalAccessToken fetchAndSave(Subject cheUser, String scmServerUrl)
-      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
-          ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
+      throws UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException;
 
   /**
    * Gets {@link PersonalAccessToken} from permanent storage.
@@ -52,8 +55,10 @@ public interface PersonalAccessTokenManager {
    * @throws UnsatisfiedScmPreconditionException - storage preconditions aren't met.
    */
   PersonalAccessToken get(String scmServerUrl)
-      throws ScmConfigurationPersistenceException, ScmUnauthorizedException,
-          ScmCommunicationException, UnknownScmProviderException,
+      throws ScmConfigurationPersistenceException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException,
           UnsatisfiedScmPreconditionException;
 
   /**
@@ -84,14 +89,19 @@ public interface PersonalAccessTokenManager {
    * @param scmServerUrl Git provider endpoint
    */
   PersonalAccessToken getAndStore(String scmServerUrl)
-      throws ScmCommunicationException, ScmConfigurationPersistenceException,
-          UnknownScmProviderException, UnsatisfiedScmPreconditionException,
+      throws ScmCommunicationException,
+          ScmConfigurationPersistenceException,
+          UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException,
           ScmUnauthorizedException;
 
   /** Refresh a personal access token. */
   void forceRefreshPersonalAccessToken(String scmServerUrl)
-      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
-          ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
+      throws UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException;
 
   /**
    * Set or update git-credentials with {@link PersonalAccessToken} from permanent storage.
@@ -104,8 +114,10 @@ public interface PersonalAccessTokenManager {
    * @throws ScmUnauthorizedException - scm authorization required.
    */
   void storeGitCredentials(String scmServerUrl)
-      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException,
-          ScmCommunicationException, ScmUnauthorizedException;
+      throws UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException,
+          ScmCommunicationException,
+          ScmUnauthorizedException;
 
   /**
    * Store {@link PersonalAccessToken} in permanent storage.

@@ -89,7 +89,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphase
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.KubernetesBrokerEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events.BrokerService;
 
-/** @author Sergii Leshchenko */
+/**
+ * @author Sergii Leshchenko
+ */
 public class KubernetesInfraModule extends AbstractModule {
   @Override
   protected void configure() {

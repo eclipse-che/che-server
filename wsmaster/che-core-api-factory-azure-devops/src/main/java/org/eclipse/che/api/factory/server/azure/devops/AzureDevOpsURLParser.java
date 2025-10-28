@@ -45,6 +45,7 @@ public class AzureDevOpsURLParser {
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final PersonalAccessTokenManager tokenManager;
   private final String azureDevOpsScmApiEndpointHost;
+
   /**
    * Regexp to find repository details (repository name, organization name and branch or tag)
    * Examples of valid URLs are in the test class.

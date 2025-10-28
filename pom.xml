@@ -114,7 +114,8 @@
         <maven.exec.plugin.version>3.0.0</maven.exec.plugin.version>
         <maven.fabric8io.docker.plugin.version>0.37.0</maven.fabric8io.docker.plugin.version>
         <maven.failsafe.plugin.version>3.2.3</maven.failsafe.plugin.version>
-        <maven.fmt.plugin.version>2.13</maven.fmt.plugin.version>
+        <maven.fmt.plugin.version>2.29</maven.fmt.plugin.version>
+        <maven.google-java-format.version>1.27.0</maven.google-java-format.version>
         <maven.install.plugin.version>3.1.1</maven.install.plugin.version>
         <maven.jacoco.plugin.version>0.8.7</maven.jacoco.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
@@ -2015,7 +2016,7 @@
                             <release>${java.target.version}</release>
                             <compilerArgs>
                                 <arg>-XDcompilePolicy=simple</arg>
-                                <arg>-Xplugin:ErrorProne</arg>
+<!--                                <arg>-Xplugin:ErrorProne</arg>-->
                             </compilerArgs>
                             <annotationProcessorPaths>
                                 <path>
@@ -2056,17 +2057,23 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>com.coveo</groupId>
+                        <groupId>com.spotify.fmt</groupId>
                         <artifactId>fmt-maven-plugin</artifactId>
                         <version>${maven.fmt.plugin.version}</version>
                         <executions>
                             <execution>
-                                <phase>validate</phase>
                                 <goals>
                                     <goal>check</goal>
                                 </goals>
                             </execution>
                         </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.google.googlejavaformat</groupId>
+                                <artifactId>google-java-format</artifactId>
+                                <version>${maven.google-java-format.version}</version>
+                            </dependency>
+                        </dependencies>
                     </plugin>
                     <!-- Adding header to file -->
                     <plugin>

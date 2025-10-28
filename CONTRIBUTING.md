@@ -28,7 +28,7 @@ For VS Code, execute tasks defined in the devfile with these steps:
 
 # Local build requirements
 - Apache Maven 3.9 or later
-- JDK 11
+- JDK 17
 - Podman or Docker (required for running integration tests)
 A Che workspace environment allows to build the image internally, using the workspace terminal.
 

@@ -109,7 +109,7 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
         if (superPrivilegesChecker.hasSuperPrivileges()) {
           return;
         }
-        // fall through
+      // fall through
       case "startById":
         key = ((String) arguments[0]);
         action = RUN;

@@ -21,7 +21,9 @@ import org.eclipse.che.multiuser.api.permission.server.SystemDomain;
 import org.eclipse.che.multiuser.api.permission.server.jsonrpc.RemoteSubscriptionPermissionCheck;
 import org.eclipse.che.multiuser.api.permission.server.jsonrpc.RemoteSubscriptionPermissionManager;
 
-/** @author Sergii Leshchenko */
+/**
+ * @author Sergii Leshchenko
+ */
 @Singleton
 public class SystemEventsSubscriptionPermissionsCheck implements RemoteSubscriptionPermissionCheck {
   @Inject

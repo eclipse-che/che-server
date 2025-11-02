@@ -112,7 +112,7 @@
         <maven.dependency.plugin.version>3.1.2</maven.dependency.plugin.version>
         <maven.enforcer.plugin.version>3.0.0</maven.enforcer.plugin.version>
         <maven.exec.plugin.version>3.0.0</maven.exec.plugin.version>
-        <maven.fabric8io.docker.plugin.version>0.37.0</maven.fabric8io.docker.plugin.version>
+        <maven.fabric8io.docker.plugin.version>0.47.0</maven.fabric8io.docker.plugin.version>
         <maven.failsafe.plugin.version>3.2.3</maven.failsafe.plugin.version>
         <maven.fmt.plugin.version>2.29</maven.fmt.plugin.version>
         <maven.google-java-format.version>1.27.0</maven.google-java-format.version>

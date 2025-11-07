@@ -97,7 +97,6 @@ import org.eclipse.che.multiuser.oidc.OIDCInfoProvider;
 import org.eclipse.che.multiuser.oidc.OIDCJwkProvider;
 import org.eclipse.che.multiuser.oidc.OIDCJwtParserProvider;
 import org.eclipse.che.multiuser.oidc.OIDCSigningKeyResolver;
-import org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter;
 import org.eclipse.che.security.PBKDF2PasswordEncryptor;
 import org.eclipse.che.security.PasswordEncryptor;
 import org.eclipse.che.security.oauth.EmbeddedOAuthAPI;
@@ -192,16 +191,12 @@ public class WsMasterModule extends AbstractModule {
     install(new org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsModule());
 
     bind(org.eclipse.che.api.core.rest.ApiInfoService.class);
-    bind(org.eclipse.che.api.user.server.UserService.class);
-    bind(org.eclipse.che.api.user.server.ProfileService.class);
-    bind(org.eclipse.che.api.user.server.PreferencesService.class);
     bind(org.eclipse.che.security.oauth.OAuthAuthenticationService.class);
     bind(org.eclipse.che.security.oauth1.OAuthAuthenticationService.class);
 
     install(new DevfileModule());
 
     bind(WorkspaceEntityProvider.class);
-    bind(org.eclipse.che.api.workspace.server.WorkspaceService.class);
     bind(org.eclipse.che.api.devfile.server.UserDevfileEntityProvider.class);
 
     install(new FactoryModuleBuilder().build(ServersCheckerFactory.class));
@@ -369,19 +364,9 @@ public class WsMasterModule extends AbstractModule {
 
     Multibinder<String> binder =
         Multibinder.newSetBinder(binder(), String.class, Names.named(SYSTEM_DOMAIN_ACTIONS));
-    binder.addBinding().toInstance(UserServicePermissionsFilter.MANAGE_USERS_ACTION);
-    bind(org.eclipse.che.multiuser.permission.user.UserProfileServicePermissionsFilter.class);
-    bind(org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter.class);
     bind(org.eclipse.che.multiuser.permission.logger.LoggerServicePermissionsFilter.class);
 
     bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
-
-    bind(
-        org.eclipse.che.multiuser.permission.resource.filters.ResourceServicePermissionsFilter
-            .class);
-    bind(
-        org.eclipse.che.multiuser.permission.resource.filters
-            .FreeResourcesLimitServicePermissionsFilter.class);
 
     if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
       bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);

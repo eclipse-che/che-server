@@ -15,6 +15,7 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.time.Duration.ofSeconds;
+import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -45,13 +46,13 @@ public class GitlabApiClient {
   private static final Logger LOG = LoggerFactory.getLogger(GitlabApiClient.class);
 
   private final HttpClient httpClient;
-  private final URI serverUrl;
+  private final String serverUrl;
 
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public GitlabApiClient(String serverUrl) {
-    this.serverUrl = URI.create(serverUrl);
+    this.serverUrl = trimEnd(serverUrl, '/');
     this.httpClient =
         HttpClient.newBuilder()
             .executor(
@@ -71,7 +72,7 @@ public class GitlabApiClient {
           ScmCommunicationException,
           ScmBadRequestException,
           ScmUnauthorizedException {
-    final URI uri = serverUrl.resolve("/api/v4/user");
+    final URI uri = URI.create(serverUrl + "/api/v4/user");
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers("Authorization", "Bearer " + authenticationToken)
@@ -94,7 +95,7 @@ public class GitlabApiClient {
 
   public GitlabPersonalAccessTokenInfo getPersonalAccessTokenInfo(String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmUnauthorizedException {
-    final URI uri = serverUrl.resolve("/api/v4/personal_access_tokens/self");
+    final URI uri = URI.create(serverUrl + "/api/v4/personal_access_tokens/self");
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers("Authorization", "Bearer " + authenticationToken)
@@ -121,7 +122,7 @@ public class GitlabApiClient {
 
   public GitlabOauthTokenInfo getOAuthTokenInfo(String authenticationToken)
       throws ScmItemNotFoundException, ScmCommunicationException, ScmUnauthorizedException {
-    final URI uri = serverUrl.resolve("/oauth/token/info");
+    final URI uri = URI.create(serverUrl + "/oauth/token/info");
     HttpRequest request =
         HttpRequest.newBuilder(uri)
             .headers("Authorization", "Bearer " + authenticationToken)
@@ -183,6 +184,6 @@ public class GitlabApiClient {
   }
 
   public boolean isConnected(String scmServerUrl) {
-    return serverUrl.equals(URI.create(scmServerUrl));
+    return serverUrl.equals(scmServerUrl);
   }
 }

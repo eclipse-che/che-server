@@ -285,15 +285,7 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-permission-resource</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
             <artifactId>che-multiuser-permission-system</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-permission-user</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.multiuser</groupId>

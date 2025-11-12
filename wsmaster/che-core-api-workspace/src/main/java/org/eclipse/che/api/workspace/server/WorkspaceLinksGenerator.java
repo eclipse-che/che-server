@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -60,13 +60,7 @@ public class WorkspaceLinksGenerator {
     final UriBuilder uriBuilder = serviceContext.getServiceUriBuilder();
     final LinkedHashMap<String, String> links = new LinkedHashMap<>();
 
-    links.put(
-        LINK_REL_SELF,
-        uriBuilder
-            .clone()
-            .path(WorkspaceService.class, "getByKey")
-            .build(workspace.getId())
-            .toString());
+    links.put(LINK_REL_SELF, uriBuilder.clone().build(workspace.getId()).toString());
     links.put(
         LINK_REL_IDE_URL,
         uriBuilder

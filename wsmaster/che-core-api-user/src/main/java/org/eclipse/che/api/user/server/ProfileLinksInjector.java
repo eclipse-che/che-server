@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,50 +38,31 @@ public class ProfileLinksInjector {
   public ProfileDto injectLinks(ProfileDto profileDto, ServiceContext serviceContext) {
     final UriBuilder uriBuilder = serviceContext.getServiceUriBuilder();
     final List<Link> links = new ArrayList<>(5);
+    links.add(createLink(HttpMethod.GET, null, APPLICATION_JSON, LINK_REL_CURRENT_PROFILE));
     links.add(
         createLink(
             HttpMethod.GET,
-            uriBuilder.clone().path(ProfileService.class, "getCurrent").build().toString(),
-            null,
-            APPLICATION_JSON,
-            LINK_REL_CURRENT_PROFILE));
-    links.add(
-        createLink(
-            HttpMethod.GET,
-            uriBuilder
-                .clone()
-                .path(ProfileService.class, "getById")
-                .build(profileDto.getUserId())
-                .toString(),
+            uriBuilder.clone().build(profileDto.getUserId()).toString(),
             null,
             APPLICATION_JSON,
             LINK_REL_SELF));
     links.add(
         createLink(
             HttpMethod.PUT,
-            uriBuilder.clone().path(ProfileService.class, "updateAttributes").build().toString(),
             APPLICATION_JSON,
             APPLICATION_JSON,
             LINK_REL_CURRENT_PROFILE_ATTRIBUTES));
     links.add(
         createLink(
             HttpMethod.DELETE,
-            uriBuilder
-                .clone()
-                .path(ProfileService.class, "removeAttributes")
-                .build(profileDto.getUserId())
-                .toString(),
+            uriBuilder.clone().build(profileDto.getUserId()).toString(),
             APPLICATION_JSON,
             APPLICATION_JSON,
             LINK_REL_CURRENT_PROFILE_ATTRIBUTES));
     links.add(
         createLink(
             HttpMethod.PUT,
-            uriBuilder
-                .clone()
-                .path(ProfileService.class, "updateAttributesById")
-                .build(profileDto.getUserId())
-                .toString(),
+            uriBuilder.clone().build(profileDto.getUserId()).toString(),
             APPLICATION_JSON,
             APPLICATION_JSON,
             LINK_REL_PROFILE_ATTRIBUTES));

@@ -227,7 +227,8 @@ public class BitbucketServerURLParser {
     String repoName = matcher.group("repo");
     String branchFromUrl = null;
     try {
-      branchFromUrl = matcher.group("branch");
+      String branch = matcher.group("branch");
+      branchFromUrl = branch.startsWith("refs/heads/") ? branch.substring(11) : branch;
     } catch (IllegalArgumentException e) {
       // keep branch with null, as the pattern doesn't have the branch group
     }

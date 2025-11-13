@@ -191,6 +191,7 @@ public class WsMasterModule extends AbstractModule {
     install(new org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsModule());
 
     bind(org.eclipse.che.api.core.rest.ApiInfoService.class);
+    bind(org.eclipse.che.api.user.server.UserService.class);
     bind(org.eclipse.che.security.oauth.OAuthAuthenticationService.class);
     bind(org.eclipse.che.security.oauth1.OAuthAuthenticationService.class);
 

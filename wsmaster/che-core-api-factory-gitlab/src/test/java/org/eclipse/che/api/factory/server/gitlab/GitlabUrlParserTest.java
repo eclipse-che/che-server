@@ -78,6 +78,18 @@ public class GitlabUrlParserTest {
   }
 
   @Test
+  public void shouldGetProviderUrlWithExtraSegment() throws ApiException {
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://gitlab-server.com/scm",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://gitlab-server.com/scm/user/project/test.git", null);
+    assertEquals(gitlabUrl.getProviderUrl(), "https://gitlab-server.com/scm");
+  }
+
+  @Test
   public void shouldParseWithUrlBranch() throws ApiException {
     GitlabUrl gitlabUrl =
         gitlabUrlParser.parse("https://gitlab.com/user/project/-/tree/master/", "branch");

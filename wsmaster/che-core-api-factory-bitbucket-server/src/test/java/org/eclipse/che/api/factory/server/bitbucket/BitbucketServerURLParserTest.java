@@ -79,14 +79,6 @@ public class BitbucketServerURLParserTest {
   }
 
   @Test
-  public void shouldParseWithBranch1() {
-    BitbucketServerUrl bitbucketServerUrl =
-        bitbucketURLParser.parse(
-            "https://bitbucket.2mcl.com/users/user/repos/repo/browse?at=refs/heads/branch", null);
-    assertEquals(bitbucketServerUrl.getBranch(), "branch");
-  }
-
-  @Test
   public void shouldParseWithUrlBranch() {
     BitbucketServerUrl bitbucketServerUrl =
         bitbucketURLParser.parse(
@@ -256,14 +248,21 @@ public class BitbucketServerURLParserTest {
         null,
         "project",
         "test1",
-        "refs%2Fheads%2Fbranch"
+        "branch"
       },
       {
         "https://bbkt.com/projects/project/repos/test1/browse?at=refs%2Fheads%2Fbranch",
         null,
         "project",
         "test1",
-        "refs%2Fheads%2Fbranch"
+        "branch"
+      },
+      {
+        "https://bitbucket.2mcl.com/users/user/repos/repo/browse?at=refs/heads/branch",
+        "user",
+        null,
+        "repo",
+        "branch"
       },
       {"https://bbkt.com/users/user/repos/repo/", "user", null, "repo", null}
     };

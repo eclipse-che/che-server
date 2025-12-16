@@ -60,7 +60,7 @@
         <com.h2database.version>2.2.224</com.h2database.version>
         <com.jcraft.jsch.version>0.1.55</com.jcraft.jsch.version>
         <com.squareup.okio.version>3.6.0</com.squareup.okio.version>
-        <commons-fileupload.version>1.5</commons-fileupload.version>
+        <commons-fileupload.version>1.6.0</commons-fileupload.version>
         <commons-io.version>2.14.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <enforcer.skip>false</enforcer.skip>
@@ -72,7 +72,7 @@
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.11.2</io.jsonwebtoken.jjwt.version>
         <io.micrometer.version>1.11.5</io.micrometer.version>
-        <io.netty.version>4.2.6.Final</io.netty.version>
+        <io.netty.version>4.2.7.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
         <io.opentracing.contrib.metrics.version>0.3.0</io.opentracing.contrib.metrics.version>
@@ -151,7 +151,7 @@
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
         <org.mockito.mockito-testng.version>0.5.2</org.mockito.mockito-testng.version>
         <org.mockito.version>3.11.2</org.mockito.version>
-        <org.postgresql.version>42.6.0</org.postgresql.version>
+        <org.postgresql.version>42.7.8</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>
         <org.slf4j.version>2.0.9</org.slf4j.version>
         <org.testng.version>7.8.0</org.testng.version>

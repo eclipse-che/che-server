@@ -91,7 +91,7 @@
         <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
         <jakarta.validatio-api.version>3.0.2</jakarta.validatio-api.version>
         <jakarta.websocket.version>2.0.0</jakarta.websocket.version>
-        <jakarta.ws.rs.version>3.1.0</jakarta.ws.rs.version>
+        <jakarta.ws.rs.version>4.0.0</jakarta.ws.rs.version>
         <java.target.version>11</java.target.version>
         <jdk.min.version>${java.target.version}</jdk.min.version>
         <junit.junit.version>4.13.2</junit.junit.version>

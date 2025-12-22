@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -63,7 +63,7 @@ public class PreferencesDeserializerTest {
       expectedExceptions = JsonParseException.class,
       expectedExceptionsMessageRegExp =
           "Unexpected value of the preference with key 'invalid.object'.\n"
-              + " at \\[Source: \\(String\\)\"\\{\"valid\\.string\": \"/usr/bin/value\",\"invalid\\.object\": \\{\"someobject\": true\\}\\}\"; line: 1, column: 54\\]")
+              + " at \\[Source: REDACTED \\(`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled\\); line: 1, column: 54]")
   public void shouldThrowExceptionOnUnsupportedPreferenceValue() throws Exception {
 
     String json =

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.impl;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.factory.FactoryParameter;
@@ -34,15 +35,18 @@ public class SourceProjectParametersValidatorTest {
             .withLocation("location")
             .withType("git")
             .withParameters(
-                new HashMap<String, String>() {
-                  {
-                    put("branch", "master");
-                    put("commitId", "123456");
-                    put("keepVcs", "true");
-                    put("fetch", "12345");
-                    put("keepDir", "/src");
-                  }
-                });
+                new HashMap<>(
+                    ImmutableMap.of(
+                        "branch",
+                        "master",
+                        "commitId",
+                        "123456",
+                        "keepVcs",
+                        "true",
+                        "fetch",
+                        "12345",
+                        "keepDir",
+                        "/src")));
   }
 
   @Test

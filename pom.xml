@@ -47,14 +47,14 @@
     </scm>
     <properties>
         <aopalliance.version>1.0</aopalliance.version>
-        <ch.qos.logback.version>1.5.20</ch.qos.logback.version>
+        <ch.qos.logback.version>1.5.22</ch.qos.logback.version>
         <com.auth0.jwks-rsa.version>0.22.1</com.auth0.jwks-rsa.version>
-        <com.fasterxml.jackson.version>2.15.2</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.20.0</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
         <com.google.code.guice.version>5.0.1</com.google.code.guice.version>
-        <com.google.errorprone>2.3.4</com.google.errorprone>
+        <com.google.errorprone>2.42.0</com.google.errorprone>
         <com.google.guava.version>32.1.2-jre</com.google.guava.version>
-        <com.google.http-client.version>1.43.3</com.google.http-client.version>
+        <com.google.http-client.version>2.0.2</com.google.http-client.version>
         <com.google.oauth-client.version>1.34.1</com.google.oauth-client.version>
         <com.googlecode.gson.version>2.10.1</com.googlecode.gson.version>
         <com.h2database.version>2.2.224</com.h2database.version>
@@ -64,6 +64,7 @@
         <commons-io.version>2.14.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <enforcer.skip>false</enforcer.skip>
+        <grpc-context.version>1.77.0</grpc-context.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
         <io.fabric8.kubernetes-client.version>7.4.0</io.fabric8.kubernetes-client.version>
@@ -136,7 +137,7 @@
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.3.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
         <org.apache.maven.plugin-tools.plugin-annotations.version>3.9.0</org.apache.maven.plugin-tools.plugin-annotations.version>
         <org.apache.maven.version>3.9.5</org.apache.maven.version>
-        <org.apache.tomcat.version>11.0.13</org.apache.tomcat.version>
+        <org.apache.tomcat.version>11.0.15</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>3.4.1</org.codehaus.plexus.utils.version>
         <org.eclipse.jetty.version>11.0.24</org.eclipse.jetty.version>
         <org.eclipse.persistence.eclipselink.version>2.7.10</org.eclipse.persistence.eclipselink.version>
@@ -203,6 +204,10 @@
                         <artifactId>jsr305</artifactId>
                         <groupId>com.google.code.findbugs</groupId>
                     </exclusion>
+                    <exclusion>
+                        <artifactId>error_prone_annotations</artifactId>
+                        <groupId>com.google.errorprone</groupId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -217,6 +222,14 @@
                     <exclusion>
                         <artifactId>jsr305</artifactId>
                         <groupId>com.google.code.findbugs</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>j2objc-annotations</artifactId>
+                        <groupId>com.google.j2objc</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>grpc-context</artifactId>
+                        <groupId>io.grpc</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1451,6 +1464,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-context</artifactId>
+                <version>${grpc-context.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.junit.version}</version>
@@ -2016,7 +2035,8 @@
                             <release>${java.target.version}</release>
                             <compilerArgs>
                                 <arg>-XDcompilePolicy=simple</arg>
-<!--                                <arg>-Xplugin:ErrorProne</arg>-->
+                                <arg>--should-stop=ifError=FLOW</arg>
+                                <arg>-Xplugin:ErrorProne</arg>
                             </compilerArgs>
                             <annotationProcessorPaths>
                                 <path>

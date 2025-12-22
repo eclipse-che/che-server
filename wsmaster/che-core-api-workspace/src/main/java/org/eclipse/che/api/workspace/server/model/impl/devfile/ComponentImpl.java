@@ -480,8 +480,8 @@ public class ComponentImpl implements Component {
       return false;
     }
     ComponentImpl component = (ComponentImpl) o;
-    return getMountSources() == component.getMountSources()
-        && getAutomountWorkspaceSecrets() == component.getAutomountWorkspaceSecrets()
+    return Objects.equals(getMountSources(), component.getMountSources())
+        && Objects.equals(getAutomountWorkspaceSecrets(), component.getAutomountWorkspaceSecrets())
         && Objects.equals(generatedId, component.generatedId)
         && Objects.equals(alias, component.alias)
         && Objects.equals(type, component.type)

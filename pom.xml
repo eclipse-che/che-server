@@ -112,7 +112,7 @@
         <maven.dependency.plugin.version>3.1.2</maven.dependency.plugin.version>
         <maven.enforcer.plugin.version>3.0.0</maven.enforcer.plugin.version>
         <maven.exec.plugin.version>3.0.0</maven.exec.plugin.version>
-        <maven.fabric8io.docker.plugin.version>0.37.0</maven.fabric8io.docker.plugin.version>
+        <maven.fabric8io.docker.plugin.version>0.47.0</maven.fabric8io.docker.plugin.version>
         <maven.failsafe.plugin.version>3.2.3</maven.failsafe.plugin.version>
         <maven.fmt.plugin.version>2.29</maven.fmt.plugin.version>
         <maven.google-java-format.version>1.27.0</maven.google-java-format.version>
@@ -145,11 +145,11 @@
         <org.everrest.version>1.15.0</org.everrest.version>
         <org.flyway.version>10.4.1</org.flyway.version>
         <org.hamcrest.version>3.0</org.hamcrest.version>
-        <org.javassist.version>3.29.2-GA</org.javassist.version>
+        <org.javassist.version>3.30.2-GA</org.javassist.version>
         <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
         <org.jgroups.version>4.1.9.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
-        <org.mockito.mockito-testng.version>0.5.2</org.mockito.mockito-testng.version>
+        <org.mockito.mockito-testng.version>0.5.4</org.mockito.mockito-testng.version>
         <org.mockito.version>3.11.2</org.mockito.version>
         <org.postgresql.version>42.7.8</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>

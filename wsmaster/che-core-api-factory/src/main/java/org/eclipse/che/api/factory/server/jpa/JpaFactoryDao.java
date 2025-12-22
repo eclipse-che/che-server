@@ -101,7 +101,7 @@ public class JpaFactoryDao implements FactoryDao {
       int maxItems, int skipCount, List<Pair<String, String>> attributes) throws ServerException {
     checkArgument(maxItems >= 0, "The number of items to return can't be negative.");
     checkArgument(
-        skipCount >= 0 && skipCount <= Integer.MAX_VALUE,
+        skipCount >= 0,
         "The number of items to skip can't be negative or greater than " + Integer.MAX_VALUE);
     try {
       LOG.debug(

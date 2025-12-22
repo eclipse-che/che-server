@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -355,12 +356,10 @@ public class ContainerSearchTest {
   }
 
   private static void assertContainsContainer(Collection<Container> containers, String name) {
-    containers.stream()
-        .filter(c -> name.equals(c.getName()))
-        .findAny()
-        .orElseThrow(
-            () ->
-                new AssertionError(
-                    format("Expected a container called %s but didn't find any.", name)));
+    Optional<Container> containerOptional =
+        containers.stream().filter(c -> name.equals(c.getName())).findAny();
+    if (containerOptional.isEmpty()) {
+      throw new AssertionError(format("Expected a container called %s but didn't find any.", name));
+    }
   }
 }

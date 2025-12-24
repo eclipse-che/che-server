@@ -16,6 +16,7 @@ import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
@@ -136,7 +137,7 @@ public class AbstractGitlabUrlParser {
 
   private boolean isJsonValid(String message) {
     try {
-      new JsonParser().parse(message).getAsJsonObject();
+      JsonObject unused = new JsonParser().parse(message).getAsJsonObject();
       return true;
     } catch (Exception exception) {
       return false;

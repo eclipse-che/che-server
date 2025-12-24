@@ -250,7 +250,7 @@ public class KeycloakServiceClient {
     }
     try {
       // Check that the source is valid Json Object (can be returned as a Map)
-      gson.<Map<String, String>>fromJson(source, Map.class);
+      Map<String, String> unused = gson.<Map<String, String>>fromJson(source, Map.class);
       return source;
     } catch (JsonSyntaxException notJsonException) {
       // The source is not valid Json: let's see if

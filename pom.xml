@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2025 Red Hat, Inc.
+    Copyright (c) 2012-2026 Red Hat, Inc.
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -82,7 +82,7 @@
         <io.opentracing.version>0.33.0</io.opentracing.version>
         <io.opentracing.web-servlet-filter.version>0.4.1</io.opentracing.web-servlet-filter.version>
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
-        <io.rest-assured.version>4.4.0</io.rest-assured.version>
+        <io.rest-assured.version>6.0.0</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
         <jakarta.activation.version>2.1.2</jakarta.activation.version>
         <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
@@ -480,12 +480,6 @@
                 <groupId>io.rest-assured</groupId>
                 <artifactId>rest-assured</artifactId>
                 <version>${io.rest-assured.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>xml-path</artifactId>
-                        <groupId>io.rest-assured</groupId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>

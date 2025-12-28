@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,9 +13,9 @@ package org.eclipse.che.core.metrics;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -29,7 +29,7 @@ public class PrometheusMeterRegistryProvider implements Provider<PrometheusMeter
   private final PrometheusMeterRegistry prometheusMeterRegistry;
 
   @Inject
-  public PrometheusMeterRegistryProvider(CollectorRegistry registry) {
+  public PrometheusMeterRegistryProvider(PrometheusRegistry registry) {
     prometheusMeterRegistry =
         new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, registry, Clock.SYSTEM);
     Metrics.addRegistry(prometheusMeterRegistry);

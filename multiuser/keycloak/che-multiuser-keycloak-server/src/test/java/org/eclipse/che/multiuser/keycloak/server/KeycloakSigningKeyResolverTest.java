@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.multiuser.keycloak.server;
 
+import static java.util.Collections.emptyMap;
 import static org.eclipse.che.multiuser.machine.authentication.shared.Constants.MACHINE_TOKEN_KIND;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ public class KeycloakSigningKeyResolverTest {
     param.put("kind", MACHINE_TOKEN_KIND);
     DefaultJwsHeader header = new DefaultJwsHeader(param);
 
-    signingKeyResolver.resolveSigningKey(header, "plaintext");
+    signingKeyResolver.resolveSigningKey(header, "plaintext".getBytes());
     verifyNoMoreInteractions(jwkProvider);
   }
 
@@ -57,14 +58,14 @@ public class KeycloakSigningKeyResolverTest {
     param.put("kind", MACHINE_TOKEN_KIND);
     DefaultJwsHeader header = new DefaultJwsHeader(param);
 
-    signingKeyResolver.resolveSigningKey(header, new DefaultClaims());
+    signingKeyResolver.resolveSigningKey(header, new DefaultClaims(emptyMap()));
     verifyNoMoreInteractions(jwkProvider);
   }
 
   @Test(expectedExceptions = JwtException.class)
   public void shouldThrowJwtExceptionifNoKeyIdHeader() {
 
-    signingKeyResolver.resolveSigningKey(new DefaultJwsHeader(), "plaintext");
+    signingKeyResolver.resolveSigningKey(new DefaultJwsHeader(emptyMap()), "plaintext".getBytes());
     verifyNoMoreInteractions(jwkProvider);
   }
 
@@ -81,7 +82,8 @@ public class KeycloakSigningKeyResolverTest {
     when(jwk.getPublicKey()).thenReturn(keyPair.getPublic());
     when(jwkProvider.get(eq(kid))).thenReturn(jwk);
 
-    Key actual = signingKeyResolver.resolveSigningKey(new DefaultJwsHeader(param), "plaintext");
+    Key actual =
+        signingKeyResolver.resolveSigningKey(new DefaultJwsHeader(param), "plaintext".getBytes());
     assertEquals(actual, keyPair.getPublic());
   }
 }

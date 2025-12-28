@@ -81,7 +81,11 @@ public class MachineTokenRegistryTest {
     final String generatedToken = tokenRegistry.getOrCreateToken(USER_ID, WORKSPACE_ID);
 
     final Claims claims =
-        Jwts.parser().setSigningKey(keyPair.getPublic()).parseClaimsJws(generatedToken).getBody();
+        Jwts.parser()
+            .setSigningKey(keyPair.getPublic())
+            .build()
+            .parseClaimsJws(generatedToken)
+            .getBody();
 
     final SubjectImpl subject =
         new SubjectImpl(

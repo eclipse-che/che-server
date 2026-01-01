@@ -85,7 +85,7 @@
         <io.rest-assured.version>6.0.0</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
         <jakarta.activation.version>2.1.2</jakarta.activation.version>
-        <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
+        <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
         <jakarta.json.version>2.0.1</jakarta.json.version>
         <jakarta.mail.version>2.0.1</jakarta.mail.version>

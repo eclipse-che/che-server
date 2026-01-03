@@ -72,7 +72,7 @@
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.11.2</io.jsonwebtoken.jjwt.version>
-        <io.micrometer.version>1.11.5</io.micrometer.version>
+        <io.micrometer.version>1.16.1</io.micrometer.version>
         <io.netty.version>4.2.9.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
@@ -81,6 +81,7 @@
         <io.opentracing.tracerresolver.version>0.1.8</io.opentracing.tracerresolver.version>
         <io.opentracing.version>0.33.0</io.opentracing.version>
         <io.opentracing.web-servlet-filter.version>0.4.1</io.opentracing.web-servlet-filter.version>
+        <io.prometheus.metricsmodel.version>1.4.3</io.prometheus.metricsmodel.version>
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
         <io.rest-assured.version>6.0.0</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
@@ -465,6 +466,11 @@
                 <groupId>io.opentracing.contrib</groupId>
                 <artifactId>opentracing-web-servlet-filter</artifactId>
                 <version>${io.opentracing.web-servlet-filter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-model</artifactId>
+                <version>${io.prometheus.metricsmodel.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.prometheus</groupId>

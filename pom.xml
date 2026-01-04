@@ -143,7 +143,7 @@
         <org.eclipse.jetty.version>11.0.24</org.eclipse.jetty.version>
         <org.eclipse.persistence.eclipselink.version>4.0.8</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.3</org.eclipse.persistence.version>
-        <org.eclipse.sisu.version>0.9.0.M2</org.eclipse.sisu.version>
+        <org.eclipse.sisu.version>0.9.0.M4</org.eclipse.sisu.version>
         <org.everrest.version>1.15.0</org.everrest.version>
         <org.flyway.version>11.20.0</org.flyway.version>
         <org.hamcrest.version>3.0</org.hamcrest.version>

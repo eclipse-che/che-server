@@ -49,7 +49,7 @@
         <aopalliance.version>1.0</aopalliance.version>
         <ch.qos.logback.version>1.5.22</ch.qos.logback.version>
         <com.auth0.jwks-rsa.version>0.22.1</com.auth0.jwks-rsa.version>
-        <com.fasterxml.jackson.version>2.20.0</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.20.1</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
         <com.google.code.guice.version>5.0.1</com.google.code.guice.version>
         <com.google.errorprone>2.42.0</com.google.errorprone>

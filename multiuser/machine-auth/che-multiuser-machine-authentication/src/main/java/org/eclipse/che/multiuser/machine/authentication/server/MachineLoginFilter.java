@@ -61,7 +61,7 @@ public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter
       PermissionChecker permissionChecker) {
     super(sessionStore, tokenExtractor);
     this.userManager = userManager;
-    this.jwtParser = Jwts.parser().setSigningKeyResolver(machineKeyResolver);
+    this.jwtParser = Jwts.parser().setSigningKeyResolver(machineKeyResolver).build();
     this.permissionChecker = permissionChecker;
   }
 

@@ -38,7 +38,7 @@ public class OIDCSigningKeyResolver extends SigningKeyResolverAdapter {
   }
 
   @Override
-  public Key resolveSigningKey(JwsHeader header, String plaintext) {
+  public Key resolveSigningKey(JwsHeader header, byte[] content) {
     return getJwtPublicKey(header);
   }
 
@@ -47,7 +47,7 @@ public class OIDCSigningKeyResolver extends SigningKeyResolverAdapter {
     return getJwtPublicKey(header);
   }
 
-  protected synchronized PublicKey getJwtPublicKey(JwsHeader<?> header) {
+  protected synchronized PublicKey getJwtPublicKey(JwsHeader header) {
     String kid = header.getKeyId();
     if (kid == null) {
       LOG.warn(

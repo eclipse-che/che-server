@@ -30,7 +30,7 @@ public class KeycloakSigningKeyResolver extends OIDCSigningKeyResolver {
   }
 
   @Override
-  public Key resolveSigningKey(JwsHeader header, String plaintext) {
+  public Key resolveSigningKey(JwsHeader header, byte[] content) {
     if (MACHINE_TOKEN_KIND.equals(header.get("kind"))) {
       throw new MachineTokenJwtException(); // machine token, doesn't need to verify
     }

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ClaimsBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.DefaultClaims;
 import jakarta.servlet.FilterChain;
@@ -70,14 +71,14 @@ public class MachineLoginFilterTest {
       new SubjectImpl("test_user", "test_user31", "userToken", false);
 
   private static final Map<String, Object> HEADER = new HashMap<>();
-  private static final Claims CLAIMS = Jwts.claims();
+  private static final ClaimsBuilder CLAIMS_BUILDER = Jwts.claims();
 
   static {
     HEADER.put("kind", MACHINE_TOKEN_KIND);
-    CLAIMS.put(Constants.WORKSPACE_ID_CLAIM, WORKSPACE_ID);
-    CLAIMS.put(Constants.USER_ID_CLAIM, SUBJECT.getUserId());
-    CLAIMS.put(Constants.USER_NAME_CLAIM, SUBJECT.getUserName());
-    CLAIMS.put(Claims.ID, "84123-132-fn31");
+    CLAIMS_BUILDER.add(Constants.WORKSPACE_ID_CLAIM, WORKSPACE_ID);
+    CLAIMS_BUILDER.add(Constants.USER_ID_CLAIM, SUBJECT.getUserId());
+    CLAIMS_BUILDER.add(Constants.USER_NAME_CLAIM, SUBJECT.getUserName());
+    CLAIMS_BUILDER.add(Claims.ID, "84123-132-fn31");
   }
 
   @Mock private UserManager userManagerMock;
@@ -98,7 +99,7 @@ public class MachineLoginFilterTest {
     final KeyPair keyPair = kpg.generateKeyPair();
     final String token =
         Jwts.builder()
-            .setClaims(CLAIMS)
+            .setClaims(CLAIMS_BUILDER.build())
             .setHeader(HEADER)
             .signWith(RS512, keyPair.getPrivate())
             .compact();
@@ -150,9 +151,9 @@ public class MachineLoginFilterTest {
     final KeyPairGenerator kpg = KeyPairGenerator.getInstance(SIGNATURE_ALGORITHM);
     kpg.initialize(KEY_SIZE);
     final KeyPair pair = kpg.generateKeyPair();
-    final Claims badClaims = new DefaultClaims();
-    badClaims.put(Constants.USER_ID_CLAIM, SUBJECT.getUserId());
-    badClaims.put(Claims.ID, "84123-132-fn31");
+    final Claims badClaims =
+        new DefaultClaims(
+            Map.of(Constants.USER_ID_CLAIM, SUBJECT.getUserId(), Claims.ID, "84123-132-fn31"));
     final String token =
         Jwts.builder()
             .setClaims(badClaims)

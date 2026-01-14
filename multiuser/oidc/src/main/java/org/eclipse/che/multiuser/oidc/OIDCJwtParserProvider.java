@@ -31,7 +31,7 @@ public class OIDCJwtParserProvider implements Provider<JwtParser> {
       @Named(OIDC_ALLOWED_CLOCK_SKEW_SEC) long allowedClockSkewSec,
       SigningKeyResolver signingKeyResolver) {
     this.jwtParser =
-        Jwts.parserBuilder()
+        Jwts.parser()
             .setSigningKeyResolver(signingKeyResolver)
             .setAllowedClockSkewSeconds(allowedClockSkewSec)
             .build();

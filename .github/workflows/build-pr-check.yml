@@ -35,13 +35,6 @@ jobs:
       # See https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#using-secrets-in-a-workflow
       if: ${{ ! github.event.pull_request.head.repo.fork }}
       uses: docker/setup-qemu-action@v3
-    - name: Login to docker.io
-      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
-      uses: redhat-actions/podman-login@v1.7
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
-        registry: docker.io
     - name: Login to quay.io
       if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
       uses: redhat-actions/podman-login@v1.7

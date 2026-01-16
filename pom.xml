@@ -136,7 +136,7 @@
         <org.apache.httpcomponents.httpclient.version>4.5.14</org.apache.httpcomponents.httpclient.version>
         <org.apache.httpcomponents.httpcore.version>4.4.16</org.apache.httpcomponents.httpcore.version>
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.3.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
-        <org.apache.maven.plugin-tools.plugin-annotations.version>3.9.0</org.apache.maven.plugin-tools.plugin-annotations.version>
+        <org.apache.maven.plugin-tools.plugin-annotations.version>3.15.2</org.apache.maven.plugin-tools.plugin-annotations.version>
         <org.apache.maven.version>3.9.12</org.apache.maven.version>
         <org.apache.tomcat.version>11.0.15</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>4.0.2</org.codehaus.plexus.utils.version>

@@ -72,7 +72,7 @@
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.13.0</io.jsonwebtoken.jjwt.version>
-        <io.micrometer.version>1.16.1</io.micrometer.version>
+        <io.micrometer.version>1.16.2</io.micrometer.version>
         <io.netty.version>4.2.9.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>

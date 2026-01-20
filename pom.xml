@@ -119,7 +119,7 @@
         <maven.fmt.plugin.version>2.29</maven.fmt.plugin.version>
         <maven.google-java-format.version>1.27.0</maven.google-java-format.version>
         <maven.install.plugin.version>3.1.1</maven.install.plugin.version>
-        <maven.jacoco.plugin.version>0.8.7</maven.jacoco.plugin.version>
+        <maven.jacoco.plugin.version>0.8.14</maven.jacoco.plugin.version>
         <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
         <maven.mycila.license.plugin.version>5.0.0</maven.mycila.license.plugin.version>
         <maven.plugin.plugin.version>3.15.2</maven.plugin.plugin.version>

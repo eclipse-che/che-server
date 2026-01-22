@@ -64,7 +64,7 @@
         <commons-io.version>2.14.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <enforcer.skip>false</enforcer.skip>
-        <grpc-context.version>1.78.0</grpc-context.version>
+        <grpc-api.version>1.78.0</grpc-api.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
         <io.fabric8.kubernetes-client.version>7.4.0</io.fabric8.kubernetes-client.version>
@@ -330,6 +330,11 @@
                 <groupId>io.github.mweirauch</groupId>
                 <artifactId>micrometer-jvm-extras</artifactId>
                 <version>${io.github.mweirauch.micrometer-jvm-extras.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-api</artifactId>
+                <version>${grpc-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.jaegertracing</groupId>
@@ -1470,12 +1475,6 @@
                 <groupId>com.github.kirviq</groupId>
                 <artifactId>dumbster</artifactId>
                 <version>${com.github.kirviq.dumbster.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.grpc</groupId>
-                <artifactId>grpc-context</artifactId>
-                <version>${grpc-context.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

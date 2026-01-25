@@ -140,7 +140,7 @@
         <org.apache.maven.version>3.9.12</org.apache.maven.version>
         <org.apache.tomcat.version>11.0.15</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>4.0.2</org.codehaus.plexus.utils.version>
-        <org.eclipse.jetty.version>11.0.24</org.eclipse.jetty.version>
+        <org.eclipse.jetty.version>11.0.26</org.eclipse.jetty.version>
         <org.eclipse.persistence.eclipselink.version>4.0.8</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.3</org.eclipse.persistence.version>
         <org.eclipse.sisu.version>0.9.0.M2</org.eclipse.sisu.version>

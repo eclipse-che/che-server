@@ -106,7 +106,7 @@
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>
         <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
         <maven.antrun.plugin.version>3.2.0</maven.antrun.plugin.version>
-        <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
+        <maven.assembly.plugin.version>3.8.0</maven.assembly.plugin.version>
         <maven.buildhelper.plugin.version>3.6.1</maven.buildhelper.plugin.version>
         <maven.buildnumber.plugin.version>3.2.1</maven.buildnumber.plugin.version>
         <maven.clean.plugin.version>3.5.0</maven.clean.plugin.version>

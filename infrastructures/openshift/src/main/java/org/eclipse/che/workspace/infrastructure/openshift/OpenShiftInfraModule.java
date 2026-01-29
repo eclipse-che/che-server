@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -55,6 +55,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurato
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.OAuthTokenSecretsConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.PreferencesConfigMapConfigurator;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.SshConfigConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPermissionConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserPreferencesConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.UserProfileConfigurator;
@@ -117,6 +118,7 @@ public class OpenShiftInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(OAuthTokenSecretsConfigurator.class);
     namespaceConfigurators.addBinding().to(PreferencesConfigMapConfigurator.class);
     namespaceConfigurators.addBinding().to(OpenShiftWorkspaceServiceAccountConfigurator.class);
+    namespaceConfigurators.addBinding().to(SshConfigConfigurator.class);
     namespaceConfigurators.addBinding().to(GitconfigConfigurator.class);
 
     bind(AuthorizationChecker.class).to(OpenShiftAuthorizationCheckerImpl.class);

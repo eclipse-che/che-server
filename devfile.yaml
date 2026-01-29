@@ -1,10 +1,14 @@
-schemaVersion: 2.2.0
+schemaVersion: 2.3.0
 metadata:
-  generateName: che-server
+  name: che-server
+  generateName: che-server-
 components:
   - container:
-      image: quay.io/devfile/universal-developer-image:ubi8-latest
-      memoryLimit: 12Gi
+      image: quay.io/devfile/universal-developer-image:ubi9-latest
+      memoryLimit: 12G
+      memoryRequest: 512Mi
+      cpuRequest: 1000m
+      cpuLimit: 5000m
       mountSources: true
       volumeMounts:
         - name: m2
@@ -13,7 +17,7 @@ components:
   - name: m2
     volume: {}
 commands:
-  - id: buildsources
+  - id: build-sources
     exec:
       label: "1. Build sources"
       component: tools
@@ -23,7 +27,7 @@ commands:
       group:
         kind: build
         isDefault: true
-  - id: buildimage
+  - id: build-image
     exec:
       label: "2. Build image"
       component: tools
@@ -33,3 +37,56 @@ commands:
       group:
         kind: build
         isDefault: true
+  - id: install-chectl
+    exec:
+      label: "3. Install chectl"
+      component: tools
+      group:
+        kind: build
+      workingDir: ${HOME}
+      commandLine: |
+        get_arch() {
+          case "$(uname -m)" in
+            "x86_64")
+            echo "x64"
+              ;;
+
+            "aarch64")
+              echo "arm64"
+              ;;
+
+            "armv7l")
+               echo "arm"
+              ;;
+
+            "ppc64le")
+               echo "ppc64le"
+              ;;
+
+            "s390x")
+               echo "s390x"
+              ;;
+
+            "arm64")
+               echo "arm64"
+              ;;
+            *)
+              error "unsupported arch: $(uname -m)"
+              return 1
+              ;;
+          esac
+        }
+        get_operating_system() {
+          SHORT_UNAME=$(uname -s)
+          if [ "$(uname)" == "Darwin" ]; then
+            echo "darwin"
+          elif [ "${SHORT_UNAME:0:5}" == "Linux" ]; then
+            echo "linux"
+          else
+            error "This installer is only supported on Linux and macOS. Found $(uname)"
+            return 1
+          fi
+        }
+        curl -LJO $(curl -fsSL https://che-incubator.github.io/chectl/download-link/stable-$(get_operating_system)-$(get_arch))
+        tar -xf chectl-linux-x64.tar.gz -C $HOME/
+        echo 'export PATH=$HOME/chectl/bin/:$PATH' >> $HOME/.bashrc

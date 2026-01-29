@@ -5,6 +5,8 @@ With this devfile you can perform the following tasks:
 
 - Build project sources with maven.
 - Build a container image.
+- Install [checlt cli tool](https://github.com/che-incubator/chectl).
+- Start debug session.
 - Push your changes to GitHub.
 
 ### Starting a Workspace within Eclipse Che
@@ -22,9 +24,10 @@ For VS Code, execute tasks defined in the devfile with these steps:
 1. Open the command palette (Ctrl/Cmd + Shift + P).
 2. Execute the `Tasks: Run Task` command.
 3. Select the `devfile` folder  and select the `1. Build sources` task to build the project sources with maven.
-4. Follow steps 1 and 2 again, select the `1. Build image` task to build a container image.
-5. In the workspace terminal, tag the **che-server** image with your account: `podman tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
-6. Push the **che-server** image to your account: `podman push <docker registry>/<your account>/che-server:next`.
+4. Follow steps 1 and 2 again, select the `1. Build image` task in the `devfile` folder to build a container image.
+5. Follow steps 1 and 2 again, select the `3. Install chectl` task in the `devfile` folder to install the chectl cli tool.
+6. In the workspace terminal, tag the **che-server** image with your account: `podman tag quay.io/eclipse/che-server:next <docker registry>/<your account>/che-server:next`.
+7. Push the **che-server** image to your account: `podman push <docker registry>/<your account>/che-server:next`.
 
 # Local build requirements
 - Apache Maven 3.9 or later
@@ -33,10 +36,11 @@ For VS Code, execute tasks defined in the devfile with these steps:
 A Che workspace environment allows to build the image internally, using the workspace terminal.
 
 # Start and debug
-1. Deploy Che to a [Red Hat OpenShift](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-openshift-using-cli/) or [Minikube](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-minikube/) cluster by using a previously built image: `chectl server:start --platform=<openshift / minikube> --cheimage=<docker registry>/<your account>/che-server:next`.
-2. Enable local debugging of the Eclipse Che server: `chectl server:debug`.
-3. In your IDE, create a new Remote JVM Debug configuration on `localhost:8000`.
-4. Hit a breakpoint in the code and activate the debug configuration.
+1. Deploy Che to a [Red Hat OpenShift](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-openshift-using-cli/) or [Minikube](https://www.eclipse.org/che/docs/stable/administration-guide/installing-che-on-minikube/) cluster by using a previously built image: `chectl server:deploy --platform=<openshift / minikube> --cheimage=<docker registry>/<your account>/che-server:next --debug`.
+2. Enable local debugging of the Eclipse Che server: `chectl server:debug` in a terminal.
+3. Hit a breakpoint in the code.
+4. Open the `Run and Debug` (Ctrl/Cmd + Shift + D) panel.
+5. Click the `Start Debugging` (F5) button.
 
 # Contributing an SCM provider
 An SCM provider support has to be provided by adding new maven modules to the wsmaster directory.

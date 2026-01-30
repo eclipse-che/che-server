@@ -149,7 +149,7 @@
         <org.hamcrest.version>3.0</org.hamcrest.version>
         <org.javassist.version>3.30.2-GA</org.javassist.version>
         <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
-        <org.jgroups.version>4.1.9.Final</org.jgroups.version>
+        <org.jgroups.version>5.5.2.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
         <org.mockito.mockito-testng.version>0.5.4</org.mockito.mockito-testng.version>
         <org.mockito.version>3.11.2</org.mockito.version>

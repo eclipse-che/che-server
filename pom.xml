@@ -145,7 +145,7 @@
         <org.eclipse.persistence.version>2.2.3</org.eclipse.persistence.version>
         <org.eclipse.sisu.version>0.9.0.M2</org.eclipse.sisu.version>
         <org.everrest.version>1.15.0</org.everrest.version>
-        <org.flyway.version>11.20.2</org.flyway.version>
+        <org.flyway.version>12.0.0</org.flyway.version>
         <org.hamcrest.version>3.0</org.hamcrest.version>
         <org.javassist.version>3.30.2-GA</org.javassist.version>
         <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>

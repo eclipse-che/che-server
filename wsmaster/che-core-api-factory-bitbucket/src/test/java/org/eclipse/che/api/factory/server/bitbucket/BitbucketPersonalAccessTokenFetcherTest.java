@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
+import java.util.Collections;
 import java.util.Optional;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.UnauthorizedException;
@@ -103,7 +104,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
       expectedExceptionsMessageRegExp =
           "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: repository:write and account")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
@@ -124,7 +125,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
       expectedExceptions = ScmUnauthorizedException.class,
       expectedExceptionsMessageRegExp = "Username is not authorized in bitbucket OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
 
     bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
@@ -133,7 +134,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldReturnToken() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken =
         newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("repo");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
@@ -230,7 +231,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
       expectedExceptions = ScmUnauthorizedException.class,
       expectedExceptionsMessageRegExp = "Username is not authorized in bitbucket OAuth provider.")
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(

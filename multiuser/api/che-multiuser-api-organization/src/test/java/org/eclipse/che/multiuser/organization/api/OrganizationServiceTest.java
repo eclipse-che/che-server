@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import io.restassured.response.Response;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import org.eclipse.che.api.core.BadRequestException;
@@ -339,7 +340,9 @@ public class OrganizationServiceTest {
     @Override
     public void doFilter(GenericContainerRequest request) {
       EnvironmentContext.getCurrent()
-          .setSubject(new SubjectImpl("userName", CURRENT_USER_ID, "token", false));
+          .setSubject(
+              new SubjectImpl(
+                  "userName", Collections.emptyList(), CURRENT_USER_ID, "token", false));
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -32,6 +32,7 @@ import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.che.api.core.ServerException;
@@ -84,7 +85,7 @@ public class GitConfigProvisionerTest {
     gitConfigProvisioner =
         new GitConfigProvisioner(preferenceManager, userManager, vcsSslCertificateProvisioner);
 
-    Subject subject = new SubjectImpl(null, "id", null, false);
+    Subject subject = new SubjectImpl(null, Collections.emptyList(), "id", null, false);
     EnvironmentContext environmentContext = new EnvironmentContext();
     environmentContext.setSubject(subject);
     EnvironmentContext.setCurrent(environmentContext);

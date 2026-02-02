@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -142,8 +142,11 @@ public class KeycloakEnvironmentInitializationFilter
                       new JwtException(
                           "Unable to authenticate user because email address is not set in keycloak profile"));
       User user = userManager.getOrCreateUser(id, email, username);
+      // #KeycloakEnvironmentInitializationFilter is not used anymore, so we can ignore obtaining
+      // the list of groups user belongs to
       return new AuthorizedSubject(
-          new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
+          new SubjectImpl(user.getName(), Collections.emptyList(), user.getId(), token, false),
+          permissionChecker);
     } catch (ServerException | ConflictException e) {
       throw new ServletException(
           "Unable to identify user " + claims.getSubject() + " in Che database", e);

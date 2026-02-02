@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -36,8 +36,6 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvV
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.KubernetesNamespaceService;
-import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.AuthorizationChecker;
-import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.KubernetesAuthorizationCheckerImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.PermissionsCleaner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.cache.jpa.JpaKubernetesRuntimeCacheModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.DockerimageComponentToWorkspaceApplier;
@@ -113,7 +111,6 @@ public class KubernetesInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
     namespaceConfigurators.addBinding().to(GitconfigConfigurator.class);
 
-    bind(AuthorizationChecker.class).to(KubernetesAuthorizationCheckerImpl.class);
     bind(PermissionsCleaner.class).asEagerSingleton();
 
     bind(KubernetesNamespaceService.class);

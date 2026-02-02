@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.commons.env;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
+import java.util.Collections;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.testng.annotations.Test;
@@ -24,7 +25,7 @@ public class EnvironmentContextTest {
   public void shouldBeAbleToSetEnvContextInSameThread() {
     // given
     EnvironmentContext expected = EnvironmentContext.getCurrent();
-    expected.setSubject(new SubjectImpl("user", "id", "token", false));
+    expected.setSubject(new SubjectImpl("user", Collections.emptyList(), "id", "token", false));
 
     EnvironmentContext actual = EnvironmentContext.getCurrent();
     Subject actualSubject = actual.getSubject();
@@ -55,7 +56,7 @@ public class EnvironmentContextTest {
   public void shouldNotBeAbleToSeeContextInOtherThread() {
     // given
     final EnvironmentContext expected = EnvironmentContext.getCurrent();
-    expected.setSubject(new SubjectImpl("user", "id", "token", false));
+    expected.setSubject(new SubjectImpl("user", Collections.emptyList(), "id", "token", false));
 
     Thread otherThread =
         new Thread() {

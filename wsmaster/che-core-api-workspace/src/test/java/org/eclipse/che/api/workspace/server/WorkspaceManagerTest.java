@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,69 +12,28 @@
 package org.eclipse.che.api.workspace.server;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
+import static java.util.Collections.*;
 import static java.util.Map.of;
-import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.RUNNING;
-import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STARTING;
-import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STOPPED;
+import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.*;
 import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.MEMORY_LIMIT_ATTRIBUTE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
-import static org.eclipse.che.api.workspace.shared.Constants.CREATED_ATTRIBUTE_NAME;
-import static org.eclipse.che.api.workspace.shared.Constants.ERROR_MESSAGE_ATTRIBUTE_NAME;
-import static org.eclipse.che.api.workspace.shared.Constants.LAST_ACTIVE_INFRASTRUCTURE_NAMESPACE;
-import static org.eclipse.che.api.workspace.shared.Constants.LAST_ACTIVITY_TIME;
-import static org.eclipse.che.api.workspace.shared.Constants.REMOVE_WORKSPACE_AFTER_STOP;
-import static org.eclipse.che.api.workspace.shared.Constants.STOPPED_ABNORMALLY_ATTRIBUTE_NAME;
-import static org.eclipse.che.api.workspace.shared.Constants.STOPPED_ATTRIBUTE_NAME;
-import static org.eclipse.che.api.workspace.shared.Constants.UPDATED_ATTRIBUTE_NAME;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_GENERATE_NAME_CHARS_APPEND;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
+import static org.eclipse.che.api.workspace.shared.Constants.*;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 import static org.testng.util.Strings.isNullOrEmpty;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.account.spi.AccountImpl;
-import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.Page;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.ValidationException;
+import org.eclipse.che.api.core.*;
+import org.eclipse.che.api.core.model.workspace.*;
 import org.eclipse.che.api.core.model.workspace.Runtime;
-import org.eclipse.che.api.core.model.workspace.Warning;
-import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
-import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.model.workspace.config.Command;
 import org.eclipse.che.api.core.model.workspace.config.Environment;
 import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
@@ -85,16 +44,7 @@ import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.workspace.server.devfile.convert.DevfileConverter;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
-import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
-import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
-import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.MachineImpl;
-import org.eclipse.che.api.workspace.server.model.impl.RecipeImpl;
-import org.eclipse.che.api.workspace.server.model.impl.RuntimeImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WarningImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.*;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
@@ -170,7 +120,7 @@ public class WorkspaceManagerTest {
         new EnvironmentContext() {
           @Override
           public Subject getSubject() {
-            return new SubjectImpl(NAMESPACE_1, USER_ID, "token", false);
+            return new SubjectImpl(NAMESPACE_1, Collections.emptyList(), USER_ID, "token", false);
           }
         });
 

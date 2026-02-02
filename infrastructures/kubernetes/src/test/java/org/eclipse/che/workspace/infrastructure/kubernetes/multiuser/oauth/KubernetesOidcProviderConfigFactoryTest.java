@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,6 +15,7 @@ import static org.testng.Assert.assertEquals;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
+import java.util.Collections;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.mockito.testng.MockitoTestNGListener;
@@ -47,7 +48,8 @@ public class KubernetesOidcProviderConfigFactoryTest {
   @Test
   public void getConfigWithTokenWhenTokenIsSet() {
     EnvironmentContext.getCurrent()
-        .setSubject(new SubjectImpl("test_name", "test_id", TEST_TOKEN, false));
+        .setSubject(
+            new SubjectImpl("test_name", Collections.emptyList(), "test_id", TEST_TOKEN, false));
 
     Config resultConfig = kubernetesOidcProviderConfigFactory.buildConfig(defaultConfig, null);
 

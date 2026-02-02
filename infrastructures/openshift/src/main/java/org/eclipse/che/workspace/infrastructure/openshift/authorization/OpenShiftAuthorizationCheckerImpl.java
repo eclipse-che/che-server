@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.AuthorizationChecker;
 
@@ -51,7 +52,8 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
   }
 
-  public boolean isAuthorized(String username) throws InfrastructureException {
+  public boolean isAuthorized(Subject subject) throws InfrastructureException {
+    String username = subject.getUserName();
     return isAllowedUser(cheServerKubernetesClientFactory.create(), username)
         && !isDeniedUser(cheServerKubernetesClientFactory.create(), username);
   }

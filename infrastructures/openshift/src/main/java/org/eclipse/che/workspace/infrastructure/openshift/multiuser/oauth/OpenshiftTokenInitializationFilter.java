@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,6 +16,7 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.openshift.client.OpenShiftClient;
+import java.util.Collections;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -93,7 +94,8 @@ public class OpenshiftTokenInitializationFilter
       ObjectMeta userMeta = osu.getMetadata();
       User user = userManager.getOrCreateUser(getUserId(osu), userMeta.getName());
       return new AuthorizedSubject(
-          new SubjectImpl(user.getName(), user.getId(), token, false), permissionChecker);
+          new SubjectImpl(user.getName(), Collections.emptyList(), user.getId(), token, false),
+          permissionChecker);
     } catch (ServerException | ConflictException e) {
       throw new RuntimeException(e);
     }

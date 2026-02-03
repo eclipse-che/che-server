@@ -19,7 +19,7 @@ import org.eclipse.che.api.core.cors.CheCorsFilter;
 import org.eclipse.che.commons.logback.filter.RequestIdLoggerFilter;
 import org.eclipse.che.inject.DynaModule;
 import org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter;
-import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructure;
+import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructure;
 import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.OpenshiftTokenInitializationFilter;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
 import org.slf4j.Logger;
@@ -67,21 +67,21 @@ public class WsMasterServletModule extends ServletModule {
   }
 
   private void configureNativeUserMode() {
-    if (isOIDCProviderConfigured()) {
-      filter("/*").through(OidcTokenInitializationFilter.class);
-    } else {
+    if (isOpenShiftOAuthEnabled()) {
       filter("/*").through(OpenshiftTokenInitializationFilter.class);
+    } else {
+      filter("/*").through(OidcTokenInitializationFilter.class);
     }
   }
 
-  private boolean isOIDCProviderConfigured() {
+  private boolean isOpenShiftOAuthEnabled() {
     String openShiftOAuthEnabled = System.getenv("CHE_INFRA_OPENSHIFT_OAUTH__ENABLED");
 
-    if (isNullOrEmpty(openShiftOAuthEnabled)) {
-      String infrastructure = System.getenv("CHE_INFRASTRUCTURE_ACTIVE");
-      return KubernetesInfrastructure.NAME.equals(infrastructure);
+    if (!isNullOrEmpty(openShiftOAuthEnabled)) {
+      return Boolean.valueOf(openShiftOAuthEnabled);
     }
 
-    return !Boolean.valueOf(openShiftOAuthEnabled);
+    String infrastructure = System.getenv("CHE_INFRASTRUCTURE_ACTIVE");
+    return OpenShiftInfrastructure.NAME.equals(infrastructure);
   }
 }

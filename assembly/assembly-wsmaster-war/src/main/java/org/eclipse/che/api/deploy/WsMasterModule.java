@@ -356,14 +356,14 @@ public class WsMasterModule extends AbstractModule {
     bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
 
     bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
-    if (isOIDCProviderConfigured()) {
+    if (isOpenShiftOAuthEnabled()) {
+      bind(AuthorizationChecker.class).to(OpenShiftAuthorizationCheckerImpl.class);
+    } else {
       bind(OIDCInfo.class).toProvider(OIDCInfoProvider.class).asEagerSingleton();
       bind(SigningKeyResolver.class).to(OIDCSigningKeyResolver.class);
       bind(JwtParser.class).toProvider(OIDCJwtParserProvider.class);
       bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);
       bind(AuthorizationChecker.class).to(KubernetesOIDCAuthorizationCheckerImpl.class);
-    } else {
-      bind(AuthorizationChecker.class).to(OpenShiftAuthorizationCheckerImpl.class);
     }
     bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
     bind(ProfileDao.class).to(JpaProfileDao.class);
@@ -471,14 +471,14 @@ public class WsMasterModule extends AbstractModule {
     }
   }
 
-  private boolean isOIDCProviderConfigured() {
+  private boolean isOpenShiftOAuthEnabled() {
     String openShiftOAuthEnabled = System.getenv("CHE_INFRA_OPENSHIFT_OAUTH__ENABLED");
 
-    if (isNullOrEmpty(openShiftOAuthEnabled)) {
-      String infrastructure = System.getenv("CHE_INFRASTRUCTURE_ACTIVE");
-      return KubernetesInfrastructure.NAME.equals(infrastructure);
+    if (!isNullOrEmpty(openShiftOAuthEnabled)) {
+      return Boolean.valueOf(openShiftOAuthEnabled);
     }
 
-    return !Boolean.valueOf(openShiftOAuthEnabled);
+    String infrastructure = System.getenv("CHE_INFRASTRUCTURE_ACTIVE");
+    return OpenShiftInfrastructure.NAME.equals(infrastructure);
   }
 }

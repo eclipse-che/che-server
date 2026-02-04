@@ -11,7 +11,9 @@
  */
 package org.eclipse.che.multiuser.oidc.filter;
 
-import static org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter.*;
+import static org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter.DEFAULT_EMAIL_CLAIM;
+import static org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter.DEFAULT_GROUPS_CLAIM;
+import static org.eclipse.che.multiuser.oidc.filter.OidcTokenInitializationFilter.DEFAULT_USERNAME_CLAIM;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;

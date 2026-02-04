@@ -11,9 +11,7 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.authorization;
 
-import static org.mockito.Mockito.*;
-
-import java.util.*;
+import java.util.Arrays;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;

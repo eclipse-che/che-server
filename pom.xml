@@ -155,7 +155,7 @@
         <org.postgresql.version>42.7.9</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>
         <org.slf4j.version>2.0.17</org.slf4j.version>
-        <org.testng.version>7.8.0</org.testng.version>
+        <org.testng.version>7.12.0</org.testng.version>
         <org.wiremock.version>3.0.1</org.wiremock.version>
     </properties>
     <dependencyManagement>

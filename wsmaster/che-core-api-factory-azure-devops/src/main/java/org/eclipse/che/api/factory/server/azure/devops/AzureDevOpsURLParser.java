@@ -126,6 +126,34 @@ public class AzureDevOpsURLParser {
               + substring.substring(
                   0, substring.contains(":") ? substring.indexOf(":") : substring.indexOf("/")));
     }
+    // Use URI parsing to properly handle IPv6 addresses
+    try {
+      URI uri = URI.create(repositoryUrl);
+      if (uri.getScheme() != null && uri.getHost() != null) {
+        String authority = uri.getRawAuthority();
+        if (authority == null) {
+          String host = uri.getHost();
+          boolean ipv6 = host != null && host.contains(":");
+          String hostForUrl = ipv6 ? "[" + host + "]" : host;
+          int port = uri.getPort();
+          authority = port == -1 ? hostForUrl : hostForUrl + ":" + port;
+        }
+
+        if (authority != null) {
+          String serverUrl = uri.getScheme() + "://" + authority;
+          // Remove path and query from the server URL
+          int authorityIdx = repositoryUrl.indexOf(authority);
+          if (authorityIdx >= 0) {
+            int pathIndex = authorityIdx + authority.length();
+            if (pathIndex < repositoryUrl.length() && repositoryUrl.charAt(pathIndex) == '/') {
+              return Optional.of(serverUrl);
+            }
+          }
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      // Fall through to old logic if URI parsing fails
+    }
     // Otherwise, extract the base url from the given repository url by cutting the url after the
     // first slash.
     Matcher serverUrlMatcher = compile("[^/|:]/").matcher(repositoryUrl);
@@ -137,16 +165,28 @@ public class AzureDevOpsURLParser {
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
-    String host = URI.create(url).getHost();
-    Matcher matcher = compile(format(azureDevOpsPatternTemplate, host)).matcher(url);
+    URI uri = URI.create(url);
+    String host = uri.getHost();
+    // Handle IPv6 addresses: escape brackets for regex
+    final String hostForRegex;
+    if (host != null && host.startsWith("[") && host.endsWith("]")) {
+      // IPv6 address - escape the brackets
+      hostForRegex = "\\[" + Pattern.quote(host.substring(1, host.length() - 1)) + "\\]";
+    } else if (host != null) {
+      // Regular hostname - escape special regex characters
+      hostForRegex = Pattern.quote(host);
+    } else {
+      hostForRegex = "";
+    }
+    Matcher matcher = compile(format(azureDevOpsPatternTemplate, hostForRegex)).matcher(url);
     if (matcher.matches()) {
       return Optional.of(matcher);
     } else {
-      matcher = compile(format(azureSSHDevOpsPatternTemplate, host)).matcher(url);
+      matcher = compile(format(azureSSHDevOpsPatternTemplate, hostForRegex)).matcher(url);
       if (matcher.matches()) {
         return Optional.of(matcher);
       } else {
-        matcher = compile(format(azureSSHDevOpsServerPatternTemplate, host)).matcher(url);
+        matcher = compile(format(azureSSHDevOpsServerPatternTemplate, hostForRegex)).matcher(url);
       }
       return matcher.matches() ? Optional.of(matcher) : Optional.empty();
     }

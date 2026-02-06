@@ -161,6 +161,34 @@ public abstract class AbstractGithubURLParser {
       String substring = repositoryUrl.substring(4);
       return Optional.of("https://" + substring.substring(0, substring.indexOf(":")));
     }
+    // Use URI parsing to properly handle IPv6 addresses
+    try {
+      URI uri = URI.create(repositoryUrl);
+      if (uri.getScheme() != null && uri.getHost() != null) {
+        String authority = uri.getRawAuthority();
+        if (authority == null) {
+          String host = uri.getHost();
+          boolean ipv6 = host != null && host.contains(":");
+          String hostForUrl = ipv6 ? "[" + host + "]" : host;
+          int port = uri.getPort();
+          authority = port == -1 ? hostForUrl : hostForUrl + ":" + port;
+        }
+
+        if (authority != null) {
+          String serverUrl = uri.getScheme() + "://" + authority;
+          // Remove path and query from the server URL
+          int authorityIdx = repositoryUrl.indexOf(authority);
+          if (authorityIdx >= 0) {
+            int pathIndex = authorityIdx + authority.length();
+            if (pathIndex < repositoryUrl.length() && repositoryUrl.charAt(pathIndex) == '/') {
+              return Optional.of(serverUrl);
+            }
+          }
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      // Fall through to old logic if URI parsing fails
+    }
     // Otherwise, extract the base url from the given repository url by cutting the url after the
     // first slash.
     Matcher serverUrlMatcher = compile("[^/|:]/").matcher(repositoryUrl);
@@ -385,11 +413,36 @@ public abstract class AbstractGithubURLParser {
                 : url);
     String scheme = uri.getScheme();
     String host = uri.getHost();
-    Matcher matcher = compile(format(githubPatternTemplate, scheme + "://" + host)).matcher(url);
+    // Build the authority part (host + port)
+    String authority = host != null ? host : "";
+    if (uri.getPort() > 0) {
+      authority += ":" + uri.getPort();
+    }
+    // Escape special regex characters, handling IPv6 brackets
+    final String hostForRegex;
+    if (host != null && host.startsWith("[") && host.endsWith("]")) {
+      // IPv6 address - escape the brackets
+      String ipv6 = host.substring(1, host.length() - 1);
+      String escapedAuthority = "\\[" + Pattern.quote(ipv6) + "\\]";
+      if (uri.getPort() > 0) {
+        escapedAuthority += ":" + uri.getPort();
+      }
+      hostForRegex = Pattern.quote(scheme + "://") + escapedAuthority;
+    } else {
+      hostForRegex = Pattern.quote(scheme + "://" + authority);
+    }
+    Matcher matcher = compile(format(githubPatternTemplate, hostForRegex)).matcher(url);
     if (matcher.matches()) {
       return Optional.of(matcher);
     } else {
-      matcher = compile(format(githubSSHPatternTemplate, host)).matcher(url);
+      final String hostOnlyForRegex;
+      if (host != null && host.startsWith("[") && host.endsWith("]")) {
+        // For SSH pattern, use the IP without brackets
+        hostOnlyForRegex = Pattern.quote(host.substring(1, host.length() - 1));
+      } else {
+        hostOnlyForRegex = host != null ? Pattern.quote(host) : "";
+      }
+      matcher = compile(format(githubSSHPatternTemplate, hostOnlyForRegex)).matcher(url);
       return matcher.matches() ? Optional.of(matcher) : Optional.empty();
     }
   }

@@ -71,17 +71,57 @@ public class AbstractGitlabUrlParser {
       String trimmedEndpoint = trimEnd(serverUrl, '/');
       URI uri = URI.create(trimmedEndpoint);
       String schema = uri.getScheme();
-      String host =
-          trimmedEndpoint.substring(
-              trimmedEndpoint.indexOf("://") + 3,
-              uri.getPort() > 0
-                  ? trimmedEndpoint.indexOf(String.valueOf(uri.getPort())) - 1
-                  : trimmedEndpoint.length());
+      // We support GitLab endpoints that include an extra path segment, e.g.:
+      //   https://gitlab-server.com/scm
+      // and want to match repo URLs like:
+      //   https://gitlab-server.com/scm/group/project.git
+      //
+      // In that case, we treat "/scm" as part of the fixed endpoint prefix, not as part of the
+      // repository path.
+      // Review feedback: use "hostname" naming instead of "endpointWithoutScheme".
+      final String hostname = uri.getAuthority();
+      final String endpointPath = uri.getPath() == null ? "" : uri.getPath();
+
+      // What if URI#getAuthority() is null? Fallback to string parsing.
+      final String authority;
+      if (hostname != null) {
+        authority = hostname;
+      } else {
+        final int schemeSeparatorIdx = trimmedEndpoint.indexOf("://");
+        final String withoutScheme =
+            schemeSeparatorIdx >= 0
+                ? trimmedEndpoint.substring(schemeSeparatorIdx + 3)
+                : trimmedEndpoint;
+        final int firstSlashIdx = withoutScheme.indexOf('/');
+        authority = firstSlashIdx >= 0 ? withoutScheme.substring(0, firstSlashIdx) : withoutScheme;
+      }
+
+      // authority may be:
+      // - gitlab-server.com
+      // - gitlab-server.com:8443
+      // - [2001:db8::1]
+      // - [2001:db8::1]:8443
+      final String hostOnly;
+      if (authority.startsWith("[")) {
+        int closingBracket = authority.indexOf(']');
+        hostOnly = closingBracket > 0 ? authority.substring(0, closingBracket + 1) : authority;
+      } else {
+        int colonIdx = authority.indexOf(':');
+        hostOnly = colonIdx > 0 ? authority.substring(0, colonIdx) : authority;
+      }
+
+      // HTTP(S) patterns should match the configured endpoint prefix (including any extra path
+      // segment). SSH pattern should match host only.
+      // For HTTP(S) patterns we include any configured endpointPath and keep the port (if any) as a
+      // part of the "host" group. This allows GitlabUrl#getProviderUrl() to return values like
+      // "https://host:8443/scm" even though GitlabUrl models "host" and "port" separately.
+      final String httpHostForRegex = Pattern.quote(authority + endpointPath);
+      final String sshHostForRegex = Pattern.quote(hostOnly);
       for (String gitlabUrlPatternTemplate : gitlabUrlPatternTemplates) {
         gitlabUrlPatterns.add(
-            compile(format(gitlabUrlPatternTemplate, schema, host, uri.getPort())));
+            compile(format(gitlabUrlPatternTemplate, schema, httpHostForRegex, uri.getPort())));
       }
-      gitlabUrlPatterns.add(compile(format(gitlabSSHPatternTemplate, host)));
+      gitlabUrlPatterns.add(compile(format(gitlabSSHPatternTemplate, sshHostForRegex)));
     }
   }
 
@@ -152,13 +192,25 @@ public class AbstractGitlabUrlParser {
                 : url);
     String scheme = uri.getScheme();
     String host = uri.getHost();
+    // Handle IPv6 addresses: escape brackets for regex
+    final String hostForRegex;
+    if (host != null && host.contains(":")) {
+      // IPv6 address - URLs contain host in square brackets.
+      hostForRegex = "\\[" + Pattern.quote(host) + "\\]";
+    } else if (host != null) {
+      // Regular hostname - escape special regex characters
+      hostForRegex = Pattern.quote(host);
+    } else {
+      hostForRegex = "";
+    }
     return gitlabUrlPatternTemplates.stream()
-        .map(t -> compile(format(t, scheme, host, uri.getPort())).matcher(url))
+        .map(t -> compile(format(t, scheme, hostForRegex, uri.getPort())).matcher(url))
         .filter(Matcher::matches)
         .findAny()
         .or(
             () -> {
-              Matcher matcher = compile(format(gitlabSSHPatternTemplate, host)).matcher(url);
+              Matcher matcher =
+                  compile(format(gitlabSSHPatternTemplate, hostForRegex)).matcher(url);
               if (matcher.matches()) {
                 return Optional.of(matcher);
               }
@@ -171,6 +223,35 @@ public class AbstractGitlabUrlParser {
       String substring = repositoryUrl.substring(4);
       return Optional.of("https://" + substring.substring(0, substring.indexOf(":")));
     }
+    // Use URI parsing to properly handle IPv6 addresses
+    try {
+      URI uri = URI.create(repositoryUrl);
+      if (uri.getScheme() != null && uri.getHost() != null) {
+        String authority = uri.getRawAuthority();
+        if (authority == null) {
+          String host = uri.getHost();
+          boolean ipv6 = host != null && host.contains(":");
+          String hostForUrl = ipv6 ? "[" + host + "]" : host;
+          int port = uri.getPort();
+          authority = port == -1 ? hostForUrl : hostForUrl + ":" + port;
+        }
+
+        if (authority != null) {
+          String serverUrl = uri.getScheme() + "://" + authority;
+          // Remove path and query from the server URL
+          int authorityIdx = repositoryUrl.indexOf(authority);
+          if (authorityIdx >= 0) {
+            int pathIndex = authorityIdx + authority.length();
+            if (pathIndex < repositoryUrl.length() && repositoryUrl.charAt(pathIndex) == '/') {
+              return Optional.of(serverUrl);
+            }
+          }
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      // Fall through to old logic if URI parsing fails
+    }
+    // Fallback for non-standard URLs
     Matcher serverUrlMatcher = compile("[^/|:]/").matcher(repositoryUrl);
     if (serverUrlMatcher.find()) {
       return Optional.of(

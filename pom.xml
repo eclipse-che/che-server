@@ -88,7 +88,7 @@
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
         <jakarta.json.version>2.0.1</jakarta.json.version>
-        <jakarta.mail.version>2.0.1</jakarta.mail.version>
+        <jakarta.mail.version>2.0.2</jakarta.mail.version>
         <jakarta.servlet.version>6.1.0</jakarta.servlet.version>
         <jakarta.validatio-api.version>3.0.2</jakarta.validatio-api.version>
         <jakarta.websocket.version>2.0.0</jakarta.websocket.version>

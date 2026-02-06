@@ -60,6 +60,25 @@ public class AzureDevOpsURLParserTest {
     assertEquals(azureDevOpsUrl.getBranch(), "main");
   }
 
+  @Test
+  public void shouldParseServerUrlWithIpv6Host() {
+    // given
+    azureDevOpsURLParser =
+        new AzureDevOpsURLParser(
+            mock(DevfileFilenamesProvider.class),
+            mock(PersonalAccessTokenManager.class),
+            "https://[2001:db8::1]/");
+
+    // when
+    AzureDevOpsUrl azureDevOpsUrl =
+        azureDevOpsURLParser.parse("https://[2001:db8::1]/MyOrg/MyProject/_git/MyRepo", null);
+
+    // then
+    assertEquals(azureDevOpsUrl.getOrganization(), "MyOrg");
+    assertEquals(azureDevOpsUrl.getProject(), "MyProject");
+    assertEquals(azureDevOpsUrl.getRepository(), "MyRepo");
+  }
+
   @Test(dataProvider = "parsing")
   public void testParse(
       String url,

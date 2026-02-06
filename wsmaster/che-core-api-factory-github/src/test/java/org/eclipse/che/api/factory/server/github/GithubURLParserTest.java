@@ -100,6 +100,28 @@ public class GithubURLParserTest {
     assertEquals(githubUrl.getBranch(), "master");
   }
 
+  @Test
+  public void shouldParseGithubServerUrlWithIpv6Host() throws ApiException {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[2001:db8::1]",
+            false);
+    when(githubApiClient.isConnected(eq("https://[2001:db8::1]"))).thenReturn(true);
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    // when
+    GithubUrl githubUrl = githubUrlParser.parse("https://[2001:db8::1]/eclipse/che", null);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+  }
+
   /** Check URLs are valid with regexp */
   @Test(dataProvider = "UrlsProvider")
   public void checkRegexp(String url) {

@@ -90,6 +90,30 @@ public class GitlabUrlParserTest {
   }
 
   @Test
+  public void shouldGetProviderUrlWithExtraSegmentOnIpv6Endpoint() throws ApiException {
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]/scm",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]/scm/user/project/test.git", null);
+    assertEquals(gitlabUrl.getProviderUrl(), "https://[2001:db8::1]/scm");
+  }
+
+  @Test
+  public void shouldGetProviderUrlWithExtraSegmentOnIpv6EndpointWithPort() throws ApiException {
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]:8443/scm",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]:8443/scm/user/project/test.git", null);
+    assertEquals(gitlabUrl.getProviderUrl(), "https://[2001:db8::1]:8443/scm");
+  }
+
+  @Test
   public void shouldParseWithUrlBranch() throws ApiException {
     GitlabUrl gitlabUrl =
         gitlabUrlParser.parse("https://gitlab.com/user/project/-/tree/master/", "branch");

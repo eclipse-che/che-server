@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.ServerException;
@@ -103,7 +104,8 @@ public class UserSpecificDockerRegistryCredentialsProviderTest {
     Map<String, String> preferences = new HashMap<>();
     preferences.put(DOCKER_REGISTRY_CREDENTIALS_KEY, base64encodedCredentials);
 
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("name", "id", "token1234", false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("name", Collections.emptyList(), "id", "token1234", false));
     when(preferenceManager.find(anyObject(), anyObject())).thenReturn(preferences);
   }
 }

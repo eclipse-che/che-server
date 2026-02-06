@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -291,7 +291,7 @@ public class KubernetesNamespaceFactory {
     var subject = EnvironmentContext.getCurrent().getSubject();
     var userName = subject.getUserName();
 
-    validateAuthorization(namespace.getName(), userName);
+    validateAuthorization(namespace.getName(), subject);
 
     NamespaceResolutionContext resolutionCtx =
         new NamespaceResolutionContext(identity.getWorkspaceId(), subject.getUserId(), userName);
@@ -585,15 +585,15 @@ public class KubernetesNamespaceFactory {
     }
   }
 
-  protected void validateAuthorization(String namespaceName, String username)
+  protected void validateAuthorization(String namespaceName, Subject subject)
       throws InfrastructureException {
-    if (!authorizationChecker.isAuthorized(username)) {
+    if (!authorizationChecker.isAuthorized(subject)) {
       try {
         permissionsCleaner.cleanUp(namespaceName);
       } catch (InfrastructureException | KubernetesClientException e) {
         LOG.error(
             "Failed to clean up permissions for user '{}' in namespace '{}'. Cause: {}",
-            username,
+            subject.getUserName(),
             namespaceName,
             e.getMessage(),
             e);
@@ -602,7 +602,7 @@ public class KubernetesNamespaceFactory {
       throw new AuthorizationException(
           format(
               "User '%s' is not authorized to create a project. Please contact your system administrator.",
-              username));
+              subject.getUserName()));
     }
   }
 

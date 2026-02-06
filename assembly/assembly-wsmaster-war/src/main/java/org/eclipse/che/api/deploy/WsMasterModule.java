@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.deploy;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.inject.matcher.Matchers.subclassesOf;
 import static org.eclipse.che.inject.Matchers.names;
 import static org.eclipse.che.multiuser.api.permission.server.SystemDomain.SYSTEM_DOMAIN_ACTIONS;
@@ -26,7 +27,6 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.SigningKeyResolver;
 import java.util.HashMap;
 import java.util.Map;
-import org.eclipse.che.api.core.notification.RemoteSubscriptionStorage;
 import org.eclipse.che.api.core.rest.CheJsonProvider;
 import org.eclipse.che.api.core.rest.MessageBodyAdapter;
 import org.eclipse.che.api.core.rest.MessageBodyAdapterInterceptor;
@@ -63,8 +63,6 @@ import org.eclipse.che.api.user.server.spi.PreferenceDao;
 import org.eclipse.che.api.user.server.spi.ProfileDao;
 import org.eclipse.che.api.user.server.spi.UserDao;
 import org.eclipse.che.api.workspace.server.WorkspaceEntityProvider;
-import org.eclipse.che.api.workspace.server.WorkspaceLockService;
-import org.eclipse.che.api.workspace.server.WorkspaceStatusCache;
 import org.eclipse.che.api.workspace.server.devfile.DevfileModule;
 import org.eclipse.che.api.workspace.server.hc.ServersCheckerFactory;
 import org.eclipse.che.api.workspace.server.spi.provision.InternalEnvironmentProvisioner;
@@ -105,6 +103,8 @@ import org.eclipse.che.security.oauth.OpenShiftOAuthModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientConfigFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfraModule;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructure;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.AuthorizationChecker;
+import org.eclipse.che.workspace.infrastructure.kubernetes.authorization.KubernetesOIDCAuthorizationCheckerImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.multiuser.oauth.KubernetesOidcProviderConfigFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposer;
@@ -118,8 +118,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtprox
 import org.eclipse.che.workspace.infrastructure.metrics.InfrastructureMetricsModule;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfraModule;
 import org.eclipse.che.workspace.infrastructure.openshift.OpenShiftInfrastructure;
+import org.eclipse.che.workspace.infrastructure.openshift.authorization.OpenShiftAuthorizationCheckerImpl;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
-import org.eclipse.che.workspace.infrastructure.openshift.multiuser.oauth.KeycloakProviderConfigFactory;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 
 /**
@@ -319,27 +319,13 @@ public class WsMasterModule extends AbstractModule {
 
   private void configureMultiUserMode(
       Map<String, String> persistenceProperties, String infrastructure) {
-    if (OpenShiftInfrastructure.NAME.equals(infrastructure)
-        || KubernetesInfrastructure.NAME.equals(infrastructure)) {
-      install(new ReplicationModule(persistenceProperties));
-      bind(
-          org.eclipse.che.multiuser.permission.workspace.infra.kubernetes
-              .BrokerServicePermissionFilter.class);
-      configureJwtProxySecureProvisioner(infrastructure);
-    } else {
-      bind(RemoteSubscriptionStorage.class)
-          .to(org.eclipse.che.api.core.notification.InmemoryRemoteSubscriptionStorage.class);
-      bind(WorkspaceLockService.class)
-          .to(org.eclipse.che.api.workspace.server.DefaultWorkspaceLockService.class);
-      bind(WorkspaceStatusCache.class)
-          .to(org.eclipse.che.api.workspace.server.DefaultWorkspaceStatusCache.class);
-    }
+    install(new ReplicationModule(persistenceProperties));
+    bind(
+        org.eclipse.che.multiuser.permission.workspace.infra.kubernetes
+            .BrokerServicePermissionFilter.class);
+    configureJwtProxySecureProvisioner(infrastructure);
 
-    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
-    } else if (OpenShiftInfrastructure.NAME.equals(infrastructure)) {
-      bind(KubernetesClientConfigFactory.class).to(KeycloakProviderConfigFactory.class);
-    }
+    bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
 
     persistenceProperties.put(
         PersistenceUnitProperties.EXCEPTION_HANDLER_CLASS,
@@ -369,18 +355,19 @@ public class WsMasterModule extends AbstractModule {
 
     bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
 
-    if (Boolean.parseBoolean(System.getenv("CHE_AUTH_NATIVEUSER"))) {
-      bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
-      if (KubernetesInfrastructure.NAME.equals(infrastructure)) {
-        bind(OIDCInfo.class).toProvider(OIDCInfoProvider.class).asEagerSingleton();
-        bind(SigningKeyResolver.class).to(OIDCSigningKeyResolver.class);
-        bind(JwtParser.class).toProvider(OIDCJwtParserProvider.class);
-        bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);
-      }
-      bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
-      bind(ProfileDao.class).to(JpaProfileDao.class);
-      bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
+    bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
+    if (isOpenShiftOAuthEnabled()) {
+      bind(AuthorizationChecker.class).to(OpenShiftAuthorizationCheckerImpl.class);
+    } else {
+      bind(OIDCInfo.class).toProvider(OIDCInfoProvider.class).asEagerSingleton();
+      bind(SigningKeyResolver.class).to(OIDCSigningKeyResolver.class);
+      bind(JwtParser.class).toProvider(OIDCJwtParserProvider.class);
+      bind(JwkProvider.class).toProvider(OIDCJwkProvider.class);
+      bind(AuthorizationChecker.class).to(KubernetesOIDCAuthorizationCheckerImpl.class);
     }
+    bind(TokenValidator.class).to(NotImplementedTokenValidator.class);
+    bind(ProfileDao.class).to(JpaProfileDao.class);
+    bind(OAuthAPI.class).to(EmbeddedOAuthAPI.class).asEagerSingleton();
 
     install(new MachineAuthModule());
 
@@ -482,5 +469,16 @@ public class WsMasterModule extends AbstractModule {
               new TypeLiteral<
                   PassThroughProxySecureServerExposerFactory<OpenShiftEnvironment>>() {});
     }
+  }
+
+  private boolean isOpenShiftOAuthEnabled() {
+    String openShiftOAuthEnabled = System.getenv("CHE_INFRA_OPENSHIFT_OAUTH__ENABLED");
+
+    if (!isNullOrEmpty(openShiftOAuthEnabled)) {
+      return Boolean.valueOf(openShiftOAuthEnabled);
+    }
+
+    String infrastructure = System.getenv("CHE_INFRASTRUCTURE_ACTIVE");
+    return OpenShiftInfrastructure.NAME.equals(infrastructure);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.net.MalformedURLException;
+import java.util.Collections;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketServerApiClient;
 import org.eclipse.che.api.factory.server.bitbucket.server.BitbucketUser;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
@@ -43,7 +44,8 @@ public class BitbucketServerUserDataFetcherTest {
 
   @BeforeMethod
   public void setup() throws MalformedURLException {
-    subject = new SubjectImpl("another_user", "user987", "token111", false);
+    subject =
+        new SubjectImpl("another_user", Collections.emptyList(), "user987", "token111", false);
     bitbucketUser =
         new BitbucketUser("User", "user", 32423523, "NORMAL", true, "user", "user@users.com");
     fetcher =

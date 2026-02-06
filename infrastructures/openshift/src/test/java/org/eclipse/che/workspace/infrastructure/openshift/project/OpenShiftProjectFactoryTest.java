@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -67,6 +67,7 @@ import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
@@ -139,7 +140,7 @@ public class OpenShiftProjectFactoryTest {
     lenient().when(cheServerOpenshiftClientFactory.createOC()).thenReturn(osClient);
     lenient().when(cheServerKubernetesClientFactory.create()).thenReturn(osClient);
     lenient().when(osClient.projects()).thenReturn(projectOperation);
-    lenient().when(authorizationChecker.isAuthorized(anyString())).thenReturn(true);
+    lenient().when(authorizationChecker.isAuthorized(any(Subject.class))).thenReturn(true);
 
     lenient()
         .when(workspaceManager.getWorkspace(any()))
@@ -153,7 +154,9 @@ public class OpenShiftProjectFactoryTest {
     lenient().when(projectList.getItems()).thenReturn(emptyList());
 
     EnvironmentContext.getCurrent()
-        .setSubject(new SubjectImpl(USER_NAME, USER_ID, "t-354t53xff34234", false));
+        .setSubject(
+            new SubjectImpl(
+                USER_NAME, Collections.emptyList(), USER_ID, "t-354t53xff34234", false));
   }
 
   @AfterMethod
@@ -284,7 +287,8 @@ public class OpenShiftProjectFactoryTest {
             authorizationChecker,
             permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
 
     // when
     List<KubernetesNamespaceMeta> availableNamespaces = projectFactory.list();
@@ -322,7 +326,8 @@ public class OpenShiftProjectFactoryTest {
             authorizationChecker,
             permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "u123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "u123", null, false));
 
     // when
     List<KubernetesNamespaceMeta> availableNamespaces = projectFactory.list();
@@ -749,7 +754,8 @@ public class OpenShiftProjectFactoryTest {
             authorizationChecker,
             permissionsCleaner,
             NO_OAUTH_IDENTITY_PROVIDER);
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
     projectFactory.list();
 
     verify(projectOperation).withLabels(Map.of("try_placeholder_here", "<username>"));
@@ -777,7 +783,8 @@ public class OpenShiftProjectFactoryTest {
                 authorizationChecker,
                 permissionsCleaner,
                 NO_OAUTH_IDENTITY_PROVIDER));
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
@@ -819,7 +826,8 @@ public class OpenShiftProjectFactoryTest {
                 authorizationChecker,
                 permissionsCleaner,
                 NO_OAUTH_IDENTITY_PROVIDER));
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
 
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     when(toReturnProject.getName()).thenReturn(projectName);

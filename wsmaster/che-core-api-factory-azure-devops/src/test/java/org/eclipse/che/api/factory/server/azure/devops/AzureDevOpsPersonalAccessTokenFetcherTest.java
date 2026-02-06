@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -32,6 +32,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -120,7 +121,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
       expectedExceptionsMessageRegExp =
           "Username is not authorized in azure-devops OAuth provider.")
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(azureOauthToken).withScope("");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(
@@ -133,7 +134,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
 
   @Test(expectedExceptions = ScmUnauthorizedException.class)
   public void shouldThrowUnauthorizedExceptionOnRedirectResponse() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(azureOauthToken).withScope("");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(

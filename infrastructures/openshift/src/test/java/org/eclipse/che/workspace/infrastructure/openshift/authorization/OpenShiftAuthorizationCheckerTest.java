@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -44,6 +46,10 @@ public class OpenShiftAuthorizationCheckerTest {
   @Mock private CheServerKubernetesClientFactory clientFactory;
   private KubernetesClient client;
   private KubernetesMockServer kubernetesMockServer;
+  private static Subject user1 =
+      new SubjectImpl("user1", Collections.emptyList(), "id", "token", false);
+  private static Subject user2 =
+      new SubjectImpl("user2", Collections.emptyList(), "id", "token", false);
 
   @BeforeMethod
   public void setUp() throws InfrastructureException {
@@ -67,7 +73,7 @@ public class OpenShiftAuthorizationCheckerTest {
 
   @Test(dataProvider = "advancedAuthorizationData")
   public void advancedAuthorization(
-      String testUserName,
+      Subject subject,
       List<Group> groups,
       String allowedUsers,
       String allowedGroups,
@@ -82,7 +88,7 @@ public class OpenShiftAuthorizationCheckerTest {
     groups.forEach(group -> client.resources(Group.class).create(group));
 
     // when
-    boolean isAuthorized = authorizationChecker.isAuthorized(testUserName);
+    boolean isAuthorized = authorizationChecker.isAuthorized(subject);
 
     // then
     Assert.assertEquals(isAuthorized, expectedIsAuthorized);
@@ -104,14 +110,14 @@ public class OpenShiftAuthorizationCheckerTest {
             List.of("user2"));
 
     return new Object[][] {
-      {"user1", Collections.emptyList(), "", "", "", "", true},
-      {"user1", Collections.emptyList(), "user1", "", "", "", true},
-      {"user1", Collections.emptyList(), "user1", "", "user2", "", true},
-      {"user1", List.of(groupWithUser2), "user1", "", "", "groupWithUser2", true},
-      {"user1", List.of(groupWithUser1), "", "groupWithUser1", "", "", true},
-      {"user2", List.of(groupWithUser1), "user2", "groupWithUser1", "", "", true},
+      {user1, Collections.emptyList(), "", "", "", "", true},
+      {user1, Collections.emptyList(), "user1", "", "", "", true},
+      {user1, Collections.emptyList(), "user1", "", "user2", "", true},
+      {user1, List.of(groupWithUser2), "user1", "", "", "groupWithUser2", true},
+      {user1, List.of(groupWithUser1), "", "groupWithUser1", "", "", true},
+      {user2, List.of(groupWithUser1), "user2", "groupWithUser1", "", "", true},
       {
-        "user1",
+        user1,
         List.of(groupWithUser1, groupWithUser2),
         "",
         "groupWithUser1",
@@ -119,15 +125,15 @@ public class OpenShiftAuthorizationCheckerTest {
         "groupWithUser2",
         true
       },
-      {"user1", Collections.emptyList(), "user1", "", "user1", "", false},
-      {"user2", Collections.emptyList(), "user1", "", "", "", false},
-      {"user2", Collections.emptyList(), "user1", "", "user2", "", false},
-      {"user2", List.of(groupWithUser1), "", "groupWithUser1", "", "", false},
-      {"user1", Collections.emptyList(), "", "", "user1", "", false},
-      {"user1", List.of(groupWithUser1), "", "", "", "groupWithUser1", false},
-      {"user1", List.of(groupWithUser1), "", "groupWithUser1", "", "groupWithUser1", false},
+      {user1, Collections.emptyList(), "user1", "", "user1", "", false},
+      {user2, Collections.emptyList(), "user1", "", "", "", false},
+      {user2, Collections.emptyList(), "user1", "", "user2", "", false},
+      {user2, List.of(groupWithUser1), "", "groupWithUser1", "", "", false},
+      {user1, Collections.emptyList(), "", "", "user1", "", false},
+      {user1, List.of(groupWithUser1), "", "", "", "groupWithUser1", false},
+      {user1, List.of(groupWithUser1), "", "groupWithUser1", "", "groupWithUser1", false},
       {
-        "user2",
+        user2,
         List.of(groupWithUser1, groupWithUser2),
         "",
         "groupWithUser1",

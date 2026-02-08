@@ -116,7 +116,7 @@
         <maven.fabric8io.docker.plugin.version>0.48.0</maven.fabric8io.docker.plugin.version>
         <maven.failsafe.plugin.version>3.5.4</maven.failsafe.plugin.version>
         <maven.fmt.plugin.version>2.29</maven.fmt.plugin.version>
-        <maven.google-java-format.version>1.27.0</maven.google-java-format.version>
+        <maven.google-java-format.version>1.34.1</maven.google-java-format.version>
         <maven.install.plugin.version>3.1.4</maven.install.plugin.version>
         <maven.jacoco.plugin.version>0.8.14</maven.jacoco.plugin.version>
         <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>

@@ -34,6 +34,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.NotFoundException;
@@ -68,7 +69,7 @@ public class MachineLoginFilterTest {
   private static final String WORKSPACE_ID = "workspace31";
 
   private static final Subject SUBJECT =
-      new SubjectImpl("test_user", "test_user31", "userToken", false);
+      new SubjectImpl("test_user", Collections.emptyList(), "test_user31", "userToken", false);
 
   private static final Map<String, Object> HEADER = new HashMap<>();
   private static final ClaimsBuilder CLAIMS_BUILDER = Jwts.claims();

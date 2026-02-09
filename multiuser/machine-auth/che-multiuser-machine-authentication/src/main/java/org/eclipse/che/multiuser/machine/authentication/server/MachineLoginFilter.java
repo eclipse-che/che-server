@@ -26,6 +26,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -97,7 +98,9 @@ public class MachineLoginFilter extends MultiUserEnvironmentInitializationFilter
       final String userName = userManager.getById(userId).getName();
       final String workspaceId = claims.get(WORKSPACE_ID_CLAIM, String.class);
       return new MachineTokenAuthorizedSubject(
-          new SubjectImpl(userName, userId, token, false), permissionChecker, workspaceId);
+          new SubjectImpl(userName, Collections.emptyList(), userId, token, false),
+          permissionChecker,
+          workspaceId);
     } catch (NotFoundException e) {
       throw new JwtException("Corresponding user doesn't exist.");
     } catch (ServerException | JwtException e) {

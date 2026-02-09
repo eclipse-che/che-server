@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -89,7 +89,8 @@ public class OrganizationManagerTest {
         .when(eventService.publish(any()))
         .thenAnswer(invocation -> invocation.getArguments()[0]);
     EnvironmentContext.getCurrent()
-        .setSubject(new SubjectImpl(USER_NAME, USER_ID, "userToken", false));
+        .setSubject(
+            new SubjectImpl(USER_NAME, Collections.emptyList(), USER_ID, "userToken", false));
   }
 
   @AfterMethod

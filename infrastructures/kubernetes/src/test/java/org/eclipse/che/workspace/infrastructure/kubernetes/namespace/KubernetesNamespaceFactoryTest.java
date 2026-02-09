@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -88,6 +88,7 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.api.workspace.shared.Constants;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.inject.ConfigurationException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
@@ -168,13 +169,14 @@ public class KubernetesNamespaceFactoryTest {
 
     lenient().when(namespaceOperation.withName(any())).thenReturn(namespaceResource);
     lenient().when(namespaceResource.get()).thenReturn(mock(Namespace.class));
-    lenient().when(authorizationChecker.isAuthorized(anyString())).thenReturn(true);
+    lenient().when(authorizationChecker.isAuthorized(any(Subject.class))).thenReturn(true);
 
     lenient().doReturn(namespaceListResource).when(namespaceOperation).withLabels(anyMap());
     lenient().when(namespaceListResource.list()).thenReturn(namespaceList);
     lenient().when(namespaceList.getItems()).thenReturn(Collections.emptyList());
 
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "i123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "i123", null, false));
   }
 
   @AfterMethod
@@ -344,7 +346,8 @@ public class KubernetesNamespaceFactoryTest {
             pool,
             authorizationChecker,
             permissionsCleaner);
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
 
     // when
     List<KubernetesNamespaceMeta> availableNamespaces = namespaceFactory.list();
@@ -387,7 +390,8 @@ public class KubernetesNamespaceFactoryTest {
             pool,
             authorizationChecker,
             permissionsCleaner);
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
 
     // when
     List<KubernetesNamespaceMeta> availableNamespaces = namespaceFactory.list();
@@ -551,7 +555,8 @@ public class KubernetesNamespaceFactoryTest {
                 pool,
                 authorizationChecker,
                 permissionsCleaner));
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
 
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     when(toReturnNamespace.getName()).thenReturn(namespaceName);
@@ -1013,7 +1018,8 @@ public class KubernetesNamespaceFactoryTest {
 
     WorkspaceImpl workspace =
         new WorkspaceImplBuilder().setId("workspace123").setAttributes(emptyMap()).build();
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
     String namespace = namespaceFactory.getNamespaceName(workspace);
 
     assertEquals(namespace, "che-123");
@@ -1386,7 +1392,8 @@ public class KubernetesNamespaceFactoryTest {
             pool,
             authorizationChecker,
             permissionsCleaner);
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
     namespaceFactory.list();
 
     verify(namespaceOperation).withLabels(Map.of("try_placeholder_here", "<username>"));
@@ -1411,7 +1418,8 @@ public class KubernetesNamespaceFactoryTest {
                 pool,
                 authorizationChecker,
                 permissionsCleaner));
-    EnvironmentContext.getCurrent().setSubject(new SubjectImpl("jondoe", "123", null, false));
+    EnvironmentContext.getCurrent()
+        .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
     KubernetesNamespace toReturnNamespace = mock(KubernetesNamespace.class);
     prepareNamespace(toReturnNamespace);
     doReturn(toReturnNamespace).when(namespaceFactory).doCreateNamespaceAccess(any(), any());

@@ -27,6 +27,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.core.NotFoundException;
@@ -90,6 +91,7 @@ public class MachineTokenRegistryTest {
     final SubjectImpl subject =
         new SubjectImpl(
             claims.get(USER_NAME_CLAIM, String.class),
+            Collections.emptyList(),
             claims.get(USER_ID_CLAIM, String.class),
             null,
             false);

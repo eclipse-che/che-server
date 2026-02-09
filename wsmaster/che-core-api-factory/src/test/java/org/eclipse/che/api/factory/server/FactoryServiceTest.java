@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -136,7 +137,9 @@ public class FactoryServiceTest {
     @Override
     public void doFilter(GenericContainerRequest request) {
       EnvironmentContext context = EnvironmentContext.getCurrent();
-      context.setSubject(new SubjectImpl(ADMIN_USER_NAME, USER_ID, ADMIN_USER_PASSWORD, false));
+      context.setSubject(
+          new SubjectImpl(
+              ADMIN_USER_NAME, Collections.emptyList(), USER_ID, ADMIN_USER_PASSWORD, false));
     }
   }
 

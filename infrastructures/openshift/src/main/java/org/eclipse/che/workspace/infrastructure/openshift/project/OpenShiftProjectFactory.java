@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -112,7 +112,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
     var subject = EnvironmentContext.getCurrent().getSubject();
     var userName = subject.getUserName();
 
-    validateAuthorization(osProject.getName(), userName);
+    validateAuthorization(osProject.getName(), subject);
 
     NamespaceResolutionContext resolutionCtx =
         new NamespaceResolutionContext(identity.getWorkspaceId(), subject.getUserId(), userName);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -77,7 +77,8 @@ public class DefaultHttpJsonRequestTest {
   @SuppressWarnings("unused") // used by EverrestJetty
   private static final TestService TEST_SERVICE = new TestService();
 
-  private static final Subject TEST_SUBJECT = new SubjectImpl("name", "id", "token", false);
+  private static final Subject TEST_SUBJECT =
+      new SubjectImpl("name", Collections.emptyList(), "id", "token", false);
   private static final String DEFAULT_URL = "http://localhost:8080";
 
   @Captor private ArgumentCaptor<Map<String, String>> mapCaptor;

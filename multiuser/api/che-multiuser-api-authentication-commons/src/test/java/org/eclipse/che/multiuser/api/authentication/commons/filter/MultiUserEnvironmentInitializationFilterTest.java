@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -30,6 +30,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -55,7 +56,8 @@ public class MultiUserEnvironmentInitializationFilterTest {
 
   private final String userId = "user-abc-123";
   private final String token = "token-abc123";
-  private final Subject subject = new SubjectImpl("user", userId, token, false);
+  private final Subject subject =
+      new SubjectImpl("user", Collections.emptyList(), userId, token, false);
 
   private MultiUserEnvironmentInitializationFilter<Object> filter;
 
@@ -137,7 +139,8 @@ public class MultiUserEnvironmentInitializationFilterTest {
   @Test
   public void shouldReCreateSubjectIfTokensDidNotMatch() throws Exception {
     Subject otherSubject =
-        new SubjectImpl(subject.getUserId(), subject.getUserName(), "token111", false);
+        new SubjectImpl(
+            subject.getUserId(), Collections.emptyList(), subject.getUserName(), "token111", false);
     when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn(token);
     when(sessionStore.getSession(eq(userId), any())).thenReturn(session);
     when(session.getAttribute(eq(CHE_SUBJECT_ATTRIBUTE))).thenReturn(otherSubject);
@@ -149,7 +152,8 @@ public class MultiUserEnvironmentInitializationFilterTest {
 
   @Test
   public void shouldInvalidateSessionIfUserChanged() throws Exception {
-    Subject otherSubject = new SubjectImpl("another_user", "user987", "token111", false);
+    Subject otherSubject =
+        new SubjectImpl("another_user", Collections.emptyList(), "user987", "token111", false);
     when(tokenExtractor.getToken(any(HttpServletRequest.class))).thenReturn(token);
     when(sessionStore.getSession(eq(userId), any())).thenReturn(session);
     when(session.getAttribute(eq(CHE_SUBJECT_ATTRIBUTE))).thenReturn(otherSubject);

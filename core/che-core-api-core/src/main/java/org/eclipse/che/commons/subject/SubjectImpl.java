@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.commons.subject;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import org.eclipse.che.api.core.ForbiddenException;
 
@@ -22,11 +24,14 @@ import org.eclipse.che.api.core.ForbiddenException;
 public class SubjectImpl implements Subject {
   private final String id;
   private final String name;
+  private final List<String> groups;
   private final String token;
   private final boolean isTemporary;
 
-  public SubjectImpl(String name, String id, String token, boolean isTemporary) {
+  public SubjectImpl(
+      String name, List<String> groups, String id, String token, boolean isTemporary) {
     this.name = name;
+    this.groups = Collections.unmodifiableList(groups);
     this.id = id;
     this.token = token;
     this.isTemporary = isTemporary;
@@ -35,6 +40,11 @@ public class SubjectImpl implements Subject {
   @Override
   public String getUserName() {
     return name;
+  }
+
+  @Override
+  public List<String> getGroups() {
+    return groups;
   }
 
   @Override
@@ -73,6 +83,7 @@ public class SubjectImpl implements Subject {
     return Objects.equals(id, other.id)
         && Objects.equals(name, other.name)
         && Objects.equals(token, other.token)
+        && Objects.equals(groups, other.groups)
         && isTemporary == other.isTemporary;
   }
 
@@ -83,18 +94,21 @@ public class SubjectImpl implements Subject {
     hash = 31 * hash + Objects.hashCode(name);
     hash = 31 * hash + Objects.hashCode(token);
     hash = 31 * hash + Boolean.hashCode(isTemporary);
+    hash = 31 * hash + Objects.hashCode(groups);
     return hash;
   }
 
   @Override
   public String toString() {
-    return "UserImpl{"
+    return "SubjectImpl{"
         + "id='"
         + id
         + '\''
         + ", name='"
         + name
         + '\''
+        + ", groups="
+        + groups
         + ", token='"
         + token
         + '\''

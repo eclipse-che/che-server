@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -140,7 +140,7 @@ public class GithubPersonalAccessTokenFetcherTest {
       expectedExceptionsMessageRegExp =
           "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[repo, user:email, read:user, read:org, workflow]")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
@@ -160,7 +160,7 @@ public class GithubPersonalAccessTokenFetcherTest {
       expectedExceptions = ScmUnauthorizedException.class,
       expectedExceptionsMessageRegExp = "Username is not authorized in github OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
 
     githubPATFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
@@ -170,7 +170,7 @@ public class GithubPersonalAccessTokenFetcherTest {
       expectedExceptions = ScmUnauthorizedException.class,
       expectedExceptionsMessageRegExp = "Username is not authorized in github OAuth provider.")
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken).withScope("");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(
@@ -183,7 +183,7 @@ public class GithubPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldReturnToken() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(githubOauthToken);
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 

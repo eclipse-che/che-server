@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import static java.util.Collections.singletonMap;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
@@ -40,7 +41,7 @@ public class TestObjectGenerator {
   public static final String TEST_CHE_NAMESPACE = "user";
   public static final String CURRENT_USER_ID = NameGenerator.generate("usrid", 6);
   public static final Subject TEST_SUBJECT =
-      new SubjectImpl(TEST_CHE_NAMESPACE, CURRENT_USER_ID, "token", false);
+      new SubjectImpl(TEST_CHE_NAMESPACE, Collections.emptyList(), CURRENT_USER_ID, "token", false);
   public static final String USER_DEVFILE_ID = NameGenerator.generate("usrd", 16);
   public static final AccountImpl TEST_ACCOUNT =
       new AccountImpl("acc-id042u3ui3oi", TEST_CHE_NAMESPACE, "test");

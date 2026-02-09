@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.multiuser.api.permission.server;
 
 import static java.lang.String.format;
 
+import java.util.List;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -41,6 +42,11 @@ public class AuthorizedSubject implements Subject {
   @Override
   public String getUserName() {
     return baseSubject.getUserName();
+  }
+
+  @Override
+  public List<String> getGroups() {
+    return baseSubject.getGroups();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -43,7 +43,10 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
       OIDC_SETTING_PREFIX + "auth_internal_server_url";
   public static final String OIDC_PROVIDER_SETTING = OIDC_SETTING_PREFIX + "oidc_provider";
   public static final String OIDC_USERNAME_CLAIM_SETTING = OIDC_SETTING_PREFIX + "username_claim";
+  public static final String OIDC_USERNAME_PREFIX_SETTING = OIDC_SETTING_PREFIX + "username_prefix";
   public static final String OIDC_EMAIL_CLAIM_SETTING = OIDC_SETTING_PREFIX + "email_claim";
+  public static final String OIDC_GROUPS_CLAIM_SETTING = OIDC_SETTING_PREFIX + "groups_claim";
+  public static final String OIDC_GROUP_PREFIX_SETTING = OIDC_SETTING_PREFIX + "group_prefix";
   public static final String OIDC_ALLOWED_CLOCK_SKEW_SEC =
       OIDC_SETTING_PREFIX + "allowed_clock_skew_sec";
 

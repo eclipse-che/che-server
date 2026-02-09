@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.SubjectImpl;
 import org.mockito.InjectMocks;
@@ -50,7 +51,8 @@ public class DashboardRedirectionFilterTest {
     when(request.getMethod()).thenReturn("GET");
     when(request.getRequestURI()).thenReturn(uri);
     EnvironmentContext context = new EnvironmentContext();
-    context.setSubject(new SubjectImpl("id123", "name", "token123", false));
+    context.setSubject(
+        new SubjectImpl("id123", Collections.emptyList(), "name", "token123", false));
     EnvironmentContext.setCurrent(context);
 
     // when
@@ -66,7 +68,8 @@ public class DashboardRedirectionFilterTest {
     when(request.getMethod()).thenReturn("HEAD");
     when(request.getRequestURI()).thenReturn(uri);
     EnvironmentContext context = new EnvironmentContext();
-    context.setSubject(new SubjectImpl("id123", "name", "token123", false));
+    context.setSubject(
+        new SubjectImpl("id123", Collections.emptyList(), "name", "token123", false));
     EnvironmentContext.setCurrent(context);
 
     // when

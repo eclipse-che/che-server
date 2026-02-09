@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.google.common.net.HttpHeaders;
+import java.util.Collections;
 import java.util.Optional;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.UnauthorizedException;
@@ -76,7 +77,7 @@ public class GitlabOAuthTokenFetcherTest {
       expectedExceptionsMessageRegExp =
           "Current token doesn't have the necessary privileges. Please make sure Che app scopes are correct and containing at least: \\[api, write_repository]")
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("oauthtoken").withScope("api repo");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
 
@@ -103,7 +104,7 @@ public class GitlabOAuthTokenFetcherTest {
       expectedExceptions = ScmUnauthorizedException.class,
       expectedExceptionsMessageRegExp = "Username is not authorized in gitlab OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
 
     oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
@@ -111,7 +112,7 @@ public class GitlabOAuthTokenFetcherTest {
 
   @Test
   public void shouldReturnToken() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken =
         newDto(OAuthToken.class).withToken("oauthtoken").withScope("api write_repository openid");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
@@ -143,7 +144,7 @@ public class GitlabOAuthTokenFetcherTest {
           "OAuth 2 is not configured for SCM provider \\[gitlab\\]. For details, refer "
               + "the documentation in section of SCM providers configuration.")
   public void shouldThrowScmCommunicationExceptionWhenNoOauthIsConfigured() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     GitlabOAuthTokenFetcher localFetcher =
         new GitlabOAuthTokenFetcher(wireMockServer.url("/"), "http://che.api", null);
     localFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
@@ -185,7 +186,7 @@ public class GitlabOAuthTokenFetcherTest {
       expectedExceptions = ScmUnauthorizedException.class,
       expectedExceptionsMessageRegExp = "Username is not authorized in gitlab OAuth provider.")
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
-    Subject subject = new SubjectImpl("Username", "id1", "token", false);
+    Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("token").withScope("");
     when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
     stubFor(

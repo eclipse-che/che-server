@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -21,6 +21,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import io.restassured.response.Response;
+import java.util.Collections;
 import java.util.List;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
@@ -191,7 +192,7 @@ public class LoggerServiceTest {
     @Override
     public void doFilter(GenericContainerRequest request) {
       EnvironmentContext.getCurrent()
-          .setSubject(new SubjectImpl(NAMESPACE, USER_ID, "token", false));
+          .setSubject(new SubjectImpl(NAMESPACE, Collections.emptyList(), USER_ID, "token", false));
     }
   }
 }

@@ -114,7 +114,8 @@ public class OidcTokenInitializationFilter
       } else if (groupClaim instanceof String) {
         groups.add(groupPrefix + groupClaim);
       } else {
-        LOG.warn("Groups claim '{}' is not a String or Iterable, skipping groups", this.groupsClaim);
+        LOG.warn(
+            "Groups claim '{}' is not a String or Iterable, skipping groups", this.groupsClaim);
       }
     }
 

@@ -106,14 +106,16 @@ public class OidcTokenInitializationFilter
 
     List<String> groups = new ArrayList<>();
     Object groupClaim = claims.get(this.groupsClaim);
-    if (groupClaim instanceof Iterable) {
-      for (Object group : ((Iterable<?>) groupClaim)) {
-        groups.add(groupPrefix + group);
+    if (groupClaim != null) {
+      if (groupClaim instanceof Iterable) {
+        for (Object group : ((Iterable<?>) groupClaim)) {
+          groups.add(groupPrefix + group);
+        }
+      } else if (groupClaim instanceof String) {
+        groups.add(groupPrefix + groupClaim);
+      } else {
+        LOG.warn("Groups claim '{}' is not a String or Iterable, skipping groups", this.groupsClaim);
       }
-    } else if (groupClaim instanceof String) {
-      groups.add(groupPrefix + groupClaim);
-    } else {
-      LOG.warn("Groups claim '{}' is not a String or Iterable, skipping groups", this.groupsClaim);
     }
 
     return new AuthorizedSubject(

@@ -101,3 +101,6 @@ tests/e2e/load-test-folder
 
 # Develocity
 .mvn/.develocity/develocity-workspace-id
+
+# typescript-dto
+/typescript-dto/.pnp.cjs

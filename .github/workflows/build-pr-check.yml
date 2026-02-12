@@ -13,6 +13,7 @@ on: [push, pull_request]
 
 env:
   PR_IMAGE_TAG: pr-${{ github.event.pull_request.number }}
+  ORGANIZATION: quay.io/eclipse
 
 jobs:
   build:
@@ -49,3 +50,24 @@ jobs:
     - name: Build and push images
       if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
       run: ./build/build.sh --tag:${{ env.PR_IMAGE_TAG }} --build-platforms:linux/amd64,linux/ppc64le,linux/arm64,linux/s390x --builder:podman --push-image
+    -
+      name: Comment with image name
+      uses: actions/github-script@v7
+      if: ${{ github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork }}
+      with:
+        script: |
+          const { issue: { number: issue_number }, repo: { owner, repo } } = context;
+          const cheServerImage = "${{ env.ORGANIZATION }}/che-server:${{ env.PR_IMAGE_TAG }}";
+          const patchCommand = `kubectl patch -n eclipse-che "checluster/eclipse-che" --type=json -p="[{\"op\": \"replace\", \"path\": \"/spec/components/cheServer/deployment\", \"value\": {containers: [{image: \"${cheServerImage}\", name: che}]}}]"`;
+          const text = `
+          Docker image build succeeded: **${cheServerImage}**
+          <details>
+          <summary>kubectl patch command</summary>
+          
+          \`\`\`bash
+          ${patchCommand}
+          \`\`\`
+          
+          </details>
+          `;
+          github.rest.issues.createComment({ issue_number, owner, repo, body: text });

@@ -6,5 +6,6 @@
   "license": "EPL-2.0",
   "files": [
     "index.d.ts"
-  ]
+  ],
+  "packageManager": "yarn@4.12.0"
 }

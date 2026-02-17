@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,7 +15,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -84,10 +83,8 @@ public class CredentialsSecretConfiguratorTest {
             new KubernetesMixedDispatcher(responses),
             true);
     kubernetesMockServer.init();
-    kubernetesClient = spy(kubernetesMockServer.createClient());
-
-    KubernetesClient client = spy(kubernetesClient);
-    when(cheServerKubernetesClientFactory.create()).thenReturn(client);
+    kubernetesClient = kubernetesMockServer.createClient();
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubernetesClient);
 
     namespaceResolutionContext =
         new NamespaceResolutionContext(TEST_WORKSPACE_ID, TEST_USER_ID, TEST_USERNAME);

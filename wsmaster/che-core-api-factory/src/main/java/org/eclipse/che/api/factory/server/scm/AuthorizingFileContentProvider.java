@@ -41,8 +41,7 @@ import org.slf4j.LoggerFactory;
 public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     implements FileContentProvider {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(AuthorizingFileContentProvider.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AuthorizingFileContentProvider.class);
 
   protected final T remoteFactoryUrl;
   protected final PersonalAccessTokenManager personalAccessTokenManager;

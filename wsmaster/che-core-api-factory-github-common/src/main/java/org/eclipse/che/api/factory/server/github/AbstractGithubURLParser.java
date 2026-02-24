@@ -22,6 +22,10 @@ import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -133,7 +137,8 @@ public abstract class AbstractGithubURLParser {
   private boolean isApiRequestRelevant(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
-      GithubApiClient githubApiClient = new GithubApiClient(serverUrlOptional.get());
+      String serverUrl = serverUrlOptional.get();
+      GithubApiClient githubApiClient = new GithubApiClient(serverUrl);
       try {
         // If the user request catches the unauthorised error, it means that the provided url
         // belongs to GitHub.
@@ -144,14 +149,37 @@ public abstract class AbstractGithubURLParser {
         return e.getMessage().contains("Requires authentication")
             || // for older GitHub Enterprise versions
             e.getMessage().contains("Must authenticate to access this API.");
-      } catch (ScmItemNotFoundException
-          | ScmBadRequestException
-          | IllegalArgumentException
-          | ScmCommunicationException e) {
+      } catch (ScmItemNotFoundException e) {
+        // GitHub API v3 (/api/v3/user) returned 404 — this server does not expose the GitHub
+        // v3 API path. Fall back to checking the Gitea-compatible API (/api/v1/user): if that
+        // endpoint returns 401 the server is a GitHub-compatible instance (e.g. Gitea).
+        return isGiteaCompatibleServer(serverUrl);
+      } catch (ScmBadRequestException | IllegalArgumentException | ScmCommunicationException e) {
         return false;
       }
     }
     return false;
+  }
+
+  /**
+   * Returns {@code true} when the server at {@code serverUrl} exposes a Gitea-style GitHub
+   * compatible API ({@code /api/v1/user}) and requires authentication (HTTP 401).
+   */
+  private boolean isGiteaCompatibleServer(String serverUrl) {
+    try {
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(URI.create(serverUrl + "/api/v1/user"))
+              .timeout(Duration.ofSeconds(10))
+              .GET()
+              .build();
+      HttpResponse<Void> response =
+          HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.discarding());
+      return response.statusCode() == 401;
+    } catch (Exception e) {
+      LOG.debug("Failed to reach Gitea API at {}: {}", serverUrl, e.getMessage());
+      return false;
+    }
   }
 
   private Optional<String> getServerUrl(String repositoryUrl) {
@@ -439,32 +467,31 @@ public abstract class AbstractGithubURLParser {
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
     URI uri = URI.create(url.matches(format(githubSSHPatternTemplate, ".*")) ? sshToUri(url) : url);
     String scheme = uri.getScheme();
-    String host = uri.getHost();
-    // Build the authority part (host + port)
-    String authority = host != null ? host : "";
-    if (uri.getPort() > 0) {
-      authority += ":" + uri.getPort();
-    }
-    // Escape special regex characters, handling IPv6 brackets
+    String host = uri.getHost(); // IPv6 addresses are returned WITH brackets, e.g. "[fd00::1]"
+
+    // uri.getRawAuthority() already contains the correct authority string (including brackets
+    // for IPv6 and the port number), so we can quote it directly to build a literal-match regex.
+    String rawAuthority = uri.getRawAuthority();
     final String hostForRegex;
-    if (host != null && host.startsWith("[") && host.endsWith("]")) {
-      // IPv6 address - escape the brackets
-      String ipv6 = host.substring(1, host.length() - 1);
-      String escapedAuthority = "\\[" + Pattern.quote(ipv6) + "\\]";
-      if (uri.getPort() > 0) {
-        escapedAuthority += ":" + uri.getPort();
-      }
-      hostForRegex = Pattern.quote(scheme + "://") + escapedAuthority;
+    if (rawAuthority != null) {
+      hostForRegex = Pattern.quote(scheme + "://" + rawAuthority);
     } else {
+      // Fallback: build from host + port
+      String authority = host != null ? host : "";
+      if (uri.getPort() > 0) {
+        authority += ":" + uri.getPort();
+      }
       hostForRegex = Pattern.quote(scheme + "://" + authority);
     }
+
     Matcher matcher = compile(format(githubPatternTemplate, hostForRegex)).matcher(url);
     if (matcher.matches()) {
       return Optional.of(matcher);
     } else {
+      // For SSH git@ URLs the host is used without brackets even for IPv6.
       final String hostOnlyForRegex;
       if (host != null && host.startsWith("[") && host.endsWith("]")) {
-        // For SSH pattern, use the IP without brackets
+        // Strip brackets that uri.getHost() includes for IPv6.
         hostOnlyForRegex = Pattern.quote(host.substring(1, host.length() - 1));
       } else {
         hostOnlyForRegex = host != null ? Pattern.quote(host) : "";

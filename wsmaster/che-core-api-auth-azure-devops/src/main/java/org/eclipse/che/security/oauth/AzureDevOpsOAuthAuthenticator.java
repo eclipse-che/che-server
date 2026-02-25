@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2025 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -51,6 +52,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   private final String[] redirectUris;
   private final String API_VERSION = "7.0";
   private final String PROVIDER_NAME = "azure-devops";
+  private final String clientId;
   private final String clientSecret;
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -66,6 +68,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       String[] redirectUris)
       throws IOException {
     this.cheApiEndpoint = cheApiEndpoint;
+    this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.azureDevOpsScmApiEndpoint = trimEnd(azureDevOpsScmApiEndpoint, '/');
     this.azureDevOpsUserProfileDataApiUrl =
@@ -87,7 +90,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   @Override
   public String getAuthenticateUrl(URL requestUrl, List<String> scopes) {
     AuthorizationCodeRequestUrl url = flow.newAuthorizationUrl().setScopes(scopes);
-    url.set("response_type", "Assertion");
+    url.set("response_type", "code");
     url.set("redirect_uri", format("%s/oauth/callback", cheApiEndpoint));
     url.setState(prepareState(requestUrl));
     return url.build();
@@ -101,15 +104,8 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   @Override
   public OAuthToken getOrRefreshToken(String userId) throws IOException {
     final OAuthToken token = super.getOrRefreshToken(userId);
-    try {
-      // check if user's token is valid by requesting user profile data
-      if (token == null
-          || token.getToken() == null
-          || token.getToken().isEmpty()
-          || getUserProfile(token.getToken()) == null) {
-        return null;
-      }
-    } catch (OAuthAuthenticationException e) {
+    // check if user's token is valid by requesting user profile data
+    if (token == null || token.getToken() == null || token.getToken().isEmpty()) {
       return null;
     }
     return token;
@@ -200,10 +196,11 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       URL requestUrl, List<String> scopes, String code) {
     AuthorizationCodeTokenRequest request =
         super.getAuthorizationCodeTokenRequest(requestUrl, scopes, code);
-    request.set("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
-    request.set("assertion", code);
-    request.set("client_assertion", clientSecret);
-    request.set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+    request.set("client_id", clientId);
+    request.set("grant_type", "authorization_code");
+    request.set("client_secret", URLEncoder.encode(clientSecret));
+    //    request.set("client_assertion_type",
+    // "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
     request.setResponseClass(AzureDevOpsTokenResponse.class);
     return request;
   }

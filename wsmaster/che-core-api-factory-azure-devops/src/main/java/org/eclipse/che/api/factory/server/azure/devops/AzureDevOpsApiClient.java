@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -117,12 +117,16 @@ public class AzureDevOpsApiClient {
           ScmCommunicationException,
           ScmBadRequestException,
           ScmUnauthorizedException {
-    final HttpRequest userDataRequest =
-        HttpRequest.newBuilder(URI.create(url))
-            .headers("Authorization", authorizationHeader)
-            .timeout(DEFAULT_HTTP_TIMEOUT)
-            .build();
-
+    final HttpRequest userDataRequest;
+    try {
+      userDataRequest =
+          HttpRequest.newBuilder(URI.create(url))
+              .headers("Authorization", authorizationHeader)
+              .timeout(DEFAULT_HTTP_TIMEOUT)
+              .build();
+    } catch (IllegalArgumentException e) {
+      throw new ScmBadRequestException(e.getMessage());
+    }
     LOG.trace("executeRequest={}", userDataRequest);
     return executeRequest(
         httpClient,

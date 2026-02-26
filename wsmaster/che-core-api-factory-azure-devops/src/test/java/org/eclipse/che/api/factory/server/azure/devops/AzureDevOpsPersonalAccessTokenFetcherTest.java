@@ -174,6 +174,21 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
   }
 
   @Test
+  public void shouldNotValidateSAASPersonalAccessToken() throws Exception {
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
+            wireMockServer.url("/"),
+            "azure-devops",
+            "token-name",
+            "tid-23434",
+            azureDevOpsToken,
+            "invalid organization");
+
+    Optional<Pair<Boolean, String>> valid = personalAccessTokenFetcher.isValid(params);
+    assertTrue(valid.isEmpty());
+  }
+
+  @Test
   public void shouldValidateServerPersonalAccessToken() throws Exception {
     personalAccessTokenFetcher =
         new AzureDevOpsPersonalAccessTokenFetcher(

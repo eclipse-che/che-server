@@ -36,12 +36,12 @@ public class KubernetesOIDCAuthorizationCheckerImpl implements AuthorizationChec
       @Nullable @Named("che.infra.kubernetes.advanced_authorization.allow_groups")
           String allowGroups,
       @Nullable @Named("che.infra.kubernetes.advanced_authorization.deny_users") String denyUsers,
-      @Nullable @Named("che.infra.kubernetes.advanced_authorization.deny_groups")
-          String denyGroups) {
-    this.allowUsers = strToSet(allowUsers);
-    this.allowGroups = strToSet(allowGroups);
-    this.denyUsers = strToSet(denyUsers);
-    this.denyGroups = strToSet(denyGroups);
+      @Nullable @Named("che.infra.kubernetes.advanced_authorization.deny_groups") String denyGroups,
+      @Named("che.infra.kubernetes.advanced_authorization.delimiter") String delimiter) {
+    this.allowUsers = strToSet(allowUsers, delimiter);
+    this.allowGroups = strToSet(allowGroups, delimiter);
+    this.denyUsers = strToSet(denyUsers, delimiter);
+    this.denyGroups = strToSet(denyGroups, delimiter);
   }
 
   public boolean isAuthorized(Subject subject) {

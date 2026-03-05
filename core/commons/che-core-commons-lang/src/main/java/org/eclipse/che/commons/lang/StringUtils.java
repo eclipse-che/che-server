@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -101,8 +101,19 @@ public class StringUtils {
 
   /** Parse string to set of strings. String should be comma separated. Whitespaces are trimmed. */
   public static Set<String> strToSet(String str) {
+    return strToSet(str, ",");
+  }
+
+  /**
+   * Parse string to set of strings using the specified separator. Whitespaces are trimmed.
+   *
+   * @param str the string to parse
+   * @param delimiter the delimiter to split on
+   * @return set of strings
+   */
+  public static Set<String> strToSet(String str, String delimiter) {
     if (!isNullOrEmpty(str)) {
-      return Sets.newHashSet(Splitter.on(",").trimResults().omitEmptyStrings().split(str));
+      return Sets.newHashSet(Splitter.on(delimiter).trimResults().omitEmptyStrings().split(str));
     } else {
       return Collections.emptySet();
     }

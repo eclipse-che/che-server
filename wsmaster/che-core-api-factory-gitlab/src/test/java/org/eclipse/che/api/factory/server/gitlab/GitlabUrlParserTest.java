@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -87,6 +87,220 @@ public class GitlabUrlParserTest {
     GitlabUrl gitlabUrl =
         gitlabUrlParser.parse("https://gitlab-server.com/scm/user/project/test.git", null);
     assertEquals(gitlabUrl.getProviderUrl(), "https://gitlab-server.com/scm");
+  }
+
+  @Test
+  public void shouldGetProviderUrlWithExtraSegmentOnIpv6Endpoint() throws ApiException {
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]/scm",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]/scm/user/project/test.git", null);
+    assertEquals(gitlabUrl.getProviderUrl(), "https://[2001:db8::1]/scm");
+  }
+
+  @Test
+  public void shouldGetProviderUrlWithExtraSegmentOnIpv6EndpointWithPort() throws ApiException {
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]:8443/scm",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]:8443/scm/user/project/test.git", null);
+    assertEquals(gitlabUrl.getProviderUrl(), "https://[2001:db8::1]:8443/scm");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithoutExtraSegment() throws ApiException {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse("https://[2001:db8::1]/user/project.git", null);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+    assertEquals(gitlabUrl.getProviderUrl(), "https://[2001:db8::1]");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithBranch() throws ApiException {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]/user/project/-/tree/feature-branch", null);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+    assertEquals(gitlabUrl.getBranch(), "feature-branch");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithBranchContainingSlash() throws ApiException {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]/user/project/-/tree/feature/my-branch", null);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+    assertEquals(gitlabUrl.getBranch(), "feature/my-branch");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithRevisionParam() throws ApiException {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]/user/project.git", "my-branch");
+
+    // then
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+    assertEquals(gitlabUrl.getBranch(), "my-branch");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithSubgroups() throws ApiException {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]/group/subgroup/project.git", null);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "group/subgroup/project");
+  }
+
+  @Test
+  public void shouldParseIpv6LoopbackAddress() throws ApiException {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[::1]", devfileFilenamesProvider, mock(PersonalAccessTokenManager.class));
+
+    // when
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse("https://[::1]/user/project.git", null);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+    assertEquals(gitlabUrl.getProviderUrl(), "https://[::1]");
+  }
+
+  @Test
+  public void shouldParseIpv6FullFormAddress() throws ApiException {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:0db8:0000:0000:0000:0000:0000:0001]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse(
+            "https://[2001:0db8:0000:0000:0000:0000:0000:0001]/user/project.git", null);
+
+    // then
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+  }
+
+  @Test
+  public void shouldValidateIpv6Url() {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when/then
+    assertTrue(gitlabUrlParser.isValid("https://[2001:db8::1]/user/project.git"));
+  }
+
+  @Test
+  public void shouldValidateIpv6UrlWithPort() {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]:8443",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when/then
+    assertTrue(gitlabUrlParser.isValid("https://[2001:db8::1]:8443/user/project.git"));
+  }
+
+  @Test
+  public void shouldValidateIpv6UrlWithBranch() {
+    // given
+    gitlabUrlParser =
+        new GitlabUrlParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            mock(PersonalAccessTokenManager.class));
+
+    // when/then
+    assertTrue(gitlabUrlParser.isValid("https://[2001:db8::1]/user/project/-/tree/master"));
+  }
+
+  @Test
+  public void shouldParseIpv6UrlViaDynamicPatternMatching() throws ApiException {
+    // The parser is configured for gitlab1.com (via setUp), but getPatternMatcherByUrl()
+    // dynamically creates a pattern from the URL itself. This exercises the fixed
+    // IPv6 bracket handling in getPatternMatcherByUrl() -- the code path where the
+    // double-bracketing bug (Issue #4 in the verdict) was fixed.
+    GitlabUrl gitlabUrl = gitlabUrlParser.parse("https://[2001:db8::1]/user/project.git", null);
+
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlViaDynamicPatternMatchingWithBranch() throws ApiException {
+    // Exercises getPatternMatcherByUrl() dynamic path with IPv6 and branch
+    GitlabUrl gitlabUrl =
+        gitlabUrlParser.parse("https://[2001:db8::1]/user/project/-/tree/feature-branch", null);
+
+    assertEquals(gitlabUrl.getProject(), "project");
+    assertEquals(gitlabUrl.getSubGroups(), "user/project");
+    assertEquals(gitlabUrl.getBranch(), "feature-branch");
   }
 
   @Test

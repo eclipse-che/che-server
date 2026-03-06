@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -190,15 +190,24 @@ public class GithubUrl extends DefaultFactoryUrl {
   public String rawFileLocation(String fileName) {
     String branchName = latestCommit != null ? latestCommit : branch != null ? branch : "HEAD";
 
+    final String rawBaseUrl;
+    if (HOSTNAME.equals(serverUrl)) {
+      rawBaseUrl = "https://raw.githubusercontent.com";
+    } else {
+      // IPv6 addresses (recognised by "://[") cannot carry a "raw." subdomain prefix.
+      // Treat them the same as servers with subdomain isolation disabled.
+      boolean isIPv6 = serverUrl.contains("://[");
+      if (disableSubdomainIsolation || isIPv6) {
+        rawBaseUrl = serverUrl + "/raw";
+      } else {
+        rawBaseUrl =
+            serverUrl.substring(0, serverUrl.indexOf("://") + 3)
+                + "raw."
+                + serverUrl.substring(serverUrl.indexOf("://") + 3);
+      }
+    }
     return new StringJoiner("/")
-        .add(
-            HOSTNAME.equals(serverUrl)
-                ? "https://raw.githubusercontent.com"
-                : disableSubdomainIsolation
-                    ? serverUrl + "/raw"
-                    : serverUrl.substring(0, serverUrl.indexOf("://") + 3)
-                        + "raw."
-                        + serverUrl.substring(serverUrl.indexOf("://") + 3))
+        .add(rawBaseUrl)
         .add(username)
         .add(repository)
         .add(branchName)

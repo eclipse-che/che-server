@@ -84,7 +84,7 @@ public class OpenShiftAuthorizationCheckerTest {
     // give
     OpenShiftAuthorizationCheckerImpl authorizationChecker =
         new OpenShiftAuthorizationCheckerImpl(
-            allowedUsers, allowedGroups, deniedUsers, deniedGroups, clientFactory);
+            allowedUsers, allowedGroups, deniedUsers, deniedGroups, ",", clientFactory);
     groups.forEach(group -> client.resources(Group.class).create(group));
 
     // when

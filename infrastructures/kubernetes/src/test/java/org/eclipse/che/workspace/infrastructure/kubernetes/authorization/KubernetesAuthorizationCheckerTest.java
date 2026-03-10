@@ -42,7 +42,7 @@ public class KubernetesAuthorizationCheckerTest {
     // give
     KubernetesOIDCAuthorizationCheckerImpl authorizationChecker =
         new KubernetesOIDCAuthorizationCheckerImpl(
-            allowedUsers, allowedGroups, deniedUsers, deniedGroups);
+            allowedUsers, allowedGroups, deniedUsers, deniedGroups, ",");
 
     // when
     boolean isAuthorized = authorizationChecker.isAuthorized(subject);

@@ -1885,25 +1885,6 @@
                         </dependency>
                     </dependencies>
                 </plugin>
-                <plugin>
-                    <groupId>com.gradle</groupId>
-                    <artifactId>develocity-maven-extension</artifactId>
-                    <configuration>
-                        <develocity>
-                            <normalization>
-                                <runtimeClassPath>
-                                    <metaInf>
-                                        <ignoredAttributes>
-                                            <ignore>Implementation-Version</ignore>
-                                            <ignore>Date</ignore>
-                                            <ignore>SCM-Revision</ignore>
-                                        </ignoredAttributes>
-                                    </metaInf>
-                                </runtimeClassPath>
-                            </normalization>
-                        </develocity>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>

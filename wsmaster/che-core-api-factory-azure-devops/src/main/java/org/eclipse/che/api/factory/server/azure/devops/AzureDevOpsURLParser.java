@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -121,10 +121,45 @@ public class AzureDevOpsURLParser {
       substring = repositoryUrl.substring(6);
     }
     if (!isNullOrEmpty(substring)) {
+      // Handle IPv6 addresses in SSH URLs (e.g., ssh://[2001:db8::1]:port/...)
+      if (substring.startsWith("[")) {
+        int closingBracket = substring.indexOf(']');
+        if (closingBracket > 0) {
+          return Optional.of("https://" + substring.substring(0, closingBracket + 1));
+        }
+      }
       return Optional.of(
           "https://"
               + substring.substring(
                   0, substring.contains(":") ? substring.indexOf(":") : substring.indexOf("/")));
+    }
+    // Use URI parsing to properly handle IPv6 addresses
+    try {
+      URI uri = URI.create(repositoryUrl);
+      if (uri.getScheme() != null && uri.getHost() != null) {
+        String authority = uri.getRawAuthority();
+        if (authority == null) {
+          String host = uri.getHost();
+          boolean ipv6 = host != null && host.contains(":");
+          String hostForUrl = ipv6 ? "[" + host + "]" : host;
+          int port = uri.getPort();
+          authority = port == -1 ? hostForUrl : hostForUrl + ":" + port;
+        }
+
+        if (authority != null) {
+          String serverUrl = uri.getScheme() + "://" + authority;
+          // Remove path and query from the server URL
+          int authorityIdx = repositoryUrl.indexOf(authority);
+          if (authorityIdx >= 0) {
+            int pathIndex = authorityIdx + authority.length();
+            if (pathIndex < repositoryUrl.length() && repositoryUrl.charAt(pathIndex) == '/') {
+              return Optional.of(serverUrl);
+            }
+          }
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      // Fall through to old logic if URI parsing fails
     }
     // Otherwise, extract the base url from the given repository url by cutting the url after the
     // first slash.
@@ -137,16 +172,28 @@ public class AzureDevOpsURLParser {
   }
 
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
-    String host = URI.create(url).getHost();
-    Matcher matcher = compile(format(azureDevOpsPatternTemplate, host)).matcher(url);
+    URI uri = URI.create(url);
+    String host = uri.getHost();
+    // Handle IPv6 addresses: escape brackets for regex
+    final String hostForRegex;
+    if (host != null && host.startsWith("[") && host.endsWith("]")) {
+      // IPv6 address - escape the brackets
+      hostForRegex = "\\[" + Pattern.quote(host.substring(1, host.length() - 1)) + "\\]";
+    } else if (host != null) {
+      // Regular hostname - escape special regex characters
+      hostForRegex = Pattern.quote(host);
+    } else {
+      hostForRegex = "";
+    }
+    Matcher matcher = compile(format(azureDevOpsPatternTemplate, hostForRegex)).matcher(url);
     if (matcher.matches()) {
       return Optional.of(matcher);
     } else {
-      matcher = compile(format(azureSSHDevOpsPatternTemplate, host)).matcher(url);
+      matcher = compile(format(azureSSHDevOpsPatternTemplate, hostForRegex)).matcher(url);
       if (matcher.matches()) {
         return Optional.of(matcher);
       } else {
-        matcher = compile(format(azureSSHDevOpsServerPatternTemplate, host)).matcher(url);
+        matcher = compile(format(azureSSHDevOpsServerPatternTemplate, hostForRegex)).matcher(url);
       }
       return matcher.matches() ? Optional.of(matcher) : Optional.empty();
     }
@@ -158,18 +205,14 @@ public class AzureDevOpsURLParser {
   }
 
   public AzureDevOpsUrl parse(String url, @Nullable String revision) {
-    Matcher matcher;
-    boolean isHTTPSUrl = azureDevOpsPattern.matcher(url).matches();
-    if (isHTTPSUrl) {
-      matcher = azureDevOpsPattern.matcher(url);
-    } else if (azureSSHDevOpsPattern.matcher(url).matches()) {
+    Matcher matcher = azureDevOpsPattern.matcher(url);
+    boolean isHTTPSUrl = matcher.matches();
+    if (!isHTTPSUrl) {
       matcher = azureSSHDevOpsPattern.matcher(url);
-    } else {
-      matcher = getPatternMatcherByUrl(url).orElseThrow(() -> buildIllegalArgumentException(url));
-      isHTTPSUrl = url.startsWith("http");
-    }
-    if (!matcher.matches()) {
-      throw buildIllegalArgumentException(url);
+      if (!matcher.matches()) {
+        matcher = getPatternMatcherByUrl(url).orElseThrow(() -> buildIllegalArgumentException(url));
+        isHTTPSUrl = url.startsWith("http");
+      }
     }
     String serverUrl = getServerUrl(url).orElseThrow(() -> buildIllegalArgumentException(url));
     String repoName = matcher.group("repoName");

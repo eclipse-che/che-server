@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -84,8 +84,23 @@ public class BitbucketServerURLParser {
     URI uri = URI.create(repositoryUrl);
     String schema = uri.getScheme();
     String host = uri.getHost();
+    // Handle IPv6 addresses: escape brackets for regex
+    final String hostForRegex;
+    if (host != null && host.startsWith("[") && host.endsWith("]")) {
+      hostForRegex = "\\[" + Pattern.quote(host.substring(1, host.length() - 1)) + "\\]";
+    } else if (host != null) {
+      hostForRegex = Pattern.quote(host);
+    } else {
+      hostForRegex = "";
+    }
+    // Escape scheme for regex to prevent injection
+    final String schemeForRegex = schema != null ? Pattern.quote(schema) : "";
     if (bitbucketUrlPatternTemplates.stream()
-        .anyMatch(t -> Pattern.compile(format(t, schema, host)).matcher(repositoryUrl).matches())) {
+        .anyMatch(
+            t ->
+                Pattern.compile(format(t, schemeForRegex, hostForRegex))
+                    .matcher(repositoryUrl)
+                    .matches())) {
       try {
         Optional<PersonalAccessToken> token =
             personalAccessTokenManager.get(
@@ -119,13 +134,25 @@ public class BitbucketServerURLParser {
   private List<Pattern> getUrlPatterns(String url) {
     URI uri = URI.create(url);
     ArrayList<Pattern> patterns = new ArrayList<>();
+    String rawHost = uri.getHost();
+    // Handle IPv6 addresses: escape brackets for regex
+    final String hostForRegex;
+    if (rawHost != null && rawHost.startsWith("[") && rawHost.endsWith("]")) {
+      hostForRegex = "\\[" + Pattern.quote(rawHost.substring(1, rawHost.length() - 1)) + "\\]";
+    } else if (rawHost != null) {
+      hostForRegex = Pattern.quote(rawHost);
+    } else {
+      hostForRegex = "";
+    }
+    String portSuffix = uri.getPort() > 0 ? ":" + uri.getPort() : "";
+    String pathSuffix = uri.getPath() != null ? Pattern.quote(uri.getPath()) : "";
     bitbucketUrlPatternTemplates.forEach(
         t -> {
           String scheme = t.contains("git@") ? "ssh" : uri.getScheme();
-          String host =
-              uri.getHost() + (uri.getPort() > 0 ? ":" + uri.getPort() : "") + uri.getPath();
-          ;
-          patterns.add(Pattern.compile(format(t, scheme, host)));
+          // Escape scheme for regex to prevent injection
+          String schemeForRegex = scheme != null ? Pattern.quote(scheme) : "";
+          String host = hostForRegex + portSuffix + pathSuffix;
+          patterns.add(Pattern.compile(format(t, schemeForRegex, host)));
         });
     return patterns;
   }
@@ -152,9 +179,43 @@ public class BitbucketServerURLParser {
   private String getServerUrl(String repositoryUrl) {
     if (repositoryUrl.startsWith("ssh://git@")) {
       String substring = repositoryUrl.substring(10);
+      // Handle IPv6 addresses in SSH URLs (e.g., ssh://git@[2001:db8::1]:port/...)
+      if (substring.startsWith("[")) {
+        int closingBracket = substring.indexOf(']');
+        if (closingBracket > 0) {
+          return "https://" + substring.substring(0, closingBracket + 1);
+        }
+      }
       return "https://"
           + substring.substring(
               0, substring.contains(":") ? substring.indexOf(":") : substring.indexOf("/"));
+    }
+    // Use URI parsing to properly handle IPv6 addresses
+    try {
+      URI uri = URI.create(repositoryUrl);
+      if (uri.getScheme() != null && uri.getHost() != null) {
+        String authority = uri.getRawAuthority();
+        if (authority == null) {
+          String host = uri.getHost();
+          boolean ipv6 = host != null && host.contains(":");
+          String hostForUrl = ipv6 ? "[" + host + "]" : host;
+          int port = uri.getPort();
+          authority = port == -1 ? hostForUrl : hostForUrl + ":" + port;
+        }
+
+        if (authority != null) {
+          String serverUrl = uri.getScheme() + "://" + authority;
+          int authorityIdx = repositoryUrl.indexOf(authority);
+          if (authorityIdx >= 0) {
+            int pathIndex = authorityIdx + authority.length();
+            if (pathIndex < repositoryUrl.length() && repositoryUrl.charAt(pathIndex) == '/') {
+              return serverUrl;
+            }
+          }
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      // Fall through to old logic if URI parsing fails
     }
     return repositoryUrl.substring(
         0,
@@ -171,8 +232,26 @@ public class BitbucketServerURLParser {
     URI uri = URI.create(url);
     String scheme = uri.getScheme();
     String host = uri.getHost();
+    // Handle IPv6 addresses: escape brackets for regex
+    final String hostForRegex;
+    if (host != null && host.startsWith("[") && host.endsWith("]")) {
+      // IPv6 address - strip brackets, quote the address, re-add escaped brackets
+      hostForRegex = "\\[" + Pattern.quote(host.substring(1, host.length() - 1)) + "\\]";
+    } else if (host != null) {
+      hostForRegex = Pattern.quote(host);
+    } else {
+      hostForRegex = "";
+    }
+    // Append port if present
+    String hostWithPort = hostForRegex;
+    if (uri.getPort() > 0) {
+      hostWithPort += ":" + uri.getPort();
+    }
+    final String finalHostWithPort = hostWithPort;
+    // Escape scheme for regex to prevent injection
+    final String schemeForRegex = scheme != null ? Pattern.quote(scheme) : "";
     return bitbucketUrlPatternTemplates.stream()
-        .map(t -> compile(format(t, scheme, host)).matcher(url))
+        .map(t -> compile(format(t, schemeForRegex, finalHostWithPort)).matcher(url))
         .filter(Matcher::matches)
         .findAny();
   }

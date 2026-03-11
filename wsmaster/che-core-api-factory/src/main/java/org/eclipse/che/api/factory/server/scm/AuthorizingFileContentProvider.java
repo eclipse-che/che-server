@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,6 +31,8 @@ import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Common implementation of file content provider which is able to access content of private
@@ -38,6 +40,8 @@ import org.eclipse.che.commons.annotation.Nullable;
  */
 public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     implements FileContentProvider {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AuthorizingFileContentProvider.class);
 
   protected final T remoteFactoryUrl;
   protected final PersonalAccessTokenManager personalAccessTokenManager;
@@ -92,13 +96,23 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
         }
         return urlFetcher.fetch(requestURL, authorization);
       }
-    } catch (UnknownScmProviderException e) {
+    } catch (UnknownScmProviderException
+        | ScmConfigurationPersistenceException
+        | UnsatisfiedScmPreconditionException e) {
+      // No matching SCM provider or Kubernetes credentials unavailable (e.g. standalone mode).
+      // Fall back to an unauthenticated fetch so public repositories still work.
+      if (e instanceof ScmConfigurationPersistenceException
+          || e instanceof UnsatisfiedScmPreconditionException) {
+        LOG.error(
+            "Kubernetes credentials unavailable (e.g. standalone mode): {}. "
+                + "Falling back to unauthenticated fetch for {}",
+            e.getMessage(),
+            requestURL);
+      }
       return fetchContentWithoutToken(requestURL);
     } catch (ScmCommunicationException e) {
       return toIOException(fileURL, e);
-    } catch (ScmUnauthorizedException
-        | ScmConfigurationPersistenceException
-        | UnsatisfiedScmPreconditionException e) {
+    } catch (ScmUnauthorizedException e) {
       throw new DevfileException(e.getMessage(), e);
     }
   }

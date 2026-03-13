@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,18 +38,20 @@ public class AzureDevOpsOAuthAuthenticatorProvider implements Provider<OAuthAuth
   @Inject
   public AzureDevOpsOAuthAuthenticatorProvider(
       @Named("che.api") String cheApiEndpoint,
+      @Nullable @Named("che.oauth2.azure.devops.tenantid_filepath") String azureDevOpsTennantIdPath,
       @Nullable @Named("che.oauth2.azure.devops.clientid_filepath") String azureDevOpsClientIdPath,
       @Nullable @Named("che.oauth2.azure.devops.clientsecret_filepath")
           String azureDevOpsClientSecretPath,
       @Named("che.integration.azure.devops.api_endpoint") String azureDevOpsApiEndpoint,
       @Named("che.integration.azure.devops.scm.api_endpoint") String azureDevOpsScmApiEndpoint,
-      @Named("che.oauth.azure.devops.authuri") String authUri,
-      @Named("che.oauth.azure.devops.tokenuri") String tokenUri,
+      @Named("che.oauth.azure.devops.authuri.template") String authUri,
+      @Named("che.oauth.azure.devops.tokenuri.template") String tokenUri,
       @Named("che.oauth.azure.devops.redirecturis") String[] redirectUris)
       throws IOException {
     authenticator =
         getOAuthAuthenticator(
             cheApiEndpoint,
+            azureDevOpsTennantIdPath,
             azureDevOpsClientIdPath,
             azureDevOpsClientSecretPath,
             azureDevOpsApiEndpoint,
@@ -67,27 +69,31 @@ public class AzureDevOpsOAuthAuthenticatorProvider implements Provider<OAuthAuth
 
   private OAuthAuthenticator getOAuthAuthenticator(
       String cheApiEndpoint,
+      String tenantIdPath,
       String clientIdPath,
       String clientSecretPath,
       String azureDevOpsApiEndpoint,
       String azureDevOpsScmApiEndpoint,
-      String authUri,
-      String tokenUri,
+      String authUriTemplate,
+      String tokenUriTemplate,
       String[] redirectUris)
       throws IOException {
 
-    if (!isNullOrEmpty(clientIdPath) && !isNullOrEmpty(clientSecretPath)) {
+    if (!isNullOrEmpty(clientIdPath)
+        && !isNullOrEmpty(clientSecretPath)
+        && !isNullOrEmpty(tenantIdPath)) {
+      final String tenantId = Files.readString(Path.of(tenantIdPath)).trim();
       final String clientId = Files.readString(Path.of(clientIdPath)).trim();
       final String clientSecret = Files.readString(Path.of(clientSecretPath)).trim();
-      if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {
+      if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret) && !isNullOrEmpty(tenantId)) {
         return new AzureDevOpsOAuthAuthenticator(
             cheApiEndpoint,
             clientId,
             clientSecret,
             azureDevOpsApiEndpoint,
             azureDevOpsScmApiEndpoint,
-            authUri,
-            tokenUri,
+            String.format(authUriTemplate, tenantId),
+            String.format(tokenUriTemplate, tenantId),
             redirectUris);
       }
     }

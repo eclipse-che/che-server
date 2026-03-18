@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,10 @@ import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -133,7 +137,8 @@ public abstract class AbstractGithubURLParser {
   private boolean isApiRequestRelevant(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
-      GithubApiClient githubApiClient = new GithubApiClient(serverUrlOptional.get());
+      String serverUrl = serverUrlOptional.get();
+      GithubApiClient githubApiClient = new GithubApiClient(serverUrl);
       try {
         // If the user request catches the unauthorised error, it means that the provided url
         // belongs to GitHub.
@@ -144,14 +149,37 @@ public abstract class AbstractGithubURLParser {
         return e.getMessage().contains("Requires authentication")
             || // for older GitHub Enterprise versions
             e.getMessage().contains("Must authenticate to access this API.");
-      } catch (ScmItemNotFoundException
-          | ScmBadRequestException
-          | IllegalArgumentException
-          | ScmCommunicationException e) {
+      } catch (ScmItemNotFoundException e) {
+        // GitHub API v3 (/api/v3/user) returned 404 — this server does not expose the GitHub
+        // v3 API path. Fall back to checking the Gitea-compatible API (/api/v1/user): if that
+        // endpoint returns 401 the server is a GitHub-compatible instance (e.g. Gitea).
+        return isGiteaCompatibleServer(serverUrl);
+      } catch (ScmBadRequestException | IllegalArgumentException | ScmCommunicationException e) {
         return false;
       }
     }
     return false;
+  }
+
+  /**
+   * Returns {@code true} when the server at {@code serverUrl} exposes a Gitea-style GitHub
+   * compatible API ({@code /api/v1/user}) and requires authentication (HTTP 401).
+   */
+  private boolean isGiteaCompatibleServer(String serverUrl) {
+    try {
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(URI.create(serverUrl + "/api/v1/user"))
+              .timeout(Duration.ofSeconds(10))
+              .GET()
+              .build();
+      HttpResponse<Void> response =
+          HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.discarding());
+      return response.statusCode() == 401;
+    } catch (Exception e) {
+      LOG.debug("Failed to reach Gitea API at {}: {}", serverUrl, e.getMessage());
+      return false;
+    }
   }
 
   private Optional<String> getServerUrl(String repositoryUrl) {
@@ -159,7 +187,42 @@ public abstract class AbstractGithubURLParser {
     // https://<hostname extracted from the SSH url>.
     if (repositoryUrl.startsWith("git@")) {
       String substring = repositoryUrl.substring(4);
+      // Handle IPv6 addresses in SSH URLs (e.g., git@[2001:db8::1]:repo)
+      if (substring.startsWith("[")) {
+        int closingBracket = substring.indexOf(']');
+        if (closingBracket > 0) {
+          return Optional.of("https://" + substring.substring(0, closingBracket + 1));
+        }
+      }
       return Optional.of("https://" + substring.substring(0, substring.indexOf(":")));
+    }
+    // Use URI parsing to properly handle IPv6 addresses
+    try {
+      URI uri = URI.create(repositoryUrl);
+      if (uri.getScheme() != null && uri.getHost() != null) {
+        String authority = uri.getRawAuthority();
+        if (authority == null) {
+          String host = uri.getHost();
+          boolean ipv6 = host != null && host.contains(":");
+          String hostForUrl = ipv6 ? "[" + host + "]" : host;
+          int port = uri.getPort();
+          authority = port == -1 ? hostForUrl : hostForUrl + ":" + port;
+        }
+
+        if (authority != null) {
+          String serverUrl = uri.getScheme() + "://" + authority;
+          // Remove path and query from the server URL
+          int authorityIdx = repositoryUrl.indexOf(authority);
+          if (authorityIdx >= 0) {
+            int pathIndex = authorityIdx + authority.length();
+            if (pathIndex < repositoryUrl.length() && repositoryUrl.charAt(pathIndex) == '/') {
+              return Optional.of(serverUrl);
+            }
+          }
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      // Fall through to old logic if URI parsing fails
     }
     // Otherwise, extract the base url from the given repository url by cutting the url after the
     // first slash.
@@ -377,19 +440,63 @@ public abstract class AbstractGithubURLParser {
     return null;
   }
 
+  /**
+   * Converts an SSH git URL (git@host:path) to a parseable URI (ssh://git@host/path), handling IPv6
+   * addresses where colons in the address must not be replaced.
+   */
+  private static String sshToUri(String url) {
+    // Strip "git@" prefix
+    String afterAt = url.substring(4);
+    if (afterAt.startsWith("[")) {
+      // IPv6: git@[2001:db8::1]:path -> ssh://git@[2001:db8::1]/path
+      int closingBracket = afterAt.indexOf(']');
+      if (closingBracket >= 0 && closingBracket + 1 < afterAt.length()) {
+        String host = afterAt.substring(0, closingBracket + 1);
+        // Skip the colon separator after the closing bracket
+        String path = afterAt.substring(closingBracket + 1);
+        if (path.startsWith(":")) {
+          path = path.substring(1);
+        }
+        return "ssh://git@" + host + "/" + path;
+      }
+    }
+    // Regular hostname: git@host:path -> ssh://git@host/path
+    return "ssh://" + url.replace(":", "/");
+  }
+
   private Optional<Matcher> getPatternMatcherByUrl(String url) {
-    URI uri =
-        URI.create(
-            url.matches(format(githubSSHPatternTemplate, ".*"))
-                ? "ssh://" + url.replace(":", "/")
-                : url);
+    URI uri = URI.create(url.matches(format(githubSSHPatternTemplate, ".*")) ? sshToUri(url) : url);
     String scheme = uri.getScheme();
-    String host = uri.getHost();
-    Matcher matcher = compile(format(githubPatternTemplate, scheme + "://" + host)).matcher(url);
+    String host = uri.getHost(); // IPv6 addresses are returned WITH brackets, e.g. "[fd00::1]"
+
+    // uri.getRawAuthority() already contains the correct authority string (including brackets
+    // for IPv6 and the port number), so we can quote it directly to build a literal-match regex.
+    String rawAuthority = uri.getRawAuthority();
+    final String hostForRegex;
+    if (rawAuthority != null) {
+      hostForRegex = Pattern.quote(scheme + "://" + rawAuthority);
+    } else {
+      // Fallback: build from host + port
+      String authority = host != null ? host : "";
+      if (uri.getPort() > 0) {
+        authority += ":" + uri.getPort();
+      }
+      hostForRegex = Pattern.quote(scheme + "://" + authority);
+    }
+
+    Matcher matcher = compile(format(githubPatternTemplate, hostForRegex)).matcher(url);
     if (matcher.matches()) {
       return Optional.of(matcher);
     } else {
-      matcher = compile(format(githubSSHPatternTemplate, host)).matcher(url);
+      // For SSH git@ URLs the host is used without brackets even for IPv6.
+      final String hostOnlyForRegex;
+      if (host != null && host.startsWith("[") && host.endsWith("]")) {
+        // Strip brackets that uri.getHost() includes for IPv6.
+        hostOnlyForRegex = Pattern.quote(host.substring(1, host.length() - 1));
+      } else {
+        hostOnlyForRegex = host != null ? Pattern.quote(host) : "";
+      }
+      matcher = compile(format(githubSSHPatternTemplate, hostOnlyForRegex)).matcher(url);
       return matcher.matches() ? Optional.of(matcher) : Optional.empty();
     }
   }

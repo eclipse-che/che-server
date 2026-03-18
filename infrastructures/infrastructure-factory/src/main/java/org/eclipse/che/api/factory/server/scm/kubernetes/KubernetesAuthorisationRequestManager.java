@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -37,10 +37,15 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Store and retrieve rejected authorisation requests in the Kubernetes ConfigMap. */
 @Singleton
 public class KubernetesAuthorisationRequestManager implements AuthorisationRequestManager {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(KubernetesAuthorisationRequestManager.class);
+
   private final KubernetesNamespaceFactory namespaceFactory;
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private static final String SKIP_AUTHORISATION_MAP_KEY = "skip-authorisation";
@@ -83,7 +88,17 @@ public class KubernetesAuthorisationRequestManager implements AuthorisationReque
 
   @Override
   public boolean isStored(String scmProviderName) {
-    return getSkipAuthorisationValues().contains(scmProviderName);
+    try {
+      return getSkipAuthorisationValues().contains(scmProviderName);
+    } catch (Exception e) {
+      // In environments where the Kubernetes configmap cannot be read (e.g. when running
+      // che-server standalone without a properly configured service account), treat the
+      // preference as "not stored" so the factory resolver can continue processing.
+      LOG.debug(
+          "Cannot read authorisation preferences configmap ({}); defaulting to false.",
+          e.getMessage());
+      return false;
+    }
   }
 
   @Override

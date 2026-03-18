@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -98,6 +98,189 @@ public class GithubURLParserTest {
     GithubUrl githubUrl =
         githubUrlParser.parse("https://github.com/eclipse/che/tree/master/", "branch");
     assertEquals(githubUrl.getBranch(), "master");
+  }
+
+  @Test
+  public void shouldParseGithubServerUrlWithIpv6Host() throws ApiException {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[2001:db8::1]",
+            false);
+    when(githubApiClient.isConnected(eq("https://[2001:db8::1]"))).thenReturn(true);
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    // when
+    GithubUrl githubUrl = githubUrlParser.parse("https://[2001:db8::1]/eclipse/che", null);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithBranch() throws ApiException {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[2001:db8::1]",
+            false);
+    when(githubApiClient.isConnected(eq("https://[2001:db8::1]"))).thenReturn(true);
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    // when
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://[2001:db8::1]/eclipse/che/tree/feature-branch", null);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+    assertEquals(githubUrl.getBranch(), "feature-branch");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithRevisionParam() throws ApiException {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[2001:db8::1]",
+            false);
+    when(githubApiClient.isConnected(eq("https://[2001:db8::1]"))).thenReturn(true);
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    // when
+    GithubUrl githubUrl = githubUrlParser.parse("https://[2001:db8::1]/eclipse/che", "my-branch");
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+    assertEquals(githubUrl.getBranch(), "my-branch");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithPullRequestId() throws Exception {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[2001:db8::1]",
+            false);
+
+    GithubPullRequest pr =
+        new GithubPullRequest()
+            .withState("open")
+            .withHead(
+                new GithubHead()
+                    .withRef("pr-branch")
+                    .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
+                    .withRepo(new GithubRepo().withName("che")));
+    when(githubApiClient.isConnected(eq("https://[2001:db8::1]"))).thenReturn(true);
+    when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pr);
+
+    // when
+    GithubUrl githubUrl = githubUrlParser.parse("https://[2001:db8::1]/eclipse/che/pull/123", null);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+    assertEquals(githubUrl.getBranch(), "pr-branch");
+  }
+
+  @Test
+  public void shouldParseIpv6LoopbackAddress() throws ApiException {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[::1]",
+            false);
+    when(githubApiClient.isConnected(eq("https://[::1]"))).thenReturn(true);
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    // when
+    GithubUrl githubUrl = githubUrlParser.parse("https://[::1]/eclipse/che", null);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+  }
+
+  @Test
+  public void shouldParseIpv6FullFormAddress() throws ApiException {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[2001:0db8:0000:0000:0000:0000:0000:0001]",
+            false);
+    when(githubApiClient.isConnected(eq("https://[2001:0db8:0000:0000:0000:0000:0000:0001]")))
+        .thenReturn(true);
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    // when
+    GithubUrl githubUrl =
+        githubUrlParser.parse(
+            "https://[2001:0db8:0000:0000:0000:0000:0000:0001]/eclipse/che", null);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+  }
+
+  @Test
+  public void shouldParseIpv6DotGitUrl() throws ApiException {
+    // given
+    githubUrlParser =
+        new GithubURLParser(
+            personalAccessTokenManager,
+            devfileFilenamesProvider,
+            githubApiClient,
+            "https://[2001:db8::1]",
+            false);
+    when(githubApiClient.isConnected(eq("https://[2001:db8::1]"))).thenReturn(true);
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    // when
+    GithubUrl githubUrl = githubUrlParser.parse("https://[2001:db8::1]/eclipse/che.git", null);
+
+    // then
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlViaDynamicPatternMatching() throws ApiException {
+    // The parser is configured for github.com, but getPatternMatcherByUrl() dynamically
+    // creates a pattern from the URL itself, so IPv6 URLs can be parsed even when the
+    // constructor was configured with a different host.
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+
+    GithubUrl githubUrl = githubUrlParser.parse("https://[2001:db8::1]/eclipse/che", null);
+
+    assertEquals(githubUrl.getUsername(), "eclipse");
+    assertEquals(githubUrl.getRepository(), "che");
   }
 
   /** Check URLs are valid with regexp */

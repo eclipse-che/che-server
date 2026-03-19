@@ -13,11 +13,10 @@ package org.eclipse.che.workspace.infrastructure.openshift;
 
 import javax.inject.Singleton;
 
-
 /**
  * @author Sergii Leshchenko
  */
 @Singleton
-public class OpenShiftInfrastructure{
+public class OpenShiftInfrastructure {
   public static final String NAME = "openshift";
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -24,12 +24,11 @@ import org.eclipse.che.api.core.model.workspace.config.Command;
 import org.eclipse.che.api.core.model.workspace.config.Environment;
 import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
-import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.commons.annotation.Nullable;
 
 /**
  * Representation of {@link Environment} which holds internal representations of environment
- * components to ease implementation of {@link RuntimeInfrastructure}.
+ * components to ease implementation of RuntimeInfrastructure.
  *
  * <p>It is related but not really bound to some specific infrastructure. It lets an infrastructure
  * apply multiple different implementations, some of which can be considered as a "native format",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,6 @@ public class WsMasterMetricsModule extends AbstractModule {
     Multibinder<MeterBinder> meterMultibinder =
         Multibinder.newSetBinder(binder(), MeterBinder.class);
 
-    meterMultibinder.addBinding().to(WorkspaceActivityMeterBinder.class);
     meterMultibinder.addBinding().to(WorkspaceFailureMeterBinder.class);
     meterMultibinder.addBinding().to(WorkspaceStartTrackerMeterBinder.class);
     meterMultibinder.addBinding().to(WorkspaceStopTrackerMeterBinder.class);
@@ -36,6 +35,5 @@ public class WsMasterMetricsModule extends AbstractModule {
     meterMultibinder.addBinding().to(WorkspaceInterruptedStartAttemptsMeterBinder.class);
     meterMultibinder.addBinding().to(UserMeterBinder.class);
     meterMultibinder.addBinding().to(RuntimeLogMeterBinder.class);
-    meterMultibinder.addBinding().to(WorkspaceMeterBinder.class);
   }
 }

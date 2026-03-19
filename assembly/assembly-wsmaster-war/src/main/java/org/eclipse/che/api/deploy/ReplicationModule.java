@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,14 +12,11 @@
 package org.eclipse.che.api.deploy;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import java.util.Map;
 import org.eclipse.che.api.core.notification.RemoteSubscriptionStorage;
-import org.eclipse.che.api.system.server.ServiceTermination;
 import org.eclipse.che.api.workspace.server.WorkspaceLockService;
 import org.eclipse.che.api.workspace.server.WorkspaceStatusCache;
-import org.eclipse.che.multiuser.api.distributed.JGroupsServiceTermination;
 import org.eclipse.che.multiuser.api.distributed.WorkspaceStopPropagator;
 import org.eclipse.che.multiuser.api.distributed.subscription.DistributedRemoteSubscriptionStorage;
 import org.eclipse.persistence.config.CacheCoordinationProtocol;
@@ -53,10 +50,6 @@ public class ReplicationModule extends AbstractModule {
         .to(org.eclipse.che.multiuser.api.distributed.lock.JGroupsWorkspaceLockService.class);
     bind(WorkspaceStatusCache.class)
         .to(org.eclipse.che.multiuser.api.distributed.cache.JGroupsWorkspaceStatusCache.class);
-
-    Multibinder.newSetBinder(binder(), ServiceTermination.class)
-        .addBinding()
-        .to(JGroupsServiceTermination.class);
 
     bind(WorkspaceStopPropagator.class).asEagerSingleton();
   }

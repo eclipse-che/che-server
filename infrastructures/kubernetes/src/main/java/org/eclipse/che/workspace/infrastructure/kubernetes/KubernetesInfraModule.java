@@ -123,8 +123,6 @@ public class KubernetesInfraModule extends AbstractModule {
     factories.addBinding(KubernetesEnvironment.TYPE).to(KubernetesEnvironmentFactory.class);
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
-    bind(RuntimeInfrastructure.class).to(KubernetesInfrastructure.class);
-
     bind(TrustedCAProvisioner.class).to(KubernetesTrustedCAProvisioner.class);
 
     MapBinder<WorkspaceExposureType, TlsProvisioner<KubernetesEnvironment>> tlsProvisioners =
@@ -140,11 +138,6 @@ public class KubernetesInfraModule extends AbstractModule {
     bind(new TypeLiteral<KubernetesEnvironmentProvisioner<KubernetesEnvironment>>() {})
         .to(KubernetesEnvironmentProvisioner.KubernetesEnvironmentProvisionerImpl.class);
 
-    install(new FactoryModuleBuilder().build(KubernetesRuntimeContextFactory.class));
-
-    install(
-        new FactoryModuleBuilder()
-            .build(new TypeLiteral<KubernetesRuntimeFactory<KubernetesEnvironment>>() {}));
     install(new FactoryModuleBuilder().build(StartSynchronizerFactory.class));
 
     bind(RemoveNamespaceOnWorkspaceRemove.class).asEagerSingleton();

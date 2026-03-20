@@ -941,18 +941,7 @@
                 <artifactId>che-core-api-workspace</artifactId>
                 <version>${che.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.core</groupId>
-                <artifactId>che-core-api-workspace-activity</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.core</groupId>
-                <artifactId>che-core-api-workspace-activity</artifactId>
-                <version>${che.version}</version>
-                <classifier>tests</classifier>
-            </dependency>
-            <dependency>
+           <dependency>
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-workspace-shared</artifactId>
                 <version>${che.version}</version>
@@ -1160,11 +1149,6 @@
             <dependency>
                 <groupId>org.eclipse.che.multiuser</groupId>
                 <artifactId>che-multiuser-api-resource-shared</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-api-workspace-activity</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>

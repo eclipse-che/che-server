@@ -17,7 +17,6 @@ import static org.mockito.Mockito.when;
 
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentMetadataProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
@@ -68,7 +67,6 @@ public class OpenShiftEnvironmentProvisionerTest {
   @Mock private OpenShiftPreviewUrlExposer previewUrlEndpointsProvisioner;
   @Mock private VcsSslCertificateProvisioner vcsSslCertificateProvisioner;
   @Mock private GatewayRouterProvisioner gatewayRouterProvisioner;
-  @Mock private DeploymentMetadataProvisioner deploymentMetadataProvisioner;
   @Mock private OpenshiftTrustedCAProvisioner trustedCAProvisioner;
 
   private OpenShiftEnvironmentProvisioner osInfraProvisioner;
@@ -95,7 +93,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             previewUrlEndpointsProvisioner,
             vcsSslCertificateProvisioner,
             gatewayRouterProvisioner,
-            deploymentMetadataProvisioner,
             trustedCAProvisioner);
     provisionOrder =
         inOrder(
@@ -114,7 +111,6 @@ public class OpenShiftEnvironmentProvisionerTest {
             gitConfigProvisioner,
             previewUrlEndpointsProvisioner,
             gatewayRouterProvisioner,
-            deploymentMetadataProvisioner,
             trustedCAProvisioner);
   }
 
@@ -137,7 +133,6 @@ public class OpenShiftEnvironmentProvisionerTest {
     provisionOrder.verify(vcsSslCertificateProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(gitConfigProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(gatewayRouterProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
-    provisionOrder.verify(deploymentMetadataProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(trustedCAProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(uniqueNamesProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verifyNoMoreInteractions();

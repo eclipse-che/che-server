@@ -22,7 +22,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.Certificate
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesTrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ServiceAccountProvisioner;
@@ -72,7 +71,6 @@ public class KubernetesEnvironmentProvisionerTest {
   @Mock private GitConfigProvisioner gitConfigProvisioner;
   @Mock private PreviewUrlExposer previewUrlExposer;
   @Mock private VcsSslCertificateProvisioner vcsSslCertificateProvisioner;
-  @Mock private KubernetesTrustedCAProvisioner trustedCAProvisioner;
   @Mock private GatewayRouterProvisioner gatewayRouterProvisioner;
 
   private KubernetesEnvironmentProvisioner<KubernetesEnvironment> k8sInfraProvisioner;
@@ -100,8 +98,7 @@ public class KubernetesEnvironmentProvisionerTest {
             gitConfigProvisioner,
             previewUrlExposer,
             vcsSslCertificateProvisioner,
-            gatewayRouterProvisioner,
-            trustedCAProvisioner);
+            gatewayRouterProvisioner);
     provisionOrder =
         inOrder(
             uniqueNamesProvisioner,
@@ -117,8 +114,7 @@ public class KubernetesEnvironmentProvisionerTest {
             certificateProvisioner,
             gitConfigProvisioner,
             previewUrlExposer,
-            gatewayRouterProvisioner,
-            trustedCAProvisioner);
+            gatewayRouterProvisioner);
   }
 
   @Test
@@ -142,7 +138,6 @@ public class KubernetesEnvironmentProvisionerTest {
     provisionOrder.verify(certificateProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(gitConfigProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(gatewayRouterProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
-    provisionOrder.verify(trustedCAProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(uniqueNamesProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verifyNoMoreInteractions();
   }

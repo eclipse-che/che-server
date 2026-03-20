@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,7 +38,6 @@ import org.eclipse.che.api.workspace.server.wsplugins.model.PluginFQN;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory.BrokersConfigs;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -62,7 +61,6 @@ public class BrokerEnvironmentFactoryTest {
   private static final String PLUGINS_VOLUME_NAME = "plugins";
   private static final String CA_CERTIFICATES_MOUNT_PATH = "/public-certs";
   @Mock private CertificateProvisioner certProvisioner;
-  @Mock private TrustedCAProvisioner trustedCAProvisioner;
   @Mock private AgentAuthEnableEnvVarProvider authEnableEnvVarProvider;
   @Mock private MachineTokenEnvVarProvider machineTokenEnvVarProvider;
   @Mock private RuntimeIdentity runtimeId;
@@ -83,7 +81,6 @@ public class BrokerEnvironmentFactoryTest {
                 METADATA_BROKER_IMAGE,
                 DEFAULT_REGISTRY,
                 "",
-                trustedCAProvisioner,
                 CA_CERTIFICATES_MOUNT_PATH,
                 certProvisioner) {
               @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,7 +20,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.Certificate
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.KubernetesBrokerEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
-import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenshiftTrustedCAProvisioner;
 
 /**
  * Extends {@link KubernetesBrokerEnvironmentFactory} to be used in the openshift infrastructure.
@@ -43,8 +42,7 @@ public class OpenshiftBrokerEnvironmentFactory
       @Nullable @Named("che.workspace.plugin_registry_internal_url")
           String pluginRegistryInternalUrl,
       @Named("che.infra.openshift.trusted_ca_bundles_mount_path") String caCertificatesMountPath,
-      CertificateProvisioner certProvisioner,
-      OpenshiftTrustedCAProvisioner trustedCAProvisioner) {
+      CertificateProvisioner certProvisioner) {
     super(
         cheWebsocketEndpoint,
         cheWebsocketInternalEndpoint,
@@ -55,7 +53,6 @@ public class OpenshiftBrokerEnvironmentFactory
         metadataBrokerImage,
         pluginRegistryUrl,
         pluginRegistryInternalUrl,
-        trustedCAProvisioner,
         caCertificatesMountPath,
         certProvisioner);
   }

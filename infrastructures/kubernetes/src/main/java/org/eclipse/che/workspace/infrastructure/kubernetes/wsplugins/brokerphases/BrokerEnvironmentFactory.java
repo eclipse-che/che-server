@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -51,7 +51,6 @@ import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Names;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.Containers;
 
 /**
@@ -79,7 +78,6 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
   private final String artifactsBrokerImage;
   private final String metadataBrokerImage;
   private final String pluginRegistryUrl;
-  private final TrustedCAProvisioner trustedCAProvisioner;
   private final String certificateMountPath;
   private final CertificateProvisioner certProvisioner;
 
@@ -93,7 +91,6 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
       String metadataBrokerImage,
       String pluginRegistryExternalUrl,
       String pluginRegistryInternalUrl,
-      TrustedCAProvisioner trustedCAProvisioner,
       String certificateMountPath,
       CertificateProvisioner certProvisioner) {
     this.cheWebsocketEndpoint =
@@ -109,7 +106,6 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
         isNullOrEmpty(pluginRegistryInternalUrl)
             ? pluginRegistryExternalUrl
             : pluginRegistryInternalUrl;
-    this.trustedCAProvisioner = trustedCAProvisioner;
     this.certificateMountPath = certificateMountPath;
     this.certProvisioner = certProvisioner;
   }
@@ -230,10 +226,6 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
                 certProvisioner.isConfigured() ? certProvisioner.getCertPath() : "",
                 "--registry-address",
                 Strings.nullToEmpty(pluginRegistryUrl)));
-    if (trustedCAProvisioner.isTrustedStoreInitialized()) {
-      args.add("--cadir");
-      args.add(certificateMountPath);
-    }
     if (mergePlugins) {
       args.add("--merge-plugins");
     }

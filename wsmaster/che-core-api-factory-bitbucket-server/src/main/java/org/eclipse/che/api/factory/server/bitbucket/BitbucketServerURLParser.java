@@ -304,13 +304,17 @@ public class BitbucketServerURLParser {
       project = matcher.group("project");
     }
     String repoName = matcher.group("repo");
-    String branchFromUrl = null;
+    String branch = null;
     try {
-      String branch = matcher.group("branch");
-      branchFromUrl =
-          branch.startsWith("refs/heads/")
-              ? branch.substring(11)
-              : (branch.startsWith("refs%2Fheads%2F") ? branch.substring(15) : branch);
+      String branchFromUrl = matcher.group("branch");
+      if (!isNullOrEmpty(branchFromUrl)) {
+        branch =
+            branchFromUrl.startsWith("refs/heads/")
+                ? branchFromUrl.substring(11)
+                : (branchFromUrl.startsWith("refs%2Fheads%2F")
+                    ? branchFromUrl.substring(15)
+                    : branchFromUrl);
+      }
     } catch (IllegalArgumentException e) {
       // keep branch with null, as the pattern doesn't have the branch group
     }
@@ -322,7 +326,7 @@ public class BitbucketServerURLParser {
         .withProject(project)
         .withUser(user)
         .withRepository(repoName)
-        .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
+        .withBranch(isNullOrEmpty(branch) ? revision : branch)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames());
   }
 }

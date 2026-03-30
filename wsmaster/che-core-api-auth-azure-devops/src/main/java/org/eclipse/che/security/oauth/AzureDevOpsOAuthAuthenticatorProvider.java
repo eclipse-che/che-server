@@ -82,19 +82,34 @@ public class AzureDevOpsOAuthAuthenticatorProvider implements Provider<OAuthAuth
     if (!isNullOrEmpty(clientIdPath)
         && !isNullOrEmpty(clientSecretPath)
         && !isNullOrEmpty(tenantIdPath)) {
-      final String tenantId = Files.readString(Path.of(tenantIdPath)).trim();
+      // This flag is needed to support the deprecated Azure DevOps oauth apps.
+      // TODO remove the related logic when the deprecated Azure DevOps oauth app is no longer
+      // available, see
+      // https://learn.microsoft.com/en-us/azure/devops/integrate/get-started/authentication/oauth?view=azure-devops#azure-devops-oauth-deprecated
+      boolean isDevOpsOauth = false;
+      String tenantId = null;
+      try {
+        tenantId = Files.readString(Path.of(tenantIdPath)).trim();
+      } catch (IOException e) {
+        isDevOpsOauth = true;
+      }
       final String clientId = Files.readString(Path.of(clientIdPath)).trim();
       final String clientSecret = Files.readString(Path.of(clientSecretPath)).trim();
-      if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret) && !isNullOrEmpty(tenantId)) {
+      if (!isNullOrEmpty(clientId) && !isNullOrEmpty(clientSecret)) {
         return new AzureDevOpsOAuthAuthenticator(
             cheApiEndpoint,
             clientId,
             clientSecret,
             azureDevOpsApiEndpoint,
             azureDevOpsScmApiEndpoint,
-            String.format(authUriTemplate, tenantId),
-            String.format(tokenUriTemplate, tenantId),
-            redirectUris);
+            isDevOpsOauth
+                ? "https://app.vssps.visualstudio.com/oauth2/authorize"
+                : String.format(authUriTemplate, tenantId),
+            isDevOpsOauth
+                ? "https://app.vssps.visualstudio.com/oauth2/authorize"
+                : String.format(tokenUriTemplate, tenantId),
+            redirectUris,
+            isDevOpsOauth);
       }
     }
     return new NoopOAuthAuthenticator();

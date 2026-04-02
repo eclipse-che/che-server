@@ -29,7 +29,6 @@ import org.eclipse.che.api.workspace.server.NoEnvironmentFactory;
 import org.eclipse.che.api.workspace.server.WorkspaceAttributeValidator;
 import org.eclipse.che.api.workspace.server.devfile.DevfileBindings;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
-import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironmentFactory;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
@@ -60,10 +59,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.IngressTlsP
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiExternalEnvVarProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiInternalEnvVarProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesPreviewUrlCommandProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesTrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PreviewUrlCommandProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TlsProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.server.ServersConverter;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.IngressAnnotationsProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.PreviewUrlExposer;
@@ -83,7 +80,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureS
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.NonTlsDistributedClusterModeNotifier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.KubernetesPluginsToolingApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.PluginBrokerManager;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.KubernetesBrokerEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events.BrokerService;
@@ -123,10 +119,6 @@ public class KubernetesInfraModule extends AbstractModule {
     factories.addBinding(KubernetesEnvironment.TYPE).to(KubernetesEnvironmentFactory.class);
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
-    bind(RuntimeInfrastructure.class).to(KubernetesInfrastructure.class);
-
-    bind(TrustedCAProvisioner.class).to(KubernetesTrustedCAProvisioner.class);
-
     MapBinder<WorkspaceExposureType, TlsProvisioner<KubernetesEnvironment>> tlsProvisioners =
         MapBinder.newMapBinder(
             binder(),
@@ -140,11 +132,6 @@ public class KubernetesInfraModule extends AbstractModule {
     bind(new TypeLiteral<KubernetesEnvironmentProvisioner<KubernetesEnvironment>>() {})
         .to(KubernetesEnvironmentProvisioner.KubernetesEnvironmentProvisionerImpl.class);
 
-    install(new FactoryModuleBuilder().build(KubernetesRuntimeContextFactory.class));
-
-    install(
-        new FactoryModuleBuilder()
-            .build(new TypeLiteral<KubernetesRuntimeFactory<KubernetesEnvironment>>() {}));
     install(new FactoryModuleBuilder().build(StartSynchronizerFactory.class));
 
     bind(RemoveNamespaceOnWorkspaceRemove.class).asEagerSingleton();
@@ -214,9 +201,6 @@ public class KubernetesInfraModule extends AbstractModule {
 
     bind(PluginBrokerManager.class)
         .to(new TypeLiteral<PluginBrokerManager<KubernetesEnvironment>>() {});
-
-    bind(SidecarToolingProvisioner.class)
-        .to(new TypeLiteral<SidecarToolingProvisioner<KubernetesEnvironment>>() {});
 
     DevfileBindings.onComponentIntegrityValidatorBinder(
         binder(),

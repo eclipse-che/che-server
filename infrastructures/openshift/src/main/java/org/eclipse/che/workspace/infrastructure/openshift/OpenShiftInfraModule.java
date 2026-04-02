@@ -27,13 +27,11 @@ import org.eclipse.che.api.workspace.server.NoEnvironmentFactory;
 import org.eclipse.che.api.workspace.server.WorkspaceAttributeValidator;
 import org.eclipse.che.api.workspace.server.devfile.DevfileBindings;
 import org.eclipse.che.api.workspace.server.devfile.validator.ComponentIntegrityValidator.NoopComponentIntegrityValidator;
-import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironmentFactory;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.wsplugins.ChePluginsApplier;
 import org.eclipse.che.api.workspace.shared.Constants;
-import org.eclipse.che.workspace.infrastructure.kubernetes.InconsistentRuntimesDetector;
 import org.eclipse.che.workspace.infrastructure.kubernetes.K8sInfraNamespaceWsAttributeValidator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientTermination;
@@ -63,7 +61,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesC
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesCheApiInternalEnvVarProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PreviewUrlCommandProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TlsProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.TrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.server.ServersConverter;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.PreviewUrlExposer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.WorkspaceExposureType;
@@ -78,17 +75,14 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtprox
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.NonTlsDistributedClusterModeNotifier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.KubernetesPluginsToolingApplier;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.PluginBrokerManager;
-import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.SidecarToolingProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphases.BrokerEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events.BrokerService;
 import org.eclipse.che.workspace.infrastructure.openshift.devfile.OpenshiftComponentToWorkspaceApplier;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.openshift.project.OpenShiftProjectFactory;
-import org.eclipse.che.workspace.infrastructure.openshift.project.RemoveProjectOnWorkspaceRemove;
 import org.eclipse.che.workspace.infrastructure.openshift.project.configurator.OpenShiftWorkspaceServiceAccountConfigurator;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftPreviewUrlCommandProvisioner;
-import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenshiftTrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.RouteTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.server.OpenShiftCookiePathStrategy;
 import org.eclipse.che.workspace.infrastructure.openshift.server.OpenShiftPreviewUrlExposer;
@@ -130,20 +124,15 @@ public class OpenShiftInfraModule extends AbstractModule {
     factories.addBinding(KubernetesEnvironment.TYPE).to(KubernetesEnvironmentFactory.class);
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
-    bind(InconsistentRuntimesDetector.class).asEagerSingleton();
-    bind(RuntimeInfrastructure.class).to(OpenShiftInfrastructure.class);
-
-    bind(KubernetesNamespaceFactory.class).to(OpenShiftProjectFactory.class);
+    String directNamespaceCreation =
+        System.getenv("CHE_INFRA_OPENSHIFT__DIRECT_NAMESPACE_CREATION");
+    if (!"true".equalsIgnoreCase(directNamespaceCreation)) {
+      bind(KubernetesNamespaceFactory.class).to(OpenShiftProjectFactory.class);
+    }
     bind(KubernetesClientFactory.class).to(OpenShiftClientFactory.class);
     bind(CheServerOpenshiftClientFactory.class);
 
-    install(new FactoryModuleBuilder().build(OpenShiftRuntimeContextFactory.class));
-    install(new FactoryModuleBuilder().build(OpenShiftRuntimeFactory.class));
     install(new FactoryModuleBuilder().build(StartSynchronizerFactory.class));
-
-    bind(RemoveProjectOnWorkspaceRemove.class).asEagerSingleton();
-
-    bind(TrustedCAProvisioner.class).to(OpenshiftTrustedCAProvisioner.class);
 
     bind(CheApiInternalEnvVarProvider.class).to(KubernetesCheApiInternalEnvVarProvider.class);
     bind(CheApiExternalEnvVarProvider.class).to(KubernetesCheApiExternalEnvVarProvider.class);
@@ -188,9 +177,6 @@ public class OpenShiftInfraModule extends AbstractModule {
 
     bind(PluginBrokerManager.class)
         .to(new TypeLiteral<PluginBrokerManager<OpenShiftEnvironment>>() {});
-
-    bind(SidecarToolingProvisioner.class)
-        .to(new TypeLiteral<SidecarToolingProvisioner<OpenShiftEnvironment>>() {});
 
     MapBinder<WorkspaceExposureType, TlsProvisioner<OpenShiftEnvironment>> tlsProvisioners =
         MapBinder.newMapBinder(

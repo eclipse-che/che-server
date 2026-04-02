@@ -65,13 +65,10 @@ import org.eclipse.che.api.user.server.spi.UserDao;
 import org.eclipse.che.api.workspace.server.WorkspaceEntityProvider;
 import org.eclipse.che.api.workspace.server.devfile.DevfileModule;
 import org.eclipse.che.api.workspace.server.hc.ServersCheckerFactory;
-import org.eclipse.che.api.workspace.server.spi.provision.InternalEnvironmentProvisioner;
-import org.eclipse.che.api.workspace.server.spi.provision.MachineNameProvisioner;
 import org.eclipse.che.api.workspace.server.spi.provision.env.AgentAuthEnableEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiInternalEnvVarProvider;
-import org.eclipse.che.api.workspace.server.spi.provision.env.EnvVarEnvironmentProvisioner;
 import org.eclipse.che.api.workspace.server.spi.provision.env.EnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.JavaOptsEnvVariableProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.LegacyEnvVarProvider;
@@ -88,7 +85,6 @@ import org.eclipse.che.multiuser.api.authentication.commons.token.HeaderRequestT
 import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenExtractor;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 import org.eclipse.che.multiuser.api.permission.server.PermissionCheckerImpl;
-import org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivityModule;
 import org.eclipse.che.multiuser.machine.authentication.server.MachineAuthModule;
 import org.eclipse.che.multiuser.oidc.OIDCInfo;
 import org.eclipse.che.multiuser.oidc.OIDCInfoProvider;
@@ -202,11 +198,6 @@ public class WsMasterModule extends AbstractModule {
 
     install(new FactoryModuleBuilder().build(ServersCheckerFactory.class));
 
-    Multibinder<InternalEnvironmentProvisioner> internalEnvironmentProvisioners =
-        Multibinder.newSetBinder(binder(), InternalEnvironmentProvisioner.class);
-    internalEnvironmentProvisioners.addBinding().to(EnvVarEnvironmentProvisioner.class);
-    internalEnvironmentProvisioners.addBinding().to(MachineNameProvisioner.class);
-
     Multibinder<EnvVarProvider> envVarProviders =
         Multibinder.newSetBinder(binder(), EnvVarProvider.class);
     envVarProviders.addBinding().to(CheApiEnvVarProvider.class);
@@ -258,9 +249,6 @@ public class WsMasterModule extends AbstractModule {
     install(new SystemModule());
     Multibinder<ServiceTermination> terminationMultiBinder =
         Multibinder.newSetBinder(binder(), ServiceTermination.class);
-    terminationMultiBinder
-        .addBinding()
-        .to(org.eclipse.che.api.workspace.server.WorkspaceServiceTermination.class);
     terminationMultiBinder
         .addBinding()
         .to(org.eclipse.che.api.system.server.CronThreadPullTermination.class);
@@ -336,7 +324,6 @@ public class WsMasterModule extends AbstractModule {
     install(
         new org.eclipse.che.multiuser.permission.workspace.server.jpa
             .MultiuserWorkspaceJpaModule());
-    install(new MultiUserWorkspaceActivityModule());
     install(
         new org.eclipse.che.multiuser.permission.devfile.server.jpa
             .MultiuserUserDevfileJpaModule());

@@ -17,16 +17,12 @@
     <parent>
         <artifactId>che-infrastructures-parent</artifactId>
         <groupId>org.eclipse.che.infrastructure</groupId>
-        <version>7.116.0-SNAPSHOT</version>
+        <version>7.117.0-SNAPSHOT</version>
     </parent>
     <artifactId>infrastructure-distributed</artifactId>
     <packaging>jar</packaging>
     <name>Infrastructure :: Distributed components</name>
     <dependencies>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
@@ -42,10 +38,6 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-model</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-api-system</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>

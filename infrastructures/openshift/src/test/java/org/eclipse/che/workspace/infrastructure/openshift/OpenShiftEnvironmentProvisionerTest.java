@@ -17,7 +17,6 @@ import static org.mockito.Mockito.when;
 
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.DeploymentMetadataProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GatewayRouterProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.GitConfigProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
@@ -32,7 +31,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.provision.restartpoli
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.server.ServersConverter;
 import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftEnvironment;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenShiftUniqueNamesProvisioner;
-import org.eclipse.che.workspace.infrastructure.openshift.provision.OpenshiftTrustedCAProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.provision.RouteTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.openshift.server.OpenShiftPreviewUrlExposer;
 import org.mockito.InOrder;
@@ -68,8 +66,6 @@ public class OpenShiftEnvironmentProvisionerTest {
   @Mock private OpenShiftPreviewUrlExposer previewUrlEndpointsProvisioner;
   @Mock private VcsSslCertificateProvisioner vcsSslCertificateProvisioner;
   @Mock private GatewayRouterProvisioner gatewayRouterProvisioner;
-  @Mock private DeploymentMetadataProvisioner deploymentMetadataProvisioner;
-  @Mock private OpenshiftTrustedCAProvisioner trustedCAProvisioner;
 
   private OpenShiftEnvironmentProvisioner osInfraProvisioner;
 
@@ -94,9 +90,7 @@ public class OpenShiftEnvironmentProvisionerTest {
             gitConfigProvisioner,
             previewUrlEndpointsProvisioner,
             vcsSslCertificateProvisioner,
-            gatewayRouterProvisioner,
-            deploymentMetadataProvisioner,
-            trustedCAProvisioner);
+            gatewayRouterProvisioner);
     provisionOrder =
         inOrder(
             serversProvisioner,
@@ -113,9 +107,7 @@ public class OpenShiftEnvironmentProvisionerTest {
             vcsSslCertificateProvisioner,
             gitConfigProvisioner,
             previewUrlEndpointsProvisioner,
-            gatewayRouterProvisioner,
-            deploymentMetadataProvisioner,
-            trustedCAProvisioner);
+            gatewayRouterProvisioner);
   }
 
   @Test
@@ -137,8 +129,6 @@ public class OpenShiftEnvironmentProvisionerTest {
     provisionOrder.verify(vcsSslCertificateProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(gitConfigProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(gatewayRouterProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
-    provisionOrder.verify(deploymentMetadataProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
-    provisionOrder.verify(trustedCAProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verify(uniqueNamesProvisioner).provision(eq(osEnv), eq(runtimeIdentity));
     provisionOrder.verifyNoMoreInteractions();
   }

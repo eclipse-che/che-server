@@ -61,9 +61,7 @@ import java.util.Set;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.user.server.PreferenceManager;
-import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.RuntimeIdentityImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -114,7 +112,6 @@ public class OpenShiftProjectFactoryTest {
   @Mock private OpenShiftClientFactory openShiftClientFactory;
   @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private CheServerOpenshiftClientFactory cheServerOpenshiftClientFactory;
-  @Mock private WorkspaceManager workspaceManager;
   @Mock private PreferenceManager preferenceManager;
   @Mock private KubernetesSharedPool pool;
   @Mock private AuthorizationChecker authorizationChecker;
@@ -141,10 +138,6 @@ public class OpenShiftProjectFactoryTest {
     lenient().when(cheServerKubernetesClientFactory.create()).thenReturn(osClient);
     lenient().when(osClient.projects()).thenReturn(projectOperation);
     lenient().when(authorizationChecker.isAuthorized(any(Subject.class))).thenReturn(true);
-
-    lenient()
-        .when(workspaceManager.getWorkspace(any()))
-        .thenReturn(WorkspaceImpl.builder().setId("1").setAttributes(emptyMap()).build());
 
     lenient().when(projectOperation.withName(any())).thenReturn(projectResource);
     lenient().when(projectResource.get()).thenReturn(mock(Project.class));

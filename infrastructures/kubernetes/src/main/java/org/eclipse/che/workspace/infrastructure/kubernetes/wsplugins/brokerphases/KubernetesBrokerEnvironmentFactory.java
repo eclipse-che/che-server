@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -19,7 +19,6 @@ import org.eclipse.che.api.workspace.server.spi.provision.env.MachineTokenEnvVar
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.KubernetesTrustedCAProvisioner;
 
 /**
  * Extends {@link BrokerEnvironmentFactory} to be used in the kubernetes infrastructure.
@@ -45,7 +44,6 @@ public class KubernetesBrokerEnvironmentFactory
       @Nullable @Named("che.workspace.plugin_registry_url") String pluginRegistryExternalUrl,
       @Nullable @Named("che.workspace.plugin_registry_internal_url")
           String pluginRegistryInternalUrl,
-      KubernetesTrustedCAProvisioner trustedCAProvisioner,
       CertificateProvisioner certProvisioner) {
     super(
         cheWebsocketEndpoint,
@@ -57,7 +55,6 @@ public class KubernetesBrokerEnvironmentFactory
         metadataBrokerImage,
         pluginRegistryExternalUrl,
         pluginRegistryInternalUrl,
-        trustedCAProvisioner,
         certificateMountPath,
         certProvisioner);
   }

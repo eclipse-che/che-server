@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -219,6 +219,213 @@ public class BitbucketServerURLParserTest {
     assertFalse(result);
   }
 
+  @Test
+  public void shouldParseIpv6HttpsUrl() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("https://[2001:db8::1]/scm/project/repo.git", null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getProject(), "project");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+  }
+
+  @Test
+  public void shouldParseIpv6HttpsUrlWithUserRepo() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("https://[2001:db8::1]/scm/~user/repo.git", null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getUser(), "user");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithBranch() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse(
+            "https://[2001:db8::1]/projects/project/repos/repo/browse?at=refs%2Fheads%2Ffeature",
+            null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getProject(), "project");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+    assertEquals(bitbucketServerUrl.getBranch(), "feature");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithRevisionParam() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("https://[2001:db8::1]/scm/project/repo.git", "my-branch");
+
+    // then
+    assertEquals(bitbucketServerUrl.getProject(), "project");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+    assertEquals(bitbucketServerUrl.getBranch(), "my-branch");
+  }
+
+  @Test
+  public void shouldParseIpv6UrlWithUserBrowse() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse(
+            "https://[2001:db8::1]/users/user/repos/repo/browse?at=refs/heads/main", null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getUser(), "user");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+    assertEquals(bitbucketServerUrl.getBranch(), "main");
+  }
+
+  @Test
+  public void shouldParseIpv6LoopbackAddress() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("https://[::1]/scm/project/repo.git", null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getProject(), "project");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+  }
+
+  @Test
+  public void shouldParseIpv6FullFormAddress() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:0db8:0000:0000:0000:0000:0000:0001]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse(
+            "https://[2001:0db8:0000:0000:0000:0000:0000:0001]/scm/project/repo.git", null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getProject(), "project");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+  }
+
+  @Test
+  public void shouldValidateIpv6Url() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when/then
+    assertTrue(bitbucketURLParser.isValid("https://[2001:db8::1]/scm/project/repo.git"));
+  }
+
+  @Test
+  public void shouldValidateIpv6UrlWithProjectsBrowse() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when/then
+    assertTrue(
+        bitbucketURLParser.isValid("https://[2001:db8::1]/projects/project/repos/repo/browse"));
+  }
+
+  @Test
+  public void shouldParseIpv6SshUrl() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("ssh://git@[2001:db8::1]:7999/project/repo.git", null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getProject(), "project");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+  }
+
+  @Test
+  public void shouldParseIpv6SshUrlWithUserRepo() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            "https://[2001:db8::1]",
+            devfileFilenamesProvider,
+            oAuthAPI,
+            mock(PersonalAccessTokenManager.class));
+
+    // when
+    BitbucketServerUrl bitbucketServerUrl =
+        bitbucketURLParser.parse("ssh://git@[2001:db8::1]:7999/~user/repo.git", null);
+
+    // then
+    assertEquals(bitbucketServerUrl.getUser(), "user");
+    assertEquals(bitbucketServerUrl.getRepository(), "repo");
+  }
+
   @DataProvider(name = "UrlsProvider")
   public Object[][] urls() {
     return new Object[][] {
@@ -264,6 +471,7 @@ public class BitbucketServerURLParserTest {
         "repo",
         "branch"
       },
+      {"https://bitbucket.2mcl.com/users/user/repos/repo/browse", "user", null, "repo", null},
       {"https://bbkt.com/users/user/repos/repo/", "user", null, "repo", null}
     };
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,11 +11,10 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes;
 
-import com.google.common.collect.ImmutableSet;
+import java.util.Collections;
 import java.util.Set;
 import javax.inject.Inject;
 import org.eclipse.che.api.system.server.ServiceTermination;
-import org.eclipse.che.api.workspace.server.WorkspaceServiceTermination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +55,6 @@ public class KubernetesClientTermination implements ServiceTermination {
 
   @Override
   public Set<String> getDependencies() {
-    return ImmutableSet.of(WorkspaceServiceTermination.SERVICE_NAME);
+    return Collections.emptySet();
   }
 }

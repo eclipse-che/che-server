@@ -102,6 +102,7 @@ public class OpenShiftProjectFactoryTest {
   private static final String USER_ID = "2342-2559-234";
   private static final String USER_NAME = "johndoe";
   private static final String NO_OAUTH_IDENTITY_PROVIDER = null;
+  private static final String NULL_STRING_OAUTH_IDENTITY_PROVIDER = "NULL";
   private static final String OAUTH_IDENTITY_PROVIDER = "openshift-v4";
   private static final String NAMESPACE_LABEL_NAME = "component";
   private static final String NAMESPACE_LABELS = NAMESPACE_LABEL_NAME + "=workspace";
@@ -546,7 +547,8 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     assertEquals(toReturnProject, project);
-    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
+    // When OAuth is NOT configured (null), use Che server SA (true)
+    verify(toReturnProject).prepare(eq(true), eq(true), any(), any());
   }
 
   @Test
@@ -676,6 +678,44 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     verify(serviceAccount).prepare();
+    // When OAuth IS configured, use user credentials (false) to create projects
+    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
+  }
+
+  @Test
+  public void shouldUseCheServerSAWhenOAuthIdentityProviderIsNullString() throws Exception {
+    // given - when oAuthIdentityProvider is the string "NULL" (property placeholder default),
+    // it should be treated as if OAuth is not configured and Che server SA should be used
+    projectFactory =
+        spy(
+            new OpenShiftProjectFactory(
+                "<userid>-che",
+                true,
+                true,
+                true,
+                NAMESPACE_LABELS,
+                NAMESPACE_ANNOTATIONS,
+                true,
+                emptySet(),
+                openShiftClientFactory,
+                cheServerKubernetesClientFactory,
+                cheServerOpenshiftClientFactory,
+                preferenceManager,
+                pool,
+                authorizationChecker,
+                permissionsCleaner,
+                NULL_STRING_OAUTH_IDENTITY_PROVIDER));
+    OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
+    prepareProject(toReturnProject);
+    doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
+
+    // when
+    RuntimeIdentity identity =
+        new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
+    projectFactory.getOrCreate(identity);
+
+    // then - should use Che server SA (true) when oAuthIdentityProvider="NULL"
+    verify(toReturnProject).prepare(eq(true), eq(true), any(), any());
   }
 
   @Ignore

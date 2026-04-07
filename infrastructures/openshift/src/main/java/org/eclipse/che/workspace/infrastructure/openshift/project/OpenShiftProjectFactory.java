@@ -119,9 +119,14 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
     Map<String, String> namespaceAnnotationsEvaluated =
         evaluateAnnotationPlaceholders(resolutionCtx);
 
+    // Use Che server SA when initWithCheServerSa is true and OAuth is not configured.
+    // The string "NULL" is treated as "not configured" to handle property placeholder defaults.
+    boolean isOAuthConfigured = !isNullOrEmpty(oAuthIdentityProvider) && !"NULL".equals(oAuthIdentityProvider);
+    boolean useServerSa = initWithCheServerSa && !isOAuthConfigured;
+
     osProject.prepare(
         canCreateNamespace(),
-        initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
+        useServerSa,
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
 

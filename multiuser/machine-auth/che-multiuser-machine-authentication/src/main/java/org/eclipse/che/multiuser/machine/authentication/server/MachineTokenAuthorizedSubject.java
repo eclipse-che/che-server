@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,7 +14,6 @@ package org.eclipse.che.multiuser.machine.authentication.server;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.multiuser.api.permission.server.AuthorizedSubject;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
-import org.eclipse.che.multiuser.permission.workspace.server.WorkspaceDomain;
 
 /**
  * An implementation of {@link Subject} which should be used when request was signed by machine
@@ -35,7 +34,7 @@ public class MachineTokenAuthorizedSubject extends AuthorizedSubject {
 
   @Override
   public boolean hasPermission(String domain, String instance, String action) {
-    if (domain.equals(WorkspaceDomain.DOMAIN_ID) && !instance.equals(claimsWorkspaceId)) {
+    if (domain.equals("workspace") && !instance.equals(claimsWorkspaceId)) {
       return false;
     }
     return super.hasPermission(domain, instance, action);

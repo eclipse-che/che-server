@@ -99,8 +99,5 @@ tests/e2e/load-test-folder
 */.lock-wscript
 */cypress-tests/dist
 
-# Develocity
-.mvn/.develocity/develocity-workspace-id
-
 # typescript-dto
 /typescript-dto/.pnp.cjs

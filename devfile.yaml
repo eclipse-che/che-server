@@ -90,3 +90,8 @@ commands:
         curl -LJO $(curl -fsSL https://che-incubator.github.io/chectl/download-link/stable-$(get_operating_system)-$(get_arch))
         tar -xf chectl-linux-x64.tar.gz -C $HOME/
         echo 'export PATH=$HOME/chectl/bin/:$PATH' >> $HOME/.bashrc
+  - id: install-claude
+    exec:
+      label: Install Claude CLI
+      commandLine: curl -fsSL https://claude.ai/install.sh -o claude-install.sh && chmod +x claude-install.sh && ./claude-install.sh
+      component: tools

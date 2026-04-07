@@ -547,8 +547,8 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     assertEquals(toReturnProject, project);
-    // When OAuth is NOT configured (null), use Che server SA (true)
-    verify(toReturnProject).prepare(eq(true), eq(true), any(), any());
+    // When OAuth is NOT configured (null), don't use Che server SA (false)
+    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
   }
 
   @Test
@@ -678,14 +678,14 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     verify(serviceAccount).prepare();
-    // When OAuth IS configured, use user credentials (false) to create projects
-    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
+    // When OAuth IS configured, use Che server SA (true) to create projects
+    verify(toReturnProject).prepare(eq(true), eq(true), any(), any());
   }
 
   @Test
   public void shouldUseCheServerSAWhenOAuthIdentityProviderIsNullString() throws Exception {
     // given - when oAuthIdentityProvider is the string "NULL" (property placeholder default),
-    // it should be treated as if OAuth is not configured and Che server SA should be used
+    // it should be treated as if OAuth is not configured (same as null)
     projectFactory =
         spy(
             new OpenShiftProjectFactory(
@@ -714,8 +714,9 @@ public class OpenShiftProjectFactoryTest {
         new RuntimeIdentityImpl("workspace123", null, USER_ID, "workspace123");
     projectFactory.getOrCreate(identity);
 
-    // then - should use Che server SA (true) when oAuthIdentityProvider="NULL"
-    verify(toReturnProject).prepare(eq(true), eq(true), any(), any());
+    // then - should NOT use Che server SA (false) when oAuthIdentityProvider="NULL"
+    // because "NULL" is treated the same as null (unconfigured)
+    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
   }
 
   @Ignore

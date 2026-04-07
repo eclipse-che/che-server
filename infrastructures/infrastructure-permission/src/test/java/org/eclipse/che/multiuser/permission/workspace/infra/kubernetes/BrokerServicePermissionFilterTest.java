@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,7 +23,6 @@ import org.eclipse.che.api.workspace.shared.dto.event.BrokerStatusChangedEvent;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.dto.server.DtoFactory;
-import org.eclipse.che.multiuser.permission.workspace.server.WorkspaceDomain;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
@@ -74,8 +73,7 @@ public class BrokerServicePermissionFilterTest {
           "User doesn't have the required permissions to the specified workspace")
   public void shouldThrowExceptionIfUserDoesNotHaveRunPermission(String method) throws Exception {
     // given
-    when(subject.hasPermission(eq(WorkspaceDomain.DOMAIN_ID), eq("ws123"), eq(WorkspaceDomain.RUN)))
-        .thenReturn(false);
+    when(subject.hasPermission(eq("workspace"), eq("ws123"), eq("run"))).thenReturn(false);
 
     // when
     permissionFilter.doAccept(
@@ -87,8 +85,7 @@ public class BrokerServicePermissionFilterTest {
   @Test(dataProvider = "coveredMethods")
   public void shouldDoNothingIfUserHasRunPermissions(String method) throws Exception {
     // given
-    when(subject.hasPermission(WorkspaceDomain.DOMAIN_ID, "ws123", WorkspaceDomain.RUN))
-        .thenReturn(true);
+    when(subject.hasPermission("workspace", "ws123", "run")).thenReturn(true);
 
     // when
     permissionFilter.doAccept(

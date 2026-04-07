@@ -25,12 +25,8 @@
     <packaging>pom</packaging>
     <name>Che Multiuser :: Parent</name>
     <modules>
-        <module>sql-schema</module>
         <module>api</module>
-        <module>permission</module>
-        <module>keycloak</module>
         <module>machine-auth</module>
-        <module>personal-account</module>
         <module>oidc</module>
     </modules>
 </project>

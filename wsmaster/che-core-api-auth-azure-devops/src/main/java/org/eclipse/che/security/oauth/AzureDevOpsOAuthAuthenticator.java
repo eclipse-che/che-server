@@ -34,6 +34,7 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
@@ -55,6 +56,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   private final String PROVIDER_NAME = "azure-devops";
   private final String clientId;
   private final String clientSecret;
+  private final boolean isDevOpsOauth;
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -66,7 +68,8 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       String azureDevOpsScmApiEndpoint,
       String authUri,
       String tokenUri,
-      String[] redirectUris)
+      String[] redirectUris,
+      boolean isDevOpsOauth)
       throws IOException {
     this.cheApiEndpoint = cheApiEndpoint;
     this.clientId = clientId;
@@ -78,6 +81,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
             trimEnd(azureDevOpsApiEndpoint, '/'), API_VERSION);
     this.tokenUri = tokenUri;
     this.redirectUris = redirectUris;
+    this.isDevOpsOauth = isDevOpsOauth;
     configure(
         clientId, clientSecret, redirectUris, authUri, tokenUri, new MemoryDataStoreFactory());
   }
@@ -90,8 +94,15 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
    */
   @Override
   public String getAuthenticateUrl(URL requestUrl, List<String> scopes) {
+    if (isDevOpsOauth) {
+      scopes = Collections.singletonList("vso.code_write");
+    }
     AuthorizationCodeRequestUrl url = flow.newAuthorizationUrl().setScopes(scopes);
-    url.set("response_type", "code");
+    if (isDevOpsOauth) {
+      url.set("response_type", "Assertion");
+    } else {
+      url.set("response_type", "code");
+    }
     url.set("redirect_uri", format("%s/oauth/callback", cheApiEndpoint));
     url.setState(prepareState(requestUrl));
     return url.build();
@@ -204,10 +215,19 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       URL requestUrl, List<String> scopes, String code) {
     AuthorizationCodeTokenRequest request =
         super.getAuthorizationCodeTokenRequest(requestUrl, scopes, code);
-    request.set("client_id", clientId);
-    request.set("grant_type", "authorization_code");
-    request.set("client_secret", URLEncoder.encode(clientSecret));
-    request.setResponseClass(TokenResponse.class);
+    if (isDevOpsOauth) {
+      request.set("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
+      request.set("assertion", code);
+      request.set("client_assertion", clientSecret);
+      request.set(
+          "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+      request.setResponseClass(AzureDevOpsTokenResponse.class);
+    } else {
+      request.set("client_id", clientId);
+      request.set("grant_type", "authorization_code");
+      request.set("client_secret", URLEncoder.encode(clientSecret));
+      request.setResponseClass(TokenResponse.class);
+    }
     return request;
   }
 }

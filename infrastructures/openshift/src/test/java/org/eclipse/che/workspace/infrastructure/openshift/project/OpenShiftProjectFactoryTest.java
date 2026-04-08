@@ -533,7 +533,7 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     assertEquals(toReturnProject, project);
-    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
+    verify(toReturnProject).prepare(eq(true), eq(true), any(), any());
   }
 
   @Test
@@ -770,7 +770,7 @@ public class OpenShiftProjectFactoryTest {
     // then
     assertEquals(toReturnProject, project);
     verify(toReturnProject)
-        .prepare(eq(true), eq(false), any(), eq(Map.of("try_placeholder_here", "jondoe")));
+        .prepare(eq(true), eq(true), any(), eq(Map.of("try_placeholder_here", "jondoe")));
   }
 
   @Test

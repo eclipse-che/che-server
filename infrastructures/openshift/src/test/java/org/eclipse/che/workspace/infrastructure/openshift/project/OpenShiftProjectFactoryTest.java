@@ -103,8 +103,6 @@ public class OpenShiftProjectFactoryTest {
 
   private static final String USER_ID = "2342-2559-234";
   private static final String USER_NAME = "johndoe";
-  private static final String NO_OAUTH_IDENTITY_PROVIDER = null;
-  private static final String OAUTH_IDENTITY_PROVIDER = "openshift-v4";
   private static final String NAMESPACE_LABEL_NAME = "component";
   private static final String NAMESPACE_LABELS = NAMESPACE_LABEL_NAME + "=workspace";
   private static final String NAMESPACE_ANNOTATION_NAME = "owner";
@@ -184,8 +182,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
 
     projectFactory.checkIfNamespaceIsAllowed(USER_NAME + "-che");
   }
@@ -216,8 +213,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
     try {
       projectFactory.checkIfNamespaceIsAllowed("any-namespace");
     } catch (ValidationException e) {
@@ -248,8 +244,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
   }
 
   @Test
@@ -285,8 +280,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
 
@@ -324,8 +318,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "u123", null, false));
 
@@ -359,8 +352,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
 
     // when
     projectFactory.list();
@@ -403,8 +395,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
 
     List<KubernetesNamespaceMeta> availableNamespaces = projectFactory.list();
     assertEquals(availableNamespaces.size(), 1);
@@ -441,8 +432,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
 
     List<KubernetesNamespaceMeta> availableNamespaces = projectFactory.list();
     assertEquals(availableNamespaces.size(), 1);
@@ -479,8 +469,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
 
     projectFactory.list();
   }
@@ -507,8 +496,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
 
     projectFactory.list();
   }
@@ -540,8 +528,7 @@ public class OpenShiftProjectFactoryTest {
                 preferenceManager,
                 pool,
                 authorizationChecker,
-                permissionsCleaner,
-                NO_OAUTH_IDENTITY_PROVIDER));
+                permissionsCleaner));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
@@ -553,7 +540,7 @@ public class OpenShiftProjectFactoryTest {
 
     // then
     assertEquals(toReturnProject, project);
-    verify(toReturnProject).prepare(eq(true), eq(false), any(), any());
+    verify(toReturnProject).prepare(eq(true), eq(true), any(), any());
   }
 
   @Test
@@ -576,8 +563,7 @@ public class OpenShiftProjectFactoryTest {
                 preferenceManager,
                 pool,
                 authorizationChecker,
-                permissionsCleaner,
-                NO_OAUTH_IDENTITY_PROVIDER));
+                permissionsCleaner));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
     when(toReturnProject.getName()).thenReturn("namespace123");
@@ -620,8 +606,7 @@ public class OpenShiftProjectFactoryTest {
                 preferenceManager,
                 pool,
                 authorizationChecker,
-                permissionsCleaner,
-                NO_OAUTH_IDENTITY_PROVIDER));
+                permissionsCleaner));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     prepareProject(toReturnProject);
     doReturn(toReturnProject).when(projectFactory).doCreateProjectAccess(any(), any());
@@ -666,8 +651,7 @@ public class OpenShiftProjectFactoryTest {
                 preferenceManager,
                 pool,
                 authorizationChecker,
-                permissionsCleaner,
-                OAUTH_IDENTITY_PROVIDER));
+                permissionsCleaner));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
     when(toReturnProject.getName()).thenReturn("workspace123");
     prepareProject(toReturnProject);
@@ -718,8 +702,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
 
     String namespace =
         projectFactory.evaluateNamespaceName(
@@ -752,8 +735,7 @@ public class OpenShiftProjectFactoryTest {
             preferenceManager,
             pool,
             authorizationChecker,
-            permissionsCleaner,
-            NO_OAUTH_IDENTITY_PROVIDER);
+            permissionsCleaner);
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
     projectFactory.list();
@@ -781,8 +763,7 @@ public class OpenShiftProjectFactoryTest {
                 preferenceManager,
                 pool,
                 authorizationChecker,
-                permissionsCleaner,
-                NO_OAUTH_IDENTITY_PROVIDER));
+                permissionsCleaner));
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
     OpenShiftProject toReturnProject = mock(OpenShiftProject.class);
@@ -796,7 +777,7 @@ public class OpenShiftProjectFactoryTest {
     // then
     assertEquals(toReturnProject, project);
     verify(toReturnProject)
-        .prepare(eq(true), eq(false), any(), eq(Map.of("try_placeholder_here", "jondoe")));
+        .prepare(eq(true), eq(true), any(), eq(Map.of("try_placeholder_here", "jondoe")));
   }
 
   @Test
@@ -824,8 +805,7 @@ public class OpenShiftProjectFactoryTest {
                 preferenceManager,
                 pool,
                 authorizationChecker,
-                permissionsCleaner,
-                NO_OAUTH_IDENTITY_PROVIDER));
+                permissionsCleaner));
     EnvironmentContext.getCurrent()
         .setSubject(new SubjectImpl("jondoe", Collections.emptyList(), "123", null, false));
 

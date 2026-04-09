@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2012-2025 Red Hat, Inc.
+    Copyright (c) 2012-2026 Red Hat, Inc.
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -72,7 +72,7 @@
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.11.2</io.jsonwebtoken.jjwt.version>
         <io.micrometer.version>1.11.5</io.micrometer.version>
-        <io.netty.version>4.2.7.Final</io.netty.version>
+        <io.netty.version>4.2.12.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
         <io.opentracing.contrib.metrics.version>0.3.0</io.opentracing.contrib.metrics.version>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -54,7 +54,7 @@ import org.testng.annotations.Test;
  */
 @Listeners(MockitoTestNGListener.class)
 public class KeycloakProviderConfigFactoryTest {
-  private static final String PROVIDER = "openshift-v3";
+  private static final String PROVIDER = "openshift-v4";
   private static final String THE_USER_ID = "a_user_id";
   private static final String ANOTHER_USER_ID = "another_user_id";
   private static final String A_WORKSPACE_ID = "workspace_id";
@@ -132,7 +132,6 @@ public class KeycloakProviderConfigFactoryTest {
             keycloakServiceClient,
             keycloakSettings,
             workspaceRuntimeProvider,
-            PROVIDER,
             API_ENDPOINT,
             null,
             null);
@@ -142,20 +141,6 @@ public class KeycloakProviderConfigFactoryTest {
   @AfterMethod
   public void cleanup() {
     EnvironmentContext.reset();
-  }
-
-  @Test
-  public void testFallbackToDefaultConfigWhenProvideIsNull() throws Exception {
-    configBuilder =
-        new KeycloakProviderConfigFactory(
-            keycloakServiceClient,
-            keycloakSettings,
-            workspaceRuntimeProvider,
-            null,
-            API_ENDPOINT,
-            null,
-            null);
-    assertSame(defaultConfig, configBuilder.buildConfig(defaultConfig, A_WORKSPACE_ID));
   }
 
   @Test

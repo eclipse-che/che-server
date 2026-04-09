@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -72,14 +72,15 @@ public class KeycloakProviderConfigFactory extends KubernetesClientConfigFactory
       KeycloakServiceClient keycloakServiceClient,
       KeycloakSettings keycloakSettings,
       Provider<WorkspaceRuntimes> workspaceRuntimeProvider,
-      @Nullable @Named("che.infra.openshift.oauth_identity_provider") String oauthIdentityProvider,
       @Named("che.api") String apiEndpoint,
       @Nullable @Named("che.infra.kubernetes.master_url") String masterUrl,
       @Nullable @Named("che.infra.kubernetes.trust_certs") Boolean doTrustCerts) {
     super(masterUrl, doTrustCerts);
     this.keycloakServiceClient = keycloakServiceClient;
     this.workspaceRuntimeProvider = workspaceRuntimeProvider;
-    this.oauthIdentityProvider = oauthIdentityProvider;
+
+    // Hardcoded, since it is not used anyway
+    this.oauthIdentityProvider = "openshift-v4";
 
     messageToLinkAccount =
         "You should link your account with the <strong>"

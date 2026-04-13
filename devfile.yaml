@@ -92,6 +92,6 @@ commands:
         echo 'export PATH=$HOME/chectl/bin/:$PATH' >> $HOME/.bashrc
   - id: install-claude
     exec:
-      label: Install Claude CLI
+      label: "4. Install Claude CLI"
       commandLine: curl -fsSL https://claude.ai/install.sh -o claude-install.sh && chmod +x claude-install.sh && ./claude-install.sh
       component: tools

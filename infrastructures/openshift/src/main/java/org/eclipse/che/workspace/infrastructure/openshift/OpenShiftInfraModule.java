@@ -124,9 +124,9 @@ public class OpenShiftInfraModule extends AbstractModule {
     factories.addBinding(KubernetesEnvironment.TYPE).to(KubernetesEnvironmentFactory.class);
     factories.addBinding(Constants.NO_ENVIRONMENT_RECIPE_TYPE).to(NoEnvironmentFactory.class);
 
-    String directNamespaceCreation =
-        System.getenv("CHE_INFRA_OPENSHIFT__DIRECT_NAMESPACE_CREATION");
-    if (!"true".equalsIgnoreCase(directNamespaceCreation)) {
+    String kubernetesNamespacesCreation =
+        System.getenv("CHE_INFRA_OPENSHIFT__KUBERNETES_NAMESPACES_CREATION");
+    if (!"true".equalsIgnoreCase(kubernetesNamespacesCreation)) {
       bind(KubernetesNamespaceFactory.class).to(OpenShiftProjectFactory.class);
     }
     bind(KubernetesClientFactory.class).to(OpenShiftClientFactory.class);

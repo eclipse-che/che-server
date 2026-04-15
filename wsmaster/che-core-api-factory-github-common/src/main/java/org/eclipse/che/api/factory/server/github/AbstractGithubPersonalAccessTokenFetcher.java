@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -239,18 +239,10 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       }
     }
     try {
-      if (params.getScmTokenName() != null && params.getScmTokenName().startsWith(OAUTH_2_PREFIX)) {
-        Pair<String, String[]> pair = apiClient.getTokenScopes(params.getToken());
-        return Optional.of(
-            Pair.of(
-                containsScopes(pair.second, DEFAULT_TOKEN_SCOPES) ? Boolean.TRUE : Boolean.FALSE,
-                pair.first));
-      } else {
-        // TODO: add PAT scope validation
-        // No REST API for PAT-s in Github found yet. Just try to do some action.
-        GithubUser user = apiClient.getUser(params.getToken());
-        return Optional.of(Pair.of(Boolean.TRUE, user.getLogin()));
-      }
+      // TODO: add PAT scope validation
+      // No way to get scopes from PAT-s or GitHub app tokens found yet. Just try to do some action.
+      GithubUser user = apiClient.getUser(params.getToken());
+      return Optional.of(Pair.of(Boolean.TRUE, user.getLogin()));
     } catch (ScmItemNotFoundException | ScmBadRequestException | ScmUnauthorizedException e) {
       return Optional.empty();
     }

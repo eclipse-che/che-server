@@ -13,9 +13,9 @@ package org.eclipse.che.core.metrics;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.prometheus.client.CollectorRegistry;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -29,7 +29,7 @@ public class PrometheusMeterRegistryProvider implements Provider<PrometheusMeter
   private final PrometheusMeterRegistry prometheusMeterRegistry;
 
   @Inject
-  public PrometheusMeterRegistryProvider(PrometheusRegistry registry) {
+  public PrometheusMeterRegistryProvider(CollectorRegistry registry) {
     prometheusMeterRegistry =
         new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, registry, Clock.SYSTEM);
     Metrics.addRegistry(prometheusMeterRegistry);

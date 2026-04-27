@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,7 +23,6 @@ import org.eclipse.che.api.workspace.shared.dto.event.BrokerStatusChangedEvent;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.multiuser.api.permission.server.jsonrpc.JsonRpcPermissionsFilterAdapter;
-import org.eclipse.che.multiuser.permission.workspace.server.WorkspaceDomain;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events.BrokerService;
 
 /**
@@ -56,8 +55,7 @@ public class BrokerServicePermissionFilter extends JsonRpcPermissionsFilterAdapt
     }
 
     Subject currentSubject = EnvironmentContext.getCurrent().getSubject();
-    if (!currentSubject.hasPermission(
-        WorkspaceDomain.DOMAIN_ID, workspaceId, WorkspaceDomain.RUN)) {
+    if (!currentSubject.hasPermission("workspace", workspaceId, "run")) {
       throw new ForbiddenException(
           "User doesn't have the required permissions to the specified workspace");
     }

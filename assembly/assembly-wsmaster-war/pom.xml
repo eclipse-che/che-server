@@ -253,47 +253,11 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-api-permission</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-keycloak-token-provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
             <artifactId>che-multiuser-machine-authentication</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.multiuser</groupId>
             <artifactId>che-multiuser-oidc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-permission-devfile</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-permission-logger</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-permission-system</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-permission-workspace</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-permission-workspace-activity</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-personal-account</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.multiuser</groupId>
-            <artifactId>che-multiuser-sql-schema</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
@@ -426,7 +390,6 @@
                                 <dep>io.jaegertracing:jaeger-client</dep>
                                 <dep>io.jaegertracing:jaeger-tracerresolver</dep>
                                 <dep>org.eclipse.che.multiuser:che-multiuser-personal-account</dep>
-                                <dep>org.eclipse.che.multiuser:che-multiuser-keycloak-token-provider</dep>
                                 <dep>org.eclipse.persistence:org.eclipse.persistence.extension</dep>
                                 <dep>org.eclipse.persistence:org.eclipse.persistence.jpa</dep>
                                 <dep>org.jgroups.kubernetes:jgroups-kubernetes</dep>

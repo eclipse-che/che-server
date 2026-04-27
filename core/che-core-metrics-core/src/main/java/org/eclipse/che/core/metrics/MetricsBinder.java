@@ -12,7 +12,7 @@
 package org.eclipse.che.core.metrics;
 
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;

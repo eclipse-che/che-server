@@ -23,7 +23,7 @@ Che Server is mostly a Java web application deployed on an Apache Tomcat server 
 - infrastructures/kubernetes
 - infrastructure/openshift
 - infrastructures/infrastructure-factory
-
+fork
 Other modules are deprecated and will be removed in the future.
 
 # License

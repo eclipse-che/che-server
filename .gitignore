@@ -98,6 +98,3 @@ tests/e2e/load-test-folder
 */.grunt
 */.lock-wscript
 */cypress-tests/dist
-
-# typescript-dto
-/typescript-dto/.pnp.cjs

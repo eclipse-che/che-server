@@ -244,6 +244,16 @@
             <groupId>io.fabric8</groupId>
             <artifactId>mockwebserver</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>vertx-auth-common</artifactId>
+                    <groupId>io.vertx</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>vertx-web-common</artifactId>
+                    <groupId>io.vertx</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>

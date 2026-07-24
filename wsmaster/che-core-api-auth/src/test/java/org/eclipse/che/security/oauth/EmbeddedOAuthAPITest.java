@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import jakarta.ws.rs.core.Response;
@@ -214,5 +215,49 @@ public class EmbeddedOAuthAPITest {
 
     // then
     assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params=%7B%7D");
+  }
+
+  @Test
+  public void shouldIncludeClientIdForOAuth2Providers() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://eclipse.che"));
+    when(oauth2Providers.getRegisteredProviderNames()).thenReturn(Set.of("github"));
+    when(oauth1Providers.getRegisteredProviderNames()).thenReturn(Set.of());
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(authenticator.getClientId()).thenReturn("test-client-id");
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+
+    // when
+    Set<OAuthAuthenticatorDescriptor> descriptors =
+        embeddedOAuthAPI.getRegisteredAuthenticators(uriInfo);
+
+    // then
+    assertEquals(descriptors.size(), 1);
+    OAuthAuthenticatorDescriptor descriptor = descriptors.iterator().next();
+    assertEquals(descriptor.getName(), "github");
+    assertEquals(descriptor.getClientId(), "test-client-id");
+  }
+
+  @Test
+  public void shouldHaveNullClientIdForOAuth1Providers() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri("http://eclipse.che"));
+    when(oauth2Providers.getRegisteredProviderNames()).thenReturn(Set.of());
+    when(oauth1Providers.getRegisteredProviderNames()).thenReturn(Set.of("bitbucket"));
+    org.eclipse.che.security.oauth1.OAuthAuthenticator oauth1Authenticator =
+        mock(org.eclipse.che.security.oauth1.OAuthAuthenticator.class);
+    when(oauth1Providers.getAuthenticator("bitbucket")).thenReturn(oauth1Authenticator);
+
+    // when
+    Set<OAuthAuthenticatorDescriptor> descriptors =
+        embeddedOAuthAPI.getRegisteredAuthenticators(uriInfo);
+
+    // then
+    assertEquals(descriptors.size(), 1);
+    OAuthAuthenticatorDescriptor descriptor = descriptors.iterator().next();
+    assertEquals(descriptor.getName(), "bitbucket");
+    assertNull(descriptor.getClientId());
   }
 }

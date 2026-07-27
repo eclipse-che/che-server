@@ -239,6 +239,14 @@
                     <artifactId>netty-common</artifactId>
                     <groupId>io.netty</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>vertx-auth-common</artifactId>
+                    <groupId>io.vertx</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>vertx-web-common</artifactId>
+                    <groupId>io.vertx</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>

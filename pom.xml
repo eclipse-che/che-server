@@ -83,7 +83,7 @@
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
         <io.rest-assured.version>6.0.0</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
-        <io.vertx.version>4.5.24</io.vertx.version>
+        <io.vertx.version>4.5.30</io.vertx.version>
         <jakarta.activation.version>2.1.4</jakarta.activation.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
@@ -505,6 +505,11 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
+                <version>${io.vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-web-client</artifactId>
                 <version>${io.vertx.version}</version>
             </dependency>
             <dependency>
@@ -935,7 +940,7 @@
                 <artifactId>che-core-api-workspace</artifactId>
                 <version>${che.version}</version>
             </dependency>
-           <dependency>
+            <dependency>
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-workspace-shared</artifactId>
                 <version>${che.version}</version>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -206,13 +206,16 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
                   .withRequired(true)
                   .withDefaultValue("federated_login")));
       OAuthAuthenticator authenticator = oauth2Providers.getAuthenticator(name);
+      String endpointUrl =
+          authenticator != null
+              ? authenticator.getEndpointUrl()
+              : oauth1Providers.getAuthenticator(name).getEndpointUrl();
+      String clientId = authenticator != null ? authenticator.getClientId() : null;
       result.add(
           newDto(OAuthAuthenticatorDescriptor.class)
               .withName(name)
-              .withEndpointUrl(
-                  authenticator != null
-                      ? authenticator.getEndpointUrl()
-                      : oauth1Providers.getAuthenticator(name).getEndpointUrl())
+              .withEndpointUrl(endpointUrl)
+              .withClientId(clientId)
               .withLinks(links));
     }
     return result;

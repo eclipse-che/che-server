@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.security.oauth;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -30,6 +31,14 @@ import org.eclipse.che.api.core.*;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Required;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
+import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
+import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.lang.NameGenerator;
+import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 
 /** RESTful wrapper for OAuthAuthenticator. */
@@ -40,6 +49,8 @@ public class OAuthAuthenticationService extends Service {
 
   @Inject private OAuthAPI oAuthAPI;
   @Inject private AuthorisationRequestManager authorisationRequestManager;
+  @Inject private PersonalAccessTokenManager personalAccessTokenManager;
+  @Inject private GitCredentialManager gitCredentialManager;
 
   /**
    * Redirect request to OAuth provider site for authentication|authorization. Client must provide
@@ -103,6 +114,39 @@ public class OAuthAuthenticationService extends Service {
           BadRequestException,
           ConflictException {
     return oAuthAPI.getOrRefreshToken(oauthProvider);
+  }
+
+  /**
+   * Refreshes the OAuth token for the given provider and persists the updated token as a Kubernetes
+   * secret and git credential, so that subsequent SCM operations use the new access token.
+   *
+   * @param oauthProvider OAuth provider name
+   */
+  @POST
+  @Path("refresh")
+  public void refresh(@Required @QueryParam("oauth_provider") String oauthProvider)
+      throws ServerException,
+          UnauthorizedException,
+          NotFoundException,
+          ForbiddenException,
+          UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException {
+    OAuthToken token = oAuthAPI.refreshToken(oauthProvider);
+    Subject subject = EnvironmentContext.getCurrent().getSubject();
+    PersonalAccessToken personalAccessToken =
+        new PersonalAccessToken(
+            oAuthAPI.getProviderUrl(oauthProvider),
+            oauthProvider,
+            subject.getUserId(),
+            null,
+            subject.getUserName(),
+            NameGenerator.generate("oauth2-", 5),
+            NameGenerator.generate("id-", 5),
+            token.getToken(),
+            token.getRefreshToken(),
+            token.getExpiresIn());
+    personalAccessTokenManager.store(personalAccessToken);
+    gitCredentialManager.createOrReplace(personalAccessToken);
   }
 
   /**

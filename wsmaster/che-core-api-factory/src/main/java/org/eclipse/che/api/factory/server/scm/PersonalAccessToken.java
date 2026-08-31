@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -28,6 +28,12 @@ public class PersonalAccessToken {
   /** Organization that user belongs to. Can be null if user is not a member of any organization. */
   @Nullable private final String scmOrganization;
 
+  /** OAuth refresh token for obtaining new access tokens. Null for non-OAuth (PAT) tokens. */
+  @Nullable private final String refreshToken;
+
+  /** Token expiration time in seconds. 0 if the token does not expire. */
+  @Nullable private final long expiresIn;
+
   private final String scmTokenName;
   private final String scmTokenId;
   private final String token;
@@ -41,7 +47,9 @@ public class PersonalAccessToken {
       String scmUserName,
       String scmTokenName,
       String scmTokenId,
-      String token) {
+      String token,
+      String refreshToken,
+      long expiresIn) {
     this.scmProviderUrl = scmProviderUrl;
     this.scmOrganization = scmOrganization;
     this.scmProviderName = scmProviderName;
@@ -49,26 +57,9 @@ public class PersonalAccessToken {
     this.scmTokenName = scmTokenName;
     this.scmTokenId = scmTokenId;
     this.token = token;
+    this.refreshToken = refreshToken;
     this.cheUserId = cheUserId;
-  }
-
-  public PersonalAccessToken(
-      String scmProviderUrl,
-      String scmProviderName,
-      String cheUserId,
-      String scmUserName,
-      String scmTokenName,
-      String scmTokenId,
-      String token) {
-    this(
-        scmProviderUrl,
-        scmProviderName,
-        cheUserId,
-        null,
-        scmUserName,
-        scmTokenName,
-        scmTokenId,
-        token);
+    this.expiresIn = expiresIn;
   }
 
   public PersonalAccessToken(
@@ -81,7 +72,9 @@ public class PersonalAccessToken {
         scmUserName,
         null,
         null,
-        token);
+        token,
+        null,
+        0);
   }
 
   public String getScmProviderUrl() {
@@ -104,6 +97,11 @@ public class PersonalAccessToken {
     return token;
   }
 
+  @Nullable
+  public String getRefreshToken() {
+    return refreshToken;
+  }
+
   public String getCheUserId() {
     return cheUserId;
   }
@@ -111,6 +109,11 @@ public class PersonalAccessToken {
   @Nullable
   public String getScmOrganization() {
     return scmOrganization;
+  }
+
+  @Nullable
+  public long getExpiresIn() {
+    return expiresIn;
   }
 
   @Override
@@ -125,13 +128,23 @@ public class PersonalAccessToken {
         && Objects.equal(scmTokenName, that.scmTokenName)
         && Objects.equal(scmTokenId, that.scmTokenId)
         && Objects.equal(token, that.token)
-        && Objects.equal(cheUserId, that.cheUserId);
+        && Objects.equal(refreshToken, that.refreshToken)
+        && Objects.equal(cheUserId, that.cheUserId)
+        && Objects.equal(expiresIn, that.expiresIn);
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        scmProviderUrl, scmUserName, scmOrganization, scmTokenName, scmTokenId, token, cheUserId);
+        scmProviderUrl,
+        scmUserName,
+        scmOrganization,
+        scmTokenName,
+        scmTokenId,
+        token,
+        refreshToken,
+        cheUserId,
+        expiresIn);
   }
 
   @Override
@@ -158,8 +171,14 @@ public class PersonalAccessToken {
         + ", token='"
         + token
         + '\''
+        + ", refreshToken='"
+        + refreshToken
+        + '\''
         + ", cheUserId='"
         + cheUserId
+        + '\''
+        + ", expiresIn="
+        + expiresIn
         + '}';
   }
 

@@ -95,10 +95,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com",
             "provider",
             "cheUser",
+            null,
             "username",
             "token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     // when
     kubernetesGitCredentialManager.createOrReplace(token);
@@ -120,12 +123,15 @@ public class KubernetesGitCredentialManagerTest {
     PersonalAccessToken token =
         new PersonalAccessToken(
             "https://bitbucket-server.com:5648",
+            "provider",
             "cheUser",
             "cheOrganization",
             "username",
             "token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
 
@@ -182,10 +188,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com",
             "provider",
             "cheUser",
+            null,
             "username",
             "oauth2-token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     // when
     kubernetesGitCredentialManager.createOrReplace(token);
@@ -218,10 +227,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com",
             "bitbucket",
             "cheUser",
+            null,
             "username",
             "oauth2-token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     // when
     kubernetesGitCredentialManager.createOrReplace(token);
@@ -244,10 +256,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com:5648",
             "provider",
             "cheUser",
+            null,
             "username",
             "token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
 

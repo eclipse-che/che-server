@@ -179,12 +179,12 @@ public abstract class OAuthAuthenticator {
    *     server
    * @param scopes specify exactly what type of access needed. This list must be exactly the same as
    *     list passed to the method {@link #getAuthenticateUrl(URL, java.util.List)}
-   * @return access token
+   * @return TokenResponse object with the token data
    * @throws OAuthAuthenticationException if authentication failed or <code>requestUrl</code> does
    *     not contain required parameters, e.g. 'code'
    * @throws ScmCommunicationException if communication with SCM failed
    */
-  public String callback(URL requestUrl, List<String> scopes)
+  public TokenResponse callback(URL requestUrl, List<String> scopes)
       throws OAuthAuthenticationException, ScmCommunicationException {
     if (!isConfigured()) {
       throw new OAuthAuthenticationException(AUTHENTICATOR_IS_NOT_CONFIGURED);
@@ -209,7 +209,7 @@ public abstract class OAuthAuthenticator {
         userId = EnvironmentContext.getCurrent().getSubject().getUserId();
       }
       flow.createAndStoreCredential(tokenResponse, userId);
-      return tokenResponse.getAccessToken();
+      return tokenResponse;
     } catch (IOException ioe) {
       if (ioe instanceof SSLHandshakeException) {
         throw new ScmCommunicationException(
@@ -328,7 +328,10 @@ public abstract class OAuthAuthenticator {
         return null;
       }
     }
-    return newDto(OAuthToken.class).withToken(credential.getAccessToken());
+    return newDto(OAuthToken.class)
+        .withToken(credential.getAccessToken())
+        .withRefreshToken(credential.getRefreshToken())
+        .withExpiresIn(credential.getExpiresInSeconds());
   }
 
   /**
@@ -366,7 +369,10 @@ public abstract class OAuthAuthenticator {
       }
       return null;
     }
-    return newDto(OAuthToken.class).withToken(credential.getAccessToken());
+    return newDto(OAuthToken.class)
+        .withToken(credential.getAccessToken())
+        .withRefreshToken(credential.getRefreshToken())
+        .withExpiresIn(credential.getExpiresInSeconds());
   }
 
   /**

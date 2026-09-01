@@ -166,12 +166,6 @@ prepareRelease() {
         sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${CHE_VERSION}<\/che.version>#" pom.xml
         echo "[INFO] Dependencies updated in che-server parent"
 
-        # TODO pull parent pom version from VERSION file, instead of being hardcoded
-        pushd typescript-dto >/dev/null
-            sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${CHE_VERSION}<\/che.version>#" dto-pom.xml
-            echo "[INFO] Dependencies updated in che typescript DTO (che server = ${CHE_VERSION})"
-        popd >/dev/null
-
         # run mvn license format, in case some files that have old license headers have been updated
         mvn license:format
     popd >/dev/null
@@ -203,12 +197,6 @@ releaseCheServer() {
         exit $EXIT_CODE
     fi
     set +x
-    popd >/dev/null
-}
-
-releaseTypescriptDto() {
-    pushd che-server/typescript-dto >/dev/null
-    ./build.sh
     popd >/dev/null
 }
 
@@ -258,9 +246,6 @@ bumpVersion() {
 
         mvn versions:set -DgenerateBackupPoms=false -DallowSnapshots=true -DnewVersion=$1
         sed -i -e "s#<che.version>.*<\/che.version>#<che.version>$1<\/che.version>#" pom.xml
-        pushd typescript-dto >/dev/null
-            sed -i -e "s#<che.version>.*<\/che.version>#<che.version>${1}<\/che.version>#" dto-pom.xml
-        popd >/dev/null
 
         # update integration tests to new root pom version
         find . -name "pom.xml" -exec sed -i {} -r -e "s@<version>${current_root_pom_version}</version>@<version>$1</version>@g" \;
@@ -312,7 +297,6 @@ else
     createTags
 fi
 releaseCheServer
-releaseTypescriptDto
 
 if [[ "${BUILD_AND_PUSH_IMAGES}" = "true" ]]; then
     buildAndPushImages  ${CHE_VERSION}

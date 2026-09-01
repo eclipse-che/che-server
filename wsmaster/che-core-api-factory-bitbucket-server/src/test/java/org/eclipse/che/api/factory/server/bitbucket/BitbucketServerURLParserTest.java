@@ -471,6 +471,7 @@ public class BitbucketServerURLParserTest {
         "repo",
         "branch"
       },
+      {"https://bitbucket.2mcl.com/users/user/repos/repo/browse", "user", null, "repo", null},
       {"https://bbkt.com/users/user/repos/repo/", "user", null, "repo", null}
     };
   }

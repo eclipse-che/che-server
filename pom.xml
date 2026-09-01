@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.che</groupId>
     <artifactId>che-server</artifactId>
-    <version>7.116.0-SNAPSHOT</version>
+    <version>7.122.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
     <description>Eclipse Che Server</description>
@@ -47,9 +47,9 @@
     </scm>
     <properties>
         <aopalliance.version>1.0</aopalliance.version>
-        <ch.qos.logback.version>1.5.25</ch.qos.logback.version>
+        <ch.qos.logback.version>1.5.28</ch.qos.logback.version>
         <com.auth0.jwks-rsa.version>0.22.1</com.auth0.jwks-rsa.version>
-        <com.fasterxml.jackson.version>2.21.0</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.22.0</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
         <com.google.code.guice.version>5.0.1</com.google.code.guice.version>
         <com.google.errorprone>2.42.0</com.google.errorprone>
@@ -66,13 +66,13 @@
         <grpc-api.version>1.78.0</grpc-api.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client.version>7.6.1</io.fabric8.kubernetes-client.version>
+        <io.fabric8.kubernetes-client.version>7.8.0</io.fabric8.kubernetes-client.version>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.13.0</io.jsonwebtoken.jjwt.version>
-        <io.micrometer.version>1.16.2</io.micrometer.version>
-        <io.netty.version>4.2.9.Final</io.netty.version>
+        <io.micrometer.version>1.11.5</io.micrometer.version>
+        <io.netty.version>4.2.17.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
         <io.opentracing.contrib.metrics.version>0.3.0</io.opentracing.contrib.metrics.version>
@@ -80,11 +80,10 @@
         <io.opentracing.tracerresolver.version>0.1.8</io.opentracing.tracerresolver.version>
         <io.opentracing.version>0.33.0</io.opentracing.version>
         <io.opentracing.web-servlet-filter.version>0.4.1</io.opentracing.web-servlet-filter.version>
-        <io.prometheus.metricsmodel.version>1.4.3</io.prometheus.metricsmodel.version>
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
         <io.rest-assured.version>6.0.0</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
-        <io.vertx.version>4.5.24</io.vertx.version>
+        <io.vertx.version>4.5.30</io.vertx.version>
         <jakarta.activation.version>2.1.4</jakarta.activation.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
@@ -100,7 +99,7 @@
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
-        <che.version>7.116.0-SNAPSHOT</che.version>
+        <che.version>7.122.0-SNAPSHOT</che.version>
         <specification.version>1.0-beta2</specification.version>
         <?SORTPOM RESUME?>
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>
@@ -110,24 +109,24 @@
         <maven.buildhelper.plugin.version>3.6.1</maven.buildhelper.plugin.version>
         <maven.buildnumber.plugin.version>3.3.0</maven.buildnumber.plugin.version>
         <maven.clean.plugin.version>3.5.0</maven.clean.plugin.version>
-        <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
+        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.dependency.plugin.version>3.9.0</maven.dependency.plugin.version>
         <maven.enforcer.plugin.version>3.0.0</maven.enforcer.plugin.version>
         <maven.exec.plugin.version>3.6.3</maven.exec.plugin.version>
-        <maven.fabric8io.docker.plugin.version>0.48.0</maven.fabric8io.docker.plugin.version>
+        <maven.fabric8io.docker.plugin.version>0.48.1</maven.fabric8io.docker.plugin.version>
         <maven.failsafe.plugin.version>3.5.4</maven.failsafe.plugin.version>
         <maven.fmt.plugin.version>2.29</maven.fmt.plugin.version>
-        <maven.google-java-format.version>1.35.0</maven.google-java-format.version>
+        <maven.google-java-format.version>1.36.1</maven.google-java-format.version>
         <maven.install.plugin.version>3.1.4</maven.install.plugin.version>
         <maven.jacoco.plugin.version>0.8.14</maven.jacoco.plugin.version>
         <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
         <maven.mycila.license.plugin.version>5.0.0</maven.mycila.license.plugin.version>
         <maven.plugin.plugin.version>3.15.2</maven.plugin.plugin.version>
-        <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
+        <maven.resources.plugin.version>3.5.0</maven.resources.plugin.version>
         <maven.sortpom.plugin.version>2.3.1</maven.sortpom.plugin.version>
-        <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
+        <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.supported-versions>[3.6.2,)</maven.supported-versions>
-        <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
+        <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
         <maven.war.plugin.version>3.5.1</maven.war.plugin.version>
         <mysql.connector.version>8.0.33</mysql.connector.version>
         <net.java.dev.jna.version>4.1.0</net.java.dev.jna.version>
@@ -138,14 +137,14 @@
         <org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>3.5.0</org.apache.maven.plugin-testing.maven-plugin-testing-harness.version>
         <org.apache.maven.plugin-tools.plugin-annotations.version>3.15.2</org.apache.maven.plugin-tools.plugin-annotations.version>
         <org.apache.maven.version>3.9.12</org.apache.maven.version>
-        <org.apache.tomcat.version>11.0.15</org.apache.tomcat.version>
+        <org.apache.tomcat.version>11.0.22</org.apache.tomcat.version>
         <org.codehaus.plexus.utils.version>4.0.2</org.codehaus.plexus.utils.version>
         <org.eclipse.jetty.version>11.0.26</org.eclipse.jetty.version>
         <org.eclipse.persistence.eclipselink.version>4.0.8</org.eclipse.persistence.eclipselink.version>
         <org.eclipse.persistence.version>2.2.3</org.eclipse.persistence.version>
         <org.eclipse.sisu.version>0.9.0.M2</org.eclipse.sisu.version>
         <org.everrest.version>1.15.0</org.everrest.version>
-        <org.flyway.version>11.20.2</org.flyway.version>
+        <org.flyway.version>12.4.0</org.flyway.version>
         <org.hamcrest.version>3.0</org.hamcrest.version>
         <org.javassist.version>3.30.2-GA</org.javassist.version>
         <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
@@ -156,7 +155,7 @@
         <org.postgresql.version>42.7.9</org.postgresql.version>
         <org.reflections.version>0.9.9</org.reflections.version>
         <org.slf4j.version>2.0.17</org.slf4j.version>
-        <org.testng.version>7.8.0</org.testng.version>
+        <org.testng.version>7.12.0</org.testng.version>
         <org.wiremock.version>3.0.1</org.wiremock.version>
     </properties>
     <dependencyManagement>
@@ -474,11 +473,6 @@
             </dependency>
             <dependency>
                 <groupId>io.prometheus</groupId>
-                <artifactId>prometheus-metrics-model</artifactId>
-                <version>${io.prometheus.metricsmodel.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.prometheus</groupId>
                 <artifactId>simpleclient</artifactId>
                 <version>${io.prometheus.simpleclient.version}</version>
             </dependency>
@@ -511,6 +505,11 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
+                <version>${io.vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-web-client</artifactId>
                 <version>${io.vertx.version}</version>
             </dependency>
             <dependency>
@@ -941,7 +940,7 @@
                 <artifactId>che-core-api-workspace</artifactId>
                 <version>${che.version}</version>
             </dependency>
-           <dependency>
+            <dependency>
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-workspace-shared</artifactId>
                 <version>${che.version}</version>
@@ -1163,11 +1162,6 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-keycloak-token-provider</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
                 <artifactId>che-multiuser-keycloak-user-remover</artifactId>
                 <version>${che.version}</version>
             </dependency>
@@ -1195,58 +1189,6 @@
             <dependency>
                 <groupId>org.eclipse.che.multiuser</groupId>
                 <artifactId>che-multiuser-permission-devfile</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-devfile</artifactId>
-                <version>${che.version}</version>
-                <classifier>tests</classifier>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-logger</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-resource</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-system</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-user</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-workspace</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-workspace</artifactId>
-                <version>${che.version}</version>
-                <classifier>tests</classifier>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-permission-workspace-activity</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-personal-account</artifactId>
-                <version>${che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.che.multiuser</groupId>
-                <artifactId>che-multiuser-sql-schema</artifactId>
                 <version>${che.version}</version>
             </dependency>
             <dependency>
@@ -1868,25 +1810,6 @@
                             <version>1.2.0</version>
                         </dependency>
                     </dependencies>
-                </plugin>
-                <plugin>
-                    <groupId>com.gradle</groupId>
-                    <artifactId>develocity-maven-extension</artifactId>
-                    <configuration>
-                        <develocity>
-                            <normalization>
-                                <runtimeClassPath>
-                                    <metaInf>
-                                        <ignoredAttributes>
-                                            <ignore>Implementation-Version</ignore>
-                                            <ignore>Date</ignore>
-                                            <ignore>SCM-Revision</ignore>
-                                        </ignoredAttributes>
-                                    </metaInf>
-                                </runtimeClassPath>
-                            </normalization>
-                        </develocity>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

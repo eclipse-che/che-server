@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.workspace.infrastructure.openshift.project;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -66,8 +65,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
 
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
 
-  private final String oAuthIdentityProvider;
-
   @Inject
   public OpenShiftProjectFactory(
       @Nullable @Named("che.infra.kubernetes.namespace.default") String defaultNamespaceName,
@@ -84,9 +81,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
       PreferenceManager preferenceManager,
       KubernetesSharedPool sharedPool,
       AuthorizationChecker authorizationChecker,
-      PermissionsCleaner permissionsCleaner,
-      @Nullable @Named("che.infra.openshift.oauth_identity_provider")
-          String oAuthIdentityProvider) {
+      PermissionsCleaner permissionsCleaner) {
     super(
         defaultNamespaceName,
         namespaceCreationAllowed,
@@ -104,7 +99,6 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.cheServerOpenshiftClientFactory = cheServerOpenshiftClientFactory;
     this.openShiftClientFactory = openShiftClientFactory;
-    this.oAuthIdentityProvider = oAuthIdentityProvider;
   }
 
   public OpenShiftProject getOrCreate(RuntimeIdentity identity) throws InfrastructureException {
@@ -121,7 +115,7 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
 
     osProject.prepare(
         canCreateNamespace(),
-        initWithCheServerSa && !isNullOrEmpty(oAuthIdentityProvider),
+        initWithCheServerSa,
         labelNamespaces ? namespaceLabels : emptyMap(),
         annotateNamespaces ? namespaceAnnotationsEvaluated : emptyMap());
 

@@ -14,7 +14,6 @@ package org.eclipse.che.api.deploy;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.inject.matcher.Matchers.subclassesOf;
 import static org.eclipse.che.inject.Matchers.names;
-import static org.eclipse.che.multiuser.api.permission.server.SystemDomain.SYSTEM_DOMAIN_ACTIONS;
 
 import com.auth0.jwk.JwkProvider;
 import com.google.inject.AbstractModule;
@@ -65,6 +64,7 @@ import org.eclipse.che.api.user.server.spi.UserDao;
 import org.eclipse.che.api.workspace.server.WorkspaceEntityProvider;
 import org.eclipse.che.api.workspace.server.devfile.DevfileModule;
 import org.eclipse.che.api.workspace.server.hc.ServersCheckerFactory;
+import org.eclipse.che.api.workspace.server.jpa.WorkspaceJpaModule;
 import org.eclipse.che.api.workspace.server.spi.provision.env.AgentAuthEnableEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiEnvVarProvider;
 import org.eclipse.che.api.workspace.server.spi.provision.env.CheApiExternalEnvVarProvider;
@@ -270,6 +270,7 @@ public class WsMasterModule extends AbstractModule {
     install(new org.eclipse.che.security.oauth.GitLabModule());
     install(new org.eclipse.che.security.oauth.AzureDevOpsModule());
     install(new org.eclipse.che.security.oauth.GithubModule());
+    install(new WorkspaceJpaModule());
 
     configureMultiUserMode(persistenceProperties, infrastructure);
 
@@ -314,33 +315,6 @@ public class WsMasterModule extends AbstractModule {
     configureJwtProxySecureProvisioner(infrastructure);
 
     bind(KubernetesClientConfigFactory.class).to(KubernetesOidcProviderConfigFactory.class);
-
-    persistenceProperties.put(
-        PersistenceUnitProperties.EXCEPTION_HANDLER_CLASS,
-        "org.eclipse.che.core.db.postgresql.jpa.eclipselink.PostgreSqlExceptionHandler");
-
-    install(
-        new org.eclipse.che.multiuser.permission.workspace.server.WorkspaceApiPermissionsModule());
-    install(
-        new org.eclipse.che.multiuser.permission.workspace.server.jpa
-            .MultiuserWorkspaceJpaModule());
-    install(
-        new org.eclipse.che.multiuser.permission.devfile.server.jpa
-            .MultiuserUserDevfileJpaModule());
-    install(
-        new org.eclipse.che.multiuser.permission.devfile.server.UserDevfileApiPermissionsModule());
-
-    // Permission filters
-    bind(org.eclipse.che.multiuser.permission.system.SystemServicePermissionsFilter.class);
-    bind(org.eclipse.che.multiuser.permission.system.JvmServicePermissionsFilter.class);
-    bind(
-        org.eclipse.che.multiuser.permission.system.SystemEventsSubscriptionPermissionsCheck.class);
-
-    Multibinder<String> binder =
-        Multibinder.newSetBinder(binder(), String.class, Names.named(SYSTEM_DOMAIN_ACTIONS));
-    bind(org.eclipse.che.multiuser.permission.logger.LoggerServicePermissionsFilter.class);
-
-    bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
 
     bind(RequestTokenExtractor.class).to(HeaderRequestTokenExtractor.class);
     if (isOpenShiftOAuthEnabled()) {

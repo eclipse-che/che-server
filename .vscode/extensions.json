@@ -5,6 +5,7 @@
       "vscjava.vscode-maven",
       "vscjava.vscode-java-debug",
       "vscjava.vscode-java-test",
-      "RooVeterinaryInc.roo-cline"
+      "RooVeterinaryInc.roo-cline",
+      "Anthropic.claude-code"
     ]
 }

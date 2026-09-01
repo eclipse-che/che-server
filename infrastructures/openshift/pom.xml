@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-infrastructures-parent</artifactId>
         <groupId>org.eclipse.che.infrastructure</groupId>
-        <version>7.121.0-SNAPSHOT</version>
+        <version>7.122.0-SNAPSHOT</version>
     </parent>
     <artifactId>infrastructure-openshift</artifactId>
     <name>Infrastructure :: OpenShift</name>
@@ -238,6 +238,14 @@
                 <exclusion>
                     <artifactId>netty-common</artifactId>
                     <groupId>io.netty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>vertx-auth-common</artifactId>
+                    <groupId>io.vertx</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>vertx-web-common</artifactId>
+                    <groupId>io.vertx</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

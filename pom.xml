@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.che</groupId>
     <artifactId>che-server</artifactId>
-    <version>7.121.0-SNAPSHOT</version>
+    <version>7.122.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Che Server</name>
     <description>Eclipse Che Server</description>
@@ -66,13 +66,13 @@
         <grpc-api.version>1.78.0</grpc-api.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client.version>7.7.0</io.fabric8.kubernetes-client.version>
+        <io.fabric8.kubernetes-client.version>7.8.0</io.fabric8.kubernetes-client.version>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.13.0</io.jsonwebtoken.jjwt.version>
         <io.micrometer.version>1.11.5</io.micrometer.version>
-        <io.netty.version>4.2.15.Final</io.netty.version>
+        <io.netty.version>4.2.17.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
         <io.opentracing.contrib.metrics.version>0.3.0</io.opentracing.contrib.metrics.version>
@@ -83,7 +83,7 @@
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
         <io.rest-assured.version>6.0.0</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
-        <io.vertx.version>4.5.24</io.vertx.version>
+        <io.vertx.version>4.5.30</io.vertx.version>
         <jakarta.activation.version>2.1.4</jakarta.activation.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
@@ -99,7 +99,7 @@
         <license_contributor>Red Hat, Inc. - initial API and implementation</license_contributor>
         <?SORTPOM IGNORE?>
         <build.info>${project.version}</build.info>
-        <che.version>7.121.0-SNAPSHOT</che.version>
+        <che.version>7.122.0-SNAPSHOT</che.version>
         <specification.version>1.0-beta2</specification.version>
         <?SORTPOM RESUME?>
         <license_copyrightOwner>Red Hat, Inc.</license_copyrightOwner>
@@ -147,8 +147,6 @@
         <org.flyway.version>12.4.0</org.flyway.version>
         <org.hamcrest.version>3.0</org.hamcrest.version>
         <org.javassist.version>3.30.2-GA</org.javassist.version>
-        <org.jgroups.kubernetes.version>1.0.13.Final</org.jgroups.kubernetes.version>
-        <org.jgroups.version>5.5.6.Final</org.jgroups.version>
         <org.leadpony.justify.version>3.1.0</org.leadpony.justify.version>
         <org.mockito.mockito-testng.version>0.5.4</org.mockito.mockito-testng.version>
         <org.mockito.version>3.11.2</org.mockito.version>
@@ -505,6 +503,11 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
+                <version>${io.vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-web-client</artifactId>
                 <version>${io.vertx.version}</version>
             </dependency>
             <dependency>
@@ -935,7 +938,7 @@
                 <artifactId>che-core-api-workspace</artifactId>
                 <version>${che.version}</version>
             </dependency>
-           <dependency>
+            <dependency>
                 <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-workspace-shared</artifactId>
                 <version>${che.version}</version>
@@ -1276,16 +1279,6 @@
                 <groupId>org.javassist</groupId>
                 <artifactId>javassist</artifactId>
                 <version>${org.javassist.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jgroups</groupId>
-                <artifactId>jgroups</artifactId>
-                <version>${org.jgroups.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jgroups.kubernetes</groupId>
-                <artifactId>jgroups-kubernetes</artifactId>
-                <version>${org.jgroups.kubernetes.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.leadpony.justify</groupId>

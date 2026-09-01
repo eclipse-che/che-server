@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -128,7 +128,13 @@ public class URLFetcher {
   String fetch(@NotNull final String url, int timeout, @Nullable String authorization)
       throws IOException {
     requireNonNull(url, "url parameter can't be null");
-    URLConnection connection = new URL(sanitized(url)).openConnection();
+    URL parsedUrl = new URL(sanitized(url));
+    String scheme = parsedUrl.getProtocol();
+    if (!"http".equals(scheme) && !"https".equals(scheme)) {
+      throw new IOException(
+          "Only http and https URLs are allowed, got: " + scheme + " in URL " + url);
+    }
+    URLConnection connection = parsedUrl.openConnection();
     connection.setConnectTimeout(timeout);
     connection.setReadTimeout(timeout);
     if (!isNullOrEmpty(authorization)) {

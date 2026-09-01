@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,7 +27,6 @@ import java.net.URLConnection;
 import java.util.function.Consumer;
 import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
-import org.testng.Assert;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -50,13 +49,11 @@ public class URLFetcherTest {
 
   /** Check that when url exists the content is retrieved */
   @Test
-  public void checkGetContent() {
-
-    // test to download this class object
-    URL urlJson = getClass().getClassLoader().getResource("devfile/url_fetcher_test_resource.json");
-    Assert.assertNotNull(urlJson);
-
-    String content = urlFetcher.fetchSafely(urlJson.toString());
+  public void checkGetContent() throws IOException {
+    URLConnection urlConnection = Mockito.mock(URLConnection.class);
+    when(urlConnection.getInputStream())
+        .thenReturn(new ByteArrayInputStream("Hello".getBytes(UTF_8)));
+    String content = urlFetcher.fetch(urlConnection);
     assertEquals(content, "Hello");
   }
 
@@ -76,6 +73,55 @@ public class URLFetcherTest {
     assertNull(result);
   }
 
+  /** Check that non-http schemes are rejected */
+  @Test(
+      expectedExceptions = IOException.class,
+      expectedExceptionsMessageRegExp = "Only http and https URLs are allowed.*")
+  public void checkFileSchemeIsRejected() throws Exception {
+    urlFetcher.fetch("file:///etc/passwd");
+  }
+
+  /** Check that non-http schemes are rejected via fetchSafely */
+  @Test
+  public void checkFileSchemeIsRejectedSafely() {
+    String result = urlFetcher.fetchSafely("file:///etc/passwd");
+    assertNull(result);
+  }
+
+  /** Check that non-http schemes are rejected */
+  @Test(
+      expectedExceptions = IOException.class,
+      expectedExceptionsMessageRegExp = "Only http and https URLs are allowed.*")
+  public void checkFtpSchemeIsRejected() throws Exception {
+    urlFetcher.fetch("ftp://evil.com/file");
+  }
+
+  /** Check that non-http schemes are rejected */
+  @Test(
+      expectedExceptions = IOException.class,
+      expectedExceptionsMessageRegExp = "Only http and https URLs are allowed.*")
+  public void checkJarSchemeIsRejected() throws Exception {
+    urlFetcher.fetch("jar:file:///tmp/evil.jar!/payload");
+  }
+
+  /** Check that http scheme is allowed */
+  @Test
+  public void checkHttpSchemeIsAllowed() throws IOException {
+    URLFetcher fetcher =
+        new TimeoutCheckURLFetcher(
+            timeout -> assertEquals(timeout.intValue(), CONNECTION_READ_TIMEOUT));
+    fetcher.fetch("http://example.com/devfile.yaml");
+  }
+
+  /** Check that https scheme is allowed */
+  @Test
+  public void checkHttpsSchemeIsAllowed() throws IOException {
+    URLFetcher fetcher =
+        new TimeoutCheckURLFetcher(
+            timeout -> assertEquals(timeout.intValue(), CONNECTION_READ_TIMEOUT));
+    fetcher.fetch("https://example.com/devfile.yaml");
+  }
+
   /** Check Sanitizing of Git URL works */
   @Test
   public void checkDotGitRemovedFromURL() {
@@ -86,43 +132,14 @@ public class URLFetcherTest {
     assertEquals("http://github.com/acme/demo", result);
   }
 
-  /** Check that when url doesn't exist */
-  @Test
-  public void checkMissingContent() {
-
-    // test to download this class object
-    URL urlJson = getClass().getClassLoader().getResource("devfile/url_fetcher_test_resource.json");
-    Assert.assertNotNull(urlJson);
-
-    // add extra path to make url not found
-    String content = urlFetcher.fetchSafely(urlJson.toString() + "-invalid");
-    assertNull(content);
-  }
-
-  /** Check that when url doesn't exist */
-  @Test(
-      expectedExceptions = IOException.class,
-      expectedExceptionsMessageRegExp =
-          ".*url_fetcher_test_resource.json-invalid \\(No such file or directory\\)")
-  public void checkMissingContentUnsafeGet() throws Exception {
-
-    // test to download this class object
-    URL urlJson = getClass().getClassLoader().getResource("devfile/url_fetcher_test_resource.json");
-    Assert.assertNotNull(urlJson);
-
-    // add extra path to make url not found
-    String content = urlFetcher.fetch(urlJson.toString() + "-invalid");
-    assertNull(content);
-  }
-
   /** Check when we reach custom limit */
   @Test
-  public void checkPartialContent() {
-    URL urlJson = getClass().getClassLoader().getResource("devfile/url_fetcher_test_resource.json");
-    Assert.assertNotNull(urlJson);
-
-    String content = new OneByteURLFetcher(1).fetchSafely(urlJson.toString());
-    assertEquals(content, "Hello".substring(0, 1));
+  public void checkPartialContent() throws IOException {
+    URLConnection urlConnection = Mockito.mock(URLConnection.class);
+    when(urlConnection.getInputStream())
+        .thenReturn(new ByteArrayInputStream("Hello".getBytes(UTF_8)));
+    String content = new OneByteURLFetcher(1).fetch(urlConnection);
+    assertEquals(content, "H");
   }
 
   /** Check when we reach custom limit */

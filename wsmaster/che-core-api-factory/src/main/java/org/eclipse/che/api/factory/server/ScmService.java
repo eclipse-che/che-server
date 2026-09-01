@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -53,7 +53,7 @@ public class ScmService extends Service {
       @Parameter(description = "File name or path") @QueryParam("file") String filePath)
       throws ApiException {
     requireNonNull(repository, "Repository");
-    requireNonNull(repository, "File");
+    requireNonNull(filePath, "File");
     String content = getScmFileResolver(repository).fileContent(repository, filePath);
     return Response.ok().entity(content).build();
   }

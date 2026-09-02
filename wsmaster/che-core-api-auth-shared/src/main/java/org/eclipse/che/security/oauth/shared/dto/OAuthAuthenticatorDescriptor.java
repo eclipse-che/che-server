@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -38,4 +38,15 @@ public interface OAuthAuthenticatorDescriptor {
   void setLinks(List<Link> links);
 
   OAuthAuthenticatorDescriptor withLinks(List<Link> links);
+
+  /**
+   * The OAuth App client ID. Exposed so clients can initiate flows that require the client ID
+   * directly (e.g. GitHub Device Authorization Flow / RFC 8628) without needing access to the raw
+   * Kubernetes Secret.
+   */
+  String getClientId();
+
+  void setClientId(String clientId);
+
+  OAuthAuthenticatorDescriptor withClientId(String clientId);
 }

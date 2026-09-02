@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -51,6 +51,7 @@ public abstract class OAuthAuthenticator {
   private static final Logger LOG = LoggerFactory.getLogger(OAuthAuthenticator.class);
 
   protected AuthorizationCodeFlow flow;
+  private String clientId;
   protected Map<Pattern, String> redirectUrisMap;
 
   /**
@@ -109,6 +110,7 @@ public abstract class OAuthAuthenticator {
         tokenUri,
         dataStoreFactory);
 
+    this.clientId = clientId;
     configure(authorizationFlow, Arrays.asList(redirectUris));
   }
 
@@ -388,6 +390,11 @@ public abstract class OAuthAuthenticator {
    */
   public boolean invalidateToken(String token) throws IOException {
     throw new UnsupportedOperationException("Should be implemented by specific provider");
+  }
+
+  /** Returns the OAuth App client ID (e.g. for GitHub Device Authorization Flow). */
+  public String getClientId() {
+    return clientId;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,10 +15,15 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.api.factory.server.ApiExceptionMapper.toApiException;
 import static org.eclipse.che.api.factory.server.scm.exception.ExceptionMessages.getDevfileConnectionErrorMessage;
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.factory.shared.Constants.DEFAULT_DEVFILE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -49,6 +54,24 @@ public class URLFactoryBuilder {
   private static final Logger LOG = LoggerFactory.getLogger(URLFactoryBuilder.class);
 
   public static final String DEVFILE_FILENAME = "devfileFilename";
+
+  private static final String[] DEVCONTAINER_LOCATIONS = {
+    ".devcontainer/devcontainer.json", ".devcontainer.json"
+  };
+
+  private static final String DEVCONTAINER_DEVFILE_TEMPLATE;
+
+  static {
+    try (InputStream is =
+        URLFactoryBuilder.class.getResourceAsStream("/devcontainer-devfile-template.yaml")) {
+      if (is == null) {
+        throw new IOException("devcontainer-devfile-template.yaml not found on classpath");
+      }
+      DEVCONTAINER_DEVFILE_TEMPLATE = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to load devcontainer devfile template", e);
+    }
+  }
 
   private final String defaultCheEditor;
   private final String defaultChePlugins;
@@ -140,6 +163,46 @@ public class URLFactoryBuilder {
         throw toApiException(e, location);
       }
     }
+
+    // No devfile found — probe for devcontainer.json
+    for (String devcontainerPath : DEVCONTAINER_LOCATIONS) {
+      String devcontainerLocation = remoteFactoryUrl.rawFileLocation(devcontainerPath);
+      if (devcontainerLocation == null) {
+        break;
+      }
+      try {
+        Optional<String> credentialsOptional = remoteFactoryUrl.getCredentials();
+        if (skipAuthentication) {
+          fileContentProvider.fetchContentWithoutAuthentication(devcontainerLocation);
+        } else if (credentialsOptional.isPresent()) {
+          fileContentProvider.fetchContent(devcontainerLocation, credentialsOptional.get());
+        } else {
+          fileContentProvider.fetchContent(devcontainerLocation);
+        }
+      } catch (IOException ex) {
+        LOG.debug("No devcontainer at: {}. Error: {}", devcontainerLocation, ex.getMessage());
+        continue;
+      } catch (DevfileException e) {
+        LOG.debug("Unexpected exception probing devcontainer: {}", e.getMessage());
+        continue;
+      }
+
+      LOG.info("Devcontainer detected at {}; generating devfile", devcontainerLocation);
+      try {
+        JsonNode additions = devfileParser.parseYamlRaw(DEVCONTAINER_DEVFILE_TEMPLATE);
+        Map<String, Object> devfileMap = new HashMap<>(DEFAULT_DEVFILE);
+        devfileMap.putAll(devfileParser.convertYamlToMap(additions));
+        return Optional.of(
+            newDto(FactoryDevfileV2Dto.class)
+                .withV(CURRENT_VERSION)
+                .withDevfile(devfileMap)
+                .withSource(devcontainerPath));
+      } catch (DevfileException e) {
+        LOG.error("Failed to parse devcontainer devfile template", e);
+        break;
+      }
+    }
+
     return Optional.empty();
   }
 

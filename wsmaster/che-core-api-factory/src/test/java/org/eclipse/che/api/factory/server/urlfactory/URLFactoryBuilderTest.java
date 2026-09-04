@@ -702,6 +702,301 @@ public class URLFactoryBuilderTest {
     assertFalse(result.isPresent());
   }
 
+  @Test
+  public void testDevcontainerEmptyContentReturnsEmpty() throws Exception {
+    String devfileLocation = "http://repo/raw/devfile.yaml";
+    String devcontainerLocation = "http://repo/raw/.devcontainer/devcontainer.json";
+    String devcontainerLocation2 = "http://repo/raw/.devcontainer.json";
+
+    RemoteFactoryUrl remoteUrl =
+        new RemoteFactoryUrl() {
+          @Override
+          public String getProviderName() {
+            return "test";
+          }
+
+          @Override
+          public List<DevfileLocation> devfileFileLocations() {
+            return singletonList(
+                new DevfileLocation() {
+                  @Override
+                  public Optional<String> filename() {
+                    return Optional.of("devfile.yaml");
+                  }
+
+                  @Override
+                  public String location() {
+                    return devfileLocation;
+                  }
+                });
+          }
+
+          @Override
+          public String rawFileLocation(String filename) {
+            return "http://repo/raw/" + filename;
+          }
+
+          @Override
+          public String getHostName() {
+            return "repo";
+          }
+
+          @Override
+          public String getProviderUrl() {
+            return "http://repo";
+          }
+
+          @Override
+          public String getBranch() {
+            return null;
+          }
+
+          @Override
+          public Optional<String> getCredentials() {
+            return Optional.empty();
+          }
+
+          @Override
+          public void setDevfileFilename(String devfileName) {}
+        };
+
+    when(fileContentProvider.fetchContent(eq(devfileLocation)))
+        .thenThrow(new IOException("not found"));
+    when(fileContentProvider.fetchContent(eq(devcontainerLocation))).thenReturn("");
+    when(fileContentProvider.fetchContent(eq(devcontainerLocation2))).thenReturn("");
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            remoteUrl, fileContentProvider, emptyMap(), false);
+
+    assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void testDevcontainerHtmlContentReturnsEmpty() throws Exception {
+    String devfileLocation = "http://repo/raw/devfile.yaml";
+    String devcontainerLocation = "http://repo/raw/.devcontainer/devcontainer.json";
+    String devcontainerLocation2 = "http://repo/raw/.devcontainer.json";
+
+    RemoteFactoryUrl remoteUrl =
+        new RemoteFactoryUrl() {
+          @Override
+          public String getProviderName() {
+            return "test";
+          }
+
+          @Override
+          public List<DevfileLocation> devfileFileLocations() {
+            return singletonList(
+                new DevfileLocation() {
+                  @Override
+                  public Optional<String> filename() {
+                    return Optional.of("devfile.yaml");
+                  }
+
+                  @Override
+                  public String location() {
+                    return devfileLocation;
+                  }
+                });
+          }
+
+          @Override
+          public String rawFileLocation(String filename) {
+            return "http://repo/raw/" + filename;
+          }
+
+          @Override
+          public String getHostName() {
+            return "repo";
+          }
+
+          @Override
+          public String getProviderUrl() {
+            return "http://repo";
+          }
+
+          @Override
+          public String getBranch() {
+            return null;
+          }
+
+          @Override
+          public Optional<String> getCredentials() {
+            return Optional.empty();
+          }
+
+          @Override
+          public void setDevfileFilename(String devfileName) {}
+        };
+
+    when(fileContentProvider.fetchContent(eq(devfileLocation)))
+        .thenThrow(new IOException("not found"));
+    when(fileContentProvider.fetchContent(eq(devcontainerLocation)))
+        .thenReturn("<!DOCTYPE html><html><body>Access denied</body></html>");
+    when(fileContentProvider.fetchContent(eq(devcontainerLocation2)))
+        .thenReturn("<!DOCTYPE html><html><body>Access denied</body></html>");
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            remoteUrl, fileContentProvider, emptyMap(), false);
+
+    assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void testDevcontainerJsoncWithLeadingCommentDetected() throws Exception {
+    String devfileLocation = "http://repo/raw/devfile.yaml";
+    String devcontainerLocation = "http://repo/raw/.devcontainer/devcontainer.json";
+
+    RemoteFactoryUrl remoteUrl =
+        new RemoteFactoryUrl() {
+          @Override
+          public String getProviderName() {
+            return "test";
+          }
+
+          @Override
+          public List<DevfileLocation> devfileFileLocations() {
+            return singletonList(
+                new DevfileLocation() {
+                  @Override
+                  public Optional<String> filename() {
+                    return Optional.of("devfile.yaml");
+                  }
+
+                  @Override
+                  public String location() {
+                    return devfileLocation;
+                  }
+                });
+          }
+
+          @Override
+          public String rawFileLocation(String filename) {
+            return "http://repo/raw/" + filename;
+          }
+
+          @Override
+          public String getHostName() {
+            return "repo";
+          }
+
+          @Override
+          public String getProviderUrl() {
+            return "http://repo";
+          }
+
+          @Override
+          public String getBranch() {
+            return null;
+          }
+
+          @Override
+          public Optional<String> getCredentials() {
+            return Optional.empty();
+          }
+
+          @Override
+          public void setDevfileFilename(String devfileName) {}
+        };
+
+    Map<String, Object> templateAdditions =
+        Map.of("commands", List.of(Map.of("id", "start-devcontainer")));
+
+    when(fileContentProvider.fetchContent(eq(devfileLocation)))
+        .thenThrow(new IOException("not found"));
+    when(fileContentProvider.fetchContent(eq(devcontainerLocation)))
+        .thenReturn("// This is a JSONC comment\n{\"name\": \"test\"}");
+    JsonNode templateNode = new ObjectNode(JsonNodeFactory.instance);
+    when(devfileParser.parseYamlRaw(anyString())).thenReturn(templateNode);
+    when(devfileParser.convertYamlToMap(templateNode)).thenReturn(templateAdditions);
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            remoteUrl, fileContentProvider, emptyMap(), false);
+
+    assertTrue(result.isPresent());
+    assertEquals(result.get().getSource(), ".devcontainer/devcontainer.json");
+    assertTrue(result.get() instanceof FactoryDevfileV2Dto);
+  }
+
+  @Test
+  public void testDevcontainerJsoncWithBlockCommentDetected() throws Exception {
+    String devfileLocation = "http://repo/raw/devfile.yaml";
+    String devcontainerLocation = "http://repo/raw/.devcontainer/devcontainer.json";
+
+    RemoteFactoryUrl remoteUrl =
+        new RemoteFactoryUrl() {
+          @Override
+          public String getProviderName() {
+            return "test";
+          }
+
+          @Override
+          public List<DevfileLocation> devfileFileLocations() {
+            return singletonList(
+                new DevfileLocation() {
+                  @Override
+                  public Optional<String> filename() {
+                    return Optional.of("devfile.yaml");
+                  }
+
+                  @Override
+                  public String location() {
+                    return devfileLocation;
+                  }
+                });
+          }
+
+          @Override
+          public String rawFileLocation(String filename) {
+            return "http://repo/raw/" + filename;
+          }
+
+          @Override
+          public String getHostName() {
+            return "repo";
+          }
+
+          @Override
+          public String getProviderUrl() {
+            return "http://repo";
+          }
+
+          @Override
+          public String getBranch() {
+            return null;
+          }
+
+          @Override
+          public Optional<String> getCredentials() {
+            return Optional.empty();
+          }
+
+          @Override
+          public void setDevfileFilename(String devfileName) {}
+        };
+
+    Map<String, Object> templateAdditions =
+        Map.of("commands", List.of(Map.of("id", "start-devcontainer")));
+
+    when(fileContentProvider.fetchContent(eq(devfileLocation)))
+        .thenThrow(new IOException("not found"));
+    when(fileContentProvider.fetchContent(eq(devcontainerLocation)))
+        .thenReturn("/*\n * Generated config\n */\n{\"name\": \"test\"}");
+    JsonNode templateNode = new ObjectNode(JsonNodeFactory.instance);
+    when(devfileParser.parseYamlRaw(anyString())).thenReturn(templateNode);
+    when(devfileParser.convertYamlToMap(templateNode)).thenReturn(templateAdditions);
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            remoteUrl, fileContentProvider, emptyMap(), false);
+
+    assertTrue(result.isPresent());
+    assertEquals(result.get().getSource(), ".devcontainer/devcontainer.json");
+  }
+
   @DataProvider
   public static Object[][] devfileExceptions() {
     return new Object[][] {

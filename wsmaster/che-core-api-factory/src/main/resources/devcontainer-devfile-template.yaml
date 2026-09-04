@@ -28,8 +28,7 @@ commands:
         # Env overrides:
         #   CONTAINER_NAME     nested container name           (default: devcontainer)
         #   IMAGE_NAME         built image tag                 (default: localhost/devcontainer:latest)
-        #   REUSE_CONTAINER=1  reuse a running container instead of rebuilding
-        #   REBUILD=1          force rebuild (remove existing container and image)
+        #   REBUILD=1          force rebuild (remove existing container and image; default: auto-rebuild when config changes)
         #   NO_CACHE=1         rebuild without cache (passes --no-cache to devcontainer build)
         #   STRICT_LIFECYCLE=1 exit non-zero if any lifecycle command fails
         #   NO_KEEP_ID=1       skip --userns=keep-id (debugging)
@@ -56,7 +55,6 @@ commands:
         PROJECT_NAME="$(basename "$PROJECT_DIR")"
         CONTAINER_NAME="${CONTAINER_NAME:-devcontainer}"
         IMAGE_NAME="${IMAGE_NAME:-localhost/devcontainer:latest}"
-        REUSE_CONTAINER="${REUSE_CONTAINER:-0}"
         REBUILD="${REBUILD:-0}"
         NO_CACHE="${NO_CACHE:-0}"
         STRICT_LIFECYCLE="${STRICT_LIFECYCLE:-0}"
@@ -84,19 +82,6 @@ commands:
         [ -n "$PODMAN" ] || { echo "podman not found" >&2; exit 1; }
         step "1/8" "engine: $PODMAN"
 
-        # ---------------------------------------------------------------------------
-        # 2. Storage + subuid
-        # ---------------------------------------------------------------------------
-        # Keep the image store OFF the PVC: subuid-owned files there break DWO's cleanup job and
-        # wedge the workspace in Error on teardown. Prefer overlay+fuse-overlayfs when /dev/fuse
-        # exists — VFS is much slower and rules out --userns=keep-id.
-        mkdir -p /tmp/podman/storage ~/.config/containers
-        if [ -c /dev/fuse ] && [ -x /usr/bin/fuse-overlayfs ]; then
-          printf '[storage]\ndriver = "overlay"\ngraphroot = "/tmp/podman/storage"\n[storage.options.overlay]\nmount_program = "/usr/bin/fuse-overlayfs"\n' > ~/.config/containers/storage.conf
-        else
-          printf '[storage]\ndriver = "vfs"\ngraphroot = "/tmp/podman/storage"\n' > ~/.config/containers/storage.conf
-        fi
-
         # Derive the range instead of hardcoding a uid — UDI's entrypoint computes this from the
         # actual uid, and a hardcoded "user:1001:..." maps the wrong host range on a uid-1000 pod.
         # NOTE: a 65536-ID userns cannot map container ID 65534 (nobody) however the ranges are
@@ -108,16 +93,20 @@ commands:
           printf '%s\n' "$RANGES" > /etc/subuid 2>/dev/null &&
           printf '%s\n' "$RANGES" > /etc/subgid 2>/dev/null &&
           "$PODMAN" system migrate >/dev/null 2>&1 &&
-          step "2/8" "storage=$("$PODMAN" info --format json 2>/dev/null | jq -r '.store.graphDriverName') subuid=${SU_USER}(${SU_UID})" ||
-          step "2/8" "storage=$("$PODMAN" info --format json 2>/dev/null | jq -r '.store.graphDriverName') subuid=unchanged"
+          step "2/8" "store=$("$PODMAN" info --format json 2>/dev/null | jq -r '.store.graphDriverName + " @ " + .store.graphRoot') subuid=${SU_USER}(${SU_UID})" ||
+          step "2/8" "store=$("$PODMAN" info --format json 2>/dev/null | jq -r '.store.graphDriverName + " @ " + .store.graphRoot') subuid=unchanged"
         fi
 
         # ---------------------------------------------------------------------------
-        # 3. devcontainer CLI + pre-build config
+        # 2. devcontainer CLI + pre-build config
         # ---------------------------------------------------------------------------
         DEVCONTAINER_BIN="${DEVCONTAINER_BIN:-$(command -v devcontainer || echo /home/user/.devcontainers/bin/devcontainer)}"
         if ! "$DEVCONTAINER_BIN" --version >/dev/null 2>&1; then
           step "3/8" "installing devcontainer CLI..."
+          # TODO: remove once the devcontainer CLI is bundled in the Universal Developer Image.
+          # Tracking: https://github.com/devfile/developer-images/pull/267
+          # Until then the CLI is installed at workspace start, which requires network access to
+          # npm/GitHub and is a blocker for airgapped clusters.
           npm install -g @devcontainers/cli >/dev/null 2>&1 ||
             curl -fsSL https://raw.githubusercontent.com/devcontainers/cli/main/scripts/install.sh | sh
           DEVCONTAINER_BIN="$(command -v devcontainer || echo /home/user/.devcontainers/bin/devcontainer)"
@@ -147,8 +136,10 @@ commands:
           [ -n "$CONFIG_JSON" ] || { echo "  could not parse $DC" >&2; exit 1; }
         fi
 
+        CONFIG_FINGERPRINT="$(printf '%s' "$CONFIG_JSON" | sha256sum | cut -d' ' -f1)"
+
         # ---------------------------------------------------------------------------
-        # 4. initializeCommand (runs OUTSIDE the container, per spec)
+        # 3. initializeCommand (runs OUTSIDE the container, per spec)
         # ---------------------------------------------------------------------------
         JQ_NORMALIZE='
         def norm($name):
@@ -175,16 +166,26 @@ commands:
         run_outer "$(printf '%s' "$CONFIG_JSON" | jq -c '.initializeCommand // null')"
 
         # ---------------------------------------------------------------------------
-        # 5. Build
+        # 4. Build
         # ---------------------------------------------------------------------------
         REUSING=0
         if [ "$REBUILD" = "1" ]; then
           "$PODMAN" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-          "$PODMAN" rmi -f "$IMAGE_NAME" >/dev/null 2>&1 || true
+          [ "$NO_CACHE" = "1" ] && { "$PODMAN" rmi -f "$IMAGE_NAME" >/dev/null 2>&1 || true; }
+        elif "$PODMAN" container exists "$CONTAINER_NAME" 2>/dev/null; then
+          STORED_FP="$("$PODMAN" inspect --format json "$CONTAINER_NAME" 2>/dev/null \
+            | jq -r '.[0].Config.Labels["che.devcontainer.config"] // ""' 2>/dev/null || echo "")"
+          if [ "$STORED_FP" = "$CONFIG_FINGERPRINT" ]; then
+            REUSING=1; step "5/8" "reusing existing container (config unchanged)."
+            "$PODMAN" start "$CONTAINER_NAME" >/dev/null 2>&1 || true
+          else
+            REUSING=1; step "5/8" "reusing existing container (config STALE)."
+            echo "  WARNING: devcontainer.json changed since this container was built."
+            echo "  Run the 'Rebuild dev container' task to apply changes."
+            "$PODMAN" start "$CONTAINER_NAME" >/dev/null 2>&1 || true
+          fi
         fi
-        if [ "$REBUILD" != "1" ] && [ "$REUSE_CONTAINER" = "1" ] && "$PODMAN" container exists "$CONTAINER_NAME" 2>/dev/null; then
-          REUSING=1; echo "[5/8] reusing existing container."; "$PODMAN" start "$CONTAINER_NAME" >/dev/null 2>&1 || true
-        else
+        if [ "$REUSING" = "0" ]; then
           step "5/8" "building image (slow part)..."
           BUILD_ARGS=(--docker-path="$PODMAN" --workspace-folder "$PROJECT_DIR" --image-name "$IMAGE_NAME")
           [ "$NO_CACHE" = "1" ] && BUILD_ARGS+=(--no-cache)
@@ -193,7 +194,7 @@ commands:
         fi
 
         # ---------------------------------------------------------------------------
-        # 6. Merged metadata from the built image
+        # 5. Merged metadata from the built image
         # ---------------------------------------------------------------------------
         # `devcontainer build` writes a devcontainer.metadata LABEL containing the FULLY MERGED
         # config — the base image's metadata, every Feature's contributions, and devcontainer.json.
@@ -248,7 +249,7 @@ commands:
         [ -n "$skipped" ] && echo "  NOTE: env with \${...} substitution skipped: $skipped" >&2
 
         # ---------------------------------------------------------------------------
-        # 7. Run the container, with UID parity
+        # 6. Run the container, with UID parity
         # ---------------------------------------------------------------------------
         # The whole point of outer-editor is "edit outside, run inside" — so the two sides must agree
         # on file ownership. Without keep-id, anything created inside (node_modules, build output,
@@ -269,14 +270,16 @@ commands:
           fi
         fi
 
+        # The dev container does NOT receive cluster credentials. It runs arbitrary repository
+        # code and with --network=host already reaches che-code (:3100) and machine-exec (:3333).
+        # VS Code dev containers do not expose Kubernetes service-account tokens; cluster tooling
+        # lives in UDI — use the "outer (UDI)" terminal profile for kubectl/oc.
         start_container() {   # $1 = extra args array name
           local -n extra="$1"
           "$PODMAN" run -d --name "$CONTAINER_NAME" --network=host \
+            --label "che.devcontainer.config=${CONFIG_FINGERPRINT}" \
             "${extra[@]}" \
             -v "$PROJECT_DIR:${WORKSPACE_FOLDER}" \
-            -v /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount:ro \
-            -e KUBERNETES_SERVICE_HOST="${KUBERNETES_SERVICE_HOST:-}" \
-            -e KUBERNETES_SERVICE_PORT="${KUBERNETES_SERVICE_PORT:-}" \
             "${CONTAINER_ENV[@]}" \
             "$IMAGE_NAME" sleep infinity
         }
@@ -304,7 +307,7 @@ commands:
         "$PODMAN" exec "$CONTAINER_NAME" git config --global --replace-all safe.directory "$WORKSPACE_FOLDER" 2>/dev/null || true
 
         # ---------------------------------------------------------------------------
-        # 8. Lifecycle commands, then editor wiring
+        # 7. Lifecycle commands, then editor wiring
         # ---------------------------------------------------------------------------
         EXEC_USER=(); [ -n "$REMOTE_USER" ] && EXEC_USER=(-u "$REMOTE_USER")
         CREATE_MARKER=/tmp/.devcontainer-create-hooks-done

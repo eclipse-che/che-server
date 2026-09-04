@@ -120,10 +120,13 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
           scmServerUrl,
           OAUTH_PROVIDER_NAME,
           cheSubject.getUserId(),
+          null,
           valid.get().second,
           tokenName,
           tokenId,
-          oAuthToken.getToken());
+          oAuthToken.getToken(),
+          oAuthToken.getRefreshToken(),
+          oAuthToken.getExpiresIn());
     } catch (UnauthorizedException e) {
       throw buildScmUnauthorizedException(cheSubject);
     } catch (NotFoundException nfe) {

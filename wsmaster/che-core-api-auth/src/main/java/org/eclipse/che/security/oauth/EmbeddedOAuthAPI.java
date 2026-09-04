@@ -21,6 +21,7 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.security.oauth.OAuthAuthenticator.SSL_ERROR_CODE;
 import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
+import com.google.api.client.auth.oauth2.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
@@ -106,7 +107,10 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     OAuthAuthenticator oauth = getAuthenticator(providerName);
     final List<String> scopes = params.get("scope");
     try {
-      String token = oauth.callback(requestUrl, scopes == null ? emptyList() : scopes);
+      TokenResponse tokenResponse =
+          oauth.callback(requestUrl, scopes == null ? emptyList() : scopes);
+      // Store the full token response (including refresh token and expiry) so that
+      // tokens can be refreshed later without requiring re-authorization.
       personalAccessTokenManager.store(
           new PersonalAccessToken(
               oauth.getEndpointUrl(),
@@ -116,7 +120,9 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
               null,
               NameGenerator.generate(OAUTH_2_PREFIX, 5),
               NameGenerator.generate("id-", 5),
-              token));
+              tokenResponse.getAccessToken(),
+              tokenResponse.getRefreshToken(),
+              tokenResponse.getExpiresInSeconds()));
     } catch (OAuthAuthenticationException e) {
       return Response.temporaryRedirect(
               URI.create(
@@ -260,21 +266,45 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       throws NotFoundException, UnauthorizedException, ServerException {
     OAuthAuthenticator provider = getAuthenticator(oauthProvider);
     Subject subject = EnvironmentContext.getCurrent().getSubject();
+    String userId = subject.getUserId();
+    String userName = subject.getUserName();
     try {
-      OAuthToken token = provider.refreshToken(subject.getUserId());
-      if (token == null) {
-        token = provider.refreshToken(subject.getUserName());
+      OAuthToken storedToken = provider.refreshToken(userId);
+      if (storedToken == null) {
+        storedToken = provider.refreshToken(userName);
       }
 
-      if (token != null) {
-        return token;
+      if (storedToken != null) {
+        return storedToken;
       } else {
-        throw new UnauthorizedException(
-            "OAuth token for user " + subject.getUserId() + " was not found");
+        // Credential was not found in the in-memory store (e.g. after server restart).
+        // Restore it from the persisted Kubernetes secret so the OAuth flow can refresh it.
+        Optional<PersonalAccessToken> tokenOptional =
+            personalAccessTokenManager.get(subject, oauthProvider, null, null);
+        if (tokenOptional.isPresent()) {
+          PersonalAccessToken token = tokenOptional.get();
+          if (isNullOrEmpty(token.getRefreshToken())) {
+            throw getUnauthorizedException(userId);
+          }
+          // Re-populate the in-memory credential store from the persisted token
+          TokenResponse tokenResponse =
+              new TokenResponse()
+                  .setAccessToken(token.getToken())
+                  .setRefreshToken(token.getRefreshToken())
+                  .setExpiresInSeconds(token.getExpiresIn());
+          provider.flow.createAndStoreCredential(tokenResponse, userId);
+          return provider.refreshToken(userId);
+        } else {
+          throw getUnauthorizedException(userId);
+        }
       }
-    } catch (IOException e) {
+    } catch (IOException | ScmConfigurationPersistenceException | ScmCommunicationException e) {
       throw new ServerException(e.getLocalizedMessage(), e);
     }
+  }
+
+  private UnauthorizedException getUnauthorizedException(String userId) {
+    return new UnauthorizedException("OAuth token for user " + userId + " was not found");
   }
 
   @Override
@@ -290,6 +320,11 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     } catch (IOException e) {
       throw new ServerException(e.getMessage());
     }
+  }
+
+  @Override
+  public String getProviderUrl(String oauthProvider) throws NotFoundException {
+    return getAuthenticator(oauthProvider).getEndpointUrl();
   }
 
   protected OAuthAuthenticator getAuthenticator(String oauthProviderName) throws NotFoundException {

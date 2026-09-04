@@ -111,10 +111,13 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
           scmServerUrl,
           providerName,
           cheSubject.getUserId(),
+          null,
           valid.get().second,
           tokenName,
           tokenId,
-          oAuthToken.getToken());
+          oAuthToken.getToken(),
+          oAuthToken.getRefreshToken(),
+          oAuthToken.getExpiresIn());
     } catch (UnauthorizedException e) {
       throw buildScmUnauthorizedException(cheSubject);
     } catch (NotFoundException nfe) {

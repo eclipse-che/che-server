@@ -153,10 +153,13 @@ public class KubernetesPersonalAccessTokenManagerTest {
             "https://bitbucket.com",
             "provider",
             "cheUser",
+            null,
             "username",
             "token-name",
             "tid-24",
-            "token123");
+            "token123",
+            "refresh123",
+            3600);
 
     // when
     personalAccessTokenManager.store(token);
@@ -618,7 +621,16 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "http://host1", "provider", "cheUser", "username", "token-name", "tid-24", "token123");
+            "http://host1",
+            "provider",
+            "cheUser",
+            null,
+            "username",
+            "token-name",
+            "tid-24",
+            "token123",
+            "refresh123",
+            3600);
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
             any(org.eclipse.che.commons.subject.Subject.class), eq("http://host1")))
         .thenReturn(token);
@@ -691,5 +703,228 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     // then
     verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
+  }
+
+  @Test
+  public void shouldStoreRefreshTokenAndExpiryInSecret() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    ArgumentCaptor<Secret> captor = ArgumentCaptor.forClass(Secret.class);
+
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://github.com",
+            "github",
+            "cheUser",
+            null,
+            "username",
+            "token-name",
+            "tid-24",
+            "access-token",
+            "refresh-token-value",
+            3600);
+
+    // when
+    personalAccessTokenManager.store(token);
+
+    // then
+    verify(nonNamespaceOperation).createOrReplace(captor.capture());
+    Secret createdSecret = captor.getValue();
+    assertEquals(
+        new String(Base64.getDecoder().decode(createdSecret.getData().get("token")), UTF_8),
+        "access-token");
+    assertEquals(
+        new String(Base64.getDecoder().decode(createdSecret.getData().get("refresh-token")), UTF_8),
+        "refresh-token-value");
+    assertEquals(
+        new String(Base64.getDecoder().decode(createdSecret.getData().get("expires-in")), UTF_8),
+        "3600");
+  }
+
+  @Test
+  public void shouldDecodeRefreshTokenAndExpiryFromSecret() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+
+    Map<String, String> data =
+        Map.of(
+            "token", Base64.getEncoder().encodeToString("access-token".getBytes(UTF_8)),
+            "refresh-token",
+                Base64.getEncoder().encodeToString("refresh-token-value".getBytes(UTF_8)),
+            "expires-in", Base64.getEncoder().encodeToString("7200".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "oauth2-token",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://github.com"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    PersonalAccessToken result =
+        personalAccessTokenManager
+            .get(
+                new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+                null,
+                "http://github.com",
+                null)
+            .get();
+
+    // then
+    assertEquals(result.getToken(), "access-token");
+    assertEquals(result.getRefreshToken(), "refresh-token-value");
+    assertEquals(result.getExpiresIn(), 7200L);
+  }
+
+  @Test
+  public void shouldHandleMissingRefreshTokenAndExpiryInSecret() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token-value".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "pat-name",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    PersonalAccessToken result =
+        personalAccessTokenManager
+            .get(
+                new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+                null,
+                "http://host1",
+                null)
+            .get();
+
+    // then
+    assertEquals(result.getToken(), "token-value");
+    assertEquals(result.getRefreshToken(), null);
+    assertEquals(result.getExpiresIn(), 0L);
+  }
+
+  @Test
+  public void shouldMatchSecretByOAuthProviderName() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "oauth2-token-name",
+                    ANNOTATION_SCM_PROVIDER_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://github.com"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    Optional<PersonalAccessToken> result =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            "github",
+            null,
+            null);
+
+    // then
+    assertTrue(result.isPresent());
+    assertEquals(result.get().getToken(), "token1");
+  }
+
+  @Test
+  public void shouldNotMatchSecretWithWrongProviderName() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "oauth2-token-name",
+                    ANNOTATION_SCM_PROVIDER_NAME,
+                    "gitlab",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://gitlab.com"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    Optional<PersonalAccessToken> result =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            "github",
+            null,
+            null);
+
+    // then
+    assertFalse(result.isPresent());
   }
 }

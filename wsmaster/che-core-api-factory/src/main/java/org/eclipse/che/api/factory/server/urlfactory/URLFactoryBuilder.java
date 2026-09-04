@@ -168,22 +168,30 @@ public class URLFactoryBuilder {
     for (String devcontainerPath : DEVCONTAINER_LOCATIONS) {
       String devcontainerLocation = remoteFactoryUrl.rawFileLocation(devcontainerPath);
       if (devcontainerLocation == null) {
-        break;
+        continue;
       }
+      String devcontainerContent;
       try {
         Optional<String> credentialsOptional = remoteFactoryUrl.getCredentials();
         if (skipAuthentication) {
-          fileContentProvider.fetchContentWithoutAuthentication(devcontainerLocation);
+          devcontainerContent =
+              fileContentProvider.fetchContentWithoutAuthentication(devcontainerLocation);
         } else if (credentialsOptional.isPresent()) {
-          fileContentProvider.fetchContent(devcontainerLocation, credentialsOptional.get());
+          devcontainerContent =
+              fileContentProvider.fetchContent(devcontainerLocation, credentialsOptional.get());
         } else {
-          fileContentProvider.fetchContent(devcontainerLocation);
+          devcontainerContent = fileContentProvider.fetchContent(devcontainerLocation);
         }
       } catch (IOException ex) {
         LOG.debug("No devcontainer at: {}. Error: {}", devcontainerLocation, ex.getMessage());
         continue;
       } catch (DevfileException e) {
-        LOG.debug("Unexpected exception probing devcontainer: {}", e.getMessage());
+        LOG.warn("Unexpected exception probing devcontainer: {}", e.getMessage());
+        continue;
+      }
+
+      if (!looksLikeJson(devcontainerContent)) {
+        LOG.debug("Ignoring non-JSON content from {}", devcontainerLocation);
         continue;
       }
 
@@ -217,5 +225,36 @@ public class URLFactoryBuilder {
         .withV(CURRENT_VERSION)
         .withDevfile(devfileParser.convertYamlToMap(devfileJson))
         .withSource(location.filename().isPresent() ? location.filename().get() : null);
+  }
+
+  /**
+   * Cheap probe: returns true when content is non-empty and starts with '{' after skipping
+   * whitespace and JSONC single-line comments. Does not parse the file.
+   */
+  static boolean looksLikeJson(String content) {
+    if (isNullOrEmpty(content)) {
+      return false;
+    }
+    boolean inBlockComment = false;
+    for (String line : content.split("\n")) {
+      String trimmed = line.trim();
+      if (inBlockComment) {
+        if (trimmed.contains("*/")) {
+          inBlockComment = false;
+        }
+        continue;
+      }
+      if (trimmed.isEmpty() || trimmed.startsWith("//")) {
+        continue;
+      }
+      if (trimmed.startsWith("/*")) {
+        if (!trimmed.contains("*/")) {
+          inBlockComment = true;
+        }
+        continue;
+      }
+      return trimmed.startsWith("{");
+    }
+    return false;
   }
 }

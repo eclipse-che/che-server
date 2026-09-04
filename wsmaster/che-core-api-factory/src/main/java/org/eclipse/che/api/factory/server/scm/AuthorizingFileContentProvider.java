@@ -163,7 +163,14 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
   protected String formatUrl(String fileURL) throws DevfileException {
     String requestURL;
     try {
-      if (new URI(fileURL).isAbsolute()) {
+      URI fileURI = new URI(fileURL);
+      if (fileURI.isAbsolute()) {
+        String scheme = fileURI.getScheme();
+        if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+          throw new DevfileException(
+              String.format(
+                  "URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
+        }
         requestURL = fileURL;
       } else {
         // since files retrieved via REST, we cannot use path like '.' or one that starts with './'

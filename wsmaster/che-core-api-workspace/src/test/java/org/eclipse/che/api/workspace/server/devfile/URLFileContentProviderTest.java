@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -40,6 +40,48 @@ public class URLFileContentProviderTest {
   @Test
   public void shouldFetchByAbsoluteURL() throws Exception {
     String url = "http://myhost.com/relative/dev.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+    provider.fetchContent(url);
+    verify(urlFetcher).fetch(captor.capture(), eq(null));
+    assertEquals(captor.getValue(), url);
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeURL() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContent("file:///etc/passwd");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFtpSchemeURL() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContent("ftp://evil.com/file");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectJarSchemeURL() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContent("jar:file:///tmp/evil.jar!/payload");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeViaFetchWithoutAuthentication() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContentWithoutAuthentication("file:///etc/passwd");
+  }
+
+  @Test
+  public void shouldAllowHttpsAbsoluteURL() throws Exception {
+    String url = "https://secure.example.com/devfile.yaml";
     URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
     ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
     provider.fetchContent(url);

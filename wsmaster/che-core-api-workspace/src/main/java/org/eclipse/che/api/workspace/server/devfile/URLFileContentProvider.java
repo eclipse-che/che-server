@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -46,6 +46,11 @@ public class URLFileContentProvider implements FileContentProvider {
     }
 
     if (fileURI.isAbsolute()) {
+      String scheme = fileURI.getScheme();
+      if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+        throw new DevfileException(
+            format("URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
+      }
       requestURL = fileURL;
     } else {
       if (devfileLocation == null) {

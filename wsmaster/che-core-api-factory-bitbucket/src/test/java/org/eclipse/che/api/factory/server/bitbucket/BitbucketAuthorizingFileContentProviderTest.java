@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -22,6 +22,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
@@ -98,5 +99,18 @@ public class BitbucketAuthorizingFileContentProviderTest {
 
     // then
     assertEquals(content, "content");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeUrl() throws Exception {
+    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
+    BitbucketUrl bitbucketUrl = new BitbucketUrl().withWorkspaceId("eclipse").withRepository("che");
+    FileContentProvider fileContentProvider =
+        new BitbucketAuthorizingFileContentProvider(
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
+
+    fileContentProvider.fetchContent("file:///etc/passwd");
   }
 }

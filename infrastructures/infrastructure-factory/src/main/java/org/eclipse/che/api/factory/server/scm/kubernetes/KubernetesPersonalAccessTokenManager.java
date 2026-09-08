@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.common.collect.ImmutableMap;
@@ -230,7 +231,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           oAuthProviderName);
 
       for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(namespaceName)) {
-        List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
+        // OAuth token secrets take precedence over the ones holding a manually configured personal
+        // access token. The sort is stable, so the newest-first order is preserved within each
+        // group.
+        List<Secret> secrets =
+            doGetPersonalAccessTokenSecrets(namespaceMeta).stream()
+                .sorted(Comparator.comparing(secret -> isOAuthTokenSecret(secret) ? 0 : 1))
+                .collect(Collectors.toList());
 
         for (Secret secret : secrets) {
           LOG.debug("Checking secret {}", secret.getMetadata().getName());
@@ -386,6 +393,19 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         configuredTokenId,
         token,
         configuredScmOrganization);
+  }
+
+  /**
+   * Checks whether the given secret holds a token retrieved via OAuth. Such tokens have their name
+   * generated with the {@code oauth2-} prefix.
+   *
+   * @param secret the secret to check
+   * @return {@code true} if the secret corresponds to an OAuth token
+   */
+  private boolean isOAuthTokenSecret(Secret secret) {
+    String configuredTokenName =
+        secret.getMetadata().getAnnotations().get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+    return !isNullOrEmpty(configuredTokenName) && configuredTokenName.startsWith(OAUTH_2_PREFIX);
   }
 
   private boolean isSecretMatchesSearchCriteria(

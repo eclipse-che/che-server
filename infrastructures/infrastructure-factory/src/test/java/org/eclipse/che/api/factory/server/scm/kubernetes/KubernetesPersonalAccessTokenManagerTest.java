@@ -567,6 +567,67 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
+  public void shouldPreferOAuthTokenOverPersonalAccessToken() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+    Map<String, String> data1 =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+    Map<String, String> data2 =
+        Map.of("token", Base64.getEncoder().encodeToString("token2".getBytes(UTF_8)));
+    // the OAuth token secret is older, so it comes last in the creation timestamp order
+    ObjectMeta oauthTokenMeta =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "oauth2-abcde",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "oauth-id"))
+            .build();
+    ObjectMeta patMeta =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "pat-id"))
+            .build();
+    Secret oauthSecret = new SecretBuilder().withMetadata(oauthTokenMeta).withData(data1).build();
+    Secret patSecret = new SecretBuilder().withMetadata(patMeta).withData(data2).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(oauthSecret, patSecret));
+
+    // when
+    Optional<PersonalAccessToken> token =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            null,
+            "http://host1",
+            null);
+
+    // then
+    assertTrue(token.isPresent());
+    assertEquals(token.get().getScmTokenId(), "oauth-id");
+  }
+
+  @Test
   public void shouldReturnFirstValidTokenAndDeleteTheOlderOne() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");

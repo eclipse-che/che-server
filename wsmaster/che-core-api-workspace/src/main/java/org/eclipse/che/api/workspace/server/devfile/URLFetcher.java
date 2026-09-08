@@ -23,8 +23,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -134,6 +138,7 @@ public class URLFetcher {
       throw new IOException(
           "Only http and https URLs are allowed, got: " + scheme + " in URL " + url);
     }
+    validateUrlTarget(parsedUrl, url);
     URLConnection connection = parsedUrl.openConnection();
     connection.setConnectTimeout(timeout);
     connection.setReadTimeout(timeout);
@@ -175,6 +180,34 @@ public class URLFetcher {
    */
   protected long getLimit() {
     return maximumReadBytes;
+  }
+
+  private void validateUrlTarget(URL parsedUrl, String originalUrl) throws IOException {
+    final String host;
+    try {
+      host = new URI(parsedUrl.toString()).getHost();
+    } catch (URISyntaxException e) {
+      throw new IOException("Invalid URL " + originalUrl, e);
+    }
+
+    if (isNullOrEmpty(host)) {
+      throw new IOException("URL host is missing in " + originalUrl);
+    }
+
+    final InetAddress address;
+    try {
+      address = InetAddress.getByName(host);
+    } catch (UnknownHostException e) {
+      throw new IOException("Unable to resolve URL host " + host + " in " + originalUrl, e);
+    }
+
+    if (address.isAnyLocalAddress()
+        || address.isLoopbackAddress()
+        || address.isLinkLocalAddress()
+        || address.isSiteLocalAddress()
+        || address.isMulticastAddress()) {
+      throw new IOException("URL host is not allowed: " + host);
+    }
   }
 
   /**

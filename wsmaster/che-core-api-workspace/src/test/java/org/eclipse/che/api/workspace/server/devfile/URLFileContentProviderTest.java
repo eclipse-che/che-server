@@ -90,6 +90,49 @@ public class URLFileContentProviderTest {
   }
 
   @Test
+  public void shouldSendCredentialsToTheDevfileHost() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    String url = "https://myhost.com/relative/dependent.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent(url, "user:pass");
+
+    verify(urlFetcher).fetch(eq(url), eq("Basic dXNlcjpwYXNz"));
+  }
+
+  @Test
+  public void shouldSendCredentialsForRelativeURL() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent("dependent.yaml", "user:pass");
+
+    verify(urlFetcher)
+        .fetch(eq("https://myhost.com/relative/dependent.yaml"), eq("Basic dXNlcjpwYXNz"));
+  }
+
+  @Test
+  public void shouldNotSendCredentialsToAForeignHost() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    String foreignUrl = "https://attacker.example/collect";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent(foreignUrl, "user:pass");
+
+    verify(urlFetcher).fetch(eq(foreignUrl), eq(null));
+  }
+
+  @Test
+  public void shouldNotSendCredentialsWhenTheDevfileLocationIsUnknown() throws Exception {
+    String url = "https://myhost.com/relative/devfile.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+
+    provider.fetchContent(url, "user:pass");
+
+    verify(urlFetcher).fetch(eq(url), eq(null));
+  }
+
+  @Test
   public void shouldMergeDevfileLocationAndRelativeURL() throws Exception {
     String devfileUrl = "http://myhost.com/relative/devile.yaml";
     String relativeUrl = "relative.yaml";

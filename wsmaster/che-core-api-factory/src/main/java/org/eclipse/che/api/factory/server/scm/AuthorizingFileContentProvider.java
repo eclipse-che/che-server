@@ -20,6 +20,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import javax.net.ssl.SSLException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -42,6 +46,9 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     implements FileContentProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizingFileContentProvider.class);
+
+  /** Placeholder file name used to derive the host that serves the raw repository content. */
+  private static final String RAW_CONTENT_PROBE_FILE = "devfile.yaml";
 
   protected final T remoteFactoryUrl;
   protected final PersonalAccessTokenManager personalAccessTokenManager;
@@ -77,25 +84,24 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
       String fileURL, boolean skipAuthentication, @Nullable String credentials)
       throws IOException, DevfileException {
     final String requestURL = formatUrl(fileURL);
+    if (skipAuthentication || !canSendCredentialsTo(requestURL)) {
+      return urlFetcher.fetch(requestURL);
+    }
     try {
-      if (skipAuthentication) {
-        return urlFetcher.fetch(requestURL);
+      // try to authenticate for the given URL
+      String authorization;
+      if (isNullOrEmpty(credentials)) {
+        PersonalAccessToken token =
+            personalAccessTokenManager.getAndStore(remoteFactoryUrl.getProviderUrl());
+        authorization =
+            formatAuthorization(
+                token.getToken(),
+                token.getScmTokenName() == null
+                    || !token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
       } else {
-        // try to authenticate for the given URL
-        String authorization;
-        if (isNullOrEmpty(credentials)) {
-          PersonalAccessToken token =
-              personalAccessTokenManager.getAndStore(remoteFactoryUrl.getProviderUrl());
-          authorization =
-              formatAuthorization(
-                  token.getToken(),
-                  token.getScmTokenName() == null
-                      || !token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
-        } else {
-          authorization = getCredentialsAuthorization(credentials);
-        }
-        return urlFetcher.fetch(requestURL, authorization);
+        authorization = getCredentialsAuthorization(credentials);
       }
+      return urlFetcher.fetch(requestURL, authorization);
     } catch (UnknownScmProviderException
         | ScmConfigurationPersistenceException
         | UnsatisfiedScmPreconditionException e) {
@@ -158,6 +164,74 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
 
   protected boolean isPublicRepository(T remoteFactoryUrl) {
     return false;
+  }
+
+  /**
+   * Tells whether the user's credentials may be sent to the given URL. A devfile can reference an
+   * absolute URL on an arbitrary host, and attaching the personal access token to such a request
+   * would disclose it to that host, so credentials are only sent to the SCM provider they were
+   * issued for.
+   *
+   * @param requestURL the URL about to be fetched
+   * @return true if the URL belongs to this provider, false if it must be fetched anonymously
+   */
+  protected boolean canSendCredentialsTo(String requestURL) {
+    Set<String> trustedHosts = getTrustedHosts();
+    Optional<String> host = hostOfUrl(requestURL);
+    if (host.isPresent() && trustedHosts.contains(host.get())) {
+      return true;
+    }
+    LOG.warn(
+        "Fetching a file from host '{}' without credentials: it is not one of the {} provider"
+            + " hosts {}.",
+        host.orElse("<unknown>"),
+        remoteFactoryUrl.getProviderName(),
+        trustedHosts);
+    return false;
+  }
+
+  /**
+   * Returns the hosts allowed to receive the user's credentials. Besides the SCM provider host
+   * itself, it holds the host serving the raw repository content, as the two are not necessarily
+   * the same (e.g. {@code github.com} and {@code raw.githubusercontent.com}).
+   */
+  protected Set<String> getTrustedHosts() {
+    Set<String> trustedHosts = new HashSet<>();
+    hostOfUrlOrHostName(remoteFactoryUrl.getProviderUrl()).ifPresent(trustedHosts::add);
+    hostOfUrlOrHostName(remoteFactoryUrl.getHostName()).ifPresent(trustedHosts::add);
+    try {
+      hostOfUrl(remoteFactoryUrl.rawFileLocation(RAW_CONTENT_PROBE_FILE))
+          .ifPresent(trustedHosts::add);
+    } catch (RuntimeException e) {
+      LOG.debug(
+          "Unable to resolve the raw content host of {}", remoteFactoryUrl.getProviderUrl(), e);
+    }
+    return trustedHosts;
+  }
+
+  /** Extracts the host of an absolute URL, empty if it is not one. */
+  private static Optional<String> hostOfUrl(String url) {
+    return isNullOrEmpty(url) || !url.contains("://") ? Optional.empty() : parseHost(url);
+  }
+
+  /**
+   * Extracts the host of a value that {@link RemoteFactoryUrl} implementations return either as a
+   * bare host name or as a full URL.
+   */
+  private static Optional<String> hostOfUrlOrHostName(String urlOrHostName) {
+    if (isNullOrEmpty(urlOrHostName)) {
+      return Optional.empty();
+    }
+    return parseHost(urlOrHostName.contains("://") ? urlOrHostName : "https://" + urlOrHostName);
+  }
+
+  private static Optional<String> parseHost(String url) {
+    try {
+      String host = new URI(url).getHost();
+      return isNullOrEmpty(host) ? Optional.empty() : Optional.of(host.toLowerCase(Locale.ROOT));
+    } catch (URISyntaxException e) {
+      return Optional.empty();
+    }
   }
 
   protected String formatUrl(String fileURL) throws DevfileException {

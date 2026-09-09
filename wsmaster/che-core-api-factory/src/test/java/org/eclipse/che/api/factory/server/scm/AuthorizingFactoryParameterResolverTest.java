@@ -52,10 +52,26 @@ public class AuthorizingFactoryParameterResolverTest {
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     // when
-    provider.fetchContent("url");
+    provider.fetchContent("https://provider.url/devfile.yaml");
 
     // then
     verify(personalAccessTokenManager).getAndStore(anyString());
+  }
+
+  @Test
+  public void shouldNotSendCredentialsToAForeignHost() throws Exception {
+    // given
+    String foreignUrl = "https://attacker.example/collect";
+    when(remoteFactoryUrl.getProviderUrl()).thenReturn("https://provider.url");
+    when(urlFetcher.fetch(anyString())).thenReturn("content");
+
+    // when
+    provider.fetchContent(foreignUrl);
+
+    // then
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+    verify(urlFetcher).fetch(foreignUrl);
+    verify(urlFetcher, never()).fetch(anyString(), anyString());
   }
 
   @Test

@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.github;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -131,6 +132,51 @@ public class GithubAuthorizingFileContentProviderTest {
     when(urlFetcher.fetch(eq("https://github.com/eclipse/che"))).thenThrow(IOException.class);
 
     fileContentProvider.fetchContent(url);
+  }
+
+  @Test
+  public void shouldNotSendTokenToForeignHost() throws Exception {
+    String foreignUrl = "https://attacker.example/collect";
+
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withBranch("main")
+            .withServerUrl("https://github.com");
+
+    URLFetcher urlFetcher = mock(URLFetcher.class);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
+
+    fileContentProvider.fetchContent(foreignUrl);
+
+    verify(urlFetcher).fetch(eq(foreignUrl));
+    verify(urlFetcher, never()).fetch(anyString(), anyString());
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+  }
+
+  @Test
+  public void shouldSendTokenToRawContentHostOfGithubEnterprise() throws Exception {
+    String rawUrl = "https://raw.ghe.example.com/eclipse/che/main/devfile.yaml";
+
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withBranch("main")
+            .withServerUrl("https://ghe.example.com");
+
+    URLFetcher urlFetcher = mock(URLFetcher.class);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
+
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenReturn(new PersonalAccessToken(rawUrl, "provider", "che", "my-token"));
+
+    fileContentProvider.fetchContent(rawUrl);
+
+    verify(urlFetcher).fetch(eq(rawUrl), eq("token my-token"));
   }
 
   @Test(

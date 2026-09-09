@@ -13,6 +13,9 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
@@ -46,9 +49,20 @@ class BitbucketAuthorizingFileContentProvider extends AuthorizingFileContentProv
     return "Bearer " + token;
   }
 
+  /** Along with the Bitbucket host itself, the token is also valid for the Bitbucket API host. */
+  @Override
+  protected Set<String> getTrustedHosts() {
+    Set<String> trustedHosts = new HashSet<>(super.getTrustedHosts());
+    trustedHosts.add(URI.create(BitbucketApiClient.BITBUCKET_API_SERVER).getHost());
+    return trustedHosts;
+  }
+
   @Override
   public String fetchContent(String fileURL) throws IOException, DevfileException {
     final String requestURL = formatUrl(fileURL);
+    if (!canSendCredentialsTo(requestURL)) {
+      return fetchContentWithoutToken(requestURL);
+    }
     try {
       // try to authenticate for the given URL
       PersonalAccessToken token =

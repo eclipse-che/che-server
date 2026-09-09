@@ -12,7 +12,9 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -99,6 +101,23 @@ public class BitbucketAuthorizingFileContentProviderTest {
 
     // then
     assertEquals(content, "content");
+  }
+
+  @Test
+  public void shouldNotSendTokenToForeignHost() throws Exception {
+    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
+    String foreignUrl = "https://attacker.example/collect";
+    BitbucketUrl bitbucketUrl =
+        new BitbucketUrl().withUsername("eclipse").withWorkspaceId("eclipse").withRepository("che");
+    FileContentProvider fileContentProvider =
+        new BitbucketAuthorizingFileContentProvider(
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
+
+    fileContentProvider.fetchContent(foreignUrl);
+
+    verify(urlFetcher).fetch(eq(foreignUrl));
+    verifyNoInteractions(bitbucketApiClient);
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
   }
 
   @Test(

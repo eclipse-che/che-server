@@ -20,12 +20,16 @@ import java.net.URISyntaxException;
 import java.util.Base64;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple implementation of the FileContentProvider that merely uses the function resolve relative
  * paths and {@link URLFetcher} for retrieving the content, handling common error cases.
  */
 public class URLFileContentProvider implements FileContentProvider {
+
+  private static final Logger LOG = LoggerFactory.getLogger(URLFileContentProvider.class);
 
   private final URI devfileLocation;
   private final URLFetcher urlFetcher;
@@ -63,8 +67,9 @@ public class URLFileContentProvider implements FileContentProvider {
       requestURL = devfileLocation.resolve(fileURI).toString();
     }
     try {
+      boolean authorize = !isNullOrEmpty(credentials) && canSendCredentialsTo(requestURL);
       return urlFetcher.fetch(
-          requestURL, isNullOrEmpty(credentials) ? null : getCredentialsAuthorization(credentials));
+          requestURL, authorize ? getCredentialsAuthorization(credentials) : null);
     } catch (IOException e) {
       throw new IOException(
           format(
@@ -78,6 +83,32 @@ public class URLFileContentProvider implements FileContentProvider {
               fileURL, e.getMessage()),
           e);
     }
+  }
+
+  /**
+   * Tells whether the credentials taken from the devfile URL may be sent to the given URL. A
+   * devfile can reference an absolute URL on an arbitrary host, and attaching the credentials to
+   * such a request would disclose them to that host, so they are only sent back to the host the
+   * devfile itself was loaded from.
+   */
+  private boolean canSendCredentialsTo(String requestURL) {
+    if (devfileLocation == null) {
+      return false;
+    }
+    final String host;
+    try {
+      host = new URI(requestURL).getHost();
+    } catch (URISyntaxException e) {
+      return false;
+    }
+    if (host != null && host.equalsIgnoreCase(devfileLocation.getHost())) {
+      return true;
+    }
+    LOG.warn(
+        "Fetching a file from host '{}' without credentials: the devfile was loaded from '{}'.",
+        host,
+        devfileLocation.getHost());
+    return false;
   }
 
   private String getCredentialsAuthorization(String credentials) {

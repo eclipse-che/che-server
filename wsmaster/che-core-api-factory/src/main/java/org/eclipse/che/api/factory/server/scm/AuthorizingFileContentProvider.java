@@ -170,65 +170,73 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
    * Tells whether the user's credentials may be sent to the given URL. A devfile can reference an
    * absolute URL on an arbitrary host, and attaching the personal access token to such a request
    * would disclose it to that host, so credentials are only sent to the SCM provider they were
-   * issued for.
+   * issued for. The comparison is on the whole origin rather than the host alone, so that a devfile
+   * cannot downgrade the request to plain http and put the token on the wire in the clear.
    *
    * @param requestURL the URL about to be fetched
    * @return true if the URL belongs to this provider, false if it must be fetched anonymously
    */
   protected boolean canSendCredentialsTo(String requestURL) {
-    Set<String> trustedHosts = getTrustedHosts();
-    Optional<String> host = hostOfUrl(requestURL);
-    if (host.isPresent() && trustedHosts.contains(host.get())) {
+    Set<String> trustedOrigins = getTrustedOrigins();
+    Optional<String> origin = originOfUrl(requestURL);
+    if (origin.isPresent() && trustedOrigins.contains(origin.get())) {
       return true;
     }
     LOG.warn(
-        "Fetching a file from host '{}' without credentials: it is not one of the {} provider"
-            + " hosts {}.",
-        host.orElse("<unknown>"),
+        "Fetching a file from '{}' without credentials: it is not one of the {} provider"
+            + " origins {}.",
+        origin.orElse("<unknown>"),
         remoteFactoryUrl.getProviderName(),
-        trustedHosts);
+        trustedOrigins);
     return false;
   }
 
   /**
-   * Returns the hosts allowed to receive the user's credentials. Besides the SCM provider host
-   * itself, it holds the host serving the raw repository content, as the two are not necessarily
-   * the same (e.g. {@code github.com} and {@code raw.githubusercontent.com}).
+   * Returns the origins ({@code scheme://host[:port]}) allowed to receive the user's credentials.
+   * Besides the SCM provider itself, it holds the origin serving the raw repository content, as the
+   * two are not necessarily the same (e.g. {@code github.com} and {@code raw.githubusercontent.com}
+   * ).
    */
-  protected Set<String> getTrustedHosts() {
-    Set<String> trustedHosts = new HashSet<>();
-    hostOfUrlOrHostName(remoteFactoryUrl.getProviderUrl()).ifPresent(trustedHosts::add);
-    hostOfUrlOrHostName(remoteFactoryUrl.getHostName()).ifPresent(trustedHosts::add);
+  protected Set<String> getTrustedOrigins() {
+    Set<String> trustedOrigins = new HashSet<>();
+    originOfUrlOrHostName(remoteFactoryUrl.getProviderUrl()).ifPresent(trustedOrigins::add);
+    originOfUrlOrHostName(remoteFactoryUrl.getHostName()).ifPresent(trustedOrigins::add);
     try {
-      hostOfUrl(remoteFactoryUrl.rawFileLocation(RAW_CONTENT_PROBE_FILE))
-          .ifPresent(trustedHosts::add);
+      originOfUrl(remoteFactoryUrl.rawFileLocation(RAW_CONTENT_PROBE_FILE))
+          .ifPresent(trustedOrigins::add);
     } catch (RuntimeException e) {
       LOG.debug(
-          "Unable to resolve the raw content host of {}", remoteFactoryUrl.getProviderUrl(), e);
+          "Unable to resolve the raw content origin of {}", remoteFactoryUrl.getProviderUrl(), e);
     }
-    return trustedHosts;
+    return trustedOrigins;
   }
 
-  /** Extracts the host of an absolute URL, empty if it is not one. */
-  private static Optional<String> hostOfUrl(String url) {
-    return isNullOrEmpty(url) || !url.contains("://") ? Optional.empty() : parseHost(url);
+  /** Extracts the origin of an absolute URL, empty if it is not one. */
+  protected static Optional<String> originOfUrl(String url) {
+    return isNullOrEmpty(url) || !url.contains("://") ? Optional.empty() : parseOrigin(url);
   }
 
   /**
-   * Extracts the host of a value that {@link RemoteFactoryUrl} implementations return either as a
-   * bare host name or as a full URL.
+   * Extracts the origin of a value that {@link RemoteFactoryUrl} implementations return either as a
+   * bare host name or as a full URL. A bare host name is assumed to be served over https.
    */
-  private static Optional<String> hostOfUrlOrHostName(String urlOrHostName) {
+  private static Optional<String> originOfUrlOrHostName(String urlOrHostName) {
     if (isNullOrEmpty(urlOrHostName)) {
       return Optional.empty();
     }
-    return parseHost(urlOrHostName.contains("://") ? urlOrHostName : "https://" + urlOrHostName);
+    return parseOrigin(urlOrHostName.contains("://") ? urlOrHostName : "https://" + urlOrHostName);
   }
 
-  private static Optional<String> parseHost(String url) {
+  private static Optional<String> parseOrigin(String url) {
     try {
-      String host = new URI(url).getHost();
-      return isNullOrEmpty(host) ? Optional.empty() : Optional.of(host.toLowerCase(Locale.ROOT));
+      URI uri = new URI(url);
+      String scheme = uri.getScheme();
+      String host = uri.getHost();
+      if (isNullOrEmpty(scheme) || isNullOrEmpty(host)) {
+        return Optional.empty();
+      }
+      String origin = scheme.toLowerCase(Locale.ROOT) + "://" + host.toLowerCase(Locale.ROOT);
+      return Optional.of(uri.getPort() == -1 ? origin : origin + ":" + uri.getPort());
     } catch (URISyntaxException e) {
       return Optional.empty();
     }

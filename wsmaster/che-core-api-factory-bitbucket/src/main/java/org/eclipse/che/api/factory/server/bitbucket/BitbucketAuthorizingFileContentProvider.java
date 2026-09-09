@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,7 +13,6 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
@@ -51,10 +50,10 @@ class BitbucketAuthorizingFileContentProvider extends AuthorizingFileContentProv
 
   /** Along with the Bitbucket host itself, the token is also valid for the Bitbucket API host. */
   @Override
-  protected Set<String> getTrustedHosts() {
-    Set<String> trustedHosts = new HashSet<>(super.getTrustedHosts());
-    trustedHosts.add(URI.create(BitbucketApiClient.BITBUCKET_API_SERVER).getHost());
-    return trustedHosts;
+  protected Set<String> getTrustedOrigins() {
+    Set<String> trustedOrigins = new HashSet<>(super.getTrustedOrigins());
+    originOfUrl(BitbucketApiClient.BITBUCKET_API_SERVER).ifPresent(trustedOrigins::add);
+    return trustedOrigins;
   }
 
   @Override

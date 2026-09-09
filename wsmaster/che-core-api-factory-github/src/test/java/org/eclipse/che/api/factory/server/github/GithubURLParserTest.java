@@ -27,6 +27,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -549,6 +550,7 @@ public class GithubURLParserTest {
   @Test
   public void shouldValidateOldVersionGitHubServerUrl() throws Exception {
     // given
+    githubUrlParser = probingLoopbackParser();
     Field endpoint = AbstractGithubURLParser.class.getDeclaredField("endpoint");
     endpoint.setAccessible(true);
     endpoint.set(githubUrlParser, wireMockServer.baseUrl());
@@ -570,6 +572,7 @@ public class GithubURLParserTest {
   @Test
   public void shouldValidateGitHubServerUrl() throws Exception {
     // given
+    githubUrlParser = probingLoopbackParser();
     Field endpoint = AbstractGithubURLParser.class.getDeclaredField("endpoint");
     endpoint.setAccessible(true);
     endpoint.set(githubUrlParser, wireMockServer.baseUrl());
@@ -595,5 +598,30 @@ public class GithubURLParserTest {
 
     // then
     verify(githubApiClient, never()).getUser(anyString());
+  }
+
+  /**
+   * An unconfigured URL is probed to find out whether it is a GitHub server, which must not become
+   * a way of having the server reach whatever the caller names.
+   */
+  @Test
+  public void shouldNotProbeAPrivateAddress() throws Exception {
+    // when
+    boolean valid = githubUrlParser.isValid("http://10.0.0.1/user/repo");
+
+    // then
+    assertFalse(valid);
+    verify(githubApiClient, never()).getUser(anyString());
+  }
+
+  /** The wiremock server stands in for a GitHub server, but is only reachable over loopback. */
+  private GithubURLParser probingLoopbackParser() {
+    return new GithubURLParser(
+        personalAccessTokenManager, devfileFilenamesProvider, githubApiClient, null, false) {
+      @Override
+      boolean canProbe(String serverUrl) {
+        return true;
+      }
+    };
   }
 }

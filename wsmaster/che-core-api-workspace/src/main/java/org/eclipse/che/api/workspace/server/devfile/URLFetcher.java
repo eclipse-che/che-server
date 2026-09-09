@@ -23,12 +23,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,6 +35,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +52,9 @@ public class URLFetcher {
 
   /** timeout when reading */
   @VisibleForTesting static final int CONNECTION_READ_TIMEOUT = 10 * 1000; // 10s
+
+  /** How many redirects are followed before a request is given up on. */
+  @VisibleForTesting static final int MAX_REDIRECTS = 5;
 
   /** The Compiled REGEX PATTERN that can be used for http|https git urls */
   final Pattern GIT_HTTP_URL_PATTERN = Pattern.compile("(?<sanitized>^http[s]?://.*)\\.git$");
@@ -132,20 +135,103 @@ public class URLFetcher {
   String fetch(@NotNull final String url, int timeout, @Nullable String authorization)
       throws IOException {
     requireNonNull(url, "url parameter can't be null");
-    URL parsedUrl = new URL(sanitized(url));
-    String scheme = parsedUrl.getProtocol();
-    if (!"http".equals(scheme) && !"https".equals(scheme)) {
+    // new URL() first, so that a malformed URL keeps reporting the parsing error it always did
+    URL currentUrl = new URL(sanitized(url));
+    String currentAuthorization = authorization;
+
+    for (int hop = 0; ; hop++) {
+      // every hop is validated: a redirect is as much under the control of whoever supplied the
+      // URL as the URL itself, so validating only the first one would leave the check bypassable
+      validateTarget(currentUrl.toString());
+
+      URLConnection connection = currentUrl.openConnection();
+      connection.setConnectTimeout(timeout);
+      connection.setReadTimeout(timeout);
+      if (!isNullOrEmpty(currentAuthorization)) {
+        connection.setRequestProperty(HttpHeaders.AUTHORIZATION, currentAuthorization);
+      }
+      if (!(connection instanceof HttpURLConnection)) {
+        return fetch(connection);
+      }
+
+      HttpURLConnection httpConnection = (HttpURLConnection) connection;
+      httpConnection.setInstanceFollowRedirects(false);
+      Optional<String> location = redirectLocation(httpConnection);
+      if (location.isEmpty()) {
+        return fetch(httpConnection);
+      }
+      httpConnection.disconnect();
+
+      if (hop == MAX_REDIRECTS) {
+        throw new IOException(
+            "Too many redirects (more than " + MAX_REDIRECTS + ") while fetching " + url);
+      }
+      URL nextUrl = new URL(currentUrl, location.get());
+      if (isSchemeDowngrade(currentUrl, nextUrl)) {
+        throw new IOException(
+            "Refusing to follow the redirect from " + currentUrl + " to " + nextUrl + " over http");
+      }
+      if (!isSameOrigin(currentUrl, nextUrl)) {
+        // do not hand the caller's credentials to whoever the redirect points at
+        currentAuthorization = null;
+      }
+      currentUrl = nextUrl;
+    }
+  }
+
+  /**
+   * Checks that the server is allowed to request the given URL. Called once per hop of a redirect
+   * chain.
+   *
+   * @param url the URL about to be requested
+   * @throws IOException if the URL may not be requested
+   */
+  @VisibleForTesting
+  void validateTarget(String url) throws IOException {
+    UrlTargetValidator.validate(url);
+  }
+
+  /**
+   * Issues the request held by the given connection and returns where it redirects to, or an empty
+   * optional if the response is not a redirect.
+   *
+   * @param connection the connection to send the request on
+   * @return the value of the {@code Location} header of a redirect response
+   * @throws IOException if the request fails, or if a redirect carries no location
+   */
+  @VisibleForTesting
+  Optional<String> redirectLocation(HttpURLConnection connection) throws IOException {
+    int status = connection.getResponseCode();
+    if (status != HttpURLConnection.HTTP_MOVED_PERM
+        && status != HttpURLConnection.HTTP_MOVED_TEMP
+        && status != HttpURLConnection.HTTP_SEE_OTHER
+        && status != 307
+        && status != 308) {
+      return Optional.empty();
+    }
+    String location = connection.getHeaderField("Location");
+    if (isNullOrEmpty(location)) {
       throw new IOException(
-          "Only http and https URLs are allowed, got: " + scheme + " in URL " + url);
+          "Got a redirect response " + status + " without a location from " + connection.getURL());
     }
-    validateUrlTarget(parsedUrl, url);
-    URLConnection connection = parsedUrl.openConnection();
-    connection.setConnectTimeout(timeout);
-    connection.setReadTimeout(timeout);
-    if (!isNullOrEmpty(authorization)) {
-      connection.setRequestProperty(HttpHeaders.AUTHORIZATION, authorization);
-    }
-    return fetch(connection);
+    return Optional.of(location);
+  }
+
+  private static boolean isSchemeDowngrade(URL from, URL to) {
+    return "https".equalsIgnoreCase(from.getProtocol())
+        && !"https".equalsIgnoreCase(to.getProtocol());
+  }
+
+  private static boolean isSameOrigin(URL first, URL second) {
+    return first.getProtocol().equalsIgnoreCase(second.getProtocol())
+        && String.valueOf(first.getHost())
+            .toLowerCase(Locale.ROOT)
+            .equals(String.valueOf(second.getHost()).toLowerCase(Locale.ROOT))
+        && effectivePort(first) == effectivePort(second);
+  }
+
+  private static int effectivePort(URL url) {
+    return url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
   }
 
   /**
@@ -180,34 +266,6 @@ public class URLFetcher {
    */
   protected long getLimit() {
     return maximumReadBytes;
-  }
-
-  private void validateUrlTarget(URL parsedUrl, String originalUrl) throws IOException {
-    final String host;
-    try {
-      host = new URI(parsedUrl.toString()).getHost();
-    } catch (URISyntaxException e) {
-      throw new IOException("Invalid URL " + originalUrl, e);
-    }
-
-    if (isNullOrEmpty(host)) {
-      throw new IOException("URL host is missing in " + originalUrl);
-    }
-
-    final InetAddress address;
-    try {
-      address = InetAddress.getByName(host);
-    } catch (UnknownHostException e) {
-      throw new IOException("Unable to resolve URL host " + host + " in " + originalUrl, e);
-    }
-
-    if (address.isAnyLocalAddress()
-        || address.isLoopbackAddress()
-        || address.isLinkLocalAddress()
-        || address.isSiteLocalAddress()
-        || address.isMulticastAddress()) {
-      throw new IOException("URL host is not allowed: " + host);
-    }
   }
 
   /**

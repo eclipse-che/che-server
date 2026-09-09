@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -98,6 +98,7 @@ public class GitlabCustomPortUrlParserTest {
   @Test
   public void shouldValidateUrlByApiRequest() {
     // given
+    gitlabUrlParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
@@ -117,6 +118,7 @@ public class GitlabCustomPortUrlParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithPlainStringResponse() {
     // given
+    gitlabUrlParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
@@ -132,6 +134,7 @@ public class GitlabCustomPortUrlParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequest() {
     // given
+    gitlabUrlParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(get(urlEqualTo("/oauth/token/info")).willReturn(aResponse().withStatus(500)));
 
@@ -140,6 +143,28 @@ public class GitlabCustomPortUrlParserTest {
 
     // then
     assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotProbeAPrivateAddress() {
+    // when
+    boolean result = gitlabUrlParser.isValid("http://10.0.0.1/user/repo");
+
+    // then
+    assertFalse(result);
+  }
+
+  /** The wiremock server stands in for a GitLab server, but is only reachable over loopback. */
+  private GitlabUrlParser probingLoopbackParser() {
+    return new GitlabUrlParser(
+        "https://gitlab.custom.com:31280",
+        devfileFilenamesProvider,
+        mock(PersonalAccessTokenManager.class)) {
+      @Override
+      boolean canProbe(String serverUrl) {
+        return true;
+      }
+    };
   }
 
   @DataProvider(name = "UrlsProvider")

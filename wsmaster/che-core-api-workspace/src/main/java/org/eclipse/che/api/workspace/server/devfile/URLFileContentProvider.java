@@ -88,27 +88,50 @@ public class URLFileContentProvider implements FileContentProvider {
   /**
    * Tells whether the credentials taken from the devfile URL may be sent to the given URL. A
    * devfile can reference an absolute URL on an arbitrary host, and attaching the credentials to
-   * such a request would disclose them to that host, so they are only sent back to the host the
-   * devfile itself was loaded from.
+   * such a request would disclose them to that host, so they are only sent back to the origin the
+   * devfile itself was loaded from. The scheme is part of that comparison, so that a devfile cannot
+   * downgrade the request to plain http and put the credentials on the wire in the clear.
    */
   private boolean canSendCredentialsTo(String requestURL) {
     if (devfileLocation == null) {
       return false;
     }
-    final String host;
+    final URI requestURI;
     try {
-      host = new URI(requestURL).getHost();
+      requestURI = new URI(requestURL);
     } catch (URISyntaxException e) {
       return false;
     }
-    if (host != null && host.equalsIgnoreCase(devfileLocation.getHost())) {
+    if (isSameOrigin(requestURI, devfileLocation)) {
       return true;
     }
     LOG.warn(
-        "Fetching a file from host '{}' without credentials: the devfile was loaded from '{}'.",
-        host,
-        devfileLocation.getHost());
+        "Fetching a file from '{}' without credentials: the devfile was loaded from '{}'.",
+        originOf(requestURI),
+        originOf(devfileLocation));
     return false;
+  }
+
+  private static boolean isSameOrigin(URI first, URI second) {
+    return first.getScheme() != null
+        && first.getScheme().equalsIgnoreCase(second.getScheme())
+        && first.getHost() != null
+        && first.getHost().equalsIgnoreCase(second.getHost())
+        && effectivePort(first) == effectivePort(second);
+  }
+
+  private static int effectivePort(URI uri) {
+    if (uri.getPort() != -1) {
+      return uri.getPort();
+    }
+    return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+  }
+
+  private static String originOf(URI uri) {
+    return uri.getScheme()
+        + "://"
+        + uri.getHost()
+        + (uri.getPort() == -1 ? "" : ":" + uri.getPort());
   }
 
   private String getCredentialsAuthorization(String credentials) {

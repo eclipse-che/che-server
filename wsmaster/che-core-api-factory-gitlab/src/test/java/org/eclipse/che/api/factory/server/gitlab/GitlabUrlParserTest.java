@@ -339,6 +339,7 @@ public class GitlabUrlParserTest {
   @Test
   public void shouldValidateUrlByApiRequest() {
     // given
+    gitlabUrlParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
@@ -358,6 +359,7 @@ public class GitlabUrlParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithPlainStringResponse() {
     // given
+    gitlabUrlParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
@@ -373,6 +375,7 @@ public class GitlabUrlParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequest() {
     // given
+    gitlabUrlParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(get(urlEqualTo("/oauth/token/info")).willReturn(aResponse().withStatus(500)));
 
@@ -381,6 +384,26 @@ public class GitlabUrlParserTest {
 
     // then
     assertFalse(result);
+  }
+
+  @Test
+  public void shouldNotProbeAPrivateAddress() {
+    // when
+    boolean result = gitlabUrlParser.isValid("http://10.0.0.1/user/repo");
+
+    // then
+    assertFalse(result);
+  }
+
+  /** The wiremock server stands in for a GitLab server, but is only reachable over loopback. */
+  private GitlabUrlParser probingLoopbackParser() {
+    return new GitlabUrlParser(
+        "https://gitlab1.com", devfileFilenamesProvider, mock(PersonalAccessTokenManager.class)) {
+      @Override
+      boolean canProbe(String serverUrl) {
+        return true;
+      }
+    };
   }
 
   @DataProvider(name = "UrlsProvider")

@@ -179,6 +179,28 @@ public class GithubAuthorizingFileContentProviderTest {
     verify(urlFetcher).fetch(eq(rawUrl), eq("token my-token"));
   }
 
+  @Test
+  public void shouldNotSendTokenOverPlainHttpToATrustedHost() throws Exception {
+    String plaintextUrl = "http://raw.githubusercontent.com/eclipse/che/main/devfile.yaml";
+
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withBranch("main")
+            .withServerUrl("https://github.com");
+
+    URLFetcher urlFetcher = mock(URLFetcher.class);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
+
+    fileContentProvider.fetchContent(plaintextUrl);
+
+    verify(urlFetcher).fetch(eq(plaintextUrl));
+    verify(urlFetcher, never()).fetch(anyString(), anyString());
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+  }
+
   @Test(
       expectedExceptions = DevfileException.class,
       expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")

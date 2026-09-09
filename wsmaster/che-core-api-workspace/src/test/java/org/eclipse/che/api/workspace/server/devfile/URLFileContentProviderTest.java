@@ -123,6 +123,17 @@ public class URLFileContentProviderTest {
   }
 
   @Test
+  public void shouldNotSendCredentialsOverPlainHttpToTheDevfileHost() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    String plaintextUrl = "http://myhost.com/relative/dependent.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent(plaintextUrl, "user:pass");
+
+    verify(urlFetcher).fetch(eq(plaintextUrl), eq(null));
+  }
+
+  @Test
   public void shouldNotSendCredentialsWhenTheDevfileLocationIsUnknown() throws Exception {
     String url = "https://myhost.com/relative/devfile.yaml";
     URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);

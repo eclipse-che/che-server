@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -142,5 +142,16 @@ public class GitlabAuthorizingFileContentProviderTest {
 
     // when
     fileContentProvider.fetchContent("devfile.yaml");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeUrl() throws Exception {
+    GitlabUrl gitlabUrl = new GitlabUrl().withHostName("gitlab.net").withSubGroups("eclipse/che");
+    FileContentProvider fileContentProvider =
+        new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
+
+    fileContentProvider.fetchContent("file:///etc/passwd");
   }
 }

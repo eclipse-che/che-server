@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,6 +20,7 @@ import static org.testng.Assert.assertEquals;
 
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -51,10 +52,26 @@ public class AuthorizingFactoryParameterResolverTest {
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     // when
-    provider.fetchContent("url");
+    provider.fetchContent("https://provider.url/devfile.yaml");
 
     // then
     verify(personalAccessTokenManager).getAndStore(anyString());
+  }
+
+  @Test
+  public void shouldNotSendCredentialsToAForeignHost() throws Exception {
+    // given
+    String foreignUrl = "https://attacker.example/collect";
+    when(remoteFactoryUrl.getProviderUrl()).thenReturn("https://provider.url");
+    when(urlFetcher.fetch(anyString())).thenReturn("content");
+
+    // when
+    provider.fetchContent(foreignUrl);
+
+    // then
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+    verify(urlFetcher).fetch(foreignUrl);
+    verify(urlFetcher, never()).fetch(anyString(), anyString());
   }
 
   @Test
@@ -77,5 +94,44 @@ public class AuthorizingFactoryParameterResolverTest {
   @Test
   public void shouldKeepResourceNameUnchanged() throws Exception {
     assertEquals(provider.formatUrl(".gitconfig"), ".gitconfig");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeUrl() throws Exception {
+    provider.formatUrl("file:///etc/passwd");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFtpSchemeUrl() throws Exception {
+    provider.formatUrl("ftp://evil.com/secret");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectJarSchemeUrl() throws Exception {
+    provider.formatUrl("jar:file:///tmp/evil.jar!/payload");
+  }
+
+  @Test
+  public void shouldStillResolveRelativePaths() throws Exception {
+    when(remoteFactoryUrl.rawFileLocation("devfile.yaml")).thenReturn("resolved-url");
+
+    String result = provider.formatUrl("devfile.yaml");
+
+    assertEquals(result, "resolved-url");
+  }
+
+  @Test
+  public void shouldStillResolveRelativePathsWithDotSlash() throws Exception {
+    when(remoteFactoryUrl.rawFileLocation("subdir/file.yaml")).thenReturn("resolved-subdir-url");
+
+    String result = provider.formatUrl("./subdir/file.yaml");
+
+    assertEquals(result, "resolved-subdir-url");
   }
 }

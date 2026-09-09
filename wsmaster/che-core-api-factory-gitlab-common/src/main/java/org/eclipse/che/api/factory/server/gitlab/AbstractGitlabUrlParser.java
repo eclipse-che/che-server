@@ -16,6 +16,7 @@ import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import jakarta.validation.constraints.NotNull;
@@ -35,6 +36,9 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Parser of String Gitlab URLs and provide {@link GitlabUrl} objects.
@@ -42,6 +46,8 @@ import org.eclipse.che.commons.env.EnvironmentContext;
  * @author Max Shaposhnyk
  */
 public class AbstractGitlabUrlParser {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractGitlabUrlParser.class);
 
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final PersonalAccessTokenManager personalAccessTokenManager;
@@ -155,10 +161,28 @@ public class AbstractGitlabUrlParser {
         || isApiRequestRelevant(url);
   }
 
+  /**
+   * Tells whether a URL that is not known to belong to any configured provider may nonetheless be
+   * probed. Such a URL comes straight from the caller, so probing it unconditionally would let
+   * anyone use the server to reach services only it can see and read the outcome off the answer the
+   * factory endpoint returns, which is why only publicly routable hosts are probed. An SCM server
+   * on a private network is reached through the configured provider endpoints or a personal access
+   * token, both of which are checked before it comes to this.
+   */
+  @VisibleForTesting
+  boolean canProbe(String serverUrl) {
+    return UrlTargetValidator.isAllowed(serverUrl);
+  }
+
   private boolean isApiRequestRelevant(String repositoryUrl) {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
-      GitlabApiClient gitlabApiClient = new GitlabApiClient(serverUrlOptional.get());
+      String serverUrl = serverUrlOptional.get();
+      if (!canProbe(serverUrl)) {
+        LOG.warn("Not probing {}: it does not point to a publicly routable host.", serverUrl);
+        return false;
+      }
+      GitlabApiClient gitlabApiClient = new GitlabApiClient(serverUrl);
       try {
         // If the token request catches the unauthorised error, it means that the provided url
         // belongs to Gitlab.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,12 +20,16 @@ import java.net.URISyntaxException;
 import java.util.Base64;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple implementation of the FileContentProvider that merely uses the function resolve relative
  * paths and {@link URLFetcher} for retrieving the content, handling common error cases.
  */
 public class URLFileContentProvider implements FileContentProvider {
+
+  private static final Logger LOG = LoggerFactory.getLogger(URLFileContentProvider.class);
 
   private final URI devfileLocation;
   private final URLFetcher urlFetcher;
@@ -46,6 +50,11 @@ public class URLFileContentProvider implements FileContentProvider {
     }
 
     if (fileURI.isAbsolute()) {
+      String scheme = fileURI.getScheme();
+      if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+        throw new DevfileException(
+            format("URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
+      }
       requestURL = fileURL;
     } else {
       if (devfileLocation == null) {
@@ -58,8 +67,9 @@ public class URLFileContentProvider implements FileContentProvider {
       requestURL = devfileLocation.resolve(fileURI).toString();
     }
     try {
+      boolean authorize = !isNullOrEmpty(credentials) && canSendCredentialsTo(requestURL);
       return urlFetcher.fetch(
-          requestURL, isNullOrEmpty(credentials) ? null : getCredentialsAuthorization(credentials));
+          requestURL, authorize ? getCredentialsAuthorization(credentials) : null);
     } catch (IOException e) {
       throw new IOException(
           format(
@@ -73,6 +83,55 @@ public class URLFileContentProvider implements FileContentProvider {
               fileURL, e.getMessage()),
           e);
     }
+  }
+
+  /**
+   * Tells whether the credentials taken from the devfile URL may be sent to the given URL. A
+   * devfile can reference an absolute URL on an arbitrary host, and attaching the credentials to
+   * such a request would disclose them to that host, so they are only sent back to the origin the
+   * devfile itself was loaded from. The scheme is part of that comparison, so that a devfile cannot
+   * downgrade the request to plain http and put the credentials on the wire in the clear.
+   */
+  private boolean canSendCredentialsTo(String requestURL) {
+    if (devfileLocation == null) {
+      return false;
+    }
+    final URI requestURI;
+    try {
+      requestURI = new URI(requestURL);
+    } catch (URISyntaxException e) {
+      return false;
+    }
+    if (isSameOrigin(requestURI, devfileLocation)) {
+      return true;
+    }
+    LOG.warn(
+        "Fetching a file from '{}' without credentials: the devfile was loaded from '{}'.",
+        originOf(requestURI),
+        originOf(devfileLocation));
+    return false;
+  }
+
+  private static boolean isSameOrigin(URI first, URI second) {
+    return first.getScheme() != null
+        && first.getScheme().equalsIgnoreCase(second.getScheme())
+        && first.getHost() != null
+        && first.getHost().equalsIgnoreCase(second.getHost())
+        && effectivePort(first) == effectivePort(second);
+  }
+
+  private static int effectivePort(URI uri) {
+    if (uri.getPort() != -1) {
+      return uri.getPort();
+    }
+    return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
+  }
+
+  private static String originOf(URI uri) {
+    return uri.getScheme()
+        + "://"
+        + uri.getHost()
+        + (uri.getPort() == -1 ? "" : ":" + uri.getPort());
   }
 
   private String getCredentialsAuthorization(String credentials) {

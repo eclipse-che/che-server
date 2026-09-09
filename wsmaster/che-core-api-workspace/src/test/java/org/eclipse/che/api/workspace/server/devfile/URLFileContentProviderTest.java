@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -45,6 +45,102 @@ public class URLFileContentProviderTest {
     provider.fetchContent(url);
     verify(urlFetcher).fetch(captor.capture(), eq(null));
     assertEquals(captor.getValue(), url);
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeURL() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContent("file:///etc/passwd");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFtpSchemeURL() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContent("ftp://evil.com/file");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectJarSchemeURL() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContent("jar:file:///tmp/evil.jar!/payload");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeViaFetchWithoutAuthentication() throws Exception {
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    provider.fetchContentWithoutAuthentication("file:///etc/passwd");
+  }
+
+  @Test
+  public void shouldAllowHttpsAbsoluteURL() throws Exception {
+    String url = "https://secure.example.com/devfile.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+    provider.fetchContent(url);
+    verify(urlFetcher).fetch(captor.capture(), eq(null));
+    assertEquals(captor.getValue(), url);
+  }
+
+  @Test
+  public void shouldSendCredentialsToTheDevfileHost() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    String url = "https://myhost.com/relative/dependent.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent(url, "user:pass");
+
+    verify(urlFetcher).fetch(eq(url), eq("Basic dXNlcjpwYXNz"));
+  }
+
+  @Test
+  public void shouldSendCredentialsForRelativeURL() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent("dependent.yaml", "user:pass");
+
+    verify(urlFetcher)
+        .fetch(eq("https://myhost.com/relative/dependent.yaml"), eq("Basic dXNlcjpwYXNz"));
+  }
+
+  @Test
+  public void shouldNotSendCredentialsToAForeignHost() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    String foreignUrl = "https://attacker.example/collect";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent(foreignUrl, "user:pass");
+
+    verify(urlFetcher).fetch(eq(foreignUrl), eq(null));
+  }
+
+  @Test
+  public void shouldNotSendCredentialsOverPlainHttpToTheDevfileHost() throws Exception {
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    String plaintextUrl = "http://myhost.com/relative/dependent.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent(plaintextUrl, "user:pass");
+
+    verify(urlFetcher).fetch(eq(plaintextUrl), eq(null));
+  }
+
+  @Test
+  public void shouldNotSendCredentialsWhenTheDevfileLocationIsUnknown() throws Exception {
+    String url = "https://myhost.com/relative/devfile.yaml";
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+
+    provider.fetchContent(url, "user:pass");
+
+    verify(urlFetcher).fetch(eq(url), eq(null));
   }
 
   @Test

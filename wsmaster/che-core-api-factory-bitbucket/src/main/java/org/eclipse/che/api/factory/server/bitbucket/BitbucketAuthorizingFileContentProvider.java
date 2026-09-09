@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,8 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
@@ -46,9 +48,20 @@ class BitbucketAuthorizingFileContentProvider extends AuthorizingFileContentProv
     return "Bearer " + token;
   }
 
+  /** Along with the Bitbucket host itself, the token is also valid for the Bitbucket API host. */
+  @Override
+  protected Set<String> getTrustedOrigins() {
+    Set<String> trustedOrigins = new HashSet<>(super.getTrustedOrigins());
+    originOfUrl(BitbucketApiClient.BITBUCKET_API_SERVER).ifPresent(trustedOrigins::add);
+    return trustedOrigins;
+  }
+
   @Override
   public String fetchContent(String fileURL) throws IOException, DevfileException {
     final String requestURL = formatUrl(fileURL);
+    if (!canSendCredentialsTo(requestURL)) {
+      return fetchContentWithoutToken(requestURL);
+    }
     try {
       // try to authenticate for the given URL
       PersonalAccessToken token =

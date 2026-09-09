@@ -20,6 +20,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import javax.net.ssl.SSLException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -42,6 +46,9 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     implements FileContentProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizingFileContentProvider.class);
+
+  /** Placeholder file name used to derive the host that serves the raw repository content. */
+  private static final String RAW_CONTENT_PROBE_FILE = "devfile.yaml";
 
   protected final T remoteFactoryUrl;
   protected final PersonalAccessTokenManager personalAccessTokenManager;
@@ -77,25 +84,24 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
       String fileURL, boolean skipAuthentication, @Nullable String credentials)
       throws IOException, DevfileException {
     final String requestURL = formatUrl(fileURL);
+    if (skipAuthentication || !canSendCredentialsTo(requestURL)) {
+      return urlFetcher.fetch(requestURL);
+    }
     try {
-      if (skipAuthentication) {
-        return urlFetcher.fetch(requestURL);
+      // try to authenticate for the given URL
+      String authorization;
+      if (isNullOrEmpty(credentials)) {
+        PersonalAccessToken token =
+            personalAccessTokenManager.getAndStore(remoteFactoryUrl.getProviderUrl());
+        authorization =
+            formatAuthorization(
+                token.getToken(),
+                token.getScmTokenName() == null
+                    || !token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
       } else {
-        // try to authenticate for the given URL
-        String authorization;
-        if (isNullOrEmpty(credentials)) {
-          PersonalAccessToken token =
-              personalAccessTokenManager.getAndStore(remoteFactoryUrl.getProviderUrl());
-          authorization =
-              formatAuthorization(
-                  token.getToken(),
-                  token.getScmTokenName() == null
-                      || !token.getScmTokenName().startsWith(OAUTH_2_PREFIX));
-        } else {
-          authorization = getCredentialsAuthorization(credentials);
-        }
-        return urlFetcher.fetch(requestURL, authorization);
+        authorization = getCredentialsAuthorization(credentials);
       }
+      return urlFetcher.fetch(requestURL, authorization);
     } catch (UnknownScmProviderException
         | ScmConfigurationPersistenceException
         | UnsatisfiedScmPreconditionException e) {
@@ -160,10 +166,93 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     return false;
   }
 
+  /**
+   * Tells whether the user's credentials may be sent to the given URL. A devfile can reference an
+   * absolute URL on an arbitrary host, and attaching the personal access token to such a request
+   * would disclose it to that host, so credentials are only sent to the SCM provider they were
+   * issued for. The comparison is on the whole origin rather than the host alone, so that a devfile
+   * cannot downgrade the request to plain http and put the token on the wire in the clear.
+   *
+   * @param requestURL the URL about to be fetched
+   * @return true if the URL belongs to this provider, false if it must be fetched anonymously
+   */
+  protected boolean canSendCredentialsTo(String requestURL) {
+    Set<String> trustedOrigins = getTrustedOrigins();
+    Optional<String> origin = originOfUrl(requestURL);
+    if (origin.isPresent() && trustedOrigins.contains(origin.get())) {
+      return true;
+    }
+    LOG.warn(
+        "Fetching a file from '{}' without credentials: it is not one of the {} provider"
+            + " origins {}.",
+        origin.orElse("<unknown>"),
+        remoteFactoryUrl.getProviderName(),
+        trustedOrigins);
+    return false;
+  }
+
+  /**
+   * Returns the origins ({@code scheme://host[:port]}) allowed to receive the user's credentials.
+   * Besides the SCM provider itself, it holds the origin serving the raw repository content, as the
+   * two are not necessarily the same (e.g. {@code github.com} and {@code raw.githubusercontent.com}
+   * ).
+   */
+  protected Set<String> getTrustedOrigins() {
+    Set<String> trustedOrigins = new HashSet<>();
+    originOfUrlOrHostName(remoteFactoryUrl.getProviderUrl()).ifPresent(trustedOrigins::add);
+    originOfUrlOrHostName(remoteFactoryUrl.getHostName()).ifPresent(trustedOrigins::add);
+    try {
+      originOfUrl(remoteFactoryUrl.rawFileLocation(RAW_CONTENT_PROBE_FILE))
+          .ifPresent(trustedOrigins::add);
+    } catch (RuntimeException e) {
+      LOG.debug(
+          "Unable to resolve the raw content origin of {}", remoteFactoryUrl.getProviderUrl(), e);
+    }
+    return trustedOrigins;
+  }
+
+  /** Extracts the origin of an absolute URL, empty if it is not one. */
+  protected static Optional<String> originOfUrl(String url) {
+    return isNullOrEmpty(url) || !url.contains("://") ? Optional.empty() : parseOrigin(url);
+  }
+
+  /**
+   * Extracts the origin of a value that {@link RemoteFactoryUrl} implementations return either as a
+   * bare host name or as a full URL. A bare host name is assumed to be served over https.
+   */
+  private static Optional<String> originOfUrlOrHostName(String urlOrHostName) {
+    if (isNullOrEmpty(urlOrHostName)) {
+      return Optional.empty();
+    }
+    return parseOrigin(urlOrHostName.contains("://") ? urlOrHostName : "https://" + urlOrHostName);
+  }
+
+  private static Optional<String> parseOrigin(String url) {
+    try {
+      URI uri = new URI(url);
+      String scheme = uri.getScheme();
+      String host = uri.getHost();
+      if (isNullOrEmpty(scheme) || isNullOrEmpty(host)) {
+        return Optional.empty();
+      }
+      String origin = scheme.toLowerCase(Locale.ROOT) + "://" + host.toLowerCase(Locale.ROOT);
+      return Optional.of(uri.getPort() == -1 ? origin : origin + ":" + uri.getPort());
+    } catch (URISyntaxException e) {
+      return Optional.empty();
+    }
+  }
+
   protected String formatUrl(String fileURL) throws DevfileException {
     String requestURL;
     try {
-      if (new URI(fileURL).isAbsolute()) {
+      URI fileURI = new URI(fileURL);
+      if (fileURI.isAbsolute()) {
+        String scheme = fileURI.getScheme();
+        if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+          throw new DevfileException(
+              String.format(
+                  "URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
+        }
         requestURL = fileURL;
       } else {
         // since files retrieved via REST, we cannot use path like '.' or one that starts with './'

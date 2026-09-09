@@ -108,8 +108,7 @@ public class GitlabAuthorizingFileContentProviderTest {
             .withScheme("http")
             .withHostName(format("%s:%s", uri.getHost(), uri.getPort()))
             .withSubGroups("eclipse/che");
-    FileContentProvider fileContentProvider =
-        new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
+    FileContentProvider fileContentProvider = probingLoopbackProvider(gitlabUrl);
 
     stubFor(get(urlEqualTo("/eclipse/che")).willReturn(aResponse().withStatus(HTTP_OK)));
 
@@ -135,8 +134,7 @@ public class GitlabAuthorizingFileContentProviderTest {
             .withScheme("http")
             .withHostName(format("%s:%s", uri.getHost(), uri.getPort()))
             .withSubGroups("eclipse/che");
-    FileContentProvider fileContentProvider =
-        new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
+    FileContentProvider fileContentProvider = probingLoopbackProvider(gitlabUrl);
 
     stubFor(get(urlEqualTo("/eclipse/che")).willReturn(aResponse().withStatus(HTTP_MOVED_TEMP)));
 
@@ -153,5 +151,50 @@ public class GitlabAuthorizingFileContentProviderTest {
         new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
 
     fileContentProvider.fetchContent("file:///etc/passwd");
+  }
+
+  /**
+   * The check for a public repository is a request to a URL derived from the one the caller
+   * supplied, and must not become a way of having the server reach whatever the caller names. The
+   * wiremock server would answer with 200, so the 404 is only turned into a {@link
+   * DevfileException} - rather than passed through as for a public repository - if the request was
+   * never sent.
+   */
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = "Could not reach devfile at test path")
+  public void shouldNotProbeANonRoutableHost() throws Exception {
+    // given
+    when(urlFetcher.fetch(
+            eq(
+                wireMockServer.url(
+                    "/api/v4/projects/eclipse%2Fche/repository/files/devfile.yaml/raw?ref=HEAD"))))
+        .thenThrow(new FileNotFoundException("test path"));
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenThrow(new UnknownScmProviderException("", ""));
+    URI uri = URI.create(wireMockServer.url("/"));
+    GitlabUrl gitlabUrl =
+        new GitlabUrl()
+            .withScheme("http")
+            .withHostName(format("%s:%s", uri.getHost(), uri.getPort()))
+            .withSubGroups("eclipse/che");
+    FileContentProvider fileContentProvider =
+        new GitlabAuthorizingFileContentProvider(gitlabUrl, urlFetcher, personalAccessTokenManager);
+
+    stubFor(get(urlEqualTo("/eclipse/che")).willReturn(aResponse().withStatus(HTTP_OK)));
+
+    // when
+    fileContentProvider.fetchContent("devfile.yaml");
+  }
+
+  /** The wiremock server stands in for a GitLab server, but is only reachable over loopback. */
+  private GitlabAuthorizingFileContentProvider probingLoopbackProvider(GitlabUrl gitlabUrl) {
+    return new GitlabAuthorizingFileContentProvider(
+        gitlabUrl, urlFetcher, personalAccessTokenManager) {
+      @Override
+      boolean canProbe(String repositoryUrl) {
+        return true;
+      }
+    };
   }
 }

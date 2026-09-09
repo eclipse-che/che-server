@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.gitlab;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.Duration.ofSeconds;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,10 +27,16 @@ import java.util.concurrent.Executors;
 import org.eclipse.che.api.factory.server.scm.AuthorizingFileContentProvider;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Gitlab specific authorizing file content provider. */
 class GitlabAuthorizingFileContentProvider extends AuthorizingFileContentProvider<GitlabUrl> {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(GitlabAuthorizingFileContentProvider.class);
 
   private final HttpClient httpClient;
 
@@ -54,14 +61,26 @@ class GitlabAuthorizingFileContentProvider extends AuthorizingFileContentProvide
             .build();
   }
 
+  /**
+   * Tells whether the server may send the request that decides if a repository is public. The URL
+   * is derived from the one the caller supplied, and the request does not go through {@link
+   * URLFetcher}, which is where the check on the destination normally sits, so it is made here.
+   */
+  @VisibleForTesting
+  boolean canProbe(String repositoryUrl) {
+    return UrlTargetValidator.isAllowed(repositoryUrl);
+  }
+
   @Override
   protected boolean isPublicRepository(GitlabUrl remoteFactoryUrl) {
+    String repositoryUrl =
+        remoteFactoryUrl.getProviderUrl() + '/' + remoteFactoryUrl.getSubGroups();
+    if (!canProbe(repositoryUrl)) {
+      LOG.warn("Not probing {}: it does not point to a publicly routable host.", repositoryUrl);
+      return false;
+    }
     HttpRequest request =
-        HttpRequest.newBuilder(
-                URI.create(
-                    remoteFactoryUrl.getProviderUrl() + '/' + remoteFactoryUrl.getSubGroups()))
-            .timeout(DEFAULT_HTTP_TIMEOUT)
-            .build();
+        HttpRequest.newBuilder(URI.create(repositoryUrl)).timeout(DEFAULT_HTTP_TIMEOUT).build();
     try {
       HttpResponse<InputStream> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());

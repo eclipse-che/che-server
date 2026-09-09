@@ -128,9 +128,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldValidateUrlByApiRequest() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -148,9 +146,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldValidateUrlByApiRequestButFailOnPatternCheck() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -168,9 +164,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithBadRequest() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -186,9 +180,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithEmptyData() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -204,9 +196,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithEmptyHeader() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -424,6 +414,42 @@ public class BitbucketServerURLParserTest {
     // then
     assertEquals(bitbucketServerUrl.getUser(), "user");
     assertEquals(bitbucketServerUrl.getRepository(), "repo");
+  }
+
+  /**
+   * An unconfigured URL is probed to find out whether it is a Bitbucket server, which must not
+   * become a way of having the server reach whatever the caller names. The wiremock server would
+   * answer the probe, so the URL only comes back invalid if the probe was never sent.
+   */
+  @Test
+  public void shouldNotProbeANonRoutableHost() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
+  }
+
+  /** The wiremock server stands in for a Bitbucket server, but is only reachable over loopback. */
+  private BitbucketServerURLParser probingLoopbackParser() {
+    return new BitbucketServerURLParser(
+        null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class)) {
+      @Override
+      boolean canProbe(String serverUrl) {
+        return true;
+      }
+    };
   }
 
   @DataProvider(name = "UrlsProvider")

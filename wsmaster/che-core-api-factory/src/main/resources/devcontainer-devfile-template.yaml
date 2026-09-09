@@ -20,6 +20,18 @@ commands:
         cat > /tmp/start-devcontainer.sh <<'DEVCONTAINER_SCRIPT_EOF'
         #!/usr/bin/env bash
         #
+        # Copyright (c) 2012-2026 Red Hat, Inc.
+        # This program and the accompanying materials are made
+        # available under the terms of the Eclipse Public License 2.0
+        # which is available at https://www.eclipse.org/legal/epl-2.0/
+        #
+        # SPDX-License-Identifier: EPL-2.0
+        #
+        # Contributors:
+        #   Red Hat, Inc. - initial API and implementation
+        #
+
+        #
         # Outer editor + inner devcontainer.
         # che-code stays in the UDI container; the repo's devcontainer.json is built and run as a
         # nested rootless-podman container. Terminals, lifecycle commands and file ownership are
@@ -34,6 +46,28 @@ commands:
         #   NO_KEEP_ID=1       skip --userns=keep-id (debugging)
         #
         set -uo pipefail
+
+        # Only one instance may touch the container and the podman store at a time. postStart runs this
+        # while the user can also launch the start/rebuild task, and both would race on `podman rm -f`.
+        LOCK_FILE="${LOCK_FILE:-/tmp/.devcontainer-setup.lock}"
+        if command -v flock >/dev/null 2>&1; then
+          exec 9>"$LOCK_FILE" || true
+          if ! flock -n 9; then
+            HOLDER="$(cat "$LOCK_FILE" 2>/dev/null | tr -dc '0-9')"
+            if [ "${REBUILD:-0}" != "1" ]; then
+              echo "another devcontainer setup is in progress (pid ${HOLDER:-?}); exiting (not a rebuild)."
+              exit 0
+            fi
+            echo "rebuild requested; killing in-progress setup (pid ${HOLDER:-?})..."
+            [ -n "$HOLDER" ] && kill "$HOLDER" 2>/dev/null && sleep 1
+            # After killing, the lock should be free — try once more
+            if ! flock -n 9; then
+              [ -n "$HOLDER" ] && kill -9 "$HOLDER" 2>/dev/null && sleep 1
+              flock -w 30 9 || { echo "could not acquire lock after killing previous run" >&2; exit 1; }
+            fi
+          fi
+          echo $$ > "$LOCK_FILE"
+        fi
 
         PROJECTS_ROOT="${PROJECTS_ROOT:-/projects}"
         # Project: explicit arg > DWO's PROJECT_SOURCE > the only directory under PROJECTS_ROOT.
@@ -82,6 +116,21 @@ commands:
         [ -n "$PODMAN" ] || { echo "podman not found" >&2; exit 1; }
         step "1/8" "engine: $PODMAN"
 
+        # ---------------------------------------------------------------------------
+        # 2. Subuid ranges
+        # ---------------------------------------------------------------------------
+        # No storage.conf is written here. UDI's entrypoint (base/ubi*/entrypoint.sh) already selects
+        # overlay+fuse-overlayfs when /dev/fuse is present and falls back to vfs otherwise, so the
+        # driver choice is not ours to repeat, and the graphroot is left at podman's rootless default
+        # (${XDG_DATA_HOME:-$HOME/.local/share}/containers/storage).
+        # CAVEAT: with devEnvironments.persistUserHome enabled (the Che default) $HOME is PVC-backed,
+        # so the image store lands on the workspace PVC. Under DWO's common storage strategy
+        # (including Che's per-user strategy), the cleanup Job removes the workspace directory on
+        # deletion and subuid-owned files can wedge the workspace in Error:
+        # https://github.com/eclipse-che/che/issues/23924. On CRC (2026-09-08), the PVC-backed image
+        # build store was deleted cleanly with another workspace running. Full devcontainer teardown
+        # remains unverified there because nested-container startup failed.
+
         # Derive the range instead of hardcoding a uid — UDI's entrypoint computes this from the
         # actual uid, and a hardcoded "user:1001:..." maps the wrong host range on a uid-1000 pod.
         # NOTE: a 65536-ID userns cannot map container ID 65534 (nobody) however the ranges are
@@ -98,7 +147,7 @@ commands:
         fi
 
         # ---------------------------------------------------------------------------
-        # 2. devcontainer CLI + pre-build config
+        # 3. devcontainer CLI + pre-build config
         # ---------------------------------------------------------------------------
         DEVCONTAINER_BIN="${DEVCONTAINER_BIN:-$(command -v devcontainer || echo /home/user/.devcontainers/bin/devcontainer)}"
         if ! "$DEVCONTAINER_BIN" --version >/dev/null 2>&1; then
@@ -139,7 +188,7 @@ commands:
         CONFIG_FINGERPRINT="$(printf '%s' "$CONFIG_JSON" | sha256sum | cut -d' ' -f1)"
 
         # ---------------------------------------------------------------------------
-        # 3. initializeCommand (runs OUTSIDE the container, per spec)
+        # 4. initializeCommand (runs OUTSIDE the container, per spec)
         # ---------------------------------------------------------------------------
         JQ_NORMALIZE='
         def norm($name):
@@ -166,7 +215,7 @@ commands:
         run_outer "$(printf '%s' "$CONFIG_JSON" | jq -c '.initializeCommand // null')"
 
         # ---------------------------------------------------------------------------
-        # 4. Build
+        # 5. Build
         # ---------------------------------------------------------------------------
         REUSING=0
         if [ "$REBUILD" = "1" ]; then
@@ -194,7 +243,7 @@ commands:
         fi
 
         # ---------------------------------------------------------------------------
-        # 5. Merged metadata from the built image
+        # 6. Merged metadata from the built image
         # ---------------------------------------------------------------------------
         # `devcontainer build` writes a devcontainer.metadata LABEL containing the FULLY MERGED
         # config — the base image's metadata, every Feature's contributions, and devcontainer.json.
@@ -249,7 +298,7 @@ commands:
         [ -n "$skipped" ] && echo "  NOTE: env with \${...} substitution skipped: $skipped" >&2
 
         # ---------------------------------------------------------------------------
-        # 6. Run the container, with UID parity
+        # 7. Run the container, with UID parity
         # ---------------------------------------------------------------------------
         # The whole point of outer-editor is "edit outside, run inside" — so the two sides must agree
         # on file ownership. Without keep-id, anything created inside (node_modules, build output,
@@ -307,7 +356,7 @@ commands:
         "$PODMAN" exec "$CONTAINER_NAME" git config --global --replace-all safe.directory "$WORKSPACE_FOLDER" 2>/dev/null || true
 
         # ---------------------------------------------------------------------------
-        # 7. Lifecycle commands, then editor wiring
+        # 8. Lifecycle commands, then editor wiring
         # ---------------------------------------------------------------------------
         EXEC_USER=(); [ -n "$REMOTE_USER" ] && EXEC_USER=(-u "$REMOTE_USER")
         CREATE_MARKER=/tmp/.devcontainer-create-hooks-done
@@ -355,6 +404,20 @@ commands:
           mkdir -p "$(dirname "$file")"; printf '%s\n' "$cur" | jq '.' > "$file"
         }
 
+        # .vscode/extensions.json is the one generated file that must live in the repo — VS Code reads
+        # recommendations only from there. Keep it out of `git status` via .git/info/exclude, which is
+        # local to the clone and never committed. Ignore rules do not apply to files git already tracks,
+        # so a repo that commits its own .vscode/extensions.json is left completely alone.
+        safe_to_write() {   # $1 = path relative to the project root; returns 0 when writing is OK
+          local rel="$1" gitdir ex
+          gitdir="$(git -C "$PROJECT_DIR" rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+          git -C "$PROJECT_DIR" ls-files --error-unmatch "$rel" >/dev/null 2>&1 && return 1
+          ex="$gitdir/info/exclude"
+          mkdir -p "$(dirname "$ex")" 2>/dev/null || return 0
+          grep -qxF "$rel" "$ex" 2>/dev/null || printf '%s\n' "$rel" >> "$ex"
+          return 0
+        }
+
         profile=(exec -it)
         [ -n "$REMOTE_USER" ] && profile+=(-u "$REMOTE_USER")
         profile+=("${REMOTE_ENV[@]}" -w "$WORKSPACE_FOLDER" "$CONTAINER_NAME" "$INNER_SHELL")
@@ -370,29 +433,46 @@ commands:
         # untrusted workspace, so they must go to MACHINE settings — which is also the file che-code's
         # launcher merges the vscode-editor-configurations ConfigMap into, and it keeps the repo clean.
         MACHINE_SETTINGS="${CHE_MACHINE_SETTINGS:-/checode/remote/data/Machine/settings.json}"
-        if mkdir -p "$(dirname "$MACHINE_SETTINGS")" 2>/dev/null; then
+        MACHINE_OK=0
+        mkdir -p "$(dirname "$MACHINE_SETTINGS")" 2>/dev/null && MACHINE_OK=1
+
+        if [ "$MACHINE_OK" = 1 ]; then
           merge_into "$MACHINE_SETTINGS" "$terminal"
           echo "  terminal profile -> ${MACHINE_SETTINGS} (reload the window if it does not appear)"
         else
           echo "  WARNING: ${MACHINE_SETTINGS} unwritable; terminal profile will not apply." >&2
         fi
 
-        # Editor-safe settings are unrestricted, so the workspace file is fine for those.
+        # Editor settings go to MACHINE settings too, not the repo: the user should not find unexplained
+        # modifications in a tree they did not touch. /checode is recreated on each workspace start, so
+        # nothing written here survives into a later session with a different project.
+        # NOTE: machine scope is editor-wide, not per-folder. With one project — the normal case for a
+        # factory workspace — that is indistinguishable from workspace scope; with several projects under
+        # $PROJECTS_ROOT the last run wins.
         SAFE='editor.|files.|workbench.|search.|explorer.|diffEditor.|breadcrumbs.|scm.|outline.|problems.|output.|window.|comments.'
         editor_settings="$(printf '%s' "$META" | jq -c --arg p "$SAFE" '(.settings // {})
           | with_entries(select(.key as $k | ($p|split("|")|any(. as $x | $k|startswith($x)))))')"
-        [ "$(printf '%s' "$editor_settings" | jq 'length')" -gt 0 ] &&
-          merge_into "${PROJECT_DIR}/.vscode/settings.json" "$editor_settings" &&
-          echo "  editor settings -> .vscode/settings.json"
+        if [ "$(printf '%s' "$editor_settings" | jq 'length')" -gt 0 ]; then
+          if [ "$MACHINE_OK" = 1 ]; then
+            merge_into "$MACHINE_SETTINGS" "$editor_settings"
+            echo "  editor settings -> ${MACHINE_SETTINGS}"
+          else
+            echo "  WARNING: ${MACHINE_SETTINGS} unwritable; editor settings not applied." >&2
+          fi
+        fi
 
         # Surface the extensions the devcontainer asks for (including Feature-contributed ones) as
         # workspace recommendations. che-code cannot auto-install them, but this at least tells the
         # user what the repo expects instead of silently dropping the list.
         exts="$(printf '%s' "$META" | jq -c '.extensions // []')"
         if [ "$(printf '%s' "$exts" | jq 'length')" -gt 0 ]; then
-          merge_into "${PROJECT_DIR}/.vscode/extensions.json" \
-            "$(jq -n --argjson e "$exts" '{recommendations: $e}')"
-          echo "  recommended extensions -> .vscode/extensions.json: $(printf '%s' "$exts" | jq -r 'join(", ")')"
+          if safe_to_write .vscode/extensions.json; then
+            merge_into "${PROJECT_DIR}/.vscode/extensions.json" \
+              "$(jq -n --argjson e "$exts" '{recommendations: $e}')"
+            echo "  recommended extensions -> .vscode/extensions.json: $(printf '%s' "$exts" | jq -r 'join(", ")')"
+          else
+            echo "  recommended extensions (not written, .vscode/extensions.json is tracked): $(printf '%s' "$exts" | jq -r 'join(", ")')"
+          fi
         fi
 
         _close_phase

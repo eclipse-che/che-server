@@ -32,13 +32,12 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Required;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
-import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
-import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.lang.NameGenerator;
-import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 
 /** RESTful wrapper for OAuthAuthenticator. */
@@ -120,33 +119,18 @@ public class OAuthAuthenticationService extends Service {
    * Refreshes the OAuth token for the given provider and persists the updated token as a Kubernetes
    * secret and git credential, so that subsequent SCM operations use the new access token.
    *
-   * @param oauthProvider OAuth provider name
+   * @param providerUrl URL of the OAuth provider instance the token belongs to. Optional, if not
+   *     set, the URL configured for the given provider is used.
    */
   @POST
   @Path("refresh")
-  public void refresh(@Required @QueryParam("oauth_provider") String oauthProvider)
-      throws ServerException,
-          UnauthorizedException,
-          NotFoundException,
-          ForbiddenException,
-          UnsatisfiedScmPreconditionException,
-          ScmConfigurationPersistenceException {
-    OAuthToken token = oAuthAPI.refreshToken(oauthProvider);
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
-    PersonalAccessToken personalAccessToken =
-        new PersonalAccessToken(
-            oAuthAPI.getProviderUrl(oauthProvider),
-            oauthProvider,
-            subject.getUserId(),
-            null,
-            subject.getUserName(),
-            NameGenerator.generate("oauth2-", 5),
-            NameGenerator.generate("id-", 5),
-            token.getToken(),
-            token.getRefreshToken(),
-            token.getExpiresIn());
-    personalAccessTokenManager.store(personalAccessToken);
-    gitCredentialManager.createOrReplace(personalAccessToken);
+  public void refresh(@Required @QueryParam("provider_url") String providerUrl)
+      throws UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException,
+          ScmCommunicationException,
+          UnknownScmProviderException,
+          ScmUnauthorizedException {
+    personalAccessTokenManager.forceRefreshPersonalAccessToken(providerUrl);
   }
 
   /**

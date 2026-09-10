@@ -75,13 +75,15 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME =
       "che.eclipse.org/scm-personal-access-token-name";
   public static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
+
+  /** Kubernetes secret annotation key for the token expiration time in seconds. */
+  public static final String ANNOTATION_SCM_TOKEN_EXPIRES_IN =
+      "che.eclipse.org/scm-token-expires-in";
+
   public static final String TOKEN_DATA_FIELD = "token";
 
   /** Kubernetes secret data field key for the OAuth refresh token. */
   public static final String REFRESH_TOKEN_DATA_FIELD = "refresh-token";
-
-  /** Kubernetes secret data field key for the token expiration time in seconds. */
-  public static final String EXPIRES_IN_DATA_FIELD = "expires-in";
 
   private final KubernetesNamespaceFactory namespaceFactory;
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
@@ -122,6 +124,9 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                       .put(
                           ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
                           personalAccessToken.getScmTokenName())
+                      .put(
+                          ANNOTATION_SCM_TOKEN_EXPIRES_IN,
+                          String.valueOf(personalAccessToken.getExpiresIn()))
                       .build())
               .withLabels(SECRET_LABELS)
               .build();
@@ -134,22 +139,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           Base64.getEncoder()
               .encodeToString(
                   personalAccessToken.getRefreshToken().getBytes(StandardCharsets.UTF_8));
-      String expiresInEncoded =
-          Base64.getEncoder()
-              .encodeToString(
-                  String.valueOf(personalAccessToken.getExpiresIn())
-                      .getBytes(StandardCharsets.UTF_8));
       Secret secret =
           new SecretBuilder()
               .withMetadata(meta)
               .withData(
                   Map.of(
-                      TOKEN_DATA_FIELD,
-                      tokenEncoded,
-                      REFRESH_TOKEN_DATA_FIELD,
-                      refreshTokenEncoded,
-                      EXPIRES_IN_DATA_FIELD,
-                      expiresInEncoded))
+                      TOKEN_DATA_FIELD, tokenEncoded,
+                      REFRESH_TOKEN_DATA_FIELD, refreshTokenEncoded))
               .build();
 
       cheServerKubernetesClientFactory
@@ -395,20 +391,18 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   /** Extracts token parameters from a Kubernetes secret, decoding Base64-encoded data fields. */
   private PersonalAccessTokenParams secret2PersonalAccessTokenParams(Secret secret) {
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
-    String refreshTokenData = secret.getData().get("refresh-token");
-    String expiresInData = secret.getData().get("expires-in");
+    String refreshTokenData = secret.getData().get(REFRESH_TOKEN_DATA_FIELD);
+    String expiresInAnnotation = secretAnnotations.get(ANNOTATION_SCM_TOKEN_EXPIRES_IN);
 
-    String token = new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
+    String token =
+        new String(Base64.getDecoder().decode(secret.getData().get(TOKEN_DATA_FIELD))).trim();
     // Refresh token and expiresIn may be absent in PAT secrets, or secrets created before OAuth
     // refresh support
     String refreshToken =
         isNullOrEmpty(refreshTokenData)
             ? null
             : new String(Base64.getDecoder().decode(refreshTokenData)).trim();
-    long expiresIn =
-        isNullOrEmpty(expiresInData)
-            ? 0
-            : parseLong(new String(Base64.getDecoder().decode(expiresInData)));
+    long expiresIn = isNullOrEmpty(expiresInAnnotation) ? 0 : parseLong(expiresInAnnotation.trim());
     String configuredOAuthTokenName =
         secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
     String configuredTokenId = secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);

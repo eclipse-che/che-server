@@ -741,8 +741,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new String(Base64.getDecoder().decode(createdSecret.getData().get("refresh-token")), UTF_8),
         "refresh-token-value");
     assertEquals(
-        new String(Base64.getDecoder().decode(createdSecret.getData().get("expires-in")), UTF_8),
-        "3600");
+        createdSecret.getMetadata().getAnnotations().get(ANNOTATION_SCM_TOKEN_EXPIRES_IN), "3600");
   }
 
   @Test
@@ -761,8 +760,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
         Map.of(
             "token", Base64.getEncoder().encodeToString("access-token".getBytes(UTF_8)),
             "refresh-token",
-                Base64.getEncoder().encodeToString("refresh-token-value".getBytes(UTF_8)),
-            "expires-in", Base64.getEncoder().encodeToString("7200".getBytes(UTF_8)));
+                Base64.getEncoder().encodeToString("refresh-token-value".getBytes(UTF_8)));
 
     ObjectMeta metaData =
         new ObjectMetaBuilder()
@@ -773,7 +771,9 @@ public class KubernetesPersonalAccessTokenManagerTest {
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,
-                    "http://github.com"))
+                    "http://github.com",
+                    ANNOTATION_SCM_TOKEN_EXPIRES_IN,
+                    "7200"))
             .build();
 
     Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();

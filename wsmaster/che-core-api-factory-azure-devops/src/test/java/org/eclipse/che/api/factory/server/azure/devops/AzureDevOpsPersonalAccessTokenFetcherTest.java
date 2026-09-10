@@ -190,13 +190,19 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
 
   @Test
   public void shouldValidateServerPersonalAccessToken() throws Exception {
+    // the wiremock server stands in for an Azure DevOps Server, but is only reachable over loopback
     personalAccessTokenFetcher =
         new AzureDevOpsPersonalAccessTokenFetcher(
             "localhost",
             "https://dev.azure-server.com",
             new String[] {},
             new AzureDevOpsApiClient(wireMockServer.url("/")),
-            oAuthAPI);
+            oAuthAPI) {
+          @Override
+          boolean canContact(String scmServerUrl) {
+            return true;
+          }
+        };
     stubFor(
         get(urlEqualTo("/organization/_api/_common/GetUserProfile"))
             .withHeader(
@@ -245,5 +251,31 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
     Optional<Pair<Boolean, String>> valid = personalAccessTokenFetcher.isValid(params);
     assertTrue(valid.isPresent());
     assertTrue(valid.get().first);
+  }
+
+  /**
+   * The provider URL of a token comes from a secret in the user's namespace, so it must not become
+   * a way of having the server reach whatever the namespace owner names.
+   */
+  @Test
+  public void shouldNotContactPrivateAddresses() throws Exception {
+    personalAccessTokenFetcher =
+        new AzureDevOpsPersonalAccessTokenFetcher(
+            "localhost",
+            "https://dev.azure-server.com",
+            new String[] {},
+            new AzureDevOpsApiClient(wireMockServer.url("/")),
+            oAuthAPI);
+
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
+            "https://10.0.0.1",
+            "azure-devops",
+            "token-name",
+            "tid-23434",
+            azureDevOpsToken,
+            "organization");
+
+    assertTrue(personalAccessTokenFetcher.isValid(params).isEmpty());
   }
 }

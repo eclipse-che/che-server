@@ -15,6 +15,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
@@ -36,8 +37,11 @@ import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.StringUtils;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Parser of String Bitbucket Server URLs and provide {@link BitbucketServerUrl} objects.
@@ -46,6 +50,8 @@ import org.eclipse.che.security.oauth1.BitbucketServerOAuthAuthenticator;
  */
 @Singleton
 public class BitbucketServerURLParser {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BitbucketServerURLParser.class);
 
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final OAuthAPI oAuthAPI;
@@ -157,14 +163,30 @@ public class BitbucketServerURLParser {
     return patterns;
   }
 
+  /**
+   * Tells whether a URL that is not known to belong to any configured provider may nonetheless be
+   * probed. Such a URL comes straight from the caller, so probing it unconditionally would let
+   * anyone use the server to reach services only it can see and read the outcome off the answer the
+   * factory endpoint returns, which is why only publicly routable hosts are probed. A Bitbucket
+   * Server on a private network is reached through {@code
+   * che.integration.bitbucket.server_endpoints} or a personal access token, both of which are
+   * checked before it comes to this.
+   */
+  @VisibleForTesting
+  boolean canProbe(String serverUrl) {
+    return UrlTargetValidator.isAllowed(serverUrl);
+  }
+
   private boolean isApiRequestRelevant(String repositoryUrl) {
+    String serverUrl = getServerUrl(repositoryUrl);
+    if (!canProbe(serverUrl)) {
+      LOG.warn("Not probing {}: it does not point to a publicly routable host.", serverUrl);
+      return false;
+    }
     try {
       HttpBitbucketServerApiClient bitbucketServerApiClient =
           new HttpBitbucketServerApiClient(
-              getServerUrl(repositoryUrl),
-              new BitbucketServerOAuthAuthenticator("", "", "", ""),
-              oAuthAPI,
-              "");
+              serverUrl, new BitbucketServerOAuthAuthenticator("", "", "", ""), oAuthAPI, "");
       // If the user request catches the unauthorised error, it means that the provided url
       // belongs to Bitbucket.
       bitbucketServerApiClient.getUser();

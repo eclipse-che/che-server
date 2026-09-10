@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.azure.devops;
 import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.getAuthenticateUrlPath;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -35,6 +36,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
@@ -171,10 +173,29 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
     }
   }
 
+  /**
+   * Tells whether the server may contact an Azure DevOps Server that is not the SaaS endpoint. Such
+   * a URL comes from a secret in the user's namespace, so contacting it unconditionally would let
+   * anyone holding a namespace have the server reach services only it can see (SSRF). A server on a
+   * private network is reached through the configured provider endpoint, which is matched before it
+   * comes to this.
+   */
+  @VisibleForTesting
+  boolean canContact(String scmServerUrl) {
+    return UrlTargetValidator.isAllowed(scmServerUrl);
+  }
+
   @Override
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params) {
     if (!isValidAzureDevOpsSAASUrl(params.getScmProviderUrl())) {
       if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
+        if (!canContact(params.getScmProviderUrl())) {
+          LOG.warn(
+              "Not contacting {}: it is not the configured Azure DevOps endpoint and does not point"
+                  + " to a publicly routable host.",
+              params.getScmProviderUrl());
+          return Optional.empty();
+        }
         AzureDevOpsServerApiClient azureDevOpsServerApiClient =
             new AzureDevOpsServerApiClient(params.getScmProviderUrl(), params.getOrganization());
         try {

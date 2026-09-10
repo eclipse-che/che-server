@@ -269,4 +269,17 @@ public class GithubPersonalAccessTokenFetcherTest {
 
     assertFalse(githubPATFetcher.isValid(params).isPresent());
   }
+
+  /**
+   * The provider URL of a token comes from a secret in the user's namespace, so it must not become
+   * a way of having the server reach whatever the namespace owner names.
+   */
+  @Test
+  public void shouldNotContactPrivateAddresses() throws Exception {
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
+            "https://10.0.0.1", "provider", "github", "tid-23434", githubOauthToken, null);
+
+    assertFalse(githubPATFetcher.isValid(params).isPresent());
+  }
 }

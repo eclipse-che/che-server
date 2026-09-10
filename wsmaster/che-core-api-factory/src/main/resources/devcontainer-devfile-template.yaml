@@ -533,6 +533,3 @@ commands:
         [ -x "$PODMAN" ] || PODMAN=podman
         "$PODMAN" system prune -af
         "$PODMAN" system df
-events:
-  postStart:
-    - start-devcontainer

@@ -110,16 +110,30 @@ public final class UrlTargetValidator {
     if (bytes.length == 4) {
       int first = bytes[0] & 0xFF;
       int second = bytes[1] & 0xFF;
+      int third = bytes[2] & 0xFF;
+      // 0.0.0.0/8 "this network" (RFC 791), of which isAnyLocalAddress only covers 0.0.0.0 itself
+      if (first == 0) {
+        return false;
+      }
       // 100.64.0.0/10 shared address space (RFC 6598), used by several CNI plugins
       if (first == 100 && second >= 64 && second <= 127) {
         return false;
       }
       // 192.0.0.0/24 IETF protocol assignments (RFC 6890)
-      if (first == 192 && second == 0 && (bytes[2] & 0xFF) == 0) {
+      // and 192.0.2.0/24 TEST-NET-1 (RFC 5737)
+      if (first == 192 && second == 0 && (third == 0 || third == 2)) {
         return false;
       }
       // 198.18.0.0/15 benchmarking (RFC 2544)
       if (first == 198 && (second == 18 || second == 19)) {
+        return false;
+      }
+      // 198.51.100.0/24 TEST-NET-2 (RFC 5737)
+      if (first == 198 && second == 51 && third == 100) {
+        return false;
+      }
+      // 203.0.113.0/24 TEST-NET-3 (RFC 5737)
+      if (first == 203 && second == 0 && third == 113) {
         return false;
       }
       // 240.0.0.0/4 reserved, including the 255.255.255.255 broadcast address

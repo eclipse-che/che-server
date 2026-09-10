@@ -51,6 +51,14 @@ public class UrlTargetValidatorTest {
       {"http://198.18.0.1/"},
       {"http://240.0.0.1/"},
       {"http://255.255.255.255/"},
+      // the whole 0.0.0.0/8 block, not just the 0.0.0.0 that isAnyLocalAddress matches
+      {"http://0.0.0.0/"},
+      {"http://0.1.2.3/"},
+      {"http://0.255.255.255/"},
+      // the documentation ranges of RFC 5737, which are not routable on the public internet
+      {"http://192.0.2.1/"},
+      {"http://198.51.100.1/"},
+      {"http://203.0.113.1/"},
       // no host to check
       {"http:///path"},
     };
@@ -67,6 +75,11 @@ public class UrlTargetValidatorTest {
       {"https://93.184.216.34/devfile.yaml"},
       {"http://8.8.8.8/"},
       {"https://[2001:4860:4860::8888]/"},
+      // neighbours of the reserved /24 blocks, which stay routable
+      {"http://192.0.1.1/"},
+      {"http://192.0.3.1/"},
+      {"http://198.51.101.1/"},
+      {"http://203.0.114.1/"},
     };
   }
 

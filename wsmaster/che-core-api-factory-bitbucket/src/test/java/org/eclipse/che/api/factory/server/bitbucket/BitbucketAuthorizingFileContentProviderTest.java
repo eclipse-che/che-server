@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,7 +12,9 @@
 package org.eclipse.che.api.factory.server.bitbucket;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
@@ -22,6 +24,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
@@ -98,5 +101,35 @@ public class BitbucketAuthorizingFileContentProviderTest {
 
     // then
     assertEquals(content, "content");
+  }
+
+  @Test
+  public void shouldNotSendTokenToForeignHost() throws Exception {
+    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
+    String foreignUrl = "https://attacker.example/collect";
+    BitbucketUrl bitbucketUrl =
+        new BitbucketUrl().withUsername("eclipse").withWorkspaceId("eclipse").withRepository("che");
+    FileContentProvider fileContentProvider =
+        new BitbucketAuthorizingFileContentProvider(
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
+
+    fileContentProvider.fetchContent(foreignUrl);
+
+    verify(urlFetcher).fetch(eq(foreignUrl));
+    verifyNoInteractions(bitbucketApiClient);
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeUrl() throws Exception {
+    URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
+    BitbucketUrl bitbucketUrl = new BitbucketUrl().withWorkspaceId("eclipse").withRepository("che");
+    FileContentProvider fileContentProvider =
+        new BitbucketAuthorizingFileContentProvider(
+            bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
+
+    fileContentProvider.fetchContent("file:///etc/passwd");
   }
 }

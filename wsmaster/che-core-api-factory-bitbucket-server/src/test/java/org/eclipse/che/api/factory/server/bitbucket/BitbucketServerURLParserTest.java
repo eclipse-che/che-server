@@ -13,8 +13,10 @@ package org.eclipse.che.api.factory.server.bitbucket;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
@@ -57,6 +59,7 @@ public class BitbucketServerURLParserTest {
 
   @BeforeMethod
   public void setUp() {
+    WireMock.reset();
     bitbucketURLParser =
         new BitbucketServerURLParser(
             "https://bitbucket.2mcl.com,https://bbkt.com,https://my-bitbucket.org/bitbucket",
@@ -128,9 +131,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldValidateUrlByApiRequest() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -148,9 +149,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldValidateUrlByApiRequestButFailOnPatternCheck() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/user/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -168,9 +167,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithBadRequest() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -186,9 +183,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithEmptyData() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -204,9 +199,7 @@ public class BitbucketServerURLParserTest {
   @Test
   public void shouldNotValidateUrlByApiRequestWithEmptyHeader() {
     // given
-    bitbucketURLParser =
-        new BitbucketServerURLParser(
-            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    bitbucketURLParser = probingLoopbackParser();
     String url = wireMockServer.url("/users/user/repos/repo");
     stubFor(
         get(urlEqualTo("/rest/api/1.0/application-properties"))
@@ -217,6 +210,53 @@ public class BitbucketServerURLParserTest {
 
     // then
     assertFalse(result);
+  }
+
+  /**
+   * An unconfigured URL is probed to find out whether it is a Bitbucket Server, which must not
+   * become a way of having the server reach whatever the caller names.
+   */
+  @Test
+  public void shouldNotProbeALoopbackAddress() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+    String url = wireMockServer.url("/users/user/repos/repo");
+    stubFor(
+        get(urlEqualTo("/rest/api/1.0/application-properties"))
+            .willReturn(
+                aResponse()
+                    .withBodyFile("bitbucket/rest/api.1.0.application-properties/response.json")));
+
+    // when
+    boolean result = bitbucketURLParser.isValid(url);
+
+    // then
+    assertFalse(result);
+    verify(0, getRequestedFor(urlEqualTo("/rest/api/1.0/application-properties")));
+  }
+
+  @Test
+  public void shouldNotProbeAPrivateAddress() {
+    // given
+    bitbucketURLParser =
+        new BitbucketServerURLParser(
+            null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
+
+    // when/then
+    assertFalse(bitbucketURLParser.isValid("http://10.0.0.1/users/user/repos/repo"));
+  }
+
+  /** The wiremock server stands in for a Bitbucket Server, but is only reachable over loopback. */
+  private BitbucketServerURLParser probingLoopbackParser() {
+    return new BitbucketServerURLParser(
+        null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class)) {
+      @Override
+      boolean canProbe(String serverUrl) {
+        return true;
+      }
+    };
   }
 
   @Test

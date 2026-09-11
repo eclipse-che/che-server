@@ -44,31 +44,34 @@ commands:
         #   NO_CACHE=1         rebuild without cache (passes --no-cache to devcontainer build)
         #   STRICT_LIFECYCLE=1 exit non-zero if any lifecycle command fails
         #   NO_KEEP_ID=1       skip --userns=keep-id (debugging)
+        #   CHE_DEVCONTAINER_RUNTIME  terminal description (default: /tmp/che-devcontainer/runtime.json)
+        #   PREFLIGHT_IMAGE    runnable probe image (default: quay.io/podman/hello:latest; override for a registry mirror)
         #
         set -uo pipefail
 
-        # Only one instance may touch the container and the podman store at a time. postStart runs this
-        # while the user can also launch the start/rebuild task, and both would race on `podman rm -f`.
+        # Serialize setup and rebuild without interrupting an active build. Opening in append mode
+        # preserves the current owner's PID for the extension while another invocation waits.
         LOCK_FILE="${LOCK_FILE:-/tmp/.devcontainer-setup.lock}"
+        LOCK_HELD=0
         if command -v flock >/dev/null 2>&1; then
-          exec 9>"$LOCK_FILE" || true
+          exec 9>>"$LOCK_FILE" || { echo "cannot open setup lock: $LOCK_FILE" >&2; exit 1; }
           if ! flock -n 9; then
-            HOLDER="$(cat "$LOCK_FILE" 2>/dev/null | tr -dc '0-9')"
-            if [ "${REBUILD:-0}" != "1" ]; then
-              echo "another devcontainer setup is in progress (pid ${HOLDER:-?}); exiting (not a rebuild)."
-              exit 0
-            fi
-            echo "rebuild requested; killing in-progress setup (pid ${HOLDER:-?})..."
-            [ -n "$HOLDER" ] && kill "$HOLDER" 2>/dev/null && sleep 1
-            # After killing, the lock should be free — try once more
-            if ! flock -n 9; then
-              [ -n "$HOLDER" ] && kill -9 "$HOLDER" 2>/dev/null && sleep 1
-              flock -w 30 9 || { echo "could not acquire lock after killing previous run" >&2; exit 1; }
-            fi
+            echo "another devcontainer setup is in progress; waiting..."
+            flock -w 900 9 || { echo "timed out waiting for the in-progress setup" >&2; exit 1; }
           fi
-          echo $$ > "$LOCK_FILE"
+          LOCK_HELD=1
+          printf '%s\n' "$$" > "$LOCK_FILE"
         fi
 
+        # The parent owns the lock and stays alive for the extension's PID-based build detection.
+        # Close the descriptor in the setup child so conmon, fuse-overlayfs, and lifecycle processes
+        # cannot retain it after setup finishes.
+        (
+        exec 9>&-
+        RUNTIME_FILE="${CHE_DEVCONTAINER_RUNTIME:-/tmp/che-devcontainer/runtime.json}"
+        # Invalidate the previous terminal configuration while holding the setup lock. A failed
+        # setup must never leave a description that the extension could mistake for a ready result.
+        rm -f -- "$RUNTIME_FILE" || exit 1
         PROJECTS_ROOT="${PROJECTS_ROOT:-/projects}"
         # Project: explicit arg > DWO's PROJECT_SOURCE > the only directory under PROJECTS_ROOT.
         if [ "$#" -ge 1 ] && [ -n "${1:-}" ]; then
@@ -115,6 +118,33 @@ commands:
         [ -x "$PODMAN" ] || PODMAN="$(command -v podman 2>/dev/null)"
         [ -n "$PODMAN" ] || { echo "podman not found" >&2; exit 1; }
         step "1/8" "engine: $PODMAN"
+
+        # ---------------------------------------------------------------------------
+        # 1b. Preflight: can this workspace run nested containers at all?
+        # ---------------------------------------------------------------------------
+        # Exercise the same engine and host networking used by start_container. Podman info's
+        # capability and UID-map fields do not prove that a container can actually start.
+        # This checks basic execution only, not project builds, bind mounts, or keep-id mappings.
+        PREFLIGHT_IMAGE="${PREFLIGHT_IMAGE:-quay.io/podman/hello:latest}"
+        PREFLIGHT_CONTAINER="che-devcontainer-preflight-$$"
+        step "1b" "checking nested container execution (timeout: 120s)..."
+        PREFLIGHT_RC=0
+        timeout --kill-after=5s 120s "$PODMAN" run --rm --network=host \
+          --name "$PREFLIGHT_CONTAINER" "$PREFLIGHT_IMAGE" 9>&- || PREFLIGHT_RC=$?
+        if [ "$PREFLIGHT_RC" -ne 0 ]; then
+          # A timeout or runtime failure may leave a partially created container. Only remove
+          # this probe's container, and bound cleanup as well. Preserve the original failure.
+          timeout --kill-after=5s 10s "$PODMAN" rm -f "$PREFLIGHT_CONTAINER" \
+            >/dev/null 2>&1 9>&- || true
+          if [ "$PREFLIGHT_RC" -eq 124 ] || [ "$PREFLIGHT_RC" -eq 137 ]; then
+            echo "Nested-container preflight timed out; devcontainer setup stopped." >&2
+          else
+            echo "Nested-container preflight failed (exit ${PREFLIGHT_RC}); devcontainer setup stopped." >&2
+          fi
+          echo "See the Podman error above for the cause (for example, image pull or container runtime failure)." >&2
+          exit "$PREFLIGHT_RC"
+        fi
+        step "1b" "nested container execution succeeded"
 
         # ---------------------------------------------------------------------------
         # 2. Subuid ranges
@@ -322,7 +352,7 @@ commands:
         # The dev container does NOT receive cluster credentials. It runs arbitrary repository
         # code and with --network=host already reaches che-code (:3100) and machine-exec (:3333).
         # VS Code dev containers do not expose Kubernetes service-account tokens; cluster tooling
-        # lives in UDI — use the "outer (UDI)" terminal profile for kubectl/oc.
+        # lives in UDI — use a regular editor terminal for kubectl/oc.
         start_container() {   # $1 = extra args array name
           local -n extra="$1"
           "$PODMAN" run -d --name "$CONTAINER_NAME" --network=host \
@@ -418,30 +448,10 @@ commands:
           return 0
         }
 
-        profile=(exec -it)
-        [ -n "$REMOTE_USER" ] && profile+=(-u "$REMOTE_USER")
-        profile+=("${REMOTE_ENV[@]}" -w "$WORKSPACE_FOLDER" "$CONTAINER_NAME" "$INNER_SHELL")
-        profile_json="$(printf '%s\n' "${profile[@]}" | jq -R . | jq -s -c .)"
-        terminal="$(jq -n --argjson a "$profile_json" --arg p "$PODMAN" '{
-          "terminal.integrated.profiles.linux": {
-            "devcontainer": { "path": $p, "args": $a, "icon": "container" },
-            "outer (UDI)":  { "path": "/bin/bash" } },
-          "terminal.integrated.defaultProfile.linux": "devcontainer" }')"
-
-        # terminal.integrated.profiles.* and defaultProfile.* are declared `restricted: true` in
-        # VS Code. Restricted settings coming from WORKSPACE settings are silently discarded in an
-        # untrusted workspace, so they must go to MACHINE settings — which is also the file che-code's
-        # launcher merges the vscode-editor-configurations ConfigMap into, and it keeps the repo clean.
+        # Terminal configuration is owned by the extension; only editor settings belong here.
         MACHINE_SETTINGS="${CHE_MACHINE_SETTINGS:-/checode/remote/data/Machine/settings.json}"
         MACHINE_OK=0
         mkdir -p "$(dirname "$MACHINE_SETTINGS")" 2>/dev/null && MACHINE_OK=1
-
-        if [ "$MACHINE_OK" = 1 ]; then
-          merge_into "$MACHINE_SETTINGS" "$terminal"
-          echo "  terminal profile -> ${MACHINE_SETTINGS} (reload the window if it does not appear)"
-        else
-          echo "  WARNING: ${MACHINE_SETTINGS} unwritable; terminal profile will not apply." >&2
-        fi
 
         # Editor settings go to MACHINE settings too, not the repo: the user should not find unexplained
         # modifications in a tree they did not touch. /checode is recreated on each workspace start, so
@@ -475,6 +485,41 @@ commands:
           fi
         fi
 
+        if [ "$LIFECYCLE_FAILURES" -gt 0 ]; then
+          echo; echo "  WARNING: ${LIFECYCLE_FAILURES} lifecycle command(s) failed."
+          [ "$STRICT_LIFECYCLE" = "1" ] && exit 1
+        fi
+
+        # Publish only a successful, running container. The ID binds these resolved values to
+        # this instance, so a replacement container cannot reuse an obsolete terminal description.
+        publish_runtime() (
+          umask 077
+          local runtime_dir runtime_tmp container_id remote_env_json
+          runtime_dir="$(dirname "$RUNTIME_FILE")"
+          mkdir -p "$runtime_dir" || return 1
+          container_id="$("$PODMAN" inspect --format json "$CONTAINER_NAME" | jq -er \
+            '.[0] | select(.State.Running == true) | .Id | select(type == "string" and length > 0)')" || return 1
+          # Use exactly the already-resolved environment arguments passed to lifecycle commands.
+          remote_env_json='{}'
+          local i entry key value
+          for ((i=1; i<${#REMOTE_ENV[@]}; i+=2)); do
+            entry="${REMOTE_ENV[i]}"; key="${entry%%=*}"; value="${entry#*=}"
+            remote_env_json="$(jq -cn --argjson env "$remote_env_json" --arg k "$key" --arg v "$value" '$env + {($k): $v}')" || return 1
+          done
+          runtime_tmp="$(mktemp "$runtime_dir/.runtime.XXXXXX")" || return 1
+          trap 'rm -f -- "$runtime_tmp"' EXIT
+          jq -n --arg containerName "$CONTAINER_NAME" --arg containerId "$container_id" \
+            --arg podmanPath "$PODMAN" --arg image "$IMAGE_NAME" --arg remoteUser "$REMOTE_USER" \
+            --arg workspaceFolder "$WORKSPACE_FOLDER" --arg shell "$INNER_SHELL" \
+            --arg fingerprint "$CONFIG_FINGERPRINT" --argjson remoteEnv "$remote_env_json" \
+            '{version: 1, containerName: $containerName, containerId: $containerId,
+              podmanPath: $podmanPath, image: $image, remoteUser: $remoteUser,
+              workspaceFolder: $workspaceFolder, shell: $shell, remoteEnv: $remoteEnv,
+              fingerprint: $fingerprint}' > "$runtime_tmp" || return 1
+          mv -f -- "$runtime_tmp" "$RUNTIME_FILE"
+        )
+        publish_runtime || { echo "could not publish devcontainer terminal configuration" >&2; exit 1; }
+
         _close_phase
         echo
         echo "=== ready ==="
@@ -483,22 +528,26 @@ commands:
           d="${e%%|*}"; l="${e#*|}"; [ "$d" -ge 2 ] && printf ' | %s %ss' "${l%% *}" "$d"
         done
         echo
-        echo "  Terminals open inside the container (profile 'devcontainer')."
+        echo "  Use the extension action: Open Terminal in Dev Container."
         echo "  Files:  ${PROJECT_DIR} <-> ${WORKSPACE_FOLDER}"
         [ "$KEEP_ID_OK" = "1" ] && echo "  UID parity ON — files created inside are owned by you." \
                                 || echo "  UID parity OFF — files created inside are subuid-owned."
         echo "  Shell:  ${PODMAN} exec -it ${CONTAINER_NAME} ${INNER_SHELL}"
-        if [ "$LIFECYCLE_FAILURES" -gt 0 ]; then
-          echo; echo "  WARNING: ${LIFECYCLE_FAILURES} lifecycle command(s) failed."
-          [ "$STRICT_LIFECYCLE" = "1" ] && exit 1
-        fi
         exit 0
+        )
+        SETUP_RC=$?
+        # Clear the published PID while we still own the lock, before another run can acquire it.
+        if [ "$LOCK_HELD" = 1 ]; then
+          : > "$LOCK_FILE"
+        fi
+        exit "$SETUP_RC"
         DEVCONTAINER_SCRIPT_EOF
         chmod +x /tmp/start-devcontainer.sh
         # Run in the FOREGROUND so che-code keeps the task terminal alive and streams progress.
         # A backgrounded (setsid/nohup &) process is reaped when the task's foreground shell exits,
         # so it never survived. tee keeps /tmp/devcontainer.log for anyone who wants to tail it.
-        bash /tmp/start-devcontainer.sh 2>&1 | tee /tmp/devcontainer.log
+        # Preserve setup failures through tee so the extension receives the task's exit code.
+        bash -o pipefail -c 'bash /tmp/start-devcontainer.sh 2>&1 | tee /tmp/devcontainer.log'
   - id: rebuild-devcontainer
     exec:
       component: universal-developer-image

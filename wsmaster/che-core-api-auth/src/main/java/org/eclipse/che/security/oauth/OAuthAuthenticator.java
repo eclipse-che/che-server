@@ -328,10 +328,7 @@ public abstract class OAuthAuthenticator {
         return null;
       }
     }
-    return newDto(OAuthToken.class)
-        .withToken(credential.getAccessToken())
-        .withRefreshToken(credential.getRefreshToken())
-        .withExpiresIn(credential.getExpiresInSeconds());
+    return newOAuthToken(credential);
   }
 
   /**
@@ -369,10 +366,21 @@ public abstract class OAuthAuthenticator {
       }
       return null;
     }
-    return newDto(OAuthToken.class)
-        .withToken(credential.getAccessToken())
-        .withRefreshToken(credential.getRefreshToken())
-        .withExpiresIn(credential.getExpiresInSeconds());
+    return newOAuthToken(credential);
+  }
+
+  /**
+   * Create an {@link OAuthToken} DTO from the given credential. Expiration time is set only when
+   * the credential provides it, since {@link OAuthToken#withExpiresIn(long)} accepts a primitive
+   * and {@link Credential#getExpiresInSeconds()} may return {@code null}.
+   */
+  private OAuthToken newOAuthToken(Credential credential) {
+    OAuthToken oAuthToken =
+        newDto(OAuthToken.class)
+            .withToken(credential.getAccessToken())
+            .withRefreshToken(credential.getRefreshToken());
+    Long expiresIn = credential.getExpiresInSeconds();
+    return expiresIn == null ? oAuthToken : oAuthToken.withExpiresIn(expiresIn);
   }
 
   /**

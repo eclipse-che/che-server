@@ -111,6 +111,8 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
           oauth.callback(requestUrl, scopes == null ? emptyList() : scopes);
       // Store the full token response (including refresh token and expiry) so that
       // tokens can be refreshed later without requiring re-authorization.
+      // Providers that issue non-expiring tokens omit `expires_in`, so fall back to 0.
+      Long expiresInSeconds = tokenResponse.getExpiresInSeconds();
       personalAccessTokenManager.store(
           new PersonalAccessToken(
               oauth.getEndpointUrl(),
@@ -122,7 +124,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
               NameGenerator.generate("id-", 5),
               tokenResponse.getAccessToken(),
               tokenResponse.getRefreshToken(),
-              tokenResponse.getExpiresInSeconds()));
+              expiresInSeconds == null ? 0 : expiresInSeconds));
     } catch (OAuthAuthenticationException e) {
       return Response.temporaryRedirect(
               URI.create(

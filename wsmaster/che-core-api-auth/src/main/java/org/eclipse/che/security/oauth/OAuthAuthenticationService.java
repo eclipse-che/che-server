@@ -31,7 +31,6 @@ import org.eclipse.che.api.core.*;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Required;
 import org.eclipse.che.api.factory.server.scm.AuthorisationRequestManager;
-import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
@@ -49,7 +48,6 @@ public class OAuthAuthenticationService extends Service {
   @Inject private OAuthAPI oAuthAPI;
   @Inject private AuthorisationRequestManager authorisationRequestManager;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
-  @Inject private GitCredentialManager gitCredentialManager;
 
   /**
    * Redirect request to OAuth provider site for authentication|authorization. Client must provide

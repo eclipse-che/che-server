@@ -135,18 +135,16 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       String tokenEncoded =
           Base64.getEncoder()
               .encodeToString(personalAccessToken.getToken().getBytes(StandardCharsets.UTF_8));
-      String refreshTokenEncoded =
-          Base64.getEncoder()
-              .encodeToString(
-                  personalAccessToken.getRefreshToken().getBytes(StandardCharsets.UTF_8));
-      Secret secret =
-          new SecretBuilder()
-              .withMetadata(meta)
-              .withData(
-                  Map.of(
-                      TOKEN_DATA_FIELD, tokenEncoded,
-                      REFRESH_TOKEN_DATA_FIELD, refreshTokenEncoded))
-              .build();
+      ImmutableMap.Builder<String, String> data =
+          new ImmutableMap.Builder<String, String>().put(TOKEN_DATA_FIELD, tokenEncoded);
+      // Refresh token is absent for PATs and for OAuth providers that don't issue one
+      String refreshToken = personalAccessToken.getRefreshToken();
+      if (!isNullOrEmpty(refreshToken)) {
+        data.put(
+            REFRESH_TOKEN_DATA_FIELD,
+            Base64.getEncoder().encodeToString(refreshToken.getBytes(StandardCharsets.UTF_8)));
+      }
+      Secret secret = new SecretBuilder().withMetadata(meta).withData(data.build()).build();
 
       cheServerKubernetesClientFactory
           .create()

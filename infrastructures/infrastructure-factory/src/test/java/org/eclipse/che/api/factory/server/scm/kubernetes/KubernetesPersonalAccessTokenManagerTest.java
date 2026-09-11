@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
@@ -742,6 +743,75 @@ public class KubernetesPersonalAccessTokenManagerTest {
         "refresh-token-value");
     assertEquals(
         createdSecret.getMetadata().getAnnotations().get(ANNOTATION_SCM_TOKEN_EXPIRES_IN), "3600");
+  }
+
+  @Test
+  public void shouldStoreSecretWithoutRefreshTokenFieldWhenRefreshTokenIsNull() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    ArgumentCaptor<Secret> captor = ArgumentCaptor.forClass(Secret.class);
+
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://github.com",
+            "github",
+            "cheUser",
+            null,
+            "username",
+            "token-name",
+            "tid-24",
+            "access-token",
+            null,
+            0);
+
+    // when
+    personalAccessTokenManager.store(token);
+
+    // then
+    verify(nonNamespaceOperation).createOrReplace(captor.capture());
+    Secret createdSecret = captor.getValue();
+    assertEquals(
+        new String(Base64.getDecoder().decode(createdSecret.getData().get("token")), UTF_8),
+        "access-token");
+    assertFalse(createdSecret.getData().containsKey("refresh-token"));
+    assertEquals(
+        createdSecret.getMetadata().getAnnotations().get(ANNOTATION_SCM_TOKEN_EXPIRES_IN), "0");
+  }
+
+  @Test
+  public void shouldStoreSecretWithoutRefreshTokenFieldWhenRefreshTokenIsEmpty() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    ArgumentCaptor<Secret> captor = ArgumentCaptor.forClass(Secret.class);
+
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://github.com",
+            "github",
+            "cheUser",
+            null,
+            "username",
+            "token-name",
+            "tid-24",
+            "access-token",
+            "",
+            0);
+
+    // when
+    personalAccessTokenManager.store(token);
+
+    // then
+    verify(nonNamespaceOperation).createOrReplace(captor.capture());
+    Secret createdSecret = captor.getValue();
+    assertEquals(createdSecret.getData().keySet(), Set.of("token"));
   }
 
   @Test

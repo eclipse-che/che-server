@@ -302,6 +302,37 @@ public class EmbeddedOAuthAPITest {
   }
 
   @Test
+  public void shouldStoreZeroExpiryOnCallbackWhenTokenResponseHasNoExpiresIn() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    TokenResponse tokenResponse = mock(TokenResponse.class);
+    when(authenticator.getEndpointUrl()).thenReturn("http://eclipse.che");
+    when(tokenResponse.getAccessToken()).thenReturn("access-token");
+    when(tokenResponse.getRefreshToken()).thenReturn("refresh-token");
+    // providers that issue non-expiring tokens omit `expires_in`
+    when(tokenResponse.getExpiresInSeconds()).thenReturn(null);
+    when(authenticator.callback(any(URL.class), anyList())).thenReturn(tokenResponse);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"));
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    ArgumentCaptor<PersonalAccessToken> tokenCapture =
+        ArgumentCaptor.forClass(PersonalAccessToken.class);
+
+    // when
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
+
+    // then
+    verify(personalAccessTokenManager).store(tokenCapture.capture());
+    PersonalAccessToken token = tokenCapture.getValue();
+    assertEquals(token.getToken(), "access-token");
+    assertEquals(token.getRefreshToken(), "refresh-token");
+    assertEquals(token.getExpiresIn(), 0L);
+  }
+
+  @Test
   public void shouldRestoreCredentialFromPersistedTokenOnRefresh() throws Exception {
     // given
     String provider = "github";

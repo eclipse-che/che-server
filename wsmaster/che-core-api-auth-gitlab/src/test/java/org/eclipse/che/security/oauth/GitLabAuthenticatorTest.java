@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static java.lang.Long.MAX_VALUE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -58,7 +59,12 @@ public class GitLabAuthenticatorTest {
         flowField.get(gitLabOAuthAuthenticator),
         new MemoryDataStoreFactory()
             .getDataStore("test")
-            .set("userId", new StoredCredential().setAccessToken("token")));
+            .set(
+                "userId",
+                new StoredCredential()
+                    .setAccessToken("token")
+                    .setRefreshToken("refreshToken")
+                    .setExpirationTimeMilliseconds(MAX_VALUE)));
     stubFor(
         get(urlEqualTo("/api/v4/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))
@@ -83,7 +89,12 @@ public class GitLabAuthenticatorTest {
         flowField.get(gitLabOAuthAuthenticator),
         new MemoryDataStoreFactory()
             .getDataStore("test")
-            .set("userId", new StoredCredential().setAccessToken("token")));
+            .set(
+                "userId",
+                new StoredCredential()
+                    .setAccessToken("token")
+                    .setRefreshToken("refreshToken")
+                    .setExpirationTimeMilliseconds(MAX_VALUE)));
     stubFor(
         get(urlEqualTo("/api/v4/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer token"))

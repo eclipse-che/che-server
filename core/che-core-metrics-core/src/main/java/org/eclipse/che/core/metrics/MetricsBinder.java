@@ -12,7 +12,7 @@
 package org.eclipse.che.core.metrics;
 
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,7 +20,7 @@ import javax.inject.Singleton;
 /**
  * Takes all {@link io.micrometer.core.instrument.binder.MeterBinder} from guice container, binded
  * with {@link com.google.inject.multibindings.Multibinder}, and bind them to {@link
- * io.micrometer.prometheus.PrometheusMeterRegistry} on PostConstruct.
+ * io.micrometer.prometheusmetrics.PrometheusMeterRegistry} on PostConstruct.
  */
 @Singleton
 public class MetricsBinder {

@@ -253,6 +253,14 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
               String.format(
                   "URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
         }
+        Optional<String> expectedOrigin = parseOrigin(remoteFactoryUrl.rawFileLocation(RAW_CONTENT_PROBE_FILE));
+        Optional<String> fileOrigin = parseOrigin(fileURL);
+        if (expectedOrigin.isEmpty() || fileOrigin.isEmpty() || !expectedOrigin.get().equals(fileOrigin.get())) {
+          throw new DevfileException(
+              String.format(
+                  "URL '%s' is not allowed: absolute URLs must match repository origin %s",
+                  fileURL, expectedOrigin.orElse("<unknown>")));
+        }
         requestURL = fileURL;
       } else {
         // since files retrieved via REST, we cannot use path like '.' or one that starts with './'

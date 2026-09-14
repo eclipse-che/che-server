@@ -16,6 +16,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -135,7 +137,7 @@ public class GithubAuthorizingFileContentProviderTest {
   }
 
   @Test
-  public void shouldNotSendTokenToForeignHost() throws Exception {
+  public void shouldRejectForeignHost() throws Exception {
     String foreignUrl = "https://attacker.example/collect";
 
     GithubUrl githubUrl =
@@ -149,9 +151,11 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
-    fileContentProvider.fetchContent(foreignUrl);
+    DevfileException e =
+        expectThrows(DevfileException.class, () -> fileContentProvider.fetchContent(foreignUrl));
 
-    verify(urlFetcher).fetch(eq(foreignUrl));
+    assertTrue(e.getMessage().contains("absolute URLs must point to one of the provider origins"));
+    verify(urlFetcher, never()).fetch(anyString());
     verify(urlFetcher, never()).fetch(anyString(), anyString());
     verify(personalAccessTokenManager, never()).getAndStore(anyString());
   }
@@ -180,7 +184,7 @@ public class GithubAuthorizingFileContentProviderTest {
   }
 
   @Test
-  public void shouldNotSendTokenOverPlainHttpToATrustedHost() throws Exception {
+  public void shouldRejectPlainHttpDowngradeOfATrustedHost() throws Exception {
     String plaintextUrl = "http://raw.githubusercontent.com/eclipse/che/main/devfile.yaml";
 
     GithubUrl githubUrl =
@@ -194,9 +198,11 @@ public class GithubAuthorizingFileContentProviderTest {
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
 
-    fileContentProvider.fetchContent(plaintextUrl);
+    DevfileException e =
+        expectThrows(DevfileException.class, () -> fileContentProvider.fetchContent(plaintextUrl));
 
-    verify(urlFetcher).fetch(eq(plaintextUrl));
+    assertTrue(e.getMessage().contains("absolute URLs must point to one of the provider origins"));
+    verify(urlFetcher, never()).fetch(anyString());
     verify(urlFetcher, never()).fetch(anyString(), anyString());
     verify(personalAccessTokenManager, never()).getAndStore(anyString());
   }

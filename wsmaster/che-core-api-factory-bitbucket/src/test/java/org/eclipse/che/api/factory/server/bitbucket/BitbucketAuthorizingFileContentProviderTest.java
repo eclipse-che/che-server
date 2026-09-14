@@ -17,6 +17,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 
 import java.io.FileNotFoundException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
@@ -104,7 +106,7 @@ public class BitbucketAuthorizingFileContentProviderTest {
   }
 
   @Test
-  public void shouldNotSendTokenToForeignHost() throws Exception {
+  public void shouldRejectForeignHost() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     String foreignUrl = "https://attacker.example/collect";
     BitbucketUrl bitbucketUrl =
@@ -113,9 +115,11 @@ public class BitbucketAuthorizingFileContentProviderTest {
         new BitbucketAuthorizingFileContentProvider(
             bitbucketUrl, urlFetcher, personalAccessTokenManager, bitbucketApiClient);
 
-    fileContentProvider.fetchContent(foreignUrl);
+    DevfileException e =
+        expectThrows(DevfileException.class, () -> fileContentProvider.fetchContent(foreignUrl));
 
-    verify(urlFetcher).fetch(eq(foreignUrl));
+    assertTrue(e.getMessage().contains("absolute URLs must point to one of the provider origins"));
+    verifyNoInteractions(urlFetcher);
     verifyNoInteractions(bitbucketApiClient);
     verify(personalAccessTokenManager, never()).getAndStore(anyString());
   }

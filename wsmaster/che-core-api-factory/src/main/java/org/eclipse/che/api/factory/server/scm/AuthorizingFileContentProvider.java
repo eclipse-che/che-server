@@ -242,6 +242,12 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
     }
   }
 
+  /**
+   * Resolves the URL a devfile refers to into the URL to fetch. A relative path is resolved against
+   * the repository, while an absolute URL is only accepted when it points to one of the {@link
+   * #getTrustedOrigins() provider origins}: the devfile is user input, so an arbitrary absolute URL
+   * would turn this server into a proxy for hosts the user cannot reach themselves.
+   */
   protected String formatUrl(String fileURL) throws DevfileException {
     String requestURL;
     try {
@@ -252,6 +258,15 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
           throw new DevfileException(
               String.format(
                   "URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
+        }
+        Set<String> trustedOrigins = getTrustedOrigins();
+        Optional<String> fileOrigin = originOfUrl(fileURL);
+        if (fileOrigin.isEmpty() || !trustedOrigins.contains(fileOrigin.get())) {
+          throw new DevfileException(
+              String.format(
+                  "URL '%s' is not allowed: absolute URLs must point to one of the provider"
+                      + " origins %s",
+                  fileURL, trustedOrigins));
         }
         requestURL = fileURL;
       } else {

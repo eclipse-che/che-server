@@ -17,6 +17,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
@@ -59,18 +61,20 @@ public class AuthorizingFactoryParameterResolverTest {
   }
 
   @Test
-  public void shouldNotSendCredentialsToAForeignHost() throws Exception {
+  public void shouldRejectAnAbsoluteUrlPointingToAForeignHost() throws Exception {
     // given
-    String foreignUrl = "https://attacker.example/collect";
     when(remoteFactoryUrl.getProviderUrl()).thenReturn("https://provider.url");
-    when(urlFetcher.fetch(anyString())).thenReturn("content");
 
-    // when
-    provider.fetchContent(foreignUrl);
+    // whene
+    DevfileException e =
+        expectThrows(
+            DevfileException.class,
+            () -> provider.fetchContent("https://attacker.example/collect"));
 
     // then
+    assertTrue(e.getMessage().contains("absolute URLs must point to one of the provider origins"));
     verify(personalAccessTokenManager, never()).getAndStore(anyString());
-    verify(urlFetcher).fetch(foreignUrl);
+    verify(urlFetcher, never()).fetch(anyString());
     verify(urlFetcher, never()).fetch(anyString(), anyString());
   }
 

@@ -253,7 +253,7 @@ public class BitbucketServerURLParserTest {
     return new BitbucketServerURLParser(
         null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class)) {
       @Override
-      boolean canProbe(String serverUrl) {
+      boolean canContact(String serverUrl) {
         return true;
       }
     };

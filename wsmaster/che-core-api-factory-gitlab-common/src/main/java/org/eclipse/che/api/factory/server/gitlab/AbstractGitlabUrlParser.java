@@ -163,14 +163,14 @@ public class AbstractGitlabUrlParser {
 
   /**
    * Tells whether a URL that is not known to belong to any configured provider may nonetheless be
-   * probed. Such a URL comes straight from the caller, so probing it unconditionally would let
-   * anyone use the server to reach services only it can see and read the outcome off the answer the
-   * factory endpoint returns, which is why only publicly routable hosts are probed. An SCM server
-   * on a private network is reached through the configured provider endpoints or a personal access
-   * token, both of which are checked before it comes to this.
+   * contacted. Such a URL comes straight from the caller, so contacting it unconditionally would
+   * let anyone use the server to reach services only it can see and read the outcome off the answer
+   * the factory endpoint returns, which is why only publicly routable hosts are contacted. An SCM
+   * server on a private network is reached through the configured provider endpoints or a personal
+   * access token, both of which are checked before it comes to this.
    */
   @VisibleForTesting
-  boolean canProbe(String serverUrl) {
+  boolean canContact(String serverUrl) {
     return UrlTargetValidator.isAllowed(serverUrl);
   }
 
@@ -178,8 +178,8 @@ public class AbstractGitlabUrlParser {
     Optional<String> serverUrlOptional = getServerUrl(repositoryUrl);
     if (serverUrlOptional.isPresent()) {
       String serverUrl = serverUrlOptional.get();
-      if (!canProbe(serverUrl)) {
-        LOG.warn("Not probing {}: it does not point to a publicly routable host.", serverUrl);
+      if (!canContact(serverUrl)) {
+        LOG.warn("Not contacting {}: it does not point to a publicly routable host.", serverUrl);
         return false;
       }
       GitlabApiClient gitlabApiClient = new GitlabApiClient(serverUrl);

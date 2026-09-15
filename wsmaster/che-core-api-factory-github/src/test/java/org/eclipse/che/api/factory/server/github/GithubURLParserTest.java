@@ -619,7 +619,7 @@ public class GithubURLParserTest {
     return new GithubURLParser(
         personalAccessTokenManager, devfileFilenamesProvider, githubApiClient, null, false) {
       @Override
-      boolean canProbe(String serverUrl) {
+      boolean canContact(String serverUrl) {
         return true;
       }
     };

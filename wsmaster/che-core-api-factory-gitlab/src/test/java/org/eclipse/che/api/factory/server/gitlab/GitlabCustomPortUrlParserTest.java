@@ -161,7 +161,7 @@ public class GitlabCustomPortUrlParserTest {
         devfileFilenamesProvider,
         mock(PersonalAccessTokenManager.class)) {
       @Override
-      boolean canProbe(String serverUrl) {
+      boolean canContact(String serverUrl) {
         return true;
       }
     };

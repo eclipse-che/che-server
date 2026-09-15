@@ -110,24 +110,24 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
       String namespace = getFirstNamespace();
+      ImmutableMap.Builder<String, String> annotations =
+          new ImmutableMap.Builder<String, String>()
+              .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
+              .put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl())
+              .put(ANNOTATION_SCM_PROVIDER_NAME, personalAccessToken.getScmProviderName())
+              .put(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID, personalAccessToken.getScmTokenId())
+              .put(
+                  ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME, personalAccessToken.getScmTokenName());
+      // Only OAuth tokens with a known lifetime get the annotation. Storing `0` would be
+      // indistinguishable from a token that expires immediately, so it is omitted instead.
+      if (personalAccessToken.getExpiresIn() > 0) {
+        annotations.put(
+            ANNOTATION_SCM_TOKEN_EXPIRES_IN, String.valueOf(personalAccessToken.getExpiresIn()));
+      }
       ObjectMeta meta =
           new ObjectMetaBuilder()
               .withName(NameGenerator.generate(NAME_PATTERN, 5))
-              .withAnnotations(
-                  new ImmutableMap.Builder<String, String>()
-                      .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
-                      .put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl())
-                      .put(ANNOTATION_SCM_PROVIDER_NAME, personalAccessToken.getScmProviderName())
-                      .put(
-                          ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
-                          personalAccessToken.getScmTokenId())
-                      .put(
-                          ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
-                          personalAccessToken.getScmTokenName())
-                      .put(
-                          ANNOTATION_SCM_TOKEN_EXPIRES_IN,
-                          String.valueOf(personalAccessToken.getExpiresIn()))
-                      .build())
+              .withAnnotations(annotations.build())
               .withLabels(SECRET_LABELS)
               .build();
 

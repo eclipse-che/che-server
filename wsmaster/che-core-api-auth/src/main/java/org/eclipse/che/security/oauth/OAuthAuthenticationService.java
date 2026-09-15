@@ -117,8 +117,7 @@ public class OAuthAuthenticationService extends Service {
    * Refreshes the OAuth token for the given provider and persists the updated token as a Kubernetes
    * secret and git credential, so that subsequent SCM operations use the new access token.
    *
-   * @param providerUrl URL of the OAuth provider instance the token belongs to. Optional, if not
-   *     set, the URL configured for the given provider is used.
+   * @param providerUrl URL of the OAuth provider instance the token belongs to.
    */
   @POST
   @Path("refresh")

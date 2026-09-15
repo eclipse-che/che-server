@@ -778,8 +778,8 @@ public class KubernetesPersonalAccessTokenManagerTest {
         new String(Base64.getDecoder().decode(createdSecret.getData().get("token")), UTF_8),
         "access-token");
     assertFalse(createdSecret.getData().containsKey("refresh-token"));
-    assertEquals(
-        createdSecret.getMetadata().getAnnotations().get(ANNOTATION_SCM_TOKEN_EXPIRES_IN), "0");
+    assertFalse(
+        createdSecret.getMetadata().getAnnotations().containsKey(ANNOTATION_SCM_TOKEN_EXPIRES_IN));
   }
 
   @Test

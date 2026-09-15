@@ -363,13 +363,67 @@ public class EmbeddedOAuthAPITest {
             3600);
     when(personalAccessTokenManager.get(any(Subject.class), eq(provider), eq(null), eq(null)))
         .thenReturn(Optional.of(persistedToken));
+    ArgumentCaptor<TokenResponse> tokenResponseCaptor =
+        ArgumentCaptor.forClass(TokenResponse.class);
 
     // when
     OAuthToken result = embeddedOAuthAPI.refreshToken(provider);
 
     // then
     assertEquals(result.getToken(), "new-access-token");
-    verify(flow).createAndStoreCredential(any(TokenResponse.class), eq("0000-00-0000"));
+    verify(flow).createAndStoreCredential(tokenResponseCaptor.capture(), eq("0000-00-0000"));
+    TokenResponse tokenResponse = tokenResponseCaptor.getValue();
+    assertEquals(tokenResponse.getAccessToken(), "old-access-token");
+    assertEquals(tokenResponse.getRefreshToken(), "refresh-token-123");
+    assertEquals(tokenResponse.getExpiresInSeconds(), Long.valueOf(3600));
+  }
+
+  @Test
+  public void shouldNotSetExpiresInSecondsOnRefreshWhenPersistedTokenHasNoExpiry()
+      throws Exception {
+    // given
+    String provider = "github";
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
+
+    OAuthToken refreshedToken =
+        newDto(OAuthToken.class).withToken("new-access-token").withRefreshToken("new-refresh");
+    when(authenticator.refreshToken("0000-00-0000")).thenReturn(null).thenReturn(refreshedToken);
+    when(authenticator.refreshToken("Anonymous")).thenReturn(null);
+
+    AuthorizationCodeFlow flow = mock(AuthorizationCodeFlow.class);
+    Field flowField = OAuthAuthenticator.class.getDeclaredField("flow");
+    flowField.setAccessible(true);
+    flowField.set(authenticator, flow);
+
+    // tokens persisted without `expires_in` are stored with the `0` default
+    PersonalAccessToken persistedToken =
+        new PersonalAccessToken(
+            "https://github.com",
+            provider,
+            "0000-00-0000",
+            null,
+            null,
+            "oauth2-token",
+            "id-token",
+            "old-access-token",
+            "refresh-token-123",
+            0);
+    when(personalAccessTokenManager.get(any(Subject.class), eq(provider), eq(null), eq(null)))
+        .thenReturn(Optional.of(persistedToken));
+    ArgumentCaptor<TokenResponse> tokenResponseCaptor =
+        ArgumentCaptor.forClass(TokenResponse.class);
+
+    // when
+    OAuthToken result = embeddedOAuthAPI.refreshToken(provider);
+
+    // then
+    assertEquals(result.getToken(), "new-access-token");
+    verify(flow).createAndStoreCredential(tokenResponseCaptor.capture(), eq("0000-00-0000"));
+    TokenResponse tokenResponse = tokenResponseCaptor.getValue();
+    assertEquals(tokenResponse.getAccessToken(), "old-access-token");
+    assertEquals(tokenResponse.getRefreshToken(), "refresh-token-123");
+    assertNull(tokenResponse.getExpiresInSeconds());
   }
 
   @Test(

@@ -292,8 +292,12 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
           TokenResponse tokenResponse =
               new TokenResponse()
                   .setAccessToken(token.getToken())
-                  .setRefreshToken(token.getRefreshToken())
-                  .setExpiresInSeconds(token.getExpiresIn());
+                  .setRefreshToken(token.getRefreshToken());
+          // leave `expires_in` unset when the persisted token carries no expiry,
+          // so that the credential is not treated as already expired
+          if (token.getExpiresIn() > 0) {
+            tokenResponse.setExpiresInSeconds(token.getExpiresIn());
+          }
           provider.flow.createAndStoreCredential(tokenResponse, userId);
           return provider.refreshToken(userId);
         } else {

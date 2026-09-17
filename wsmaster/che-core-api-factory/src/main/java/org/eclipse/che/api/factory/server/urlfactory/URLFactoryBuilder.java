@@ -19,10 +19,12 @@ import static org.eclipse.che.api.factory.shared.Constants.DEFAULT_DEVFILE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -59,15 +61,22 @@ public class URLFactoryBuilder {
     ".devcontainer/devcontainer.json", ".devcontainer.json"
   };
 
+  private static final String DEVCONTAINER_SCRIPT_B64_PLACEHOLDER = "__START_DEVCONTAINER_B64__";
+
   private static final String DEVCONTAINER_DEVFILE_TEMPLATE;
 
   static {
-    try (InputStream is =
-        URLFactoryBuilder.class.getResourceAsStream("/devcontainer-devfile-template.yaml")) {
-      if (is == null) {
-        throw new IOException("devcontainer-devfile-template.yaml not found on classpath");
+    try {
+      String script = loadClasspathResource("/start-devcontainer.sh");
+      String encodedScript =
+          Base64.getEncoder().encodeToString(script.getBytes(StandardCharsets.UTF_8));
+      String template = loadClasspathResource("/devcontainer-devfile-template.yaml");
+      if (!template.contains(DEVCONTAINER_SCRIPT_B64_PLACEHOLDER)) {
+        throw new IOException(
+            "devcontainer-devfile-template.yaml is missing " + DEVCONTAINER_SCRIPT_B64_PLACEHOLDER);
       }
-      DEVCONTAINER_DEVFILE_TEMPLATE = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+      DEVCONTAINER_DEVFILE_TEMPLATE =
+          template.replace(DEVCONTAINER_SCRIPT_B64_PLACEHOLDER, encodedScript);
     } catch (IOException e) {
       throw new UncheckedIOException("Failed to load devcontainer devfile template", e);
     }
@@ -125,16 +134,9 @@ public class URLFactoryBuilder {
     for (DevfileLocation location : remoteFactoryUrl.devfileFileLocations()) {
       String devfileLocation = location.location();
       try {
-        Optional<String> credentialsOptional = remoteFactoryUrl.getCredentials();
-        if (skipAuthentication) {
-          devfileYamlContent =
-              fileContentProvider.fetchContentWithoutAuthentication(devfileLocation);
-        } else if (credentialsOptional.isPresent()) {
-          devfileYamlContent =
-              fileContentProvider.fetchContent(devfileLocation, credentialsOptional.get());
-        } else {
-          devfileYamlContent = fileContentProvider.fetchContent(devfileLocation);
-        }
+        devfileYamlContent =
+            fetchContent(
+                remoteFactoryUrl, fileContentProvider, devfileLocation, skipAuthentication);
       } catch (IOException ex) {
         // try next location
         LOG.debug(
@@ -164,7 +166,9 @@ public class URLFactoryBuilder {
       }
     }
 
-    // No devfile found — probe for devcontainer.json
+    // No devfile found — probe for devcontainer.json. Providers that cannot fetch raw files
+    // (git-ssh returns a bare filename from rawFileLocation) skip this and fall through to the
+    // default factory.
     for (String devcontainerPath : DEVCONTAINER_LOCATIONS) {
       String devcontainerLocation = remoteFactoryUrl.rawFileLocation(devcontainerPath);
       if (devcontainerLocation == null) {
@@ -172,22 +176,17 @@ public class URLFactoryBuilder {
       }
       String devcontainerContent;
       try {
-        Optional<String> credentialsOptional = remoteFactoryUrl.getCredentials();
-        if (skipAuthentication) {
-          devcontainerContent =
-              fileContentProvider.fetchContentWithoutAuthentication(devcontainerLocation);
-        } else if (credentialsOptional.isPresent()) {
-          devcontainerContent =
-              fileContentProvider.fetchContent(devcontainerLocation, credentialsOptional.get());
-        } else {
-          devcontainerContent = fileContentProvider.fetchContent(devcontainerLocation);
-        }
+        devcontainerContent =
+            fetchContent(
+                remoteFactoryUrl, fileContentProvider, devcontainerLocation, skipAuthentication);
       } catch (IOException ex) {
         LOG.debug("No devcontainer at: {}. Error: {}", devcontainerLocation, ex.getMessage());
         continue;
       } catch (DevfileException e) {
-        LOG.warn("Unexpected exception probing devcontainer: {}", e.getMessage());
-        continue;
+        LOG.debug("Unexpected exception probing devcontainer: {}", e.getMessage());
+        throw e.getCause() instanceof ScmUnauthorizedException
+            ? toApiException(e)
+            : new ApiException(e.getMessage());
       }
 
       if (!looksLikeJson(devcontainerContent)) {
@@ -195,7 +194,7 @@ public class URLFactoryBuilder {
         continue;
       }
 
-      LOG.info("Devcontainer detected at {}; generating devfile", devcontainerLocation);
+      LOG.debug("Devcontainer detected at {}; generating devfile", devcontainerLocation);
       try {
         JsonNode additions = devfileParser.parseYamlRaw(DEVCONTAINER_DEVFILE_TEMPLATE);
         Map<String, Object> devfileMap = new HashMap<>(DEFAULT_DEVFILE);
@@ -214,6 +213,21 @@ public class URLFactoryBuilder {
     return Optional.empty();
   }
 
+  private static String fetchContent(
+      RemoteFactoryUrl remoteFactoryUrl,
+      FileContentProvider fileContentProvider,
+      String location,
+      boolean skipAuthentication)
+      throws IOException, DevfileException {
+    Optional<String> credentialsOptional = remoteFactoryUrl.getCredentials();
+    if (skipAuthentication) {
+      return fileContentProvider.fetchContentWithoutAuthentication(location);
+    } else if (credentialsOptional.isPresent()) {
+      return fileContentProvider.fetchContent(location, credentialsOptional.get());
+    }
+    return fileContentProvider.fetchContent(location);
+  }
+
   /**
    * Converts given devfile json into factory.
    *
@@ -229,32 +243,58 @@ public class URLFactoryBuilder {
 
   /**
    * Cheap probe: returns true when content is non-empty and starts with '{' after skipping
-   * whitespace and JSONC single-line comments. Does not parse the file.
+   * whitespace and JSONC comments. Does not parse the file.
    */
   static boolean looksLikeJson(String content) {
     if (isNullOrEmpty(content)) {
       return false;
     }
-    boolean inBlockComment = false;
-    for (String line : content.split("\n")) {
-      String trimmed = line.trim();
-      if (inBlockComment) {
-        if (trimmed.contains("*/")) {
-          inBlockComment = false;
+    int i = 0;
+    int n = content.length();
+    if (content.charAt(0) == '\uFEFF') {
+      i = 1;
+    }
+    while (i < n) {
+      char c = content.charAt(i);
+      if (Character.isWhitespace(c)) {
+        i++;
+        continue;
+      }
+      if (c == '/' && i + 1 < n) {
+        char next = content.charAt(i + 1);
+        if (next == '/') {
+          int newline = content.indexOf('\n', i);
+          if (newline < 0) {
+            return false;
+          }
+          i = newline + 1;
+          continue;
         }
-        continue;
-      }
-      if (trimmed.isEmpty() || trimmed.startsWith("//")) {
-        continue;
-      }
-      if (trimmed.startsWith("/*")) {
-        if (!trimmed.contains("*/")) {
-          inBlockComment = true;
+        if (next == '*') {
+          int end = content.indexOf("*/", i + 2);
+          if (end < 0) {
+            return false;
+          }
+          i = end + 2;
+          continue;
         }
-        continue;
       }
-      return trimmed.startsWith("{");
+      return c == '{';
     }
     return false;
+  }
+
+  private static String loadClasspathResource(String name) throws IOException {
+    try (InputStream is = URLFactoryBuilder.class.getResourceAsStream(name)) {
+      if (is == null) {
+        throw new IOException(name + " not found on classpath");
+      }
+      return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+    }
+  }
+
+  @VisibleForTesting
+  static String getDevcontainerDevfileTemplate() {
+    return DEVCONTAINER_DEVFILE_TEMPLATE;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -95,10 +95,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com",
             "provider",
             "cheUser",
+            null,
             "username",
             "token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     // when
     kubernetesGitCredentialManager.createOrReplace(token);
@@ -120,12 +123,15 @@ public class KubernetesGitCredentialManagerTest {
     PersonalAccessToken token =
         new PersonalAccessToken(
             "https://bitbucket-server.com:5648",
+            "provider",
             "cheUser",
             "cheOrganization",
             "username",
             "token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
 
@@ -182,10 +188,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com",
             "provider",
             "cheUser",
+            null,
             "username",
             "oauth2-token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     // when
     kubernetesGitCredentialManager.createOrReplace(token);
@@ -218,10 +227,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com",
             "bitbucket",
             "cheUser",
+            null,
             "username",
             "oauth2-token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     // when
     kubernetesGitCredentialManager.createOrReplace(token);
@@ -244,10 +256,13 @@ public class KubernetesGitCredentialManagerTest {
             "https://bitbucket.com:5648",
             "provider",
             "cheUser",
+            null,
             "username",
             "token-name",
             "tid-23434",
-            "token123");
+            "token123",
+            null,
+            0);
 
     Map<String, String> annotations = new HashMap<>(DEFAULT_SECRET_ANNOTATIONS);
 

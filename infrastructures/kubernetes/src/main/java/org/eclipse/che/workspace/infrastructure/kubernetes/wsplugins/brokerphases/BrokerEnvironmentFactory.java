@@ -29,7 +29,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -199,7 +199,11 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
             .withEnv(envVars);
     if (brokerVolumeName != null) {
       cb.withVolumeMounts(
-          new VolumeMount(CONF_FOLDER + "/", null, brokerVolumeName, true, null, null, null));
+          new VolumeMountBuilder()
+              .withMountPath(CONF_FOLDER + "/")
+              .withName(brokerVolumeName)
+              .withReadOnly(true)
+              .build());
       cb.addToArgs("--metas", CONF_FOLDER + "/" + CONFIG_FILE);
     }
     Container container = cb.build();

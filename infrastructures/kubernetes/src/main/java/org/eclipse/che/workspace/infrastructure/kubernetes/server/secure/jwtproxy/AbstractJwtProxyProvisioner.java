@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -36,7 +36,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import java.security.KeyPair;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -306,14 +306,11 @@ abstract class AbstractJwtProxyProvisioner implements ProxyProvisioner {
                 .withName(containerName)
                 .withImage(jwtProxyImage)
                 .withVolumeMounts(
-                    new VolumeMount(
-                        JWT_PROXY_CONFIG_FOLDER + "/",
-                        null,
-                        "che-jwtproxy-config-volume",
-                        false,
-                        null,
-                        null,
-                        null))
+                    new VolumeMountBuilder()
+                        .withMountPath(JWT_PROXY_CONFIG_FOLDER + "/")
+                        .withName("che-jwtproxy-config-volume")
+                        .withReadOnly(false)
+                        .build())
                 .withArgs("-config", JWT_PROXY_CONFIG_FOLDER + "/" + JWT_PROXY_CONFIG_FILE)
                 .addNewEnv()
                 .withName("XDG_CONFIG_HOME")

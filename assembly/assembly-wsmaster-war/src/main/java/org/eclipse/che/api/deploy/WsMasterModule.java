@@ -189,6 +189,7 @@ public class WsMasterModule extends AbstractModule {
     bind(org.eclipse.che.api.core.rest.ApiInfoService.class);
     bind(org.eclipse.che.api.user.server.UserService.class);
     bind(org.eclipse.che.security.oauth.OAuthAuthenticationService.class);
+    bind(org.eclipse.che.security.oauth.OAuthIdeRedirectService.class);
     bind(org.eclipse.che.security.oauth1.OAuthAuthenticationService.class);
 
     install(new DevfileModule());

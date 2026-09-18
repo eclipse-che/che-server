@@ -169,10 +169,10 @@ public class PersonalAccessToken {
         + scmTokenId
         + '\''
         + ", token='"
-        + token
+        + (token == null ? "<null>" : "<redacted>")
         + '\''
         + ", refreshToken='"
-        + refreshToken
+        + (refreshToken == null ? "<null>" : "<redacted>")
         + '\''
         + ", cheUserId='"
         + cheUserId

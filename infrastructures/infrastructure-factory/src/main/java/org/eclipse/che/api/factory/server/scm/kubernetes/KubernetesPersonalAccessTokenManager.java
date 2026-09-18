@@ -400,7 +400,18 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         isNullOrEmpty(refreshTokenData)
             ? null
             : new String(Base64.getDecoder().decode(refreshTokenData)).trim();
-    long expiresIn = isNullOrEmpty(expiresInAnnotation) ? 0 : parseLong(expiresInAnnotation.trim());
+    long expiresIn = 0;
+    if (!isNullOrEmpty(expiresInAnnotation)) {
+      try {
+        expiresIn = parseLong(expiresInAnnotation.trim());
+      } catch (NumberFormatException e) {
+        LOG.warn(
+            "Invalid '{}' annotation value '{}' in secret '{}'. Treating token as non-expiring.",
+            ANNOTATION_SCM_TOKEN_EXPIRES_IN,
+            expiresInAnnotation,
+            secret.getMetadata().getName());
+      }
+    }
     String configuredOAuthTokenName =
         secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
     String configuredTokenId = secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);

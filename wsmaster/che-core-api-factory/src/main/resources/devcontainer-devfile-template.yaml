@@ -9,14 +9,6 @@
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
 #
-# Commands target Che's default UDI component name, which the dashboard injects
-# when a factory has no components. Custom CheCluster defaultComponents names
-# will not match these exec commands.
-#
-# The start script is stored as start-devcontainer.sh and substituted here as
-# base64 so DevWorkspace flattening cannot rewrite bash variable-default syntax
-# for the projects root / project source inside the script body.
-#
 
 commands:
   - id: start-devcontainer

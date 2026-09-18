@@ -182,10 +182,21 @@ if [ -z "$CONFIG_JSON" ]; then
   echo "  read-configuration failed; using fallback parser on $DC" >&2
   # whole-line comments only, so a URL inside a string survives
   CONFIG_JSON="$(sed -e 's@^[[:space:]]*//.*$@@' "$DC" | jq -c '.' 2>/dev/null)"
+  CONFIG_PATH="$DC"
   [ -n "$CONFIG_JSON" ] || { echo "  could not parse $DC" >&2; exit 1; }
+else
+  # Use the file the CLI actually resolved, rather than repeating config discovery.
+  CONFIG_PATH="$(printf '%s' "$CONFIG_JSON" | jq -r '.configFilePath.fsPath // empty' 2>/dev/null || true)"
 fi
 
 CONFIG_FINGERPRINT="$(printf '%s' "$CONFIG_JSON" | sha256sum | cut -d' ' -f1)"
+
+# Raw config bytes for the editor's "Config changed" check. CONFIG_FINGERPRINT above
+# remains the resolved-config hash used for container reuse and the container label.
+CONFIG_FILE_FINGERPRINT=""
+if [ -n "$CONFIG_PATH" ] && [ -f "$CONFIG_PATH" ]; then
+  CONFIG_FILE_FINGERPRINT="$(sha256sum "$CONFIG_PATH" | cut -d' ' -f1)" || CONFIG_FILE_FINGERPRINT=""
+fi
 
 # ---------------------------------------------------------------------------
 # 4. initializeCommand (runs OUTSIDE the container, per spec)
@@ -419,10 +430,14 @@ publish_runtime() (
     --arg podmanPath "$PODMAN" --arg image "$IMAGE_NAME" --arg remoteUser "$REMOTE_USER" \
     --arg workspaceFolder "$WORKSPACE_FOLDER" --arg shell "$INNER_SHELL" \
     --arg fingerprint "$CONFIG_FINGERPRINT" --argjson remoteEnv "$remote_env_json" \
+    --arg configPath "$CONFIG_PATH" --arg configFileFingerprint "$CONFIG_FILE_FINGERPRINT" \
     '{version: 1, containerName: $containerName, containerId: $containerId,
       podmanPath: $podmanPath, image: $image, remoteUser: $remoteUser,
       workspaceFolder: $workspaceFolder, shell: $shell, remoteEnv: $remoteEnv,
-      fingerprint: $fingerprint}' > "$runtime_tmp" || return 1
+      fingerprint: $fingerprint}
+     + (if $configPath != "" and $configFileFingerprint != "" then
+          {configPath: $configPath, configFileFingerprint: $configFileFingerprint}
+        else {} end)' > "$runtime_tmp" || return 1
   mv -f -- "$runtime_tmp" "$RUNTIME_FILE"
 )
 publish_runtime || { echo "could not publish devcontainer terminal configuration" >&2; exit 1; }

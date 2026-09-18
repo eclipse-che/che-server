@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.gitlab;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
@@ -22,6 +23,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationExceptio
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 
 /** Gitlab OAuth token retriever. */
 public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
@@ -58,6 +60,18 @@ public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
     return new GitUserData(user.getName(), user.getEmail());
   }
 
+  /**
+   * Tells whether the server may contact an SCM server that is not the configured provider
+   * endpoint. Such a URL comes from a secret in the user's namespace, so contacting it
+   * unconditionally would let anyone holding a namespace have the server reach services only it can
+   * see (SSRF). A provider on a private network is reached through the configured provider
+   * endpoint, which is matched before it comes to this.
+   */
+  @VisibleForTesting
+  boolean canContact(String scmServerUrl) {
+    return serverUrl.equals(scmServerUrl) || UrlTargetValidator.isAllowed(scmServerUrl);
+  }
+
   @Override
   protected GitUserData fetchGitUserDataWithPersonalAccessToken(
       PersonalAccessToken personalAccessToken)
@@ -65,6 +79,13 @@ public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
           ScmCommunicationException,
           ScmBadRequestException,
           ScmUnauthorizedException {
+    if (!canContact(personalAccessToken.getScmProviderUrl())) {
+      throw new ScmCommunicationException(
+          "Refusing to contact "
+              + personalAccessToken.getScmProviderUrl()
+              + ": it is not the configured GitLab endpoint and does not point to a publicly"
+              + " routable host.");
+    }
     GitlabUser user =
         new GitlabApiClient(personalAccessToken.getScmProviderUrl())
             .getUser(personalAccessToken.getToken());

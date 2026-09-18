@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -31,6 +31,7 @@ import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.GitUserData;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.mockito.Mock;
@@ -109,5 +110,22 @@ public class GithubGitUserDataFetcherTest {
     // then
     assertEquals(gitUserData.getScmUsername(), "Github User");
     assertEquals(gitUserData.getScmUserEmail(), "github-user@acme.com");
+  }
+
+  /**
+   * The provider URL of a token comes from a secret in the user's namespace, so it must not become
+   * a way of having the server reach whatever the namespace owner names.
+   */
+  @Test(
+      expectedExceptions = ScmCommunicationException.class,
+      expectedExceptionsMessageRegExp = "Refusing to contact https://10\\.0\\.0\\.1: .*")
+  public void shouldNotContactPrivateAddresses() throws Exception {
+    PersonalAccessToken token = mock(PersonalAccessToken.class);
+    when(token.getToken()).thenReturn(githubOauthToken);
+    when(token.getScmProviderUrl()).thenReturn("https://10.0.0.1");
+    when(personalAccessTokenManager.get(any(Subject.class), eq("github"), eq(null), eq(null)))
+        .thenReturn(Optional.of(token));
+
+    githubGUDFetcher.fetchGitUserData(null);
   }
 }

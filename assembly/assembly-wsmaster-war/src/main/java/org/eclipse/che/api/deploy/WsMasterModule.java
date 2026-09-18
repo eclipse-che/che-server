@@ -180,6 +180,7 @@ public class WsMasterModule extends AbstractModule {
     scmFileResolverResolverMultibinder.addBinding().to(GitSshScmFileResolver.class);
 
     install(new org.eclipse.che.api.factory.server.scm.KubernetesScmModule());
+    install(new org.eclipse.che.security.oauth.KubernetesOAuthModule());
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketServerModule());
     install(new org.eclipse.che.api.factory.server.gitlab.GitlabModule());
     install(new org.eclipse.che.api.factory.server.github.GithubModule());

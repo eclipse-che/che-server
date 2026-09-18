@@ -11,14 +11,23 @@
  */
 package org.eclipse.che.commons.lang;
 
+import static org.eclipse.che.commons.lang.UrlTargetValidator.URL_DESTINATION_CHECK;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /** Tests of {@link UrlTargetValidator}. */
 public class UrlTargetValidatorTest {
+
+  @AfterMethod
+  public void restoreCheck() {
+    UrlTargetValidator.setCheckEnabled(null);
+  }
 
   @DataProvider
   public Object[][] disallowedUrls() {
@@ -86,5 +95,64 @@ public class UrlTargetValidatorTest {
   @Test(dataProvider = "allowedUrls")
   public void shouldAllowUrl(String url) {
     assertTrue(UrlTargetValidator.isAllowed(url), url + " should be reachable");
+  }
+
+  @Test(dataProvider = "disallowedUrls")
+  public void shouldAllowAnyUrlWhenCheckIsTurnedOff(String url) throws Exception {
+    UrlTargetValidator.setCheckEnabled(false);
+
+    UrlTargetValidator.validate(url);
+    assertTrue(UrlTargetValidator.isAllowed(url), url + " should be reachable with the check off");
+  }
+
+  @DataProvider
+  public Object[][] envValues() {
+    return new Object[][] {
+      {"true", true},
+      {"TRUE", true},
+      {" yes ", true},
+      {"1", true},
+      {"on", true},
+      {"false", false},
+      {"FALSE", false},
+      {" no ", false},
+      {"0", false},
+      {"off", false},
+      // an unset, empty or unrecognised value leaves the check on
+      {"maybe", true},
+      {"disabled", true},
+      {"", true},
+      {null, true},
+    };
+  }
+
+  @Test(dataProvider = "envValues")
+  public void shouldReadTheCheckEnvValue(String value, boolean expected) {
+    assertEquals(
+        UrlTargetValidator.isCheckEnabledBy(value),
+        expected,
+        "for " + URL_DESTINATION_CHECK + "=" + value);
+  }
+
+  /**
+   * The variable is not set in the environment the tests run in, so resolving it from there is the
+   * unset case, and it has to leave the check on.
+   */
+  @Test
+  public void shouldKeepCheckingWhenTheEnvVariableIsNotSet() {
+    assertNull(
+        System.getenv(URL_DESTINATION_CHECK),
+        URL_DESTINATION_CHECK + " must not be set for this test to mean anything");
+    UrlTargetValidator.setCheckEnabled(null);
+
+    assertTrue(UrlTargetValidator.isCheckEnabled());
+    assertFalse(UrlTargetValidator.isAllowed("http://169.254.169.254/latest/meta-data/"));
+  }
+
+  @Test
+  public void shouldKeepCheckingWhenTurningOffIsNotRequested() {
+    UrlTargetValidator.setCheckEnabled(true);
+
+    assertFalse(UrlTargetValidator.isAllowed("http://169.254.169.254/latest/meta-data/"));
   }
 }

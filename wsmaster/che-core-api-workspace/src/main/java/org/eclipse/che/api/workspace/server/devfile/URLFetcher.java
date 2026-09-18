@@ -171,13 +171,21 @@ public class URLFetcher {
             "Too many redirects (more than " + MAX_REDIRECTS + ") while fetching " + url);
       }
       URL nextUrl = new URL(currentUrl, location.get());
-      if (isSchemeDowngrade(currentUrl, nextUrl)) {
-        throw new IOException(
-            "Refusing to follow the redirect from " + currentUrl + " to " + nextUrl + " over http");
-      }
-      if (!isSameOrigin(currentUrl, nextUrl)) {
-        // do not hand the caller's credentials to whoever the redirect points at
-        currentAuthorization = null;
+      // URL_DESTINATION_CHECK also relaxes what a redirect may do, so that a deployment that has
+      // to turn the destination check off is not stopped by the rules that go with it either
+      if (UrlTargetValidator.isCheckEnabled()) {
+        if (isSchemeDowngrade(currentUrl, nextUrl)) {
+          throw new IOException(
+              "Refusing to follow the redirect from "
+                  + currentUrl
+                  + " to "
+                  + nextUrl
+                  + " over http");
+        }
+        if (!isSameOrigin(currentUrl, nextUrl)) {
+          // do not hand the caller's credentials to whoever the redirect points at
+          currentAuthorization = null;
+        }
       }
       currentUrl = nextUrl;
     }

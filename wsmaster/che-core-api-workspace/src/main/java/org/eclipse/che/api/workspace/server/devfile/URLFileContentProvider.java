@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 import java.util.Base64;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,9 @@ public class URLFileContentProvider implements FileContentProvider {
 
     if (fileURI.isAbsolute()) {
       String scheme = fileURI.getScheme();
-      if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+      if (UrlTargetValidator.isCheckEnabled()
+          && !"http".equalsIgnoreCase(scheme)
+          && !"https".equalsIgnoreCase(scheme)) {
         throw new DevfileException(
             format("URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
       }
@@ -91,8 +94,14 @@ public class URLFileContentProvider implements FileContentProvider {
    * such a request would disclose them to that host, so they are only sent back to the origin the
    * devfile itself was loaded from. The scheme is part of that comparison, so that a devfile cannot
    * downgrade the request to plain http and put the credentials on the wire in the clear.
+   *
+   * <p>Turned off along with the destination check by {@link
+   * UrlTargetValidator#URL_DESTINATION_CHECK}.
    */
   private boolean canSendCredentialsTo(String requestURL) {
+    if (!UrlTargetValidator.isCheckEnabled()) {
+      return true;
+    }
     if (devfileLocation == null) {
       return false;
     }

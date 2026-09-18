@@ -35,6 +35,7 @@ import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,10 +174,16 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
    * issued for. The comparison is on the whole origin rather than the host alone, so that a devfile
    * cannot downgrade the request to plain http and put the token on the wire in the clear.
    *
+   * <p>Turned off along with the destination check by {@link
+   * UrlTargetValidator#URL_DESTINATION_CHECK}.
+   *
    * @param requestURL the URL about to be fetched
    * @return true if the URL belongs to this provider, false if it must be fetched anonymously
    */
   protected boolean canSendCredentialsTo(String requestURL) {
+    if (!UrlTargetValidator.isCheckEnabled()) {
+      return true;
+    }
     Set<String> trustedOrigins = getTrustedOrigins();
     Optional<String> origin = originOfUrl(requestURL);
     if (origin.isPresent() && trustedOrigins.contains(origin.get())) {
@@ -247,26 +254,31 @@ public class AuthorizingFileContentProvider<T extends RemoteFactoryUrl>
    * the repository, while an absolute URL is only accepted when it points to one of the {@link
    * #getTrustedOrigins() provider origins}: the devfile is user input, so an arbitrary absolute URL
    * would turn this server into a proxy for hosts the user cannot reach themselves.
+   *
+   * <p>Both restrictions on absolute URLs are turned off along with the destination check by {@link
+   * UrlTargetValidator#URL_DESTINATION_CHECK}.
    */
   protected String formatUrl(String fileURL) throws DevfileException {
     String requestURL;
     try {
       URI fileURI = new URI(fileURL);
       if (fileURI.isAbsolute()) {
-        String scheme = fileURI.getScheme();
-        if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
-          throw new DevfileException(
-              String.format(
-                  "URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
-        }
-        Set<String> trustedOrigins = getTrustedOrigins();
-        Optional<String> fileOrigin = originOfUrl(fileURL);
-        if (fileOrigin.isEmpty() || !trustedOrigins.contains(fileOrigin.get())) {
-          throw new DevfileException(
-              String.format(
-                  "URL '%s' is not allowed: absolute URLs must point to one of the provider"
-                      + " origins %s",
-                  fileURL, trustedOrigins));
+        if (UrlTargetValidator.isCheckEnabled()) {
+          String scheme = fileURI.getScheme();
+          if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+            throw new DevfileException(
+                String.format(
+                    "URL '%s' is not allowed: only http and https schemes are permitted", fileURL));
+          }
+          Set<String> trustedOrigins = getTrustedOrigins();
+          Optional<String> fileOrigin = originOfUrl(fileURL);
+          if (fileOrigin.isEmpty() || !trustedOrigins.contains(fileOrigin.get())) {
+            throw new DevfileException(
+                String.format(
+                    "URL '%s' is not allowed: absolute URLs must point to one of the provider"
+                        + " origins %s",
+                    fileURL, trustedOrigins));
+          }
         }
         requestURL = fileURL;
       } else {

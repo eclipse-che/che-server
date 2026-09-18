@@ -32,8 +32,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -47,6 +49,11 @@ public class URLFetcherTest {
 
   /** Instance to test. */
   private URLFetcher urlFetcher = new URLFetcher(1024);
+
+  @AfterMethod
+  public void restoreUrlChecks() {
+    UrlTargetValidator.setCheckEnabled(null);
+  }
 
   /** Check that when url is null, NPE is thrown */
   @Test(expectedExceptions = NullPointerException.class)
@@ -256,6 +263,35 @@ public class URLFetcherTest {
     try (LocalServers servers = new LocalServers()) {
       String entry = servers.redirectTo("entry", "file:///etc/passwd");
       new LoopbackURLFetcher().fetch(entry);
+    }
+  }
+
+  /**
+   * With the destination check turned off, no destination is refused, whatever its scheme or
+   * address.
+   */
+  @Test
+  public void checkTargetIsNotValidatedWhenTheCheckIsTurnedOff() throws Exception {
+    UrlTargetValidator.setCheckEnabled(false);
+
+    urlFetcher.validateTarget("file:///etc/passwd");
+    urlFetcher.validateTarget("http://169.254.169.254/latest/meta-data/");
+  }
+
+  /**
+   * Turning the destination check off also lifts the rules on where a redirect may take the
+   * credentials.
+   */
+  @Test
+  public void checkAuthorizationIsKeptOnCrossOriginRedirectWhenTheCheckIsTurnedOff()
+      throws Exception {
+    UrlTargetValidator.setCheckEnabled(false);
+    try (LocalServers servers = new LocalServers()) {
+      String target = servers.echoAuthorization("target");
+      String entry = servers.redirectTo("entry", target);
+
+      assertEquals(
+          new LoopbackURLFetcher().fetch(entry, "Bearer secret"), "authorization=Bearer secret");
     }
   }
 

@@ -13,6 +13,7 @@ package org.eclipse.che.api.factory.server.scm.kubernetes;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Long.parseLong;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.common.collect.ImmutableMap;
@@ -302,7 +303,36 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       LOG.debug("Failed to get personal access token", e);
       throw new ScmConfigurationPersistenceException(e.getMessage(), e);
     }
+    // Put personal access tokens before the OAuth ones, keeping the newest-first order within each
+    // group. OAuth tokens may be short-living, e.g. GitLab OAuth tokens expire in 2 hours, so a
+    // personal access token is always preferred when both are configured.
+    result.sort(Comparator.comparing(KubernetesPersonalAccessTokenManager::isOAuthToken));
     return result;
+  }
+
+  /**
+   * Checks whether the token was obtained with the OAuth flow. Such tokens are stored with a
+   * generated {@code oauth2-<random>} name, while the manually configured personal access tokens
+   * are named after the SCM provider.
+   *
+   * @param token the token to check
+   * @return {@code true} if the token is an OAuth one
+   */
+  private static boolean isOAuthToken(PersonalAccessToken token) {
+    return token.getScmTokenName() != null && token.getScmTokenName().startsWith(OAUTH_2_PREFIX);
+  }
+
+  /**
+   * The same as {@link #isOAuthToken(PersonalAccessToken)} but for the secret the token is stored
+   * in.
+   *
+   * @param secret the token secret to check
+   * @return {@code true} if the secret keeps an OAuth token
+   */
+  private static boolean isOAuthTokenSecret(Secret secret) {
+    String tokenName =
+        secret.getMetadata().getAnnotations().get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+    return tokenName != null && tokenName.startsWith(OAUTH_2_PREFIX);
   }
 
   /**
@@ -480,7 +510,10 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
         for (int i = 1; i < secrets.size(); i++) {
           Secret secret = secrets.get(i);
-          if (secret.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL).equals(scmServerUrl)) {
+          // Only the outdated OAuth token secrets are cleaned up. The manually configured personal
+          // access tokens must survive the refresh, as they are preferred over the OAuth ones.
+          if (secret.getMetadata().getAnnotations().get(ANNOTATION_SCM_URL).equals(scmServerUrl)
+              && isOAuthTokenSecret(secret)) {
             cheServerKubernetesClientFactory
                 .create()
                 .secrets()

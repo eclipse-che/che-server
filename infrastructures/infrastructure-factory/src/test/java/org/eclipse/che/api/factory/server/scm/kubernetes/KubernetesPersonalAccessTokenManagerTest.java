@@ -18,6 +18,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -586,7 +587,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
-                    "github",
+                    "oauth2-abcde",
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,
@@ -600,7 +601,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .withAnnotations(
                 Map.of(
                     ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
-                    "github",
+                    "oauth2-fghij",
                     ANNOTATION_CHE_USERID,
                     "user1",
                     ANNOTATION_SCM_URL,
@@ -628,6 +629,136 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     // then
     verify(nonNamespaceOperation, times(1)).delete(eq(secret1));
+  }
+
+  @Test
+  public void shouldPreferPersonalAccessTokenOverOAuthToken() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+    Map<String, String> patData =
+        Map.of("token", Base64.getEncoder().encodeToString("pat-token".getBytes(UTF_8)));
+    Map<String, String> oauthData =
+        Map.of("token", Base64.getEncoder().encodeToString("oauth-token".getBytes(UTF_8)));
+    // the personal access token secret is the older one
+    ObjectMeta patMeta =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "gitlab",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "pat-id"))
+            .build();
+    ObjectMeta oauthMeta =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "oauth2-abcde",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "oauth-id"))
+            .build();
+    Secret patSecret = new SecretBuilder().withMetadata(patMeta).withData(patData).build();
+    Secret oauthSecret = new SecretBuilder().withMetadata(oauthMeta).withData(oauthData).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(patSecret, oauthSecret));
+
+    // when
+    Optional<PersonalAccessToken> token =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            null,
+            "http://host1",
+            null);
+
+    // then
+    assertTrue(token.isPresent());
+    assertEquals(token.get().getScmTokenId(), "pat-id");
+    assertEquals(token.get().getToken(), "pat-token");
+  }
+
+  @Test
+  public void shouldKeepPersonalAccessTokenSecretOnForceRefresh() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    Map<String, String> patData =
+        Map.of("token", Base64.getEncoder().encodeToString("pat-token".getBytes(UTF_8)));
+    Map<String, String> oauthData =
+        Map.of("token", Base64.getEncoder().encodeToString("oauth-token".getBytes(UTF_8)));
+    ObjectMeta patMeta =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "gitlab",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "pat-id"))
+            .build();
+    ObjectMeta oauthMeta =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-02T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "oauth2-abcde",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://host1",
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
+                    "oauth-id"))
+            .build();
+    Secret patSecret = new SecretBuilder().withMetadata(patMeta).withData(patData).build();
+    Secret oauthSecret = new SecretBuilder().withMetadata(oauthMeta).withData(oauthData).build();
+    // the newly stored token is the first one, the rest are the candidates for the cleanup
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Arrays.asList(patSecret, oauthSecret));
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "http://host1",
+            "gitlab",
+            "user1",
+            "user",
+            "oauth2-fghij",
+            "new-oauth-id",
+            "new-oauth-token");
+    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+            any(Subject.class), eq("http://host1")))
+        .thenReturn(token);
+
+    // when
+    personalAccessTokenManager.forceRefreshPersonalAccessToken("http://host1");
+
+    // then
+    verify(nonNamespaceOperation, never()).delete(eq(patSecret));
   }
 
   @Test

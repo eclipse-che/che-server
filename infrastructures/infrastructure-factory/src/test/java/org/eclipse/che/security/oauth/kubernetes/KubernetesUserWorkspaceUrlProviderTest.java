@@ -17,7 +17,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResourceList;
@@ -147,6 +149,29 @@ public class KubernetesUserWorkspaceUrlProviderTest {
 
   @Test(expectedExceptions = ServerException.class)
   public void shouldFailWhenTheDevWorkspacesCannotBeRead() throws Exception {
+    mockUnreadableDevWorkspaces();
+
+    provider.getWorkspaceUrls();
+  }
+
+  /**
+   * The message of a {@link ServerException} is serialized into the response body, and a Kubernetes
+   * API failure names the service account and the namespaces it was denied.
+   */
+  @Test
+  public void shouldNotLeakTheKubernetesFailureIntoTheExceptionMessage() throws Exception {
+    mockUnreadableDevWorkspaces();
+
+    try {
+      provider.getWorkspaceUrls();
+      fail("Expected a ServerException");
+    } catch (ServerException e) {
+      assertFalse(e.getMessage().contains("system:serviceaccount:eclipse-che:che"), e.getMessage());
+      assertFalse(e.getMessage().contains("alice-che"), e.getMessage());
+    }
+  }
+
+  private void mockUnreadableDevWorkspaces() throws Exception {
     when(namespaceFactory.list())
         .thenReturn(singletonList(new KubernetesNamespaceMetaImpl("alice-che")));
     NonNamespaceOperation<
@@ -155,9 +180,12 @@ public class KubernetesUserWorkspaceUrlProviderTest {
             Resource<GenericKubernetesResource>>
         inNamespace = mock(NonNamespaceOperation.class);
     when(devWorkspacesOperation.inNamespace("alice-che")).thenReturn(inNamespace);
-    when(inNamespace.list()).thenThrow(new KubernetesClientException("forbidden"));
-
-    provider.getWorkspaceUrls();
+    when(inNamespace.list())
+        .thenThrow(
+            new KubernetesClientException(
+                "devworkspaces.workspace.devfile.io is forbidden: User"
+                    + " \"system:serviceaccount:eclipse-che:che\" cannot list resource in namespace"
+                    + " \"alice-che\""));
   }
 
   private void mockDevWorkspaces(String namespace, GenericKubernetesResource... devWorkspaces) {

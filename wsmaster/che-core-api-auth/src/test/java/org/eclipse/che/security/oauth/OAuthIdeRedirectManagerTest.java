@@ -14,6 +14,8 @@ package org.eclipse.che.security.oauth;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -103,6 +105,18 @@ public class OAuthIdeRedirectManagerTest {
     assertFalse(location.contains("code="), location);
   }
 
+  /**
+   * The callback URL is authorized twice: once early and once on the value handed to the redirect.
+   * Resolving the workspaces hits the Kubernetes API, so it must happen only once per request.
+   */
+  @Test
+  public void shouldResolveTheWorkspacesOfTheUserOnlyOnce() throws Exception {
+    manager.ideRedirect(
+        mockUriInfo("code", "c", "state", compositeState("csrf", OWN_CALLBACK_URL)));
+
+    verify(workspaceUrlProvider, times(1)).getWorkspaceUrls();
+  }
+
   @Test
   public void shouldAcceptAnyOfTheWorkspacesOfTheUser() throws Exception {
     when(workspaceUrlProvider.getWorkspaceUrls())
@@ -176,10 +190,50 @@ public class OAuthIdeRedirectManagerTest {
     manager.ideRedirect(mockUriInfo("code", "c", "state", compositeState("csrf", encodedSlash)));
   }
 
+  /**
+   * The authorization check compares decoded paths, so percent encoding in the path is rejected
+   * whether or not it decodes to something dangerous.
+   */
+  @Test(expectedExceptions = BadRequestException.class)
+  public void shouldRejectCallbackWithAnyPercentEncodedPath() throws Exception {
+    String encodedDash = CHE_HOST + "/alice/nodejs%2Dangular/3100/callback";
+
+    manager.ideRedirect(mockUriInfo("code", "c", "state", compositeState("csrf", encodedDash)));
+  }
+
+  /** Only the path is restricted: the IDE legitimately percent encodes its callback query. */
+  @Test
+  public void shouldAcceptAPercentEncodedQuery() throws Exception {
+    Response response =
+        manager.ideRedirect(
+            mockUriInfo("code", "c", "state", compositeState("csrf", OWN_CALLBACK_URL)));
+
+    assertEquals(response.getStatus(), 307);
+    assertTrue(location(response).contains("vscode-path=%2Fauthentication"));
+  }
+
   @Test(expectedExceptions = BadRequestException.class)
   public void shouldRejectCallbackWithNonHttpScheme() throws Exception {
     manager.ideRedirect(
         mockUriInfo("code", "c", "state", compositeState("csrf", "ftp://che.example.com/cb")));
+  }
+
+  /** The redirect carries the authorization code in its query string. */
+  @Test(expectedExceptions = BadRequestException.class)
+  public void shouldRejectCleartextCallback() throws Exception {
+    String cleartext = "http://che.apps.cluster.example.com/alice/nodejs-angular/3100/callback";
+
+    manager.ideRedirect(mockUriInfo("code", "c", "state", compositeState("csrf", cleartext)));
+  }
+
+  /** Even when the workspace itself publishes a cleartext main URL. */
+  @Test(expectedExceptions = BadRequestException.class)
+  public void shouldRejectCleartextCallbackToACleartextWorkspace() throws Exception {
+    String cleartextWorkspace = "http://che.apps.cluster.example.com/alice/nodejs-angular/3100/";
+    when(workspaceUrlProvider.getWorkspaceUrls()).thenReturn(ImmutableSet.of(cleartextWorkspace));
+
+    manager.ideRedirect(
+        mockUriInfo("code", "c", "state", compositeState("csrf", cleartextWorkspace + "callback")));
   }
 
   @Test(expectedExceptions = BadRequestException.class)

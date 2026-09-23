@@ -24,7 +24,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Locale;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -93,7 +92,9 @@ public class OAuthIdeRedirectManager {
     String csrfState = getStringField(state, STATE_CSRF_FIELD);
     URI callbackUri = parseCallbackUrl(getStringField(state, STATE_CALLBACK_URL_FIELD));
 
-    authorizeCallbackUrl(subject, callbackUri);
+    // Read once: the check below is repeated on the URL that is actually redirected to.
+    Set<String> workspaceUrls = userWorkspaceUrlProvider.getWorkspaceUrls();
+    authorizeCallbackUrl(subject, callbackUri, workspaceUrls);
 
     UriBuilder target = UriBuilder.fromUri(callbackUri).queryParam("state", csrfState);
     if (!isNullOrBlank(code)) {
@@ -114,6 +115,10 @@ public class OAuthIdeRedirectManager {
       throw new BadRequestException("Unable to build the redirect URL: " + e.getMessage());
     }
 
+    // The check above was made against the URL the target is derived from. Repeat it on the exact
+    // value that is handed to the redirect, so that the guarantee holds at the point of use.
+    authorizeCallbackUrl(subject, redirectTarget, workspaceUrls);
+
     return Response.temporaryRedirect(redirectTarget)
         .header("Cache-Control", "no-store")
         .header("Referrer-Policy", "no-referrer")
@@ -123,10 +128,12 @@ public class OAuthIdeRedirectManager {
   /**
    * Fails unless the callback URL is located under the main URL of one of the workspaces of the
    * given user.
+   *
+   * @param workspaceUrls main URLs of the workspaces of {@code subject}, see {@link
+   *     UserWorkspaceUrlProvider}
    */
-  private void authorizeCallbackUrl(Subject subject, URI callbackUri)
-      throws ForbiddenException, ServerException {
-    Set<String> workspaceUrls = userWorkspaceUrlProvider.getWorkspaceUrls();
+  private void authorizeCallbackUrl(Subject subject, URI callbackUri, Set<String> workspaceUrls)
+      throws ForbiddenException {
     for (String workspaceUrl : workspaceUrls) {
       if (isLocatedUnder(callbackUri, workspaceUrl)) {
         return;
@@ -224,9 +231,12 @@ public class OAuthIdeRedirectManager {
     if (!uri.isAbsolute() || uri.isOpaque() || uri.getHost() == null) {
       throw new BadRequestException("Callback URL must be an absolute URL with a host");
     }
-    String scheme = uri.getScheme().toLowerCase(Locale.ROOT);
-    if (!scheme.equals("https") && !scheme.equals("http")) {
-      throw new BadRequestException("Callback URL must use the http or https scheme");
+    // The redirect carries the authorization code in its query string, so it must not travel in
+    // cleartext. This costs nothing in practice: the Che operator publishes the main URL of a
+    // gateway routed workspace as https whatever the ingress actually serves, and a workspace that
+    // really is served over http fails the scheme comparison in isLocatedUnder anyway.
+    if (!uri.getScheme().equalsIgnoreCase("https")) {
+      throw new BadRequestException("Callback URL must use the https scheme");
     }
     if (uri.getUserInfo() != null) {
       throw new BadRequestException("Callback URL must not contain user information");
@@ -234,9 +244,13 @@ public class OAuthIdeRedirectManager {
     if (uri.getFragment() != null) {
       throw new BadRequestException("Callback URL must not contain a fragment");
     }
+    // The authorization check below compares decoded paths, so any percent encoding in the path is
+    // a chance for the two forms to disagree. A workspace path is built from normalized segments
+    // and never needs encoding, so reject it outright rather than reasoning about which escapes are
+    // harmless. Percent encoding in the query, which the IDE does use, is unaffected.
     String rawPath = uri.getRawPath();
-    if (rawPath == null || rawPath.toLowerCase(Locale.ROOT).contains("%2f")) {
-      throw new BadRequestException("Callback URL must not contain an encoded path separator");
+    if (rawPath == null || rawPath.indexOf('%') >= 0) {
+      throw new BadRequestException("Callback URL must not contain a percent encoded path");
     }
     URI normalized = uri.normalize();
     if (normalized.getPath().contains("..")) {

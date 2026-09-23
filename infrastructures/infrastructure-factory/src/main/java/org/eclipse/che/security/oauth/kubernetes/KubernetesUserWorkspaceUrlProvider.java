@@ -37,7 +37,21 @@ import org.slf4j.LoggerFactory;
  * workbench itself is served from. Comparing against it, rather than reconstructing the URL layout
  * that the Che operator generates, keeps this check correct for both the {@code
  * /<username>/<workspace-name>/<port>/} and the legacy {@code /<workspace-id>/<component>/<port>/}
- * path strategies, as well as for subdomain based routing.
+ * path strategies.
+ *
+ * <p>Both of those are gateway routed, which is what every editor definition shipped with the Che
+ * operator asks for by declaring {@code urlRewriteSupported: true} on its {@code type: main}
+ * endpoint. The Che operator publishes gateway routed endpoints as {@code https} and under a path
+ * that names either the user or the workspace, which is what makes the main URL usable as an
+ * authorization boundary in the first place.
+ *
+ * <p>An editor definition that turns {@code urlRewriteSupported} off is exposed through a dedicated
+ * Route or Ingress instead. Its main URL then names a host of its own, carries only whatever the
+ * endpoint declares as its {@code path}, and is {@code https} only if the endpoint asks to be
+ * secure. The redirect is refused for such a workspace: {@code
+ * OAuthIdeRedirectManager#isLocatedUnder} rejects an empty path, because matching on the host alone
+ * would accept the workspace of any other user on the same host, and the callback URL is required
+ * to be {@code https}.
  */
 @Singleton
 public class KubernetesUserWorkspaceUrlProvider implements UserWorkspaceUrlProvider {
@@ -84,8 +98,10 @@ public class KubernetesUserWorkspaceUrlProvider implements UserWorkspaceUrlProvi
         }
       }
     } catch (InfrastructureException | KubernetesClientException e) {
-      throw new ServerException(
-          "Failed to read the workspaces of the current user: " + e.getMessage(), e);
+      // The message of a Kubernetes API failure names the service account and the namespaces it
+      // was denied, and the message of a ServerException is returned to the caller. Keep it here.
+      LOG.warn("Failed to read the workspaces of the current user: {}", e.getMessage(), e);
+      throw new ServerException("Failed to read the workspaces of the current user");
     }
     LOG.debug("Resolved {} workspace URL(s) for the current user", urls.size());
     return urls;

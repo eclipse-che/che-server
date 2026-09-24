@@ -28,18 +28,15 @@
 #
 set -uo pipefail
 
-# Serialize setup and rebuild without interrupting an active build. Opening in append mode
-# preserves the current owner's PID while another invocation waits.
+# Serialize setup and rebuild so a second invocation waits rather than interrupting an
+# active build.
 LOCK_FILE="${LOCK_FILE:-/tmp/.devcontainer-setup.lock}"
-LOCK_HELD=0
 if command -v flock >/dev/null 2>&1; then
   exec 9>>"$LOCK_FILE" || { echo "cannot open setup lock: $LOCK_FILE" >&2; exit 1; }
   if ! flock -n 9; then
     echo "another devcontainer setup is in progress; waiting..."
     flock -w 900 9 || { echo "timed out waiting for the in-progress setup" >&2; exit 1; }
   fi
-  LOCK_HELD=1
-  printf '%s\n' "$$" > "$LOCK_FILE"
 fi
 
 # The parent owns the lock and stays alive for the whole run. Close the descriptor in the setup
@@ -421,9 +418,3 @@ echo "  Files:  ${PROJECT_DIR} <-> ${WORKSPACE_FOLDER}"
 echo "  Shell:  ${PODMAN} exec -it ${CONTAINER_NAME} ${INNER_SHELL}"
 exit 0
 )
-SETUP_RC=$?
-# Clear the published PID while we still own the lock, before another run can acquire it.
-if [ "$LOCK_HELD" = 1 ]; then
-  : > "$LOCK_FILE"
-fi
-exit "$SETUP_RC"

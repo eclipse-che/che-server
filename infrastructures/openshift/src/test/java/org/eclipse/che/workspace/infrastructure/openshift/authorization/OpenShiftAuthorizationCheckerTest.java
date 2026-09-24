@@ -157,8 +157,7 @@ public class OpenShiftAuthorizationCheckerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void shouldAuthorizeUserWhenAllowGroupNameContainsSpaces()
-      throws InfrastructureException {
+  public void shouldAuthorizeUserWhenAllowGroupNameContainsSpaces() throws InfrastructureException {
     Group groupWithSpaces =
         new Group(
             "v1",

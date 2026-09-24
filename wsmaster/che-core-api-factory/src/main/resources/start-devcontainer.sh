@@ -24,13 +24,12 @@
 #   NO_CACHE=1         rebuild without cache (passes --no-cache to devcontainer build)
 #   STRICT_LIFECYCLE=1 exit non-zero if any lifecycle command fails
 #   NO_KEEP_ID=1       skip --userns=keep-id (debugging)
-#   CHE_DEVCONTAINER_RUNTIME  terminal description (default: /tmp/che-devcontainer/runtime.json)
 #   PREFLIGHT_IMAGE    runnable probe image (default: quay.io/podman/hello:latest; override for a registry mirror)
 #
 set -uo pipefail
 
 # Serialize setup and rebuild without interrupting an active build. Opening in append mode
-# preserves the current owner's PID for the extension while another invocation waits.
+# preserves the current owner's PID while another invocation waits.
 LOCK_FILE="${LOCK_FILE:-/tmp/.devcontainer-setup.lock}"
 LOCK_HELD=0
 if command -v flock >/dev/null 2>&1; then
@@ -43,15 +42,10 @@ if command -v flock >/dev/null 2>&1; then
   printf '%s\n' "$$" > "$LOCK_FILE"
 fi
 
-# The parent owns the lock and stays alive for the extension's PID-based build detection.
-# Close the descriptor in the setup child so conmon, fuse-overlayfs, and lifecycle processes
-# cannot retain it after setup finishes.
+# The parent owns the lock and stays alive for the whole run. Close the descriptor in the setup
+# child so conmon, fuse-overlayfs, and lifecycle processes cannot retain it after setup finishes.
 (
 exec 9>&-
-RUNTIME_FILE="${CHE_DEVCONTAINER_RUNTIME:-/tmp/che-devcontainer/runtime.json}"
-# Invalidate the previous terminal configuration while holding the setup lock. A failed
-# setup must never leave a description that the extension could mistake for a ready result.
-rm -f -- "$RUNTIME_FILE" || exit 1
 PROJECTS_ROOT="${PROJECTS_ROOT:-/projects}"
 # Project: explicit arg > DWO's PROJECT_SOURCE > the only directory under PROJECTS_ROOT.
 if [ "$#" -ge 1 ] && [ -n "${1:-}" ]; then
@@ -190,13 +184,6 @@ else
 fi
 
 CONFIG_FINGERPRINT="$(printf '%s' "$CONFIG_JSON" | sha256sum | cut -d' ' -f1)"
-
-# Raw config bytes for the editor's "Config changed" check. CONFIG_FINGERPRINT above
-# remains the resolved-config hash used for container reuse and the container label.
-CONFIG_FILE_FINGERPRINT=""
-if [ -n "$CONFIG_PATH" ] && [ -f "$CONFIG_PATH" ]; then
-  CONFIG_FILE_FINGERPRINT="$(sha256sum "$CONFIG_PATH" | cut -d' ' -f1)" || CONFIG_FILE_FINGERPRINT=""
-fi
 
 # ---------------------------------------------------------------------------
 # 4. initializeCommand (runs OUTSIDE the container, per spec)
@@ -375,7 +362,7 @@ fi
 "$PODMAN" exec "$CONTAINER_NAME" git config --global --replace-all safe.directory "$WORKSPACE_FOLDER" 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
-# 8. Lifecycle commands, then runtime publish
+# 8. Lifecycle commands
 # ---------------------------------------------------------------------------
 EXEC_USER=(); [ -n "$REMOTE_USER" ] && EXEC_USER=(-u "$REMOTE_USER")
 CREATE_MARKER=/tmp/.devcontainer-create-hooks-done
@@ -419,42 +406,6 @@ if [ "$LIFECYCLE_FAILURES" -gt 0 ]; then
   [ "$STRICT_LIFECYCLE" = "1" ] && exit 1
 fi
 
-# Publish only a successful, running container. The ID binds these resolved values to
-# this instance, so a replacement container cannot reuse an obsolete terminal description.
-# The flock file PID is what the extension uses for in-flight build detection; runtime.json
-# is published only on success and cannot replace that.
-publish_runtime() (
-  umask 077
-  local runtime_dir runtime_tmp container_id remote_env_json
-  runtime_dir="$(dirname "$RUNTIME_FILE")"
-  mkdir -p "$runtime_dir" || return 1
-  container_id="$("$PODMAN" inspect --format json "$CONTAINER_NAME" | jq -er \
-    '.[0] | select(.State.Running == true) | .Id | select(type == "string" and length > 0)')" || return 1
-  # Use exactly the already-resolved environment arguments passed to lifecycle commands.
-  remote_env_json='{}'
-  local i entry key value
-  for ((i=1; i<${#REMOTE_ENV[@]}; i+=2)); do
-    entry="${REMOTE_ENV[i]}"; key="${entry%%=*}"; value="${entry#*=}"
-    remote_env_json="$(jq -cn --argjson env "$remote_env_json" --arg k "$key" --arg v "$value" '$env + {($k): $v}')" || return 1
-  done
-  runtime_tmp="$(mktemp "$runtime_dir/.runtime.XXXXXX")" || return 1
-  trap 'rm -f -- "$runtime_tmp"' EXIT
-  jq -n --arg containerName "$CONTAINER_NAME" --arg containerId "$container_id" \
-    --arg podmanPath "$PODMAN" --arg image "$IMAGE_NAME" --arg remoteUser "$REMOTE_USER" \
-    --arg workspaceFolder "$WORKSPACE_FOLDER" --arg shell "$INNER_SHELL" \
-    --arg fingerprint "$CONFIG_FINGERPRINT" --argjson remoteEnv "$remote_env_json" \
-    --arg configPath "$CONFIG_PATH" --arg configFileFingerprint "$CONFIG_FILE_FINGERPRINT" \
-    '{version: 1, containerName: $containerName, containerId: $containerId,
-      podmanPath: $podmanPath, image: $image, remoteUser: $remoteUser,
-      workspaceFolder: $workspaceFolder, shell: $shell, remoteEnv: $remoteEnv,
-      fingerprint: $fingerprint}
-     + (if $configPath != "" and $configFileFingerprint != "" then
-          {configPath: $configPath, configFileFingerprint: $configFileFingerprint}
-        else {} end)' > "$runtime_tmp" || return 1
-  mv -f -- "$runtime_tmp" "$RUNTIME_FILE"
-)
-publish_runtime || { echo "could not publish devcontainer terminal configuration" >&2; exit 1; }
-
 _close_phase
 echo
 echo "=== ready ==="
@@ -463,7 +414,7 @@ for e in "${PHASE_LOG[@]}"; do
   d="${e%%|*}"; l="${e#*|}"; [ "$d" -ge 2 ] && printf ' | %s %ss' "${l%% *}" "$d"
 done
 echo
-echo "  Use the extension action: Open Terminal in Dev Container."
+echo "  Open a shell inside it with the command shown below."
 echo "  Files:  ${PROJECT_DIR} <-> ${WORKSPACE_FOLDER}"
 [ "$KEEP_ID_OK" = "1" ] && echo "  UID parity ON — files created inside are owned by you." \
                         || echo "  UID parity OFF — files created inside are subuid-owned."

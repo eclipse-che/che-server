@@ -244,10 +244,13 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       } else {
         Optional<PersonalAccessToken> tokenOptional;
         try {
-          tokenOptional = personalAccessTokenManager.get(subject, oauthProvider, null, null);
+          // The token is read as stored: refreshing it is this class' own job, so a read that
+          // refreshes would come back here through the SCM token fetcher and never terminate.
+          tokenOptional = personalAccessTokenManager.getStored(subject, oauthProvider, null, null);
           if (tokenOptional.isEmpty()) {
             tokenOptional =
-                personalAccessTokenManager.get(subject, null, provider.getEndpointUrl(), null);
+                personalAccessTokenManager.getStored(
+                    subject, null, provider.getEndpointUrl(), null);
           }
           if (tokenOptional.isPresent()) {
             return newDto(OAuthToken.class).withToken(tokenOptional.get().getToken());
@@ -280,9 +283,11 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
         return storedToken;
       } else {
         // Credential was not found in the in-memory store (e.g. after server restart).
-        // Restore it from the persisted Kubernetes secret so the OAuth flow can refresh it.
+        // Restore it from the persisted Kubernetes secret so the OAuth flow can refresh it. The
+        // token is read as stored: it is this call that refreshes it, so letting the manager
+        // refresh it on read would call back here endlessly.
         Optional<PersonalAccessToken> tokenOptional =
-            personalAccessTokenManager.get(subject, oauthProvider, null, null);
+            personalAccessTokenManager.getStored(subject, oauthProvider, null, null);
         if (tokenOptional.isPresent()) {
           PersonalAccessToken token = tokenOptional.get();
           if (isNullOrEmpty(token.getRefreshToken())) {

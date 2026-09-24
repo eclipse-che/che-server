@@ -241,11 +241,39 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         .findFirst();
   }
 
+  @Override
+  public Optional<PersonalAccessToken> getStored(
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
+      throws ScmConfigurationPersistenceException, ScmCommunicationException {
+    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl, namespaceName, false)
+        .stream()
+        .findFirst();
+  }
+
   private List<PersonalAccessToken> doGetPersonalAccessTokens(
       Subject cheUser,
       @Nullable String oAuthProviderName,
       @Nullable String scmServerUrl,
       @Nullable String namespaceName)
+      throws ScmConfigurationPersistenceException, ScmCommunicationException {
+    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl, namespaceName, true);
+  }
+
+  /**
+   * @param refreshAndValidate whether the tokens have to be checked against the SCM provider: an
+   *     expired OAuth token gets refreshed, and a token that the provider does not accept gets
+   *     removed. When {@code false}, the tokens are returned exactly as they are stored, see {@link
+   *     #getStored(Subject, String, String, String)}.
+   */
+  private List<PersonalAccessToken> doGetPersonalAccessTokens(
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName,
+      boolean refreshAndValidate)
       throws ScmConfigurationPersistenceException, ScmCommunicationException {
     List<PersonalAccessToken> result = new ArrayList<>();
     try {
@@ -268,6 +296,12 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
             LOG.debug("Iterating over secret {}", secret.getMetadata().getName());
             PersonalAccessTokenParams personalAccessTokenParams =
                 this.secret2PersonalAccessTokenParams(secret);
+
+            if (!refreshAndValidate) {
+              LOG.debug("Returning the token from secret {} as is", secret.getMetadata().getName());
+              result.add(secret2PersonalAccessToken(secret, personalAccessTokenParams, null));
+              continue;
+            }
 
             // OAuth tokens are short-living, e.g. GitLab issues them for 2 hours. An expired one is
             // refreshed in place, so that the user does not have to go through the OAuth flow
@@ -293,21 +327,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                   "Creating personal access token for user {} and OAuth provider {}",
                   cheUser.getUserId(),
                   oAuthProviderName);
-              Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
-
-              PersonalAccessToken personalAccessToken =
-                  new PersonalAccessToken(
-                      personalAccessTokenParams.getScmProviderUrl(),
-                      getScmProviderName(personalAccessTokenParams),
-                      secretAnnotations.get(ANNOTATION_CHE_USERID),
-                      personalAccessTokenParams.getOrganization(),
-                      scmUsername.get(),
-                      personalAccessTokenParams.getScmTokenName(),
-                      personalAccessTokenParams.getScmTokenId(),
-                      personalAccessTokenParams.getToken(),
-                      personalAccessTokenParams.getRefreshToken(),
-                      personalAccessTokenParams.getExpiresIn());
-              result.add(personalAccessToken);
+              result.add(
+                  secret2PersonalAccessToken(secret, personalAccessTokenParams, scmUsername.get()));
               continue;
             }
 
@@ -333,6 +354,29 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     // personal access token is always preferred when both are configured.
     result.sort(Comparator.comparing(KubernetesPersonalAccessTokenManager::isOAuthToken));
     return result;
+  }
+
+  /**
+   * Builds a personal access token out of the secret it is stored in.
+   *
+   * @param secret the secret the token is stored in
+   * @param params the token parameters read from the secret
+   * @param scmUsername the SCM username the token belongs to, or {@code null} if the token was not
+   *     validated against the SCM provider
+   */
+  private PersonalAccessToken secret2PersonalAccessToken(
+      Secret secret, PersonalAccessTokenParams params, @Nullable String scmUsername) {
+    return new PersonalAccessToken(
+        params.getScmProviderUrl(),
+        getScmProviderName(params),
+        secret.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID),
+        params.getOrganization(),
+        scmUsername,
+        params.getScmTokenName(),
+        params.getScmTokenId(),
+        params.getToken(),
+        params.getRefreshToken(),
+        params.getExpiresIn());
   }
 
   /**

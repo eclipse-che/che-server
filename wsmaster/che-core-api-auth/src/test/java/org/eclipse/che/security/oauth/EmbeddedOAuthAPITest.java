@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -361,7 +362,7 @@ public class EmbeddedOAuthAPITest {
             "old-access-token",
             "refresh-token-123",
             3600);
-    when(personalAccessTokenManager.get(any(Subject.class), eq(provider), eq(null), eq(null)))
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
         .thenReturn(Optional.of(persistedToken));
     ArgumentCaptor<TokenResponse> tokenResponseCaptor =
         ArgumentCaptor.forClass(TokenResponse.class);
@@ -376,6 +377,9 @@ public class EmbeddedOAuthAPITest {
     assertEquals(tokenResponse.getAccessToken(), "old-access-token");
     assertEquals(tokenResponse.getRefreshToken(), "refresh-token-123");
     assertEquals(tokenResponse.getExpiresInSeconds(), Long.valueOf(3600));
+    // reading the token the regular way makes the manager refresh it, which comes back here
+    // through the SCM token fetcher and never terminates
+    verify(personalAccessTokenManager, never()).get(any(Subject.class), any(), any(), any());
   }
 
   @Test
@@ -409,7 +413,7 @@ public class EmbeddedOAuthAPITest {
             "old-access-token",
             "refresh-token-123",
             0);
-    when(personalAccessTokenManager.get(any(Subject.class), eq(provider), eq(null), eq(null)))
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
         .thenReturn(Optional.of(persistedToken));
     ArgumentCaptor<TokenResponse> tokenResponseCaptor =
         ArgumentCaptor.forClass(TokenResponse.class);
@@ -449,7 +453,7 @@ public class EmbeddedOAuthAPITest {
             "old-access-token",
             null,
             0);
-    when(personalAccessTokenManager.get(any(Subject.class), eq(provider), eq(null), eq(null)))
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
         .thenReturn(Optional.of(persistedToken));
 
     // when
@@ -465,7 +469,7 @@ public class EmbeddedOAuthAPITest {
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
     when(authenticator.refreshToken(anyString())).thenReturn(null);
-    when(personalAccessTokenManager.get(any(Subject.class), eq(provider), eq(null), eq(null)))
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
         .thenReturn(Optional.empty());
 
     // when
@@ -479,7 +483,7 @@ public class EmbeddedOAuthAPITest {
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
     when(authenticator.refreshToken(anyString())).thenReturn(null);
-    when(personalAccessTokenManager.get(any(Subject.class), eq(provider), eq(null), eq(null)))
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
         .thenThrow(new ScmCommunicationException("SCM error"));
 
     // when

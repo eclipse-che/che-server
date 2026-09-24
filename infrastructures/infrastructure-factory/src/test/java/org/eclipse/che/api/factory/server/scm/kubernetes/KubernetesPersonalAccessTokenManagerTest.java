@@ -1219,6 +1219,64 @@ public class KubernetesPersonalAccessTokenManagerTest {
     verify(nonNamespaceOperation, times(1)).delete(eq(oauthSecret));
   }
 
+  @Test
+  public void shouldNotRefreshOrValidateTheTokenReadWithGetStored() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    Map<String, String> annotations = new HashMap<>();
+    annotations.put(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME, "oauth2-abcde");
+    annotations.put(ANNOTATION_CHE_USERID, "user1");
+    annotations.put(ANNOTATION_SCM_URL, "http://host1");
+    annotations.put(ANNOTATION_SCM_PROVIDER_NAME, "gitlab");
+    annotations.put(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID, "token-id");
+    annotations.put(ANNOTATION_SCM_TOKEN_EXPIRES_IN, "3600");
+    Secret oauthSecret =
+        new SecretBuilder()
+            .withMetadata(
+                new ObjectMetaBuilder()
+                    .withName("personal-access-token-expired")
+                    .withCreationTimestamp("2021-07-01T12:00:00Z")
+                    .withAnnotations(annotations)
+                    .build())
+            .withData(
+                Map.of(
+                    TOKEN_DATA_FIELD,
+                    Base64.getEncoder().encodeToString("expired-token".getBytes(UTF_8)),
+                    REFRESH_TOKEN_DATA_FIELD,
+                    Base64.getEncoder().encodeToString("stored-refresh-token".getBytes(UTF_8))))
+            .build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
+
+    // when
+    // this is the read the OAuth API performs to restore the in-memory credential it lost, e.g. on
+    // a server restart, before refreshing the token itself
+    Optional<PersonalAccessToken> token =
+        personalAccessTokenManager.getStored(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            "gitlab",
+            null,
+            null);
+
+    // then
+    assertTrue(token.isPresent());
+    assertEquals(token.get().getToken(), "expired-token");
+    // the refresh token is what the OAuth API needs to perform the refresh
+    assertEquals(token.get().getRefreshToken(), "stored-refresh-token");
+    // refreshing the token from within its own refresh would never terminate
+    verify(scmPersonalAccessTokenFetcher, never())
+        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"));
+    // validating the expired token would delete the secret that keeps the refresh token
+    verify(scmPersonalAccessTokenFetcher, never())
+        .getScmUsername(any(PersonalAccessTokenParams.class));
+    // nothing is written to the cluster, the token is only read
+    verify(cheServerKubernetesClientFactory, never()).create();
+  }
+
   /** The token the SCM provider returns when the expired one gets refreshed. */
   private static PersonalAccessToken refreshedToken() {
     return new PersonalAccessToken(

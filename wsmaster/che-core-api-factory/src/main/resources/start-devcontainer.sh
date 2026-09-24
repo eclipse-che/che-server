@@ -352,6 +352,19 @@ if [ "$REUSING" = "0" ]; then
   fi
 else
   step "6/8" "container already running."
+  # A reused container keeps the user-namespace mapping it was created with, so ask the
+  # container rather than trusting a variable the create path never set. Without this,
+  # KEEP_ID_OK stays 0 on every reuse and the fallback chmod below walks the whole project
+  # and widens permissions on a container that already has uid parity.
+  #
+  # JSON + jq, not --format: `.HostConfig.IDMappings.UidMap` is the JSON key but not the Go
+  # field name, and the template form fails with "can't evaluate field UidMap in type
+  # *define.InspectIDMappings" on podman 5.8.
+  if "$PODMAN" inspect "$CONTAINER_NAME" --format json 2>/dev/null \
+       | jq -e '(.[0].HostConfig.IDMappings.UidMap // []) | length > 0' >/dev/null 2>&1; then
+    KEEP_ID_OK=1
+    echo "  uid parity: already active on the reused container"
+  fi
 fi
 
 # Only widen permissions when uid parity failed. a+rwX (not 777) so the execute bit is not

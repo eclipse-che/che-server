@@ -35,6 +35,33 @@ export TEST_FILE_NAME=${TEST_FILE_NAME:-"Date.txt"}
 export CUSTOM_CONFIG_MAP_NAME=${CUSTOM_CONFIG_MAP_NAME:-"custom-ca-certificates"}
 export GIT_SSL_CONFIG_MAP_NAME=${GIT_SSL_CONFIG_MAP_NAME:-"che-self-signed-cert"}
 
+waitForPRImage() {
+  echo "------- [INFO] Waiting for PR image ${CHE_SERVER_IMAGE} to be available on registry -------"
+  CURRENT_TIME=$(date +%s)
+  ENDTIME=$((CURRENT_TIME + 1800))
+  ELAPSED=0
+
+  while [ "$(date +%s)" -lt $ENDTIME ]; do
+    RESPONSE=$(curl -s "https://quay.io/api/v1/repository/eclipse/che-server/tag/?specificTag=${PR_IMAGE_TAG}&onlyActiveTags=true")
+    if echo "${RESPONSE}" | grep -q "\"name\": \"${PR_IMAGE_TAG}\""; then
+      echo ""
+      echo "======= [INFO] PR image ${CHE_SERVER_IMAGE} is available (after ${ELAPSED}s). ======="
+      return 0
+    fi
+    sleep 30
+    ELAPSED=$((ELAPSED + 30))
+    if (( ELAPSED % 300 == 0 )); then
+      echo " $((ELAPSED / 60))m"
+    else
+      echo -n "."
+    fi
+  done
+
+  echo ""
+  echo "####### [ERROR] PR image ${CHE_SERVER_IMAGE} is not available after 30 minutes. #######"
+  exit 1
+}
+
 provisionOpenShiftOAuthUser() {
   echo "------- [INFO] Start provisioning Openshift OAuth user -------"
   htpasswd -c -B -b users.htpasswd ${OCP_ADMIN_USER_NAME} ${OCP_LOGIN_PASSWORD}
@@ -564,6 +591,7 @@ setupTestEnvironment() {
   OCP_USER_NAME=$1
 
   provisionOpenShiftOAuthUser
+  waitForPRImage
   createCustomResourcesFile
   deployChe
   forwardPortToService
@@ -576,6 +604,7 @@ setupTestEnvironmentOAuthFlow() {
   APPLICATION_SECRET=$3
 
   provisionOpenShiftOAuthUser
+  waitForPRImage
   configureGitSelfSignedCertificate
   createCustomResourcesFile
   deployChe

@@ -398,6 +398,45 @@ run_hook postAttachCommand
 INNER_SHELL=/bin/sh
 "$PODMAN" exec "$CONTAINER_NAME" sh -c 'command -v bash' >/dev/null 2>&1 && INNER_SHELL=bash
 
+# ---------------------------------------------------------------------------
+# 9. Terminal profile
+# ---------------------------------------------------------------------------
+# A "devcontainer" terminal profile, so a shell can be opened inside the container from the
+# terminal dropdown rather than by retyping a podman exec line.
+#
+# terminal.integrated.profiles.* is declared `restricted: true` in VS Code, so a value coming
+# from WORKSPACE settings is silently discarded in an untrusted workspace. It has to go to
+# MACHINE settings - which is also the file che-code's launcher merges the
+# vscode-editor-configurations ConfigMap into, and it keeps the project tree clean.
+#
+# defaultProfile is deliberately NOT set: the default terminal stays in UDI, where kubectl/oc
+# and the cluster credentials are. Opening the dev container is an explicit choice from the
+# dropdown.
+merge_into() {   # $1 = file, $2 = json object to merge in
+  local file="$1" obj="$2" cur='{}' tmp
+  [ -f "$file" ] && cur="$(sed -e 's@^[[:space:]]*//.*$@@' "$file" | jq -c '.' 2>/dev/null || echo '{}')"
+  cur="$(jq -n --argjson a "$cur" --argjson b "$obj" '$a * $b')" || return 1
+  mkdir -p "$(dirname "$file")" || return 1
+  tmp="$(mktemp "$(dirname "$file")/.settings.XXXXXX")" || return 1
+  printf '%s\n' "$cur" | jq '.' > "$tmp" && mv -f -- "$tmp" "$file" || { rm -f -- "$tmp"; return 1; }
+}
+
+profile_argv=(exec -it)
+[ -n "$REMOTE_USER" ] && profile_argv+=(-u "$REMOTE_USER")
+profile_argv+=("${REMOTE_ENV[@]}" -w "$WORKSPACE_FOLDER" "$CONTAINER_NAME" "$INNER_SHELL")
+TERMINAL_PROFILE="$(jq -n \
+  --argjson args "$(printf '%s\n' "${profile_argv[@]}" | jq -R . | jq -s -c .)" \
+  --arg path "$PODMAN" '{
+    "terminal.integrated.profiles.linux": {
+      "devcontainer": { "path": $path, "args": $args, "icon": "container" } } }')"
+
+MACHINE_SETTINGS="${CHE_MACHINE_SETTINGS:-/checode/remote/data/Machine/settings.json}"
+if merge_into "$MACHINE_SETTINGS" "$TERMINAL_PROFILE"; then
+  echo "  terminal profile 'devcontainer' -> ${MACHINE_SETTINGS}"
+else
+  echo "  NOTE: ${MACHINE_SETTINGS} not writable; use the podman exec line below instead." >&2
+fi
+
 if [ "$LIFECYCLE_FAILURES" -gt 0 ]; then
   echo; echo "  WARNING: ${LIFECYCLE_FAILURES} lifecycle command(s) failed."
   [ "$STRICT_LIFECYCLE" = "1" ] && exit 1
@@ -411,7 +450,7 @@ for e in "${PHASE_LOG[@]}"; do
   d="${e%%|*}"; l="${e#*|}"; [ "$d" -ge 2 ] && printf ' | %s %ss' "${l%% *}" "$d"
 done
 echo
-echo "  Open a shell inside it with the command shown below."
+echo "  Terminal: pick the 'devcontainer' profile, or use the command below."
 echo "  Files:  ${PROJECT_DIR} <-> ${WORKSPACE_FOLDER}"
 [ "$KEEP_ID_OK" = "1" ] && echo "  UID parity ON — files created inside are owned by you." \
                         || echo "  UID parity OFF — files created inside are subuid-owned."

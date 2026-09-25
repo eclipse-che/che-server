@@ -27,6 +27,7 @@ source "${SCRIPT_DIR}"/common.sh
 trap "collectLogs" EXIT SIGINT
 
 provisionOpenShiftOAuthUser
+waitForPRImage
 createCustomResourcesFile
 deployChe
 startSmokeTest

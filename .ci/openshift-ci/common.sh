@@ -15,7 +15,12 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-PR_IMAGE_TAG="pr-${PULL_NUMBER}"
+if [[ "${REPO_NAME:-}" == "che-server" ]]; then
+  PR_IMAGE_TAG="pr-${PULL_NUMBER}"
+else
+  PR_IMAGE_TAG="next"
+  echo "[INFO] Not a che-server PR (repo: ${REPO_OWNER:-unknown}/${REPO_NAME:-unknown}), using image tag: ${PR_IMAGE_TAG}"
+fi
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}
 export CHE_SERVER_IMAGE=${CHE_SERVER_IMAGE:-"quay.io/eclipse/che-server:${PR_IMAGE_TAG}"}
@@ -36,6 +41,10 @@ export CUSTOM_CONFIG_MAP_NAME=${CUSTOM_CONFIG_MAP_NAME:-"custom-ca-certificates"
 export GIT_SSL_CONFIG_MAP_NAME=${GIT_SSL_CONFIG_MAP_NAME:-"che-self-signed-cert"}
 
 waitForPRImage() {
+  if [[ "${REPO_NAME:-}" != "che-server" ]]; then
+    echo "------- [INFO] Skipping PR image wait (not a che-server PR, using ${PR_IMAGE_TAG}) -------"
+    return 0
+  fi
   echo "------- [INFO] Waiting for PR image ${CHE_SERVER_IMAGE} to be available on registry -------"
   CURRENT_TIME=$(date +%s)
   ENDTIME=$((CURRENT_TIME + 1800))
@@ -66,24 +75,79 @@ provisionOpenShiftOAuthUser() {
   echo "------- [INFO] Start provisioning Openshift OAuth user -------"
   htpasswd -c -B -b users.htpasswd ${OCP_ADMIN_USER_NAME} ${OCP_LOGIN_PASSWORD}
   htpasswd -b users.htpasswd ${OCP_NON_ADMIN_USER_NAME} ${OCP_LOGIN_PASSWORD}
-  oc create secret generic htpass-secret --from-file=htpasswd="users.htpasswd" -n openshift-config
-  oc apply -f ".ci/openshift-ci/htpasswdProvider.yaml"
+
+  if [ -f "${SHARED_DIR}/nested_kubeconfig" ]; then
+    provisionOpenShiftOAuthUserHyperShift
+  else
+    provisionOpenShiftOAuthUserIPI
+  fi
+
   oc adm policy add-cluster-role-to-user cluster-admin ${OCP_ADMIN_USER_NAME}
 
-  echo "------- [INFO] Waiting for htpasswd auth to be working up to 5 minutes -------"
+  echo "------- [INFO] Waiting for htpasswd auth to be working up to 10 minutes -------"
   CURRENT_TIME=$(date +%s)
-  ENDTIME=$((CURRENT_TIME + 300))
+  ENDTIME=$((CURRENT_TIME + 600))
   while [ "$(date +%s)" -lt $ENDTIME ]; do
-      if oc login -u=${OCP_ADMIN_USER_NAME} -p=${OCP_LOGIN_PASSWORD} --insecure-skip-tls-verify=false; then
+      if oc login -u=${OCP_ADMIN_USER_NAME} -p=${OCP_LOGIN_PASSWORD} --insecure-skip-tls-verify; then
           echo "======= [INFO] OpenShift OAuth htpasswd is configured. =======
 ======= [INFO] Login to OCP cluster with admin user credentials is success.======="
           return 0
       fi
-      sleep 5
+      sleep 10
   done
 
   echo "####### [ERROR] Error occurred while waiting OpenShift OAuth htpasswd setup. Try to rerun test. #######"
   exit 1
+}
+
+provisionOpenShiftOAuthUserIPI() {
+  echo "------- [INFO] IPI environment: configuring OAuth directly -------"
+  oc create secret generic htpass-secret --from-file=htpasswd="users.htpasswd" -n openshift-config
+  oc apply -f ".ci/openshift-ci/htpasswdProvider.yaml"
+}
+
+provisionOpenShiftOAuthUserHyperShift() {
+  echo "------- [INFO] HyperShift environment: configuring OAuth via HostedCluster API -------"
+
+  local CLUSTER_NAME
+  CLUSTER_NAME=$(cat "${SHARED_DIR}/cluster-name")
+
+  local MGMT_KUBECONFIG
+  if [ -f "${SHARED_DIR}/mgmt_kubeconfig" ]; then
+    MGMT_KUBECONFIG="${SHARED_DIR}/mgmt_kubeconfig"
+  else
+    echo "####### [ERROR] Management cluster kubeconfig not found #######"
+    exit 1
+  fi
+
+  local HYPERSHIFT_NS
+  HYPERSHIFT_NS=$(cat "${SHARED_DIR}/hypershift-clusters-namespace" 2>/dev/null || echo "clusters")
+
+  KUBECONFIG="${MGMT_KUBECONFIG}" oc create secret generic htpass-secret \
+    --from-file=htpasswd="users.htpasswd" -n "${HYPERSHIFT_NS}"
+
+  KUBECONFIG="${MGMT_KUBECONFIG}" oc get hostedcluster "${CLUSTER_NAME}" \
+    -n "${HYPERSHIFT_NS}" -o json > /tmp/hostedcluster.json
+
+  python3 -c "
+import json
+with open('/tmp/hostedcluster.json') as f:
+    hc = json.load(f)
+cfg = hc.setdefault('spec', {}).setdefault('configuration', {}).setdefault('oauth', {})
+idps = cfg.setdefault('identityProviders', [])
+idps.append({
+    'htpasswd': {'fileData': {'name': 'htpass-secret'}},
+    'mappingMethod': 'claim',
+    'name': 'htpasswd',
+    'type': 'HTPasswd'
+})
+with open('/tmp/hostedcluster.json', 'w') as f:
+    json.dump(hc, f)
+"
+
+  KUBECONFIG="${MGMT_KUBECONFIG}" oc replace -f /tmp/hostedcluster.json
+
+  echo "------- [INFO] HostedCluster OAuth patched, waiting for rollout -------"
 }
 
 configureGitSelfSignedCertificate() {

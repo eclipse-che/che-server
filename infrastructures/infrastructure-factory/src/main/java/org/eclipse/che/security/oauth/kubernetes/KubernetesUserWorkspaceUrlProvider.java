@@ -21,16 +21,17 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.security.oauth.UserWorkspaceUrlProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Reads the main URLs of the current user's workspaces from the {@code DevWorkspace} custom
- * resources living in the namespaces of that user.
+ * resources living in the namespace of that user.
  *
  * <p>{@code status.mainUrl} is published by the DevWorkspace Operator and holds the URL of the
  * endpoint marked with the {@code type: main} attribute, which for a browser IDE is the URL the
@@ -82,19 +83,20 @@ public class KubernetesUserWorkspaceUrlProvider implements UserWorkspaceUrlProvi
   public Set<String> getWorkspaceUrls() throws ServerException {
     Set<String> urls = new LinkedHashSet<>();
     try {
-      for (KubernetesNamespaceMeta namespace : namespaceFactory.list()) {
-        List<GenericKubernetesResource> devWorkspaces =
-            cheServerKubernetesClientFactory
-                .create()
-                .genericKubernetesResources(DEV_WORKSPACE_CONTEXT)
-                .inNamespace(namespace.getName())
-                .list()
-                .getItems();
-        for (GenericKubernetesResource devWorkspace : devWorkspaces) {
-          Object mainUrl = devWorkspace.get("status", "mainUrl");
-          if (mainUrl instanceof String && !((String) mainUrl).isBlank()) {
-            urls.add((String) mainUrl);
-          }
+      String namespace =
+          namespaceFactory.evaluateNamespaceName(
+              new NamespaceResolutionContext(EnvironmentContext.getCurrent().getSubject()));
+      List<GenericKubernetesResource> devWorkspaces =
+          cheServerKubernetesClientFactory
+              .create()
+              .genericKubernetesResources(DEV_WORKSPACE_CONTEXT)
+              .inNamespace(namespace)
+              .list()
+              .getItems();
+      for (GenericKubernetesResource devWorkspace : devWorkspaces) {
+        Object mainUrl = devWorkspace.get("status", "mainUrl");
+        if (mainUrl instanceof String && !((String) mainUrl).isBlank()) {
+          urls.add((String) mainUrl);
         }
       }
     } catch (InfrastructureException | KubernetesClientException e) {

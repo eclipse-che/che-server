@@ -11,10 +11,11 @@
  */
 package org.eclipse.che.security.oauth.kubernetes;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.emptyList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -35,17 +36,22 @@ import java.util.Map;
 import java.util.Set;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.api.workspace.server.spi.NamespaceResolutionContext;
+import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
-import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesUserWorkspaceUrlProviderTest {
+
+  private static final String NAMESPACE = "alice-che";
 
   @Mock private KubernetesNamespaceFactory namespaceFactory;
   @Mock private CheServerKubernetesClientFactory clientFactory;
@@ -66,14 +72,23 @@ public class KubernetesUserWorkspaceUrlProviderTest {
     when(clientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.genericKubernetesResources(any(ResourceDefinitionContext.class)))
         .thenReturn(devWorkspacesOperation);
+    when(namespaceFactory.evaluateNamespaceName(any(NamespaceResolutionContext.class)))
+        .thenReturn(NAMESPACE);
+
+    EnvironmentContext context = new EnvironmentContext();
+    context.setSubject(new SubjectImpl("alice", emptyList(), "alice-id", "token", false));
+    EnvironmentContext.setCurrent(context);
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    EnvironmentContext.reset();
   }
 
   @Test
   public void shouldReturnMainUrlsOfTheDevWorkspacesOfTheUser() throws Exception {
-    when(namespaceFactory.list())
-        .thenReturn(singletonList(new KubernetesNamespaceMetaImpl("alice-che")));
     mockDevWorkspaces(
-        "alice-che",
+        NAMESPACE,
         devWorkspace("https://che.example.com/alice/first/3100/"),
         devWorkspace("https://che.example.com/alice/second/3100/"));
 
@@ -86,27 +101,21 @@ public class KubernetesUserWorkspaceUrlProviderTest {
             "https://che.example.com/alice/second/3100/"));
   }
 
+  /** Only the namespace Che resolves for the current user may be read, and no other. */
   @Test
-  public void shouldCollectUrlsFromAllNamespacesOfTheUser() throws Exception {
-    when(namespaceFactory.list())
-        .thenReturn(
-            asList(
-                new KubernetesNamespaceMetaImpl("alice-che"),
-                new KubernetesNamespaceMetaImpl("alice-che-2")));
-    mockDevWorkspaces("alice-che", devWorkspace("https://che.example.com/alice/first/3100/"));
-    mockDevWorkspaces("alice-che-2", devWorkspace("https://che.example.com/alice/second/3100/"));
+  public void shouldReadOnlyTheNamespaceResolvedForTheCurrentUser() throws Exception {
+    mockDevWorkspaces(NAMESPACE, devWorkspace("https://che.example.com/alice/first/3100/"));
 
-    Set<String> urls = provider.getWorkspaceUrls();
+    provider.getWorkspaceUrls();
 
-    assertEquals(urls.size(), 2);
+    verify(devWorkspacesOperation).inNamespace(NAMESPACE);
+    verifyNoMoreInteractions(devWorkspacesOperation);
   }
 
   @Test
   public void shouldSkipDevWorkspacesWithoutMainUrl() throws Exception {
-    when(namespaceFactory.list())
-        .thenReturn(singletonList(new KubernetesNamespaceMetaImpl("alice-che")));
     mockDevWorkspaces(
-        "alice-che",
+        NAMESPACE,
         devWorkspaceWithoutStatus(),
         devWorkspace(null),
         devWorkspace(""),
@@ -121,28 +130,25 @@ public class KubernetesUserWorkspaceUrlProviderTest {
   /** The CRD does not constrain us to a string here, so a non string value must not blow up. */
   @Test
   public void shouldSkipDevWorkspacesWithANonStringMainUrl() throws Exception {
-    when(namespaceFactory.list())
-        .thenReturn(singletonList(new KubernetesNamespaceMetaImpl("alice-che")));
     GenericKubernetesResource devWorkspace = devWorkspace(null);
     ((Map<String, Object>) devWorkspace.getAdditionalProperties().get("status"))
         .put("mainUrl", List.of("https://che.example.com/alice/first/3100/"));
-    mockDevWorkspaces("alice-che", devWorkspace);
+    mockDevWorkspaces(NAMESPACE, devWorkspace);
 
     assertTrue(provider.getWorkspaceUrls().isEmpty());
   }
 
   @Test
   public void shouldReturnEmptySetWhenTheUserHasNoDevWorkspaces() throws Exception {
-    when(namespaceFactory.list())
-        .thenReturn(singletonList(new KubernetesNamespaceMetaImpl("alice-che")));
-    mockDevWorkspaces("alice-che");
+    mockDevWorkspaces(NAMESPACE);
 
     assertTrue(provider.getWorkspaceUrls().isEmpty());
   }
 
   @Test(expectedExceptions = ServerException.class)
-  public void shouldFailWhenTheNamespacesCannotBeResolved() throws Exception {
-    when(namespaceFactory.list()).thenThrow(new InfrastructureException("no namespace"));
+  public void shouldFailWhenTheNamespaceCannotBeResolved() throws Exception {
+    when(namespaceFactory.evaluateNamespaceName(any(NamespaceResolutionContext.class)))
+        .thenThrow(new InfrastructureException("no namespace"));
 
     provider.getWorkspaceUrls();
   }
@@ -167,25 +173,25 @@ public class KubernetesUserWorkspaceUrlProviderTest {
       fail("Expected a ServerException");
     } catch (ServerException e) {
       assertFalse(e.getMessage().contains("system:serviceaccount:eclipse-che:che"), e.getMessage());
-      assertFalse(e.getMessage().contains("alice-che"), e.getMessage());
+      assertFalse(e.getMessage().contains(NAMESPACE), e.getMessage());
     }
   }
 
-  private void mockUnreadableDevWorkspaces() throws Exception {
-    when(namespaceFactory.list())
-        .thenReturn(singletonList(new KubernetesNamespaceMetaImpl("alice-che")));
+  private void mockUnreadableDevWorkspaces() {
     NonNamespaceOperation<
             GenericKubernetesResource,
             GenericKubernetesResourceList,
             Resource<GenericKubernetesResource>>
         inNamespace = mock(NonNamespaceOperation.class);
-    when(devWorkspacesOperation.inNamespace("alice-che")).thenReturn(inNamespace);
+    when(devWorkspacesOperation.inNamespace(NAMESPACE)).thenReturn(inNamespace);
     when(inNamespace.list())
         .thenThrow(
             new KubernetesClientException(
                 "devworkspaces.workspace.devfile.io is forbidden: User"
                     + " \"system:serviceaccount:eclipse-che:che\" cannot list resource in namespace"
-                    + " \"alice-che\""));
+                    + " \""
+                    + NAMESPACE
+                    + "\""));
   }
 
   private void mockDevWorkspaces(String namespace, GenericKubernetesResource... devWorkspaces) {

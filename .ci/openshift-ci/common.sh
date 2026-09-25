@@ -126,21 +126,26 @@ provisionOpenShiftOAuthUserHyperShift() {
   KUBECONFIG="${MGMT_KUBECONFIG}" oc create secret generic htpass-secret \
     --from-file=htpasswd="users.htpasswd" -n "${HYPERSHIFT_NS}"
 
-  KUBECONFIG="${MGMT_KUBECONFIG}" oc patch hostedcluster "${CLUSTER_NAME}" \
-    -n "${HYPERSHIFT_NS}" --type=merge -p '{
-      "spec": {
-        "configuration": {
-          "oauth": {
-            "identityProviders": [{
-              "htpasswd": {"fileData": {"name": "htpass-secret"}},
-              "mappingMethod": "claim",
-              "name": "htpasswd",
-              "type": "HTPasswd"
-            }]
-          }
-        }
-      }
-    }'
+  KUBECONFIG="${MGMT_KUBECONFIG}" oc get hostedcluster "${CLUSTER_NAME}" \
+    -n "${HYPERSHIFT_NS}" -o json > /tmp/hostedcluster.json
+
+  python3 -c "
+import json
+with open('/tmp/hostedcluster.json') as f:
+    hc = json.load(f)
+cfg = hc.setdefault('spec', {}).setdefault('configuration', {}).setdefault('oauth', {})
+idps = cfg.setdefault('identityProviders', [])
+idps.append({
+    'htpasswd': {'fileData': {'name': 'htpass-secret'}},
+    'mappingMethod': 'claim',
+    'name': 'htpasswd',
+    'type': 'HTPasswd'
+})
+with open('/tmp/hostedcluster.json', 'w') as f:
+    json.dump(hc, f)
+"
+
+  KUBECONFIG="${MGMT_KUBECONFIG}" oc replace -f /tmp/hostedcluster.json
 
   echo "------- [INFO] HostedCluster OAuth patched, waiting for rollout -------"
 }

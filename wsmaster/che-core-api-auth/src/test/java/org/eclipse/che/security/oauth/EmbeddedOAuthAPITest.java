@@ -476,6 +476,42 @@ public class EmbeddedOAuthAPITest {
     embeddedOAuthAPI.refreshToken(provider);
   }
 
+  @Test(
+      expectedExceptions = UnauthorizedException.class,
+      expectedExceptionsMessageRegExp = "OAuth token for user 0000-00-0000 was not found")
+  public void shouldThrowUnauthorizedWhenRefreshStillFailsAfterRestoringCredential()
+      throws Exception {
+    // given
+    String provider = "github";
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
+    // the refresh fails both before and after the credential is restored
+    when(authenticator.refreshToken(anyString())).thenReturn(null);
+
+    AuthorizationCodeFlow flow = mock(AuthorizationCodeFlow.class);
+    Field flowField = OAuthAuthenticator.class.getDeclaredField("flow");
+    flowField.setAccessible(true);
+    flowField.set(authenticator, flow);
+
+    PersonalAccessToken persistedToken =
+        new PersonalAccessToken(
+            "https://github.com",
+            provider,
+            "0000-00-0000",
+            null,
+            null,
+            "oauth2-token",
+            "id-token",
+            "old-access-token",
+            "refresh-token-123",
+            3600);
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
+        .thenReturn(Optional.of(persistedToken));
+
+    // when
+    embeddedOAuthAPI.refreshToken(provider);
+  }
+
   @Test(expectedExceptions = ServerException.class)
   public void shouldWrapScmCommunicationExceptionInServerExceptionOnRefresh() throws Exception {
     // given

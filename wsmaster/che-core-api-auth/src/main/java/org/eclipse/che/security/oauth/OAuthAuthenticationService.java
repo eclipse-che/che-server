@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -40,6 +40,7 @@ public class OAuthAuthenticationService extends Service {
 
   @Inject private OAuthAPI oAuthAPI;
   @Inject private AuthorisationRequestManager authorisationRequestManager;
+  @Inject private OAuthIdeRedirectManager ideRedirectManager;
 
   /**
    * Redirect request to OAuth provider site for authentication|authorization. Client must provide
@@ -72,6 +73,17 @@ public class OAuthAuthenticationService extends Service {
       throws OAuthAuthenticationException, NotFoundException, ForbiddenException {
     authorisationRequestManager.callback(uriInfo, errorValues);
     return oAuthAPI.callback(uriInfo, errorValues);
+  }
+
+  /**
+   * Processes an OAuth callback issued to the IDE redirect proxy and redirects to the workspace IDE
+   * with the authorization code. Used by browser-based IDE extensions that cannot register a
+   * protocol based {@code redirect_uri}.
+   */
+  @GET
+  @Path("ide-redirect")
+  public Response ideRedirect() throws BadRequestException, ForbiddenException, ServerException {
+    return ideRedirectManager.ideRedirect(uriInfo);
   }
 
   /**

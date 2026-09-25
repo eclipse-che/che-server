@@ -91,6 +91,116 @@ public class EmbeddedOAuthAPITest {
   }
 
   @Test
+  public void shouldRestoreCredentialAndRefreshPersistedTokenOnGet() throws Exception {
+    // given
+    String provider = "github";
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
+    // the in-memory credential store is empty, e.g. after a server restart
+    when(authenticator.getOrRefreshToken(anyString())).thenReturn(null);
+    when(authenticator.refreshToken("0000-00-0000"))
+        .thenReturn(newDto(OAuthToken.class).withToken("new-access-token"));
+
+    AuthorizationCodeFlow flow = mock(AuthorizationCodeFlow.class);
+    Field flowField = OAuthAuthenticator.class.getDeclaredField("flow");
+    flowField.setAccessible(true);
+    flowField.set(authenticator, flow);
+
+    PersonalAccessToken persistedToken =
+        new PersonalAccessToken(
+            "https://github.com",
+            provider,
+            "0000-00-0000",
+            null,
+            null,
+            "oauth2-token",
+            "id-token",
+            "old-access-token",
+            "refresh-token-123",
+            3600);
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
+        .thenReturn(Optional.of(persistedToken));
+    ArgumentCaptor<TokenResponse> tokenResponseCaptor =
+        ArgumentCaptor.forClass(TokenResponse.class);
+
+    // when
+    OAuthToken result = embeddedOAuthAPI.getOrRefreshToken(provider);
+
+    // then the persisted token is refreshed instead of being handed out as stored, since it may
+    // already have expired
+    assertEquals(result.getToken(), "new-access-token");
+    verify(flow).createAndStoreCredential(tokenResponseCaptor.capture(), eq("0000-00-0000"));
+    assertEquals(tokenResponseCaptor.getValue().getRefreshToken(), "refresh-token-123");
+  }
+
+  @Test
+  public void shouldReturnPersistedTokenOnGetWhenItHasNoRefreshToken() throws Exception {
+    // given
+    String provider = "github";
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
+    when(authenticator.getOrRefreshToken(anyString())).thenReturn(null);
+
+    // a user-supplied personal access token has nothing to refresh with
+    PersonalAccessToken persistedToken =
+        new PersonalAccessToken(
+            "https://github.com",
+            provider,
+            "0000-00-0000",
+            null,
+            null,
+            "token-name",
+            "id-token",
+            "persisted-token",
+            null,
+            0);
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
+        .thenReturn(Optional.of(persistedToken));
+
+    // when
+    OAuthToken result = embeddedOAuthAPI.getOrRefreshToken(provider);
+
+    // then
+    assertEquals(result.getToken(), "persisted-token");
+    verify(authenticator, never()).refreshToken(anyString());
+  }
+
+  @Test(
+      expectedExceptions = UnauthorizedException.class,
+      expectedExceptionsMessageRegExp = "OAuth token for user 0000-00-0000 was not found")
+  public void shouldThrowUnauthorizedOnGetWhenRefreshOfPersistedTokenFails() throws Exception {
+    // given
+    String provider = "github";
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
+    when(authenticator.getOrRefreshToken(anyString())).thenReturn(null);
+    when(authenticator.refreshToken(anyString())).thenReturn(null);
+
+    AuthorizationCodeFlow flow = mock(AuthorizationCodeFlow.class);
+    Field flowField = OAuthAuthenticator.class.getDeclaredField("flow");
+    flowField.setAccessible(true);
+    flowField.set(authenticator, flow);
+
+    PersonalAccessToken persistedToken =
+        new PersonalAccessToken(
+            "https://github.com",
+            provider,
+            "0000-00-0000",
+            null,
+            null,
+            "oauth2-token",
+            "id-token",
+            "old-access-token",
+            "refresh-token-123",
+            3600);
+    when(personalAccessTokenManager.getStored(any(Subject.class), eq(provider), eq(null), eq(null)))
+        .thenReturn(Optional.of(persistedToken));
+
+    // when
+    embeddedOAuthAPI.getOrRefreshToken(provider);
+  }
+
+  @Test
   public void shouldGetRegisteredAuthenticators() throws Exception {
     // given
     UriInfo uriInfo = mock(UriInfo.class);

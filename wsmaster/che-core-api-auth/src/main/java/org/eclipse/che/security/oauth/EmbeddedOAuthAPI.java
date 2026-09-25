@@ -253,7 +253,20 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
                     subject, null, provider.getEndpointUrl(), null);
           }
           if (tokenOptional.isPresent()) {
-            return newDto(OAuthToken.class).withToken(tokenOptional.get().getToken());
+            PersonalAccessToken persistedToken = tokenOptional.get();
+            if (isNullOrEmpty(persistedToken.getRefreshToken())) {
+              // Nothing to refresh with, e.g. a user-supplied personal access token.
+              return newDto(OAuthToken.class).withToken(persistedToken.getToken());
+            }
+            // The persisted access token is returned as stored, so it may already have expired.
+            // Restore the credential and refresh it, otherwise the expired token would be handed
+            // out on every call, as the in-memory store stays empty.
+            restoreCredential(provider, persistedToken, subject.getUserId());
+            OAuthToken refreshedToken = provider.refreshToken(subject.getUserId());
+            if (refreshedToken == null) {
+              throw getUnauthorizedException(subject.getUserId());
+            }
+            return refreshedToken;
           }
         } catch (ScmConfigurationPersistenceException | ScmCommunicationException e) {
           throw new RuntimeException(e);
@@ -293,17 +306,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
           if (isNullOrEmpty(token.getRefreshToken())) {
             throw getUnauthorizedException(userId);
           }
-          // Re-populate the in-memory credential store from the persisted token
-          TokenResponse tokenResponse =
-              new TokenResponse()
-                  .setAccessToken(token.getToken())
-                  .setRefreshToken(token.getRefreshToken());
-          // leave `expires_in` unset when the persisted token carries no expiry,
-          // so that the credential is not treated as already expired
-          if (token.getExpiresIn() > 0) {
-            tokenResponse.setExpiresInSeconds(token.getExpiresIn());
-          }
-          provider.flow.createAndStoreCredential(tokenResponse, userId);
+          restoreCredential(provider, token, userId);
           OAuthToken refreshedToken = provider.refreshToken(userId);
           if (refreshedToken == null) {
             throw getUnauthorizedException(userId);
@@ -316,6 +319,25 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     } catch (IOException | ScmConfigurationPersistenceException | ScmCommunicationException e) {
       throw new ServerException(e.getLocalizedMessage(), e);
     }
+  }
+
+  /**
+   * Re-populate the in-memory credential store from a token persisted in a Kubernetes secret, so
+   * that the OAuth flow can refresh it. The credential is gone from the in-memory store e.g. after
+   * a server restart.
+   */
+  private void restoreCredential(
+      OAuthAuthenticator provider, PersonalAccessToken token, String userId) throws IOException {
+    TokenResponse tokenResponse =
+        new TokenResponse()
+            .setAccessToken(token.getToken())
+            .setRefreshToken(token.getRefreshToken());
+    // leave `expires_in` unset when the persisted token carries no expiry,
+    // so that the credential is not treated as already expired
+    if (token.getExpiresIn() > 0) {
+      tokenResponse.setExpiresInSeconds(token.getExpiresIn());
+    }
+    provider.flow.createAndStoreCredential(tokenResponse, userId);
   }
 
   private UnauthorizedException getUnauthorizedException(String userId) {

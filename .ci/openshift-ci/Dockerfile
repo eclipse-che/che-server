@@ -24,7 +24,9 @@ RUN sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo && \
 
 # hadolint ignore=DL3041
 # Install yq, kubectl, chectl cli.
-RUN yum install --assumeyes -d1 psmisc python3-pip  httpd-tools nodejs && \
+# Node.js 22 installed from binary — EPEL only provides Node 16, but chectl requires >= 18.
+RUN yum install --assumeyes -d1 psmisc python3-pip httpd-tools && \
+    curl -fsSL https://nodejs.org/dist/v22.16.0/node-v22.16.0-linux-x64.tar.xz | tar -xJ -C /usr/local --strip-components=1 && \
     pip3 install --upgrade setuptools && \
     pip3 install yq && \
     curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,8 +13,11 @@ package org.eclipse.che.api.factory.server.github;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -134,9 +137,80 @@ public class GithubAuthorizingFileContentProviderTest {
   }
 
   @Test
-  public void shouldNotAskGitHubAPIForDifferentDomain() throws Exception {
-    String raw_url = "https://ghserver.com/foo/bar/branch-name/devfile.yaml";
+  public void shouldRejectForeignHost() throws Exception {
+    String foreignUrl = "https://attacker.example/collect";
 
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withBranch("main")
+            .withServerUrl("https://github.com");
+
+    URLFetcher urlFetcher = mock(URLFetcher.class);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
+
+    DevfileException e =
+        expectThrows(DevfileException.class, () -> fileContentProvider.fetchContent(foreignUrl));
+
+    assertTrue(e.getMessage().contains("absolute URLs must point to one of the provider origins"));
+    verify(urlFetcher, never()).fetch(anyString());
+    verify(urlFetcher, never()).fetch(anyString(), anyString());
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+  }
+
+  @Test
+  public void shouldSendTokenToRawContentHostOfGithubEnterprise() throws Exception {
+    String rawUrl = "https://raw.ghe.example.com/eclipse/che/main/devfile.yaml";
+
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withBranch("main")
+            .withServerUrl("https://ghe.example.com");
+
+    URLFetcher urlFetcher = mock(URLFetcher.class);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
+
+    when(personalAccessTokenManager.getAndStore(anyString()))
+        .thenReturn(new PersonalAccessToken(rawUrl, "provider", "che", "my-token"));
+
+    fileContentProvider.fetchContent(rawUrl);
+
+    verify(urlFetcher).fetch(eq(rawUrl), eq("token my-token"));
+  }
+
+  @Test
+  public void shouldRejectPlainHttpDowngradeOfATrustedHost() throws Exception {
+    String plaintextUrl = "http://raw.githubusercontent.com/eclipse/che/main/devfile.yaml";
+
+    GithubUrl githubUrl =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withBranch("main")
+            .withServerUrl("https://github.com");
+
+    URLFetcher urlFetcher = mock(URLFetcher.class);
+    FileContentProvider fileContentProvider =
+        new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
+
+    DevfileException e =
+        expectThrows(DevfileException.class, () -> fileContentProvider.fetchContent(plaintextUrl));
+
+    assertTrue(e.getMessage().contains("absolute URLs must point to one of the provider origins"));
+    verify(urlFetcher, never()).fetch(anyString());
+    verify(urlFetcher, never()).fetch(anyString(), anyString());
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeUrl() throws Exception {
     URLFetcher urlFetcher = Mockito.mock(URLFetcher.class);
     GithubUrl githubUrl =
         new GithubUrl("github")
@@ -145,11 +219,7 @@ public class GithubAuthorizingFileContentProviderTest {
             .withServerUrl("https://github.com");
     FileContentProvider fileContentProvider =
         new GithubAuthorizingFileContentProvider(githubUrl, urlFetcher, personalAccessTokenManager);
-    var personalAccessToken = new PersonalAccessToken(raw_url, "provider", "che", "my-token");
-    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
-    fileContentProvider.fetchContent(raw_url);
-
-    verify(urlFetcher).fetch(eq(raw_url), eq("token my-token"));
+    fileContentProvider.fetchContent("file:///etc/passwd");
   }
 }

@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.factory.server.github;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -26,6 +27,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.*;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.slf4j.Logger;
@@ -223,6 +225,18 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     }
   }
 
+  /**
+   * Tells whether the server may contact an SCM server that is not the configured provider
+   * endpoint. Such a URL comes from a secret in the user's namespace, so contacting it
+   * unconditionally would let anyone holding a namespace have the server reach services only it can
+   * see (SSRF). A provider on a private network is reached through the configured provider
+   * endpoint, which is matched before it comes to this.
+   */
+  @VisibleForTesting
+  boolean canContact(String scmServerUrl) {
+    return UrlTargetValidator.isAllowed(scmServerUrl);
+  }
+
   @Override
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
       throws ScmCommunicationException {
@@ -232,6 +246,13 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       apiClient = githubApiClient;
     } else {
       if (OAUTH_PROVIDER_NAME.equals(params.getScmTokenName())) {
+        if (!canContact(params.getScmProviderUrl())) {
+          LOG.warn(
+              "Not contacting {}: it is not the configured GitHub endpoint and does not point to a"
+                  + " publicly routable host.",
+              params.getScmProviderUrl());
+          return Optional.empty();
+        }
         apiClient = new GithubApiClient(params.getScmProviderUrl());
       } else {
         LOG.debug("not a  valid url {} for current fetcher ", params.getScmProviderUrl());

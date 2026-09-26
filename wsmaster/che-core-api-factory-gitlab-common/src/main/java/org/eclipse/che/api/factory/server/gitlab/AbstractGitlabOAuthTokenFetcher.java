@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -111,10 +111,13 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
           scmServerUrl,
           providerName,
           cheSubject.getUserId(),
+          null,
           valid.get().second,
           tokenName,
           tokenId,
-          oAuthToken.getToken());
+          oAuthToken.getToken(),
+          oAuthToken.getRefreshToken(),
+          oAuthToken.getExpiresIn());
     } catch (UnauthorizedException e) {
       throw buildScmUnauthorizedException(cheSubject);
     } catch (NotFoundException nfe) {

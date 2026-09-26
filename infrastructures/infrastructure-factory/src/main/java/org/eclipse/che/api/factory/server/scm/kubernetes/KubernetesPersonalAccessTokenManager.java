@@ -12,6 +12,7 @@
 package org.eclipse.che.api.factory.server.scm.kubernetes;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.Long.parseLong;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
@@ -24,6 +25,8 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -75,7 +78,21 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME =
       "che.eclipse.org/scm-personal-access-token-name";
   public static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
+
+  /** Kubernetes secret annotation key for the token expiration time in seconds. */
+  public static final String ANNOTATION_SCM_TOKEN_EXPIRES_IN =
+      "che.eclipse.org/scm-token-expires-in";
+
   public static final String TOKEN_DATA_FIELD = "token";
+
+  /** Kubernetes secret data field key for the OAuth refresh token. */
+  public static final String REFRESH_TOKEN_DATA_FIELD = "refresh-token";
+
+  /**
+   * Number of seconds before the actual expiration time at which an OAuth token is already
+   * considered expired and gets refreshed.
+   */
+  private static final long TOKEN_EXPIRATION_LEEWAY_SECONDS = 60;
 
   private final KubernetesNamespaceFactory namespaceFactory;
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
@@ -102,34 +119,41 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
       String namespace = getFirstNamespace();
+      ImmutableMap.Builder<String, String> annotations =
+          new ImmutableMap.Builder<String, String>()
+              .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
+              .put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl())
+              .put(ANNOTATION_SCM_PROVIDER_NAME, personalAccessToken.getScmProviderName())
+              .put(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID, personalAccessToken.getScmTokenId())
+              .put(
+                  ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME, personalAccessToken.getScmTokenName());
+      // Only OAuth tokens with a known lifetime get the annotation. Storing `0` would be
+      // indistinguishable from a token that expires immediately, so it is omitted instead.
+      if (personalAccessToken.getExpiresIn() > 0) {
+        annotations.put(
+            ANNOTATION_SCM_TOKEN_EXPIRES_IN, String.valueOf(personalAccessToken.getExpiresIn()));
+      }
       ObjectMeta meta =
           new ObjectMetaBuilder()
               .withName(NameGenerator.generate(NAME_PATTERN, 5))
-              .withAnnotations(
-                  new ImmutableMap.Builder<String, String>()
-                      .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
-                      .put(ANNOTATION_SCM_URL, personalAccessToken.getScmProviderUrl())
-                      .put(ANNOTATION_SCM_PROVIDER_NAME, personalAccessToken.getScmProviderName())
-                      .put(
-                          ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID,
-                          personalAccessToken.getScmTokenId())
-                      .put(
-                          ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
-                          personalAccessToken.getScmTokenName())
-                      .build())
+              .withAnnotations(annotations.build())
               .withLabels(SECRET_LABELS)
               .build();
 
-      Secret secret =
-          new SecretBuilder()
-              .withMetadata(meta)
-              .withData(
-                  Map.of(
-                      TOKEN_DATA_FIELD,
-                      Base64.getEncoder()
-                          .encodeToString(
-                              personalAccessToken.getToken().getBytes(StandardCharsets.UTF_8))))
-              .build();
+      // Kubernetes secrets store data as Base64-encoded values
+      String tokenEncoded =
+          Base64.getEncoder()
+              .encodeToString(personalAccessToken.getToken().getBytes(StandardCharsets.UTF_8));
+      ImmutableMap.Builder<String, String> data =
+          new ImmutableMap.Builder<String, String>().put(TOKEN_DATA_FIELD, tokenEncoded);
+      // Refresh token is absent for PATs and for OAuth providers that don't issue one
+      String refreshToken = personalAccessToken.getRefreshToken();
+      if (!isNullOrEmpty(refreshToken)) {
+        data.put(
+            REFRESH_TOKEN_DATA_FIELD,
+            Base64.getEncoder().encodeToString(refreshToken.getBytes(StandardCharsets.UTF_8)));
+      }
+      Secret secret = new SecretBuilder().withMetadata(meta).withData(data.build()).build();
 
       cheServerKubernetesClientFactory
           .create()
@@ -217,11 +241,39 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         .findFirst();
   }
 
+  @Override
+  public Optional<PersonalAccessToken> getStored(
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
+      throws ScmConfigurationPersistenceException, ScmCommunicationException {
+    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl, namespaceName, false)
+        .stream()
+        .findFirst();
+  }
+
   private List<PersonalAccessToken> doGetPersonalAccessTokens(
       Subject cheUser,
       @Nullable String oAuthProviderName,
       @Nullable String scmServerUrl,
       @Nullable String namespaceName)
+      throws ScmConfigurationPersistenceException, ScmCommunicationException {
+    return doGetPersonalAccessTokens(cheUser, oAuthProviderName, scmServerUrl, namespaceName, true);
+  }
+
+  /**
+   * @param refreshAndValidate whether the tokens have to be checked against the SCM provider: an
+   *     expired OAuth token gets refreshed, and a token that the provider does not accept gets
+   *     removed. When {@code false}, the tokens are returned exactly as they are stored, see {@link
+   *     #getStored(Subject, String, String, String)}.
+   */
+  private List<PersonalAccessToken> doGetPersonalAccessTokens(
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName,
+      boolean refreshAndValidate)
       throws ScmConfigurationPersistenceException, ScmCommunicationException {
     List<PersonalAccessToken> result = new ArrayList<>();
     try {
@@ -244,6 +296,29 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
             LOG.debug("Iterating over secret {}", secret.getMetadata().getName());
             PersonalAccessTokenParams personalAccessTokenParams =
                 this.secret2PersonalAccessTokenParams(secret);
+
+            if (!refreshAndValidate) {
+              LOG.debug("Returning the token from secret {} as is", secret.getMetadata().getName());
+              result.add(secret2PersonalAccessToken(secret, personalAccessTokenParams, null));
+              continue;
+            }
+
+            // OAuth tokens are short-living, e.g. GitLab issues them for 2 hours. An expired one is
+            // refreshed in place, so that the user does not have to go through the OAuth flow
+            // again. If the refresh fails, the regular validation below takes over.
+            if (isOAuthTokenSecret(secret) && isTokenExpired(secret, personalAccessTokenParams)) {
+              Optional<PersonalAccessToken> refreshedToken =
+                  refreshExpiredOAuthToken(
+                      cheUser,
+                      secret,
+                      personalAccessTokenParams.getScmProviderUrl(),
+                      namespaceMeta.getName());
+              if (refreshedToken.isPresent()) {
+                result.add(refreshedToken.get());
+                continue;
+              }
+            }
+
             Optional<String> scmUsername =
                 scmPersonalAccessTokenFetcher.getScmUsername(personalAccessTokenParams);
 
@@ -252,19 +327,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
                   "Creating personal access token for user {} and OAuth provider {}",
                   cheUser.getUserId(),
                   oAuthProviderName);
-              Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
-
-              PersonalAccessToken personalAccessToken =
-                  new PersonalAccessToken(
-                      personalAccessTokenParams.getScmProviderUrl(),
-                      getScmProviderName(personalAccessTokenParams),
-                      secretAnnotations.get(ANNOTATION_CHE_USERID),
-                      personalAccessTokenParams.getOrganization(),
-                      scmUsername.get(),
-                      personalAccessTokenParams.getScmTokenName(),
-                      personalAccessTokenParams.getScmTokenId(),
-                      personalAccessTokenParams.getToken());
-              result.add(personalAccessToken);
+              result.add(
+                  secret2PersonalAccessToken(secret, personalAccessTokenParams, scmUsername.get()));
               continue;
             }
 
@@ -293,6 +357,29 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   /**
+   * Builds a personal access token out of the secret it is stored in.
+   *
+   * @param secret the secret the token is stored in
+   * @param params the token parameters read from the secret
+   * @param scmUsername the SCM username the token belongs to, or {@code null} if the token was not
+   *     validated against the SCM provider
+   */
+  private PersonalAccessToken secret2PersonalAccessToken(
+      Secret secret, PersonalAccessTokenParams params, @Nullable String scmUsername) {
+    return new PersonalAccessToken(
+        params.getScmProviderUrl(),
+        getScmProviderName(params),
+        secret.getMetadata().getAnnotations().get(ANNOTATION_CHE_USERID),
+        params.getOrganization(),
+        scmUsername,
+        params.getScmTokenName(),
+        params.getScmTokenId(),
+        params.getToken(),
+        params.getRefreshToken(),
+        params.getExpiresIn());
+  }
+
+  /**
    * Checks whether the token was obtained with the OAuth flow. Such tokens are stored with a
    * generated {@code oauth2-<random>} name, while the manually configured personal access tokens
    * are named after the SCM provider.
@@ -315,6 +402,80 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     String tokenName =
         secret.getMetadata().getAnnotations().get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
     return tokenName != null && tokenName.startsWith(OAUTH_2_PREFIX);
+  }
+
+  /**
+   * Checks whether the token kept in the given secret has expired. The lifetime is counted from the
+   * secret creation time, as the {@code che.eclipse.org/scm-token-expires-in} annotation holds the
+   * number of seconds the token was valid for when it was stored.
+   *
+   * @param secret the secret the token is stored in
+   * @param params the token parameters read from the secret
+   * @return {@code true} if the token is known to expire and its lifetime is over
+   */
+  private static boolean isTokenExpired(Secret secret, PersonalAccessTokenParams params) {
+    // Tokens without a known lifetime, e.g. personal access tokens, never expire from Che's
+    // point of view.
+    if (params.getExpiresIn() <= 0) {
+      return false;
+    }
+    String creationTimestamp = secret.getMetadata().getCreationTimestamp();
+    if (isNullOrEmpty(creationTimestamp)) {
+      return false;
+    }
+    try {
+      Instant expiresAt = Instant.parse(creationTimestamp).plusSeconds(params.getExpiresIn());
+      // A token that is about to expire is treated as expired, so that it does not run out in the
+      // middle of the operation it is handed out for.
+      return !Instant.now().isBefore(expiresAt.minusSeconds(TOKEN_EXPIRATION_LEEWAY_SECONDS));
+    } catch (DateTimeParseException e) {
+      LOG.warn(
+          "Invalid creation timestamp '{}' in secret '{}'. Treating token as non-expiring.",
+          creationTimestamp,
+          secret.getMetadata().getName());
+      return false;
+    }
+  }
+
+  /**
+   * Refreshes the expired OAuth token kept in the given secret. The refreshed token is stored in a
+   * new secret, and the outdated one is removed.
+   *
+   * @param cheUser the user the token belongs to
+   * @param secret the secret keeping the expired token
+   * @param scmServerUrl the SCM server URL to refresh the token for
+   * @param namespaceName the namespace the outdated secret lives in
+   * @return the refreshed token, or {@link Optional#empty()} if the token could not be refreshed
+   */
+  private Optional<PersonalAccessToken> refreshExpiredOAuthToken(
+      Subject cheUser, Secret secret, String scmServerUrl, String namespaceName) {
+    String secretName = secret.getMetadata().getName();
+    PersonalAccessToken refreshedToken;
+    try {
+      LOG.debug("Refreshing the expired OAuth token from secret {}", secretName);
+      refreshedToken =
+          scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(cheUser, scmServerUrl);
+      store(refreshedToken);
+      gitCredentialManager.createOrReplace(refreshedToken);
+    } catch (ScmUnauthorizedException
+        | ScmCommunicationException
+        | UnknownScmProviderException
+        | UnsatisfiedScmPreconditionException
+        | ScmConfigurationPersistenceException e) {
+      // The caller falls back to the regular validation flow, which either finds another valid
+      // token or reports that none exists, so that a new one is requested from the user.
+      LOG.debug("Failed to refresh the expired OAuth token from secret {}", secretName, e);
+      return Optional.empty();
+    }
+
+    // The outdated secret is superseded by the newly stored one. Failing to remove it is not
+    // fatal, it is just left behind to be cleaned up on the next refresh.
+    try {
+      cheServerKubernetesClientFactory.create().secrets().inNamespace(namespaceName).delete(secret);
+    } catch (InfrastructureException | KubernetesClientException e) {
+      LOG.warn("Failed to remove the outdated OAuth token secret {}", secretName, e);
+    }
+    return Optional.of(refreshedToken);
   }
 
   /**
@@ -398,10 +559,32 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     return false;
   }
 
+  /** Extracts token parameters from a Kubernetes secret, decoding Base64-encoded data fields. */
   private PersonalAccessTokenParams secret2PersonalAccessTokenParams(Secret secret) {
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
+    String refreshTokenData = secret.getData().get(REFRESH_TOKEN_DATA_FIELD);
+    String expiresInAnnotation = secretAnnotations.get(ANNOTATION_SCM_TOKEN_EXPIRES_IN);
 
-    String token = new String(Base64.getDecoder().decode(secret.getData().get("token"))).trim();
+    String token =
+        new String(Base64.getDecoder().decode(secret.getData().get(TOKEN_DATA_FIELD))).trim();
+    // Refresh token and expiresIn may be absent in PAT secrets, or secrets created before OAuth
+    // refresh support
+    String refreshToken =
+        isNullOrEmpty(refreshTokenData)
+            ? null
+            : new String(Base64.getDecoder().decode(refreshTokenData)).trim();
+    long expiresIn = 0;
+    if (!isNullOrEmpty(expiresInAnnotation)) {
+      try {
+        expiresIn = parseLong(expiresInAnnotation.trim());
+      } catch (NumberFormatException e) {
+        LOG.warn(
+            "Invalid '{}' annotation value '{}' in secret '{}'. Treating token as non-expiring.",
+            ANNOTATION_SCM_TOKEN_EXPIRES_IN,
+            expiresInAnnotation,
+            secret.getMetadata().getName());
+      }
+    }
     String configuredOAuthTokenName =
         secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
     String configuredTokenId = secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_ID);
@@ -415,7 +598,9 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
         configuredOAuthTokenName,
         configuredTokenId,
         token,
-        configuredScmOrganization);
+        configuredScmOrganization,
+        refreshToken,
+        expiresIn);
   }
 
   private boolean isSecretMatchesSearchCriteria(
@@ -426,8 +611,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
     String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
     String configuredCheUserId = secretAnnotations.get(ANNOTATION_CHE_USERID);
-    String configuredOAuthProviderName =
-        secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+    String configuredOAuthProviderName = secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME);
 
     return (configuredCheUserId.equals(cheUser.getUserId()))
         && (oAuthProviderName == null || oAuthProviderName.equals(configuredOAuthProviderName))
@@ -490,8 +674,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   public void storeGitCredentials(String scmServerUrl)
       throws UnsatisfiedScmPreconditionException,
           ScmConfigurationPersistenceException,
-          ScmCommunicationException,
-          ScmUnauthorizedException {
+          ScmCommunicationException {
     Subject subject = EnvironmentContext.getCurrent().getSubject();
     Optional<PersonalAccessToken> tokenOptional =
         doGetPersonalAccessTokens(subject, null, scmServerUrl, null).stream().findFirst();

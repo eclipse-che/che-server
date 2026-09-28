@@ -25,8 +25,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -87,12 +85,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   /** Kubernetes secret data field key for the OAuth refresh token. */
   public static final String REFRESH_TOKEN_DATA_FIELD = "refresh-token";
-
-  /**
-   * Number of seconds before the actual expiration time at which an OAuth token is already
-   * considered expired and gets refreshed.
-   */
-  private static final long TOKEN_EXPIRATION_LEEWAY_SECONDS = 60;
 
   private final KubernetesNamespaceFactory namespaceFactory;
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
@@ -303,22 +295,6 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
               continue;
             }
 
-            // OAuth tokens are short-living, e.g. GitLab issues them for 2 hours. An expired one is
-            // refreshed in place, so that the user does not have to go through the OAuth flow
-            // again. If the refresh fails, the regular validation below takes over.
-            if (isOAuthTokenSecret(secret) && isTokenExpired(secret, personalAccessTokenParams)) {
-              Optional<PersonalAccessToken> refreshedToken =
-                  refreshExpiredOAuthToken(
-                      cheUser,
-                      secret,
-                      personalAccessTokenParams.getScmProviderUrl(),
-                      namespaceMeta.getName());
-              if (refreshedToken.isPresent()) {
-                result.add(refreshedToken.get());
-                continue;
-              }
-            }
-
             Optional<String> scmUsername =
                 scmPersonalAccessTokenFetcher.getScmUsername(personalAccessTokenParams);
 
@@ -330,6 +306,22 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
               result.add(
                   secret2PersonalAccessToken(secret, personalAccessTokenParams, scmUsername.get()));
               continue;
+            }
+
+            // OAuth tokens are short-living, e.g. GitLab issues them for 2 hours. A token that the
+            // provider no longer accepts is refreshed in place, so that the user does not have to
+            // go through the OAuth flow again. If the refresh fails, the secret is removed below.
+            if (isOAuthTokenSecret(secret)) {
+              Optional<PersonalAccessToken> refreshedToken =
+                  refreshExpiredOAuthToken(
+                      cheUser,
+                      secret,
+                      personalAccessTokenParams.getScmProviderUrl(),
+                      namespaceMeta.getName());
+              if (refreshedToken.isPresent()) {
+                result.add(refreshedToken.get());
+                continue;
+              }
             }
 
             // Removing token that is no longer valid. If several tokens exist the next one could
@@ -405,44 +397,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   }
 
   /**
-   * Checks whether the token kept in the given secret has expired. The lifetime is counted from the
-   * secret creation time, as the {@code che.eclipse.org/scm-token-expires-in} annotation holds the
-   * number of seconds the token was valid for when it was stored.
-   *
-   * @param secret the secret the token is stored in
-   * @param params the token parameters read from the secret
-   * @return {@code true} if the token is known to expire and its lifetime is over
-   */
-  private static boolean isTokenExpired(Secret secret, PersonalAccessTokenParams params) {
-    // Tokens without a known lifetime, e.g. personal access tokens, never expire from Che's
-    // point of view.
-    if (params.getExpiresIn() <= 0) {
-      return false;
-    }
-    String creationTimestamp = secret.getMetadata().getCreationTimestamp();
-    if (isNullOrEmpty(creationTimestamp)) {
-      return false;
-    }
-    try {
-      Instant expiresAt = Instant.parse(creationTimestamp).plusSeconds(params.getExpiresIn());
-      // A token that is about to expire is treated as expired, so that it does not run out in the
-      // middle of the operation it is handed out for.
-      return !Instant.now().isBefore(expiresAt.minusSeconds(TOKEN_EXPIRATION_LEEWAY_SECONDS));
-    } catch (DateTimeParseException e) {
-      LOG.warn(
-          "Invalid creation timestamp '{}' in secret '{}'. Treating token as non-expiring.",
-          creationTimestamp,
-          secret.getMetadata().getName());
-      return false;
-    }
-  }
-
-  /**
-   * Refreshes the expired OAuth token kept in the given secret. The refreshed token is stored in a
-   * new secret, and the outdated one is removed.
+   * Refreshes the OAuth token kept in the given secret that the SCM provider no longer accepts. The
+   * refreshed token is stored in a new secret, and the outdated one is removed.
    *
    * @param cheUser the user the token belongs to
-   * @param secret the secret keeping the expired token
+   * @param secret the secret keeping the outdated token
    * @param scmServerUrl the SCM server URL to refresh the token for
    * @param namespaceName the namespace the outdated secret lives in
    * @return the refreshed token, or {@link Optional#empty()} if the token could not be refreshed

@@ -54,7 +54,6 @@ import org.eclipse.che.api.factory.server.scm.GitCredentialManager;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
-import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -785,7 +784,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
-  public void shouldRefreshExpiredOAuthToken() throws Exception {
+  public void shouldRefreshOAuthTokenRejectedByScmProvider() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(singletonList(meta));
@@ -796,7 +795,9 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
-    // the token was issued for an hour back in 2021, so it is long expired by now
+    // the SCM provider does not accept the stored token anymore
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.empty());
     ObjectMeta oauthMeta =
         new ObjectMetaBuilder()
             .withName("personal-access-token-old")
@@ -854,13 +855,13 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // the refreshed token is stored and the outdated secret is removed
     verify(nonNamespaceOperation, times(1)).createOrReplace(any(Secret.class));
     verify(nonNamespaceOperation, times(1)).delete(eq(oauthSecret));
-    // there is no point in validating the token that is known to be expired
-    verify(scmPersonalAccessTokenFetcher, never())
+    // the refresh is only attempted after the stored token is rejected
+    verify(scmPersonalAccessTokenFetcher, times(1))
         .getScmUsername(any(PersonalAccessTokenParams.class));
   }
 
   @Test
-  public void shouldNotRefreshOAuthTokenThatIsStillValid() throws Exception {
+  public void shouldNotRefreshOAuthTokenThatTheScmProviderAccepts() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(singletonList(meta));
@@ -870,7 +871,6 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
         .thenReturn(Optional.of("user"));
-    // the token has just been issued for an hour
     ObjectMeta oauthMeta =
         new ObjectMetaBuilder()
             .withName("personal-access-token-fresh")
@@ -914,7 +914,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
-  public void shouldRefreshOAuthTokenThatIsAboutToExpire() throws Exception {
+  public void shouldUpdateGitCredentialsWithRefreshedOAuthToken() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(singletonList(meta));
@@ -925,14 +925,15 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
-    // the token is valid for a couple of seconds more, which is within the expiration leeway
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.empty());
     Secret oauthSecret =
         tokenSecret(
-            "personal-access-token-almost-expired",
+            "personal-access-token-rejected",
             "oauth2-abcde",
-            Instant.now().minusSeconds(3595).toString(),
+            Instant.now().toString(),
             "3600",
-            "almost-expired-token");
+            "rejected-token");
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
     PersonalAccessToken refreshedToken = refreshedToken();
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
@@ -955,47 +956,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
-  public void shouldFallBackToStoredOAuthTokenIfRefreshFails() throws Exception {
-    // given
-    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(singletonList(meta));
-    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
-    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
-    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
-    when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    Secret oauthSecret =
-        tokenSecret(
-            "personal-access-token-expired",
-            "oauth2-abcde",
-            "2021-07-01T12:00:00Z",
-            "3600",
-            "expired-token");
-    when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
-    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("http://host1")))
-        .thenThrow(new ScmCommunicationException("the SCM provider is not reachable"));
-    // the SCM provider still accepts the stored token, e.g. Che and the provider disagree on the
-    // expiration time
-    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn(Optional.of("user"));
-
-    // when
-    Optional<PersonalAccessToken> token =
-        personalAccessTokenManager.get(
-            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
-            null,
-            "http://host1",
-            null);
-
-    // then
-    assertTrue(token.isPresent());
-    assertEquals(token.get().getToken(), "expired-token");
-    verify(gitCredentialManager, never()).createOrReplace(any(PersonalAccessToken.class));
-  }
-
-  @Test
-  public void shouldRemoveExpiredOAuthTokenSecretIfRefreshFailsAndTokenIsInvalid()
-      throws Exception {
+  public void shouldRemoveRejectedOAuthTokenSecretIfRefreshFails() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(singletonList(meta));
@@ -1008,11 +969,11 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     Secret oauthSecret =
         tokenSecret(
-            "personal-access-token-expired",
+            "personal-access-token-rejected",
             "oauth2-abcde",
             "2021-07-01T12:00:00Z",
             "3600",
-            "expired-token");
+            "rejected-token");
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
             any(Subject.class), eq("http://host1")))
@@ -1077,7 +1038,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   @Test
-  public void shouldNotRefreshExpiredPersonalAccessToken() throws Exception {
+  public void shouldNotRefreshRejectedPersonalAccessToken() throws Exception {
     // given
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
     when(namespaceFactory.list()).thenReturn(singletonList(meta));
@@ -1085,10 +1046,13 @@ public class KubernetesPersonalAccessTokenManagerTest {
     KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
     when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
     when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
     when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn(Optional.of("user"));
-    // a manually configured token cannot be refreshed, even if it somehow got the expiration
-    // annotation
+        .thenReturn(Optional.empty());
+    // a manually configured token cannot be refreshed, it is just removed once the provider
+    // rejects it
     Secret patSecret =
         tokenSecret(
             "personal-access-token-pat", "gitlab", "2021-07-01T12:00:00Z", "3600", "pat-token");
@@ -1103,86 +1067,14 @@ public class KubernetesPersonalAccessTokenManagerTest {
             null);
 
     // then
-    assertTrue(token.isPresent());
-    assertEquals(token.get().getToken(), "pat-token");
+    assertFalse(token.isPresent());
+    verify(nonNamespaceOperation, times(1)).delete(eq(patSecret));
     verify(scmPersonalAccessTokenFetcher, never())
         .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"));
   }
 
   @Test
-  public void shouldNotRefreshOAuthTokenWithoutExpirationAnnotation() throws Exception {
-    // given
-    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(singletonList(meta));
-    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
-    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
-    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
-    when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn(Optional.of("user"));
-    // secrets created before the OAuth refresh support have no known lifetime
-    Secret oauthSecret =
-        tokenSecret(
-            "personal-access-token-legacy",
-            "oauth2-abcde",
-            "2021-07-01T12:00:00Z",
-            null,
-            "oauth-token");
-    when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
-
-    // when
-    Optional<PersonalAccessToken> token =
-        personalAccessTokenManager.get(
-            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
-            null,
-            "http://host1",
-            null);
-
-    // then
-    assertTrue(token.isPresent());
-    assertEquals(token.get().getToken(), "oauth-token");
-    verify(scmPersonalAccessTokenFetcher, never())
-        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"));
-  }
-
-  @Test
-  public void shouldNotRefreshOAuthTokenWithUnparsableCreationTimestamp() throws Exception {
-    // given
-    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
-    when(namespaceFactory.list()).thenReturn(singletonList(meta));
-    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
-    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
-    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
-    when(kubernetesnamespace.secrets()).thenReturn(secrets);
-    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
-        .thenReturn(Optional.of("user"));
-    // the expiration time cannot be calculated, so the token is validated the regular way
-    Secret oauthSecret =
-        tokenSecret(
-            "personal-access-token-broken",
-            "oauth2-abcde",
-            "not-a-timestamp",
-            "3600",
-            "oauth-token");
-    when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
-
-    // when
-    Optional<PersonalAccessToken> token =
-        personalAccessTokenManager.get(
-            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
-            null,
-            "http://host1",
-            null);
-
-    // then
-    assertTrue(token.isPresent());
-    assertEquals(token.get().getToken(), "oauth-token");
-    verify(scmPersonalAccessTokenFetcher, never())
-        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"));
-  }
-
-  @Test
-  public void shouldRefreshExpiredOAuthTokenOnStoreGitCredentials() throws Exception {
+  public void shouldRefreshRejectedOAuthTokenOnStoreGitCredentials() throws Exception {
     // given
     Subject subject = mock(Subject.class);
     when(subject.getUserId()).thenReturn("user1");
@@ -1198,13 +1090,15 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq(meta.getName()))).thenReturn(nonNamespaceOperation);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.empty());
     Secret oauthSecret =
         tokenSecret(
-            "personal-access-token-expired",
+            "personal-access-token-rejected",
             "oauth2-abcde",
             "2021-07-01T12:00:00Z",
             "3600",
-            "expired-token");
+            "rejected-token");
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
     PersonalAccessToken refreshedToken = refreshedToken();
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
@@ -1277,7 +1171,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     verify(cheServerKubernetesClientFactory, never()).create();
   }
 
-  /** The token the SCM provider returns when the expired one gets refreshed. */
+  /** The token the SCM provider returns when the outdated one gets refreshed. */
   private static PersonalAccessToken refreshedToken() {
     return new PersonalAccessToken(
         "http://host1",
@@ -1294,7 +1188,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
   /**
    * Builds a token secret of the 'user1' user for the 'http://host1' SCM server, so that the
-   * expiration related tests do not have to repeat the whole secret structure.
+   * refresh related tests do not have to repeat the whole secret structure.
    *
    * @param secretName name of the secret
    * @param tokenName token name annotation value, prefixed with 'oauth2-' for the OAuth tokens

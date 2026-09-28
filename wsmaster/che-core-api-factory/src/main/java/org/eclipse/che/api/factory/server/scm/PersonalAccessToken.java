@@ -32,7 +32,7 @@ public class PersonalAccessToken {
   @Nullable private final String refreshToken;
 
   /** Token expiration time in seconds. 0 if the token does not expire. */
-  @Nullable private final long expiresIn;
+  private final long expiresIn;
 
   private final String scmTokenName;
   private final String scmTokenId;
@@ -111,7 +111,6 @@ public class PersonalAccessToken {
     return scmOrganization;
   }
 
-  @Nullable
   public long getExpiresIn() {
     return expiresIn;
   }

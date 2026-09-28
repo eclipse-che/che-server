@@ -123,8 +123,9 @@ provisionOpenShiftOAuthUserHyperShift() {
   local HYPERSHIFT_NS
   HYPERSHIFT_NS=$(cat "${SHARED_DIR}/hypershift-clusters-namespace" 2>/dev/null || echo "clusters")
 
-  KUBECONFIG="${MGMT_KUBECONFIG}" oc create secret generic htpass-secret \
-    --from-file=htpasswd="users.htpasswd" -n "${HYPERSHIFT_NS}"
+  oc create secret generic htpass-secret \
+    --from-file=htpasswd="users.htpasswd" -n "${HYPERSHIFT_NS}" \
+    --dry-run=client -o yaml | KUBECONFIG="${MGMT_KUBECONFIG}" oc apply -f -
 
   KUBECONFIG="${MGMT_KUBECONFIG}" oc get hostedcluster "${CLUSTER_NAME}" \
     -n "${HYPERSHIFT_NS}" -o json > /tmp/hostedcluster.json

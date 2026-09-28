@@ -19,7 +19,8 @@ SHELL ["/bin/bash", "-c"]
 
 # hadolint ignore=DL3041
 # Install yq, kubectl, chectl cli.
-RUN dnf install --assumeyes -q psmisc python3-pip httpd-tools nodejs && \
+RUN dnf module enable nodejs:22 -y && \
+    dnf install --assumeyes -q psmisc python3-pip httpd-tools nodejs && \
     pip3 install --upgrade setuptools && \
     pip3 install yq && \
     curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \

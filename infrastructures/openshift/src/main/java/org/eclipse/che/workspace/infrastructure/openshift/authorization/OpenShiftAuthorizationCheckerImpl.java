@@ -13,6 +13,7 @@ package org.eclipse.che.workspace.infrastructure.openshift.authorization;
 
 import static org.eclipse.che.commons.lang.StringUtils.strToSet;
 
+import com.google.common.net.UrlEscapers;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.openshift.api.model.Group;
 import java.util.List;
@@ -70,7 +71,7 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
     }
 
     for (String groupName : allowGroups) {
-      Group group = client.resources(Group.class).withName(groupName).get();
+      Group group = getGroup(client, groupName);
       if (group != null) {
         List<String> users = group.getUsers();
         if (users != null && users.contains(username)) {
@@ -93,7 +94,7 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
     }
 
     for (String groupName : denyGroups) {
-      Group group = client.resources(Group.class).withName(groupName).get();
+      Group group = getGroup(client, groupName);
       if (group != null) {
         List<String> users = group.getUsers();
         if (users != null && users.contains(username)) {
@@ -103,5 +104,18 @@ public class OpenShiftAuthorizationCheckerImpl implements AuthorizationChecker {
     }
 
     return false;
+  }
+
+  /**
+   * Looks up an OpenShift Group by name. Group names are path-segment encoded so names containing
+   * spaces or other reserved URI characters (common for Active Directory groups) can be requested
+   * without triggering {@link java.net.URISyntaxException}.
+   */
+  private static Group getGroup(KubernetesClient client, String groupName) {
+    return client.resources(Group.class).withName(encodeGroupName(groupName)).get();
+  }
+
+  static String encodeGroupName(String groupName) {
+    return UrlEscapers.urlPathSegmentEscaper().escape(groupName);
   }
 }

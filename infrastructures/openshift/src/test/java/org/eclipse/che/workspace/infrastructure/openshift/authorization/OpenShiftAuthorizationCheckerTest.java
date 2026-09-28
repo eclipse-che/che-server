@@ -15,6 +15,8 @@ import static org.mockito.Mockito.*;
 
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
 import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
 import io.fabric8.mockwebserver.Context;
@@ -142,5 +144,38 @@ public class OpenShiftAuthorizationCheckerTest {
         false
       },
     };
+  }
+
+  @Test
+  public void encodeGroupNamePercentEncodesSpaces() {
+    Assert.assertEquals(
+        OpenShiftAuthorizationCheckerImpl.encodeGroupName("LD EIDP PTEC 3P40"),
+        "LD%20EIDP%20PTEC%203P40");
+    Assert.assertEquals(
+        OpenShiftAuthorizationCheckerImpl.encodeGroupName("groupWithUser1"), "groupWithUser1");
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldAuthorizeUserWhenAllowGroupNameContainsSpaces() throws InfrastructureException {
+    Group groupWithSpaces =
+        new Group(
+            "v1",
+            "Group",
+            new ObjectMetaBuilder().withName("LD EIDP PTEC 3P40").build(),
+            List.of("user1"));
+    KubernetesClient mockClient = mock(KubernetesClient.class);
+    MixedOperation resources = mock(MixedOperation.class);
+    Resource resource = mock(Resource.class);
+    when(clientFactory.create()).thenReturn(mockClient);
+    when(mockClient.resources(Group.class)).thenReturn(resources);
+    when(resources.withName("LD%20EIDP%20PTEC%203P40")).thenReturn(resource);
+    when(resource.get()).thenReturn(groupWithSpaces);
+
+    OpenShiftAuthorizationCheckerImpl authorizationChecker =
+        new OpenShiftAuthorizationCheckerImpl("", "LD EIDP PTEC 3P40", "", "", ",", clientFactory);
+
+    Assert.assertTrue(authorizationChecker.isAuthorized(user1));
+    Assert.assertFalse(authorizationChecker.isAuthorized(user2));
   }
 }

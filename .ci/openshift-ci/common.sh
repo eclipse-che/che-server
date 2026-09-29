@@ -127,26 +127,22 @@ provisionOpenShiftOAuthUserHyperShift() {
     --from-file=htpasswd="users.htpasswd" -n "${HYPERSHIFT_NS}" \
     --dry-run=client -o yaml | KUBECONFIG="${MGMT_KUBECONFIG}" oc apply -f -
 
-  KUBECONFIG="${MGMT_KUBECONFIG}" oc get hostedcluster "${CLUSTER_NAME}" \
-    -n "${HYPERSHIFT_NS}" -o json > /tmp/hostedcluster.json
-
-  python3 -c "
-import json
-with open('/tmp/hostedcluster.json') as f:
-    hc = json.load(f)
-cfg = hc.setdefault('spec', {}).setdefault('configuration', {}).setdefault('oauth', {})
-idps = cfg.setdefault('identityProviders', [])
-idps.append({
-    'htpasswd': {'fileData': {'name': 'htpass-secret'}},
-    'mappingMethod': 'claim',
-    'name': 'htpasswd',
-    'type': 'HTPasswd'
-})
-with open('/tmp/hostedcluster.json', 'w') as f:
-    json.dump(hc, f)
-"
-
-  KUBECONFIG="${MGMT_KUBECONFIG}" oc replace -f /tmp/hostedcluster.json
+  KUBECONFIG="${MGMT_KUBECONFIG}" oc patch hostedcluster "${CLUSTER_NAME}" \
+    -n "${HYPERSHIFT_NS}" --type=merge -p '
+{
+  "spec": {
+    "configuration": {
+      "oauth": {
+        "identityProviders": [{
+          "htpasswd": {"fileData": {"name": "htpass-secret"}},
+          "mappingMethod": "claim",
+          "name": "htpasswd",
+          "type": "HTPasswd"
+        }]
+      }
+    }
+  }
+}'
 
   echo "------- [INFO] HostedCluster OAuth patched, waiting for rollout -------"
 }
@@ -182,6 +178,7 @@ deployChe() {
                        --che-operator-cr-patch-yaml=custom-resources.yaml \
                        --platform=openshift \
                        --telemetry=off \
+                       --k8spoderrorrechecktimeout=600000 \
                        --batch
 
   waitFinishDeploymentCheServer

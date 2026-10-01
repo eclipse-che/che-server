@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -76,6 +76,31 @@ public interface PersonalAccessTokenManager {
    * @throws ScmCommunicationException - problem occurred during communication with SCM server.
    */
   Optional<PersonalAccessToken> get(
+      Subject cheUser,
+      @Nullable String oAuthProviderName,
+      @Nullable String scmServerUrl,
+      @Nullable String namespaceName)
+      throws ScmConfigurationPersistenceException, ScmCommunicationException;
+
+  /**
+   * The same as {@link #get(Subject, String, String, String)}, but the token is returned exactly as
+   * it is stored: it is neither refreshed nor validated against the SCM provider.
+   *
+   * <p>This is what the OAuth token refresh flow has to use, as it needs the persisted refresh
+   * token to perform the refresh itself. Reading the token the regular way would make it refresh
+   * the very token that is already being refreshed, looping endlessly, and validating an expired
+   * token would drop the secret that keeps the refresh token the ongoing refresh needs.
+   *
+   * @param cheUser Che user object
+   * @param oAuthProviderName OAuth provider name to get token for
+   * @param scmServerUrl Git provider endpoint
+   * @param namespaceName The user's namespace name.
+   * @return the stored personal access token
+   * @throws ScmConfigurationPersistenceException - problem occurred during communication with
+   *     permanent storage.
+   * @throws ScmCommunicationException - problem occurred during communication with SCM server.
+   */
+  Optional<PersonalAccessToken> getStored(
       Subject cheUser,
       @Nullable String oAuthProviderName,
       @Nullable String scmServerUrl,

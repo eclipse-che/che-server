@@ -263,7 +263,16 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
     // given
     PersonalAccessToken token =
         new PersonalAccessToken(
-            privateAddressURL, "bitbucket-server", "user987", "user-slug", "token-name", "1", "t");
+            privateAddressURL,
+            "bitbucket-server",
+            "user987",
+            null,
+            "user-slug",
+            "token-name",
+            "1",
+            "t",
+            "refresh-token",
+            3600);
     when(bitbucketServerApiClient.isConnected(eq(privateAddressURL))).thenReturn(false);
     // when
     Optional<Boolean> result = fetcher.isValid(token);

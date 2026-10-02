@@ -214,7 +214,16 @@ public class GitlabOAuthTokenFetcherTest {
   public void shouldNotContactPrivateAddressesWhenValidatingToken() {
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://10.0.0.1", "provider", "id1", "user", "gitlab", "tid-23434", "token123");
+            "https://10.0.0.1",
+            "provider",
+            "id1",
+            null,
+            "user",
+            "gitlab",
+            "tid-23434",
+            "token123",
+            "refresh-token",
+            3600);
 
     assertTrue(oAuthTokenFetcher.isValid(token).isEmpty());
   }

@@ -16,6 +16,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
+import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
+import static org.eclipse.che.commons.lang.UrlUtils.getQueryParameters;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.security.oauth.OAuthAuthenticator.SSL_ERROR_CODE;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +29,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -48,13 +51,16 @@ import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -73,7 +79,20 @@ public class EmbeddedOAuthAPITest {
   RedirectAfterLoginUrlValidator redirectUrlValidator =
       new RedirectAfterLoginUrlValidator("https://redirecturl.com/api");
 
+  /** Nonces are real here: a callback is only served when its state carries one of them. */
+  @Spy OAuthCsrfNonceStore csrfNonceStore = new OAuthCsrfNonceStore();
+
   @InjectMocks EmbeddedOAuthAPI embeddedOAuthAPI;
+
+  @AfterMethod
+  public void resetSubject() {
+    EnvironmentContext.reset();
+  }
+
+  /** The nonce a callback of the user of the current request has to carry in its state. */
+  private String issuedNonce() {
+    return csrfNonceStore.issue(EnvironmentContext.getCurrent().getSubject());
+  }
 
   @Test(
       expectedExceptions = NotFoundException.class,
@@ -230,8 +249,10 @@ public class EmbeddedOAuthAPITest {
   @Test
   public void shouldEncodeRejectErrorForRedirectUrl() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
-    when(uriInfo.getRequestUri()).thenReturn(new URI("http://eclipse.che"));
+    when(uriInfo.getRequestUri())
+        .thenReturn(new URI("http://eclipse.che?state=csrf_nonce%3D" + nonce));
     Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
     redirectAfterLogin.setAccessible(true);
     redirectAfterLogin.set(embeddedOAuthAPI, "https://redirecturl.com?quary=param");
@@ -248,6 +269,7 @@ public class EmbeddedOAuthAPITest {
   @Test
   public void shouldAddSslErrorCode() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(authenticator.callback(any(URL.class), anyList()))
@@ -257,7 +279,10 @@ public class EmbeddedOAuthAPITest {
             new URI(
                 "http://eclipse.che?state=oauth_provider"
                     + encode(
-                        "=github&redirect_after_login=https://redirecturl.com?params=", UTF_8)));
+                        "=github&redirect_after_login=https://redirecturl.com?params="
+                            + "&csrf_nonce="
+                            + nonce,
+                        UTF_8)));
     when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
 
     // when
@@ -272,6 +297,7 @@ public class EmbeddedOAuthAPITest {
   @Test
   public void shouldStoreTokenOnCallback() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     TokenResponse tokenResponse = mock(TokenResponse.class);
@@ -281,7 +307,9 @@ public class EmbeddedOAuthAPITest {
     when(uriInfo.getRequestUri())
         .thenReturn(
             new URI(
-                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"));
+                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"
+                    + "%26csrf_nonce%3D"
+                    + nonce));
     when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
     ArgumentCaptor<PersonalAccessToken> tokenCapture =
         ArgumentCaptor.forClass(PersonalAccessToken.class);
@@ -302,6 +330,7 @@ public class EmbeddedOAuthAPITest {
   @Test
   public void shouldEncodeRedirectUrl() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(authenticator.callback(any(URL.class), anyList())).thenReturn(mock(TokenResponse.class));
@@ -311,7 +340,9 @@ public class EmbeddedOAuthAPITest {
                 "http://eclipse.che?state=oauth_provider"
                     + encode(
                         "=github&redirect_after_login=https://redirecturl.com?params="
-                            + encode("{}", UTF_8),
+                            + encode("{}", UTF_8)
+                            + "&csrf_nonce="
+                            + nonce,
                         UTF_8)));
     when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
 
@@ -325,6 +356,7 @@ public class EmbeddedOAuthAPITest {
   @Test
   public void shouldNotEncodeRedirectUrl() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(authenticator.callback(any(URL.class), anyList())).thenReturn(mock(TokenResponse.class));
@@ -334,7 +366,9 @@ public class EmbeddedOAuthAPITest {
                 "http://eclipse.che?state=oauth_provider"
                     + encode(
                         "=github&redirect_after_login=https://redirecturl.com?params="
-                            + encode(encode("{}", UTF_8), UTF_8),
+                            + encode(encode("{}", UTF_8), UTF_8)
+                            + "&csrf_nonce="
+                            + nonce,
                         UTF_8)));
     when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
 
@@ -392,6 +426,7 @@ public class EmbeddedOAuthAPITest {
   @Test
   public void shouldStoreRefreshTokenAndExpiryOnCallback() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     TokenResponse tokenResponse = mock(TokenResponse.class);
@@ -403,7 +438,9 @@ public class EmbeddedOAuthAPITest {
     when(uriInfo.getRequestUri())
         .thenReturn(
             new URI(
-                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"));
+                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"
+                    + "%26csrf_nonce%3D"
+                    + nonce));
     when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
     ArgumentCaptor<PersonalAccessToken> tokenCapture =
         ArgumentCaptor.forClass(PersonalAccessToken.class);
@@ -422,6 +459,7 @@ public class EmbeddedOAuthAPITest {
   @Test
   public void shouldStoreZeroExpiryOnCallbackWhenTokenResponseHasNoExpiresIn() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     TokenResponse tokenResponse = mock(TokenResponse.class);
@@ -434,7 +472,9 @@ public class EmbeddedOAuthAPITest {
     when(uriInfo.getRequestUri())
         .thenReturn(
             new URI(
-                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"));
+                "http://eclipse.che?state=oauth_provider%3Dgithub%26redirect_after_login%3DredirectUrl"
+                    + "%26csrf_nonce%3D"
+                    + nonce));
     when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
     ArgumentCaptor<PersonalAccessToken> tokenCapture =
         ArgumentCaptor.forClass(PersonalAccessToken.class);
@@ -652,6 +692,7 @@ public class EmbeddedOAuthAPITest {
       expectedExceptionsMessageRegExp = "The redirect after login URL is missing or not allowed")
   public void shouldNotRedirectToAForeignHostOnCallback() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
     when(authenticator.getEndpointUrl()).thenReturn("http://eclipse.che");
@@ -660,7 +701,9 @@ public class EmbeddedOAuthAPITest {
         .thenReturn(
             new URI(
                 "http://eclipse.che?state=oauth_provider"
-                    + encode("=github&redirect_after_login=https://attacker.com/", UTF_8)));
+                    + encode(
+                        "=github&redirect_after_login=https://attacker.com/&csrf_nonce=" + nonce,
+                        UTF_8)));
     when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
 
     // when
@@ -670,8 +713,10 @@ public class EmbeddedOAuthAPITest {
   @Test(expectedExceptions = ForbiddenException.class)
   public void shouldNotRedirectToAForeignHostOnAccessDenied() throws Exception {
     // given
+    String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
-    when(uriInfo.getRequestUri()).thenReturn(new URI("http://eclipse.che"));
+    when(uriInfo.getRequestUri())
+        .thenReturn(new URI("http://eclipse.che?state=csrf_nonce%3D" + nonce));
     Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
     redirectAfterLogin.setAccessible(true);
     redirectAfterLogin.set(embeddedOAuthAPI, "https://attacker.com?quary=param");
@@ -689,5 +734,97 @@ public class EmbeddedOAuthAPITest {
 
     // when
     embeddedOAuthAPI.authenticate(uriInfo, "github", emptyList(), "https://attacker.com/", null);
+  }
+
+  /**
+   * The nonce the flow is started with travels in the `state`, which the provider echoes back to
+   * the callback, and is what the callback recognises the flow by.
+   */
+  @Test
+  public void shouldPutACsrfNonceInTheStateOfTheAuthorizationUrl() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(new URI("http://eclipse.che/api/oauth/authenticate?oauth_provider=github"));
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(authenticator.getAuthenticateUrl(any(URL.class), anyList()))
+        .thenReturn("https://github.com/login/oauth/authorize");
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    ArgumentCaptor<URL> requestUrlCaptor = ArgumentCaptor.forClass(URL.class);
+
+    // when
+    embeddedOAuthAPI.authenticate(uriInfo, "github", emptyList(), null, null);
+
+    // then the callback made of that state is served
+    verify(authenticator).getAuthenticateUrl(requestUrlCaptor.capture(), anyList());
+    String nonce =
+        getParameter(
+            getQueryParameters(requestUrlCaptor.getValue()), OAuthCsrfNonceStore.CSRF_NONCE_PARAM);
+    assertNotNull(nonce);
+    csrfNonceStore.verify(nonce, EnvironmentContext.getCurrent().getSubject());
+  }
+
+  /**
+   * Without a nonce, a callback URL carrying the attacker's own authorization code, opened by a
+   * logged-in victim, has the victim's Che identity hold the attacker's SCM token (CWE-352).
+   */
+  @Test(
+      expectedExceptions = ForbiddenException.class,
+      expectedExceptionsMessageRegExp =
+          "The OAuth callback does not answer an authorization request of the current user")
+  public void shouldRefuseACallbackWithoutACsrfNonce() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?code=attacker-code&state=oauth_provider"
+                    + encode("=github&redirect_after_login=/dashboard", UTF_8)));
+
+    // when
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
+
+    // then no token is exchanged, let alone stored
+  }
+
+  /** A nonce the attacker had issued to themselves does not make the callback the victim's. */
+  @Test(expectedExceptions = ForbiddenException.class)
+  public void shouldRefuseACallbackWithANonceIssuedToAnotherUser() throws Exception {
+    // given
+    String attackersNonce =
+        csrfNonceStore.issue(new SubjectImpl("mallory", emptyList(), "mallory-id", "token", false));
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?code=attacker-code&state=oauth_provider"
+                    + encode(
+                        "=github&redirect_after_login=/dashboard&csrf_nonce=" + attackersNonce,
+                        UTF_8)));
+
+    // when the victim, who is the user of this request, opens it
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
+  }
+
+  /** A nonce answers one callback, so a callback URL cannot be handed out to be opened again. */
+  @Test(expectedExceptions = ForbiddenException.class)
+  public void shouldRefuseAReplayedCallback() throws Exception {
+    // given
+    String nonce = issuedNonce();
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(authenticator.getEndpointUrl()).thenReturn("http://eclipse.che");
+    when(authenticator.callback(any(URL.class), anyList())).thenReturn(mock(TokenResponse.class));
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode(
+                        "=github&redirect_after_login=/dashboard&csrf_nonce=" + nonce, UTF_8)));
+
+    // when
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
   }
 }

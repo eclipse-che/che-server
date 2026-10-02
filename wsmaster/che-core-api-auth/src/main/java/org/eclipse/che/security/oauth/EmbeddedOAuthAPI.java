@@ -19,6 +19,7 @@ import static org.eclipse.che.commons.lang.UrlUtils.*;
 import static org.eclipse.che.commons.lang.UrlUtils.getParameter;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.security.oauth.OAuthAuthenticator.SSL_ERROR_CODE;
+import static org.eclipse.che.security.oauth.OAuthCsrfNonceStore.CSRF_NONCE_PARAM;
 import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_QUERY_NAME;
 
 import com.google.api.client.auth.oauth2.TokenResponse;
@@ -75,6 +76,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   @Inject private RedirectAfterLoginUrlValidator redirectUrlValidator;
+  @Inject private OAuthCsrfNonceStore csrfNonceStore;
   private String redirectAfterLogin;
 
   @Override
@@ -92,9 +94,34 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     }
     this.redirectAfterLogin = redirectAfterLogin;
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
+    // Bind the flow to the user starting it. The nonce travels in the `state` and comes back in
+    // the callback, which is the only thing there that tells an authorization this user asked for
+    // from one an attacker prepared with their own SCM account.
+    String csrfNonce = csrfNonceStore.issue(EnvironmentContext.getCurrent().getSubject());
     final String authUrl =
-        oauth.getAuthenticateUrl(getRequestUrl(uriInfo), scopes == null ? emptyList() : scopes);
+        oauth.getAuthenticateUrl(
+            withCsrfNonce(uriInfo, csrfNonce), scopes == null ? emptyList() : scopes);
     return Response.temporaryRedirect(URI.create(authUrl)).build();
+  }
+
+  /**
+   * Returns the URL of this request with the CSRF nonce added to its query string. The {@code
+   * state} of the authorization URL is a copy of that query string, see {@link
+   * OAuthAuthenticator#prepareState(URL)}, which is how the nonce reaches the callback. A nonce
+   * supplied by the caller is replaced rather than added to, so that only the issued one is read
+   * back.
+   */
+  private static URL withCsrfNonce(UriInfo uriInfo, String csrfNonce) {
+    URI uri =
+        UriBuilder.fromUri(uriInfo.getRequestUri())
+            .replaceQueryParam(CSRF_NONCE_PARAM, csrfNonce)
+            .build();
+    try {
+      return uri.toURL();
+    } catch (MalformedURLException e) {
+      // cannot happen: the request URI of an HTTP request is an absolute http(s) URL
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override
@@ -102,6 +129,10 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       throws NotFoundException, ForbiddenException {
     URL requestUrl = getRequestUrl(uriInfo);
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
+    // The `state` is whatever the authorization URL asked the provider to echo back, so a callback
+    // URL can be prepared by anyone. Serve it only when it answers a flow this user started.
+    csrfNonceStore.verify(
+        getParameter(params, CSRF_NONCE_PARAM), EnvironmentContext.getCurrent().getSubject());
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null

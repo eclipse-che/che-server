@@ -37,6 +37,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
@@ -73,6 +74,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Inject protected OAuthAuthenticatorProvider oauth2Providers;
   @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
+  @Inject private RedirectAfterLoginUrlValidator redirectUrlValidator;
   private String redirectAfterLogin;
 
   @Override
@@ -82,7 +84,12 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       List<String> scopes,
       String redirectAfterLogin,
       HttpServletRequest request)
-      throws NotFoundException, OAuthAuthenticationException {
+      throws NotFoundException, OAuthAuthenticationException, ForbiddenException {
+    if (!isNullOrEmpty(redirectAfterLogin)) {
+      // Refuse the URL before the browser leaves for the OAuth provider: the callback refuses to
+      // redirect to it anyway, and the user would have authorized Che for nothing.
+      redirectUrlValidator.authorize(redirectAfterLogin);
+    }
     this.redirectAfterLogin = redirectAfterLogin;
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
     final String authUrl =
@@ -92,16 +99,14 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
 
   @Override
   public Response callback(UriInfo uriInfo, @Nullable List<String> errorValues)
-      throws NotFoundException {
+      throws NotFoundException, ForbiddenException {
     URL requestUrl = getRequestUrl(uriInfo);
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
     if (!isNullOrEmpty(redirectAfterLogin)
         && errorValues != null
         && errorValues.contains("access_denied")) {
-      return Response.temporaryRedirect(
-              URI.create(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied")))
-          .build();
+      return redirect(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied"));
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);
@@ -126,37 +131,48 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
               tokenResponse.getRefreshToken(),
               expiresInSeconds == null ? 0 : expiresInSeconds));
     } catch (OAuthAuthenticationException e) {
-      return Response.temporaryRedirect(
-              URI.create(
-                  getParameter(params, "redirect_after_login")
-                      + String.format("&%s=access_denied", ERROR_QUERY_NAME)))
-          .build();
+      return redirect(getRedirectAfterLoginUrl(params, "access_denied"));
     } catch (UnsatisfiedScmPreconditionException | ScmConfigurationPersistenceException e) {
       // Skip exception, the token will be stored in the next request.
       LOG.error(e.getMessage(), e);
     } catch (ScmCommunicationException e) {
       if (e.getStatusCode() == SSL_ERROR_CODE) {
-        return Response.temporaryRedirect(
-                URI.create(getRedirectAfterLoginUrl(params, "ssl_exception")))
-            .build();
+        return redirect(getRedirectAfterLoginUrl(params, "ssl_exception"));
       } else {
         LOG.error(e.getMessage(), e);
       }
     }
-    return Response.temporaryRedirect(URI.create(getRedirectAfterLoginUrl(params, null))).build();
+    return redirect(getRedirectAfterLoginUrl(params, null));
+  }
+
+  /**
+   * Redirects the browser to the given redirect after login URL, unless the URL is not allowed to
+   * be redirected to. The URL comes from the OAuth {@code state}, which is chosen by whoever built
+   * the authorization URL, so it is authorized here, at the point of use.
+   */
+  private Response redirect(String redirectAfterLogin) throws ForbiddenException {
+    return Response.temporaryRedirect(redirectUrlValidator.authorize(redirectAfterLogin)).build();
   }
 
   /**
    * Returns the redirect after login URL from the query parameters. If the URL is encoded by the
    * CSM provider, it will be decoded, to avoid unsupported characters in the URL.
    *
+   * <p>The returned URL is taken from the OAuth {@code state} and is not authorized here: it has to
+   * be passed through {@link RedirectAfterLoginUrlValidator} before the browser is redirected to
+   * it.
+   *
    * @param parameters the query parameters
    * @param errorCode the error code or {@code null}
-   * @return the redirect after login URL
+   * @return the redirect after login URL, or {@code null} if the parameters carry none
    */
+  @Nullable
   public static String getRedirectAfterLoginUrl(
       Map<String, List<String>> parameters, @Nullable String errorCode) {
     String redirectAfterLogin = getParameter(parameters, "redirect_after_login");
+    if (isNullOrEmpty(redirectAfterLogin)) {
+      return null;
+    }
     try {
       URI.create(redirectAfterLogin);
     } catch (IllegalArgumentException e) {

@@ -60,6 +60,8 @@ import org.testng.annotations.Test;
 public class BitbucketServerPersonalAccessTokenFetcherTest {
   String someNotBitbucketURL = "https://notabitbucket.com";
   String someBitbucketURL = "https://some.bitbucketserver.com";
+  String privateAddressURL = "https://10.0.0.1";
+  URL apiEndpoint;
   Subject subject;
   @Mock BitbucketServerApiClient bitbucketServerApiClient;
   @Mock PersonalAccessTokenParams personalAccessTokenParams;
@@ -72,7 +74,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
 
   @BeforeMethod
   public void setup() throws MalformedURLException {
-    URL apiEndpoint = new URL("https://che.server.com");
+    apiEndpoint = new URL("https://che.server.com");
     subject =
         new SubjectImpl("another_user", Collections.emptyList(), "user987", "token111", false);
     bitbucketUser =
@@ -220,11 +222,51 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
           NotFoundException,
           BadRequestException {
     // given
+    // the host is unknown but routable, so it is contacted and turns out not to be a Bitbucket
+    // Server
+    fetcher =
+        new BitbucketServerPersonalAccessTokenFetcher(
+            bitbucketServerApiClient, apiEndpoint, oAuthAPI) {
+          @Override
+          boolean canContact(String scmServerUrl) {
+            return true;
+          }
+        };
     when(personalAccessTokenParams.getToken()).thenReturn("token");
     when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(someNotBitbucketURL);
     when(bitbucketServerApiClient.isConnected(eq(someNotBitbucketURL))).thenReturn(false);
     // when
     Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);
+    // then
+    assertTrue(result.isEmpty());
+  }
+
+  /**
+   * The provider URL of a token comes from a secret in the user's namespace, so it must not become
+   * a way of having the server reach whatever the namespace owner names.
+   */
+  @Test
+  public void shouldNotContactPrivateAddressesWhenValidatingTokenParams()
+      throws ScmCommunicationException {
+    // given
+    when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(privateAddressURL);
+    when(bitbucketServerApiClient.isConnected(eq(privateAddressURL))).thenReturn(false);
+    // when
+    Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);
+    // then
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void shouldNotContactPrivateAddressesWhenValidatingToken()
+      throws ScmCommunicationException, ScmUnauthorizedException {
+    // given
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            privateAddressURL, "bitbucket-server", "user987", "user-slug", "token-name", "1", "t");
+    when(bitbucketServerApiClient.isConnected(eq(privateAddressURL))).thenReturn(false);
+    // when
+    Optional<Boolean> result = fetcher.isValid(token);
     // then
     assertTrue(result.isEmpty());
   }

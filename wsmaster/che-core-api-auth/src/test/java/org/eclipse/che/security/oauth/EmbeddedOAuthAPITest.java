@@ -247,15 +247,18 @@ public class EmbeddedOAuthAPITest {
   }
 
   @Test
-  public void shouldEncodeRejectErrorForRedirectUrl() throws Exception {
+  public void shouldRedirectToTheUrlOfTheFlowOnAccessDenied() throws Exception {
     // given
     String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     when(uriInfo.getRequestUri())
-        .thenReturn(new URI("http://eclipse.che?state=csrf_nonce%3D" + nonce));
-    Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
-    redirectAfterLogin.setAccessible(true);
-    redirectAfterLogin.set(embeddedOAuthAPI, "https://redirecturl.com?quary=param");
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state="
+                    + encode(
+                        "redirect_after_login=https://redirecturl.com?quary=param&csrf_nonce="
+                            + nonce,
+                        UTF_8)));
 
     // when
     Response callback = embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));
@@ -263,7 +266,77 @@ public class EmbeddedOAuthAPITest {
     // then
     assertEquals(
         callback.getLocation().toString(),
-        "https://redirecturl.com?quary%3Dparam%26error_code%3Daccess_denied");
+        "https://redirecturl.com?quary=param&error_code=access_denied");
+  }
+
+  /** A URL carrying characters that `java.net.URI` refuses, such as JSON, has to be encoded. */
+  @Test
+  public void shouldEncodeRejectErrorForRedirectUrl() throws Exception {
+    // given
+    String nonce = issuedNonce();
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state="
+                    + encode(
+                        "redirect_after_login=https://redirecturl.com?params="
+                            + encode("{}", UTF_8)
+                            + "&csrf_nonce="
+                            + nonce,
+                        UTF_8)));
+
+    // when
+    Response callback = embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));
+
+    // then
+    assertEquals(
+        callback.getLocation().toString(),
+        "https://redirecturl.com?params%3D%7B%7D&error_code=access_denied");
+  }
+
+  /**
+   * The URL to come back to belongs to the flow the callback answers. Holding it in a field of this
+   * singleton sent the user to whatever URL the last authorization request, of any user, carried
+   * (CWE-488).
+   */
+  @Test
+  public void shouldNotCarryTheRedirectUrlOfOneFlowIntoAnother() throws Exception {
+    // given a flow started with one redirect URL
+    UriInfo authenticateUriInfo = mock(UriInfo.class);
+    when(authenticateUriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che/api/oauth/authenticate?oauth_provider=github"
+                    + "&redirect_after_login="
+                    + encode("https://redirecturl.com/of-another-user", UTF_8)));
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(authenticator.getAuthenticateUrl(any(URL.class), anyList()))
+        .thenReturn("https://github.com");
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    embeddedOAuthAPI.authenticate(
+        authenticateUriInfo,
+        "github",
+        emptyList(),
+        "https://redirecturl.com/of-another-user",
+        null);
+
+    // when the callback of a flow started with another one comes in
+    String nonce = issuedNonce();
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state="
+                    + encode(
+                        "redirect_after_login=https://redirecturl.com/own?x=1&csrf_nonce=" + nonce,
+                        UTF_8)));
+    Response callback = embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));
+
+    // then
+    assertEquals(
+        callback.getLocation().toString(),
+        "https://redirecturl.com/own?x=1&error_code=access_denied");
   }
 
   @Test
@@ -716,10 +789,12 @@ public class EmbeddedOAuthAPITest {
     String nonce = issuedNonce();
     UriInfo uriInfo = mock(UriInfo.class);
     when(uriInfo.getRequestUri())
-        .thenReturn(new URI("http://eclipse.che?state=csrf_nonce%3D" + nonce));
-    Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
-    redirectAfterLogin.setAccessible(true);
-    redirectAfterLogin.set(embeddedOAuthAPI, "https://attacker.com?quary=param");
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state="
+                    + encode(
+                        "redirect_after_login=https://attacker.com?quary=param&csrf_nonce=" + nonce,
+                        UTF_8)));
 
     // when
     embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));

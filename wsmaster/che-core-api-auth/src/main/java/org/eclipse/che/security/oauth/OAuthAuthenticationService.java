@@ -48,6 +48,7 @@ public class OAuthAuthenticationService extends Service {
   @Inject private OAuthAPI oAuthAPI;
   @Inject private AuthorisationRequestManager authorisationRequestManager;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
+  @Inject private OAuthIdeRedirectManager ideRedirectManager;
 
   /**
    * Redirect request to OAuth provider site for authentication|authorization. Client must provide
@@ -80,6 +81,17 @@ public class OAuthAuthenticationService extends Service {
       throws OAuthAuthenticationException, NotFoundException, ForbiddenException {
     authorisationRequestManager.callback(uriInfo, errorValues);
     return oAuthAPI.callback(uriInfo, errorValues);
+  }
+
+  /**
+   * Processes an OAuth callback issued to the IDE redirect proxy and redirects to the workspace IDE
+   * with the authorization code. Used by browser-based IDE extensions that cannot register a
+   * protocol based {@code redirect_uri}.
+   */
+  @GET
+  @Path("ide-redirect")
+  public Response ideRedirect() throws BadRequestException, ForbiddenException, ServerException {
+    return ideRedirectManager.ideRedirect(uriInfo);
   }
 
   /**

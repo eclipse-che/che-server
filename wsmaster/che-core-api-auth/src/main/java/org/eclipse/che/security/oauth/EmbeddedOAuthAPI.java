@@ -77,7 +77,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   @Inject private RedirectAfterLoginUrlValidator redirectUrlValidator;
   @Inject private OAuthCsrfNonceStore csrfNonceStore;
-  private String redirectAfterLogin;
 
   @Override
   public Response authenticate(
@@ -92,7 +91,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       // redirect to it anyway, and the user would have authorized Che for nothing.
       redirectUrlValidator.authorize(redirectAfterLogin);
     }
-    this.redirectAfterLogin = redirectAfterLogin;
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
     // Bind the flow to the user starting it. The nonce travels in the `state` and comes back in
     // the callback, which is the only thing there that tells an authorization this user asked for
@@ -134,10 +132,14 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     csrfNonceStore.verify(
         getParameter(params, CSRF_NONCE_PARAM), EnvironmentContext.getCurrent().getSubject());
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
-    if (!isNullOrEmpty(redirectAfterLogin)
-        && errorValues != null
-        && errorValues.contains("access_denied")) {
-      return redirect(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied"));
+    if (errorValues != null && errorValues.contains("access_denied")) {
+      // The URL to come back to belongs to the flow this callback answers, so it is read from its
+      // `state`. Held in a field of this singleton, it was whatever the authorization request
+      // that started last, by any user, carried.
+      String redirectAfterLogin = getRedirectAfterLoginUrl(params, "access_denied");
+      if (!isNullOrEmpty(redirectAfterLogin)) {
+        return redirect(redirectAfterLogin);
+      }
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);

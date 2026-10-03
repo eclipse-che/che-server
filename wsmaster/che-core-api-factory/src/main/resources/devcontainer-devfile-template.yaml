@@ -1,0 +1,75 @@
+#
+# Copyright (c) 2012-2026 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+
+commands:
+  - id: start-devcontainer
+    exec:
+      component: universal-developer-image
+      label: Start dev container
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: |
+        base64 -d >/tmp/start-devcontainer.sh <<'DEVCONTAINER_SCRIPT_B64'
+        __START_DEVCONTAINER_B64__
+        DEVCONTAINER_SCRIPT_B64
+        chmod +x /tmp/start-devcontainer.sh
+        # Run in the FOREGROUND so che-code keeps the task terminal alive and streams progress.
+        # A backgrounded (setsid/nohup &) process is reaped when the task's foreground shell exits,
+        # so it never survived. tee keeps /tmp/devcontainer.log for anyone who wants to tail it.
+        # Preserve setup failures through tee so the extension receives the task's exit code.
+        bash -o pipefail -c 'bash /tmp/start-devcontainer.sh 2>&1 | tee /tmp/devcontainer.log'
+  - id: rebuild-devcontainer
+    exec:
+      component: universal-developer-image
+      label: Rebuild dev container
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: |
+        if [ ! -f /tmp/start-devcontainer.sh ]; then
+          base64 -d >/tmp/start-devcontainer.sh <<'DEVCONTAINER_SCRIPT_B64'
+        __START_DEVCONTAINER_B64__
+        DEVCONTAINER_SCRIPT_B64
+          chmod +x /tmp/start-devcontainer.sh
+        fi
+        REBUILD=1 bash /tmp/start-devcontainer.sh
+  - id: rebuild-devcontainer-no-cache
+    exec:
+      component: universal-developer-image
+      label: Rebuild dev container (no cache)
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: |
+        if [ ! -f /tmp/start-devcontainer.sh ]; then
+          base64 -d >/tmp/start-devcontainer.sh <<'DEVCONTAINER_SCRIPT_B64'
+        __START_DEVCONTAINER_B64__
+        DEVCONTAINER_SCRIPT_B64
+          chmod +x /tmp/start-devcontainer.sh
+        fi
+        REBUILD=1 NO_CACHE=1 bash /tmp/start-devcontainer.sh
+  - id: show-devcontainer-log
+    exec:
+      component: universal-developer-image
+      label: Show dev container log
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: |
+        touch /tmp/devcontainer.log
+        tail -n 200 -f /tmp/devcontainer.log
+  - id: clean-devcontainer-images
+    exec:
+      component: universal-developer-image
+      label: Clean up dev container images
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: |
+        PODMAN="${ORIGINAL_PODMAN_PATH:-/usr/bin/podman.orig}"
+        [ -x "$PODMAN" ] || PODMAN=podman
+        CONTAINER_NAME="${CONTAINER_NAME:-devcontainer}"
+        IMAGE_NAME="${IMAGE_NAME:-localhost/devcontainer:latest}"
+        "$PODMAN" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+        "$PODMAN" rmi -f "$IMAGE_NAME" >/dev/null 2>&1 || true
+        "$PODMAN" images

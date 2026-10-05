@@ -14,6 +14,7 @@ package org.eclipse.che.api.factory.server.bitbucket;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import java.net.URL;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.Pair;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.OAuthAPI;
 import org.eclipse.che.security.oauth1.NoopOAuthAuthenticator;
@@ -124,10 +126,29 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     }
   }
 
+  /**
+   * Tells whether the server may contact a Bitbucket Server that is not one of the configured
+   * endpoints. Such a URL comes from a secret in the user's namespace, so contacting it
+   * unconditionally would let anyone holding a namespace have the server reach services only it can
+   * see (SSRF). A server on a private network is reached through {@code
+   * che.integration.bitbucket.server_endpoints}, which is matched before it comes to this.
+   */
+  @VisibleForTesting
+  boolean canContact(String scmServerUrl) {
+    return UrlTargetValidator.isAllowed(scmServerUrl);
+  }
+
   @Override
   public Optional<Boolean> isValid(PersonalAccessToken accessToken)
       throws ScmCommunicationException, ScmUnauthorizedException {
     if (!bitbucketServerApiClient.isConnected(accessToken.getScmProviderUrl())) {
+      if (!canContact(accessToken.getScmProviderUrl())) {
+        LOG.warn(
+            "Not contacting {}: it is not a configured Bitbucket Server endpoint and does not point"
+                + " to a publicly routable host.",
+            accessToken.getScmProviderUrl());
+        return Optional.empty();
+      }
       // If BitBucket oAuth is not configured check the manually added user namespace token.
       HttpBitbucketServerApiClient apiClient =
           new HttpBitbucketServerApiClient(
@@ -163,6 +184,13 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   public Optional<Pair<Boolean, String>> isValid(PersonalAccessTokenParams params)
       throws ScmCommunicationException {
     if (!bitbucketServerApiClient.isConnected(params.getScmProviderUrl())) {
+      if (!canContact(params.getScmProviderUrl())) {
+        LOG.warn(
+            "Not contacting {}: it is not a configured Bitbucket Server endpoint and does not point"
+                + " to a publicly routable host.",
+            params.getScmProviderUrl());
+        return Optional.empty();
+      }
       // If BitBucket oAuth is not configured check the manually added user namespace token.
       HttpBitbucketServerApiClient apiClient =
           new HttpBitbucketServerApiClient(

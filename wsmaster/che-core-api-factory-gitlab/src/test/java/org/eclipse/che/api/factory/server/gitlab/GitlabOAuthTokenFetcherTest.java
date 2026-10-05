@@ -196,4 +196,35 @@ public class GitlabOAuthTokenFetcherTest {
 
     oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
+
+  /**
+   * The provider URL of a token comes from a secret in the user's namespace, so it must not become
+   * a way of having the server reach whatever the namespace owner names.
+   */
+  @Test
+  public void shouldNotContactPrivateAddressesWhenValidatingTokenParams() throws Exception {
+    PersonalAccessTokenParams params =
+        new PersonalAccessTokenParams(
+            "https://10.0.0.1", "provider", "gitlab", "tid-23434", "token123", null);
+
+    assertTrue(oAuthTokenFetcher.isValid(params).isEmpty());
+  }
+
+  @Test
+  public void shouldNotContactPrivateAddressesWhenValidatingToken() {
+    PersonalAccessToken token =
+        new PersonalAccessToken(
+            "https://10.0.0.1",
+            "provider",
+            "id1",
+            null,
+            "user",
+            "gitlab",
+            "tid-23434",
+            "token123",
+            "refresh-token",
+            3600);
+
+    assertTrue(oAuthTokenFetcher.isValid(token).isEmpty());
+  }
 }

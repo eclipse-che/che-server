@@ -64,7 +64,9 @@ echo "========================================================================"
 export PUBLIC_REPO_SSH_URL=${PUBLIC_REPO_SSH_URL:-"git@github.com:chepullreq1/public-repo.git"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@github.com:chepullreq1/private-repo.git"}
 
+set +x
 setupSSHKeyPairs "${GITHUB_PRIVATE_KEY}" "${GITHUB_PUBLIC_KEY}"
+set -x
 testFactoryResolverNoPatOAuth ${PUBLIC_REPO_SSH_URL} ${PRIVATE_REPO_SSH_URL}
 
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_SSH_URL} ${USER_CHE_NAMESPACE}
@@ -84,18 +86,24 @@ export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://github.com"}
 export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://raw.githubusercontent.com/chepullreq1/private-repo/main/devfile.yaml"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@github.com:chepullreq1/private-repo.git"}
 
+set +x
 setupPersonalAccessToken  ${GIT_PROVIDER_TYPE} ${GIT_PROVIDER_URL} ${GITHUB_PAT}
+set -x
 requestProvisionNamespace
 testFactoryResolverWithPatOAuth ${PUBLIC_REPO_URL} ${PRIVATE_REPO_URL}
 
 echo "------- [INFO] Check clone public repository with PAT setup -------"
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_URL} ${USER_CHE_NAMESPACE}
+set +x
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITHUB_PAT} ${GIT_PROVIDER_URL}
+set -x
 deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
 echo "------- [INFO] Check clone private repository with PAT setup -------"
 testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_URL} ${USER_CHE_NAMESPACE}
+set +x
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITHUB_PAT} ${GIT_PROVIDER_URL}
+set -x
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
 echo "------- [INFO] Check clone private repository by raw devfile URL with PAT setup -------"
@@ -103,7 +111,9 @@ testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 200
 testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_RAW_PATH_URL} ${USER_CHE_NAMESPACE}
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
+set +x
 setupSSHKeyPairs "${GITHUB_PRIVATE_KEY}" "${GITHUB_PUBLIC_KEY}"
+set -x
 
 echo "------- [INFO] Check clone private repository by SSH URL with PAT setup -------"
 testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 200

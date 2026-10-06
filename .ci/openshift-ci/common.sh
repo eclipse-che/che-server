@@ -301,8 +301,6 @@ setupPersonalAccessToken() {
     sed -i "s#''#${GIT_PROVIDER_USERNAME}#g" pat-secret.yaml
   fi
 
-  cat pat-secret.yaml
-
   oc apply -f pat-secret.yaml -n ${USER_CHE_NAMESPACE}
   echo "======= [INFO] Personal Access Token is created. ======="
 }
@@ -320,8 +318,6 @@ setupSSHKeyPairs() {
   # patch the ssh-secret.yaml file
   sed -i "s#ssh_private_key#${ENCODED_GIT_PRIVATE_KEY}#g" ssh-secret.yaml
   sed -i "s#ssh_public_key#${ENCODED_GIT_PUBLIC_KEY}#g" ssh-secret.yaml
-
-  cat ssh-secret.yaml
 
   oc apply -f ssh-secret.yaml -n ${USER_CHE_NAMESPACE}
   echo "======= [INFO] SSH Secret is created. ======="

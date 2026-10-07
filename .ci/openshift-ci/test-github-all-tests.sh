@@ -46,7 +46,7 @@ echo "========================================================================"
 echo "======= [TEST 2/4] github-no-pat-oauth-flow-raw-devfile-url ======="
 echo "========================================================================"
 export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://raw.githubusercontent.com/chepullreq1/public-repo/main/devfile.yaml"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://raw.githubusercontent.com/chepullreq1/private-repo/main/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://raw.githubusercontent.com/chepullreq1/private-repo/main/devfile.yaml"
 
 testFactoryResolverNoPatOAuthRaw ${PUBLIC_REPO_RAW_PATH_URL} ${PRIVATE_REPO_RAW_PATH_URL}
 
@@ -83,7 +83,7 @@ export PUBLIC_REPO_URL=${PUBLIC_REPO_URL:-"https://github.com/chepullreq1/public
 export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://github.com/chepullreq1/private-repo.git"}
 export GIT_PROVIDER_TYPE=${GIT_PROVIDER_TYPE:-"github"}
 export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://github.com"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://raw.githubusercontent.com/chepullreq1/private-repo/main/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://raw.githubusercontent.com/chepullreq1/private-repo/main/devfile.yaml"
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@github.com:chepullreq1/private-repo.git"}
 
 set +x

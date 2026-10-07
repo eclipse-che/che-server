@@ -65,7 +65,7 @@ echo "========================================================================"
 echo "======= [TEST 2/4] gitlab-no-pat-oauth-flow-raw-devfile-url ======="
 echo "========================================================================"
 export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://gitlab.com/chepullreq1/public-repo/-/raw/main/devfile.yaml"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"
 
 testFactoryResolverNoPatOAuth ${PUBLIC_REPO_RAW_PATH_URL} ${PRIVATE_REPO_RAW_PATH_URL}
 
@@ -104,7 +104,7 @@ export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/priv
 export GIT_PROVIDER_TYPE=${GIT_PROVIDER_TYPE:-"gitlab"}
 export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://gitlab.com"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@gitlab.com:chepullreq1/private-repo.git"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"
 
 export PUBLIC_REPO_WITH_DOT_DEFILE_URL=${PUBLIC_REPO_WITH_DOT_DEFILE_URL:-"https://gitlab.com/chepullreq1/public-repo-dot-devfile.git"}
 export PRIVATE_REPO_WITH_DOT_DEFILE_URL=${PRIVATE_REPO_WITH_DOT_DEFILE_URL:-"https://gitlab.com/chepullreq1/private-repo-dot-devfile.git"}

@@ -46,7 +46,7 @@ echo "========================================================================"
 echo "======= [TEST 2/4] azure-no-pat-oauth-flow-raw-devfile-url ======="
 echo "========================================================================"
 export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://dev.azure.com/chepullreq1/che-pr-public/_apis/git/repositories/public-repo/items?path=/devfile.yaml"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://dev.azure.com/chepullreq1/che-pr-private/_apis/git/repositories/private-repo/items?path=/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://dev.azure.com/chepullreq1/che-pr-private/_apis/git/repositories/private-repo/items?path=/devfile.yaml"
 
 testFactoryResolverResponse ${PUBLIC_REPO_RAW_PATH_URL} 200
 testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 400
@@ -87,7 +87,7 @@ export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://dev.azure.com/chepullreq1/c
 export GIT_PROVIDER_TYPE=${GIT_PROVIDER_TYPE:-"azure-devops"}
 export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://dev.azure.com"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@ssh.dev.azure.com:v3/chepullreq1/che-pr-private/private-repo"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://dev.azure.com/chepullreq1/che-pr-private/_apis/git/repositories/private-repo/items?path=/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://dev.azure.com/chepullreq1/che-pr-private/_apis/git/repositories/private-repo/items?path=/devfile.yaml"
 
 set +x
 setupPersonalAccessToken  ${GIT_PROVIDER_TYPE} ${GIT_PROVIDER_URL} ${AZURE_PAT}

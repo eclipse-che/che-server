@@ -46,7 +46,7 @@ echo "========================================================================"
 echo "======= [TEST 2/5] bitbucket-no-pat-oauth-flow-raw-devfile-url ======="
 echo "========================================================================"
 export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://bitbucket.org/chepullreq/public-repo/raw/746000bd63a54eaf8ea8aba9dfe6620e5c6c61d7/devfile.yaml"}
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_URL:-"https://bitbucket.org/chepullreq/private-repo/raw/80b183d27c6c533462128b0c092208aad73b2906/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://bitbucket.org/chepullreq/private-repo/raw/80b183d27c6c533462128b0c092208aad73b2906/devfile.yaml"
 
 testFactoryResolverNoPatOAuthRaw ${PUBLIC_REPO_RAW_PATH_URL} ${PRIVATE_REPO_RAW_PATH_URL}
 
@@ -106,7 +106,7 @@ echo "========================================================================"
 echo "======= [TEST 5/5] gitea-with-pat-setup-flow ======="
 echo "========================================================================"
 set +x
-export PRIVATE_REPO_RAW_PATH_URL=${PRIVATE_REPO_RAW_PATH_URL:-"https://${GITEA_PAT}@gitea.com/chepullreq1/private-repo/raw/branch/main/devfile.yaml"}
+export PRIVATE_REPO_RAW_PATH_URL="https://${GITEA_PAT}@gitea.com/chepullreq1/private-repo/raw/branch/main/devfile.yaml"
 
 testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 200
 

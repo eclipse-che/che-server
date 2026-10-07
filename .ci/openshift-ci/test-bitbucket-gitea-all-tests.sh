@@ -79,9 +79,9 @@ echo ""
 echo "========================================================================"
 echo "======= [TEST 4/5] gitea-no-pat-oauth-flow ======="
 echo "========================================================================"
-export PUBLIC_REPO_SSH_URL=${PUBLIC_REPO_SSH_URL:-"git@gitea.com:chepullreq1/public-repo.git"}
-export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@gitea.com:chepullreq1/private-repo.git"}
-export PUBLIC_REPO_RAW_PATH_URL=${PUBLIC_REPO_RAW_PATH_URL:-"https://gitea.com/chepullreq1/public-repo/raw/branch/main/devfile.yaml"}
+export PUBLIC_REPO_SSH_URL="git@gitea.com:chepullreq1/public-repo.git"
+export PRIVATE_REPO_SSH_URL="git@gitea.com:chepullreq1/private-repo.git"
+export PUBLIC_REPO_RAW_PATH_URL="https://gitea.com/chepullreq1/public-repo/raw/branch/main/devfile.yaml"
 
 set +x
 setupSSHKeyPairs "${GITEA_PRIVATE_KEY}" "${GITEA_PUBLIC_KEY}"

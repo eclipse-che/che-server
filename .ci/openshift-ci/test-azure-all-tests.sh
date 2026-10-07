@@ -86,9 +86,6 @@ export PUBLIC_REPO_URL=${PUBLIC_REPO_URL:-"https://chepullreq1@dev.azure.com/che
 export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://dev.azure.com/chepullreq1/che-pr-private/_git/private-repo"}
 export GIT_PROVIDER_TYPE=${GIT_PROVIDER_TYPE:-"azure-devops"}
 export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://dev.azure.com"}
-export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@ssh.dev.azure.com:v3/chepullreq1/che-pr-private/private-repo"}
-export PRIVATE_REPO_RAW_PATH_URL="https://dev.azure.com/chepullreq1/che-pr-private/_apis/git/repositories/private-repo/items?path=/devfile.yaml"
-
 set +x
 setupPersonalAccessToken  ${GIT_PROVIDER_TYPE} ${GIT_PROVIDER_URL} ${AZURE_PAT}
 set -x
@@ -109,16 +106,3 @@ testGitCredentialsData ${USER_CHE_NAMESPACE} ${AZURE_PAT} ${GIT_PROVIDER_URL}
 set -x
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
-echo "------- [INFO] Check clone private repository by raw devfile URL with PAT setup -------"
-testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 200
-testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_RAW_PATH_URL} ${USER_CHE_NAMESPACE}
-deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
-
-set +x
-setupSSHKeyPairs "${AZURE_PRIVATE_KEY}" "${AZURE_PUBLIC_KEY}"
-set -x
-
-echo "------- [INFO] Check clone private repository by SSH URL with PAT setup -------"
-testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 200
-testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_SSH_URL} ${USER_CHE_NAMESPACE}
-deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}

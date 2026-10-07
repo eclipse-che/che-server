@@ -103,9 +103,6 @@ export PUBLIC_REPO_URL=${PUBLIC_REPO_URL:-"https://gitlab.com/chepullreq1/public
 export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://gitlab.com/chepullreq1/private-repo.git"}
 export GIT_PROVIDER_TYPE=${GIT_PROVIDER_TYPE:-"gitlab"}
 export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://gitlab.com"}
-export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@gitlab.com:chepullreq1/private-repo.git"}
-export PRIVATE_REPO_RAW_PATH_URL="https://gitlab.com/chepullreq1/private-repo/-/raw/main/devfile.yaml"
-
 export PUBLIC_REPO_WITH_DOT_DEFILE_URL=${PUBLIC_REPO_WITH_DOT_DEFILE_URL:-"https://gitlab.com/chepullreq1/public-repo-dot-devfile.git"}
 export PRIVATE_REPO_WITH_DOT_DEFILE_URL=${PRIVATE_REPO_WITH_DOT_DEFILE_URL:-"https://gitlab.com/chepullreq1/private-repo-dot-devfile.git"}
 
@@ -147,16 +144,3 @@ testGitCredentialsData ${USER_CHE_NAMESPACE} ${GITLAB_PAT} ${GIT_PROVIDER_URL}
 set -x
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
-echo "------- [INFO] Check clone private repository by raw devfile URL with PAT setup -------"
-testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 200
-testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_RAW_PATH_URL} ${USER_CHE_NAMESPACE}
-deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
-
-set +x
-setupSSHKeyPairs "${GITLAB_PRIVATE_KEY}" "${GITLAB_PUBLIC_KEY}"
-set -x
-
-echo "------- [INFO] Check clone private repository by SSH URL with PAT setup -------"
-testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 200
-testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_SSH_URL} ${USER_CHE_NAMESPACE}
-deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}

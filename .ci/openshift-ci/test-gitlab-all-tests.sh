@@ -100,6 +100,9 @@ deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_SSH_URL} ${USER_CHE_NAMESPACE}
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
+echo "------- [INFO] Cleaning up SSH secret before PAT test -------"
+oc delete secret git-ssh-key -n ${USER_CHE_NAMESPACE} 2>/dev/null || true
+
 # ======= [TEST 4/4] gitlab-with-pat-setup-flow =======
 echo ""
 echo "========================================================================"

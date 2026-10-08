@@ -15,12 +15,7 @@ set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
-if [[ "${REPO_NAME:-}" == "che-server" ]]; then
-  PR_IMAGE_TAG="pr-${PULL_NUMBER}"
-else
-  PR_IMAGE_TAG="next"
-  echo "[INFO] Not a che-server PR (repo: ${REPO_OWNER:-unknown}/${REPO_NAME:-unknown}), using image tag: ${PR_IMAGE_TAG}"
-fi
+PR_IMAGE_TAG="pr-${PULL_NUMBER}"
 
 export CHE_NAMESPACE=${CHE_NAMESPACE:-"eclipse-che"}
 export CHE_SERVER_IMAGE=${CHE_SERVER_IMAGE:-"quay.io/eclipse/che-server:${PR_IMAGE_TAG}"}
@@ -41,10 +36,6 @@ export CUSTOM_CONFIG_MAP_NAME=${CUSTOM_CONFIG_MAP_NAME:-"custom-ca-certificates"
 export GIT_SSL_CONFIG_MAP_NAME=${GIT_SSL_CONFIG_MAP_NAME:-"che-self-signed-cert"}
 
 waitForPRImage() {
-  if [[ "${REPO_NAME:-}" != "che-server" ]]; then
-    echo "------- [INFO] Skipping PR image wait (not a che-server PR, using ${PR_IMAGE_TAG}) -------"
-    return 0
-  fi
   echo "------- [INFO] Waiting for PR image ${CHE_SERVER_IMAGE} to be available on registry -------"
   CURRENT_TIME=$(date +%s)
   ENDTIME=$((CURRENT_TIME + 1800))
@@ -76,11 +67,7 @@ provisionOpenShiftOAuthUser() {
   htpasswd -c -B -b users.htpasswd ${OCP_ADMIN_USER_NAME} ${OCP_LOGIN_PASSWORD}
   htpasswd -b users.htpasswd ${OCP_NON_ADMIN_USER_NAME} ${OCP_LOGIN_PASSWORD}
 
-  if [ -f "${SHARED_DIR}/nested_kubeconfig" ]; then
-    provisionOpenShiftOAuthUserHyperShift
-  else
-    provisionOpenShiftOAuthUserIPI
-  fi
+  provisionOpenShiftOAuthUserHyperShift
 
   oc adm policy add-cluster-role-to-user cluster-admin ${OCP_ADMIN_USER_NAME}
 
@@ -98,12 +85,6 @@ provisionOpenShiftOAuthUser() {
 
   echo "####### [ERROR] Error occurred while waiting OpenShift OAuth htpasswd setup. Try to rerun test. #######"
   exit 1
-}
-
-provisionOpenShiftOAuthUserIPI() {
-  echo "------- [INFO] IPI environment: configuring OAuth directly -------"
-  oc create secret generic htpass-secret --from-file=htpasswd="users.htpasswd" -n openshift-config
-  oc apply -f ".ci/openshift-ci/htpasswdProvider.yaml"
 }
 
 provisionOpenShiftOAuthUserHyperShift() {
@@ -320,8 +301,6 @@ setupPersonalAccessToken() {
     sed -i "s#''#${GIT_PROVIDER_USERNAME}#g" pat-secret.yaml
   fi
 
-  cat pat-secret.yaml
-
   oc apply -f pat-secret.yaml -n ${USER_CHE_NAMESPACE}
   echo "======= [INFO] Personal Access Token is created. ======="
 }
@@ -339,8 +318,6 @@ setupSSHKeyPairs() {
   # patch the ssh-secret.yaml file
   sed -i "s#ssh_private_key#${ENCODED_GIT_PRIVATE_KEY}#g" ssh-secret.yaml
   sed -i "s#ssh_public_key#${ENCODED_GIT_PUBLIC_KEY}#g" ssh-secret.yaml
-
-  cat ssh-secret.yaml
 
   oc apply -f ssh-secret.yaml -n ${USER_CHE_NAMESPACE}
   echo "======= [INFO] SSH Secret is created. ======="
@@ -589,9 +566,11 @@ collectEclipseCheLogs() {
 }
 
 collectLogs() {
-  echo "------- [INFO] Waiting until test pod finished. -------"
-  oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test -f
-  sleep 3
+  if [[ "${SKIP_LOG_FOLLOW:-}" != "true" ]]; then
+    echo "------- [INFO] Waiting until test pod finished. -------"
+    oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test -f
+    sleep 3
+  fi
 
   # Download artifacts
   set +e

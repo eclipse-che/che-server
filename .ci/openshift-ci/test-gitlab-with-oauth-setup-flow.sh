@@ -12,7 +12,7 @@
 #
 
 # exit immediately when a command fails
-set -ex
+set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
@@ -34,6 +34,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}"/common.sh
 
 trap "collectLogs" EXIT SIGINT
+
+# Credential files diagnostic (names and sizes only, no values)
+{
+  echo "Credential files diagnostic:"
+  for f in /usr/local/ci-secrets/*/*; do
+    [ -f "$f" ] && echo "  $(basename $(dirname $f))/$(basename $f): $(wc -c < "$f") bytes"
+  done
+} > ${ARTIFACTS_DIR}/credential-diagnostic.txt 2>&1 || true
 
 setupTestEnvironmentOAuthFlow ${ADMIN_ACCESS_TOKEN} ${APPLICATION_NAME} ${APPLICATION_ID} ${APPLICATION_SECRET}
 startOAuthFactoryTest

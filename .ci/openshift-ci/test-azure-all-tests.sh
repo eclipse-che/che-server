@@ -12,7 +12,7 @@
 #
 
 # exit immediately when a command fails
-set -ex
+set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
@@ -23,6 +23,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}"/common.sh
 
 trap "catchFinish" EXIT SIGINT
+
+# Credential files diagnostic (names and sizes only, no values)
+{
+  echo "Credential files diagnostic:"
+  for f in /usr/local/ci-secrets/*/*; do
+    [ -f "$f" ] && echo "  $(basename $(dirname $f))/$(basename $f): $(wc -c < "$f") bytes"
+  done
+} > ${ARTIFACTS_DIR}/credential-diagnostic.txt 2>&1 || true
 
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 
@@ -65,9 +73,7 @@ echo "========================================================================"
 export PUBLIC_REPO_SSH_URL=${PUBLIC_REPO_SSH_URL:-"git@ssh.dev.azure.com:v3/chepullreq1/che-pr-public/public-repo"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@ssh.dev.azure.com:v3/chepullreq1/che-pr-private/private-repo"}
 
-set +x
 setupSSHKeyPairs "${AZURE_PRIVATE_KEY}" "${AZURE_PUBLIC_KEY}"
-set -x
 testFactoryResolverResponse ${PUBLIC_REPO_SSH_URL} 200
 testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 500
 
@@ -86,23 +92,17 @@ export PUBLIC_REPO_URL=${PUBLIC_REPO_URL:-"https://chepullreq1@dev.azure.com/che
 export PRIVATE_REPO_URL=${PRIVATE_REPO_URL:-"https://dev.azure.com/chepullreq1/che-pr-private/_git/private-repo"}
 export GIT_PROVIDER_TYPE=${GIT_PROVIDER_TYPE:-"azure-devops"}
 export GIT_PROVIDER_URL=${GIT_PROVIDER_URL:-"https://dev.azure.com"}
-set +x
 setupPersonalAccessToken  ${GIT_PROVIDER_TYPE} ${GIT_PROVIDER_URL} ${AZURE_PAT}
-set -x
 requestProvisionNamespace
 testFactoryResolverWithPatOAuth ${PUBLIC_REPO_URL} ${PRIVATE_REPO_URL}
 
 echo "------- [INFO] Check clone public repository with PAT setup -------"
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_URL} ${USER_CHE_NAMESPACE}
-set +x
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${AZURE_PAT} ${GIT_PROVIDER_URL}
-set -x
 deleteTestWorkspace ${PUBLIC_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 
 echo "------- [INFO] Check clone private repository with PAT setup -------"
 testCloneGitRepoProjectShouldExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_URL} ${USER_CHE_NAMESPACE}
-set +x
 testGitCredentialsData ${USER_CHE_NAMESPACE} ${AZURE_PAT} ${GIT_PROVIDER_URL}
-set -x
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}
 

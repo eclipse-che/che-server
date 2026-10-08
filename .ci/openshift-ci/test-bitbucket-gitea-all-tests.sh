@@ -12,7 +12,7 @@
 #
 
 # exit immediately when a command fails
-set -ex
+set -e
 # only exit with zero if all commands of the pipeline exit successfully
 set -o pipefail
 
@@ -23,6 +23,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}"/common.sh
 
 trap "catchFinish" EXIT SIGINT
+
+# Credential files diagnostic (names and sizes only, no values)
+{
+  echo "Credential files diagnostic:"
+  for f in /usr/local/ci-secrets/*/*; do
+    [ -f "$f" ] && echo "  $(basename $(dirname $f))/$(basename $f): $(wc -c < "$f") bytes"
+  done
+} > ${ARTIFACTS_DIR}/credential-diagnostic.txt 2>&1 || true
 
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 
@@ -64,9 +72,7 @@ echo "========================================================================"
 export PUBLIC_REPO_SSH_URL=${PUBLIC_REPO_SSH_URL:-"git@bitbucket.org:chepullreq/public-repo.git"}
 export PRIVATE_REPO_SSH_URL=${PRIVATE_REPO_SSH_URL:-"git@bitbucket.org:chepullreq/private-repo.git"}
 
-set +x
 setupSSHKeyPairs "${BITBUCKET_PRIVATE_KEY}" "${BITBUCKET_PUBLIC_KEY}"
-set -x
 testFactoryResolverNoPatOAuth ${PUBLIC_REPO_SSH_URL} ${PRIVATE_REPO_SSH_URL}
 
 testCloneGitRepoProjectShouldExists ${PUBLIC_REPO_WORKSPACE_NAME} ${PUBLIC_PROJECT_NAME} ${PUBLIC_REPO_SSH_URL} ${USER_CHE_NAMESPACE}
@@ -83,9 +89,7 @@ export PUBLIC_REPO_SSH_URL="git@gitea.com:chepullreq1/public-repo.git"
 export PRIVATE_REPO_SSH_URL="git@gitea.com:chepullreq1/private-repo.git"
 export PUBLIC_REPO_RAW_PATH_URL="https://gitea.com/chepullreq1/public-repo/raw/branch/main/devfile.yaml"
 
-set +x
 setupSSHKeyPairs "${GITEA_PRIVATE_KEY}" "${GITEA_PUBLIC_KEY}"
-set -x
 
 testFactoryResolverResponse ${PUBLIC_REPO_SSH_URL} 500
 testFactoryResolverResponse ${PRIVATE_REPO_SSH_URL} 500
@@ -105,11 +109,9 @@ echo ""
 echo "========================================================================"
 echo "======= [TEST 5/5] gitea-with-pat-setup-flow ======="
 echo "========================================================================"
-set +x
 export PRIVATE_REPO_RAW_PATH_URL="https://${GITEA_PAT}@gitea.com/chepullreq1/private-repo/raw/branch/main/devfile.yaml"
 
 testFactoryResolverResponse ${PRIVATE_REPO_RAW_PATH_URL} 200
 
 testCloneGitRepoNoProjectExists ${PRIVATE_REPO_WORKSPACE_NAME} ${PRIVATE_PROJECT_NAME} ${PRIVATE_REPO_RAW_PATH_URL} ${USER_CHE_NAMESPACE}
-set -x
 deleteTestWorkspace ${PRIVATE_REPO_WORKSPACE_NAME} ${USER_CHE_NAMESPACE}

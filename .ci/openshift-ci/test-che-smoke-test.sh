@@ -39,6 +39,7 @@ set +e
 oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test -f 2>/dev/null
 sleep 3
 FIRST_EXIT=$(oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test 2>/dev/null | grep "EXIT_CODE" || true)
+export SKIP_LOG_FOLLOW=true
 set -e
 
 if [[ "${FIRST_EXIT}" == "+ EXIT_CODE=0" ]]; then

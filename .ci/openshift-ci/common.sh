@@ -566,9 +566,11 @@ collectEclipseCheLogs() {
 }
 
 collectLogs() {
-  echo "------- [INFO] Waiting until test pod finished. -------"
-  oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test -f
-  sleep 3
+  if [[ "${SKIP_LOG_FOLLOW:-}" != "true" ]]; then
+    echo "------- [INFO] Waiting until test pod finished. -------"
+    oc logs -n ${CHE_NAMESPACE} ${TEST_POD_NAME} -c test -f
+    sleep 3
+  fi
 
   # Download artifacts
   set +e

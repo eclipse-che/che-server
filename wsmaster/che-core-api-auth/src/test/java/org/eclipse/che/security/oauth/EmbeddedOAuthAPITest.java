@@ -41,6 +41,7 @@ import java.net.URL;
 import java.util.Optional;
 import java.util.Set;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
+import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
@@ -52,6 +53,7 @@ import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -65,6 +67,11 @@ public class EmbeddedOAuthAPITest {
   @Mock OAuthAuthenticatorProvider oauth2Providers;
   @Mock org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Mock PersonalAccessTokenManager personalAccessTokenManager;
+
+  /** The Che host of these tests is `redirecturl.com`, the one a redirect may address. */
+  @Spy
+  RedirectAfterLoginUrlValidator redirectUrlValidator =
+      new RedirectAfterLoginUrlValidator("https://redirecturl.com/api");
 
   @InjectMocks EmbeddedOAuthAPI embeddedOAuthAPI;
 
@@ -227,7 +234,7 @@ public class EmbeddedOAuthAPITest {
     when(uriInfo.getRequestUri()).thenReturn(new URI("http://eclipse.che"));
     Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
     redirectAfterLogin.setAccessible(true);
-    redirectAfterLogin.set(embeddedOAuthAPI, "http://eclipse.che?quary=param");
+    redirectAfterLogin.set(embeddedOAuthAPI, "https://redirecturl.com?quary=param");
 
     // when
     Response callback = embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));
@@ -235,7 +242,7 @@ public class EmbeddedOAuthAPITest {
     // then
     assertEquals(
         callback.getLocation().toString(),
-        "http://eclipse.che?quary%3Dparam%26error_code%3Daccess_denied");
+        "https://redirecturl.com?quary%3Dparam%26error_code%3Daccess_denied");
   }
 
   @Test
@@ -634,5 +641,53 @@ public class EmbeddedOAuthAPITest {
 
     // when
     embeddedOAuthAPI.refreshToken(provider);
+  }
+
+  /**
+   * The `state` parameter is echoed back by the OAuth provider as the authorization URL asked for
+   * it, so the redirect URL it carries is chosen by whoever built that URL.
+   */
+  @Test(
+      expectedExceptions = ForbiddenException.class,
+      expectedExceptionsMessageRegExp = "The redirect after login URL is missing or not allowed")
+  public void shouldNotRedirectToAForeignHostOnCallback() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(authenticator.getEndpointUrl()).thenReturn("http://eclipse.che");
+    when(authenticator.callback(any(URL.class), anyList())).thenReturn(mock(TokenResponse.class));
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode("=github&redirect_after_login=https://attacker.com/", UTF_8)));
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+
+    // when
+    embeddedOAuthAPI.callback(uriInfo, emptyList());
+  }
+
+  @Test(expectedExceptions = ForbiddenException.class)
+  public void shouldNotRedirectToAForeignHostOnAccessDenied() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri()).thenReturn(new URI("http://eclipse.che"));
+    Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
+    redirectAfterLogin.setAccessible(true);
+    redirectAfterLogin.set(embeddedOAuthAPI, "https://attacker.com?quary=param");
+
+    // when
+    embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));
+  }
+
+  /** Refusing the URL up front spares the user an authorization that leads nowhere. */
+  @Test(expectedExceptions = ForbiddenException.class)
+  public void shouldNotStartTheFlowWithAForeignRedirectUrl() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(mock(OAuthAuthenticator.class));
+
+    // when
+    embeddedOAuthAPI.authenticate(uriInfo, "github", emptyList(), "https://attacker.com/", null);
   }
 }

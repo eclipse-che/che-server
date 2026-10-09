@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -29,8 +29,10 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.security.oauth.RedirectAfterLoginUrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +49,7 @@ public class OAuthAuthenticationService extends Service {
   private static final String UNSUPPORTED_OAUTH_PROVIDER_ERROR = "Unsupported OAuth provider: %s";
   public static final String ERROR_QUERY_NAME = "error_code";
   @Inject protected OAuthAuthenticatorProvider providers;
+  @Inject protected RedirectAfterLoginUrlValidator redirectUrlValidator;
 
   @GET
   @Path("authenticate")
@@ -55,10 +58,13 @@ public class OAuthAuthenticationService extends Service {
       @QueryParam("request_method") String requestMethod,
       @QueryParam("signature_method") String signatureMethod,
       @QueryParam("redirect_after_login") String redirectAfterLogin)
-      throws OAuthAuthenticationException, BadRequestException {
+      throws OAuthAuthenticationException, BadRequestException, ForbiddenException {
 
     requiredNotNull(providerName, "Provider name");
     requiredNotNull(redirectAfterLogin, "Redirect after login");
+    // Refuse the URL before the browser leaves for the OAuth provider: the callback refuses to
+    // redirect to it anyway, and the user would have authorized Che for nothing.
+    redirectUrlValidator.authorize(redirectAfterLogin);
 
     final OAuthAuthenticator oauth = getAuthenticator(providerName);
     final String authUrl =
@@ -69,13 +75,19 @@ public class OAuthAuthenticationService extends Service {
 
   @GET
   @Path("callback")
-  public Response callback() throws OAuthAuthenticationException, BadRequestException {
+  public Response callback()
+      throws OAuthAuthenticationException, BadRequestException, ForbiddenException {
     final URL requestUrl = getRequestUrl(uriInfo);
     final Map<String, List<String>> parameters = getQueryParametersFromState(getState(requestUrl));
 
     final String providerName = getParameter(parameters, "oauth_provider");
+    // The redirect URL comes from the OAuth `state`, which is chosen by whoever built the
+    // authorization URL, so it is untrusted input and has to be authorized before it is used.
     final String redirectAfterLogin = getRedirectAfterLoginUrl(parameters, null);
+    redirectUrlValidator.authorize(redirectAfterLogin);
 
+    // Built from the URL rather than from the URI parsed out of it: UriBuilder.fromUri(URI) gives
+    // a URL that has no path a path of '/', which the caller of the callback does not expect.
     UriBuilder redirectUriBuilder = UriBuilder.fromUri(redirectAfterLogin);
 
     try {
@@ -85,7 +97,11 @@ public class OAuthAuthenticationService extends Service {
     } catch (OAuthAuthenticationException e) {
       redirectUriBuilder.queryParam(ERROR_QUERY_NAME, "invalid_request");
     }
-    return Response.temporaryRedirect(redirectUriBuilder.build()).build();
+    URI redirectTarget = redirectUriBuilder.build();
+    // The check above was made against the URL the target is derived from. Repeat it on the exact
+    // value that is handed to the redirect, so that the guarantee holds at the point of use.
+    redirectUrlValidator.authorize(redirectTarget);
+    return Response.temporaryRedirect(redirectTarget).build();
   }
 
   @GET

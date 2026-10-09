@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -27,10 +27,13 @@ import jakarta.ws.rs.core.UriInfo;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
+import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.security.oauth.RedirectAfterLoginUrlValidator;
 import org.everrest.assured.EverrestJetty;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -50,6 +53,11 @@ public class OAuthAuthenticationServiceTest {
   @Mock private UriInfo uriInfo;
 
   @Mock private OAuthAuthenticatorProvider oAuthProvider;
+
+  /** The Che host of these tests is `redirecturl.com`, the one a redirect may address. */
+  @Spy
+  private RedirectAfterLoginUrlValidator redirectUrlValidator =
+      new RedirectAfterLoginUrlValidator("https://redirecturl.com/api");
 
   @InjectMocks private OAuthAuthenticationService oAuthAuthenticationService;
 
@@ -158,5 +166,36 @@ public class OAuthAuthenticationServiceTest {
 
     // then
     assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params=%7B%7D");
+  }
+
+  /**
+   * The `state` parameter is echoed back by the OAuth provider as the authorization URL asked for
+   * it, so the redirect URL it carries is chosen by whoever built that URL.
+   */
+  @Test(
+      expectedExceptions = ForbiddenException.class,
+      expectedExceptionsMessageRegExp = "The redirect after login URL is missing or not allowed")
+  public void shouldNotRedirectToAForeignHostOnCallback() throws Exception {
+    // given
+    Field uriInfoField = Service.class.getDeclaredField("uriInfo");
+    uriInfoField.setAccessible(true);
+    uriInfoField.set(oAuthAuthenticationService, uriInfo);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode(
+                        "=bitbucket-server&redirect_after_login=https://attacker.com/", UTF_8)));
+    when(oAuthProvider.getAuthenticator("bitbucket-server"))
+        .thenReturn(mock(OAuthAuthenticator.class));
+
+    // when
+    oAuthAuthenticationService.callback();
+  }
+
+  /** Refusing the URL up front spares the user an authorization that leads nowhere. */
+  @Test(expectedExceptions = ForbiddenException.class)
+  public void shouldNotStartTheFlowWithAForeignRedirectUrl() throws Exception {
+    oAuthAuthenticationService.authenticate("test-server", "POST", "rsa", "https://attacker.com/");
   }
 }

@@ -73,6 +73,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Inject protected OAuthAuthenticatorProvider oauth2Providers;
   @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
+  @Inject private OAuthCsrfStateStore csrfStateStore;
   private String redirectAfterLogin;
 
   @Override
@@ -85,8 +86,20 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       throws NotFoundException, OAuthAuthenticationException {
     this.redirectAfterLogin = redirectAfterLogin;
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
+    // Bind a single use nonce to the user starting the flow, so that the callback can tell a flow
+    // this user asked for from one an attacker pre-computed. The nonce goes into the query because
+    // that is what every provider copies into the `state` parameter, see
+    // OAuthAuthenticator#prepareState. It is verified in OAuthAuthenticationService#callback.
+    URL requestUrl;
+    try {
+      requestUrl =
+          OAuthCsrfStateStore.appendNonce(
+              getRequestUrl(uriInfo), csrfStateStore.issue(OAuthCsrfStateStore.currentUserId()));
+    } catch (MalformedURLException e) {
+      throw new OAuthAuthenticationException(e.getMessage());
+    }
     final String authUrl =
-        oauth.getAuthenticateUrl(getRequestUrl(uriInfo), scopes == null ? emptyList() : scopes);
+        oauth.getAuthenticateUrl(requestUrl, scopes == null ? emptyList() : scopes);
     return Response.temporaryRedirect(URI.create(authUrl)).build();
   }
 

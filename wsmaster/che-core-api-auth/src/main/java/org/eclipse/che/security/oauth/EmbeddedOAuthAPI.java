@@ -75,7 +75,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   @Inject private RedirectAfterLoginUrlValidator redirectUrlValidator;
-  private String redirectAfterLogin;
 
   @Override
   public Response authenticate(
@@ -90,7 +89,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       // redirect to it anyway, and the user would have authorized Che for nothing.
       redirectUrlValidator.authorize(redirectAfterLogin);
     }
-    this.redirectAfterLogin = redirectAfterLogin;
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
     final String authUrl =
         oauth.getAuthenticateUrl(getRequestUrl(uriInfo), scopes == null ? emptyList() : scopes);
@@ -103,10 +101,13 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     URL requestUrl = getRequestUrl(uriInfo);
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
-    if (!isNullOrEmpty(redirectAfterLogin)
-        && errorValues != null
-        && errorValues.contains("access_denied")) {
-      return redirect(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied"));
+    if (errorValues != null && errorValues.contains("access_denied")) {
+      // Read from the `state` of this request, so it is the URL of the flow this callback
+      // belongs to and not of one some other user has in progress.
+      String redirectAfterLogin = getParameter(params, "redirect_after_login");
+      if (!isNullOrEmpty(redirectAfterLogin)) {
+        return redirect(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied"));
+      }
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);

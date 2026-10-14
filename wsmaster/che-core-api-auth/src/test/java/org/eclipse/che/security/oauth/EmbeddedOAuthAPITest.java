@@ -24,20 +24,25 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.TokenResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
@@ -68,12 +73,84 @@ public class EmbeddedOAuthAPITest {
   @Mock org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Mock PersonalAccessTokenManager personalAccessTokenManager;
 
+  @Spy
+  OAuthCsrfStateValidator csrfStateValidator =
+      new OAuthCsrfStateValidator("https://redirecturl.com/api");
+
   /** The Che host of these tests is `redirecturl.com`, the one a redirect may address. */
   @Spy
   RedirectAfterLoginUrlValidator redirectUrlValidator =
       new RedirectAfterLoginUrlValidator("https://redirecturl.com/api");
 
   @InjectMocks EmbeddedOAuthAPI embeddedOAuthAPI;
+
+  @Test
+  public void shouldBindACsrfNonceToTheAuthorizationState() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che/oauth/authenticate?oauth_provider=github"
+                    + "&redirect_after_login=https://redirecturl.com/dashboard"));
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    when(authenticator.getAuthenticateUrl(any(URL.class), anyList()))
+        .thenReturn("https://github.com/login/oauth/authorize");
+    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
+
+    // when
+    Response response =
+        embeddedOAuthAPI.authenticate(
+            uriInfo,
+            "github",
+            emptyList(),
+            "https://redirecturl.com/dashboard",
+            mock(HttpServletRequest.class));
+
+    // then the query the authenticator turns into the `state` parameter carries a nonce, and the
+    // browser is handed the same nonce in the cookie the callback compares the state against
+    verify(authenticator).getAuthenticateUrl(urlCaptor.capture(), anyList());
+    String query = urlCaptor.getValue().getQuery();
+    assertTrue(
+        query.startsWith(
+            "oauth_provider=github&redirect_after_login=https://redirecturl.com/dashboard&"
+                + OAuthCsrfStateValidator.NONCE_PARAM
+                + "="),
+        "Unexpected authenticate query: " + query);
+    String nonce = query.substring(query.lastIndexOf('=') + 1);
+    String setCookie = response.getHeaderString(HttpHeaders.SET_COOKIE);
+    assertTrue(
+        setCookie.startsWith(
+            OAuthCsrfStateValidator.HOST_PREFIX
+                + OAuthCsrfStateValidator.COOKIE_NAME_PREFIX
+                + "github="),
+        "Unexpected state cookie: " + setCookie);
+    assertTrue(setCookie.contains("." + nonce + ";"), "Unexpected state cookie: " + setCookie);
+  }
+
+  @Test
+  public void shouldIssueADistinctCsrfNoncePerAuthorizationRequest() throws Exception {
+    // given
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(new URI("http://eclipse.che/oauth/authenticate?oauth_provider=github"));
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    when(authenticator.getAuthenticateUrl(any(URL.class), anyList()))
+        .thenReturn("https://github.com/login/oauth/authorize");
+    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+
+    // when
+    embeddedOAuthAPI.authenticate(uriInfo, "github", emptyList(), null, request);
+    embeddedOAuthAPI.authenticate(uriInfo, "github", emptyList(), null, request);
+
+    // then
+    verify(authenticator, times(2)).getAuthenticateUrl(urlCaptor.capture(), anyList());
+    List<URL> urls = urlCaptor.getAllValues();
+    assertNotEquals(urls.get(0).getQuery(), urls.get(1).getQuery());
+  }
 
   @Test(
       expectedExceptions = NotFoundException.class,

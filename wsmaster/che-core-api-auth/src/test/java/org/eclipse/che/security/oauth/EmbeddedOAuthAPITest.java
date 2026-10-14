@@ -28,7 +28,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -36,6 +35,7 @@ import static org.testng.Assert.assertTrue;
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
@@ -72,7 +72,10 @@ public class EmbeddedOAuthAPITest {
   @Mock OAuthAuthenticatorProvider oauth2Providers;
   @Mock org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Mock PersonalAccessTokenManager personalAccessTokenManager;
-  @Spy OAuthCsrfStateStore csrfStateStore = new OAuthCsrfStateStore();
+
+  @Spy
+  OAuthCsrfStateValidator csrfStateValidator =
+      new OAuthCsrfStateValidator("https://redirecturl.com/api");
 
   /** The Che host of these tests is `redirecturl.com`, the one a redirect may address. */
   @Spy
@@ -97,25 +100,33 @@ public class EmbeddedOAuthAPITest {
     ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
 
     // when
-    embeddedOAuthAPI.authenticate(
-        uriInfo,
-        "github",
-        emptyList(),
-        "https://redirecturl.com/dashboard",
-        mock(HttpServletRequest.class));
+    Response response =
+        embeddedOAuthAPI.authenticate(
+            uriInfo,
+            "github",
+            emptyList(),
+            "https://redirecturl.com/dashboard",
+            mock(HttpServletRequest.class));
 
-    // then the query the authenticator turns into the `state` parameter carries a nonce that the
-    // store accepts for this user, and for this user only
+    // then the query the authenticator turns into the `state` parameter carries a nonce, and the
+    // browser is handed the same nonce in the cookie the callback compares the state against
     verify(authenticator).getAuthenticateUrl(urlCaptor.capture(), anyList());
     String query = urlCaptor.getValue().getQuery();
     assertTrue(
         query.startsWith(
             "oauth_provider=github&redirect_after_login=https://redirecturl.com/dashboard&"
-                + OAuthCsrfStateStore.NONCE_PARAM
+                + OAuthCsrfStateValidator.NONCE_PARAM
                 + "="),
         "Unexpected authenticate query: " + query);
     String nonce = query.substring(query.lastIndexOf('=') + 1);
-    assertFalse(csrfStateStore.consume(nonce, "somebody-else"));
+    String setCookie = response.getHeaderString(HttpHeaders.SET_COOKIE);
+    assertTrue(
+        setCookie.startsWith(
+            OAuthCsrfStateValidator.HOST_PREFIX
+                + OAuthCsrfStateValidator.COOKIE_NAME_PREFIX
+                + "github="),
+        "Unexpected state cookie: " + setCookie);
+    assertTrue(setCookie.contains("." + nonce + ";"), "Unexpected state cookie: " + setCookie);
   }
 
   @Test

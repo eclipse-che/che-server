@@ -49,7 +49,7 @@ public class OAuthAuthenticationService extends Service {
   @Inject private AuthorisationRequestManager authorisationRequestManager;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   @Inject private OAuthIdeRedirectManager ideRedirectManager;
-  @Inject private OAuthCsrfStateStore csrfStateStore;
+  @Inject private OAuthCsrfStateValidator csrfStateValidator;
 
   /**
    * Redirect request to OAuth provider site for authentication|authorization. Client must provide
@@ -81,15 +81,16 @@ public class OAuthAuthenticationService extends Service {
    * <p>The callback is a plain {@code GET} carrying an authorization code, so anything it changes
    * for the authenticated user is reachable from a page the user did not write. Nothing is acted on
    * before the {@code state} parameter is shown to belong to an authorization flow this user
-   * started, see {@link OAuthCsrfStateStore}.
+   * started in this browser, see {@link OAuthCsrfStateValidator}.
    */
   @GET
   @Path("callback")
-  public Response callback(@QueryParam("errorValues") List<String> errorValues)
+  public Response callback(
+      @QueryParam("errorValues") List<String> errorValues, @Context HttpServletRequest request)
       throws OAuthAuthenticationException, NotFoundException, ForbiddenException {
-    csrfStateStore.verifyCallback(uriInfo);
+    csrfStateValidator.verifyCallback(uriInfo, request);
     authorisationRequestManager.callback(uriInfo, errorValues);
-    return oAuthAPI.callback(uriInfo, errorValues);
+    return csrfStateValidator.clearStateCookie(uriInfo, oAuthAPI.callback(uriInfo, errorValues));
   }
 
   /**

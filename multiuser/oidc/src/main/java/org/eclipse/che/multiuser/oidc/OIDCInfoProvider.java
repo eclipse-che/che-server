@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * OIDCInfoProvider retrieves OpenID Connect (OIDC) configuration for well-known endpoint. This
@@ -79,7 +79,7 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
       final TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {};
 
       Map<String, Object> openIdConfiguration =
-          new ObjectMapper().readValue(inputStream, typeReference);
+          JsonMapper.builderWithJackson2Defaults().build().readValue(inputStream, typeReference);
 
       LOG.info("openid configuration = {}", openIdConfiguration);
 

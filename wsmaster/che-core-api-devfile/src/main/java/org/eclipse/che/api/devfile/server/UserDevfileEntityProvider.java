@@ -40,6 +40,7 @@ import org.eclipse.che.dto.server.DtoFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Entity provider for {@link UserDevfileDto}. Performs schema validation of devfile part of the
@@ -53,7 +54,7 @@ public class UserDevfileEntityProvider
     implements MessageBodyReader<UserDevfileDto>, MessageBodyWriter<UserDevfileDto> {
 
   private final DevfileParser devfileParser;
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper = JsonMapper.builderWithJackson2Defaults().build();
 
   @Inject
   public UserDevfileEntityProvider(DevfileParser devfileParser) {

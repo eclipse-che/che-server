@@ -44,7 +44,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 @Listeners(MockitoTestNGListener.class)
 public class DevfileIntegrityValidatorTest {
 
-  private ObjectMapper objectMapper = new YAMLMapper();
+  private ObjectMapper objectMapper = YAMLMapper.builder().configureForJackson2().build();
 
   private DevfileImpl initialDevfile;
 

@@ -35,7 +35,6 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -59,12 +58,8 @@ public class DevfileParser {
   public DevfileParser(DevfileIntegrityValidator integrityValidator) {
     this(
       integrityValidator,
-      YAMLMapper.builder()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-        .build(),
-      JsonMapper.builder()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-        .build());
+      YAMLMapper.builder().configureForJackson2().build(),
+      JsonMapper.builderWithJackson2Defaults().build());
   }
 
   @VisibleForTesting

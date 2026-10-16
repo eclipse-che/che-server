@@ -69,6 +69,7 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Implementation of @{@link BitbucketServerApiClient} that is using @{@link HttpClient} to
@@ -76,11 +77,11 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
-  private static final ObjectMapper OM = new ObjectMapper();
+  private static final ObjectMapper OM = JsonMapper.builderWithJackson2Defaults().build();
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpBitbucketServerApiClient.class);
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
   public static final String USERNAME_HEADER = "x-ausername";
   private final URI serverUri;
   private final OAuthAuthenticator authenticator;

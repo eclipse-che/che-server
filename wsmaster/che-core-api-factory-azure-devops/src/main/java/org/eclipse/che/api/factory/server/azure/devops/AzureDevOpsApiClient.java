@@ -47,6 +47,7 @@ import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Azure DevOps Service API operations helper. */
 @Singleton
@@ -57,7 +58,7 @@ public class AzureDevOpsApiClient {
   private final HttpClient httpClient;
   private final String azureDevOpsApiEndpoint;
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
 
   @Inject
   public AzureDevOpsApiClient(

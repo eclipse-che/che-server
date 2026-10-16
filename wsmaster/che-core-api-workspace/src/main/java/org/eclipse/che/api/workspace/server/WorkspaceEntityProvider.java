@@ -41,6 +41,7 @@ import org.eclipse.che.dto.server.DtoFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Entity provider for {@link WorkspaceDto}. Performs schema validation of devfile part of the
@@ -56,7 +57,7 @@ public class WorkspaceEntityProvider
     implements MessageBodyReader<WorkspaceDto>, MessageBodyWriter<WorkspaceDto> {
 
   private DevfileParser devfileParser;
-  private ObjectMapper mapper = new ObjectMapper();
+  private ObjectMapper mapper = JsonMapper.builderWithJackson2Defaults().build();
 
   @Inject
   public WorkspaceEntityProvider(DevfileParser devfileParser) {

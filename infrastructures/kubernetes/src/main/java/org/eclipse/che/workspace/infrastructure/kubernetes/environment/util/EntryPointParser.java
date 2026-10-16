@@ -20,11 +20,19 @@ import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /** Can be used to parse container entry-point definition specified as a YAML list of strings. */
 public class EntryPointParser {
-  private final YAMLMapper mapper = new YAMLMapper();
+  // FAIL_ON_TRAILING_TOKENS is re-enabled on top of the Jackson 2.x defaults below: it's what
+  // rejects malformed/nested entries like "[a, b, [c]]" that Jackson 3's default array-to-scalar
+  // coercion would otherwise silently flatten into ["a", "b", "c"].
+  private final YAMLMapper mapper =
+      YAMLMapper.builder()
+          .configureForJackson2()
+          .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, true)
+          .build();
 
   /**
    * Parses the attributes contained in the provided machine config and produces an entry point

@@ -46,7 +46,10 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 public class JwtProxyConfigBuilder {
 
   private static final ObjectMapper YAML_PARSER =
-      YAMLMapper.builder().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true).build();
+      YAMLMapper.builder()
+          .configureForJackson2()
+          .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+          .build();
 
   private final String workspaceId;
   private final URI authPageUrl;

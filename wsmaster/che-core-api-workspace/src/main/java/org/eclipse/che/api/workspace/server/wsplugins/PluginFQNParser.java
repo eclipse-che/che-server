@@ -48,7 +48,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 @Beta
 public class PluginFQNParser {
 
-  private ObjectMapper yamlReader = new YAMLMapper();
+  private ObjectMapper yamlReader = YAMLMapper.builder().configureForJackson2().build();
 
   private static final String INCORRECT_PLUGIN_FORMAT_TEMPLATE =
       "Plugin '%s' has incorrect format. Should be: 'registryURL#publisher/name/version' or 'publisher/name/version' or `referenceURL`";

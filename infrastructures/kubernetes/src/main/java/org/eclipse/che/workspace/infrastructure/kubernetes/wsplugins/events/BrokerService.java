@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Configure JSON_RPC consumers of Che plugin broker events. Also converts {@link
@@ -51,7 +52,7 @@ public class BrokerService {
   public static final String BROKER_STATUS_CHANGED_METHOD = "broker/statusChanged";
   public static final String BROKER_LOG_METHOD = "broker/log";
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults().build();
   private final EventService eventService;
 
   @Inject

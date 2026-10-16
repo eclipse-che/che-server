@@ -58,13 +58,13 @@ public class DevfileParser {
   @Inject
   public DevfileParser(DevfileIntegrityValidator integrityValidator) {
     this(
-        integrityValidator,
-        YAMLMapper.builder()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-            .build(),
-        JsonMapper.builder()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-            .build());
+      integrityValidator,
+      YAMLMapper.builder()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+        .build(),
+      JsonMapper.builder()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+        .build());
   }
 
   @VisibleForTesting

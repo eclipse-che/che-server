@@ -50,7 +50,8 @@ public class GitlabApiClient {
   private final String serverUrl;
 
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
-  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
+  private static final ObjectMapper OBJECT_MAPPER =
+      JsonMapper.builderWithJackson2Defaults().build();
 
   public GitlabApiClient(String serverUrl) {
     this.serverUrl = trimEnd(serverUrl, '/');

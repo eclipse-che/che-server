@@ -52,7 +52,8 @@ public class AzureDevOpsServerApiClient {
   private final String azureDevOpsServerApiEndpoint;
   private final String azureDevOpsServerCollection;
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
-  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
+  private static final ObjectMapper OBJECT_MAPPER =
+      JsonMapper.builderWithJackson2Defaults().build();
 
   public AzureDevOpsServerApiClient(
       String azureDevOpsServerApiEndpoint, String azureDevOpsServerCollection) {

@@ -64,7 +64,8 @@ public class BitbucketApiClient {
   private final URI scmServerUrl;
 
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
-  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
+  private static final ObjectMapper OBJECT_MAPPER =
+      JsonMapper.builderWithJackson2Defaults().build();
 
   /** Default constructor, binds http client to https://api.bitbucket.org */
   public BitbucketApiClient() {

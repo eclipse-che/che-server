@@ -59,7 +59,8 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   private final String clientSecret;
   private final boolean isDevOpsOauth;
 
-  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builderWithJackson2Defaults().build();
+  private static final ObjectMapper OBJECT_MAPPER =
+      JsonMapper.builderWithJackson2Defaults().build();
 
   public AzureDevOpsOAuthAuthenticator(
       String cheApiEndpoint,

@@ -37,11 +37,11 @@ public class SerializableConverter implements AttributeConverter<Serializable, S
 
   public SerializableConverter() {
     this.objectMapper =
-      JsonMapper.builderWithJackson2Defaults()
-        .activateDefaultTyping(
-          BasicPolymorphicTypeValidator.builder().allowIfSubType(Object.class).build(),
-          DefaultTyping.OBJECT_AND_NON_CONCRETE)
-        .build();
+        JsonMapper.builderWithJackson2Defaults()
+            .activateDefaultTyping(
+                BasicPolymorphicTypeValidator.builder().allowIfSubType(Object.class).build(),
+                DefaultTyping.OBJECT_AND_NON_CONCRETE)
+            .build();
   }
 
   @Override

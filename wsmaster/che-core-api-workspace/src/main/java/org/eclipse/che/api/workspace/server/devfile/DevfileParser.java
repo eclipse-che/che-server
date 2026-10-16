@@ -57,9 +57,9 @@ public class DevfileParser {
   @Inject
   public DevfileParser(DevfileIntegrityValidator integrityValidator) {
     this(
-      integrityValidator,
-      YAMLMapper.builder().configureForJackson2().build(),
-      JsonMapper.builderWithJackson2Defaults().build());
+        integrityValidator,
+        YAMLMapper.builder().configureForJackson2().build(),
+        JsonMapper.builderWithJackson2Defaults().build());
   }
 
   @VisibleForTesting

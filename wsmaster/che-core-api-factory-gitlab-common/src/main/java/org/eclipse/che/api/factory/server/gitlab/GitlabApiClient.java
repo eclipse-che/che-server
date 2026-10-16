@@ -38,6 +38,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -180,7 +181,7 @@ public class GitlabApiClient {
                 provider);
         }
       }
-    } catch (IOException | InterruptedException | UncheckedIOException e) {
+    } catch (IOException | InterruptedException | UncheckedIOException | JacksonException e) {
       throw new ScmCommunicationException(e.getMessage(), e, provider);
     }
   }

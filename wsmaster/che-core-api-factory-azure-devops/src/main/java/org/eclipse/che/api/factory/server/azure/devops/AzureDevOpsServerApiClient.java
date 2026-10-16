@@ -40,6 +40,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -141,7 +142,7 @@ public class AzureDevOpsServerApiClient {
                 "azure-devops");
         }
       }
-    } catch (IOException | InterruptedException | UncheckedIOException e) {
+    } catch (IOException | InterruptedException | UncheckedIOException | JacksonException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }

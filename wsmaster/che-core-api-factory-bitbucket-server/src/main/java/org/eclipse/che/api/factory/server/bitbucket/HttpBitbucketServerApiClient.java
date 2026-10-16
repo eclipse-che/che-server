@@ -436,7 +436,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
                 "bitbucket");
         }
       }
-    } catch (IOException | InterruptedException | UncheckedIOException e) {
+    } catch (IOException | InterruptedException | UncheckedIOException | JacksonException e) {
       if (e instanceof SSLHandshakeException) {
         throw new ScmCommunicationException(
             "The required SSL certificate is missing or not trusted by the system. Please contact your administrator.",

@@ -38,6 +38,7 @@ import java.util.List;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.json.JsonParseException;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -200,7 +201,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       String accessToken = token.getAccessToken();
       credential.setAccessToken(accessToken);
       return newDto(OAuthToken.class).withToken(accessToken);
-    } catch (IOException | InterruptedException exception) {
+    } catch (IOException | InterruptedException | JacksonException exception) {
       return newDto(OAuthToken.class).withToken(credential.getAccessToken());
     }
   }

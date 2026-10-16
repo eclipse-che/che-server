@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Duration.ofSeconds;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -41,6 +40,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.ObjectMapper;
 
 /** Azure DevOps Server API operations helper. */
 public class AzureDevOpsServerApiClient {

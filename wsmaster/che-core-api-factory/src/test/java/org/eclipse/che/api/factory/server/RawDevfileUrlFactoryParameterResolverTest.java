@@ -25,7 +25,6 @@ import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.FileNotFoundException;
 import java.util.Base64;
 import java.util.HashMap;
@@ -43,6 +42,7 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
 
 @Listeners(value = {MockitoTestNGListener.class})
 public class RawDevfileUrlFactoryParameterResolverTest {

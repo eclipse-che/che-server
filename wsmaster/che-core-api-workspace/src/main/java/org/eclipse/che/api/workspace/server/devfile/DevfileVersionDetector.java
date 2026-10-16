@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.api.workspace.server.devfile;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
+import tools.jackson.databind.JsonNode;
 
 /** Class that helps determine devfile versions. */
 @Singleton

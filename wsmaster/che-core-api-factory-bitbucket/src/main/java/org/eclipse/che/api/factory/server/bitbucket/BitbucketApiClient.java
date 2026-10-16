@@ -18,7 +18,6 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.time.Duration.ofSeconds;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.io.CharStreams;
@@ -43,6 +42,7 @@ import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.ObjectMapper;
 
 /** Bitbucket API operations helper. */
 public class BitbucketApiClient {

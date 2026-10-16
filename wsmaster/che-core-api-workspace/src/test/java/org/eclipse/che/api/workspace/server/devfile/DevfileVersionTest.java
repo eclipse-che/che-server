@@ -13,11 +13,11 @@ package org.eclipse.che.api.workspace.server.devfile;
 
 import static org.testng.Assert.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 public class DevfileVersionTest {
   private final DevfileVersionDetector devfileVersionDetector = new DevfileVersionDetector();

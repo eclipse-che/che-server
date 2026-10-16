@@ -14,14 +14,13 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.environment.util;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /** Can be used to parse container entry-point definition specified as a YAML list of strings. */
 public class EntryPointParser {
@@ -63,7 +62,7 @@ public class EntryPointParser {
   public String serializeEntry(List<String> entry) {
     try {
       return mapper.writer().writeValueAsString(entry);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new IllegalStateException(
           format("Failed to serialize list of strings %s to YAML", entry), e);
     }
@@ -73,7 +72,7 @@ public class EntryPointParser {
       throws InfrastructureException {
     try {
       return mapper.readValue(data, new TypeReference<List<String>>() {});
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new InfrastructureException(
           format(
               "Failed to parse the attribute %s as a YAML list. The value was %s",

@@ -17,7 +17,6 @@ import static org.eclipse.che.api.factory.server.scm.exception.ExceptionMessages
 import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +35,7 @@ import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Handle the creation of some elements used inside a {@link FactoryDto}.

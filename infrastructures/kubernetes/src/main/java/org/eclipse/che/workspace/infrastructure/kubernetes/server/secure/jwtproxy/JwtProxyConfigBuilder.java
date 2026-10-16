@@ -15,10 +15,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.JwtProxyProvisioner.JWT_PROXY_CONFIG_FOLDER;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.JwtProxyProvisioner.JWT_PROXY_PUBLIC_KEY_FILE;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.assistedinject.Assisted;
 import jakarta.ws.rs.core.UriBuilder;
@@ -37,6 +33,10 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtprox
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.model.SignerProxyConfig;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.model.VerifierConfig;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.model.VerifierProxyConfig;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /**
  * Helps to build JWTProxy config with several verifier proxies.
@@ -46,8 +46,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtprox
 public class JwtProxyConfigBuilder {
 
   private static final ObjectMapper YAML_PARSER =
-      new ObjectMapper(new YAMLFactory())
-          .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+      YAMLMapper.builder().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true).build();
 
   private final String workspaceId;
   private final URI authPageUrl;
@@ -156,7 +155,7 @@ public class JwtProxyConfigBuilder {
 
     try {
       return YAML_PARSER.writeValueAsString(config);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new InternalInfrastructureException(
           "Error during creation of JWTProxy config YAML: " + e.getMessage(), e);
     }

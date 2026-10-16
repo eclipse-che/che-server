@@ -13,10 +13,6 @@ package org.eclipse.che.multiuser.oidc;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -28,6 +24,9 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.proxy.ProxyAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * OIDCInfoProvider retrieves OpenID Connect (OIDC) configuration for well-known endpoint. This
@@ -77,11 +76,10 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
     LOG.info("Retrieving OpenId configuration from endpoint: {}", wellKnownEndpoint);
     ProxyAuthenticator.initAuthenticator(wellKnownEndpoint);
     try (InputStream inputStream = new URL(wellKnownEndpoint).openStream()) {
-      final JsonParser parser = new JsonFactory().createParser(inputStream);
       final TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {};
 
       Map<String, Object> openIdConfiguration =
-          new ObjectMapper().reader().readValue(parser, typeReference);
+          new ObjectMapper().readValue(inputStream, typeReference);
 
       LOG.info("openid configuration = {}", openIdConfiguration);
 
@@ -105,7 +103,7 @@ public class OIDCInfoProvider implements Provider<OIDCInfo> {
           jwksInternalUri,
           serverAuthUrl,
           serverURL);
-    } catch (IOException e) {
+    } catch (JacksonException | IOException e) {
       throw new RuntimeException(
           "Exception while retrieving OpenId configuration from endpoint: " + wellKnownEndpoint, e);
     } finally {

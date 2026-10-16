@@ -38,7 +38,7 @@ commands:
         DEVCONTAINER_SCRIPT_B64
           chmod +x /tmp/start-devcontainer.sh
         fi
-        REBUILD=1 bash /tmp/start-devcontainer.sh
+        REBUILD=1 bash -o pipefail -c 'bash /tmp/start-devcontainer.sh 2>&1 | tee /tmp/devcontainer.log'
   - id: rebuild-devcontainer-no-cache
     exec:
       component: universal-developer-image
@@ -51,7 +51,7 @@ commands:
         DEVCONTAINER_SCRIPT_B64
           chmod +x /tmp/start-devcontainer.sh
         fi
-        REBUILD=1 NO_CACHE=1 bash /tmp/start-devcontainer.sh
+        REBUILD=1 NO_CACHE=1 bash -o pipefail -c 'bash /tmp/start-devcontainer.sh 2>&1 | tee /tmp/devcontainer.log'
   - id: show-devcontainer-log
     exec:
       component: universal-developer-image

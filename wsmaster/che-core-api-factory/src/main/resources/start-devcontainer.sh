@@ -414,7 +414,12 @@ INNER_SHELL=/bin/sh
 # dropdown.
 merge_into() {   # $1 = file, $2 = json object to merge in
   local file="$1" obj="$2" cur='{}' tmp
-  [ -f "$file" ] && cur="$(sed -e 's@^[[:space:]]*//.*$@@' "$file" | jq -c '.' 2>/dev/null || echo '{}')"
+  # An existing file we cannot parse (block comments, trailing commas) is left untouched rather
+  # than replaced, which would silently drop every setting it holds.
+  if [ -s "$file" ]; then
+    cur="$(sed -e 's@^[[:space:]]*//.*$@@' "$file" | jq -c '.' 2>/dev/null)" || return 1
+    [ -n "$cur" ] || cur='{}'
+  fi
   cur="$(jq -n --argjson a "$cur" --argjson b "$obj" '$a * $b')" || return 1
   mkdir -p "$(dirname "$file")" || return 1
   tmp="$(mktemp "$(dirname "$file")/.settings.XXXXXX")" || return 1
@@ -434,7 +439,7 @@ MACHINE_SETTINGS="${CHE_MACHINE_SETTINGS:-/checode/remote/data/Machine/settings.
 if merge_into "$MACHINE_SETTINGS" "$TERMINAL_PROFILE"; then
   echo "  terminal profile 'devcontainer' -> ${MACHINE_SETTINGS}"
 else
-  echo "  NOTE: ${MACHINE_SETTINGS} not writable; use the podman exec line below instead." >&2
+  echo "  NOTE: ${MACHINE_SETTINGS} not writable or not valid JSON; use the podman exec line below instead." >&2
 fi
 
 if [ "$LIFECYCLE_FAILURES" -gt 0 ]; then

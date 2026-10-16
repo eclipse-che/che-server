@@ -426,7 +426,14 @@ public class URLFactoryBuilderTest {
   }
 
   private static RemoteFactoryUrl testRemoteUrl(Optional<String> credentials) {
+    return testRemoteUrl(credentials, "http://repo/raw/");
+  }
+
+  private static RemoteFactoryUrl testRemoteUrl(
+      Optional<String> credentials, String rawFileLocationPrefix) {
     return new RemoteFactoryUrl() {
+      private String devfileFilename = "devfile.yaml";
+
       @Override
       public String getProviderName() {
         return "test";
@@ -438,19 +445,19 @@ public class URLFactoryBuilderTest {
             new DevfileLocation() {
               @Override
               public Optional<String> filename() {
-                return Optional.of("devfile.yaml");
+                return Optional.of(devfileFilename);
               }
 
               @Override
               public String location() {
-                return TEST_DEVFILE_LOCATION;
+                return rawFileLocationPrefix + devfileFilename;
               }
             });
       }
 
       @Override
       public String rawFileLocation(String filename) {
-        return "http://repo/raw/" + filename;
+        return rawFileLocationPrefix + filename;
       }
 
       @Override
@@ -474,7 +481,9 @@ public class URLFactoryBuilderTest {
       }
 
       @Override
-      public void setDevfileFilename(String devfileName) {}
+      public void setDevfileFilename(String devfileName) {
+        devfileFilename = devfileName;
+      }
     };
   }
 
@@ -602,6 +611,71 @@ public class URLFactoryBuilderTest {
   }
 
   @Test
+  public void testDevcontainerProbeContinuesOnNonAuthDevfileException() throws Exception {
+    stubDevcontainerTemplateParse();
+    when(fileContentProvider.fetchContent(eq(TEST_DEVFILE_LOCATION)))
+        .thenThrow(new IOException("not found"));
+    when(fileContentProvider.fetchContent(eq(TEST_DEVCONTAINER_LOCATION)))
+        .thenThrow(new DevfileException("connection error", new IOException("tls")));
+    when(fileContentProvider.fetchContent(eq(TEST_DEVCONTAINER_LOCATION_ROOT)))
+        .thenReturn("{\"name\": \"test\"}");
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            testRemoteUrl(), fileContentProvider, emptyMap(), false);
+
+    assertTrue(result.isPresent());
+    assertEquals(result.get().getSource(), ".devcontainer.json");
+  }
+
+  @Test
+  public void testDevcontainerProbeFailsWhenAllLocationsThrowDevfileException() throws Exception {
+    when(fileContentProvider.fetchContent(eq(TEST_DEVFILE_LOCATION)))
+        .thenThrow(new IOException("not found"));
+    when(fileContentProvider.fetchContent(eq(TEST_DEVCONTAINER_LOCATION)))
+        .thenThrow(new DevfileException("connection error", new IOException("tls")));
+    when(fileContentProvider.fetchContent(eq(TEST_DEVCONTAINER_LOCATION_ROOT)))
+        .thenThrow(new DevfileException("connection error", new IOException("tls")));
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            testRemoteUrl(), fileContentProvider, emptyMap(), false);
+
+    assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void testDevcontainerNotProbedWhenDevfileFilenameOverridden() throws Exception {
+    when(fileContentProvider.fetchContent(eq("http://repo/raw/custom-devfile.yaml")))
+        .thenThrow(new IOException("not found"));
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            testRemoteUrl(),
+            fileContentProvider,
+            Map.of(URLFactoryBuilder.DEVFILE_FILENAME, "custom-devfile.yaml"),
+            false);
+
+    assertFalse(result.isPresent());
+    verify(fileContentProvider, never()).fetchContent(eq(TEST_DEVCONTAINER_LOCATION));
+    verify(fileContentProvider, never()).fetchContent(eq(TEST_DEVCONTAINER_LOCATION_ROOT));
+  }
+
+  @Test
+  public void testDevcontainerNotProbedWhenRawLocationIsNotAbsolute() throws Exception {
+    when(fileContentProvider.fetchContent(eq("devfile.yaml")))
+        .thenThrow(new IOException("not found"));
+
+    Optional<FactoryMetaDto> result =
+        urlFactoryBuilder.createFactoryFromDevfile(
+            testRemoteUrl(Optional.empty(), ""), fileContentProvider, emptyMap(), false);
+
+    assertFalse(result.isPresent());
+    verify(fileContentProvider, never()).fetchContent(eq(".devcontainer/devcontainer.json"));
+    verify(fileContentProvider, never()).fetchContent(eq(".devcontainer.json"));
+  }
+
+  @Test
   public void testDevcontainerFetchIOExceptionReturnsEmpty() throws Exception {
     when(fileContentProvider.fetchContent(eq(TEST_DEVFILE_LOCATION)))
         .thenThrow(new IOException("not found"));
@@ -703,6 +777,7 @@ public class URLFactoryBuilderTest {
     assertTrue(template.contains("id: start-devcontainer"));
     assertTrue(template.contains("id: rebuild-devcontainer"));
     assertTrue(template.contains("id: rebuild-devcontainer-no-cache"));
+    assertTrue(template.contains("REBUILD=1 bash -o pipefail -c 'bash /tmp/start-devcontainer.sh"));
     assertTrue(template.contains("id: show-devcontainer-log"));
     assertTrue(template.contains("id: clean-devcontainer-images"));
     assertTrue(template.contains("workingDir: ${PROJECTS_ROOT}"));

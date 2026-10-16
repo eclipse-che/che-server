@@ -20,9 +20,12 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -63,24 +66,10 @@ public class URLFactoryBuilder {
 
   private static final String DEVCONTAINER_SCRIPT_B64_PLACEHOLDER = "__START_DEVCONTAINER_B64__";
 
-  private static final String DEVCONTAINER_DEVFILE_TEMPLATE;
-
-  static {
-    try {
-      String script = loadClasspathResource("/start-devcontainer.sh");
-      String encodedScript =
-          Base64.getEncoder().encodeToString(script.getBytes(StandardCharsets.UTF_8));
-      String template = loadClasspathResource("/devcontainer-devfile-template.yaml");
-      if (!template.contains(DEVCONTAINER_SCRIPT_B64_PLACEHOLDER)) {
-        throw new IOException(
-            "devcontainer-devfile-template.yaml is missing " + DEVCONTAINER_SCRIPT_B64_PLACEHOLDER);
-      }
-      DEVCONTAINER_DEVFILE_TEMPLATE =
-          template.replace(DEVCONTAINER_SCRIPT_B64_PLACEHOLDER, encodedScript);
-    } catch (IOException e) {
-      throw new UncheckedIOException("Failed to load devcontainer devfile template", e);
-    }
-  }
+  // Loaded lazily so a broken or missing template disables devcontainer detection instead of
+  // failing class initialization and with it every factory resolution.
+  private static final Supplier<Optional<String>> DEVCONTAINER_DEVFILE_TEMPLATE =
+      Suppliers.memoize(URLFactoryBuilder::loadDevcontainerDevfileTemplate);
 
   private final String defaultCheEditor;
   private final String defaultChePlugins;
@@ -125,26 +114,21 @@ public class URLFactoryBuilder {
       boolean skipAuthentication)
       throws ApiException {
     String devfileYamlContent;
-    LOG.debug(
-        "Factory resolution started: provider={}, skipAuthentication={}",
-        remoteFactoryUrl.getClass().getSimpleName(),
-        skipAuthentication);
-
-    // Apply the new devfile name to look for
-    if (overrideProperties.containsKey(DEVFILE_FILENAME)) {
+    boolean devfileFilenameOverridden = overrideProperties.containsKey(DEVFILE_FILENAME);
+    if (devfileFilenameOverridden) {
       remoteFactoryUrl.setDevfileFilename(overrideProperties.get(DEVFILE_FILENAME));
     }
 
     for (DevfileLocation location : remoteFactoryUrl.devfileFileLocations()) {
       String devfileLocation = location.location();
-      LOG.debug("Factory probing devfile: {}", devfileLocation);
       try {
         devfileYamlContent =
             fetchContent(
                 remoteFactoryUrl, fileContentProvider, devfileLocation, skipAuthentication);
       } catch (IOException ex) {
         // try next location
-        LOG.debug("Factory devfile fetch failed: {}", devfileLocation, ex);
+        LOG.debug(
+            "Unreachable devfile location met: {}. Error is: {}", devfileLocation, ex.getMessage());
         continue;
       } catch (DevfileException e) {
         LOG.debug("Unexpected devfile exception: {}", e.getMessage());
@@ -153,9 +137,6 @@ public class URLFactoryBuilder {
             : new ApiException(e.getMessage());
       }
       if (isNullOrEmpty(devfileYamlContent)) {
-        LOG.debug(
-            "Factory received empty devfile content at {}; returning default without devcontainer probing",
-            devfileLocation);
         return Optional.empty();
       }
       try {
@@ -167,52 +148,71 @@ public class URLFactoryBuilder {
         } catch (DevfileException e) {
           throw new ApiException(getDevfileConnectionErrorMessage(devfileLocation));
         }
-        LOG.debug("Factory selected repository devfile: {}", devfileLocation);
         return Optional.of(createFactory(parsedDevfile, location));
       } catch (DevfileException e) {
         throw toApiException(e, location);
       }
     }
 
-    // No devfile found — probe for devcontainer.json. Providers that cannot fetch raw files
-    // (git-ssh returns a bare filename from rawFileLocation) skip this and fall through to the
-    // default factory.
+    // An explicitly requested devfile that is missing should fall back to the default devfile, not
+    // to a devcontainer the user did not ask for.
+    if (devfileFilenameOverridden) {
+      return Optional.empty();
+    }
+    return createFactoryFromDevcontainer(remoteFactoryUrl, fileContentProvider, skipAuthentication);
+  }
+
+  /**
+   * Probes the repository for a devcontainer.json and returns a factory with a devfile that builds
+   * and runs it as a nested container. The probe is best effort: any failure other than missing SCM
+   * authorization falls through to the default factory.
+   */
+  private Optional<FactoryMetaDto> createFactoryFromDevcontainer(
+      RemoteFactoryUrl remoteFactoryUrl,
+      FileContentProvider fileContentProvider,
+      boolean skipAuthentication)
+      throws ApiException {
     for (String devcontainerPath : DEVCONTAINER_LOCATIONS) {
       String devcontainerLocation = remoteFactoryUrl.rawFileLocation(devcontainerPath);
-      if (devcontainerLocation == null) {
-        LOG.debug("Factory cannot resolve raw devcontainer location: {}", devcontainerPath);
-        continue;
+      // Providers without a raw file endpoint (e.g. git-ssh returns the bare filename) cannot be
+      // probed.
+      if (!isAbsoluteUri(devcontainerLocation)) {
+        return Optional.empty();
       }
       String devcontainerContent;
-      LOG.debug("Factory probing devcontainer: {}", devcontainerLocation);
       try {
         devcontainerContent =
             fetchContent(
                 remoteFactoryUrl, fileContentProvider, devcontainerLocation, skipAuthentication);
       } catch (IOException ex) {
-        LOG.debug("Factory devcontainer fetch failed: {}", devcontainerLocation, ex);
+        LOG.debug(
+            "Factory devcontainer fetch failed: {}. Error is: {}",
+            devcontainerLocation,
+            ex.getMessage());
         continue;
       } catch (DevfileException e) {
-        LOG.debug("Factory devcontainer probe failed: {}", devcontainerLocation, e);
-        throw e.getCause() instanceof ScmUnauthorizedException
-            ? toApiException(e)
-            : new ApiException(e.getMessage());
+        if (e.getCause() instanceof ScmUnauthorizedException) {
+          throw toApiException(e);
+        }
+        LOG.debug(
+            "Factory devcontainer probe failed: {}. Error is: {}",
+            devcontainerLocation,
+            e.getMessage());
+        continue;
       }
 
       if (!looksLikeJson(devcontainerContent)) {
-        LOG.debug(
-            "Factory ignoring non-JSON devcontainer content from {}; characters={}",
-            devcontainerLocation,
-            devcontainerContent == null ? 0 : devcontainerContent.length());
         continue;
       }
 
-      LOG.debug("Factory detected devcontainer at {}; generating devfile", devcontainerLocation);
+      Optional<String> template = DEVCONTAINER_DEVFILE_TEMPLATE.get();
+      if (template.isEmpty()) {
+        return Optional.empty();
+      }
       try {
-        JsonNode additions = devfileParser.parseYamlRaw(DEVCONTAINER_DEVFILE_TEMPLATE);
+        JsonNode additions = devfileParser.parseYamlRaw(template.get());
         Map<String, Object> devfileMap = new HashMap<>(DEFAULT_DEVFILE);
         devfileMap.putAll(devfileParser.convertYamlToMap(additions));
-        LOG.debug("Factory selected generated devcontainer devfile: {}", devcontainerPath);
         return Optional.of(
             newDto(FactoryDevfileV2Dto.class)
                 .withV(CURRENT_VERSION)
@@ -220,12 +220,22 @@ public class URLFactoryBuilder {
                 .withSource(devcontainerPath));
       } catch (DevfileException e) {
         LOG.error("Failed to parse devcontainer devfile template", e);
-        break;
+        return Optional.empty();
       }
     }
 
-    LOG.debug("Factory found no usable devfile or devcontainer; returning default devfile");
     return Optional.empty();
+  }
+
+  private static boolean isAbsoluteUri(String location) {
+    if (isNullOrEmpty(location)) {
+      return false;
+    }
+    try {
+      return new URI(location).isAbsolute();
+    } catch (URISyntaxException e) {
+      return false;
+    }
   }
 
   private static String fetchContent(
@@ -299,6 +309,23 @@ public class URLFactoryBuilder {
     return false;
   }
 
+  private static Optional<String> loadDevcontainerDevfileTemplate() {
+    try {
+      String script = loadClasspathResource("/start-devcontainer.sh");
+      String encodedScript =
+          Base64.getEncoder().encodeToString(script.getBytes(StandardCharsets.UTF_8));
+      String template = loadClasspathResource("/devcontainer-devfile-template.yaml");
+      if (!template.contains(DEVCONTAINER_SCRIPT_B64_PLACEHOLDER)) {
+        throw new IOException(
+            "devcontainer-devfile-template.yaml is missing " + DEVCONTAINER_SCRIPT_B64_PLACEHOLDER);
+      }
+      return Optional.of(template.replace(DEVCONTAINER_SCRIPT_B64_PLACEHOLDER, encodedScript));
+    } catch (IOException e) {
+      LOG.error("Failed to load devcontainer devfile template; devcontainer detection disabled", e);
+      return Optional.empty();
+    }
+  }
+
   private static String loadClasspathResource(String name) throws IOException {
     try (InputStream is = URLFactoryBuilder.class.getResourceAsStream(name)) {
       if (is == null) {
@@ -310,6 +337,6 @@ public class URLFactoryBuilder {
 
   @VisibleForTesting
   static String getDevcontainerDevfileTemplate() {
-    return DEVCONTAINER_DEVFILE_TEMPLATE;
+    return DEVCONTAINER_DEVFILE_TEMPLATE.get().orElse(null);
   }
 }

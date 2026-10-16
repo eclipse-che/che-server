@@ -13,7 +13,6 @@ package org.eclipse.che.api.workspace.server.model.impl.devfile;
 
 import static java.util.stream.Collectors.toCollection;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +39,7 @@ import org.eclipse.che.api.core.model.workspace.devfile.Env;
 import org.eclipse.che.api.core.model.workspace.devfile.Volume;
 import org.eclipse.che.api.workspace.server.devfile.PreferencesDeserializer;
 import org.eclipse.che.api.workspace.server.devfile.SerializableConverter;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * @author Sergii Leshchenko

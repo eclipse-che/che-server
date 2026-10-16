@@ -11,16 +11,18 @@
  */
 package org.eclipse.che.api.workspace.server.devfile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import org.eclipse.che.api.core.model.workspace.devfile.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DefaultTyping;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 /**
  * Helps to store and read serializable values of the preferences map in {@link Component} to/from
@@ -34,15 +36,19 @@ public class SerializableConverter implements AttributeConverter<Serializable, S
   private ObjectMapper objectMapper;
 
   public SerializableConverter() {
-    this.objectMapper = new ObjectMapper();
-    objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
+    this.objectMapper =
+        JsonMapper.builderWithJackson2Defaults()
+            .activateDefaultTyping(
+                BasicPolymorphicTypeValidator.builder().allowIfSubType(Object.class).build(),
+                DefaultTyping.OBJECT_AND_NON_CONCRETE)
+            .build();
   }
 
   @Override
   public String convertToDatabaseColumn(Serializable value) {
     try {
       return objectMapper.writeValueAsString(value);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException("Unable to serialize preference value:" + e.getMessage(), e);
     }
   }
@@ -55,12 +61,12 @@ public class SerializableConverter implements AttributeConverter<Serializable, S
         return serializableNodeValue(node);
       } else if (node.isArray()) {
         List<Serializable> values = new ArrayList<>();
-        node.elements().forEachRemaining(n -> values.add(serializableNodeValue(n)));
+        node.values().forEach(n -> values.add(serializableNodeValue(n)));
         return values.toArray();
       } else {
         throw new RuntimeException("Unable to deserialize preference value:" + dbData);
       }
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException("Unable to deserialize preference value:" + e.getMessage(), e);
     }
   }

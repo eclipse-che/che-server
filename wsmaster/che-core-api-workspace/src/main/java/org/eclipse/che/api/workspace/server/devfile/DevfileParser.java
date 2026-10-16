@@ -18,11 +18,6 @@ import static java.util.Collections.emptyMap;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.KUBERNETES_COMPONENT_TYPE;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_COMPONENT_TYPE;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -38,6 +33,12 @@ import org.eclipse.che.api.workspace.server.devfile.exception.OverrideParameterE
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /**
  * Facade for devfile related operations.
@@ -55,7 +56,10 @@ public class DevfileParser {
 
   @Inject
   public DevfileParser(DevfileIntegrityValidator integrityValidator) {
-    this(integrityValidator, new ObjectMapper(new YAMLFactory()), new ObjectMapper());
+    this(
+        integrityValidator,
+        YAMLMapper.builder().configureForJackson2().build(),
+        JsonMapper.builderWithJackson2Defaults().build());
   }
 
   @VisibleForTesting
@@ -100,7 +104,7 @@ public class DevfileParser {
           .orElseThrow(
               () ->
                   new DevfileFormatException("Unable to parse Devfile - provided source is empty"));
-    } catch (JsonProcessingException jpe) {
+    } catch (JacksonException jpe) {
       throw new DevfileFormatException("Can't parse devfile yaml.", jpe);
     }
   }
@@ -191,7 +195,7 @@ public class DevfileParser {
       throws DevfileFormatException, OverrideParameterException {
     try {
       return parse(mapper.readTree(content), mapper, overrideProperties);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new DevfileFormatException(e.getMessage());
     }
   }
@@ -206,7 +210,7 @@ public class DevfileParser {
     try {
       parsed = overridePropertiesApplier.applyPropertiesOverride(parsed, overrideProperties);
       devfile = mapper.treeToValue(parsed, DevfileImpl.class);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new DevfileFormatException(e.getMessage());
     }
     integrityValidator.validateDevfile(devfile);

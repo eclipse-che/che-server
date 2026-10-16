@@ -11,15 +11,12 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.server.external;
 
-import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER;
 import static org.eclipse.che.api.core.model.workspace.config.ServerConfig.SERVICE_NAME_ATTRIBUTE;
 import static org.eclipse.che.api.core.model.workspace.config.ServerConfig.SERVICE_PORT_ATTRIBUTE;
+import static tools.jackson.dataformat.yaml.YAMLWriteFeature.WRITE_DOC_START_MARKER;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +25,9 @@ import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Annotations;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.dataformat.yaml.YAMLFactory;
 
 /**
  * Config generator for Traefik Gateway.
@@ -122,20 +122,20 @@ public class TraefikGatewayRouteConfigGenerator implements GatewayRouteConfigGen
       throws InfrastructureException {
     StringWriter sw = new StringWriter();
     try {
-      YAMLGenerator generator =
+      JsonGenerator generator =
           YAMLFactory.builder().disable(WRITE_DOC_START_MARKER).build().createGenerator(sw);
 
       generator.writeStartObject();
-      generator.writeFieldName("http");
+      generator.writeName("http");
       generator.writeStartObject();
 
-      generator.writeFieldName("routers");
+      generator.writeName("routers");
       generateRouters(generator, name, path);
 
-      generator.writeFieldName("services");
+      generator.writeName("services");
       generateServices(generator, name, serviceUrl);
 
-      generator.writeFieldName("middlewares");
+      generator.writeName("middlewares");
       generateMiddlewares(generator, name, path);
 
       generator.writeEndObject();
@@ -144,7 +144,7 @@ public class TraefikGatewayRouteConfigGenerator implements GatewayRouteConfigGen
       generator.flush();
 
       return sw.toString();
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new InfrastructureException(e);
     }
   }
@@ -161,20 +161,19 @@ public class TraefikGatewayRouteConfigGenerator implements GatewayRouteConfigGen
    *   priority: 100
    * </pre>
    */
-  private void generateRouters(YAMLGenerator generator, String name, String path)
-      throws IOException {
+  private void generateRouters(JsonGenerator generator, String name, String path) {
     generator.writeStartObject();
-    generator.writeFieldName(name);
+    generator.writeName(name);
     generator.writeStartObject();
-    generator.writeFieldName("rule");
+    generator.writeName("rule");
     generator.writeString("PathPrefix(`" + path + "`)");
-    generator.writeFieldName("service");
+    generator.writeName("service");
     generator.writeString(name);
-    generator.writeFieldName("middlewares");
+    generator.writeName("middlewares");
     generator.writeStartArray();
     generator.writeString(name);
     generator.writeEndArray();
-    generator.writeFieldName("priority");
+    generator.writeName("priority");
     generator.writeNumber(100);
     generator.writeEndObject();
     generator.writeEndObject();
@@ -190,17 +189,16 @@ public class TraefikGatewayRouteConfigGenerator implements GatewayRouteConfigGen
    *     - url: "{serviceUrl}"
    * </pre>
    */
-  private void generateServices(YAMLGenerator generator, String name, String serviceUrl)
-      throws IOException {
+  private void generateServices(JsonGenerator generator, String name, String serviceUrl) {
     generator.writeStartObject();
-    generator.writeFieldName(name);
+    generator.writeName(name);
     generator.writeStartObject();
-    generator.writeFieldName("loadBalancer");
+    generator.writeName("loadBalancer");
     generator.writeStartObject();
-    generator.writeFieldName("servers");
+    generator.writeName("servers");
     generator.writeStartArray();
     generator.writeStartObject();
-    generator.writeFieldName("url");
+    generator.writeName("url");
     generator.writeString(serviceUrl);
     generator.writeEndObject();
     generator.writeEndArray();
@@ -219,14 +217,13 @@ public class TraefikGatewayRouteConfigGenerator implements GatewayRouteConfigGen
    *     - "{path}"
    * </pre>
    */
-  private void generateMiddlewares(YAMLGenerator generator, String name, String path)
-      throws IOException {
+  private void generateMiddlewares(JsonGenerator generator, String name, String path) {
     generator.writeStartObject();
-    generator.writeFieldName(name);
+    generator.writeName(name);
     generator.writeStartObject();
-    generator.writeFieldName("stripPrefix");
+    generator.writeName("stripPrefix");
     generator.writeStartObject();
-    generator.writeFieldName("prefixes");
+    generator.writeName("prefixes");
     generator.writeStartArray();
     generator.writeString(path);
     generator.writeEndArray();

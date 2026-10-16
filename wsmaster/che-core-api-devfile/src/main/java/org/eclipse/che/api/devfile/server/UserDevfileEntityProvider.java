@@ -13,8 +13,6 @@ package org.eclipse.che.api.devfile.server;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
@@ -39,6 +37,10 @@ import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
 import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.dto.server.DtoFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Entity provider for {@link UserDevfileDto}. Performs schema validation of devfile part of the
@@ -52,7 +54,7 @@ public class UserDevfileEntityProvider
     implements MessageBodyReader<UserDevfileDto>, MessageBodyWriter<UserDevfileDto> {
 
   private final DevfileParser devfileParser;
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper = JsonMapper.builderWithJackson2Defaults().build();
 
   @Inject
   public UserDevfileEntityProvider(DevfileParser devfileParser) {
@@ -85,7 +87,7 @@ public class UserDevfileEntityProvider
       return DtoFactory.getInstance().createDtoFromJson(wsNode.toString(), UserDevfileDto.class);
     } catch (DevfileFormatException e) {
       throw new BadRequestException(e.getMessage());
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new WebApplicationException(e.getMessage(), e);
     }
   }

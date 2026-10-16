@@ -16,7 +16,6 @@ import static java.lang.String.format;
 import static org.eclipse.che.api.factory.server.FactoryResolverPriority.HIGHEST;
 import static org.eclipse.che.api.factory.shared.Constants.URL_PARAMETER_NAME;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -36,6 +35,7 @@ import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
+import tools.jackson.databind.JsonNode;
 
 /**
  * {@link FactoryParametersResolver} implementation to resolve factory based on url parameter as a

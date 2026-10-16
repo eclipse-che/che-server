@@ -49,7 +49,6 @@
         <aopalliance.version>1.0</aopalliance.version>
         <ch.qos.logback.version>1.5.28</ch.qos.logback.version>
         <com.auth0.jwks-rsa.version>0.22.1</com.auth0.jwks-rsa.version>
-        <com.fasterxml.jackson.version>2.22.3</com.fasterxml.jackson.version>
         <com.github.kirviq.dumbster.version>1.7.1</com.github.kirviq.dumbster.version>
         <com.google.code.guice.version>5.0.1</com.google.code.guice.version>
         <com.google.errorprone>2.42.0</com.google.errorprone>
@@ -66,13 +65,13 @@
         <grpc-api.version>1.78.0</grpc-api.version>
         <integration.mysql.db.image>quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764</integration.mysql.db.image>
         <integration.postgresql.db.image>quay.io/eclipse/che--centos--postgresql-13-centos7:1-71b24684d64da46f960682cc4216222a7e4ed8b1a31dd5a865b3e71afdea20d2</integration.postgresql.db.image>
-        <io.fabric8.kubernetes-client.version>7.9.0</io.fabric8.kubernetes-client.version>
+        <io.fabric8.kubernetes-client.version>8.0.0</io.fabric8.kubernetes-client.version>
         <io.github.mweirauch.micrometer-jvm-extras.version>0.2.2</io.github.mweirauch.micrometer-jvm-extras.version>
         <io.jaegertracing.micrometer.version>1.8.1</io.jaegertracing.micrometer.version>
         <io.jaegertracing.version>1.8.1</io.jaegertracing.version>
         <io.jsonwebtoken.jjwt.version>0.13.0</io.jsonwebtoken.jjwt.version>
         <io.micrometer.version>1.18.0-M1</io.micrometer.version>
-        <io.netty.version>4.2.17.Final</io.netty.version>
+        <io.netty.version>4.2.18.Final</io.netty.version>
         <io.opentracing.api.extensions.version>0.6.0</io.opentracing.api.extensions.version>
         <io.opentracing.concurrent.version>0.4.0</io.opentracing.concurrent.version>
         <io.opentracing.contrib.metrics.version>0.3.0</io.opentracing.contrib.metrics.version>
@@ -84,7 +83,8 @@
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
         <io.rest-assured.version>6.0.0</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
-        <io.vertx.version>4.5.30</io.vertx.version>
+        <io.vertx.version>5.2.0</io.vertx.version>
+        <jackson.version>3.1.7</jackson.version>
         <jakarta.activation.version>2.1.4</jakarta.activation.version>
         <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
         <jakarta.inject.version>1.0.5</jakarta.inject.version>
@@ -180,11 +180,6 @@
                 <groupId>com.auth0</groupId>
                 <artifactId>jwks-rsa</artifactId>
                 <version>${com.auth0.jwks-rsa.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-yaml</artifactId>
-                <version>${com.fasterxml.jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
@@ -1395,16 +1390,21 @@
                 <version>${org.wiremock.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${com.fasterxml.jackson.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <groupId>tools.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.fabric8</groupId>
                 <artifactId>kubernetes-client-api</artifactId>
                 <version>${io.fabric8.kubernetes-client.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>tools.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -1435,6 +1435,14 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-security</artifactId>
+                <version>${org.eclipse.jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- fabric8 kubernetes-client-project 8.0.0 dropped the jetty-server pin that 7.9.0
+                 provided transitively, causing a dependency convergence failure -->
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
                 <version>${org.eclipse.jetty.version}</version>
                 <scope>test</scope>
             </dependency>

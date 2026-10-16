@@ -16,9 +16,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.annotations.Beta;
 import java.io.IOException;
 import java.net.URI;
@@ -36,6 +33,9 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.wsplugins.model.ExtendedPluginFQN;
 import org.eclipse.che.api.workspace.server.wsplugins.model.PluginFQN;
 import org.eclipse.che.api.workspace.shared.Constants;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /**
  * Parses workspace attributes into a list of {@link PluginFQN}.
@@ -48,7 +48,7 @@ import org.eclipse.che.api.workspace.shared.Constants;
 @Beta
 public class PluginFQNParser {
 
-  private ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+  private ObjectMapper yamlReader = YAMLMapper.builder().configureForJackson2().build();
 
   private static final String INCORRECT_PLUGIN_FORMAT_TEMPLATE =
       "Plugin '%s' has incorrect format. Should be: 'registryURL#publisher/name/version' or 'publisher/name/version' or `referenceURL`";

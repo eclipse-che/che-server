@@ -22,7 +22,6 @@ import static java.time.Duration.ofSeconds;
 import static org.eclipse.che.api.factory.server.azure.devops.AzureDevOps.formatAuthorizationHeader;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -47,6 +46,9 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Azure DevOps Service API operations helper. */
 @Singleton
@@ -57,7 +59,8 @@ public class AzureDevOpsApiClient {
   private final HttpClient httpClient;
   private final String azureDevOpsApiEndpoint;
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER =
+      JsonMapper.builderWithJackson2Defaults().build();
 
   @Inject
   public AzureDevOpsApiClient(
@@ -177,7 +180,7 @@ public class AzureDevOpsApiClient {
                 "azure-devops");
         }
       }
-    } catch (IOException | InterruptedException | UncheckedIOException e) {
+    } catch (IOException | InterruptedException | UncheckedIOException | JacksonException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }

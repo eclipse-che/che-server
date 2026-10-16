@@ -14,8 +14,6 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.brokerphas
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Collections.singletonMap;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
@@ -52,6 +50,9 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.Names;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.CertificateProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.util.Containers;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Creates {@link KubernetesEnvironment} with everything needed to deploy Plugin brokers.
@@ -70,7 +71,7 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
   private static final String PLUGINS_VOLUME_NAME = "plugins";
   private static final String BROKERS_POD_NAME = "che-plugin-broker";
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults().build();
   private final String cheWebsocketEndpoint;
   private final String brokerPullPolicy;
   private final AgentAuthEnableEnvVarProvider authEnableEnvVarProvider;
@@ -256,7 +257,7 @@ public abstract class BrokerEnvironmentFactory<E extends KubernetesEnvironment> 
           .endMetadata()
           .withData(singletonMap(CONFIG_FILE, objectMapper.writeValueAsString(pluginFQNs)))
           .build();
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new InternalInfrastructureException(e.getMessage(), e);
     }
   }

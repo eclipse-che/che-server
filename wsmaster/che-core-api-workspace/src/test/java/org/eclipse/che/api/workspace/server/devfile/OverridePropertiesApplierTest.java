@@ -14,12 +14,12 @@ package org.eclipse.che.api.workspace.server.devfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.api.workspace.server.devfile.exception.OverrideParameterException;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 public class OverridePropertiesApplierTest {
 

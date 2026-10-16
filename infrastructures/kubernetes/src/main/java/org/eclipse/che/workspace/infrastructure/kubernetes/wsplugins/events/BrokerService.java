@@ -14,10 +14,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.wsplugins.events;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.Beta;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -32,6 +29,10 @@ import org.eclipse.che.api.workspace.shared.dto.event.RuntimeLogEvent;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Configure JSON_RPC consumers of Che plugin broker events. Also converts {@link
@@ -51,7 +52,7 @@ public class BrokerService {
   public static final String BROKER_STATUS_CHANGED_METHOD = "broker/statusChanged";
   public static final String BROKER_LOG_METHOD = "broker/log";
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults().build();
   private final EventService eventService;
 
   @Inject
@@ -109,7 +110,7 @@ public class BrokerService {
             objectMapper.readValue(toolingString, new TypeReference<List<ChePlugin>>() {});
         // when id of plugin is not set, we can compose it from publisher, name and version
         return plugins.stream().map(this::composePluginIdWhenNull).collect(Collectors.toList());
-      } catch (IOException e) {
+      } catch (JacksonException e) {
         LOG.error("Parsing Che plugin broker event failed. Error: " + e.getMessage(), e);
       }
     }

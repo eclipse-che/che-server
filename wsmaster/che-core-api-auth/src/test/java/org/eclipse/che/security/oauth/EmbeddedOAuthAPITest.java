@@ -308,10 +308,13 @@ public class EmbeddedOAuthAPITest {
   public void shouldEncodeRejectErrorForRedirectUrl() throws Exception {
     // given
     UriInfo uriInfo = mock(UriInfo.class);
-    when(uriInfo.getRequestUri()).thenReturn(new URI("http://eclipse.che"));
-    Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
-    redirectAfterLogin.setAccessible(true);
-    redirectAfterLogin.set(embeddedOAuthAPI, "https://redirecturl.com?quary=param");
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode(
+                        "=github&redirect_after_login=https://redirecturl.com?quary=param",
+                        UTF_8)));
 
     // when
     Response callback = embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));
@@ -320,6 +323,41 @@ public class EmbeddedOAuthAPITest {
     assertEquals(
         callback.getLocation().toString(),
         "https://redirecturl.com?quary%3Dparam%26error_code%3Daccess_denied");
+  }
+
+  /**
+   * A denied callback is redirected to the URL carried by its own {@code state}, whoever else
+   * started a flow while this one was at the provider.
+   */
+  @Test
+  public void shouldRedirectADeniedCallbackToTheUrlOfItsOwnFlow() throws Exception {
+    // given another user starts a flow of their own while this one is at the provider
+    UriInfo authenticateUriInfo = mock(UriInfo.class);
+    when(authenticateUriInfo.getRequestUri())
+        .thenReturn(new URI("http://eclipse.che/oauth/authenticate?oauth_provider=github"));
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator("github")).thenReturn(authenticator);
+    when(authenticator.getAuthenticateUrl(any(URL.class), anyList()))
+        .thenReturn("https://github.com/login/oauth/authorize");
+    embeddedOAuthAPI.authenticate(
+        authenticateUriInfo, "github", emptyList(), "https://redirecturl.com/other-user?y=2", null);
+
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode(
+                        "=github&redirect_after_login=https://redirecturl.com/this-user?x=1",
+                        UTF_8)));
+
+    // when
+    Response callback = embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));
+
+    // then
+    assertEquals(
+        callback.getLocation().toString(),
+        "https://redirecturl.com/this-user?x%3D1%26error_code%3Daccess_denied");
   }
 
   @Test
@@ -748,10 +786,12 @@ public class EmbeddedOAuthAPITest {
   public void shouldNotRedirectToAForeignHostOnAccessDenied() throws Exception {
     // given
     UriInfo uriInfo = mock(UriInfo.class);
-    when(uriInfo.getRequestUri()).thenReturn(new URI("http://eclipse.che"));
-    Field redirectAfterLogin = EmbeddedOAuthAPI.class.getDeclaredField("redirectAfterLogin");
-    redirectAfterLogin.setAccessible(true);
-    redirectAfterLogin.set(embeddedOAuthAPI, "https://attacker.com?quary=param");
+    when(uriInfo.getRequestUri())
+        .thenReturn(
+            new URI(
+                "http://eclipse.che?state=oauth_provider"
+                    + encode(
+                        "=github&redirect_after_login=https://attacker.com?quary=param", UTF_8)));
 
     // when
     embeddedOAuthAPI.callback(uriInfo, singletonList("access_denied"));

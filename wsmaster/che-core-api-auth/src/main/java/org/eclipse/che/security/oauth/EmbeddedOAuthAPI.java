@@ -77,7 +77,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   @Inject private RedirectAfterLoginUrlValidator redirectUrlValidator;
   @Inject private OAuthCsrfStateValidator csrfStateValidator;
-  private String redirectAfterLogin;
 
   @Override
   public Response authenticate(
@@ -92,7 +91,6 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       // redirect to it anyway, and the user would have authorized Che for nothing.
       redirectUrlValidator.authorize(redirectAfterLogin);
     }
-    this.redirectAfterLogin = redirectAfterLogin;
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
     // Bind a single use nonce to the user starting the flow, so that the callback can tell a flow
     // this user asked for from one an attacker pre-computed. The nonce goes into the query because
@@ -119,10 +117,13 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     URL requestUrl = getRequestUrl(uriInfo);
     Map<String, List<String>> params = getQueryParametersFromState(getState(requestUrl));
     errorValues = errorValues == null ? uriInfo.getQueryParameters().get("error") : errorValues;
-    if (!isNullOrEmpty(redirectAfterLogin)
-        && errorValues != null
-        && errorValues.contains("access_denied")) {
-      return redirect(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied"));
+    if (errorValues != null && errorValues.contains("access_denied")) {
+      // Read from the `state` of this request, so it is the URL of the flow this callback
+      // belongs to and not of one some other user has in progress.
+      String redirectAfterLogin = getParameter(params, "redirect_after_login");
+      if (!isNullOrEmpty(redirectAfterLogin)) {
+        return redirect(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied"));
+      }
     }
     final String providerName = getParameter(params, "oauth_provider");
     OAuthAuthenticator oauth = getAuthenticator(providerName);

@@ -33,6 +33,7 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.wsplugins.model.ExtendedPluginFQN;
 import org.eclipse.che.api.workspace.server.wsplugins.model.PluginFQN;
 import org.eclipse.che.api.workspace.shared.Constants;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -180,7 +181,7 @@ public class PluginFQNParser {
     try {
       String pluginMetaContent = fileContentProvider.fetchContent(reference);
       contentNode = yamlReader.readTree(pluginMetaContent);
-    } catch (DevfileException | IOException e) {
+    } catch (DevfileException | IOException | JacksonException e) {
       throw new InfrastructureException(
           format("Plugin reference URL '%s' is invalid.", reference), e);
     }

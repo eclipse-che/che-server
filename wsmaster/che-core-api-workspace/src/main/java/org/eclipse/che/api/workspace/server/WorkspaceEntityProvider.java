@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,8 +13,6 @@ package org.eclipse.che.api.workspace.server;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
@@ -40,6 +38,10 @@ import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatExcep
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.dto.server.DtoFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Entity provider for {@link WorkspaceDto}. Performs schema validation of devfile part of the
@@ -55,7 +57,7 @@ public class WorkspaceEntityProvider
     implements MessageBodyReader<WorkspaceDto>, MessageBodyWriter<WorkspaceDto> {
 
   private DevfileParser devfileParser;
-  private ObjectMapper mapper = new ObjectMapper();
+  private ObjectMapper mapper = JsonMapper.builderWithJackson2Defaults().build();
 
   @Inject
   public WorkspaceEntityProvider(DevfileParser devfileParser) {
@@ -86,7 +88,7 @@ public class WorkspaceEntityProvider
       return DtoFactory.getInstance().createDtoFromJson(wsNode.toString(), WorkspaceDto.class);
     } catch (DevfileFormatException e) {
       throw new BadRequestException(e.getMessage());
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new WebApplicationException(e.getMessage(), e);
     }
   }

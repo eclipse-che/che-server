@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -25,7 +25,6 @@ import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.FileNotFoundException;
 import java.util.Base64;
 import java.util.HashMap;
@@ -43,6 +42,7 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
 
 @Listeners(value = {MockitoTestNGListener.class})
 public class RawDevfileUrlFactoryParameterResolverTest {

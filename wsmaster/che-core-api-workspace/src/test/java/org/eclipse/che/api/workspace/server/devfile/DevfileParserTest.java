@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -23,10 +23,6 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
@@ -41,6 +37,10 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Listeners(MockitoTestNGListener.class)
 public class DevfileParserTest {
@@ -85,15 +85,15 @@ public class DevfileParserTest {
 
   @Test(expectedExceptions = DevfileFormatException.class)
   public void testParseRawThrowsExceptionWhenNothinParsed()
-      throws DevfileFormatException, JsonProcessingException {
+      throws DevfileFormatException, JacksonException {
     when(yamlMapper.readTree(DEVFILE_YAML_CONTENT)).thenReturn(null);
     devfileParser.parseYamlRaw(DEVFILE_YAML_CONTENT);
   }
 
   @Test(expectedExceptions = DevfileFormatException.class)
   public void testParseRawThrowsDevfilExceptionWhenJsonParsingFails()
-      throws JsonProcessingException, DevfileFormatException {
-    when(yamlMapper.readTree(DEVFILE_YAML_CONTENT)).thenThrow(JsonProcessingException.class);
+      throws JacksonException, DevfileFormatException {
+    when(yamlMapper.readTree(DEVFILE_YAML_CONTENT)).thenThrow(JacksonException.class);
     devfileParser.parseYamlRaw(DEVFILE_YAML_CONTENT);
   }
 
@@ -176,7 +176,7 @@ public class DevfileParserTest {
       expectedExceptionsMessageRegExp = "non valid")
   public void shouldThrowExceptionWhenErrorOccurredDuringDevfileParsing() throws Exception {
     // given
-    JsonProcessingException jsonException = mock(JsonProcessingException.class);
+    JacksonException jsonException = mock(JacksonException.class);
     when(jsonException.getMessage()).thenReturn("non valid");
     when(jsonMapper.readTree(anyString())).thenReturn(devfileJsonNode);
     doThrow(jsonException).when(jsonMapper).treeToValue(any(), eq(DevfileImpl.class));

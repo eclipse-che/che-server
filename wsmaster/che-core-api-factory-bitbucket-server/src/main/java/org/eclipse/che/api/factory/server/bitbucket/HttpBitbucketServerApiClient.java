@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,10 +18,6 @@ import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Duration.ofSeconds;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
@@ -70,6 +66,10 @@ import org.eclipse.che.security.oauth1.OAuthAuthenticationException;
 import org.eclipse.che.security.oauth1.OAuthAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Implementation of @{@link BitbucketServerApiClient} that is using @{@link HttpClient} to
@@ -77,11 +77,12 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
 
-  private static final ObjectMapper OM = new ObjectMapper();
+  private static final ObjectMapper OM = JsonMapper.builderWithJackson2Defaults().build();
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpBitbucketServerApiClient.class);
   private static final Duration DEFAULT_HTTP_TIMEOUT = ofSeconds(10);
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER =
+      JsonMapper.builderWithJackson2Defaults().build();
   public static final String USERNAME_HEADER = "x-ausername";
   private final URI serverUri;
   private final OAuthAuthenticator authenticator;
@@ -228,7 +229,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
               throw new UncheckedIOException(e);
             }
           });
-    } catch (ScmItemNotFoundException | JsonProcessingException e) {
+    } catch (ScmItemNotFoundException | JacksonException e) {
       throw new ScmCommunicationException(e.getMessage(), e);
     }
   }
@@ -346,7 +347,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
         // Throw the unauthorized exception if the response contains the Bitbucket info.
         throw buildScmUnauthorizedException();
       }
-    } catch (IOException e) {
+    } catch (JacksonException | IOException e) {
       // The response does not contain the Bitbucket Server info
       throw new ScmCommunicationException("Bad request");
     }
@@ -388,8 +389,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
             .timeout(DEFAULT_HTTP_TIMEOUT)
             .build();
     LOG.trace("executeRequest={}", request);
-    final JavaType typeReference =
-        TypeFactory.defaultInstance().constructParametricType(Page.class, tClass);
+    final JavaType typeReference = OM.getTypeFactory().constructParametricType(Page.class, tClass);
     return executeRequest(
         httpClient,
         request,
@@ -436,7 +436,7 @@ public class HttpBitbucketServerApiClient implements BitbucketServerApiClient {
                 "bitbucket");
         }
       }
-    } catch (IOException | InterruptedException | UncheckedIOException e) {
+    } catch (IOException | InterruptedException | UncheckedIOException | JacksonException e) {
       if (e instanceof SSLHandshakeException) {
         throw new ScmCommunicationException(
             "The required SSL certificate is missing or not trusted by the system. Please contact your administrator.",

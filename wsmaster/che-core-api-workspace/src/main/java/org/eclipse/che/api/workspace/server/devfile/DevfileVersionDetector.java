@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,9 +11,9 @@
  */
 package org.eclipse.che.api.workspace.server.devfile;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
+import tools.jackson.databind.JsonNode;
 
 /** Class that helps determine devfile versions. */
 @Singleton

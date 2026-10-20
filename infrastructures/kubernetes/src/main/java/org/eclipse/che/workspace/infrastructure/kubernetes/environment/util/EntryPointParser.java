@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -14,18 +14,25 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.environment.util;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /** Can be used to parse container entry-point definition specified as a YAML list of strings. */
 public class EntryPointParser {
-  private final YAMLMapper mapper = new YAMLMapper();
+  // FAIL_ON_TRAILING_TOKENS is re-enabled on top of the Jackson 2.x defaults below: it's what
+  // rejects malformed/nested entries like "[a, b, [c]]" that Jackson 3's default array-to-scalar
+  // coercion would otherwise silently flatten into ["a", "b", "c"].
+  private final YAMLMapper mapper =
+      YAMLMapper.builder()
+          .configureForJackson2()
+          .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, true)
+          .build();
 
   /**
    * Parses the attributes contained in the provided machine config and produces an entry point
@@ -63,7 +70,7 @@ public class EntryPointParser {
   public String serializeEntry(List<String> entry) {
     try {
       return mapper.writer().writeValueAsString(entry);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new IllegalStateException(
           format("Failed to serialize list of strings %s to YAML", entry), e);
     }
@@ -73,7 +80,7 @@ public class EntryPointParser {
       throws InfrastructureException {
     try {
       return mapper.readValue(data, new TypeReference<List<String>>() {});
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new InfrastructureException(
           format(
               "Failed to parse the attribute %s as a YAML list. The value was %s",

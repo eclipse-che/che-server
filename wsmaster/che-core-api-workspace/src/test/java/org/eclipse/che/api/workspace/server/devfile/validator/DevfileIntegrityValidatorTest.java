@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -18,8 +18,6 @@ import static org.eclipse.che.api.workspace.server.devfile.Constants.OPENSHIFT_C
 import static org.eclipse.che.api.workspace.server.devfile.Constants.PLUGIN_COMPONENT_TYPE;
 import static org.mockito.Mockito.mock;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,11 +38,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.testng.reporters.Files;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 @Listeners(MockitoTestNGListener.class)
 public class DevfileIntegrityValidatorTest {
 
-  private ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+  private ObjectMapper objectMapper = YAMLMapper.builder().configureForJackson2().build();
 
   private DevfileImpl initialDevfile;
 

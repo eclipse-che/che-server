@@ -18,7 +18,6 @@ import static org.eclipse.che.commons.json.JsonHelper.fromJson;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
 import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest;
 import com.google.api.client.auth.oauth2.Credential;
@@ -39,6 +38,9 @@ import java.util.List;
 import javax.inject.Singleton;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.commons.json.JsonParseException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * OAuth2 authenticator for Azure DevOps Service.
@@ -58,7 +60,8 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
   private final String clientSecret;
   private final boolean isDevOpsOauth;
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER =
+      JsonMapper.builderWithJackson2Defaults().build();
 
   public AzureDevOpsOAuthAuthenticator(
       String cheApiEndpoint,
@@ -198,7 +201,7 @@ public class AzureDevOpsOAuthAuthenticator extends OAuthAuthenticator {
       String accessToken = token.getAccessToken();
       credential.setAccessToken(accessToken);
       return newDto(OAuthToken.class).withToken(accessToken);
-    } catch (IOException | InterruptedException exception) {
+    } catch (IOException | InterruptedException | JacksonException exception) {
       return newDto(OAuthToken.class).withToken(credential.getAccessToken());
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,16 +13,16 @@ package org.eclipse.che.api.workspace.server.devfile;
 
 import static org.testng.Assert.assertEquals;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
 import java.io.Serializable;
 import java.util.Map;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationContext;
 
 @Listeners(MockitoTestNGListener.class)
 public class PreferencesDeserializerTest {
@@ -60,10 +60,10 @@ public class PreferencesDeserializerTest {
   }
 
   @Test(
-      expectedExceptions = JsonParseException.class,
+      expectedExceptions = StreamReadException.class,
       expectedExceptionsMessageRegExp =
           "Unexpected value of the preference with key 'invalid.object'.\n"
-              + " at \\[Source: REDACTED \\(`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled\\); line: 1, column: 54]")
+              + " at \\[Source: REDACTED \\(`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled\\); byte offset: #UNKNOWN]")
   public void shouldThrowExceptionOnUnsupportedPreferenceValue() throws Exception {
 
     String json =

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -199,7 +199,11 @@ public class GithubApiClient {
           try {
             String result =
                 CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
-            return OBJECT_MAPPER.readValue(result, GithubCommit[].class)[0];
+            GithubCommit[] commits = OBJECT_MAPPER.readValue(result, GithubCommit[].class);
+            // A branch that exists but holds no commit answers 200 with an empty array. Return
+            // no commit rather than letting an ArrayIndexOutOfBoundsException escape, which no
+            // caller declares or handles.
+            return commits.length == 0 ? null : commits[0];
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }

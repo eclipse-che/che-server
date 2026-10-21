@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2025 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -183,5 +183,40 @@ public class GithubUrlTest {
     assertEquals(
         url.rawFileLocation(file),
         "https://raw.githubusercontent.com/eclipse/che/c24fd44e0f7296be2e49a380fb8abe2fe4db9100/.che/che-theia-plugins.yaml");
+  }
+
+  @Test
+  public void testRawFileLocationWithSubfolder() {
+    GithubUrl url =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withServerUrl("https://github.com")
+            .withBranch("main")
+            .withSubfolder("sub/dir");
+
+    assertEquals(
+        url.rawFileLocation("devfile.yaml"),
+        "https://raw.githubusercontent.com/eclipse/che/main/sub/dir/devfile.yaml");
+  }
+
+  /**
+   * The subfolder cannot be folded into the branch: once the commit is known the ref is a SHA, and
+   * a subfolder kept in the branch would be dropped along with the branch.
+   */
+  @Test
+  public void testRawFileLocationWithSubfolderForCommit() {
+    GithubUrl url =
+        new GithubUrl("github")
+            .withUsername("eclipse")
+            .withRepository("che")
+            .withServerUrl("https://github.com")
+            .withBranch("main")
+            .withSubfolder("sub/dir")
+            .withLatestCommit("c24fd44e0f7296be2e49a380fb8abe2fe4db9100");
+
+    assertEquals(
+        url.rawFileLocation("devfile.yaml"),
+        "https://raw.githubusercontent.com/eclipse/che/c24fd44e0f7296be2e49a380fb8abe2fe4db9100/sub/dir/devfile.yaml");
   }
 }

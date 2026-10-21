@@ -50,6 +50,14 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractGithubURLParser {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractGithubURLParser.class);
+
+  /**
+   * How many leading path segments may be tried as a branch name. A branch holding more slashes
+   * than this keeps its path folded into it, as before; the cap is what stops a deep path that
+   * matches no ref at all from turning into one API call per segment.
+   */
+  private static final int MAX_PROBED_BRANCH_SEGMENTS = 8;
+
   private final PersonalAccessTokenManager tokenManager;
   private final DevfileFilenamesProvider devfileFilenamesProvider;
   private final GithubApiClient apiClient;
@@ -291,10 +299,21 @@ public abstract class AbstractGithubURLParser {
     }
 
     String branchFromUrl = null;
+    String subfolder = null;
     String pullRequestId = null;
+    // Commit of the branch, when splitting the URL already had to look it up. Reused below so
+    // that the common URL costs one API call, the same as before the split was introduced.
+    GithubCommit commitFromSplit = null;
     if (isHTTPSUrl) {
-      branchFromUrl = getBranch(matcher.group("path"));
       pullRequestId = matcher.group("pullRequestId");
+      if (pullRequestId == null) {
+        BranchAndSubfolder split =
+            resolveBranchAndSubfolder(
+                serverUrl, repoUser, repoName, matcher.group("path"), authenticationRequired);
+        branchFromUrl = split.branch;
+        subfolder = split.subfolder;
+        commitFromSplit = split.commit;
+      }
     }
 
     if (pullRequestId != null) {
@@ -318,12 +337,14 @@ public abstract class AbstractGithubURLParser {
 
     String latestCommit = null;
     GithubCommit commit =
-        getLatestCommit(
-            serverUrl,
-            repoUser,
-            repoName,
-            isNullOrEmpty(revision) ? firstNonNull(branchFromUrl, "HEAD") : revision,
-            authenticationRequired);
+        commitFromSplit != null && isNullOrEmpty(revision)
+            ? commitFromSplit
+            : getLatestCommit(
+                serverUrl,
+                repoUser,
+                repoName,
+                isNullOrEmpty(revision) ? firstNonNull(branchFromUrl, "HEAD") : revision,
+                authenticationRequired);
     if (commit != null) {
       latestCommit = commit.getSha();
     }
@@ -335,24 +356,140 @@ public abstract class AbstractGithubURLParser {
         .withServerUrl(serverUrl)
         .withDisableSubdomainIsolation(disableSubdomainIsolation)
         .withBranch(isNullOrEmpty(branchFromUrl) ? revision : branchFromUrl)
+        .withSubfolder(subfolder)
         .withLatestCommit(latestCommit)
         .withDevfileFilenames(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .withUrl(url);
   }
 
-  /*
-   * Get branch from the file path by extracting the segment before the devfile name.
-   * Example of a file path: "branch/devfile.yaml" => "branch"
-   */
-  private String getBranch(String path) {
-    if (path != null && path.contains("/")) {
-      Optional<String> devfileNameOptional =
-          devfileFilenamesProvider.getConfiguredDevfileFilenames().stream()
-              .filter(devfileName -> path.endsWith("/" + devfileName))
-              .findAny();
-      return devfileNameOptional.map(s -> path.substring(0, path.indexOf(s) - 1)).orElse(path);
+  /** A {@code tree} or {@code blob} URL tail split into the ref and the directory below it. */
+  private static final class BranchAndSubfolder {
+    private final String branch;
+    private final String subfolder;
+
+    /** Commit of {@code branch}, when the split was confirmed against the API. */
+    private final GithubCommit commit;
+
+    private BranchAndSubfolder(String branch, String subfolder, GithubCommit commit) {
+      this.branch = branch;
+      this.subfolder = subfolder;
+      this.commit = commit;
     }
-    return path;
+  }
+
+  /**
+   * Splits the part of a {@code tree} or {@code blob} URL that follows {@code /tree/} or {@code
+   * /blob/} into the ref it starts with and the directory below it.
+   *
+   * <p>The URL alone does not say where the ref ends: {@code tree/branch/with/slash} and {@code
+   * tree/branch/sub/dir} have the same shape. Git resolves it, because a ref cannot be a path
+   * prefix of another ref, {@code refs/heads/branch} being a file where {@code
+   * refs/heads/branch/with/slash} needs a directory. At most one prefix of the tail is therefore a
+   * real ref, so asking the API about the prefixes in turn has exactly one answer and the first hit
+   * is it. Shortest first, so that the common URL, a short branch followed by a path, answers on
+   * the first question.
+   *
+   * <p>A prefix that the API reports as absent is skipped. Anything else, an unreachable server, a
+   * rejected token, a rate limit, means the refs cannot be enumerated at all rather than that this
+   * one is missing, so the whole tail is kept as the branch. That is what this method did before it
+   * could ask, so a URL that resolves today keeps resolving when the API cannot be reached.
+   */
+  private BranchAndSubfolder resolveBranchAndSubfolder(
+      String serverUrl,
+      String repoUser,
+      String repoName,
+      String path,
+      boolean authenticationRequired) {
+    if (path == null) {
+      return new BranchAndSubfolder(null, null, null);
+    }
+    // The devfile name is not part of the directory, and is re-appended by
+    // GithubUrl#rawFileLocation, so a `blob` URL pointing straight at a devfile is the same
+    // location as the `tree` URL of the directory holding it.
+    String tail = trimEnd(stripDevfileName(path), '/');
+    if (isNullOrEmpty(tail) || !tail.contains("/")) {
+      // A single segment is the whole ref, there is nothing to split and nothing to ask.
+      return new BranchAndSubfolder(emptyToNull(tail), null, null);
+    }
+
+    String[] segments = tail.split("/");
+    int probes = Math.min(segments.length, MAX_PROBED_BRANCH_SEGMENTS);
+    String token = getTokenValue(serverUrl, authenticationRequired);
+    GithubApiClient client =
+        this.apiClient.isConnected(serverUrl) ? this.apiClient : new GithubApiClient(serverUrl);
+    StringBuilder candidate = new StringBuilder();
+    for (int i = 0; i < probes; i++) {
+      if (i > 0) {
+        candidate.append('/');
+      }
+      candidate.append(segments[i]);
+      String branch = candidate.toString();
+      try {
+        GithubCommit commit = client.getLatestCommit(repoUser, repoName, branch, token);
+        if (commit != null) {
+          String subfolder =
+              branch.length() < tail.length() ? tail.substring(branch.length() + 1) : null;
+          return new BranchAndSubfolder(branch, subfolder, commit);
+        }
+      } catch (ScmItemNotFoundException e) {
+        // Not a ref. A longer prefix still can be, so keep going.
+      } catch (ScmBadRequestException
+          | ScmCommunicationException
+          | ScmUnauthorizedException
+          | URISyntaxException
+          | RuntimeException e) {
+        LOG.debug(
+            "Not splitting the branch of {}/{} off '{}': {}",
+            repoUser,
+            repoName,
+            tail,
+            e.toString());
+        break;
+      }
+    }
+    // No prefix resolved, or the question could not be asked. Keep the tail whole.
+    return new BranchAndSubfolder(tail, null, null);
+  }
+
+  /** Drops a trailing configured devfile name, leaving the directory holding it. */
+  private String stripDevfileName(String path) {
+    return devfileFilenamesProvider.getConfiguredDevfileFilenames().stream()
+        .filter(devfileName -> path.endsWith("/" + devfileName))
+        .findAny()
+        // Cut from the end: a directory may well be named after the devfile too.
+        .map(devfileName -> path.substring(0, path.length() - devfileName.length() - 1))
+        .orElse(path);
+  }
+
+  /**
+   * Returns the token to call the API of {@code githubEndpoint} with, or {@code null} to call it
+   * anonymously. Acquired once per parse rather than once per probe.
+   */
+  @Nullable
+  private String getTokenValue(String githubEndpoint, boolean authenticationRequired) {
+    try {
+      Subject subject = EnvironmentContext.getCurrent().getSubject();
+      Optional<PersonalAccessToken> token = tokenManager.get(subject, null, githubEndpoint, null);
+      if (token.isPresent()) {
+        return token.get().getToken();
+      }
+      if (authenticationRequired) {
+        // Can hand back no token, in which case the probes go out anonymously.
+        PersonalAccessToken fetched = tokenManager.fetchAndSave(subject, githubEndpoint);
+        return fetched == null ? null : fetched.getToken();
+      }
+    } catch (ScmCommunicationException
+        | ScmConfigurationPersistenceException
+        | UnsatisfiedScmPreconditionException
+        | UnknownScmProviderException
+        | ScmUnauthorizedException e) {
+      LOG.debug("No token for {}, continuing anonymously: {}", githubEndpoint, e.toString());
+    }
+    return null;
+  }
+
+  private static String emptyToNull(String value) {
+    return isNullOrEmpty(value) ? null : value;
   }
 
   private GithubPullRequest getPullRequest(

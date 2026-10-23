@@ -1577,4 +1577,133 @@ public class KubernetesPersonalAccessTokenManagerTest {
     // then
     assertFalse(result.isPresent());
   }
+
+  @Test
+  public void shouldMatchSecretByTokenNameWhenProviderNameAnnotationIsMissing() throws Exception {
+    // given a secret stored before the 'scm-provider-name' annotation was introduced, which kept
+    // the provider name in the token name
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://github.com"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    Optional<PersonalAccessToken> result =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            "github",
+            null,
+            null);
+
+    // then
+    assertTrue(result.isPresent());
+    assertEquals(result.get().getToken(), "token1");
+  }
+
+  @Test
+  public void shouldMatchSecretByTokenNameWhenProviderNameAnnotationIsEmpty() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+    when(scmPersonalAccessTokenFetcher.getScmUsername(any(PersonalAccessTokenParams.class)))
+        .thenReturn(Optional.of("user"));
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_SCM_PROVIDER_NAME,
+                    "",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://github.com"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    Optional<PersonalAccessToken> result =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            "github",
+            null,
+            null);
+
+    // then
+    assertTrue(result.isPresent());
+    assertEquals(result.get().getToken(), "token1");
+  }
+
+  @Test
+  public void shouldNotMatchSecretWithoutProviderNameWhenTokenNameDiffers() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("test");
+    when(namespaceFactory.list()).thenReturn(singletonList(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+
+    Map<String, String> data =
+        Map.of("token", Base64.getEncoder().encodeToString("token1".getBytes(UTF_8)));
+
+    ObjectMeta metaData =
+        new ObjectMetaBuilder()
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "gitlab",
+                    ANNOTATION_CHE_USERID,
+                    "user1",
+                    ANNOTATION_SCM_URL,
+                    "http://gitlab.com"))
+            .build();
+
+    Secret secret = new SecretBuilder().withMetadata(metaData).withData(data).build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(singletonList(secret));
+
+    // when
+    Optional<PersonalAccessToken> result =
+        personalAccessTokenManager.get(
+            new SubjectImpl("user", Collections.emptyList(), "user1", "t1", false),
+            "github",
+            null,
+            null);
+
+    // then
+    assertFalse(result.isPresent());
+  }
 }

@@ -42,7 +42,15 @@ public interface OAuthAPI {
           ForbiddenException,
           BadRequestException;
 
-  /** Implementation of method {@link OAuthAuthenticationService#callback(List)} */
+  /**
+   * Implementation of method {@link OAuthAuthenticationService#callback(List, HttpServletRequest)}.
+   *
+   * <p>Implementations may treat the {@code state} parameter as belonging to an authorization flow
+   * the user of the current request started: the service verifies its CSRF nonce against the state
+   * cookie before calling this method. An implementation whose {@link #authenticate(UriInfo,
+   * String, List, String, HttpServletRequest)} does not put that nonce in both {@code state} and
+   * the cookie, see {@link OAuthCsrfStateValidator}, will see every callback rejected.
+   */
   Response callback(UriInfo uriInfo, List<String> errorValues)
       throws NotFoundException, OAuthAuthenticationException, ForbiddenException;
 

@@ -570,7 +570,14 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     Map<String, String> secretAnnotations = secret.getMetadata().getAnnotations();
     String configuredScmServerUrl = secretAnnotations.get(ANNOTATION_SCM_URL);
     String configuredCheUserId = secretAnnotations.get(ANNOTATION_CHE_USERID);
-    String configuredOAuthProviderName = secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME);
+    // Fall back to the token name, which is where the provider name used to be kept, to keep
+    // matching the secrets stored before the 'che.eclipse.org/scm-provider-name' annotation was
+    // introduced.
+    String providerName = secretAnnotations.get(ANNOTATION_SCM_PROVIDER_NAME);
+    String configuredOAuthProviderName =
+        isNullOrEmpty(providerName)
+            ? secretAnnotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME)
+            : providerName;
 
     return (configuredCheUserId.equals(cheUser.getUserId()))
         && (oAuthProviderName == null || oAuthProviderName.equals(configuredOAuthProviderName))

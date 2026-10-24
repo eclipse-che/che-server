@@ -23,8 +23,9 @@ permissions:
 jobs:
   generate-sbom:
     runs-on: ubuntu-latest
-    outputs:
-      project-version: ${{ steps.version.outputs.PROJECT_VERSION }}
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Extract version
         id: version
@@ -49,17 +50,8 @@ jobs:
           mvn org.cyclonedx:cyclonedx-maven-plugin:$PLUGIN_VERSION:$SBOM_TYPE -f "$PRODUCT_PATH/pom.xml"
 
       - name: Upload sbom
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: eclipse-csi/workflows/upload-sbom@20e3c63807b2bd61b7f1a9f438e5ce588c054efc # main
         with:
-          name: sbom
-          path: ${{ env.PRODUCT_PATH }}/target/bom.json
-  
-  store-sbom-data: # stores sbom and metadata in a predefined format for otterdog to pick up
-    needs: ['generate-sbom']
-    uses: eclipse-csi/workflows/.github/workflows/store-sbom-data.yml@main
-    with:
-      projectName: 'che-server'
-      projectVersion: ${{ needs.generate-sbom.outputs.project-version }}
-      bomArtifact: 'sbom'
-      bomFilename: 'bom.json'
-      parentProject: '1ab66138-685e-47bb-9020-feb6ca1fb40c'
+          sbom-file: ${{ env.PRODUCT_PATH }}/target/bom.json
+          product-name: 'che-server'
+          product-version: ${{ steps.version.outputs.PROJECT_VERSION }}

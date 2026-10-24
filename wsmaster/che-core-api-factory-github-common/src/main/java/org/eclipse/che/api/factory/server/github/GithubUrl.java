@@ -44,6 +44,14 @@ public class GithubUrl extends DefaultFactoryUrl {
   /** Branch name */
   private String branch;
 
+  /**
+   * Directory inside the repository the URL points at, without a leading or trailing slash, or
+   * {@code null} when the URL points at the repository root. Taken from the part of a {@code tree}
+   * or {@code blob} URL that follows the branch, which is why it can only be filled in once the
+   * branch is known, see {@code AbstractGithubURLParser#resolveBranchAndSubfolder}.
+   */
+  private String subfolder;
+
   /** SHA of the latest commit in the current branch */
   private String latestCommit;
 
@@ -128,6 +136,22 @@ public class GithubUrl extends DefaultFactoryUrl {
   }
 
   /**
+   * Gets the directory inside the repository this github url points at.
+   *
+   * @return the subfolder, without surrounding slashes, or {@code null} for the repository root
+   */
+  public String getSubfolder() {
+    return this.subfolder;
+  }
+
+  protected GithubUrl withSubfolder(String subfolder) {
+    if (!isNullOrEmpty(subfolder)) {
+      this.subfolder = subfolder;
+    }
+    return this;
+  }
+
+  /**
    * Retuna SHA of the latest commimt
    *
    * @return latest commit SHA
@@ -206,13 +230,15 @@ public class GithubUrl extends DefaultFactoryUrl {
                 + serverUrl.substring(serverUrl.indexOf("://") + 3);
       }
     }
-    return new StringJoiner("/")
-        .add(rawBaseUrl)
-        .add(username)
-        .add(repository)
-        .add(branchName)
-        .add(fileName)
-        .toString();
+    StringJoiner location =
+        new StringJoiner("/").add(rawBaseUrl).add(username).add(repository).add(branchName);
+    // The file name is relative to the directory the URL points at, not to the repository root,
+    // so the subfolder sits between the ref and the file. It cannot be folded into the branch
+    // instead: once the latest commit is known the ref above is a SHA, not the branch.
+    if (!isNullOrEmpty(subfolder)) {
+      location.add(subfolder);
+    }
+    return location.add(fileName).toString();
   }
 
   @Override

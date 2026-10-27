@@ -24,6 +24,7 @@ import static org.eclipse.che.security.oauth1.OAuthAuthenticationService.ERROR_Q
 import com.google.api.client.auth.oauth2.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
@@ -75,6 +76,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Inject protected org.eclipse.che.security.oauth1.OAuthAuthenticatorProvider oauth1Providers;
   @Inject private PersonalAccessTokenManager personalAccessTokenManager;
   @Inject private RedirectAfterLoginUrlValidator redirectUrlValidator;
+  @Inject private OAuthCsrfStateValidator csrfStateValidator;
 
   @Override
   public Response authenticate(
@@ -90,9 +92,23 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       redirectUrlValidator.authorize(redirectAfterLogin);
     }
     OAuthAuthenticator oauth = getAuthenticator(oauthProvider);
+    // Bind a single use nonce to the user starting the flow, so that the callback can tell a flow
+    // this user asked for from one an attacker pre-computed. The nonce goes into the query because
+    // that is what every provider copies into the `state` parameter, see
+    // OAuthAuthenticator#prepareState, and into a cookie, which is what the callback compares the
+    // returned `state` against. It is verified in OAuthAuthenticationService#callback.
+    String nonce = csrfStateValidator.issueNonce();
+    URL requestUrl;
+    try {
+      requestUrl = OAuthCsrfStateValidator.appendNonce(getRequestUrl(uriInfo), nonce);
+    } catch (MalformedURLException e) {
+      throw new OAuthAuthenticationException(e.getMessage());
+    }
     final String authUrl =
-        oauth.getAuthenticateUrl(getRequestUrl(uriInfo), scopes == null ? emptyList() : scopes);
-    return Response.temporaryRedirect(URI.create(authUrl)).build();
+        oauth.getAuthenticateUrl(requestUrl, scopes == null ? emptyList() : scopes);
+    return Response.temporaryRedirect(URI.create(authUrl))
+        .header(HttpHeaders.SET_COOKIE, csrfStateValidator.stateCookie(oauthProvider, nonce))
+        .build();
   }
 
   @Override

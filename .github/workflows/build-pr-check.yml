@@ -18,6 +18,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    # Required for OIDC: https://github.com/codecov/codecov-action?tab=readme-ov-file#using-oidc
+    permissions:
+      id-token: write
     steps:
     - uses: actions/checkout@v3
       with:
@@ -44,9 +47,9 @@ jobs:
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
     - name: Build with Maven
-      run: mvn -B clean install -U -Pintegration
+      run: mvn -B clean install -U -Pintegration,coverage
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v6
       with:
         use_oidc: true
         files: ./coverage-report/target/site/jacoco-aggregate/jacoco.xml

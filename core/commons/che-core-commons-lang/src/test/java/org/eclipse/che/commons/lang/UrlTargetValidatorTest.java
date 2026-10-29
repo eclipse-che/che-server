@@ -17,6 +17,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import java.util.Set;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -27,6 +28,7 @@ public class UrlTargetValidatorTest {
   @AfterMethod
   public void restoreCheck() {
     UrlTargetValidator.setCheckEnabled(null);
+    UrlTargetValidator.setTrustedHosts(null);
   }
 
   @DataProvider
@@ -153,6 +155,56 @@ public class UrlTargetValidatorTest {
   public void shouldKeepCheckingWhenTurningOffIsNotRequested() {
     UrlTargetValidator.setCheckEnabled(true);
 
+    assertFalse(UrlTargetValidator.isAllowed("http://169.254.169.254/latest/meta-data/"));
+  }
+
+  @Test
+  public void shouldParseTrustedHosts() {
+    assertTrue(UrlTargetValidator.parseTrustedHosts(null).isEmpty());
+    assertTrue(UrlTargetValidator.parseTrustedHosts(" NULL ").isEmpty());
+    assertEquals(
+        UrlTargetValidator.parseTrustedHosts(
+            " github.internal.example , GitLab.Internal.Example. "),
+        Set.of("github.internal.example", "gitlab.internal.example"));
+  }
+
+  @Test
+  public void shouldAllowATrustedHostThatIsNotPubliclyRoutable() {
+    UrlTargetValidator.trustHost("localhost");
+
+    assertTrue(UrlTargetValidator.isAllowed("http://localhost/org/repo"));
+    assertTrue(UrlTargetValidator.isAllowed("https://raw.localhost/org/repo/HEAD/devfile.yaml"));
+    assertTrue(UrlTargetValidator.isAllowed("http://LOCALHOST./org/repo"));
+  }
+
+  @Test
+  public void shouldKeepRejectingOtherPrivateTargetsWhenAHostIsTrusted() {
+    UrlTargetValidator.trustHost("github.internal.example");
+
+    assertTrue(
+        UrlTargetValidator.isAllowed("https://github.internal.example/org/repo"));
+    assertTrue(
+        UrlTargetValidator.isAllowed(
+            "https://raw.github.internal.example/org/repo/devfile.yaml"));
+    assertFalse(UrlTargetValidator.isAllowed("http://169.254.169.254/latest/meta-data/"));
+    assertFalse(UrlTargetValidator.isAllowed("http://10.0.0.1/"));
+    assertFalse(UrlTargetValidator.isAllowed("http://127.0.0.1/"));
+    assertFalse(UrlTargetValidator.isAllowed("file:///etc/passwd"));
+  }
+
+  @Test
+  public void shouldKeepRejectingALiteralPrivateAddressEvenWhenItIsListed() {
+    UrlTargetValidator.trustHost("127.0.0.1");
+    UrlTargetValidator.trustHost("169.254.169.254");
+    UrlTargetValidator.setTrustedHosts(
+        Set.of("10.0.0.1", "169.254.169.254", "github.internal.example"));
+
+    assertFalse(UrlTargetValidator.trustedHosts().contains("127.0.0.1"));
+    assertFalse(UrlTargetValidator.trustedHosts().contains("10.0.0.1"));
+    assertFalse(UrlTargetValidator.trustedHosts().contains("169.254.169.254"));
+    assertTrue(UrlTargetValidator.trustedHosts().contains("github.internal.example"));
+    assertFalse(UrlTargetValidator.isAllowed("http://127.0.0.1/"));
+    assertFalse(UrlTargetValidator.isAllowed("http://10.0.0.1/"));
     assertFalse(UrlTargetValidator.isAllowed("http://169.254.169.254/latest/meta-data/"));
   }
 }

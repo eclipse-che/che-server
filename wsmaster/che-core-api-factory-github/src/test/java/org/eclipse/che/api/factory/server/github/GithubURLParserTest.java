@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -38,6 +39,8 @@ import java.util.Optional;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
+import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
+import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
 import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
@@ -99,6 +102,158 @@ public class GithubURLParserTest {
     GithubUrl githubUrl =
         githubUrlParser.parse("https://github.com/eclipse/che/tree/master/", "branch");
     assertEquals(githubUrl.getBranch(), "master");
+  }
+
+  /**
+   * Makes the API answer as a repository whose only refs are {@code refs}, so that splitting a
+   * `tree` URL into a branch and a subfolder is decided here and not over the network.
+   */
+  private void givenRefs(String... refs) throws Exception {
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenAnswer(
+            invocation -> {
+              String ref = invocation.getArgument(2);
+              for (String existing : refs) {
+                if (existing.equals(ref)) {
+                  return new GithubCommit().withSha("sha-of-" + existing);
+                }
+              }
+              throw new ScmItemNotFoundException("No commit found for " + ref);
+            });
+  }
+
+  @Test
+  public void shouldSplitTheSubfolderOffTheBranch() throws Exception {
+    givenRefs("main");
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/main/sub/dir", null);
+
+    assertEquals(githubUrl.getBranch(), "main");
+    assertEquals(githubUrl.getSubfolder(), "sub/dir");
+  }
+
+  /** The case the subfolder split must not break: every segment belongs to the branch. */
+  @Test
+  public void shouldKeepABranchWhoseNameHoldsSlashesWhole() throws Exception {
+    givenRefs("branch/with/slash");
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/branch/with/slash", null);
+
+    assertEquals(githubUrl.getBranch(), "branch/with/slash");
+    assertNull(githubUrl.getSubfolder());
+  }
+
+  @Test
+  public void shouldLeaveTheDevfileNameOutOfTheSubfolder() throws Exception {
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+    givenRefs("main");
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/blob/main/sub/devfile.yaml", null);
+
+    assertEquals(githubUrl.getBranch(), "main");
+    assertEquals(githubUrl.getSubfolder(), "sub");
+  }
+
+  /** A directory named after the devfile must not be cut at its first occurrence. */
+  @Test
+  public void shouldStripOnlyTheTrailingDevfileName() throws Exception {
+    when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
+        .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+    givenRefs("main");
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse(
+            "https://github.com/eclipse/che/blob/main/devfile.yaml/sub/devfile.yaml", null);
+
+    assertEquals(githubUrl.getBranch(), "main");
+    assertEquals(githubUrl.getSubfolder(), "devfile.yaml/sub");
+  }
+
+  /** An unreachable API must leave the URL parsed the way it was before the split existed. */
+  @Test
+  public void shouldKeepTheWholeTailWhenTheApiCannotAnswer() throws Exception {
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenThrow(new ScmCommunicationException("GitHub is unreachable"));
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/main/sub/dir", null);
+
+    assertEquals(githubUrl.getBranch(), "main/sub/dir");
+    assertNull(githubUrl.getSubfolder());
+  }
+
+  @Test
+  public void shouldKeepTheWholeTailWhenNoPrefixIsARef() throws Exception {
+    givenRefs();
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/gone/sub/dir", null);
+
+    assertEquals(githubUrl.getBranch(), "gone/sub/dir");
+    assertNull(githubUrl.getSubfolder());
+  }
+
+  /** The probe that found the branch is the commit lookup, so it must not be repeated. */
+  @Test
+  public void shouldReuseTheProbeThatFoundTheBranch() throws Exception {
+    givenRefs("main");
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/main/sub/dir", null);
+
+    assertEquals(githubUrl.getLatestCommit(), "sha-of-main");
+    verify(githubApiClient, times(1)).getLatestCommit(anyString(), anyString(), anyString(), any());
+  }
+
+  /** An explicit revision wins over the URL, so the branch it names is the one looked up. */
+  @Test
+  public void shouldLookUpTheExplicitRevisionRatherThanTheProbe() throws Exception {
+    givenRefs("main", "other");
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/main/sub/dir", "other");
+
+    assertEquals(githubUrl.getBranch(), "main");
+    assertEquals(githubUrl.getSubfolder(), "sub/dir");
+    assertEquals(githubUrl.getLatestCommit(), "sha-of-other");
+  }
+
+  @Test
+  public void shouldNotProbeAPullRequestUrl() throws Exception {
+    GithubPullRequest pullRequest =
+        new GithubPullRequest()
+            .withState("open")
+            .withHead(
+                new GithubHead()
+                    .withRef("pr-branch")
+                    .withUser(new GithubUser().withId(0).withName("eclipse").withLogin("eclipse"))
+                    .withRepo(new GithubRepo().withName("che")));
+    when(githubApiClient.isConnected(eq("https://github.com"))).thenReturn(true);
+    when(githubApiClient.getPullRequest(any(), any(), any(), any())).thenReturn(pullRequest);
+
+    GithubUrl githubUrl = githubUrlParser.parse("https://github.com/eclipse/che/pull/123", null);
+
+    assertEquals(githubUrl.getBranch(), "pr-branch");
+    assertNull(githubUrl.getSubfolder());
+  }
+
+  /** A deep path matching no ref must not turn into one API call per segment. */
+  @Test
+  public void shouldCapTheNumberOfProbes() throws Exception {
+    givenRefs();
+
+    GithubUrl githubUrl =
+        githubUrlParser.parse("https://github.com/eclipse/che/tree/a/b/c/d/e/f/g/h/i/j/k/l", null);
+
+    assertEquals(githubUrl.getBranch(), "a/b/c/d/e/f/g/h/i/j/k/l");
+    // Eight probes rather than twelve, plus the commit lookup every parse ends with.
+    verify(githubApiClient, times(9)).getLatestCommit(anyString(), anyString(), anyString(), any());
   }
 
   @Test
@@ -290,12 +445,20 @@ public class GithubURLParserTest {
     assertTrue(githubUrlParser.isValid(url), "url " + url + " is invalid");
   }
 
-  /** Compare parsing */
+  /**
+   * Compare parsing. The API is made unreachable so that the rows below describe what the parser
+   * makes of a URL on its own, without reaching github.com from a unit test; a tail that holds
+   * slashes is then kept whole, since nothing can confirm where the branch ends. The rows that pin
+   * down the branch and subfolder split are the dedicated tests above.
+   */
   @Test(dataProvider = "parsing")
   public void checkParsing(String url, String username, String repository, String path)
-      throws ApiException {
+      throws Exception {
     when(devfileFilenamesProvider.getConfiguredDevfileFilenames())
         .thenReturn(asList("devfile.yaml", ".devfile.yaml"));
+    when(githubApiClient.isConnected(anyString())).thenReturn(true);
+    when(githubApiClient.getLatestCommit(anyString(), anyString(), anyString(), any()))
+        .thenThrow(new ScmCommunicationException("GitHub is unreachable"));
 
     GithubUrl githubUrl = githubUrlParser.parse(url, null);
 

@@ -202,7 +202,11 @@ public class GithubApiClient {
           try {
             String result =
                 CharStreams.toString(new InputStreamReader(response.body(), Charsets.UTF_8));
-            return OBJECT_MAPPER.readValue(result, GithubCommit[].class)[0];
+            GithubCommit[] commits = OBJECT_MAPPER.readValue(result, GithubCommit[].class);
+            // A branch that exists but holds no commit answers 200 with an empty array. Return
+            // no commit rather than letting an ArrayIndexOutOfBoundsException escape, which no
+            // caller declares or handles.
+            return commits.length == 0 ? null : commits[0];
           } catch (IOException e) {
             throw new UncheckedIOException(e);
           }

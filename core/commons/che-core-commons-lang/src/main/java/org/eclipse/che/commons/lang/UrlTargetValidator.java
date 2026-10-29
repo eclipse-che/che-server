@@ -14,12 +14,17 @@ package org.eclipse.che.commons.lang;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.net.InetAddresses;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +41,12 @@ import org.slf4j.LoggerFactory;
  * rejected. The same variable is read by the callers that restrict which URLs a devfile may refer
  * to and which hosts the user's credentials are sent to, so that one switch restores the behaviour
  * these deployments had before the checks existed. See {@link #isCheckEnabled()}.
+ *
+ * <p>Prefer listing the internal Git hostname in {@value #URL_DESTINATION_TRUSTED_HOSTS}, or
+ * configuring it as a Git provider endpoint, instead of turning the check off. A trusted hostname
+ * may resolve to a private address. Every other private address, including the cloud metadata
+ * service and literal private IPs, stays rejected. GitHub Enterprise serves raw files from {@code
+ * raw.<host>}, and that hostname is trusted together with the configured host.
  */
 public final class UrlTargetValidator {
 
@@ -49,8 +60,21 @@ public final class UrlTargetValidator {
    */
   public static final String URL_DESTINATION_CHECK = "URL_DESTINATION_CHECK";
 
+  /**
+   * Comma-separated hostnames that may be contacted even when they are not publicly routable. Used
+   * for an internal Git server such as GitHub Enterprise. Configured Git provider endpoints are
+   * added to the same set when the server starts.
+   */
+  public static final String URL_DESTINATION_TRUSTED_HOSTS = "URL_DESTINATION_TRUSTED_HOSTS";
+
   /** Resolved value of {@link #URL_DESTINATION_CHECK}, {@code null} until it is first read. */
   private static volatile Boolean checkEnabled;
+
+  /** Hostnames allowed to resolve to a private address. Guarded by {@link #trustedHostsLoaded}. */
+  private static final Set<String> trustedHosts = ConcurrentHashMap.newKeySet();
+
+  /** Whether {@link #URL_DESTINATION_TRUSTED_HOSTS} has already been read. */
+  private static volatile boolean trustedHostsLoaded;
 
   private UrlTargetValidator() {}
 
@@ -117,6 +141,117 @@ public final class UrlTargetValidator {
   }
 
   /**
+   * Allows {@code host} to be contacted even when it resolves to a private address. The {@code
+   * raw.} prefix of that host is allowed as well, because that is where GitHub Enterprise serves
+   * file content.
+   *
+   * @param host a hostname, without a scheme or port
+   */
+  public static void trustHost(String host) {
+    String normalized = normalizeHost(host);
+    if (normalized == null) {
+      return;
+    }
+    ensureTrustedHostsLoaded();
+    trustedHosts.add(normalized);
+  }
+
+  /**
+   * Replaces the trusted-host set. {@code null} reloads {@value #URL_DESTINATION_TRUSTED_HOSTS}.
+   * Only meant for tests.
+   *
+   * @param hosts hostnames to trust, or {@code null} to read the environment again
+   */
+  @VisibleForTesting
+  public static void setTrustedHosts(Collection<String> hosts) {
+    trustedHosts.clear();
+    if (hosts == null) {
+      trustedHostsLoaded = false;
+      return;
+    }
+    for (String host : hosts) {
+      String normalized = normalizeHost(host);
+      if (normalized != null) {
+        trustedHosts.add(normalized);
+      }
+    }
+    trustedHostsLoaded = true;
+  }
+
+  /** Hostnames currently trusted, including those read from the environment. */
+  @VisibleForTesting
+  static Set<String> trustedHosts() {
+    ensureTrustedHostsLoaded();
+    return Collections.unmodifiableSet(trustedHosts);
+  }
+
+  /**
+   * Parses the value of {@value #URL_DESTINATION_TRUSTED_HOSTS}.
+   *
+   * @param value comma-separated hostnames, or {@code null}
+   * @return the hostnames, lower case, with blanks and a literal {@code NULL} removed
+   */
+  @VisibleForTesting
+  static Set<String> parseTrustedHosts(String value) {
+    Set<String> parsed = ConcurrentHashMap.newKeySet();
+    if (isNullOrEmpty(value) || "NULL".equalsIgnoreCase(value.trim())) {
+      return parsed;
+    }
+    for (String part : value.split(",")) {
+      String normalized = normalizeHost(part);
+      if (normalized != null) {
+        parsed.add(normalized);
+      }
+    }
+    return parsed;
+  }
+
+  private static void ensureTrustedHostsLoaded() {
+    if (trustedHostsLoaded) {
+      return;
+    }
+    synchronized (UrlTargetValidator.class) {
+      if (trustedHostsLoaded) {
+        return;
+      }
+      trustedHosts.addAll(parseTrustedHosts(System.getenv(URL_DESTINATION_TRUSTED_HOSTS)));
+      trustedHostsLoaded = true;
+    }
+  }
+
+  private static String normalizeHost(String host) {
+    if (isNullOrEmpty(host)) {
+      return null;
+    }
+    String normalized = host.trim().toLowerCase(Locale.ROOT);
+    if (normalized.endsWith(".")) {
+      normalized = normalized.substring(0, normalized.length() - 1);
+    }
+    // A literal address is never an administrator-named Git host. Keeping it out of the
+    // allowlist means 169.254.169.254 and RFC1918 addresses stay rejected even if listed.
+    if (normalized.isEmpty()
+        || "null".equals(normalized)
+        || InetAddresses.isInetAddress(normalized)) {
+      return null;
+    }
+    return normalized;
+  }
+
+  private static boolean isTrustedHost(String host) {
+    String normalized = normalizeHost(host);
+    if (normalized == null) {
+      return false;
+    }
+    ensureTrustedHostsLoaded();
+    if (trustedHosts.contains(normalized)) {
+      return true;
+    }
+    // GitHub Enterprise publishes repository files on raw.<server>.
+    return normalized.startsWith("raw.")
+        && trustedHosts.contains(normalized.substring("raw.".length()));
+  }
+
+  /**
    * Throws if the given URL may not be requested by the server, either because of its scheme or
    * because its host resolves to an address that is not publicly routable. Does nothing when the
    * check is {@link #isCheckEnabled() turned off}.
@@ -148,6 +283,9 @@ public final class UrlTargetValidator {
     String host = uri.getHost();
     if (isNullOrEmpty(host)) {
       throw new IOException("URL host is missing in " + url);
+    }
+    if (isTrustedHost(host)) {
+      return;
     }
 
     final InetAddress[] addresses;

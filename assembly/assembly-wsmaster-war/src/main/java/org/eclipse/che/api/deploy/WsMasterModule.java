@@ -35,6 +35,7 @@ import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.RawDevfileUrlFactoryParameterResolver;
 import org.eclipse.che.api.factory.server.ScmFileResolver;
 import org.eclipse.che.api.factory.server.ScmService;
+import org.eclipse.che.api.factory.server.TrustedScmHostRegistrar;
 import org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsFactoryParametersResolver;
 import org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsScmFileResolver;
 import org.eclipse.che.api.factory.server.bitbucket.BitbucketFactoryParametersResolver;
@@ -184,6 +185,7 @@ public class WsMasterModule extends AbstractModule {
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketServerModule());
     install(new org.eclipse.che.api.factory.server.gitlab.GitlabModule());
     install(new org.eclipse.che.api.factory.server.github.GithubModule());
+    bind(TrustedScmHostRegistrar.class).asEagerSingleton();
     install(new org.eclipse.che.api.factory.server.bitbucket.BitbucketModule());
     install(new org.eclipse.che.api.factory.server.azure.devops.AzureDevOpsModule());
 

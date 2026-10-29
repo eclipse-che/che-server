@@ -252,8 +252,9 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
         if (!canContact(params.getScmProviderUrl())) {
           LOG.warn(
               "Not contacting {}: it is not the configured GitHub endpoint and does not point to a"
-                  + " publicly routable host.",
-              params.getScmProviderUrl());
+                  + " publicly routable host. List it in the {} environment variable.",
+              params.getScmProviderUrl(),
+              UrlTargetValidator.URL_DESTINATION_TRUSTED_HOSTS);
           return Optional.empty();
         }
         apiClient = new GithubApiClient(params.getScmProviderUrl());

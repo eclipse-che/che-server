@@ -147,8 +147,9 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
         if (!canContact(personalAccessToken.getScmProviderUrl())) {
           LOG.warn(
               "Not contacting {}: it is not the configured GitLab endpoint and does not point to a"
-                  + " publicly routable host.",
-              personalAccessToken.getScmProviderUrl());
+                  + " publicly routable host. List it in the {} environment variable.",
+              personalAccessToken.getScmProviderUrl(),
+              UrlTargetValidator.URL_DESTINATION_TRUSTED_HOSTS);
           return Optional.empty();
         }
         gitlabApiClient = new GitlabApiClient(personalAccessToken.getScmProviderUrl());
@@ -196,8 +197,9 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
         if (!canContact(params.getScmProviderUrl())) {
           LOG.warn(
               "Not contacting {}: it is not the configured GitLab endpoint and does not point to a"
-                  + " publicly routable host.",
-              params.getScmProviderUrl());
+                  + " publicly routable host. List it in the {} environment variable.",
+              params.getScmProviderUrl(),
+              UrlTargetValidator.URL_DESTINATION_TRUSTED_HOSTS);
           return Optional.empty();
         }
         gitlabApiClient = new GitlabApiClient(params.getScmProviderUrl());

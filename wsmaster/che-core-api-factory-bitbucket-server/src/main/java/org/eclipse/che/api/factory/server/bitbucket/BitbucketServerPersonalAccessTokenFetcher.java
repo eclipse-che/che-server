@@ -145,8 +145,9 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       if (!canContact(accessToken.getScmProviderUrl())) {
         LOG.warn(
             "Not contacting {}: it is not a configured Bitbucket Server endpoint and does not point"
-                + " to a publicly routable host.",
-            accessToken.getScmProviderUrl());
+                + " to a publicly routable host. List it in the {} environment variable.",
+            accessToken.getScmProviderUrl(),
+            UrlTargetValidator.URL_DESTINATION_TRUSTED_HOSTS);
         return Optional.empty();
       }
       // If BitBucket oAuth is not configured check the manually added user namespace token.
@@ -187,8 +188,9 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       if (!canContact(params.getScmProviderUrl())) {
         LOG.warn(
             "Not contacting {}: it is not a configured Bitbucket Server endpoint and does not point"
-                + " to a publicly routable host.",
-            params.getScmProviderUrl());
+                + " to a publicly routable host. List it in the {} environment variable.",
+            params.getScmProviderUrl(),
+            UrlTargetValidator.URL_DESTINATION_TRUSTED_HOSTS);
         return Optional.empty();
       }
       // If BitBucket oAuth is not configured check the manually added user namespace token.

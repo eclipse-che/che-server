@@ -148,8 +148,9 @@ public abstract class AbstractGithubURLParser {
    * contacted. Such a URL comes straight from the caller, so contacting it unconditionally would
    * let anyone use the server to reach services only it can see and read the outcome off the answer
    * the factory endpoint returns, which is why only publicly routable hosts are contacted. An SCM
-   * server on a private network is reached through the configured provider endpoints or a personal
-   * access token, both of which are checked before it comes to this.
+   * server on a private network is reached when its hostname is listed in {@code
+   * URL_DESTINATION_TRUSTED_HOSTS}, or through the configured provider endpoints or a personal
+   * access token. The last two are checked before it comes to this.
    */
   @VisibleForTesting
   boolean canContact(String serverUrl) {
@@ -162,7 +163,11 @@ public abstract class AbstractGithubURLParser {
     if (serverUrlOptional.isPresent()) {
       String serverUrl = serverUrlOptional.get();
       if (!canContact(serverUrl)) {
-        LOG.warn("Not contacting {}: it does not point to a publicly routable host.", serverUrl);
+        LOG.warn(
+            "Not contacting {}: it does not point to a publicly routable host. "
+                + "List it in the {} environment variable, or configure it as a Git provider endpoint.",
+            serverUrl,
+            UrlTargetValidator.URL_DESTINATION_TRUSTED_HOSTS);
         return false;
       }
       GithubApiClient githubApiClient = new GithubApiClient(serverUrl);

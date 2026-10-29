@@ -42,9 +42,11 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.urlfactory.DevfileFilenamesProvider;
+import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.eclipse.che.commons.subject.Subject;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
@@ -68,6 +70,11 @@ public class GithubURLParserTest {
 
   WireMockServer wireMockServer;
   WireMock wireMock;
+
+  @AfterMethod
+  protected void restoreTrustedHosts() {
+    UrlTargetValidator.setTrustedHosts(null);
+  }
 
   /** Setup objects/ */
   @BeforeMethod
@@ -775,6 +782,28 @@ public class GithubURLParserTest {
     // then
     assertFalse(valid);
     verify(githubApiClient, never()).getUser(anyString());
+  }
+
+  /**
+   * A hostname an administrator has trusted is a GitHub Enterprise server the user asked to use, so
+   * the parser may probe it even though it is not publicly routable.
+   */
+  @Test
+  public void shouldProbeATrustedInternalGitHubServer() throws Exception {
+    // given
+    UrlTargetValidator.trustHost("localhost");
+    stubFor(
+        get(urlEqualTo("/api/v3/user"))
+            .willReturn(
+                aResponse()
+                    .withStatus(HTTP_UNAUTHORIZED)
+                    .withBody("{\"message\": \"Requires authentication\",\n}")));
+
+    // when
+    boolean valid = githubUrlParser.isValid(wireMockServer.url("/user/repo"));
+
+    // then
+    assertTrue(valid);
   }
 
   /** The wiremock server stands in for a GitHub server, but is only reachable over loopback. */

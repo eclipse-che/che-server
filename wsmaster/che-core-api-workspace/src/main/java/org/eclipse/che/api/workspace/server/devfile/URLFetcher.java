@@ -148,6 +148,8 @@ public class URLFetcher {
       // whatever SCM host the user names, including self hosted ones, so no fixed host allowlist
       // is possible. validateTarget above rejects any scheme other than http/https and any host
       // resolving to a non publicly routable address, and runs again on every redirect hop.
+      // Hosts named in URL_DESTINATION_TRUSTED_HOSTS, and configured Git provider endpoints, are
+      // exempt so an internal Git server can still be read. Other private addresses stay rejected.
       URLConnection connection = currentUrl.openConnection();
       connection.setConnectTimeout(timeout);
       connection.setReadTimeout(timeout);

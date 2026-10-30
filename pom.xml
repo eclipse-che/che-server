@@ -81,7 +81,7 @@
         <io.opentracing.web-servlet-filter.version>0.4.1</io.opentracing.web-servlet-filter.version>
         <io.prometheus.metrics.core.version>1.8.0</io.prometheus.metrics.core.version>
         <io.prometheus.simpleclient.version>0.16.0</io.prometheus.simpleclient.version>
-        <io.rest-assured.version>6.0.0</io.rest-assured.version>
+        <io.rest-assured.version>6.0.1</io.rest-assured.version>
         <io.swagger.version>2.2.16</io.swagger.version>
         <io.vertx.version>5.2.0</io.vertx.version>
         <jackson.version>3.1.7</jackson.version>

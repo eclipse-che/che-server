@@ -1954,6 +1954,11 @@
         </profile>
         <profile>
             <id>coverage</id>
+            <activation>
+                <property>
+                    <name>!skip-coverage</name>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>

@@ -23,7 +23,7 @@ jobs:
       id-token: write
       pull-requests: write  # Required to post PR comments
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Check all properties have description
@@ -48,7 +48,7 @@ jobs:
         password: ${{ secrets.QUAY_PASSWORD }}
         registry: quay.io
     - name: Build with Maven
-      run: mvn -B clean install -U -Pintegration,coverage
+      run: mvn -B clean install -X -U -Pintegration,coverage
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v6
       with:

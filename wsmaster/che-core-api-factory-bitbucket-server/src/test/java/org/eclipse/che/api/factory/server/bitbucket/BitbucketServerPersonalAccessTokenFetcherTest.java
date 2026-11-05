@@ -60,7 +60,7 @@ import org.testng.annotations.Test;
 public class BitbucketServerPersonalAccessTokenFetcherTest {
   String someNotBitbucketURL = "https://notabitbucket.com";
   String someBitbucketURL = "https://some.bitbucketserver.com";
-  String privateAddressURL = "https://10.0.0.1";
+  String blockedAddressURL = "https://169.254.169.254";
   URL apiEndpoint;
   Subject subject;
   @Mock BitbucketServerApiClient bitbucketServerApiClient;
@@ -246,11 +246,11 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
    * a way of having the server reach whatever the namespace owner names.
    */
   @Test
-  public void shouldNotContactPrivateAddressesWhenValidatingTokenParams()
+  public void shouldNotContactBlockedAddressesWhenValidatingTokenParams()
       throws ScmCommunicationException {
     // given
-    when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(privateAddressURL);
-    when(bitbucketServerApiClient.isConnected(eq(privateAddressURL))).thenReturn(false);
+    when(personalAccessTokenParams.getScmProviderUrl()).thenReturn(blockedAddressURL);
+    when(bitbucketServerApiClient.isConnected(eq(blockedAddressURL))).thenReturn(false);
     // when
     Optional<Pair<Boolean, String>> result = fetcher.isValid(personalAccessTokenParams);
     // then
@@ -258,12 +258,12 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
   }
 
   @Test
-  public void shouldNotContactPrivateAddressesWhenValidatingToken()
+  public void shouldNotContactBlockedAddressesWhenValidatingToken()
       throws ScmCommunicationException, ScmUnauthorizedException {
     // given
     PersonalAccessToken token =
         new PersonalAccessToken(
-            privateAddressURL,
+            blockedAddressURL,
             "bitbucket-server",
             "user987",
             null,
@@ -273,7 +273,7 @@ public class BitbucketServerPersonalAccessTokenFetcherTest {
             "t",
             "refresh-token",
             3600);
-    when(bitbucketServerApiClient.isConnected(eq(privateAddressURL))).thenReturn(false);
+    when(bitbucketServerApiClient.isConnected(eq(blockedAddressURL))).thenReturn(false);
     // when
     Optional<Boolean> result = fetcher.isValid(token);
     // then

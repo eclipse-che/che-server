@@ -194,8 +194,8 @@ public class AzureDevOpsPersonalAccessTokenFetcher implements PersonalAccessToke
       if (OAUTH_PROVIDER_NAME.equals(params.getScmProviderName())) {
         if (!canContact(params.getScmProviderUrl())) {
           LOG.warn(
-              "Not contacting {}: it is not the configured Azure DevOps endpoint and does not point"
-                  + " to a publicly routable host.",
+              "Not contacting {}: it is not the configured Azure DevOps endpoint and is not an"
+                  + " address the server may be pointed at.",
               params.getScmProviderUrl());
           return Optional.empty();
         }

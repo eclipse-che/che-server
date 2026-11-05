@@ -238,14 +238,14 @@ public class BitbucketServerURLParserTest {
   }
 
   @Test
-  public void shouldNotProbeAPrivateAddress() {
+  public void shouldNotProbeABlockedAddress() {
     // given
     bitbucketURLParser =
         new BitbucketServerURLParser(
             null, devfileFilenamesProvider, oAuthAPI, mock(PersonalAccessTokenManager.class));
 
     // when/then
-    assertFalse(bitbucketURLParser.isValid("http://10.0.0.1/users/user/repos/repo"));
+    assertFalse(bitbucketURLParser.isValid("http://169.254.169.254/users/user/repos/repo"));
   }
 
   /** The wiremock server stands in for a Bitbucket Server, but is only reachable over loopback. */

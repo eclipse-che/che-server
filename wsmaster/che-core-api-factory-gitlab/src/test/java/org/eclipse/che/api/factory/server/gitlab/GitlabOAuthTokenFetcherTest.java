@@ -199,22 +199,23 @@ public class GitlabOAuthTokenFetcherTest {
 
   /**
    * The provider URL of a token comes from a secret in the user's namespace, so it must not become
-   * a way of having the server reach whatever the namespace owner names.
+   * a way of having the server reach whatever the namespace owner names. Private networks are
+   * reachable, the cloud metadata endpoint is not.
    */
   @Test
-  public void shouldNotContactPrivateAddressesWhenValidatingTokenParams() throws Exception {
+  public void shouldNotContactBlockedAddressesWhenValidatingTokenParams() throws Exception {
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            "https://10.0.0.1", "provider", "gitlab", "tid-23434", "token123", null);
+            "https://169.254.169.254", "provider", "gitlab", "tid-23434", "token123", null);
 
     assertTrue(oAuthTokenFetcher.isValid(params).isEmpty());
   }
 
   @Test
-  public void shouldNotContactPrivateAddressesWhenValidatingToken() {
+  public void shouldNotContactBlockedAddressesWhenValidatingToken() {
     PersonalAccessToken token =
         new PersonalAccessToken(
-            "https://10.0.0.1",
+            "https://169.254.169.254",
             "provider",
             "id1",
             null,

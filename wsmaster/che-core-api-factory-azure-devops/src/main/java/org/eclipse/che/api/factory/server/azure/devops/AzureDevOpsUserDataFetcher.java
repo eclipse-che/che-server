@@ -96,8 +96,8 @@ public class AzureDevOpsUserDataFetcher extends AbstractGitUserDataFetcher {
         throw new ScmCommunicationException(
             "Refusing to contact "
                 + personalAccessToken.getScmProviderUrl()
-                + ": it is not the configured Azure DevOps endpoint and does not point to a"
-                + " publicly routable host.");
+                + ": it is not the configured Azure DevOps endpoint and is not an address the"
+                + " server may be pointed at.");
       }
       AzureDevOpsServerApiClient apiClient =
           new AzureDevOpsServerApiClient(

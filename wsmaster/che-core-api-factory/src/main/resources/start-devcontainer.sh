@@ -116,19 +116,45 @@ run_preflight() {
   step "1b" "nested container execution succeeded"
 }
 
+# `podman run -d` and `podman start` only prove the process was launched. Confirm it is still
+# running a few seconds later, so a container whose entrypoint exits immediately is reported as
+# a failure rather than as ready.
+container_running() {
+  [ "$("$PODMAN" inspect --format '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null)" = "true" ]
+}
+wait_running() {
+  local _
+  for _ in 1 2 3; do container_running || return 1; sleep 1; done
+  container_running
+}
+dump_container_logs() {
+  echo "  last container output:" >&2
+  "$PODMAN" logs --tail 20 "$CONTAINER_NAME" 2>&1 | sed 's/^/    /' >&2 || true
+}
+
 # Derive the range instead of hardcoding a uid — UDI's entrypoint computes this from the
 # actual uid, and a hardcoded "user:1001:..." maps the wrong host range on a uid-1000 pod.
 # NOTE: a 65536-ID userns cannot map container ID 65534 (nobody) however the ranges are
 # split, because our own UID consumes one. apt's sandbox may still need disabling.
+#
+# `podman system migrate` STOPS EVERY RUNNING CONTAINER in the store, so it must only run when
+# the ranges actually change. Running it unconditionally would kill the live dev container (and
+# everything the user started in it) on every Start or Rebuild.
 SU_USER="$(id -un 2>/dev/null || echo user)"; SU_UID="$(id -u)"
 if [ "$SU_UID" -gt 0 ] && [ "$SU_UID" -lt 65536 ]; then
   RANGES="$(printf '%s:1:%s\n%s:%s:%s\n' "$SU_USER" "$((SU_UID-1))" \
                                           "$SU_USER" "$((SU_UID+1))" "$((65535-SU_UID))")"
-  printf '%s\n' "$RANGES" > /etc/subuid 2>/dev/null &&
-  printf '%s\n' "$RANGES" > /etc/subgid 2>/dev/null &&
-  "$PODMAN" system migrate >/dev/null 2>&1 &&
-  step "2/8" "store=$("$PODMAN" info --format json 2>/dev/null | jq -r '.store.graphDriverName + " @ " + .store.graphRoot') subuid=${SU_USER}(${SU_UID})" ||
-  step "2/8" "store=$("$PODMAN" info --format json 2>/dev/null | jq -r '.store.graphDriverName + " @ " + .store.graphRoot') subuid=unchanged"
+  if printf '%s\n' "$RANGES" | cmp -s - /etc/subuid &&
+     printf '%s\n' "$RANGES" | cmp -s - /etc/subgid; then
+    SUBUID_STATE="${SU_USER}(${SU_UID}), already configured"
+  elif printf '%s\n' "$RANGES" > /etc/subuid 2>/dev/null &&
+       printf '%s\n' "$RANGES" > /etc/subgid 2>/dev/null &&
+       "$PODMAN" system migrate >/dev/null 2>&1; then
+    SUBUID_STATE="${SU_USER}(${SU_UID})"
+  else
+    SUBUID_STATE="unchanged"
+  fi
+  step "2/8" "store=$("$PODMAN" info --format json 2>/dev/null | jq -r '.store.graphDriverName + " @ " + .store.graphRoot') subuid=${SUBUID_STATE}"
 fi
 
 # ---------------------------------------------------------------------------
@@ -194,12 +220,19 @@ def norm($name):
   else empty end;
 norm("")'
 
+# argv elements are emitted NUL-delimited: a newline-delimited read would split a multi-line
+# command ("echo a\necho b") into separate arguments and silently drop everything after line 1.
+read_argv() {   # $1 = array name, $2 = normalized entry
+  local -n _out="$1"
+  _out=(); mapfile -d '' -t _out < <(printf '%s' "$2" | jq -j '.argv[] | (., "\u0000")')
+}
+
 run_outer() {
   local spec="$1" line label; [ -z "$spec" ] || [ "$spec" = "null" ] && return 0
   while IFS= read -r line; do
     [ -z "$line" ] && continue
     label="$(printf '%s' "$line" | jq -r '.name')"
-    local -a argv=(); mapfile -t argv < <(printf '%s' "$line" | jq -r '.argv[]')
+    local -a argv=(); read_argv argv "$line"
     [ "${#argv[@]}" -eq 0 ] && continue
     echo "  -> initializeCommand${label:+ [$label]}: ${argv[*]}"
     ( cd "$PROJECT_DIR" && "${argv[@]}" ) || {
@@ -220,8 +253,12 @@ elif "$PODMAN" container exists "$CONTAINER_NAME" 2>/dev/null; then
   STORED_FP="$("$PODMAN" inspect --format json "$CONTAINER_NAME" 2>/dev/null \
     | jq -r '.[0].Config.Labels["che.devcontainer.config"] // ""' 2>/dev/null || echo "")"
   if [ "$STORED_FP" = "$CONFIG_FINGERPRINT" ]; then
-    REUSING=1; step "5/8" "reusing existing container (config unchanged)."
-    "$PODMAN" start "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    if "$PODMAN" start "$CONTAINER_NAME" >/dev/null 2>&1 && wait_running; then
+      REUSING=1; step "5/8" "reusing existing container (config unchanged)."
+    else
+      step "5/8" "existing container does not stay running; recreating."
+      "$PODMAN" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    fi
   else
     step "5/8" "devcontainer.json changed; rebuilding."
     "$PODMAN" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
@@ -251,7 +288,8 @@ def last_of($k): [ .[] | .[$k] // empty ] | last // null;
 def all_of($k):  [ .[] | .[$k] // empty ];
 { remoteUser: last_of("remoteUser"), containerUser: last_of("containerUser"),
   workspaceFolder: last_of("workspaceFolder"),
-  remoteEnv:    ( [ .[] | .remoteEnv    // {} ] | add // {} ),
+  overrideCommand: ( [ .[] | select(type == "object" and has("overrideCommand")) | .overrideCommand ] | last ),
+  remoteEnv:   ( [ .[] | .remoteEnv    // {} ] | add // {} ),
   containerEnv: ( [ .[] | .containerEnv // {} ] | add // {} ),
   onCreateCommand: all_of("onCreateCommand"), updateContentCommand: all_of("updateContentCommand"),
   postCreateCommand: all_of("postCreateCommand"), postStartCommand: all_of("postStartCommand"),
@@ -267,6 +305,8 @@ fi
 META="$(jq -n --argjson m "$META" --argjson c "$CONFIG_JSON" '
   { remoteUser: ($m.remoteUser // $c.remoteUser // $c.containerUser // null),
     workspaceFolder: ($m.workspaceFolder // $c.workspaceFolder // "/workspace"),
+    overrideCommand: (if $m.overrideCommand != null then $m.overrideCommand
+                      elif $c.overrideCommand != null then $c.overrideCommand else true end),
     remoteEnv: (($c.remoteEnv // {}) + ($m.remoteEnv // {})),
     containerEnv: (($c.containerEnv // {}) + ($m.containerEnv // {})),
     hooks: { onCreateCommand: ($m.onCreateCommand // []), updateContentCommand: ($m.updateContentCommand // []),
@@ -275,14 +315,15 @@ META="$(jq -n --argjson m "$META" --argjson c "$CONFIG_JSON" '
 
 REMOTE_USER="$(printf '%s' "$META" | jq -r '.remoteUser // empty')"
 WORKSPACE_FOLDER="$(printf '%s' "$META" | jq -r '.workspaceFolder')"
+OVERRIDE_COMMAND="$(printf '%s' "$META" | jq -r '.overrideCommand')"
 echo "  remoteUser=${REMOTE_USER:-<image default>}  workspaceFolder=${WORKSPACE_FOLDER}"
 
-env_args() {  # $1 = remoteEnv|containerEnv
-  printf '%s' "$META" | jq -r --arg k "$1" '(.[$k] // {}) | to_entries[]
-    | select(.value | tostring | test("\\$\\{") | not) | "-e", "\(.key)=\(.value)"'
+env_args() {  # $1 = remoteEnv|containerEnv; NUL-delimited so a newline in a value stays one arg
+  printf '%s' "$META" | jq -j --arg k "$1" '(.[$k] // {}) | to_entries[]
+    | select(.value | tostring | test("\\$\\{") | not) | ("-e", "\(.key)=\(.value)") | (., "\u0000")'
 }
-CONTAINER_ENV=(); mapfile -t CONTAINER_ENV < <(env_args containerEnv)
-REMOTE_ENV=();    mapfile -t REMOTE_ENV    < <(env_args remoteEnv)
+CONTAINER_ENV=(); mapfile -d '' -t CONTAINER_ENV < <(env_args containerEnv)
+REMOTE_ENV=();    mapfile -d '' -t REMOTE_ENV    < <(env_args remoteEnv)
 skipped="$(printf '%s' "$META" | jq -r '[(.remoteEnv//{}),(.containerEnv//{})] | add | to_entries[]
   | select(.value|tostring|test("\\$\\{")) | .key' | paste -sd, -)"
 [ -n "$skipped" ] && echo "  NOTE: env with \${...} substitution skipped: $skipped" >&2
@@ -299,8 +340,9 @@ KEEP_ID_ARGS=()
 if [ "$REUSING" = "0" ] && [ "${NO_KEEP_ID:-0}" != "1" ] && [ -c /dev/fuse ]; then
   IN_UID=""; IN_GID=""
   if [ -n "$REMOTE_USER" ]; then
-    IN_UID="$("$PODMAN" run --rm "$IMAGE_NAME" id -u "$REMOTE_USER" 2>/dev/null | tr -dc '0-9')"
-    IN_GID="$("$PODMAN" run --rm "$IMAGE_NAME" id -g "$REMOTE_USER" 2>/dev/null | tr -dc '0-9')"
+    # --entrypoint: otherwise an image ENTRYPOINT receives "id -u ..." as its arguments.
+    IN_UID="$("$PODMAN" run --rm --entrypoint id "$IMAGE_NAME" -u "$REMOTE_USER" 2>/dev/null | tr -dc '0-9')"
+    IN_GID="$("$PODMAN" run --rm --entrypoint id "$IMAGE_NAME" -g "$REMOTE_USER" 2>/dev/null | tr -dc '0-9')"
   fi
   if [ -n "$IN_UID" ] && [ -n "$IN_GID" ]; then
     KEEP_ID_ARGS=(--userns="keep-id:uid=${IN_UID},gid=${IN_GID}")
@@ -313,6 +355,18 @@ fi
 # code and with --network=host already reaches che-code (:3100) and machine-exec (:3333).
 # VS Code dev containers do not expose Kubernetes service-account tokens; cluster tooling
 # lives in UDI — use a regular editor terminal for kubectl/oc.
+#
+# Like the devcontainer CLI, REPLACE the image's ENTRYPOINT with a keep-alive unless
+# overrideCommand is false. `IMAGE sleep infinity` would only pass "sleep infinity" as arguments
+# to an ENTRYPOINT such as /app/server, which may exit straight away. The TERM trap lets
+# `podman stop` finish at once: PID 1 has no default signal handlers.
+if [ "$OVERRIDE_COMMAND" = "false" ]; then
+  RUN_CMD=("$IMAGE_NAME")
+else
+  RUN_CMD=(--entrypoint /bin/sh "$IMAGE_NAME"
+           -c 'trap "exit 0" TERM; while sleep 1000 & wait $!; do :; done')
+fi
+
 start_container() {   # $1 = extra args array name
   local -n extra="$1"
   "$PODMAN" run -d --name "$CONTAINER_NAME" --network=host \
@@ -320,7 +374,7 @@ start_container() {   # $1 = extra args array name
     "${extra[@]}" \
     -v "$PROJECT_DIR:${WORKSPACE_FOLDER}" \
     "${CONTAINER_ENV[@]}" \
-    "$IMAGE_NAME" sleep infinity
+    "${RUN_CMD[@]}" && wait_running
 }
 
 KEEP_ID_OK=0
@@ -332,7 +386,9 @@ if [ "$REUSING" = "0" ]; then
   else
     [ "${#KEEP_ID_ARGS[@]}" -gt 0 ] && echo "  keep-id unavailable; falling back (files created inside will be subuid-owned)" >&2
     "$PODMAN" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-    NONE=(); start_container NONE >/dev/null || { echo "  could not start container" >&2; exit 1; }
+    NONE=(); start_container NONE >/dev/null || {
+      echo "  could not start container, or it exited right after starting" >&2
+      dump_container_logs; exit 1; }
   fi
 else
   step "6/8" "container already running."
@@ -373,7 +429,7 @@ run_hook() {   # $1 = hook name
     while IFS= read -r line; do
       [ -z "$line" ] && continue
       label="$(printf '%s' "$line" | jq -r '.name')"
-      local -a argv=(); mapfile -t argv < <(printf '%s' "$line" | jq -r '.argv[]')
+      local -a argv=(); read_argv argv "$line"
       [ "${#argv[@]}" -eq 0 ] && continue
       echo "  -> ${hook}${label:+ [$label]}: ${argv[*]}"
       rc=0
@@ -430,7 +486,7 @@ profile_argv=(exec -it)
 [ -n "$REMOTE_USER" ] && profile_argv+=(-u "$REMOTE_USER")
 profile_argv+=("${REMOTE_ENV[@]}" -w "$WORKSPACE_FOLDER" "$CONTAINER_NAME" "$INNER_SHELL")
 TERMINAL_PROFILE="$(jq -n \
-  --argjson args "$(printf '%s\n' "${profile_argv[@]}" | jq -R . | jq -s -c .)" \
+  --argjson args "$(printf '%s\0' "${profile_argv[@]}" | jq -R -s -c 'split("\u0000") | .[:-1]')" \
   --arg path "$PODMAN" '{
     "terminal.integrated.profiles.linux": {
       "devcontainer": { "path": $path, "args": $args, "icon": "container" } } }')"
@@ -445,6 +501,11 @@ fi
 if [ "$LIFECYCLE_FAILURES" -gt 0 ]; then
   echo; echo "  WARNING: ${LIFECYCLE_FAILURES} lifecycle command(s) failed."
   [ "$STRICT_LIFECYCLE" = "1" ] && exit 1
+fi
+
+if ! container_running; then
+  echo "  dev container is not running" >&2
+  dump_container_logs; exit 1
 fi
 
 _close_phase

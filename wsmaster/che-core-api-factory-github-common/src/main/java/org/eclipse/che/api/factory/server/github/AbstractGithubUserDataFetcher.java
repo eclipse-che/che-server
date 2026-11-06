@@ -97,8 +97,8 @@ public abstract class AbstractGithubUserDataFetcher extends AbstractGitUserDataF
         throw new ScmCommunicationException(
             "Refusing to contact "
                 + personalAccessToken.getScmProviderUrl()
-                + ": it is not the configured GitHub endpoint and does not point to a publicly"
-                + " routable host.");
+                + ": it is not the configured GitHub endpoint and is not an address the server may"
+                + " be pointed at.");
       }
       apiClient = new GithubApiClient(personalAccessToken.getScmProviderUrl());
     }

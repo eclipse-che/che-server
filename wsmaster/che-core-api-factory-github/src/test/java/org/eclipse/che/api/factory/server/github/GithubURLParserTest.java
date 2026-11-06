@@ -602,12 +602,13 @@ public class GithubURLParserTest {
 
   /**
    * An unconfigured URL is probed to find out whether it is a GitHub server, which must not become
-   * a way of having the server reach whatever the caller names.
+   * a way of having the server reach whatever the caller names. Private networks are reachable, the
+   * cloud metadata endpoint is not.
    */
   @Test
-  public void shouldNotProbeAPrivateAddress() throws Exception {
+  public void shouldNotProbeABlockedAddress() throws Exception {
     // when
-    boolean valid = githubUrlParser.isValid("http://10.0.0.1/user/repo");
+    boolean valid = githubUrlParser.isValid("http://169.254.169.254/user/repo");
 
     // then
     assertFalse(valid);

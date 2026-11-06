@@ -83,8 +83,8 @@ public class AbstractGitlabUserDataFetcher extends AbstractGitUserDataFetcher {
       throw new ScmCommunicationException(
           "Refusing to contact "
               + personalAccessToken.getScmProviderUrl()
-              + ": it is not the configured GitLab endpoint and does not point to a publicly"
-              + " routable host.");
+              + ": it is not the configured GitLab endpoint and is not an address the server may be"
+              + " pointed at.");
     }
     GitlabUser user =
         new GitlabApiClient(personalAccessToken.getScmProviderUrl())

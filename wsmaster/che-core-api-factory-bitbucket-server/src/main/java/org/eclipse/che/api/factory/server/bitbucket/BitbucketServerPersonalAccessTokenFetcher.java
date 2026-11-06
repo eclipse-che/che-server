@@ -144,8 +144,8 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     if (!bitbucketServerApiClient.isConnected(accessToken.getScmProviderUrl())) {
       if (!canContact(accessToken.getScmProviderUrl())) {
         LOG.warn(
-            "Not contacting {}: it is not a configured Bitbucket Server endpoint and does not point"
-                + " to a publicly routable host.",
+            "Not contacting {}: it is not a configured Bitbucket Server endpoint and is not an"
+                + " address the server may be pointed at.",
             accessToken.getScmProviderUrl());
         return Optional.empty();
       }
@@ -186,8 +186,8 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
     if (!bitbucketServerApiClient.isConnected(params.getScmProviderUrl())) {
       if (!canContact(params.getScmProviderUrl())) {
         LOG.warn(
-            "Not contacting {}: it is not a configured Bitbucket Server endpoint and does not point"
-                + " to a publicly routable host.",
+            "Not contacting {}: it is not a configured Bitbucket Server endpoint and is not an"
+                + " address the server may be pointed at.",
             params.getScmProviderUrl());
         return Optional.empty();
       }

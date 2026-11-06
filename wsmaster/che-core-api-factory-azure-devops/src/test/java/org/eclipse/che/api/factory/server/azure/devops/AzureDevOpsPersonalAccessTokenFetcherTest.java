@@ -255,10 +255,11 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
 
   /**
    * The provider URL of a token comes from a secret in the user's namespace, so it must not become
-   * a way of having the server reach whatever the namespace owner names.
+   * a way of having the server reach whatever the namespace owner names. Private networks are
+   * reachable, the cloud metadata endpoint is not.
    */
   @Test
-  public void shouldNotContactPrivateAddresses() throws Exception {
+  public void shouldNotContactBlockedAddresses() throws Exception {
     personalAccessTokenFetcher =
         new AzureDevOpsPersonalAccessTokenFetcher(
             "localhost",
@@ -269,7 +270,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
 
     PersonalAccessTokenParams params =
         new PersonalAccessTokenParams(
-            "https://10.0.0.1",
+            "https://169.254.169.254",
             "azure-devops",
             "token-name",
             "tid-23434",

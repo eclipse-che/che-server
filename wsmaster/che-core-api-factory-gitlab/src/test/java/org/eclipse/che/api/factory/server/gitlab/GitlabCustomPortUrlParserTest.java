@@ -146,9 +146,9 @@ public class GitlabCustomPortUrlParserTest {
   }
 
   @Test
-  public void shouldNotProbeAPrivateAddress() {
+  public void shouldNotProbeABlockedAddress() {
     // when
-    boolean result = gitlabUrlParser.isValid("http://10.0.0.1/user/repo");
+    boolean result = gitlabUrlParser.isValid("http://169.254.169.254/user/repo");
 
     // then
     assertFalse(result);

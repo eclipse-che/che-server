@@ -47,14 +47,10 @@ public class UrlTargetValidatorTest {
       {"http://169.254.169.254/latest/meta-data/"},
       {"http://[fe80::1]/"},
       {"http://[0:0:0:0:0:ffff:a9fe:a9fe]/"},
-      // IPv4 private ranges
-      {"http://10.0.0.1/"},
-      {"http://172.16.0.1/"},
-      {"http://192.168.1.1/"},
-      // IPv6 unique local addresses, which InetAddress#isSiteLocalAddress does not cover
+      // IPv6 unique local addresses, which the site-local check never covered
       {"http://[fc00::1]/"},
       {"http://[fd12:3456:789a::1]/"},
-      // ranges that are not the public internet either
+      // ranges that are neither the public internet nor a private network
       {"http://100.64.1.1/"},
       {"http://192.0.0.1/"},
       {"http://198.18.0.1/"},
@@ -89,6 +85,12 @@ public class UrlTargetValidatorTest {
       {"http://192.0.3.1/"},
       {"http://198.51.101.1/"},
       {"http://203.0.114.1/"},
+      // the IPv4 private ranges of RFC 1918, reachable so that an SCM server published only on an
+      // internal address can be used. This is what lets a user supplied URL address the cluster
+      // network, the Kubernetes API and neighbouring pods included.
+      {"http://10.0.0.1/"},
+      {"http://172.16.0.1/"},
+      {"http://192.168.1.1/"},
     };
   }
 

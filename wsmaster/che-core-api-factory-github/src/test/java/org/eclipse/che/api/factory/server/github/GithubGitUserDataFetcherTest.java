@@ -114,15 +114,16 @@ public class GithubGitUserDataFetcherTest {
 
   /**
    * The provider URL of a token comes from a secret in the user's namespace, so it must not become
-   * a way of having the server reach whatever the namespace owner names.
+   * a way of having the server reach whatever the namespace owner names. Private networks are
+   * reachable, the cloud metadata endpoint is not.
    */
   @Test(
       expectedExceptions = ScmCommunicationException.class,
-      expectedExceptionsMessageRegExp = "Refusing to contact https://10\\.0\\.0\\.1: .*")
-  public void shouldNotContactPrivateAddresses() throws Exception {
+      expectedExceptionsMessageRegExp = "Refusing to contact https://169\\.254\\.169\\.254: .*")
+  public void shouldNotContactBlockedAddresses() throws Exception {
     PersonalAccessToken token = mock(PersonalAccessToken.class);
     when(token.getToken()).thenReturn(githubOauthToken);
-    when(token.getScmProviderUrl()).thenReturn("https://10.0.0.1");
+    when(token.getScmProviderUrl()).thenReturn("https://169.254.169.254");
     when(personalAccessTokenManager.get(any(Subject.class), eq("github"), eq(null), eq(null)))
         .thenReturn(Optional.of(token));
 

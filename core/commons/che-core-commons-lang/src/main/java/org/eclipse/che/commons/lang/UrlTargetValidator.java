@@ -28,8 +28,13 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Several endpoints take a URL from the user and make the server fetch it. Without a check on
  * the destination, such a URL can be aimed at a service that is only reachable from inside the
- * cluster - the cloud metadata endpoint, the Kubernetes API, a neighbouring pod - turning the
- * server into a proxy for the caller (SSRF).
+ * cluster - the cloud metadata endpoint, a port bound on the host itself - turning the server into
+ * a proxy for the caller (SSRF).
+ *
+ * <p>Private networks are deliberately left reachable, so that an SCM server published only on an
+ * internal address can be used. The cluster network is therefore not behind this check: the
+ * Kubernetes API and neighbouring pods on {@code 10/8}, {@code 172.16/12} or {@code 192.168/16} can
+ * be addressed by a URL that a user supplies. See {@link #isAllowedAddress(InetAddress)}.
  *
  * <p>The check can be turned off with the {@value #URL_DESTINATION_CHECK} environment variable, for
  * deployments whose SCM server is only reachable on an internal address and would therefore be
@@ -118,7 +123,7 @@ public final class UrlTargetValidator {
 
   /**
    * Throws if the given URL may not be requested by the server, either because of its scheme or
-   * because its host resolves to an address that is not publicly routable. Does nothing when the
+   * because its host resolves to an address the server may not be pointed at. Does nothing when the
    * check is {@link #isCheckEnabled() turned off}.
    *
    * @param url the URL about to be requested
@@ -160,7 +165,7 @@ public final class UrlTargetValidator {
     }
 
     for (InetAddress address : addresses) {
-      if (!isPubliclyRoutable(address)) {
+      if (!isAllowedAddress(address)) {
         throw new IOException("URL host is not allowed: " + host);
       }
     }
@@ -183,15 +188,19 @@ public final class UrlTargetValidator {
   }
 
   /**
-   * Tells whether an address belongs to the public internet, as opposed to the ranges reserved for
-   * private networks, the host itself, or protocol machinery.
+   * Tells whether the server may be pointed at an address, that is whether it falls outside the
+   * ranges reserved for the host itself, for a single link, or for protocol machinery.
+   *
+   * <p>Addresses on private networks are <em>not</em> excluded: the IPv4 ranges of RFC 1918 ({@code
+   * 10/8}, {@code 172.16/12}, {@code 192.168/16}) and the deprecated IPv6 site-local {@code
+   * fec0::/10} are accepted, so that a deployment reaches an SCM server published only on an
+   * internal address. A URL supplied by a user therefore reaches hosts on the cluster network, and
+   * the destination check does not stand in the way of that.
    */
-  private static boolean isPubliclyRoutable(InetAddress address) {
+  private static boolean isAllowedAddress(InetAddress address) {
     if (address.isAnyLocalAddress()
         || address.isLoopbackAddress()
         || address.isLinkLocalAddress()
-        // IPv4 private ranges and the deprecated IPv6 site-local fec0::/10
-        || address.isSiteLocalAddress()
         || address.isMulticastAddress()) {
       return false;
     }

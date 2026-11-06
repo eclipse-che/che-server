@@ -146,8 +146,8 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
       if (personalAccessToken.getScmTokenName().equals(providerName)) {
         if (!canContact(personalAccessToken.getScmProviderUrl())) {
           LOG.warn(
-              "Not contacting {}: it is not the configured GitLab endpoint and does not point to a"
-                  + " publicly routable host.",
+              "Not contacting {}: it is not the configured GitLab endpoint and is not an address"
+                  + " the server may be pointed at.",
               personalAccessToken.getScmProviderUrl());
           return Optional.empty();
         }
@@ -195,8 +195,8 @@ public class AbstractGitlabOAuthTokenFetcher implements PersonalAccessTokenFetch
       if (providerName.equals(params.getScmTokenName())) {
         if (!canContact(params.getScmProviderUrl())) {
           LOG.warn(
-              "Not contacting {}: it is not the configured GitLab endpoint and does not point to a"
-                  + " publicly routable host.",
+              "Not contacting {}: it is not the configured GitLab endpoint and is not an address"
+                  + " the server may be pointed at.",
               params.getScmProviderUrl());
           return Optional.empty();
         }

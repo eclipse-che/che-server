@@ -147,7 +147,8 @@ public class URLFetcher {
       // codeql[java/ssrf] the URL is user supplied by design - this server fetches devfiles from
       // whatever SCM host the user names, including self hosted ones, so no fixed host allowlist
       // is possible. validateTarget above rejects any scheme other than http/https and any host
-      // resolving to a non publicly routable address, and runs again on every redirect hop.
+      // resolving to an address the server may not be pointed at, and runs again on every redirect
+      // hop.
       URLConnection connection = currentUrl.openConnection();
       connection.setConnectTimeout(timeout);
       connection.setReadTimeout(timeout);

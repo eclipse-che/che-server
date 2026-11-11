@@ -444,6 +444,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
    */
   private List<KubernetesNamespaceMeta> getKubernetesNamespaceMetas(@Nullable String namespaceName)
       throws InfrastructureException {
+    if (namespaceName == null) {
+      // A caller with no user of its own names the namespace it works on in the context, see
+      // EnvironmentContext#getNamespaceName. Resolving it from the subject would not work there.
+      namespaceName = EnvironmentContext.getCurrent().getNamespaceName();
+    }
     if (namespaceName != null) {
       return namespaceFactory
           .fetchNamespace(namespaceName)
@@ -615,7 +620,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   private void removePreviousTokenSecretsIfPresent(String scmServerUrl)
       throws ScmConfigurationPersistenceException, UnsatisfiedScmPreconditionException {
     try {
-      for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
+      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(null)) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
         for (int i = 1; i < secrets.size(); i++) {
           Secret secret = secrets.get(i);
@@ -652,6 +657,10 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
 
   private String getFirstNamespace()
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
+    String contextNamespace = EnvironmentContext.getCurrent().getNamespaceName();
+    if (contextNamespace != null) {
+      return contextNamespace;
+    }
     try {
       return namespaceFactory.list().stream()
           .map(KubernetesNamespaceMeta::getName)

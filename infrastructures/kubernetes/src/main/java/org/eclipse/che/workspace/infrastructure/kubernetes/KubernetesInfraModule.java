@@ -43,6 +43,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesCom
 import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesDevfileBindings;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.OAuthTokenRefresher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.RemoveNamespaceOnWorkspaceRemove;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigConfigurator;
@@ -108,6 +109,9 @@ public class KubernetesInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(UserPreferencesConfigurator.class);
     namespaceConfigurators.addBinding().to(SshConfigConfigurator.class);
     namespaceConfigurators.addBinding().to(GitconfigConfigurator.class);
+
+    // Eager, because the scheduled job it carries is started when the instance is created.
+    bind(OAuthTokenRefresher.class).asEagerSingleton();
 
     bind(PermissionsCleaner.class).asEagerSingleton();
 

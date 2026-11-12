@@ -145,6 +145,60 @@ public class KubernetesPersonalAccessTokenManagerTest {
     assertEquals(token.getToken(), "token_value");
   }
 
+  /**
+   * A caller with no user of its own names the namespace in the EnvironmentContext. The token is
+   * then read from that namespace, without the namespace being resolved from a subject.
+   */
+  @Test
+  public void shouldReadTheTokenFromTheNamespaceNamedInTheEnvironmentContext() throws Exception {
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("named-namespace");
+    when(namespaceFactory.fetchNamespace(eq("named-namespace"))).thenReturn(Optional.of(meta));
+    KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq(meta.getName()))).thenReturn(kubernetesnamespace);
+    when(kubernetesnamespace.secrets()).thenReturn(secrets);
+
+    ObjectMeta secretMeta =
+        new ObjectMetaBuilder()
+            .withCreationTimestamp("2021-07-01T12:00:00Z")
+            .withAnnotations(
+                Map.of(
+                    ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                    "github",
+                    ANNOTATION_CHE_USERID,
+                    "user",
+                    ANNOTATION_SCM_URL,
+                    "http://host1"))
+            .build();
+    Secret secret =
+        new SecretBuilder()
+            .withMetadata(secretMeta)
+            .withData(Map.of("token", Base64.getEncoder().encodeToString("tkn".getBytes(UTF_8))))
+            .build();
+    when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(secret));
+
+    EnvironmentContext context = new EnvironmentContext();
+    context.setNamespaceName("named-namespace");
+    EnvironmentContext.setCurrent(context);
+    try {
+      // when the namespace is not given, it is taken from the context
+      Optional<PersonalAccessToken> token =
+          personalAccessTokenManager.getStored(
+              new SubjectImpl(null, Collections.emptyList(), "user", null, false),
+              null,
+              "http://host1",
+              null);
+
+      // then
+      assertTrue(token.isPresent());
+      assertEquals(token.get().getToken(), "tkn");
+      // the namespace of the user was never resolved, the context named it
+      verify(namespaceFactory, never()).list();
+    } finally {
+      EnvironmentContext.reset();
+    }
+  }
+
   @Test
   public void testSavingOfPersonalAccessToken() throws Exception {
 

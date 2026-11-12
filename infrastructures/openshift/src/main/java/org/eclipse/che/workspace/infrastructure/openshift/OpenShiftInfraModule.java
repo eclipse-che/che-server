@@ -47,6 +47,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.devfile.KubernetesDev
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironmentFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
+import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.OAuthTokenRefresher;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.CredentialsSecretConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.GitconfigConfigurator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator;
@@ -112,6 +113,9 @@ public class OpenShiftInfraModule extends AbstractModule {
     namespaceConfigurators.addBinding().to(OpenShiftWorkspaceServiceAccountConfigurator.class);
     namespaceConfigurators.addBinding().to(SshConfigConfigurator.class);
     namespaceConfigurators.addBinding().to(GitconfigConfigurator.class);
+
+    // Eager, because the scheduled job it carries is started when the instance is created.
+    bind(OAuthTokenRefresher.class).asEagerSingleton();
 
     bind(PermissionsCleaner.class).asEagerSingleton();
 

@@ -239,6 +239,9 @@ public class OAuthTokenRefresher {
     Set<String> refreshed = new HashSet<>();
     for (Secret secret : secrets) {
       Map<String, String> annotations = secret.getMetadata().getAnnotations();
+      if (annotations == null) {
+        continue;
+      }
       String scmServerUrl = annotations.get(ANNOTATION_SCM_URL);
       if (!isOAuthTokenSecret(annotations)) {
         LOG.debug(

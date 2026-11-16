@@ -160,7 +160,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   @Override
   public void remove(String scmServerUrl) {
     try {
-      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(null)) {
+      for (KubernetesNamespaceMeta namespaceMeta :
+          getKubernetesNamespaceMetas(EnvironmentContext.getCurrent().getNamespaceName())) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
         Optional<Secret> optionalSecret =
             secrets.stream()
@@ -274,7 +275,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           cheUser.getUserId(),
           oAuthProviderName);
 
-      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(namespaceName)) {
+      // A caller with no user of its own names the namespace it works on in the context, see
+      // EnvironmentContext#getNamespaceName. Resolving it from the subject would not work there.
+      String namespace =
+          namespaceName != null
+              ? namespaceName
+              : EnvironmentContext.getCurrent().getNamespaceName();
+      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(namespace)) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
 
         for (Secret secret : secrets) {
@@ -440,15 +447,11 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   /**
    * Returns the list of namespaces to search for the personal access token secrets.
    *
-   * @param namespaceName the user's namespace name
+   * @param namespaceName the user's namespace name, or {@code null} to search every namespace the
+   *     user of the current request is entitled to
    */
   private List<KubernetesNamespaceMeta> getKubernetesNamespaceMetas(@Nullable String namespaceName)
       throws InfrastructureException {
-    if (namespaceName == null) {
-      // A caller with no user of its own names the namespace it works on in the context, see
-      // EnvironmentContext#getNamespaceName. Resolving it from the subject would not work there.
-      namespaceName = EnvironmentContext.getCurrent().getNamespaceName();
-    }
     if (namespaceName != null) {
       return namespaceFactory
           .fetchNamespace(namespaceName)
@@ -620,7 +623,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   private void removePreviousTokenSecretsIfPresent(String scmServerUrl)
       throws ScmConfigurationPersistenceException, UnsatisfiedScmPreconditionException {
     try {
-      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(null)) {
+      for (KubernetesNamespaceMeta namespaceMeta :
+          getKubernetesNamespaceMetas(EnvironmentContext.getCurrent().getNamespaceName())) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
         for (int i = 1; i < secrets.size(); i++) {
           Secret secret = secrets.get(i);

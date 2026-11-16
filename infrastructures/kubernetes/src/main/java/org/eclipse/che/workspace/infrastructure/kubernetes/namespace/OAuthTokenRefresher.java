@@ -391,6 +391,14 @@ public class OAuthTokenRefresher {
           namespace,
           scmServerUrl,
           e);
+    } catch (RuntimeException e) {
+      // One user must not stop the refresh of the remaining namespaces.
+      LOG.warn(
+          "Unexpected failure refreshing the OAuth token of user {} of namespace {} for {}",
+          userId,
+          namespace,
+          scmServerUrl,
+          e);
     } finally {
       EnvironmentContext.setCurrent(originalContext);
     }

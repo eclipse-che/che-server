@@ -14,6 +14,7 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.commons.lang.StringUtils.trimEnd;
 
 import com.google.common.collect.ImmutableMap;
@@ -72,6 +73,11 @@ import org.slf4j.LoggerFactory;
  * those run only when Che itself provisions a namespace, which a deployment that has its namespaces
  * prepared for it never does.
  *
+ * <p>Only the tokens obtained with the OAuth flow are refreshed. A manually configured personal
+ * access token is left alone: it does not expire on its own, and it is the one preferred over an
+ * OAuth token of the same provider, so refreshing it would overwrite the git credentials of the
+ * user with a token they did not ask to be used.
+ *
  * <p>Only the tokens a running workspace is actually using are refreshed. A token hurts no one
  * while it sits in a namespace whose workspaces are all stopped: the refresh-on-read flow hands the
  * user a fresh one the next time they start a workspace. So the job collects the repositories the
@@ -106,6 +112,8 @@ public class OAuthTokenRefresher {
 
   private static final String ANNOTATION_CHE_USERID = "che.eclipse.org/che-userid";
   private static final String ANNOTATION_SCM_URL = "che.eclipse.org/scm-url";
+  private static final String ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME =
+      "che.eclipse.org/scm-personal-access-token-name";
 
   private static final Logger LOG = LoggerFactory.getLogger(OAuthTokenRefresher.class);
 
@@ -214,6 +222,14 @@ public class OAuthTokenRefresher {
     for (Secret secret : secrets) {
       Map<String, String> annotations = secret.getMetadata().getAnnotations();
       String scmServerUrl = annotations.get(ANNOTATION_SCM_URL);
+      if (!isOAuthTokenSecret(annotations)) {
+        LOG.debug(
+            "Secret {} of namespace {} keeps a manually configured personal access token, skipping"
+                + " it",
+            secret.getMetadata().getName(),
+            namespace);
+        continue;
+      }
       if (!serves(scmServerUrl, repositoryUrls)) {
         LOG.debug(
             "No workspace running in namespace {} clones from {}, skipping its OAuth token",
@@ -235,6 +251,24 @@ public class OAuthTokenRefresher {
         refreshToken(namespace, userId, scmServerUrl);
       }
     }
+  }
+
+  /**
+   * Tells whether the secret keeps a token obtained with the OAuth flow. Such tokens are stored
+   * under a generated {@code oauth2-<random>} name, while the manually configured personal access
+   * tokens are named after the SCM provider.
+   *
+   * <p>Only the OAuth tokens are refreshed. A manually configured personal access token has no
+   * refresh token behind it and does not expire on its own, so refreshing it means going to the
+   * OAuth provider of the user, which either fails, when they never went through the OAuth flow, or
+   * overwrites their git credentials with an OAuth token, although the manually configured token is
+   * the one preferred over it, see {@code KubernetesPersonalAccessTokenManager}.
+   *
+   * @param annotations the annotations of the token secret
+   */
+  private static boolean isOAuthTokenSecret(Map<String, String> annotations) {
+    String tokenName = annotations.get(ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME);
+    return tokenName != null && tokenName.startsWith(OAUTH_2_PREFIX);
   }
 
   /**

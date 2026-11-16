@@ -241,6 +241,55 @@ public class OAuthTokenRefresherTest {
     verify(personalAccessTokenManager, never()).forceRefreshPersonalAccessToken(anyString());
   }
 
+  /**
+   * A manually configured personal access token does not expire on its own and has no refresh token
+   * behind it. Refreshing it would go to the OAuth provider of the user, which the user may never
+   * have authorized at all.
+   */
+  @Test
+  public void shouldNotRefreshAManuallyConfiguredPersonalAccessToken() throws Exception {
+    // given
+    createSecret("gitlab-pat", personalAccessTokenSecret("gitlab", SCM_URL));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verifyNoInteractions(personalAccessTokenManager);
+  }
+
+  /** A secret stored before the token name annotation was introduced is not an OAuth one. */
+  @Test
+  public void shouldNotRefreshTokenOfASecretThatNamesNoToken() throws Exception {
+    // given
+    Secret secret = oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200);
+    secret.getMetadata().getAnnotations().remove("che.eclipse.org/scm-personal-access-token-name");
+    createSecret("no-token-name", secret);
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verifyNoInteractions(personalAccessTokenManager);
+  }
+
+  /**
+   * The manually configured token of a provider does not keep the OAuth token of the same provider
+   * from being refreshed: both are stored, and the manual one only wins when the token is read.
+   */
+  @Test
+  public void shouldRefreshTheOAuthTokenOfAProviderThatAlsoHasAManualToken() throws Exception {
+    // given
+    createSecret("gitlab-pat", personalAccessTokenSecret("gitlab", SCM_URL));
+    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+  }
+
   @Test
   public void shouldRestoreTheEnvironmentContextAfterTheRun() throws Exception {
     // given
@@ -446,6 +495,17 @@ public class OAuthTokenRefresherTest {
         .endMetadata()
         .withData(data)
         .build();
+  }
+
+  /**
+   * Builds the secret of a token the user configured themselves, which carries the name of the SCM
+   * provider instead of a generated {@code oauth2-} one and has no refresh token.
+   */
+  private Secret personalAccessTokenSecret(String tokenName, String scmUrl) {
+    Secret secret = oAuthTokenSecret(tokenName, scmUrl, 3600, 7200);
+    secret.getMetadata().getAnnotations().remove("che.eclipse.org/scm-token-expires-in");
+    secret.getData().remove("refresh-token");
+    return secret;
   }
 
   private static String encode(String value) {

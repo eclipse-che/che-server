@@ -55,6 +55,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.commons.subject.SubjectImpl;
@@ -69,6 +70,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -88,6 +90,11 @@ public class KubernetesPersonalAccessTokenManagerTest {
   @Mock NonNamespaceOperation<Secret, SecretList, Resource<Secret>> nonNamespaceOperation;
 
   KubernetesPersonalAccessTokenManager personalAccessTokenManager;
+
+  @AfterMethod
+  public void cleanUp() {
+    EnvironmentContext.reset();
+  }
 
   @BeforeMethod
   protected void init() {
@@ -1759,5 +1766,140 @@ public class KubernetesPersonalAccessTokenManagerTest {
 
     // then
     assertFalse(result.isPresent());
+  }
+
+  /**
+   * A caller with no user of its own, the job that refreshes the OAuth tokens of the running
+   * workspaces for one, names the namespace it works on in the {@link EnvironmentContext}. The
+   * token has to be stored there, and the namespace of the user must not be resolved from the
+   * subject, which that caller does not have a full one of.
+   */
+  @Test
+  public void shouldStoreTheTokenInTheNamespaceNamedInTheEnvironmentContext() throws Exception {
+    // given
+    setContextNamespace("named-namespace");
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq("named-namespace")))
+        .thenReturn(nonNamespaceOperation);
+
+    // when
+    personalAccessTokenManager.store(oAuthToken());
+
+    // then
+    verify(secretsMixedOperation).inNamespace("named-namespace");
+    verify(nonNamespaceOperation).createOrReplace(any(Secret.class));
+    verify(namespaceFactory, never()).list();
+  }
+
+  /** Nothing names a namespace, so the first namespace of the user is taken. */
+  @Test
+  public void shouldStoreTheTokenInTheFirstNamespaceOfTheUser() throws Exception {
+    // given
+    when(namespaceFactory.list())
+        .thenReturn(
+            List.of(
+                new KubernetesNamespaceMetaImpl("first-namespace"),
+                new KubernetesNamespaceMetaImpl("second-namespace")));
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq("first-namespace")))
+        .thenReturn(nonNamespaceOperation);
+
+    // when
+    personalAccessTokenManager.store(oAuthToken());
+
+    // then
+    verify(secretsMixedOperation).inNamespace("first-namespace");
+    verify(secretsMixedOperation, never()).inNamespace("second-namespace");
+    verify(nonNamespaceOperation).createOrReplace(any(Secret.class));
+  }
+
+  /** The user has no namespace at all, so there is nowhere to store the token. */
+  @Test(
+      expectedExceptions = UnsatisfiedScmPreconditionException.class,
+      expectedExceptionsMessageRegExp = "No user namespace found. Cannot read SCM credentials.")
+  public void shouldFailToStoreTheTokenWhenTheUserHasNoNamespace() throws Exception {
+    // given
+    when(namespaceFactory.list()).thenReturn(Collections.emptyList());
+
+    // when
+    personalAccessTokenManager.store(oAuthToken());
+  }
+
+  /**
+   * The secret the refreshed token replaces is removed from the namespace named in the context as
+   * well, and not from a namespace resolved from the subject.
+   */
+  @Test
+  public void shouldRemoveTheOutdatedSecretFromTheNamespaceNamedInTheEnvironmentContext()
+      throws Exception {
+    // given
+    setContextNamespace("named-namespace");
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("named-namespace");
+    when(namespaceFactory.fetchNamespace(eq("named-namespace"))).thenReturn(Optional.of(meta));
+    KubernetesNamespace kubernetesNamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq("named-namespace"))).thenReturn(kubernetesNamespace);
+    when(kubernetesNamespace.secrets()).thenReturn(secrets);
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq("named-namespace")))
+        .thenReturn(nonNamespaceOperation);
+
+    Secret newer = oAuthTokenSecret("oauth2-newer", "2021-07-02T12:00:00Z");
+    Secret older = oAuthTokenSecret("oauth2-older", "2021-07-01T12:00:00Z");
+    when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(newer, older));
+    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+            any(Subject.class), eq("https://github.com")))
+        .thenReturn(oAuthToken());
+
+    // when
+    personalAccessTokenManager.forceRefreshPersonalAccessToken("https://github.com");
+
+    // then
+    verify(nonNamespaceOperation).delete(eq(older));
+    verify(namespaceFactory, never()).list();
+  }
+
+  private void setContextNamespace(String namespace) {
+    EnvironmentContext context = new EnvironmentContext();
+    context.setSubject(new SubjectImpl(null, Collections.emptyList(), "cheUser", null, false));
+    context.setNamespaceName(namespace);
+    EnvironmentContext.setCurrent(context);
+  }
+
+  private static PersonalAccessToken oAuthToken() {
+    return new PersonalAccessToken(
+        "https://github.com",
+        "github",
+        "cheUser",
+        null,
+        "username",
+        "oauth2-abcde",
+        "tid-24",
+        "access-token",
+        "refresh-token-value",
+        3600);
+  }
+
+  private static Secret oAuthTokenSecret(String tokenName, String creationTimestamp) {
+    return new SecretBuilder()
+        .withMetadata(
+            new ObjectMetaBuilder()
+                .withName(tokenName)
+                .withCreationTimestamp(creationTimestamp)
+                .withAnnotations(
+                    Map.of(
+                        ANNOTATION_SCM_PERSONAL_ACCESS_TOKEN_NAME,
+                        tokenName,
+                        ANNOTATION_CHE_USERID,
+                        "cheUser",
+                        ANNOTATION_SCM_URL,
+                        "https://github.com"))
+                .build())
+        .withData(
+            Map.of("token", Base64.getEncoder().encodeToString("access-token".getBytes(UTF_8))))
+        .build();
   }
 }

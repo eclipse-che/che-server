@@ -17,8 +17,11 @@ import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesGitCre
 import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesGitCredentialManager.ANNOTATION_SCM_URL;
 import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesGitCredentialManager.DEFAULT_SECRET_ANNOTATIONS;
 import static org.eclipse.che.api.factory.server.scm.kubernetes.KubernetesGitCredentialManager.NAME_PATTERN;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -39,8 +42,11 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
+import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
@@ -49,6 +55,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesN
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -75,6 +82,11 @@ public class KubernetesGitCredentialManagerTest {
     kubernetesGitCredentialManager =
         new KubernetesGitCredentialManager(namespaceFactory, cheServerKubernetesClientFactory);
     assertNotNull(this.kubernetesGitCredentialManager);
+  }
+
+  @AfterMethod
+  public void cleanUp() {
+    EnvironmentContext.reset();
   }
 
   @Test
@@ -300,5 +312,85 @@ public class KubernetesGitCredentialManagerTest {
         new String(Base64.getDecoder().decode(createdSecret.getData().get("credentials"))),
         "https://username:token123@bitbucket.com:5648");
     assertEquals(createdSecret.getMetadata().getName(), objectMeta.getName());
+  }
+
+  /**
+   * A caller with no user of its own, the job that refreshes the OAuth tokens of the running
+   * workspaces for one, names the namespace it works on in the {@link EnvironmentContext}. The
+   * credentials have to be written there, and the namespace of the user must not be resolved from
+   * the subject, which that caller does not have a full one of.
+   */
+  @Test
+  public void shouldWriteTheCredentialsToTheNamespaceNamedInTheEnvironmentContext()
+      throws Exception {
+    // given
+    EnvironmentContext context = new EnvironmentContext();
+    context.setNamespaceName("named-namespace");
+    EnvironmentContext.setCurrent(context);
+    expectSecretsOf("named-namespace", emptyList());
+
+    // when
+    kubernetesGitCredentialManager.createOrReplace(token("https://bitbucket.com"));
+
+    // then
+    verify(secretsMixedOperation, atLeastOnce()).inNamespace("named-namespace");
+    verify(nonNamespaceOperation).createOrReplace(any(Secret.class));
+    verify(namespaceFactory, never()).list();
+  }
+
+  /** Nothing names a namespace, so the first namespace of the user is taken. */
+  @Test
+  public void shouldWriteTheCredentialsToTheFirstNamespaceOfTheUser() throws Exception {
+    // given
+    when(namespaceFactory.list())
+        .thenReturn(
+            List.of(
+                new KubernetesNamespaceMetaImpl("first-namespace"),
+                new KubernetesNamespaceMetaImpl("second-namespace")));
+    expectSecretsOf("first-namespace", emptyList());
+
+    // when
+    kubernetesGitCredentialManager.createOrReplace(token("https://bitbucket.com"));
+
+    // then
+    verify(secretsMixedOperation, atLeastOnce()).inNamespace("first-namespace");
+    verify(secretsMixedOperation, never()).inNamespace("second-namespace");
+    verify(nonNamespaceOperation).createOrReplace(any(Secret.class));
+  }
+
+  /** The user has no namespace at all, so there is nowhere to write the credentials to. */
+  @Test(
+      expectedExceptions = UnsatisfiedScmPreconditionException.class,
+      expectedExceptionsMessageRegExp = "No user namespace found. Cannot read SCM credentials.")
+  public void shouldFailWhenTheUserHasNoNamespace() throws Exception {
+    // given
+    when(namespaceFactory.list()).thenReturn(emptyList());
+
+    // when
+    kubernetesGitCredentialManager.createOrReplace(token("https://bitbucket.com"));
+  }
+
+  /** Makes the mocked client answer with the given secrets of the given namespace. */
+  private void expectSecretsOf(String namespace, List<Secret> secrets) throws Exception {
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq(namespace))).thenReturn(nonNamespaceOperation);
+    when(nonNamespaceOperation.withLabels(anyMap())).thenReturn(filterWatchDeletable);
+    when(filterWatchDeletable.list()).thenReturn(secretList);
+    when(secretList.getItems()).thenReturn(secrets);
+  }
+
+  private static PersonalAccessToken token(String scmProviderUrl) {
+    return new PersonalAccessToken(
+        scmProviderUrl,
+        "provider",
+        "cheUser",
+        null,
+        "username",
+        "token-name",
+        "tid-23434",
+        "token123",
+        null,
+        0);
   }
 }

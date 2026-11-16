@@ -58,8 +58,13 @@ import org.slf4j.LoggerFactory;
  *
  * <p>This job closes that gap. Every {@value #REFRESH_PERIOD_SEC_PROPERTY} seconds it reads the
  * running DevWorkspaces of the whole cluster, and for each namespace that has one it refreshes the
- * OAuth tokens that have expired, or that expire before the job is due to run again. Setting
- * {@value #REFRESH_ENABLED_PROPERTY} to {@code false} turns the job off.
+ * OAuth tokens its workspaces use. Setting {@value #REFRESH_ENABLED_PROPERTY} to {@code false}
+ * turns the job off.
+ *
+ * <p>A token is refreshed whether or not it has expired: the job does not compare its expiration
+ * time against a clock. The token is used by the workspace pod, which does not share a clock with
+ * the pod this job runs in, so an expiration computed here may well be wrong, and a token taken for
+ * valid is one the workspace is already failing to push with.
  *
  * <p>Everything the job needs is read from the cluster, so it covers every user from the first run
  * on, with no state to lose across a Che server restart. It deliberately does not hook into {@link
@@ -88,7 +93,7 @@ public class OAuthTokenRefresher {
   static final String REFRESH_ENABLED_PROPERTY = "che.oauth.token_refresh.enabled";
 
   /**
-   * How often, in seconds, the tokens of the running workspaces are checked, {@code
+   * How often, in seconds, the tokens of the running workspaces are refreshed, {@code
    * CHE_OAUTH_TOKEN__REFRESH_PERIOD__SEC} in the environment of the Che server. A non positive
    * value keeps the job from being scheduled, just like disabling it.
    */
@@ -130,7 +135,11 @@ public class OAuthTokenRefresher {
   }
 
   /**
-   * Refreshes the expired OAuth tokens of every namespace that holds a running workspace.
+   * Refreshes the OAuth tokens of every namespace that holds a running workspace.
+   *
+   * <p>Every token a running workspace uses is refreshed, without first asking whether it has
+   * expired. The workspace pod that holds the token does not share a clock with the pod this job
+   * runs in, so an expiration worked out here is not one to leave a workspace to run on.
    *
    * <p>A namespace that cannot be read, and a token that cannot be refreshed, are logged and
    * skipped: the remaining namespaces and tokens still have to be taken care of, and the next run

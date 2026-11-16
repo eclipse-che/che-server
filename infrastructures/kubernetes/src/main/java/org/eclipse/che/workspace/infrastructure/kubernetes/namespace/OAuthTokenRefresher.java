@@ -278,7 +278,7 @@ public class OAuthTokenRefresher {
             userId);
         continue;
       }
-      if (refreshed.add(userId + '\n' + scmServerUrl)) {
+      if (refreshed.add(userId + '\n' + trimEnd(scmServerUrl, '/'))) {
         refreshToken(namespace, userId, scmServerUrl);
       }
     }

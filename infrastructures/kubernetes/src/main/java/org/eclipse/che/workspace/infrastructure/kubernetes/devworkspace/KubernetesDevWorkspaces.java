@@ -68,6 +68,20 @@ public class KubernetesDevWorkspaces {
 
   private static final Set<String> RUNNING_PHASES = Set.of(PHASE_RUNNING, PHASE_STARTING);
 
+  /**
+   * The label the DevWorkspace Operator stamps the DevWorkspace with, holding the {@code uid} of
+   * the Kubernetes identity that created it. The operator sets it from the admission request and
+   * puts it back when it is edited away, so unlike anything else a user can write into their own
+   * namespace, it says who the DevWorkspace really belongs to.
+   *
+   * <p>The identity has to have a {@code uid} for the label to be of any use. On OpenShift it is
+   * the {@code uid} of the User object, which is what Che takes the id of the user from, see {@code
+   * OpenshiftTokenInitializationFilter}, so the two can be compared. An OIDC provider that Kube
+   * authenticates against commonly issues no {@code uid} at all, and the operator then stamps the
+   * DevWorkspace with an empty one, which says nothing about the owner.
+   */
+  public static final String CREATOR_LABEL = "controller.devfile.io/creator";
+
   /** The fields of a devfile that hold projects, every one of them optional. */
   private static final List<String> PROJECT_FIELDS =
       List.of("projects", "starterProjects", "dependentProjects");
@@ -222,6 +236,22 @@ public class KubernetesDevWorkspaces {
   public static boolean isRunning(GenericKubernetesResource devWorkspace) {
     Object phase = devWorkspace.get("status", "phase");
     return phase instanceof String && RUNNING_PHASES.contains(phase);
+  }
+
+  /**
+   * Returns the id of the user who created the given DevWorkspace, read from the {@value
+   * #CREATOR_LABEL} label the DevWorkspace Operator stamps it with.
+   *
+   * @param devWorkspace the DevWorkspace to inspect
+   * @return the id of its creator, empty when the operator recorded none, which is what an identity
+   *     without a {@code uid} leaves behind
+   */
+  public static Optional<String> getCreator(GenericKubernetesResource devWorkspace) {
+    if (devWorkspace.getMetadata() == null || devWorkspace.getMetadata().getLabels() == null) {
+      return Optional.empty();
+    }
+    String creator = devWorkspace.getMetadata().getLabels().get(CREATOR_LABEL);
+    return creator == null || creator.isBlank() ? Optional.empty() : Optional.of(creator);
   }
 
   /**

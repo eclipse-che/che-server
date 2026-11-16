@@ -381,6 +381,30 @@ public class KubernetesNamespaceFactory {
   }
 
   /**
+   * Tells whether the given namespace is the one the {@code che.infra.kubernetes.namespace.default}
+   * template names for the given user, as far as that can be told from the id of the user alone.
+   *
+   * <p>The answer is only as good as the id: a template that names the namespace after the user
+   * name cannot be evaluated here, and a user that keeps their workspaces in a namespace of their
+   * own, prepared for them or recorded in their preferences, is not recognized either. Both answer
+   * {@code false}, so a caller must treat a {@code false} as "cannot tell" rather than as "this
+   * user does not own the namespace".
+   *
+   * @param namespaceName the namespace to check
+   * @param userId the id of the user the namespace is expected to belong to
+   * @return {@code true} when the template evaluated with that id names that very namespace
+   */
+  public boolean isDefaultNamespaceOf(String namespaceName, String userId) {
+    if (isNullOrEmpty(namespaceName) || isNullOrEmpty(userId)) {
+      return false;
+    }
+    // The user name is left out, so a template that holds the <username> placeholder evaluates to
+    // a name that still holds it, which no namespace of the cluster can be called.
+    return namespaceName.equals(
+        evalPlaceholders(defaultNamespaceName, new NamespaceResolutionContext(null, userId, null)));
+  }
+
+  /**
    * Evaluates namespace according to the specified context.
    *
    * <p>First we try to find namespace with labels set in `che.infra.kubernetes.namespace.labels`

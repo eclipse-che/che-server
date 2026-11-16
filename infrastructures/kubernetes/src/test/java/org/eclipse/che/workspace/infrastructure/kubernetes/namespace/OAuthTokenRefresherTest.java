@@ -61,6 +61,7 @@ public class OAuthTokenRefresherTest {
   private static final String TEST_NAMESPACE_NAME = "namespace123";
   private static final String OTHER_NAMESPACE_NAME = "namespace456";
   private static final String TEST_USER_ID = "user123";
+  private static final String OTHER_USER_ID = "user456";
   private static final String SCM_URL = "https://gitlab.com";
   private static final long REFRESH_PERIOD_SEC = 600;
 
@@ -72,6 +73,7 @@ public class OAuthTokenRefresherTest {
   @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
   @Mock private KubernetesDevWorkspaces devWorkspaces;
+  @Mock private KubernetesNamespaceFactory namespaceFactory;
 
   private KubernetesMockServer kubernetesMockServer;
   private KubernetesClient kubernetesClient;
@@ -105,6 +107,7 @@ public class OAuthTokenRefresherTest {
         cheServerKubernetesClientFactory,
         personalAccessTokenManager,
         devWorkspaces,
+        () -> namespaceFactory,
         enabled,
         periodSec);
   }
@@ -290,6 +293,110 @@ public class OAuthTokenRefresherTest {
     verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
   }
 
+  /**
+   * A user who can write to a namespace can write a token secret that names somebody else. Without
+   * a check, the job would refresh the token of that user, from the refresh token Che holds for
+   * them, and store the result where the user who wrote the secret can read it.
+   */
+  @Test
+  public void shouldNotRefreshTokenOfAUserWhoDoesNotOwnTheNamespace() throws Exception {
+    // given a namespace whose workspace was created by someone else than the secret names
+    when(devWorkspaces.getRunningInAllNamespaces())
+        .thenReturn(
+            List.of(
+                runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", "attacker")));
+    createSecret("oauth2-victim", oAuthTokenSecret("oauth2-victim", SCM_URL, 3600, 7200));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verifyNoInteractions(personalAccessTokenManager);
+  }
+
+  /** Every user who runs a workspace in a shared namespace owns it. */
+  @Test
+  public void shouldRefreshTheTokensOfEveryUserOfASharedNamespace() throws Exception {
+    // given
+    when(devWorkspaces.getRunningInAllNamespaces())
+        .thenReturn(
+            List.of(
+                runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", TEST_USER_ID),
+                runningDevWorkspace(
+                    TEST_NAMESPACE_NAME, "https://github.com/che/repo.git", OTHER_USER_ID)));
+    createSecret("oauth2-first", oAuthTokenSecret("oauth2-first", SCM_URL, 3600, 7200));
+    Secret other = oAuthTokenSecret("oauth2-second", "https://github.com", 3600, 7200);
+    other.getMetadata().getAnnotations().put("che.eclipse.org/che-userid", OTHER_USER_ID);
+    createSecret("oauth2-second", other);
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken("https://github.com");
+  }
+
+  /**
+   * An identity without a {@code uid}, which is what an OIDC provider commonly issues, leaves the
+   * DevWorkspace Operator nothing to record. The namespace is then held against the name the
+   * namespace template gives the user.
+   */
+  @Test
+  public void shouldFallBackToTheNamespaceTemplateWhenNoCreatorIsRecorded() throws Exception {
+    // given
+    when(devWorkspaces.getRunningInAllNamespaces())
+        .thenReturn(
+            List.of(runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", null)));
+    when(namespaceFactory.isDefaultNamespaceOf(TEST_NAMESPACE_NAME, TEST_USER_ID)).thenReturn(true);
+    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+  }
+
+  /** Nothing says who owns the namespace, so nothing is refreshed. */
+  @Test
+  public void shouldNotRefreshWhenTheOwnerOfTheNamespaceCannotBeTold() throws Exception {
+    // given
+    when(devWorkspaces.getRunningInAllNamespaces())
+        .thenReturn(
+            List.of(runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", null)));
+    when(namespaceFactory.isDefaultNamespaceOf(TEST_NAMESPACE_NAME, TEST_USER_ID))
+        .thenReturn(false);
+    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verifyNoInteractions(personalAccessTokenManager);
+  }
+
+  /** A workspace that clones nothing still says who runs in the namespace. */
+  @Test
+  public void shouldTakeTheOwnerFromAWorkspaceThatClonesNothing() throws Exception {
+    // given
+    GenericKubernetesResource noProjects =
+        runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", TEST_USER_ID);
+    noProjects.setAdditionalProperty("spec", Map.of("template", Map.of()));
+    when(devWorkspaces.getRunningInAllNamespaces())
+        .thenReturn(
+            List.of(
+                noProjects,
+                runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", "attacker")));
+    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+  }
+
   @Test
   public void shouldRestoreTheEnvironmentContextAfterTheRun() throws Exception {
     // given
@@ -429,12 +536,30 @@ public class OAuthTokenRefresherTest {
         .forceRefreshPersonalAccessToken(anyString());
   }
 
-  /** A running DevWorkspace whose devfile declares a single project cloned from the given URL. */
+  /**
+   * A running DevWorkspace of {@link #TEST_USER_ID} whose devfile declares a single project cloned
+   * from the given URL.
+   */
   private static GenericKubernetesResource runningDevWorkspace(
       String namespace, String repositoryUrl) {
+    return runningDevWorkspace(namespace, repositoryUrl, TEST_USER_ID);
+  }
+
+  /**
+   * A running DevWorkspace whose devfile declares a single project cloned from the given URL.
+   *
+   * @param creator the id the DevWorkspace Operator recorded as its creator, left off the
+   *     DevWorkspace altogether when {@code null}
+   */
+  private static GenericKubernetesResource runningDevWorkspace(
+      String namespace, String repositoryUrl, String creator) {
     GenericKubernetesResource devWorkspace = new GenericKubernetesResource();
-    devWorkspace.setMetadata(
-        new ObjectMetaBuilder().withName("workspace").withNamespace(namespace).build());
+    ObjectMetaBuilder metadata =
+        new ObjectMetaBuilder().withName("workspace").withNamespace(namespace);
+    if (creator != null) {
+      metadata.withLabels(Map.of("controller.devfile.io/creator", creator));
+    }
+    devWorkspace.setMetadata(metadata.build());
     devWorkspace.setAdditionalProperty("status", Map.of("phase", "Running"));
     devWorkspace.setAdditionalProperty(
         "spec",

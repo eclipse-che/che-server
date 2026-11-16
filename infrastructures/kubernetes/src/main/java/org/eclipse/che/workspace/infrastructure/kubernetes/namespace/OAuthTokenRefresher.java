@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
@@ -72,6 +73,11 @@ import org.slf4j.LoggerFactory;
  * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator}:
  * those run only when Che itself provisions a namespace, which a deployment that has its namespaces
  * prepared for it never does.
+ *
+ * <p>A token is only refreshed once the user its secret names is known to own the namespace that
+ * secret sits in, see {@link #owns(String, String, RunningWorkspaces)}. The job acts as that user
+ * and writes the refreshed token back into that namespace, and both come from a secret that the
+ * user of the namespace can write themselves.
  *
  * <p>Only the tokens obtained with the OAuth flow are refreshed. A manually configured personal
  * access token is left alone: it does not expire on its own, and it is the one preferred over an
@@ -120,6 +126,16 @@ public class OAuthTokenRefresher {
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private final KubernetesDevWorkspaces devWorkspaces;
+
+  /**
+   * Reached lazily, and only by {@link #owns(String, String, RunningWorkspaces)}. The factory is
+   * built from the {@link
+   * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator}
+   * set, and asking for it eagerly puts this job in a circular dependency with whatever a
+   * configurator pulls in, the same way it does in {@link KubernetesDevWorkspaces}.
+   */
+  private final Provider<KubernetesNamespaceFactory> namespaceFactory;
+
   private final boolean refreshEnabled;
 
   @Inject
@@ -127,11 +143,13 @@ public class OAuthTokenRefresher {
       CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
       PersonalAccessTokenManager personalAccessTokenManager,
       KubernetesDevWorkspaces devWorkspaces,
+      Provider<KubernetesNamespaceFactory> namespaceFactory,
       @Named(REFRESH_ENABLED_PROPERTY) boolean refreshEnabled,
       @Named(REFRESH_PERIOD_SEC_PROPERTY) long refreshPeriodSec) {
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.personalAccessTokenManager = personalAccessTokenManager;
     this.devWorkspaces = devWorkspaces;
+    this.namespaceFactory = namespaceFactory;
     this.refreshEnabled = refreshEnabled;
     if (refreshEnabled && refreshPeriodSec > 0) {
       LOG.info(
@@ -161,46 +179,46 @@ public class OAuthTokenRefresher {
     if (!refreshEnabled) {
       return;
     }
-    Map<String, Set<String>> repositoryUrlsByNamespace;
+    Map<String, RunningWorkspaces> runningByNamespace;
     try {
-      repositoryUrlsByNamespace = getRepositoryUrlsOfRunningWorkspaces();
+      runningByNamespace = getRunningWorkspacesByNamespace();
     } catch (InfrastructureException | KubernetesClientException e) {
       LOG.warn("Failed to read the running DevWorkspaces of the cluster", e);
       return;
     }
     LOG.debug(
         "Checking the OAuth tokens of {} namespace(s) with a running workspace",
-        repositoryUrlsByNamespace.size());
-    for (Map.Entry<String, Set<String>> namespace : repositoryUrlsByNamespace.entrySet()) {
+        runningByNamespace.size());
+    for (Map.Entry<String, RunningWorkspaces> namespace : runningByNamespace.entrySet()) {
       refreshTokens(namespace.getKey(), namespace.getValue());
     }
   }
 
   /**
-   * Returns the URLs of the repositories the running workspaces of the cluster clone, keyed by the
-   * namespace they run in. A namespace whose workspaces clone nothing is left out.
+   * Returns what the running workspaces of the cluster say about the namespace they run in, keyed
+   * by that namespace. A namespace whose workspaces clone nothing is left out, there is no token of
+   * it to keep alive.
    */
-  private Map<String, Set<String>> getRepositoryUrlsOfRunningWorkspaces()
+  private Map<String, RunningWorkspaces> getRunningWorkspacesByNamespace()
       throws InfrastructureException {
-    Map<String, Set<String>> repositoryUrlsByNamespace = new LinkedHashMap<>();
+    Map<String, RunningWorkspaces> runningByNamespace = new LinkedHashMap<>();
     for (GenericKubernetesResource devWorkspace : devWorkspaces.getRunningInAllNamespaces()) {
-      Set<String> repositoryUrls = KubernetesDevWorkspaces.getRepositoryUrls(devWorkspace);
-      if (repositoryUrls.isEmpty()) {
-        continue;
-      }
       String namespace =
           devWorkspace.getMetadata() == null ? null : devWorkspace.getMetadata().getNamespace();
       if (isNullOrEmpty(namespace)) {
         continue;
       }
-      repositoryUrlsByNamespace
-          .computeIfAbsent(namespace, name -> new LinkedHashSet<>())
-          .addAll(repositoryUrls);
+      RunningWorkspaces running =
+          runningByNamespace.computeIfAbsent(namespace, name -> new RunningWorkspaces());
+      // The creator of a workspace that clones nothing still says who runs in the namespace.
+      KubernetesDevWorkspaces.getCreator(devWorkspace).ifPresent(running.creatorIds::add);
+      running.repositoryUrls.addAll(KubernetesDevWorkspaces.getRepositoryUrls(devWorkspace));
     }
-    return repositoryUrlsByNamespace;
+    runningByNamespace.values().removeIf(running -> running.repositoryUrls.isEmpty());
+    return runningByNamespace;
   }
 
-  private void refreshTokens(String namespace, Set<String> repositoryUrls) {
+  private void refreshTokens(String namespace, RunningWorkspaces running) {
     List<Secret> secrets;
     try {
       secrets =
@@ -230,7 +248,7 @@ public class OAuthTokenRefresher {
             namespace);
         continue;
       }
-      if (!serves(scmServerUrl, repositoryUrls)) {
+      if (!serves(scmServerUrl, running.repositoryUrls)) {
         LOG.debug(
             "No workspace running in namespace {} clones from {}, skipping its OAuth token",
             namespace,
@@ -238,7 +256,8 @@ public class OAuthTokenRefresher {
         continue;
       }
       // A namespace may be shared, so the owner of the token is read from the secret rather than
-      // from the namespace.
+      // from the namespace. The secret is written by whoever can write to the namespace, so what
+      // it claims is only taken once the namespace is known to be that user's, see #owns.
       String userId = annotations.get(ANNOTATION_CHE_USERID);
       if (isNullOrEmpty(userId)) {
         LOG.warn(
@@ -247,10 +266,67 @@ public class OAuthTokenRefresher {
             namespace);
         continue;
       }
+      if (!owns(userId, namespace, running)) {
+        LOG.warn(
+            "Secret {} of namespace {} claims to hold the token of user {}, who is not known to"
+                + " own that namespace. Skipping it.",
+            secret.getMetadata().getName(),
+            namespace,
+            userId);
+        continue;
+      }
       if (refreshed.add(userId + '\n' + scmServerUrl)) {
         refreshToken(namespace, userId, scmServerUrl);
       }
     }
+  }
+
+  /**
+   * Tells whether the given user is known to own the given namespace.
+   *
+   * <p>The job acts as the user a secret names, and writes the refreshed token into the namespace
+   * that secret was found in. Both are taken from a secret that anyone who can write to the
+   * namespace can write, and a user can write to their own. Without this check, a user who
+   * annotates a secret of their own namespace with the id of another user has the job refresh that
+   * user's token, from the refresh token Che holds for them, and store the result where the first
+   * user can read it. Ids are not secret: a shared namespace carries the ids of its users on their
+   * secrets.
+   *
+   * <p>Ownership is established from the DevWorkspaces that run in the namespace, by the {@value
+   * KubernetesDevWorkspaces#CREATOR_LABEL} label the DevWorkspace Operator stamps them with and
+   * puts back when it is edited away. When the operator recorded no creator at all, which is what
+   * an identity without a {@code uid} leaves behind, the namespace is instead held against the name
+   * the {@code che.infra.kubernetes.namespace.default} template gives the user, which only answers
+   * for the deployments that name their namespaces after the id of the user.
+   *
+   * <p>Whatever cannot be established this way is refused. A deployment where neither source
+   * answers refreshes no token at all, and says so in the log of every run.
+   *
+   * @param userId the user the secret claims the token belongs to
+   * @param namespace the namespace the secret was found in
+   * @param running what the workspaces running in that namespace say about it
+   */
+  private boolean owns(String userId, String namespace, RunningWorkspaces running) {
+    if (!running.creatorIds.isEmpty()) {
+      // A shared namespace is owned by everyone who runs a workspace in it. A user who keeps a
+      // token there without running a workspace of their own is not told apart from a user who
+      // claims somebody else's id, so neither is refreshed.
+      return running.creatorIds.contains(userId);
+    }
+    return namespaceFactory.get().isDefaultNamespaceOf(namespace, userId);
+  }
+
+  /** What the DevWorkspaces running in a namespace say about it. */
+  private static final class RunningWorkspaces {
+
+    /** The URLs of the repositories they clone. */
+    private final Set<String> repositoryUrls = new LinkedHashSet<>();
+
+    /**
+     * The ids of the users who created them, as recorded by the DevWorkspace Operator. Empty when
+     * it recorded none, see {@link KubernetesDevWorkspaces#CREATOR_LABEL}.
+     */
+    private final Set<String> creatorIds = new LinkedHashSet<>();
   }
 
   /**

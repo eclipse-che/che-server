@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.devworkspace;
 
 import static java.util.Collections.emptyList;
+import static java.util.Optional.empty;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.devworkspace.KubernetesDevWorkspaces.DEV_WORKSPACE_CONTEXT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -276,6 +277,34 @@ public class KubernetesDevWorkspacesTest {
     devWorkspace.setAdditionalProperty("spec", Map.of("template", Map.of("projects", "nonsense")));
 
     assertTrue(KubernetesDevWorkspaces.getRepositoryUrls(devWorkspace).isEmpty());
+  }
+
+  @Test
+  public void shouldReturnTheCreatorOfTheDevWorkspace() {
+    GenericKubernetesResource devWorkspace = new GenericKubernetesResource();
+    devWorkspace.setMetadata(
+        new ObjectMetaBuilder()
+            .withLabels(Map.of("controller.devfile.io/creator", "user123"))
+            .build());
+
+    assertEquals(KubernetesDevWorkspaces.getCreator(devWorkspace), Optional.of("user123"));
+  }
+
+  /**
+   * An identity without a {@code uid}, an OIDC one for instance, leaves the operator nothing to
+   * record, and an empty creator says nothing about who owns the DevWorkspace.
+   */
+  @Test
+  public void shouldReturnNoCreatorWhenTheOperatorRecordedNone() {
+    GenericKubernetesResource withoutLabels = new GenericKubernetesResource();
+    withoutLabels.setMetadata(new ObjectMetaBuilder().build());
+    GenericKubernetesResource withEmptyCreator = new GenericKubernetesResource();
+    withEmptyCreator.setMetadata(
+        new ObjectMetaBuilder().withLabels(Map.of("controller.devfile.io/creator", "")).build());
+
+    assertEquals(KubernetesDevWorkspaces.getCreator(new GenericKubernetesResource()), empty());
+    assertEquals(KubernetesDevWorkspaces.getCreator(withoutLabels), empty());
+    assertEquals(KubernetesDevWorkspaces.getCreator(withEmptyCreator), empty());
   }
 
   /** A Kubernetes API failure is reported as an {@link InfrastructureException}. */

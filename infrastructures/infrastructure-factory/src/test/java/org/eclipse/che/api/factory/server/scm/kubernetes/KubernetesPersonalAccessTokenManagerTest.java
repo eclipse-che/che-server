@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import io.fabric8.kubernetes.api.model.LabelSelector;
@@ -153,11 +154,11 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   /**
-   * A caller with no user of its own names the namespace in the EnvironmentContext. The token is
-   * then read from that namespace, without the namespace being resolved from a subject.
+   * A caller with no user of its own names the namespace it works on. The token is then read from
+   * that namespace, without the namespace being resolved from a subject.
    */
   @Test
-  public void shouldReadTheTokenFromTheNamespaceNamedInTheEnvironmentContext() throws Exception {
+  public void shouldReadTheTokenFromTheGivenNamespace() throws Exception {
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("named-namespace");
     when(namespaceFactory.fetchNamespace(eq("named-namespace"))).thenReturn(Optional.of(meta));
     KubernetesNamespace kubernetesnamespace = Mockito.mock(KubernetesNamespace.class);
@@ -184,26 +185,19 @@ public class KubernetesPersonalAccessTokenManagerTest {
             .build();
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(secret));
 
-    EnvironmentContext context = new EnvironmentContext();
-    context.setNamespaceName("named-namespace");
-    EnvironmentContext.setCurrent(context);
-    try {
-      // when the namespace is not given, it is taken from the context
-      Optional<PersonalAccessToken> token =
-          personalAccessTokenManager.getStored(
-              new SubjectImpl(null, Collections.emptyList(), "user", null, false),
-              null,
-              "http://host1",
-              null);
+    // when
+    Optional<PersonalAccessToken> token =
+        personalAccessTokenManager.getStored(
+            new SubjectImpl(null, Collections.emptyList(), "user", null, false),
+            null,
+            "http://host1",
+            "named-namespace");
 
-      // then
-      assertTrue(token.isPresent());
-      assertEquals(token.get().getToken(), "tkn");
-      // the namespace of the user was never resolved, the context named it
-      verify(namespaceFactory, never()).list();
-    } finally {
-      EnvironmentContext.reset();
-    }
+    // then
+    assertTrue(token.isPresent());
+    assertEquals(token.get().getToken(), "tkn");
+    // the namespace of the user was never resolved, the caller named it
+    verify(namespaceFactory, never()).list();
   }
 
   @Test
@@ -701,7 +695,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             "refresh123",
             3600);
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(org.eclipse.che.commons.subject.Subject.class), eq("http://host1")))
+            any(org.eclipse.che.commons.subject.Subject.class), eq("http://host1"), any()))
         .thenReturn(token);
 
     // when
@@ -834,7 +828,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             "refresh-token",
             3600);
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("http://host1")))
+            any(Subject.class), eq("http://host1"), any()))
         .thenReturn(token);
 
     // when
@@ -899,7 +893,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             "new-refresh-token",
             3600);
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("http://host1")))
+            any(Subject.class), eq("http://host1"), any()))
         .thenReturn(refreshedToken);
 
     // when
@@ -971,7 +965,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     assertTrue(token.isPresent());
     assertEquals(token.get().getToken(), "oauth-token");
     verify(scmPersonalAccessTokenFetcher, never())
-        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"));
+        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"), any());
   }
 
   @Test
@@ -998,7 +992,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
     PersonalAccessToken refreshedToken = refreshedToken();
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("http://host1")))
+            any(Subject.class), eq("http://host1"), any()))
         .thenReturn(refreshedToken);
 
     // when
@@ -1013,7 +1007,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     assertTrue(token.isPresent());
     assertEquals(token.get().getToken(), "new-oauth-token");
     // the git credentials have to be updated, otherwise the workspace keeps the expired token
-    verify(gitCredentialManager, times(1)).createOrReplace(eq(refreshedToken));
+    verify(gitCredentialManager, times(1)).createOrReplace(eq(refreshedToken), eq("test"));
   }
 
   @Test
@@ -1037,7 +1031,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             "rejected-token");
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("http://host1")))
+            any(Subject.class), eq("http://host1"), any()))
         .thenThrow(
             new ScmUnauthorizedException(
                 "the refresh token is revoked", "gitlab", "2.0", "http://host1/oauth"));
@@ -1078,7 +1072,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
             "expired-token");
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("http://host1")))
+            any(Subject.class), eq("http://host1"), any()))
         .thenReturn(refreshedToken());
     // the outdated secret is left behind, which must not fail the whole operation
     doThrow(new KubernetesClientException("failed to delete the secret"))
@@ -1131,7 +1125,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     assertFalse(token.isPresent());
     verify(nonNamespaceOperation, times(1)).delete(eq(patSecret));
     verify(scmPersonalAccessTokenFetcher, never())
-        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"));
+        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"), any());
   }
 
   @Test
@@ -1163,7 +1157,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(oauthSecret));
     PersonalAccessToken refreshedToken = refreshedToken();
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("http://host1")))
+            any(Subject.class), eq("http://host1"), any()))
         .thenReturn(refreshedToken);
 
     // when
@@ -1224,7 +1218,7 @@ public class KubernetesPersonalAccessTokenManagerTest {
     assertEquals(token.get().getRefreshToken(), "stored-refresh-token");
     // refreshing the token from within its own refresh would never terminate
     verify(scmPersonalAccessTokenFetcher, never())
-        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"));
+        .refreshPersonalAccessToken(any(Subject.class), eq("http://host1"), any());
     // validating the expired token would delete the secret that keeps the refresh token
     verify(scmPersonalAccessTokenFetcher, never())
         .getScmUsername(any(PersonalAccessTokenParams.class));
@@ -1775,21 +1769,68 @@ public class KubernetesPersonalAccessTokenManagerTest {
    * subject, which that caller does not have a full one of.
    */
   @Test
-  public void shouldStoreTheTokenInTheNamespaceNamedInTheEnvironmentContext() throws Exception {
+  public void shouldStoreTheRefreshedTokenInTheGivenNamespace() throws Exception {
     // given
-    setContextNamespace("named-namespace");
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("named-namespace");
+    when(namespaceFactory.fetchNamespace(eq("named-namespace"))).thenReturn(Optional.of(meta));
+    KubernetesNamespace kubernetesNamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq("named-namespace"))).thenReturn(kubernetesNamespace);
+    when(kubernetesNamespace.secrets()).thenReturn(secrets);
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Collections.emptyList());
     when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
     when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
     when(secretsMixedOperation.inNamespace(eq("named-namespace")))
         .thenReturn(nonNamespaceOperation);
+    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+            any(Subject.class), eq("https://github.com"), any()))
+        .thenReturn(oAuthToken());
 
     // when
-    personalAccessTokenManager.store(oAuthToken());
+    personalAccessTokenManager.forceRefreshPersonalAccessToken(
+        "https://github.com", "cheUser", "named-namespace");
 
     // then
-    verify(secretsMixedOperation).inNamespace("named-namespace");
+    verify(secretsMixedOperation, atLeastOnce()).inNamespace("named-namespace");
     verify(nonNamespaceOperation).createOrReplace(any(Secret.class));
+    verify(gitCredentialManager)
+        .createOrReplace(any(PersonalAccessToken.class), eq("named-namespace"));
     verify(namespaceFactory, never()).list();
+  }
+
+  /**
+   * The dedicated refresh speaks for the user it is given, and carries that user and the namespace
+   * in the call rather than in the {@link EnvironmentContext} of the thread it runs on.
+   */
+  @Test
+  public void shouldPassTheGivenUserAndNamespaceToTheFetcher() throws Exception {
+    // given
+    KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("named-namespace");
+    when(namespaceFactory.fetchNamespace(eq("named-namespace"))).thenReturn(Optional.of(meta));
+    KubernetesNamespace kubernetesNamespace = Mockito.mock(KubernetesNamespace.class);
+    KubernetesSecrets secrets = Mockito.mock(KubernetesSecrets.class);
+    when(namespaceFactory.access(eq(null), eq("named-namespace"))).thenReturn(kubernetesNamespace);
+    when(kubernetesNamespace.secrets()).thenReturn(secrets);
+    when(secrets.get(any(LabelSelector.class))).thenReturn(Collections.emptyList());
+    when(cheServerKubernetesClientFactory.create()).thenReturn(kubeClient);
+    when(kubeClient.secrets()).thenReturn(secretsMixedOperation);
+    when(secretsMixedOperation.inNamespace(eq("named-namespace")))
+        .thenReturn(nonNamespaceOperation);
+    ArgumentCaptor<Subject> subjectCaptor = ArgumentCaptor.forClass(Subject.class);
+    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+            subjectCaptor.capture(), eq("https://github.com"), eq("named-namespace")))
+        .thenReturn(oAuthToken());
+
+    // when
+    personalAccessTokenManager.forceRefreshPersonalAccessToken(
+        "https://github.com", "cheUser", "named-namespace");
+
+    // then
+    assertEquals(subjectCaptor.getValue().getUserId(), "cheUser");
+    // the name is left out, it is not what the OAuth token of the user is kept under
+    assertNull(subjectCaptor.getValue().getUserName());
+    // the thread the refresh ran on was never made to speak for the user
+    assertEquals(EnvironmentContext.getCurrent().getSubject(), Subject.ANONYMOUS);
   }
 
   /** Nothing names a namespace, so the first namespace of the user is taken. */
@@ -1828,14 +1869,12 @@ public class KubernetesPersonalAccessTokenManagerTest {
   }
 
   /**
-   * The secret the refreshed token replaces is removed from the namespace named in the context as
-   * well, and not from a namespace resolved from the subject.
+   * The secret the refreshed token replaces is removed from the namespace the caller named as well,
+   * and not from a namespace resolved from the subject.
    */
   @Test
-  public void shouldRemoveTheOutdatedSecretFromTheNamespaceNamedInTheEnvironmentContext()
-      throws Exception {
+  public void shouldRemoveTheOutdatedSecretFromTheGivenNamespace() throws Exception {
     // given
-    setContextNamespace("named-namespace");
     KubernetesNamespaceMeta meta = new KubernetesNamespaceMetaImpl("named-namespace");
     when(namespaceFactory.fetchNamespace(eq("named-namespace"))).thenReturn(Optional.of(meta));
     KubernetesNamespace kubernetesNamespace = Mockito.mock(KubernetesNamespace.class);
@@ -1851,22 +1890,16 @@ public class KubernetesPersonalAccessTokenManagerTest {
     Secret older = oAuthTokenSecret("oauth2-older", "2021-07-01T12:00:00Z");
     when(secrets.get(any(LabelSelector.class))).thenReturn(List.of(newer, older));
     when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
-            any(Subject.class), eq("https://github.com")))
+            any(Subject.class), eq("https://github.com"), any()))
         .thenReturn(oAuthToken());
 
     // when
-    personalAccessTokenManager.forceRefreshPersonalAccessToken("https://github.com");
+    personalAccessTokenManager.forceRefreshPersonalAccessToken(
+        "https://github.com", "cheUser", "named-namespace");
 
     // then
     verify(nonNamespaceOperation).delete(eq(older));
     verify(namespaceFactory, never()).list();
-  }
-
-  private void setContextNamespace(String namespace) {
-    EnvironmentContext context = new EnvironmentContext();
-    context.setSubject(new SubjectImpl(null, Collections.emptyList(), "cheUser", null, false));
-    context.setNamespaceName(namespace);
-    EnvironmentContext.setCurrent(context);
   }
 
   private static PersonalAccessToken oAuthToken() {

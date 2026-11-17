@@ -316,21 +316,18 @@ public class KubernetesGitCredentialManagerTest {
 
   /**
    * A caller with no user of its own, the job that refreshes the OAuth tokens of the running
-   * workspaces for one, names the namespace it works on in the {@link EnvironmentContext}. The
-   * credentials have to be written there, and the namespace of the user must not be resolved from
-   * the subject, which that caller does not have a full one of.
+   * workspaces for one, names the namespace it works on. The credentials have to be written there,
+   * and the namespace of the user must not be resolved from the subject, which that caller does not
+   * have a full one of.
    */
   @Test
-  public void shouldWriteTheCredentialsToTheNamespaceNamedInTheEnvironmentContext()
-      throws Exception {
+  public void shouldWriteTheCredentialsToTheGivenNamespace() throws Exception {
     // given
-    EnvironmentContext context = new EnvironmentContext();
-    context.setNamespaceName("named-namespace");
-    EnvironmentContext.setCurrent(context);
     expectSecretsOf("named-namespace", emptyList());
 
     // when
-    kubernetesGitCredentialManager.createOrReplace(token("https://bitbucket.com"));
+    kubernetesGitCredentialManager.createOrReplace(
+        token("https://bitbucket.com"), "named-namespace");
 
     // then
     verify(secretsMixedOperation, atLeastOnce()).inNamespace("named-namespace");

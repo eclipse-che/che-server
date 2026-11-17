@@ -23,7 +23,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -41,9 +40,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.schedule.ScheduleRate;
-import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.devworkspace.KubernetesDevWorkspaces;
 import org.slf4j.Logger;
@@ -358,26 +355,18 @@ public class OAuthTokenRefresher {
    * @param scmServerUrl the SCM provider the token belongs to
    */
   private void refreshToken(String namespace, String userId, String scmServerUrl) {
-    // The whole refresh flow, from the OAuth provider that holds the refresh token down to the
-    // namespace the new token is written to, reads the EnvironmentContext, and the job runs on a
-    // scheduler thread that has none. The id is what the OAuth token of the user is keyed by and
-    // what their secrets are annotated with. The namespace is named outright, rather than left to
-    // be resolved from the name of the user: the job already knows which namespace it is on, and
-    // the only record of the name is the Che database, which a deployment that authenticates
-    // through OIDC never writes a user to.
-    EnvironmentContext originalContext = EnvironmentContext.getCurrent();
     try {
-      EnvironmentContext context = new EnvironmentContext();
-      context.setSubject(new SubjectImpl(null, Collections.emptyList(), userId, null, false));
-      context.setNamespaceName(namespace);
-      EnvironmentContext.setCurrent(context);
-
       LOG.debug(
           "Refreshing the OAuth token of user {} of namespace {} for {}",
           userId,
           namespace,
           scmServerUrl);
-      personalAccessTokenManager.forceRefreshPersonalAccessToken(scmServerUrl);
+      // The user and the namespace are named outright. The job runs on a scheduler thread that
+      // carries no EnvironmentContext to resolve them from, and the namespace could not be
+      // resolved from the user anyway: the only record of the name of a user is the Che database,
+      // which a deployment that authenticates through OIDC never writes a user to. That the
+      // namespace is this user's is settled by #owns before the call.
+      personalAccessTokenManager.forceRefreshPersonalAccessToken(scmServerUrl, userId, namespace);
     } catch (ScmUnauthorizedException
         | ScmCommunicationException
         | ScmConfigurationPersistenceException
@@ -399,8 +388,6 @@ public class OAuthTokenRefresher {
           namespace,
           scmServerUrl,
           e);
-    } finally {
-      EnvironmentContext.setCurrent(originalContext);
     }
   }
 

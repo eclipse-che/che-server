@@ -23,6 +23,7 @@ import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
@@ -105,7 +106,8 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
     personalAccessTokenFetcher =
         new AzureDevOpsPersonalAccessTokenFetcher(
             "localhost", "https://dev.azure.com", new String[] {}, azureDevOpsApiClient, oAuthAPI);
-    when(oAuthAPI.getOrRefreshToken(AzureDevOps.PROVIDER_NAME)).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(eq(AzureDevOps.PROVIDER_NAME), any(), any()))
+        .thenReturn(oAuthToken);
     when(azureDevOpsApiClient.getUserWithOAuthToken(any())).thenReturn(azureDevOpsUser);
     when(azureDevOpsUser.getEmailAddress()).thenReturn("user-email");
 
@@ -123,7 +125,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(azureOauthToken).withScope("");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/_apis/profile/profiles/me?api-version=7.0"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + azureOauthToken))
@@ -136,7 +138,7 @@ public class AzureDevOpsPersonalAccessTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionOnRedirectResponse() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(azureOauthToken).withScope("");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/_apis/profile/profiles/me?api-version=7.0"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer " + azureOauthToken))

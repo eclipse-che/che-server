@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.commons.env;
 
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.concurrent.ThreadLocalPropagateContext;
 import org.eclipse.che.commons.subject.Subject;
 
@@ -45,13 +44,11 @@ public class EnvironmentContext {
   }
 
   private Subject subject;
-  private String namespaceName;
 
   public EnvironmentContext() {}
 
   public EnvironmentContext(EnvironmentContext other) {
     setSubject(other.getSubject());
-    setNamespaceName(other.getNamespaceName());
   }
 
   /** Returns subject or {@link Subject#ANONYMOUS} in case when subject is null. */
@@ -62,22 +59,5 @@ public class EnvironmentContext {
   /** Sets subject. */
   public void setSubject(Subject subject) {
     this.subject = subject;
-  }
-
-  /**
-   * Returns the namespace the current task acts in, or {@code null} when it does not say.
-   *
-   * <p>A request is served in the namespace its user resolves to, so nothing has to name it. A
-   * background job of the Che server works through the namespaces of other users, whose names it
-   * already knows and cannot resolve from a subject of its own, and names the one it is on here.
-   */
-  @Nullable
-  public String getNamespaceName() {
-    return namespaceName;
-  }
-
-  /** Sets the namespace the current task acts in. */
-  public void setNamespaceName(@Nullable String namespaceName) {
-    this.namespaceName = namespaceName;
   }
 }

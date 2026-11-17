@@ -32,7 +32,6 @@ import io.fabric8.mockwebserver.MockWebServer;
 import io.fabric8.mockwebserver.ServerRequest;
 import io.fabric8.mockwebserver.ServerResponse;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,6 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.ScmPersonalAccessTokenFetcher;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.server.impls.KubernetesNamespaceMetaImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespace;
@@ -60,9 +58,9 @@ import org.testng.annotations.Test;
  * against a Kubernetes API server, and only the SCM provider mocked away.
  *
  * <p>The job that refreshes the OAuth tokens of the running workspaces, {@code
- * OAuthTokenRefresher}, is the one caller that has no user of its own: it names the namespace it
- * works on in the {@link EnvironmentContext} and acts as the user the token belongs to. Everything
- * it writes has to land in that namespace, and nowhere else.
+ * OAuthTokenRefresher}, is the one caller that has no user of its own: it names the user and the
+ * namespace it works on outright. Everything the refresh writes has to land in that namespace, and
+ * nowhere else, and the thread it ran on must be left speaking for nobody.
  */
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesTokenStorageNamespaceTest {
@@ -125,11 +123,6 @@ public class KubernetesTokenStorageNamespaceTest {
             cheServerKubernetesClientFactory,
             scmPersonalAccessTokenFetcher,
             gitCredentialManager);
-
-    EnvironmentContext context = new EnvironmentContext();
-    context.setSubject(new SubjectImpl(null, Collections.emptyList(), USER_ID, null, false));
-    context.setNamespaceName(NAMESPACE);
-    EnvironmentContext.setCurrent(context);
   }
 
   @AfterMethod
@@ -142,7 +135,8 @@ public class KubernetesTokenStorageNamespaceTest {
   public void shouldWriteTheRefreshedTokenAndCredentialsToTheNamespaceNamedInTheContext()
       throws Exception {
     // given
-    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(any(Subject.class), eq(SCM_URL)))
+    when(scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+            any(Subject.class), eq(SCM_URL), eq(NAMESPACE)))
         .thenReturn(
             new PersonalAccessToken(
                 SCM_URL,
@@ -157,7 +151,7 @@ public class KubernetesTokenStorageNamespaceTest {
                 3600));
 
     // when
-    personalAccessTokenManager.forceRefreshPersonalAccessToken(SCM_URL);
+    personalAccessTokenManager.forceRefreshPersonalAccessToken(SCM_URL, USER_ID, NAMESPACE);
 
     // then the token lands in the namespace of the context
     List<Secret> tokenSecrets = secretsOf(NAMESPACE, "scm-personal-access-token");
@@ -178,6 +172,8 @@ public class KubernetesTokenStorageNamespaceTest {
     // and nothing is written anywhere else
     assertTrue(allSecretsOf(OTHER_NAMESPACE).isEmpty());
     verify(namespaceFactory, never()).list();
+    // and the thread the refresh ran on is left as it was found
+    assertEquals(EnvironmentContext.getCurrent().getSubject(), Subject.ANONYMOUS);
   }
 
   private List<Secret> secretsOf(String namespace, String component) {

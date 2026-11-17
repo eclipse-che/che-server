@@ -31,6 +31,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationExceptio
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
@@ -82,19 +83,23 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
   }
 
   @Override
-  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+  public PersonalAccessToken refreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, @Nullable String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
-    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, true);
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, namespaceName, true);
   }
 
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
-    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, false);
+    return fetchOrRefreshPersonalAccessToken(cheSubject, scmServerUrl, null, false);
   }
 
   private PersonalAccessToken fetchOrRefreshPersonalAccessToken(
-      Subject cheSubject, String scmServerUrl, boolean forceRefreshToken)
+      Subject cheSubject,
+      String scmServerUrl,
+      @Nullable String namespaceName,
+      boolean forceRefreshToken)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
@@ -105,8 +110,8 @@ public class BitbucketPersonalAccessTokenFetcher implements PersonalAccessTokenF
     try {
       oAuthToken =
           forceRefreshToken
-              ? oAuthAPI.refreshToken(OAUTH_PROVIDER_NAME)
-              : oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME);
+              ? oAuthAPI.refreshToken(OAUTH_PROVIDER_NAME, cheSubject, namespaceName)
+              : oAuthAPI.getOrRefreshToken(OAUTH_PROVIDER_NAME, cheSubject, namespaceName);
       String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =

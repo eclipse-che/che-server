@@ -43,7 +43,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.exception.ScmConfigurationPersistenceException;
 import org.eclipse.che.api.factory.server.scm.exception.UnsatisfiedScmPreconditionException;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
-import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.StringUtils;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
@@ -102,8 +102,15 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   @Override
   public void createOrReplace(PersonalAccessToken personalAccessToken)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
+    createOrReplace(personalAccessToken, null);
+  }
+
+  @Override
+  public void createOrReplace(
+      PersonalAccessToken personalAccessToken, @Nullable String namespaceName)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
-      final String namespace = getFirstNamespace();
+      final String namespace = namespaceName != null ? namespaceName : getFirstNamespace();
       final KubernetesClient client = cheServerKubernetesClientFactory.create();
       // to avoid duplicating secrets we try to reuse existing one by matching
       // hostname/username if possible, and update it. Otherwise, create new one.
@@ -190,16 +197,14 @@ public class KubernetesGitCredentialManager implements GitCredentialManager {
   }
 
   /**
-   * It is not guaranteed that this code will always return same namespace, but since credentials
+   * Returns the first namespace of the user of the current request.
+   *
+   * <p>It is not guaranteed that this code will always return same namespace, but since credentials
    * are now added into manually pre-created user namespace, we can expect always the same result
    * will be returned.
    */
   private String getFirstNamespace()
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
-    String contextNamespace = EnvironmentContext.getCurrent().getNamespaceName();
-    if (contextNamespace != null) {
-      return contextNamespace;
-    }
     try {
       Optional<String> namespace =
           namespaceFactory.list().stream().map(KubernetesNamespaceMeta::getName).findFirst();

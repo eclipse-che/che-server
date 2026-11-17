@@ -25,6 +25,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenParams;
 import org.eclipse.che.api.factory.server.scm.exception.*;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.UrlTargetValidator;
@@ -127,15 +128,22 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
     this.providerName = providerName;
   }
 
-  public PersonalAccessToken refreshPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+  public PersonalAccessToken refreshPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, @Nullable String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     // Tokens generated via GitHub OAuth app do not have an expiration date, so we don't need to
     // refresh them.
-    return fetchPersonalAccessToken(cheSubject, scmServerUrl);
+    return fetchPersonalAccessToken(cheSubject, scmServerUrl, namespaceName);
   }
 
   @Override
   public PersonalAccessToken fetchPersonalAccessToken(Subject cheSubject, String scmServerUrl)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return fetchPersonalAccessToken(cheSubject, scmServerUrl, null);
+  }
+
+  private PersonalAccessToken fetchPersonalAccessToken(
+      Subject cheSubject, String scmServerUrl, @Nullable String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     OAuthToken oAuthToken;
 
@@ -144,7 +152,7 @@ public abstract class AbstractGithubPersonalAccessTokenFetcher
       return null;
     }
     try {
-      oAuthToken = oAuthAPI.getOrRefreshToken(providerName);
+      oAuthToken = oAuthAPI.getOrRefreshToken(providerName, cheSubject, namespaceName);
       String tokenName = NameGenerator.generate(OAUTH_2_PREFIX, 5);
       String tokenId = NameGenerator.generate("id-", 5);
       Optional<Pair<Boolean, String>> valid =

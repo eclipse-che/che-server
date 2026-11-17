@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 
@@ -41,12 +42,18 @@ public interface PersonalAccessTokenFetcher {
   /**
    * Refresh a PersonalAccessToken.
    *
+   * @param cheUser the user whose token is refreshed, which a caller with no user of its own, a
+   *     background job for one, names itself
+   * @param scmServerUrl Git provider endpoint
+   * @param namespaceName the namespace the token of that user is kept in, or {@code null} to take
+   *     the namespace of the user of the current request
    * @throws ScmUnauthorizedException - in case if user are not authorized che server to create new
    *     token. Further user interaction is needed before calling next time this method.
    * @throws ScmCommunicationException - Some unexpected problem occurred during communication with
    *     scm provider.
    */
-  PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
+  PersonalAccessToken refreshPersonalAccessToken(
+      Subject cheUser, String scmServerUrl, @Nullable String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException;
 
   /**

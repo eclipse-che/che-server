@@ -12,6 +12,7 @@
 package org.eclipse.che.workspace.infrastructure.kubernetes.namespace;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -19,7 +20,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
 import com.google.common.collect.ImmutableMap;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
@@ -128,7 +128,8 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
   }
 
   /** {@code CHE_OAUTH_TOKEN__REFRESH_ENABLED=false} keeps the job from doing anything. */
@@ -207,27 +208,40 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken("https://github.com");
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken("https://github.com", TEST_USER_ID, OTHER_NAMESPACE_NAME);
   }
 
   /** The owner of the token is read from the secret, not from the namespace. */
   @Test
   public void shouldRefreshOnBehalfOfTheOwnerOfTheSecret() throws Exception {
+    // given a secret of another user than the namespace is named after
+    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 1800));
+
+    // when
+    refresher.refreshTokens();
+
+    // then the user and the namespace are named outright, neither is left to be resolved from a
+    // subject of the job, which has none
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
+  }
+
+  /** The job acts on no thread of its own: it leaves the context to the manager. */
+  @Test
+  public void shouldNotSpeakForTheUserOnItsOwnThread() throws Exception {
     // given
     createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 1800));
     AtomicReference<Subject> subjectDuringRefresh = new AtomicReference<>();
-    AtomicReference<String> namespaceDuringRefresh = new AtomicReference<>();
-    doAnswerCapturingSubject(subjectDuringRefresh, namespaceDuringRefresh);
+    doAnswerCapturingSubject(subjectDuringRefresh);
 
     // when
     refresher.refreshTokens();
 
     // then
-    assertEquals(subjectDuringRefresh.get().getUserId(), TEST_USER_ID);
-    // The name is left out: the namespace is named outright instead of resolved from it.
-    assertNull(subjectDuringRefresh.get().getUserName());
-    assertEquals(namespaceDuringRefresh.get(), TEST_NAMESPACE_NAME);
+    assertEquals(subjectDuringRefresh.get(), Subject.ANONYMOUS);
   }
 
   @Test
@@ -241,7 +255,8 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager, never()).forceRefreshPersonalAccessToken(anyString());
+    verify(personalAccessTokenManager, never())
+        .forceRefreshPersonalAccessToken(anyString(), anyString(), anyString());
   }
 
   /**
@@ -290,7 +305,8 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
   }
 
   /**
@@ -333,8 +349,10 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken("https://github.com");
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken("https://github.com", OTHER_USER_ID, TEST_NAMESPACE_NAME);
   }
 
   /**
@@ -355,7 +373,8 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
   }
 
   /** Nothing says who owns the namespace, so nothing is refreshed. */
@@ -394,20 +413,8 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
-  }
-
-  @Test
-  public void shouldRestoreTheEnvironmentContextAfterTheRun() throws Exception {
-    // given
-    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 1800));
-    EnvironmentContext original = EnvironmentContext.getCurrent();
-
-    // when
-    refresher.refreshTokens();
-
-    // then
-    assertEquals(EnvironmentContext.getCurrent(), original);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
   }
 
   @Test
@@ -420,7 +427,8 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
   }
 
   /** The running workspace clones from another provider, this token is not the one it uses. */
@@ -451,9 +459,10 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
     verify(personalAccessTokenManager, never())
-        .forceRefreshPersonalAccessToken("https://github.com");
+        .forceRefreshPersonalAccessToken(eq("https://github.com"), anyString(), anyString());
   }
 
   /** A provider hosted under a path of its own only serves the repositories below that path. */
@@ -470,7 +479,8 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(hostedScmUrl);
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(hostedScmUrl, TEST_USER_ID, TEST_NAMESPACE_NAME);
   }
 
   @Test
@@ -517,23 +527,19 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager).forceRefreshPersonalAccessToken(SCM_URL + "/");
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL + "/", TEST_USER_ID, TEST_NAMESPACE_NAME);
   }
 
+  /** Captures the subject of the thread the manager is called on. */
   private void doAnswerCapturingSubject(AtomicReference<Subject> holder) throws Exception {
-    doAnswerCapturingSubject(holder, new AtomicReference<>());
-  }
-
-  private void doAnswerCapturingSubject(
-      AtomicReference<Subject> holder, AtomicReference<String> namespaceHolder) throws Exception {
     doAnswer(
             invocation -> {
               holder.set(EnvironmentContext.getCurrent().getSubject());
-              namespaceHolder.set(EnvironmentContext.getCurrent().getNamespaceName());
               return null;
             })
         .when(personalAccessTokenManager)
-        .forceRefreshPersonalAccessToken(anyString());
+        .forceRefreshPersonalAccessToken(anyString(), anyString(), anyString());
   }
 
   /**

@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
@@ -124,15 +123,7 @@ public class OAuthTokenRefresher {
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private final KubernetesDevWorkspaces devWorkspaces;
 
-  /**
-   * Reached lazily, and only by {@link #owns(String, String, RunningWorkspaces)}. The factory is
-   * built from the {@link
-   * org.eclipse.che.workspace.infrastructure.kubernetes.namespace.configurator.NamespaceConfigurator}
-   * set, and asking for it eagerly puts this job in a circular dependency with whatever a
-   * configurator pulls in, the same way it does in {@link KubernetesDevWorkspaces}.
-   */
-  private final Provider<KubernetesNamespaceFactory> namespaceFactory;
-
+  private final KubernetesNamespaceFactory namespaceFactory;
   private final boolean refreshEnabled;
 
   @Inject
@@ -140,7 +131,7 @@ public class OAuthTokenRefresher {
       CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
       PersonalAccessTokenManager personalAccessTokenManager,
       KubernetesDevWorkspaces devWorkspaces,
-      Provider<KubernetesNamespaceFactory> namespaceFactory,
+      KubernetesNamespaceFactory namespaceFactory,
       @Named(REFRESH_ENABLED_PROPERTY) boolean refreshEnabled,
       @Named(REFRESH_PERIOD_SEC_PROPERTY) long refreshPeriodSec) {
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
@@ -313,7 +304,7 @@ public class OAuthTokenRefresher {
       // claims somebody else's id, so neither is refreshed.
       return running.creatorIds.contains(userId);
     }
-    return namespaceFactory.get().isDefaultNamespaceOf(namespace, userId);
+    return namespaceFactory.isDefaultNamespaceOf(namespace, userId);
   }
 
   /** What the DevWorkspaces running in a namespace say about it. */

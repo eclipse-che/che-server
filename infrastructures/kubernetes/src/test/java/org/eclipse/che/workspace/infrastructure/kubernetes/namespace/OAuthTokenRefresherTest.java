@@ -107,7 +107,7 @@ public class OAuthTokenRefresherTest {
         cheServerKubernetesClientFactory,
         personalAccessTokenManager,
         devWorkspaces,
-        () -> namespaceFactory,
+        namespaceFactory,
         enabled,
         periodSec);
   }

@@ -13,11 +13,14 @@ package org.eclipse.che.workspace.infrastructure.kubernetes.devworkspace;
 
 import static java.util.Optional.empty;
 import static org.eclipse.che.workspace.infrastructure.kubernetes.devworkspace.KubernetesDevWorkspaces.DEV_WORKSPACE_CONTEXT;
+import static org.eclipse.che.workspace.infrastructure.kubernetes.devworkspace.KubernetesDevWorkspaces.PAGE_SIZE;
 import static org.mockito.Mockito.lenient;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceList;
+import io.fabric8.kubernetes.api.model.ListMetaBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesMixedDispatcher;
@@ -44,6 +47,18 @@ import org.testng.annotations.Test;
 
 @Listeners(MockitoTestNGListener.class)
 public class KubernetesDevWorkspacesTest {
+
+  private static final String DEV_WORKSPACES_PATH =
+      "/apis/workspace.devfile.io/v1alpha2/devworkspaces";
+  private static final String TERMINAL_SELECTOR = "console.openshift.io%2Fterminal%21%3Dtrue";
+  private static final String FIRST_PAGE_PATH =
+      DEV_WORKSPACES_PATH + "?labelSelector=" + TERMINAL_SELECTOR + "&limit=" + PAGE_SIZE;
+  private static final String SECOND_PAGE_PATH =
+      DEV_WORKSPACES_PATH
+          + "?continue=continue-token&labelSelector="
+          + TERMINAL_SELECTOR
+          + "&limit="
+          + PAGE_SIZE;
 
   private static final String NAMESPACE = "alice-che";
   private static final String OTHER_NAMESPACE = "bob-che";
@@ -208,17 +223,105 @@ public class KubernetesDevWorkspacesTest {
     assertEquals(KubernetesDevWorkspaces.getCreator(withEmptyCreator), empty());
   }
 
+  /** The web terminals of the OpenShift console belong to the operator that owns them. */
+  @Test
+  public void shouldNotReturnTheWebTerminalDevWorkspaces() throws Exception {
+    createDevWorkspace(NAMESPACE, "workspace", "Running");
+    createDevWorkspace(
+        NAMESPACE,
+        "web-terminal",
+        Map.of("console.openshift.io/terminal", "true"),
+        Map.of("phase", "Running"));
+
+    assertEquals(names(devWorkspaces.getRunningInAllNamespaces()), List.of("workspace"));
+    // the API server does the leaving out, the response never carries the terminal
+    assertTrue(
+        kubernetesMockServer
+            .getLastRequest()
+            .getPath()
+            .contains("labelSelector=console.openshift.io%2Fterminal%21%3Dtrue"));
+  }
+
+  /**
+   * A cluster holds more DevWorkspaces than one response should carry, so they are read page by
+   * page and the running ones of every page are kept.
+   */
+  @Test
+  public void shouldReadTheDevWorkspacesPageByPage() throws Exception {
+    kubernetesMockServer
+        .expect()
+        .get()
+        .withPath(FIRST_PAGE_PATH)
+        .andReturn(200, pageOf("continue-token", runningDevWorkspace("first")))
+        .once();
+    kubernetesMockServer
+        .expect()
+        .get()
+        .withPath(SECOND_PAGE_PATH)
+        .andReturn(200, pageOf(null, runningDevWorkspace("second"), stoppedDevWorkspace("third")))
+        .once();
+
+    assertEquals(names(devWorkspaces.getRunningInAllNamespaces()), List.of("first", "second"));
+  }
+
+  /** The walk is given up on when a page is lost, the pages read until then are kept. */
+  @Test
+  public void shouldReturnThePagesReadSoFarWhenAPageCannotBeRead() throws Exception {
+    kubernetesMockServer
+        .expect()
+        .get()
+        .withPath(FIRST_PAGE_PATH)
+        .andReturn(200, pageOf("continue-token", runningDevWorkspace("first")))
+        .once();
+    kubernetesMockServer
+        .expect()
+        .get()
+        .withPath(SECOND_PAGE_PATH)
+        .andReturn(410, "the continue token has expired")
+        .always();
+
+    assertEquals(names(devWorkspaces.getRunningInAllNamespaces()), List.of("first"));
+  }
+
   /** A Kubernetes API failure is reported as an {@link InfrastructureException}. */
   @Test(expectedExceptions = InfrastructureException.class)
   public void shouldFailWhenTheDevWorkspacesCannotBeRead() throws Exception {
     kubernetesMockServer
         .expect()
         .get()
-        .withPath("/apis/workspace.devfile.io/v1alpha2/devworkspaces")
+        .withPath(FIRST_PAGE_PATH)
         .andReturn(403, "forbidden")
         .always();
 
     devWorkspaces.getRunningInAllNamespaces();
+  }
+
+  private static GenericKubernetesResourceList pageOf(
+      String continueToken, GenericKubernetesResource... devWorkspaces) {
+    GenericKubernetesResourceList page = new GenericKubernetesResourceList();
+    page.setApiVersion("workspace.devfile.io/v1alpha2");
+    page.setKind("DevWorkspaceList");
+    page.setMetadata(new ListMetaBuilder().withContinue(continueToken).build());
+    page.setItems(List.of(devWorkspaces));
+    return page;
+  }
+
+  private static GenericKubernetesResource runningDevWorkspace(String name) {
+    return devWorkspaceOf(name, "Running");
+  }
+
+  private static GenericKubernetesResource stoppedDevWorkspace(String name) {
+    return devWorkspaceOf(name, "Stopped");
+  }
+
+  private static GenericKubernetesResource devWorkspaceOf(String name, String phase) {
+    GenericKubernetesResource devWorkspace = new GenericKubernetesResource();
+    devWorkspace.setApiVersion("workspace.devfile.io/v1alpha2");
+    devWorkspace.setKind("DevWorkspace");
+    devWorkspace.setMetadata(
+        new ObjectMetaBuilder().withName(name).withNamespace(NAMESPACE).build());
+    devWorkspace.setAdditionalProperty("status", Map.of("phase", phase));
+    return devWorkspace;
   }
 
   private List<String> names(List<GenericKubernetesResource> devWorkspaces) {

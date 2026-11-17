@@ -11,20 +11,25 @@
  */
 package org.eclipse.che.workspace.infrastructure.kubernetes.devworkspace;
 
+import static com.google.common.base.Strings.emptyToNull;
+
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceList;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastructureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Reads the {@code DevWorkspace} custom resources that the DevWorkspace Operator keeps in the
@@ -44,6 +49,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesInfrastruct
  */
 @Singleton
 public class KubernetesDevWorkspaces {
+
+  private static final Logger LOG = LoggerFactory.getLogger(KubernetesDevWorkspaces.class);
 
   public static final String DEV_WORKSPACE_GROUP = "workspace.devfile.io";
   public static final String DEV_WORKSPACE_VERSION = "v1alpha2";
@@ -72,6 +79,20 @@ public class KubernetesDevWorkspaces {
    */
   public static final String CREATOR_LABEL = "controller.devfile.io/creator";
 
+  /**
+   * The label the OpenShift console stamps the DevWorkspace of a web terminal with. Those belong to
+   * the Web Terminal Operator rather than to Che, and are left out of every read here, see
+   * https://redhat-developer.github.io/web-terminal-operator/.
+   */
+  public static final String WEB_TERMINAL_LABEL = "console.openshift.io/terminal";
+
+  /**
+   * How many DevWorkspaces one page of a cluster wide read carries. A DevWorkspace holds the whole
+   * devfile it was started from, so a page is kept well below the number of workspaces a cluster
+   * may hold.
+   */
+  static final int PAGE_SIZE = 100;
+
   /** The fields of a devfile that hold projects, every one of them optional. */
   private static final List<String> PROJECT_FIELDS =
       List.of("projects", "starterProjects", "dependentProjects");
@@ -97,24 +118,52 @@ public class KubernetesDevWorkspaces {
   /**
    * Returns the running DevWorkspaces of every namespace of the cluster.
    *
+   * <p>A DevWorkspace carries the whole devfile it was started from, so the cluster of a large
+   * deployment holds more of them than one response should carry. They are read a page of {@value
+   * #PAGE_SIZE} at a time, and only the running ones are kept, which is the handful the caller is
+   * after. The web terminals of the OpenShift console are left to the operator that owns them, see
+   * {@value #WEB_TERMINAL_LABEL}.
+   *
+   * <p>A page that cannot be read ends the walk: what was read until then is returned, and the
+   * caller works with the part of the cluster it was given. The next run reads the whole of it
+   * again, so nothing is lost for good.
+   *
    * @return the running DevWorkspaces of the cluster, empty when none of them is running
-   * @throws InfrastructureException when the DevWorkspaces cannot be read
+   * @throws InfrastructureException when the first page cannot be read, which says the
+   *     DevWorkspaces cannot be read at all rather than that one page went missing
    */
   public List<GenericKubernetesResource> getRunningInAllNamespaces()
       throws InfrastructureException {
-    try {
-      return cheServerKubernetesClientFactory
-          .create()
-          .genericKubernetesResources(DEV_WORKSPACE_CONTEXT)
-          .inAnyNamespace()
-          .list()
-          .getItems()
-          .stream()
-          .filter(KubernetesDevWorkspaces::isRunning)
-          .collect(Collectors.toList());
-    } catch (KubernetesClientException e) {
-      throw new KubernetesInfrastructureException(e);
-    }
+    List<GenericKubernetesResource> running = new ArrayList<>();
+    String continueToken = null;
+    do {
+      GenericKubernetesResourceList page;
+      try {
+        page =
+            cheServerKubernetesClientFactory
+                .create()
+                .genericKubernetesResources(DEV_WORKSPACE_CONTEXT)
+                .inAnyNamespace()
+                .withoutLabel(WEB_TERMINAL_LABEL, "true")
+                .list(PAGE_SIZE, continueToken);
+      } catch (KubernetesClientException e) {
+        if (continueToken == null) {
+          throw new KubernetesInfrastructureException(e);
+        }
+        // A continue token expires with the window the API server keeps a read open for, so a
+        // walk that is slower than that window ends here rather than starting over.
+        LOG.warn(
+            "Failed to read a page of the DevWorkspaces of the cluster, carrying on with the {}"
+                + " running one(s) read so far",
+            running.size(),
+            e);
+        return running;
+      }
+      page.getItems().stream().filter(KubernetesDevWorkspaces::isRunning).forEach(running::add);
+      continueToken =
+          page.getMetadata() == null ? null : emptyToNull(page.getMetadata().getContinue());
+    } while (continueToken != null);
+    return running;
   }
 
   /**

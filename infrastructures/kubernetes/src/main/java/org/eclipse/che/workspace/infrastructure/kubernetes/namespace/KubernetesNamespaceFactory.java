@@ -537,6 +537,62 @@ public class KubernetesNamespaceFactory {
     }
   }
 
+  /**
+   * Returns the names of all the namespaces that belong to a user of Che, which are the ones
+   * carrying the labels configured in `che.infra.kubernetes.namespace.labels` and annotated with
+   * the owner they were prepared for, see {@link #isUserNamespace(HasMetadata)}.
+   *
+   * <p>Unlike {@link #findPreparedNamespaces(NamespaceResolutionContext)} this asks for the
+   * namespaces of every user rather than of one of them, so it does not resolve the {@code
+   * <username>} placeholder of the annotations and only requires them to be there. It is for the
+   * background jobs of the Che server, which run on no user, and not for serving a user request.
+   *
+   * @return the names of the namespaces of the users, empty when the cluster holds none
+   * @throws InfrastructureException when the namespaces cannot be read, which includes the {@code
+   *     che} ServiceAccount not being allowed to list them
+   */
+  public Set<String> getUserNamespaces() throws InfrastructureException {
+    try {
+      return cheServerKubernetesClientFactory
+          .create()
+          .namespaces()
+          .withLabels(namespaceLabels)
+          .list()
+          .getItems()
+          .stream()
+          .filter(this::isUserNamespace)
+          .map(namespace -> namespace.getMetadata().getName())
+          .collect(Collectors.toSet());
+    } catch (KubernetesClientException e) {
+      throw new InfrastructureException(
+          format(
+              "Error occurred when tried to list the namespaces with labels '%s'. Cause: %s",
+              namespaceLabels, e.getMessage()),
+          e);
+    }
+  }
+
+  /**
+   * Tells whether the given namespace, which is one that already matches the labels of a workspace
+   * namespace, records the user it was prepared for, as the annotations configured in
+   * `che.infra.kubernetes.namespace.annotations` have it, {@code che.eclipse.org/username} by
+   * default.
+   *
+   * <p>Only the keys of those annotations are matched. Their configured value carries the {@code
+   * <username>} placeholder, which is resolved against the user a namespace is looked up for, and
+   * here there is no such user: the question is whether the namespace belongs to any user at all.
+   *
+   * @param namespace the namespace or project to check
+   */
+  protected boolean isUserNamespace(HasMetadata namespace) {
+    Map<String, String> annotations =
+        namespace.getMetadata().getAnnotations() == null
+            ? emptyMap()
+            : namespace.getMetadata().getAnnotations();
+    return namespaceAnnotations.keySet().stream()
+        .noneMatch(annotation -> isNullOrEmpty(annotations.get(annotation)));
+  }
+
   protected void configureNamespace(
       NamespaceResolutionContext namespaceResolutionContext, String namespaceName)
       throws InfrastructureException {

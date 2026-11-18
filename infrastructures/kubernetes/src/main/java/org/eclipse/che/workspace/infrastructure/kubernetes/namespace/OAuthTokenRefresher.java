@@ -70,6 +70,12 @@ import org.slf4j.LoggerFactory;
  * those run only when Che itself provisions a namespace, which a deployment that has its namespaces
  * prepared for it never does.
  *
+ * <p>Only the namespaces Che runs the workspaces of its users in are looked at, which are the ones
+ * carrying the labels of {@code che.infra.kubernetes.namespace.labels} and annotated with the user
+ * they were prepared for, see {@link KubernetesNamespaceFactory#getUserNamespaces()}. A
+ * DevWorkspace can be created in any namespace of the cluster, and one that runs outside of the
+ * namespaces of Che holds no token secret of a user of Che to refresh.
+ *
  * <p>A token is only refreshed once the user its secret names is the one single user known to run a
  * workspace in the namespace that secret sits in, see {@link #owns(String, RunningWorkspaces)}. The
  * job acts as that user and writes the refreshed token back into that namespace, and both come from
@@ -89,7 +95,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>All reads go through the {@code che} ServiceAccount, see {@link
  * CheServerKubernetesClientFactory}, which needs {@code list} on {@code devworkspaces} across the
- * cluster and on the {@code secrets} of the user namespaces.
+ * cluster, on the {@code namespaces} of the users, and on the {@code secrets} of those namespaces.
  */
 @Singleton
 public class OAuthTokenRefresher {
@@ -122,6 +128,7 @@ public class OAuthTokenRefresher {
   private final CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private final KubernetesDevWorkspaces devWorkspaces;
+  private final KubernetesNamespaceFactory namespaceFactory;
 
   private final boolean refreshEnabled;
 
@@ -130,11 +137,13 @@ public class OAuthTokenRefresher {
       CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
       PersonalAccessTokenManager personalAccessTokenManager,
       KubernetesDevWorkspaces devWorkspaces,
+      KubernetesNamespaceFactory namespaceFactory,
       @Named(REFRESH_ENABLED_PROPERTY) boolean refreshEnabled,
       @Named(REFRESH_PERIOD_SEC_PROPERTY) long refreshPeriodSec) {
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.personalAccessTokenManager = personalAccessTokenManager;
     this.devWorkspaces = devWorkspaces;
+    this.namespaceFactory = namespaceFactory;
     this.refreshEnabled = refreshEnabled;
     if (refreshEnabled && refreshPeriodSec > 0) {
       LOG.info(
@@ -171,6 +180,10 @@ public class OAuthTokenRefresher {
       LOG.warn("Failed to read the running DevWorkspaces of the cluster", e);
       return;
     }
+    if (runningByNamespace.isEmpty()) {
+      return;
+    }
+    retainUserNamespaces(runningByNamespace);
     LOG.debug(
         "Checking the OAuth tokens of {} namespace(s) with a running workspace",
         runningByNamespace.size());
@@ -201,6 +214,47 @@ public class OAuthTokenRefresher {
     }
     runningByNamespace.values().removeIf(running -> running.repositoryUrls.isEmpty());
     return runningByNamespace;
+  }
+
+  /**
+   * Drops the namespaces that are none of the namespaces Che runs the workspaces of its users in,
+   * as {@link KubernetesNamespaceFactory#getUserNamespaces()} has them: a DevWorkspace can be
+   * created in any namespace of the cluster, and only the ones Che prepared, or that were prepared
+   * for it, hold the token secrets of a user of Che.
+   *
+   * <p>A namespace that cannot be told to be a user namespace, because the namespaces of the
+   * cluster cannot be read at all, is kept rather than dropped: the token of a user whose workspace
+   * is running would otherwise be left to expire until an administrator notices the warning in the
+   * log. What makes the refresh safe is the ownership of the namespace, see {@link #owns(String,
+   * RunningWorkspaces)}, which is read from the DevWorkspaces themselves and is checked either way.
+   *
+   * @param runningByNamespace the namespaces with a running workspace, filtered in place
+   */
+  private void retainUserNamespaces(Map<String, RunningWorkspaces> runningByNamespace) {
+    Set<String> userNamespaces;
+    try {
+      userNamespaces = namespaceFactory.getUserNamespaces();
+    } catch (InfrastructureException | KubernetesClientException e) {
+      LOG.warn(
+          "Failed to read the namespaces of the users of Che, carrying on with the {} namespace(s)"
+              + " that run a workspace, user namespace or not",
+          runningByNamespace.size(),
+          e);
+      return;
+    }
+    runningByNamespace
+        .keySet()
+        .removeIf(
+            namespace -> {
+              if (userNamespaces.contains(namespace)) {
+                return false;
+              }
+              LOG.debug(
+                  "Namespace {} runs a workspace but is not a namespace of a user of Che, skipping"
+                      + " it",
+                  namespace);
+              return true;
+            });
   }
 
   private void refreshTokens(String namespace, RunningWorkspaces running) {

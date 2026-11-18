@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
@@ -73,6 +74,7 @@ public class OAuthTokenRefresherTest {
   @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
   @Mock private KubernetesDevWorkspaces devWorkspaces;
+  @Mock private KubernetesNamespaceFactory namespaceFactory;
 
   private KubernetesMockServer kubernetesMockServer;
   private KubernetesClient kubernetesClient;
@@ -97,6 +99,10 @@ public class OAuthTokenRefresherTest {
     lenient()
         .when(devWorkspaces.getRunningInAllNamespaces())
         .thenReturn(List.of(runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git")));
+    // and both namespaces of the tests are namespaces of a user of Che
+    lenient()
+        .when(namespaceFactory.getUserNamespaces())
+        .thenReturn(Set.of(TEST_NAMESPACE_NAME, OTHER_NAMESPACE_NAME));
 
     refresher = refresher(true, REFRESH_PERIOD_SEC);
   }
@@ -106,6 +112,7 @@ public class OAuthTokenRefresherTest {
         cheServerKubernetesClientFactory,
         personalAccessTokenManager,
         devWorkspaces,
+        namespaceFactory,
         enabled,
         periodSec);
   }
@@ -210,6 +217,83 @@ public class OAuthTokenRefresherTest {
         .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
     verify(personalAccessTokenManager)
         .forceRefreshPersonalAccessToken("https://github.com", TEST_USER_ID, OTHER_NAMESPACE_NAME);
+  }
+
+  /**
+   * A DevWorkspace can be created in any namespace of the cluster. One that runs outside of the
+   * namespaces Che runs the workspaces of its users in holds no token of a user of Che.
+   */
+  @Test
+  public void shouldNotRefreshTokensOfANamespaceThatIsNoUserNamespace() throws Exception {
+    // given
+    when(namespaceFactory.getUserNamespaces()).thenReturn(Set.of(OTHER_NAMESPACE_NAME));
+    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verifyNoInteractions(personalAccessTokenManager);
+  }
+
+  /** Only the namespaces of the users are kept, the remaining ones are still taken care of. */
+  @Test
+  public void shouldRefreshTheTokensOfTheUserNamespacesOnly() throws Exception {
+    // given
+    when(namespaceFactory.getUserNamespaces()).thenReturn(Set.of(TEST_NAMESPACE_NAME));
+    createSecret(
+        TEST_NAMESPACE_NAME, "oauth2-first", oAuthTokenSecret("oauth2-first", SCM_URL, 3600, 7200));
+    createSecret(
+        OTHER_NAMESPACE_NAME,
+        "oauth2-second",
+        oAuthTokenSecret("oauth2-second", SCM_URL, 3600, 7200));
+    when(devWorkspaces.getRunningInAllNamespaces())
+        .thenReturn(
+            List.of(
+                runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git"),
+                runningDevWorkspace(OTHER_NAMESPACE_NAME, SCM_URL + "/che/repo.git")));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
+    verify(personalAccessTokenManager, never())
+        .forceRefreshPersonalAccessToken(anyString(), anyString(), eq(OTHER_NAMESPACE_NAME));
+  }
+
+  /**
+   * The namespaces of the users cannot be read at all, so nothing tells a user namespace from any
+   * other. The tokens are refreshed regardless: the ownership of the namespace is read from the
+   * DevWorkspaces and is checked either way, and a user whose workspace is running would otherwise
+   * be left with an expired token until an administrator notices the warning.
+   */
+  @Test
+  public void shouldRefreshWhenTheNamespacesOfTheUsersCannotBeRead() throws Exception {
+    // given
+    when(namespaceFactory.getUserNamespaces()).thenThrow(new InfrastructureException("forbidden"));
+    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verify(personalAccessTokenManager)
+        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
+  }
+
+  /** Nothing runs, so there is no namespace to tell a user namespace from. */
+  @Test
+  public void shouldNotReadTheNamespacesOfTheUsersWhenNoWorkspaceIsRunning() throws Exception {
+    // given
+    when(devWorkspaces.getRunningInAllNamespaces()).thenReturn(List.of());
+
+    // when
+    refresher.refreshTokens();
+
+    // then
+    verifyNoInteractions(namespaceFactory);
   }
 
   /** The owner of the token is read from the secret, not from the namespace. */

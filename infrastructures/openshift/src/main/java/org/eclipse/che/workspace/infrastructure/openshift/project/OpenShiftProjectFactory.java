@@ -221,6 +221,33 @@ public class OpenShiftProjectFactory extends KubernetesNamespaceFactory {
     }
   }
 
+  /**
+   * Returns the names of all the projects that belong to a user of Che. The projects are read
+   * through the OpenShift API, which is what tells the ones the {@code che} ServiceAccount is
+   * allowed to see, rather than through the namespaces of Kubernetes.
+   */
+  @Override
+  public Set<String> getUserNamespaces() throws InfrastructureException {
+    try {
+      return cheServerOpenshiftClientFactory
+          .createOC()
+          .projects()
+          .withLabels(namespaceLabels)
+          .list()
+          .getItems()
+          .stream()
+          .filter(this::isUserNamespace)
+          .map(project -> project.getMetadata().getName())
+          .collect(Collectors.toSet());
+    } catch (KubernetesClientException e) {
+      throw new InfrastructureException(
+          format(
+              "Error occurred when tried to list the projects with labels '%s'. Cause: %s",
+              namespaceLabels, e.getMessage()),
+          e);
+    }
+  }
+
   private KubernetesNamespaceMeta asNamespaceMeta(io.fabric8.openshift.api.model.Project project) {
     Map<String, String> attributes = new HashMap<>(4);
     ObjectMeta metadata = project.getMetadata();

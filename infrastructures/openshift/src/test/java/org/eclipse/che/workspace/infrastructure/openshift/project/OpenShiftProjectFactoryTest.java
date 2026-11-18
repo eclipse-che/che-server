@@ -286,6 +286,55 @@ public class OpenShiftProjectFactoryTest {
     assertEquals(availableNamespaces.get(1).getName(), "ns2");
   }
 
+  /**
+   * The projects of every user are returned, not the ones of the user of the request, and they are
+   * read through the OpenShift API rather than through the namespaces of Kubernetes.
+   */
+  @Test
+  public void shouldReturnTheProjectsOfEveryUser() throws Exception {
+    // given
+    doReturn(
+            Arrays.asList(
+                createProject(
+                    "ns1", "project1", "desc1", "Active", Map.of(NAMESPACE_ANNOTATION_NAME, "jon")),
+                createProject(
+                    "ns2",
+                    "project2",
+                    "desc2",
+                    "Active",
+                    Map.of(NAMESPACE_ANNOTATION_NAME, "some_other_user")),
+                // prepared for nobody, so it belongs to no user of Che
+                createProject("ns3", "project3", "desc3", "Active", Map.of("other", "jon"))))
+        .when(projectList)
+        .getItems();
+
+    projectFactory =
+        new OpenShiftProjectFactory(
+            "<userid>-che",
+            true,
+            true,
+            true,
+            NAMESPACE_LABELS,
+            NAMESPACE_ANNOTATIONS,
+            true,
+            emptySet(),
+            openShiftClientFactory,
+            cheServerKubernetesClientFactory,
+            cheServerOpenshiftClientFactory,
+            preferenceManager,
+            pool,
+            authorizationChecker,
+            permissionsCleaner);
+
+    // when
+    Set<String> userNamespaces = projectFactory.getUserNamespaces();
+
+    // then
+    assertEquals(userNamespaces, Set.of("ns1", "ns2"));
+    verify(cheServerOpenshiftClientFactory).createOC();
+    verify(projectOperation).withLabels(Map.of(NAMESPACE_LABEL_NAME, "workspace"));
+  }
+
   @Test
   public void shouldNotThrowAnExceptionWhenNotAllowedToListNamespaces() throws Exception {
     // given

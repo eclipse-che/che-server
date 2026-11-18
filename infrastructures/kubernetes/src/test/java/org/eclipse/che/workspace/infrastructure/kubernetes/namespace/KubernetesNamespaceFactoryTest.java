@@ -359,6 +359,91 @@ public class KubernetesNamespaceFactoryTest {
     assertEquals(availableNamespaces.get(1).getName(), "ns2");
   }
 
+  /**
+   * The namespaces of every user are returned, not the ones of the user of the request: the caller
+   * is a background job that runs on no user at all.
+   */
+  @Test
+  public void shouldReturnTheNamespacesOfEveryUser() throws Exception {
+    // given
+    doReturn(
+            Arrays.asList(
+                namespaceWithAnnotations("ns1", Map.of(NAMESPACE_ANNOTATION_NAME, "jondoe")),
+                namespaceWithAnnotations("ns2", Map.of(NAMESPACE_ANNOTATION_NAME, "some_other")),
+                // prepared for nobody, so it belongs to no user of Che
+                namespaceWithAnnotations("ns3", Map.of("other-annotation", "jondoe")),
+                namespaceWithAnnotations("ns4", Map.of(NAMESPACE_ANNOTATION_NAME, "")),
+                namespaceWithAnnotations("ns5", null)))
+        .when(namespaceList)
+        .getItems();
+    namespaceFactory = namespaceFactory(NAMESPACE_LABELS, NAMESPACE_ANNOTATIONS);
+
+    // when
+    Set<String> userNamespaces = namespaceFactory.getUserNamespaces();
+
+    // then
+    assertEquals(userNamespaces, Set.of("ns1", "ns2"));
+    verify(namespaceOperation).withLabels(Map.of(NAMESPACE_LABEL_NAME, "workspace"));
+  }
+
+  /** Nothing is annotated when the annotations are turned off, so the labels are all there is. */
+  @Test
+  public void shouldReturnEveryLabeledNamespaceWhenNoAnnotationIsConfigured() throws Exception {
+    // given
+    doReturn(List.of(namespaceWithAnnotations("ns1", null))).when(namespaceList).getItems();
+    namespaceFactory = namespaceFactory(NAMESPACE_LABELS, "");
+
+    // when
+    Set<String> userNamespaces = namespaceFactory.getUserNamespaces();
+
+    // then
+    assertEquals(userNamespaces, Set.of("ns1"));
+  }
+
+  /**
+   * Unlike the lookup of the namespace of a user, which falls back on the default namespace, the
+   * caller is told that the namespaces of the users could not be read at all.
+   */
+  @Test(expectedExceptions = InfrastructureException.class)
+  public void shouldThrowWhenNotAllowedToListTheNamespacesOfTheUsers() throws Exception {
+    // given
+    doThrow(new KubernetesClientException("Not allowed.", 403, new Status()))
+        .when(namespaceList)
+        .getItems();
+    namespaceFactory = namespaceFactory(NAMESPACE_LABELS, NAMESPACE_ANNOTATIONS);
+
+    // when
+    namespaceFactory.getUserNamespaces();
+  }
+
+  private KubernetesNamespaceFactory namespaceFactory(String labels, String annotations) {
+    return new KubernetesNamespaceFactory(
+        "<username>-che",
+        true,
+        true,
+        true,
+        labels,
+        annotations,
+        emptySet(),
+        cheServerKubernetesClientFactory,
+        preferenceManager,
+        pool,
+        authorizationChecker,
+        permissionsCleaner);
+  }
+
+  private static Namespace namespaceWithAnnotations(String name, Map<String, String> annotations) {
+    return new NamespaceBuilder()
+        .withNewMetadata()
+        .withName(name)
+        .withAnnotations(annotations)
+        .endMetadata()
+        .withNewStatus()
+        .withPhase("Active")
+        .endStatus()
+        .build();
+  }
+
   @Test
   public void shouldNotThrowAnExceptionWhenNotAllowedToListNamespaces() throws Exception {
     // given

@@ -233,41 +233,6 @@ public class KubernetesNamespaceFactoryTest {
     namespaceFactory.checkIfNamespaceIsAllowed("any-namespace");
   }
 
-  @Test(dataProvider = "defaultNamespaceOfProvider")
-  public void shouldTellWhetherTheNamespaceIsTheDefaultOneOfTheUser(
-      String template, String namespaceName, String userId, boolean expected) {
-    namespaceFactory =
-        new KubernetesNamespaceFactory(
-            template,
-            true,
-            true,
-            true,
-            NAMESPACE_LABELS,
-            NAMESPACE_ANNOTATIONS,
-            emptySet(),
-            cheServerKubernetesClientFactory,
-            preferenceManager,
-            pool,
-            authorizationChecker,
-            permissionsCleaner);
-
-    assertEquals(namespaceFactory.isDefaultNamespaceOf(namespaceName, userId), expected);
-  }
-
-  @DataProvider(name = "defaultNamespaceOfProvider")
-  public Object[][] defaultNamespaceOfProvider() {
-    return new Object[][] {
-      {"che-<userid>", "che-user123", "user123", true},
-      {"che-<userid>", "che-user123", "user456", false},
-      {"che-<userid>", "che-user123", null, false},
-      {"che-<userid>", null, "user123", false},
-      // The name of the user is not known to the caller, so a template that needs it tells nothing
-      // and must not be taken for a match.
-      {"<username>-che", "jondoe-che", "user123", false},
-      {"<username>-<userid>", "jondoe-user123", "user123", false},
-    };
-  }
-
   @Test
   public void shouldNormaliseNamespaceWhenUserNameStartsWithKube() {
     namespaceFactory =

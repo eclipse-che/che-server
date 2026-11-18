@@ -73,7 +73,6 @@ public class OAuthTokenRefresherTest {
   @Mock private CheServerKubernetesClientFactory cheServerKubernetesClientFactory;
   @Mock private PersonalAccessTokenManager personalAccessTokenManager;
   @Mock private KubernetesDevWorkspaces devWorkspaces;
-  @Mock private KubernetesNamespaceFactory namespaceFactory;
 
   private KubernetesMockServer kubernetesMockServer;
   private KubernetesClient kubernetesClient;
@@ -107,7 +106,6 @@ public class OAuthTokenRefresherTest {
         cheServerKubernetesClientFactory,
         personalAccessTokenManager,
         devWorkspaces,
-        namespaceFactory,
         enabled,
         periodSec);
   }
@@ -330,9 +328,14 @@ public class OAuthTokenRefresherTest {
     verifyNoInteractions(personalAccessTokenManager);
   }
 
-  /** Every user who runs a workspace in a shared namespace owns it. */
+  /**
+   * A namespace that several users run a workspace in has none of its tokens refreshed, not even
+   * the one of a user who really does run a workspace there. The secret that names them is written
+   * by whoever can write to the namespace, so nothing tells that user from another user of the
+   * namespace who claims their id.
+   */
   @Test
-  public void shouldRefreshTheTokensOfEveryUserOfASharedNamespace() throws Exception {
+  public void shouldNotRefreshTheTokensOfASharedNamespace() throws Exception {
     // given
     when(devWorkspaces.getRunningInAllNamespaces())
         .thenReturn(
@@ -349,43 +352,45 @@ public class OAuthTokenRefresherTest {
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager)
-        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
-    verify(personalAccessTokenManager)
-        .forceRefreshPersonalAccessToken("https://github.com", OTHER_USER_ID, TEST_NAMESPACE_NAME);
+    verifyNoInteractions(personalAccessTokenManager);
   }
 
   /**
-   * An identity without a {@code uid}, which is what an OIDC provider commonly issues, leaves the
-   * DevWorkspace Operator nothing to record. The namespace is then held against the name the
-   * namespace template gives the user.
+   * A user of a shared namespace plants a secret that names another user of it, for a provider that
+   * user never used there, and has a workspace of their own clone from that provider to have it
+   * looked at. Refreshing it would mint the token of the other user into a namespace the first one
+   * reads.
    */
   @Test
-  public void shouldFallBackToTheNamespaceTemplateWhenNoCreatorIsRecorded() throws Exception {
-    // given
+  public void shouldNotRefreshTokenOfAPlantedSecretOfASharedNamespace() throws Exception {
+    // given the victim runs a workspace of their own in the namespace, on another provider
     when(devWorkspaces.getRunningInAllNamespaces())
         .thenReturn(
-            List.of(runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", null)));
-    when(namespaceFactory.isDefaultNamespaceOf(TEST_NAMESPACE_NAME, TEST_USER_ID)).thenReturn(true);
-    createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
+            List.of(
+                runningDevWorkspace(
+                    TEST_NAMESPACE_NAME, "https://github.com/che/repo.git", TEST_USER_ID),
+                runningDevWorkspace(
+                    TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", OTHER_USER_ID)));
+    // and the attacker plants a secret naming the victim, for the provider of their own workspace
+    createSecret("oauth2-planted", oAuthTokenSecret("oauth2-planted", SCM_URL, 3600, 7200));
 
     // when
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager)
-        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
+    verifyNoInteractions(personalAccessTokenManager);
   }
 
-  /** Nothing says who owns the namespace, so nothing is refreshed. */
+  /**
+   * An identity without a {@code uid}, which is what an OIDC provider commonly issues, leaves the
+   * DevWorkspace Operator nothing to record. Nothing then says who the namespace belongs to.
+   */
   @Test
-  public void shouldNotRefreshWhenTheOwnerOfTheNamespaceCannotBeTold() throws Exception {
+  public void shouldNotRefreshWhenNoCreatorIsRecorded() throws Exception {
     // given
     when(devWorkspaces.getRunningInAllNamespaces())
         .thenReturn(
             List.of(runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", null)));
-    when(namespaceFactory.isDefaultNamespaceOf(TEST_NAMESPACE_NAME, TEST_USER_ID))
-        .thenReturn(false);
     createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
 
     // when
@@ -395,26 +400,28 @@ public class OAuthTokenRefresherTest {
     verifyNoInteractions(personalAccessTokenManager);
   }
 
-  /** A workspace that clones nothing still says who runs in the namespace. */
+  /**
+   * A workspace that clones nothing still says who runs in the namespace, so it makes the namespace
+   * a shared one just as a cloning workspace does.
+   */
   @Test
-  public void shouldTakeTheOwnerFromAWorkspaceThatClonesNothing() throws Exception {
+  public void shouldTakeTheUsersOfTheNamespaceFromAWorkspaceThatClonesNothing() throws Exception {
     // given
     GenericKubernetesResource noProjects =
-        runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", TEST_USER_ID);
+        runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", OTHER_USER_ID);
     noProjects.setAdditionalProperty("spec", Map.of("template", Map.of()));
     when(devWorkspaces.getRunningInAllNamespaces())
         .thenReturn(
             List.of(
                 noProjects,
-                runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", "attacker")));
+                runningDevWorkspace(TEST_NAMESPACE_NAME, SCM_URL + "/che/repo.git", TEST_USER_ID)));
     createSecret("oauth2-expired", oAuthTokenSecret("oauth2-expired", SCM_URL, 3600, 7200));
 
     // when
     refresher.refreshTokens();
 
     // then
-    verify(personalAccessTokenManager)
-        .forceRefreshPersonalAccessToken(SCM_URL, TEST_USER_ID, TEST_NAMESPACE_NAME);
+    verifyNoInteractions(personalAccessTokenManager);
   }
 
   @Test

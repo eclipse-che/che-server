@@ -70,10 +70,10 @@ import org.slf4j.LoggerFactory;
  * those run only when Che itself provisions a namespace, which a deployment that has its namespaces
  * prepared for it never does.
  *
- * <p>A token is only refreshed once the user its secret names is known to own the namespace that
- * secret sits in, see {@link #owns(String, String, RunningWorkspaces)}. The job acts as that user
- * and writes the refreshed token back into that namespace, and both come from a secret that the
- * user of the namespace can write themselves.
+ * <p>A token is only refreshed once the user its secret names is the one single user known to run a
+ * workspace in the namespace that secret sits in, see {@link #owns(String, RunningWorkspaces)}. The
+ * job acts as that user and writes the refreshed token back into that namespace, and both come from
+ * a secret that anyone who can write to the namespace can write.
  *
  * <p>Only the tokens obtained with the OAuth flow are refreshed. A manually configured personal
  * access token is left alone: it does not expire on its own, and it is the one preferred over an
@@ -123,7 +123,6 @@ public class OAuthTokenRefresher {
   private final PersonalAccessTokenManager personalAccessTokenManager;
   private final KubernetesDevWorkspaces devWorkspaces;
 
-  private final KubernetesNamespaceFactory namespaceFactory;
   private final boolean refreshEnabled;
 
   @Inject
@@ -131,13 +130,11 @@ public class OAuthTokenRefresher {
       CheServerKubernetesClientFactory cheServerKubernetesClientFactory,
       PersonalAccessTokenManager personalAccessTokenManager,
       KubernetesDevWorkspaces devWorkspaces,
-      KubernetesNamespaceFactory namespaceFactory,
       @Named(REFRESH_ENABLED_PROPERTY) boolean refreshEnabled,
       @Named(REFRESH_PERIOD_SEC_PROPERTY) long refreshPeriodSec) {
     this.cheServerKubernetesClientFactory = cheServerKubernetesClientFactory;
     this.personalAccessTokenManager = personalAccessTokenManager;
     this.devWorkspaces = devWorkspaces;
-    this.namespaceFactory = namespaceFactory;
     this.refreshEnabled = refreshEnabled;
     if (refreshEnabled && refreshPeriodSec > 0) {
       LOG.info(
@@ -257,10 +254,10 @@ public class OAuthTokenRefresher {
             namespace);
         continue;
       }
-      if (!owns(userId, namespace, running)) {
+      if (!owns(userId, running)) {
         LOG.warn(
-            "Secret {} of namespace {} claims to hold the token of user {}, who is not known to"
-                + " own that namespace. Skipping it.",
+            "Secret {} of namespace {} claims to hold the token of user {}, who is not the only"
+                + " user known to run a workspace in that namespace. Skipping it.",
             secret.getMetadata().getName(),
             namespace,
             userId);
@@ -273,38 +270,35 @@ public class OAuthTokenRefresher {
   }
 
   /**
-   * Tells whether the given user is known to own the given namespace.
+   * Tells whether the given user is the only user of the given namespace.
    *
    * <p>The job acts as the user a secret names, and writes the refreshed token into the namespace
    * that secret was found in. Both are taken from a secret that anyone who can write to the
    * namespace can write, and a user can write to their own. Without this check, a user who
-   * annotates a secret of their own namespace with the id of another user has the job refresh that
-   * user's token, from the refresh token Che holds for them, and store the result where the first
-   * user can read it. Ids are not secret: a shared namespace carries the ids of its users on their
-   * secrets.
+   * annotates a secret of a namespace with the id of another user has the job refresh that user's
+   * token, from the refresh token Che holds for them, and store the result where the first user can
+   * read it. Ids are not secret: a shared namespace carries the ids of its users on their secrets.
    *
-   * <p>Ownership is established from the DevWorkspaces that run in the namespace, by the {@value
-   * KubernetesDevWorkspaces#CREATOR_LABEL} label the DevWorkspace Operator stamps them with and
-   * puts back when it is edited away. When the operator recorded no creator at all, which is what
-   * an identity without a {@code uid} leaves behind, the namespace is instead held against the name
-   * the {@code che.infra.kubernetes.namespace.default} template gives the user, which only answers
-   * for the deployments that name their namespaces after the id of the user.
+   * <p>So a token is only refreshed into a namespace that one single user runs workspaces in, as
+   * recorded by the {@value KubernetesDevWorkspaces#CREATOR_LABEL} label the DevWorkspace Operator
+   * stamps them with and puts back when it is edited away. That user is the only one the namespace
+   * can belong to, and a secret that names anybody else is a secret somebody else wrote.
    *
-   * <p>Whatever cannot be established this way is refused. A deployment where neither source
-   * answers refreshes no token at all, and says so in the log of every run.
+   * <p>A namespace that several users run a workspace in therefore has none of its tokens
+   * refreshed, and says so in the log of every run. Telling the owner of such a namespace from a
+   * user who claims the id of one would take a record of who the namespace was handed to, which a
+   * deployment that has its namespaces prepared for it never writes. Refreshing on a claim alone
+   * would hand every user of the namespace the tokens of all the others.
+   *
+   * <p>Equally refused is a namespace whose running workspaces carry no creator at all, which is
+   * what an identity without a {@code uid} leaves behind, commonly an OIDC one. Nothing then says
+   * who the namespace belongs to.
    *
    * @param userId the user the secret claims the token belongs to
-   * @param namespace the namespace the secret was found in
    * @param running what the workspaces running in that namespace say about it
    */
-  private boolean owns(String userId, String namespace, RunningWorkspaces running) {
-    if (!running.creatorIds.isEmpty()) {
-      // A shared namespace is owned by everyone who runs a workspace in it. A user who keeps a
-      // token there without running a workspace of their own is not told apart from a user who
-      // claims somebody else's id, so neither is refreshed.
-      return running.creatorIds.contains(userId);
-    }
-    return namespaceFactory.isDefaultNamespaceOf(namespace, userId);
+  private boolean owns(String userId, RunningWorkspaces running) {
+    return running.creatorIds.size() == 1 && running.creatorIds.contains(userId);
   }
 
   /** What the DevWorkspaces running in a namespace say about it. */

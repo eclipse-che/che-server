@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2023-2025 Red Hat, Inc.
+# Copyright (c) 2023-2026 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -606,7 +606,7 @@ testCloneGitRepoNoProjectExists() {
     OCP_USER_NAMESPACE=$4
 
     runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
-    echo "------- [INFO] Check the private repository is NOT cloned with NO PAT/OAuth setup. -------"
+    echo "------- [INFO] Check the repository is NOT cloned with NO PAT/OAuth setup. -------"
     testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
     { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} should NOT be present. #######
 ####### Cause possible: PR code regress or service is changed. Need to investigate it. #######" && exit 1; }

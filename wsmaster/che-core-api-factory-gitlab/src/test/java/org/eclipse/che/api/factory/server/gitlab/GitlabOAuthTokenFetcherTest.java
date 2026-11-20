@@ -19,6 +19,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertNotNull;
@@ -79,7 +80,7 @@ public class GitlabOAuthTokenFetcherTest {
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("oauthtoken").withScope("api repo");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/api/v4/user"))
@@ -105,7 +106,8 @@ public class GitlabOAuthTokenFetcherTest {
       expectedExceptionsMessageRegExp = "Username is not authorized in gitlab OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any()))
+        .thenThrow(UnauthorizedException.class);
 
     oAuthTokenFetcher.fetchPersonalAccessToken(subject, wireMockServer.url("/"));
   }
@@ -115,7 +117,7 @@ public class GitlabOAuthTokenFetcherTest {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken =
         newDto(OAuthToken.class).withToken("oauthtoken").withScope("api write_repository openid");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/oauth/token/info"))
@@ -188,7 +190,7 @@ public class GitlabOAuthTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken("token").withScope("");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/api/v4/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token token"))

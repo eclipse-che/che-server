@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Set;
 import org.eclipse.che.api.auth.shared.dto.OAuthToken;
 import org.eclipse.che.api.core.*;
+import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 
 /**
@@ -68,12 +70,44 @@ public interface OAuthAPI {
           ConflictException;
 
   /**
+   * The same as {@link #getOrRefreshToken(String)}, for a caller that works for a user other than
+   * the one of the current request and names that user, and the namespace their token is kept in,
+   * itself.
+   *
+   * @param oauthProvider - the OAuth provider name
+   * @param cheUser - the user whose token is returned
+   * @param namespaceName - the namespace the token of that user is read from, or {@code null} to
+   *     take the namespace of the user of the current request
+   */
+  OAuthToken getOrRefreshToken(
+      String oauthProvider, Subject cheUser, @Nullable String namespaceName)
+      throws NotFoundException,
+          UnauthorizedException,
+          ServerException,
+          ForbiddenException,
+          BadRequestException,
+          ConflictException;
+
+  /**
    * Refreshes the token for the given OAuth provider.
    *
    * @param oauthProvider - the OAuth provider name
    * @return the refreshed OAuth token
    */
   OAuthToken refreshToken(String oauthProvider)
+      throws NotFoundException, UnauthorizedException, ServerException, ForbiddenException;
+
+  /**
+   * The same as {@link #refreshToken(String)}, for a caller that works for a user other than the
+   * one of the current request and names that user, and the namespace their token is kept in,
+   * itself.
+   *
+   * @param oauthProvider - the OAuth provider name
+   * @param cheUser - the user whose token is refreshed
+   * @param namespaceName - the namespace the token of that user is read from, or {@code null} to
+   *     take the namespace of the user of the current request
+   */
+  OAuthToken refreshToken(String oauthProvider, Subject cheUser, @Nullable String namespaceName)
       throws NotFoundException, UnauthorizedException, ServerException, ForbiddenException;
 
   /** Implementation of method {@link OAuthAuthenticationService#invalidate(String)}} */

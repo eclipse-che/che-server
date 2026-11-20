@@ -129,6 +129,31 @@ public interface PersonalAccessTokenManager {
           UnknownScmProviderException;
 
   /**
+   * Refreshes the personal access token of the given user, in the given namespace, on behalf of a
+   * caller that has no user of its own.
+   *
+   * <p>A request is served as the user who makes it, whose namespace is resolved from their
+   * subject, so {@link #forceRefreshPersonalAccessToken(String)} is the one to call for it. A
+   * background job of the Che server works through the namespaces of other users: it has no
+   * subject, and cannot resolve the namespace of a user it only knows the id of. It names both here
+   * instead.
+   *
+   * <p>Whoever calls this speaks for the given user without that user having authenticated, and has
+   * the refreshed token written into a namespace of its own choosing. The caller is responsible for
+   * having established that the namespace is that user's, see {@code OAuthTokenRefresher#owns}.
+   *
+   * @param scmServerUrl the SCM provider the token belongs to
+   * @param cheUserId the owner of the token
+   * @param namespaceName the namespace the token and the git credentials are written to
+   */
+  void forceRefreshPersonalAccessToken(String scmServerUrl, String cheUserId, String namespaceName)
+      throws UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException,
+          ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException;
+
+  /**
    * Set or update git-credentials with {@link PersonalAccessToken} from permanent storage.
    *
    * @param scmServerUrl Git provider endpoint

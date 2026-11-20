@@ -50,6 +50,7 @@ import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.CheServerKubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.api.shared.KubernetesNamespaceMeta;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.KubernetesNamespaceFactory;
@@ -109,8 +110,17 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   @Override
   public void store(PersonalAccessToken personalAccessToken)
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
+    store(personalAccessToken, null);
+  }
+
+  /**
+   * @param namespaceName the namespace the token is stored in, or {@code null} to take the
+   *     namespace of the user of the current request
+   */
+  private void store(PersonalAccessToken personalAccessToken, @Nullable String namespaceName)
+      throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {
-      String namespace = getFirstNamespace();
+      String namespace = namespaceName != null ? namespaceName : getFirstNamespace();
       ImmutableMap.Builder<String, String> annotations =
           new ImmutableMap.Builder<String, String>()
               .put(ANNOTATION_CHE_USERID, personalAccessToken.getCheUserId())
@@ -412,10 +422,13 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     PersonalAccessToken refreshedToken;
     try {
       LOG.debug("Refreshing the expired OAuth token from secret {}", secretName);
+      // The secret was read from this namespace, so the refreshed token belongs back into it,
+      // whether or not it is the namespace the user of the current request resolves to.
       refreshedToken =
-          scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(cheUser, scmServerUrl);
-      store(refreshedToken);
-      gitCredentialManager.createOrReplace(refreshedToken);
+          scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+              cheUser, scmServerUrl, namespaceName);
+      store(refreshedToken, namespaceName);
+      gitCredentialManager.createOrReplace(refreshedToken, namespaceName);
     } catch (ScmUnauthorizedException
         | ScmCommunicationException
         | UnknownScmProviderException
@@ -440,7 +453,8 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
   /**
    * Returns the list of namespaces to search for the personal access token secrets.
    *
-   * @param namespaceName the user's namespace name
+   * @param namespaceName the user's namespace name, or {@code null} to search every namespace the
+   *     user of the current request is entitled to
    */
   private List<KubernetesNamespaceMeta> getKubernetesNamespaceMetas(@Nullable String namespaceName)
       throws InfrastructureException {
@@ -604,18 +618,52 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
           UnknownScmProviderException,
           UnsatisfiedScmPreconditionException,
           ScmConfigurationPersistenceException {
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
-    PersonalAccessToken personalAccessToken =
-        scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(subject, scmServerUrl);
-    gitCredentialManager.createOrReplace(personalAccessToken);
-    store(personalAccessToken);
-    removePreviousTokenSecretsIfPresent(scmServerUrl);
+    doForceRefreshPersonalAccessToken(
+        scmServerUrl, EnvironmentContext.getCurrent().getSubject(), null);
   }
 
-  private void removePreviousTokenSecretsIfPresent(String scmServerUrl)
+  @Override
+  public void forceRefreshPersonalAccessToken(
+      String scmServerUrl, String cheUserId, String namespaceName)
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException {
+    // The name of the user is left out of the subject: it is not what their OAuth token is kept
+    // under, and a deployment that authenticates through OIDC has no record of it to begin with.
+    // Nothing of this reaches the EnvironmentContext: the subject and the namespace are carried
+    // by the call itself, all the way down to the OAuth provider and to the secret the refreshed
+    // token is written to, so the thread the caller runs on is left speaking for nobody.
+    Subject cheUser = new SubjectImpl(null, Collections.emptyList(), cheUserId, null, false);
+    doForceRefreshPersonalAccessToken(scmServerUrl, cheUser, namespaceName);
+  }
+
+  /**
+   * @param cheUser the user the token belongs to
+   * @param namespaceName the namespace the refreshed token is written to, or {@code null} to take
+   *     the namespace of the user of the current request
+   */
+  private void doForceRefreshPersonalAccessToken(
+      String scmServerUrl, Subject cheUser, @Nullable String namespaceName)
+      throws ScmUnauthorizedException,
+          ScmCommunicationException,
+          UnknownScmProviderException,
+          UnsatisfiedScmPreconditionException,
+          ScmConfigurationPersistenceException {
+    PersonalAccessToken personalAccessToken =
+        scmPersonalAccessTokenFetcher.refreshPersonalAccessToken(
+            cheUser, scmServerUrl, namespaceName);
+    gitCredentialManager.createOrReplace(personalAccessToken, namespaceName);
+    store(personalAccessToken, namespaceName);
+    removePreviousTokenSecretsIfPresent(scmServerUrl, namespaceName);
+  }
+
+  private void removePreviousTokenSecretsIfPresent(
+      String scmServerUrl, @Nullable String namespaceName)
       throws ScmConfigurationPersistenceException, UnsatisfiedScmPreconditionException {
     try {
-      for (KubernetesNamespaceMeta namespaceMeta : namespaceFactory.list()) {
+      for (KubernetesNamespaceMeta namespaceMeta : getKubernetesNamespaceMetas(namespaceName)) {
         List<Secret> secrets = doGetPersonalAccessTokenSecrets(namespaceMeta);
         for (int i = 1; i < secrets.size(); i++) {
           Secret secret = secrets.get(i);
@@ -626,7 +674,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
             cheServerKubernetesClientFactory
                 .create()
                 .secrets()
-                .inNamespace(getFirstNamespace())
+                .inNamespace(namespaceMeta.getName())
                 .delete(secret);
           }
         }
@@ -650,6 +698,7 @@ public class KubernetesPersonalAccessTokenManager implements PersonalAccessToken
     }
   }
 
+  /** Returns the first namespace of the user of the current request. */
   private String getFirstNamespace()
       throws UnsatisfiedScmPreconditionException, ScmConfigurationPersistenceException {
     try {

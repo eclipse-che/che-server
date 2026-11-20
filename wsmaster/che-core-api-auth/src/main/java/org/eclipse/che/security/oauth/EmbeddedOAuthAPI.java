@@ -265,8 +265,14 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Override
   public OAuthToken getOrRefreshToken(String oauthProvider)
       throws NotFoundException, UnauthorizedException, ServerException {
+    return getOrRefreshToken(oauthProvider, EnvironmentContext.getCurrent().getSubject(), null);
+  }
+
+  @Override
+  public OAuthToken getOrRefreshToken(
+      String oauthProvider, Subject subject, @Nullable String namespaceName)
+      throws NotFoundException, UnauthorizedException, ServerException {
     OAuthAuthenticator provider = getAuthenticator(oauthProvider);
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
     try {
       OAuthToken token = provider.getOrRefreshToken(subject.getUserId());
       if (token == null) {
@@ -279,11 +285,12 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
         try {
           // The token is read as stored: refreshing it is this class' own job, so a read that
           // refreshes would come back here through the SCM token fetcher and never terminate.
-          tokenOptional = personalAccessTokenManager.getStored(subject, oauthProvider, null, null);
+          tokenOptional =
+              personalAccessTokenManager.getStored(subject, oauthProvider, null, namespaceName);
           if (tokenOptional.isEmpty()) {
             tokenOptional =
                 personalAccessTokenManager.getStored(
-                    subject, null, provider.getEndpointUrl(), null);
+                    subject, null, provider.getEndpointUrl(), namespaceName);
           }
           if (tokenOptional.isPresent()) {
             PersonalAccessToken persistedToken = tokenOptional.get();
@@ -315,8 +322,14 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   @Override
   public OAuthToken refreshToken(String oauthProvider)
       throws NotFoundException, UnauthorizedException, ServerException {
+    return refreshToken(oauthProvider, EnvironmentContext.getCurrent().getSubject(), null);
+  }
+
+  @Override
+  public OAuthToken refreshToken(
+      String oauthProvider, Subject subject, @Nullable String namespaceName)
+      throws NotFoundException, UnauthorizedException, ServerException {
     OAuthAuthenticator provider = getAuthenticator(oauthProvider);
-    Subject subject = EnvironmentContext.getCurrent().getSubject();
     String userId = subject.getUserId();
     String userName = subject.getUserName();
     try {
@@ -333,7 +346,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
         // token is read as stored: it is this call that refreshes it, so letting the manager
         // refresh it on read would call back here endlessly.
         Optional<PersonalAccessToken> tokenOptional =
-            personalAccessTokenManager.getStored(subject, oauthProvider, null, null);
+            personalAccessTokenManager.getStored(subject, oauthProvider, null, namespaceName);
         if (tokenOptional.isPresent()) {
           PersonalAccessToken token = tokenOptional.get();
           if (isNullOrEmpty(token.getRefreshToken())) {

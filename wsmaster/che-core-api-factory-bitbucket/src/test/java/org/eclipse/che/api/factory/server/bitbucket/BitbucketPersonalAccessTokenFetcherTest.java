@@ -20,6 +20,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.*;
@@ -106,7 +107,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
   public void shouldThrowExceptionOnInsufficientTokenScopes() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/user"))
@@ -126,7 +127,8 @@ public class BitbucketPersonalAccessTokenFetcherTest {
       expectedExceptionsMessageRegExp = "Username is not authorized in bitbucket OAuth provider.")
   public void shouldThrowUnauthorizedExceptionWhenUserNotLoggedIn() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenThrow(UnauthorizedException.class);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any()))
+        .thenThrow(UnauthorizedException.class);
 
     bitbucketPersonalAccessTokenFetcher.fetchPersonalAccessToken(
         subject, BitbucketApiClient.BITBUCKET_SERVER);
@@ -137,7 +139,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken =
         newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("repo");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
 
     stubFor(
         get(urlEqualTo("/user"))
@@ -233,7 +235,7 @@ public class BitbucketPersonalAccessTokenFetcherTest {
   public void shouldThrowUnauthorizedExceptionIfTokenIsNotValid() throws Exception {
     Subject subject = new SubjectImpl("Username", Collections.emptyList(), "id1", "token", false);
     OAuthToken oAuthToken = newDto(OAuthToken.class).withToken(bitbucketOauthToken).withScope("");
-    when(oAuthAPI.getOrRefreshToken(anyString())).thenReturn(oAuthToken);
+    when(oAuthAPI.getOrRefreshToken(anyString(), any(), any())).thenReturn(oAuthToken);
     stubFor(
         get(urlEqualTo("/user"))
             .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token " + bitbucketOauthToken))

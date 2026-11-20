@@ -32,6 +32,32 @@ trap "catchFinish" EXIT SIGINT
   done
 } > ${ARTIFACTS_DIR}/credential-diagnostic.txt 2>&1 || true
 
+# Azure SSH key fingerprints: a SHA256 fingerprint is not the secret value,
+# so it is safe to log — it survives secret censoring and identifies the key
+# unambiguously (compare with the fingerprint of the key registered in the
+# Azure account / stored in the GSM collection). Key material is never
+# printed. Printed to stdout and to the artifacts file.
+{
+  echo "Azure SSH key fingerprints:"
+  if [ -n "${AZURE_PUBLIC_KEY:-}" ]; then
+    PUB_KEY_FILE=$(mktemp)
+    printf '%s\n' "${AZURE_PUBLIC_KEY}" > "${PUB_KEY_FILE}"
+    echo "  public:  $(ssh-keygen -lf "${PUB_KEY_FILE}" 2>/dev/null || echo 'failed to compute')"
+    rm -f "${PUB_KEY_FILE}"
+  else
+    echo "  public:  AZURE_PUBLIC_KEY is not set"
+  fi
+  if [ -n "${AZURE_PRIVATE_KEY:-}" ]; then
+    PRIV_KEY_FILE=$(mktemp)
+    chmod 600 "${PRIV_KEY_FILE}"
+    printf '%s\n' "${AZURE_PRIVATE_KEY}" > "${PRIV_KEY_FILE}"
+    echo "  private: $(ssh-keygen -yf "${PRIV_KEY_FILE}" 2>/dev/null | ssh-keygen -lf - 2>/dev/null || echo 'failed to compute')"
+    rm -f "${PRIV_KEY_FILE}"
+  else
+    echo "  private: AZURE_PRIVATE_KEY is not set"
+  fi
+} | tee -a ${ARTIFACTS_DIR}/credential-diagnostic.txt
+
 setupTestEnvironment ${OCP_NON_ADMIN_USER_NAME}
 
 # ======= [TEST 1/4] azure-no-pat-oauth-flow =======

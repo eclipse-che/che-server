@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2023 Red Hat, Inc.
+# Copyright (c) 2023-2026 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -20,7 +20,7 @@ SHELL ["/bin/bash", "-c"]
 # hadolint ignore=DL3041
 # Install yq, kubectl, chectl cli.
 RUN dnf module enable nodejs:22 -y && \
-    dnf install --assumeyes -q psmisc python3-pip httpd-tools nodejs && \
+    dnf install --assumeyes -q psmisc python3-pip httpd-tools nodejs openssh-clients && \
     pip3 install --upgrade setuptools && \
     pip3 install yq && \
     curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \

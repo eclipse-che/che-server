@@ -32,27 +32,37 @@ trap "catchFinish" EXIT SIGINT
   done
 } > ${ARTIFACTS_DIR}/credential-diagnostic.txt 2>&1 || true
 
-# Azure SSH key fingerprints: a SHA256 fingerprint is not the secret value,
-# so it is safe to log — it survives secret censoring and identifies the key
-# unambiguously (compare with the fingerprint of the key registered in the
-# Azure account / stored in the GSM collection). Key material is never
-# printed. Printed to stdout and to the artifacts file.
+# Azure SSH key fingerprints: a hash is not the secret value, so it is safe
+# to log — it survives secret censoring and identifies the key unambiguously
+# (compare with the hash of the key stored in the GSM collection / registered
+# in the Azure account). Key material is never printed. Printed to stdout and
+# to the artifacts file.
+# ssh-keygen (openssh-clients) may be absent in the CI image built from main,
+# so fall back to sha256sum (coreutils): any stable hash works for comparison,
+# it does not have to be in the OpenSSH fingerprint format. To compare
+# locally, run: printf '%s' "$(cat <key-file>)" | sha256sum
 {
   echo "Azure SSH key fingerprints:"
+  fingerprint() {
+    # $1 - key material
+    if command -v ssh-keygen &>/dev/null; then
+      local key_file
+      key_file=$(mktemp)
+      printf '%s\n' "$1" > "${key_file}"
+      ssh-keygen -lf "${key_file}" 2>/dev/null || \
+        printf 'sha256:%s' "$(printf '%s' "$1" | sha256sum | cut -d' ' -f1)"
+      rm -f "${key_file}"
+    else
+      printf 'sha256:%s' "$(printf '%s' "$1" | sha256sum | cut -d' ' -f1)"
+    fi
+  }
   if [ -n "${AZURE_PUBLIC_KEY:-}" ]; then
-    PUB_KEY_FILE=$(mktemp)
-    printf '%s\n' "${AZURE_PUBLIC_KEY}" > "${PUB_KEY_FILE}"
-    echo "  public:  $(ssh-keygen -lf "${PUB_KEY_FILE}" 2>/dev/null || echo 'failed to compute')"
-    rm -f "${PUB_KEY_FILE}"
+    echo "  public:  $(fingerprint "${AZURE_PUBLIC_KEY}")"
   else
     echo "  public:  AZURE_PUBLIC_KEY is not set"
   fi
   if [ -n "${AZURE_PRIVATE_KEY:-}" ]; then
-    PRIV_KEY_FILE=$(mktemp)
-    chmod 600 "${PRIV_KEY_FILE}"
-    printf '%s\n' "${AZURE_PRIVATE_KEY}" > "${PRIV_KEY_FILE}"
-    echo "  private: $(ssh-keygen -yf "${PRIV_KEY_FILE}" 2>/dev/null | ssh-keygen -lf - 2>/dev/null || echo 'failed to compute')"
-    rm -f "${PRIV_KEY_FILE}"
+    echo "  private: $(fingerprint "${AZURE_PRIVATE_KEY}")"
   else
     echo "  private: AZURE_PRIVATE_KEY is not set"
   fi

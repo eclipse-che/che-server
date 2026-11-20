@@ -33,7 +33,7 @@ import org.eclipse.che.api.factory.server.scm.exception.ScmBadRequestException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmItemNotFoundException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
-import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.UrlTargetValidator;
 import org.eclipse.che.commons.subject.Subject;
@@ -72,9 +72,12 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
   }
 
   @Override
-  public PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
+  public PersonalAccessToken refreshPersonalAccessToken(
+      Subject cheUser, String scmServerUrl, @Nullable String namespaceName)
       throws ScmUnauthorizedException, ScmCommunicationException {
-    // #fetchPersonalAccessToken does the same thing as #refreshPersonalAccessToken
+    // #fetchPersonalAccessToken does the same thing as #refreshPersonalAccessToken. The namespace
+    // is of no use here: the token of a Bitbucket Server is created anew rather than read back
+    // from the namespace of the user, and it does not expire on its own.
     return fetchOrRefreshPersonalAccessToken(cheUser, scmServerUrl);
   }
 
@@ -113,7 +116,7 @@ public class BitbucketServerPersonalAccessTokenFetcher implements PersonalAccess
       return new PersonalAccessToken(
           scmServerUrl,
           OAUTH_PROVIDER_NAME,
-          EnvironmentContext.getCurrent().getSubject().getUserId(),
+          cheUser.getUserId(),
           null,
           user.getSlug(),
           token.getName(),

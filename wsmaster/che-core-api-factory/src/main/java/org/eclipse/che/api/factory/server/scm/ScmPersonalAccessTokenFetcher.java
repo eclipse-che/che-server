@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2024 Red Hat, Inc.
+ * Copyright (c) 2012-2026 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.api.factory.server.scm.exception.ScmUnauthorizedException;
 import org.eclipse.che.api.factory.server.scm.exception.UnknownScmProviderException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.subject.Subject;
 
@@ -35,8 +36,20 @@ public class ScmPersonalAccessTokenFetcher {
 
   public PersonalAccessToken refreshPersonalAccessToken(Subject cheUser, String scmServerUrl)
       throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
+    return refreshPersonalAccessToken(cheUser, scmServerUrl, null);
+  }
+
+  /**
+   * The same as {@link #refreshPersonalAccessToken(Subject, String)}, for a caller that names the
+   * namespace the token of the user is kept in, see {@link
+   * PersonalAccessTokenFetcher#refreshPersonalAccessToken(Subject, String, String)}.
+   */
+  public PersonalAccessToken refreshPersonalAccessToken(
+      Subject cheUser, String scmServerUrl, @Nullable String namespaceName)
+      throws ScmUnauthorizedException, ScmCommunicationException, UnknownScmProviderException {
     for (PersonalAccessTokenFetcher fetcher : personalAccessTokenFetchers) {
-      PersonalAccessToken token = fetcher.refreshPersonalAccessToken(cheUser, scmServerUrl);
+      PersonalAccessToken token =
+          fetcher.refreshPersonalAccessToken(cheUser, scmServerUrl, namespaceName);
       if (token != null) {
         return token;
       }

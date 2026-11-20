@@ -42,6 +42,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -54,6 +55,7 @@ import org.eclipse.che.api.factory.server.scm.PersonalAccessToken;
 import org.eclipse.che.api.factory.server.scm.PersonalAccessTokenManager;
 import org.eclipse.che.api.factory.server.scm.exception.ScmCommunicationException;
 import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.security.oauth.shared.dto.OAuthAuthenticatorDescriptor;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -612,6 +614,60 @@ public class EmbeddedOAuthAPITest {
     // reading the token the regular way makes the manager refresh it, which comes back here
     // through the SCM token fetcher and never terminates
     verify(personalAccessTokenManager, never()).get(any(Subject.class), any(), any(), any());
+  }
+
+  /**
+   * A caller with no user of its own, the job that refreshes the OAuth tokens of the running
+   * workspaces for one, names the user and the namespace their token is kept in. The credential is
+   * restored from that namespace, and for that user, with nothing read from the thread.
+   */
+  @Test
+  public void shouldRestoreCredentialOfTheGivenUserFromTheGivenNamespaceOnRefresh()
+      throws Exception {
+    // given
+    String provider = "github";
+    OAuthAuthenticator authenticator = mock(OAuthAuthenticator.class);
+    when(oauth2Providers.getAuthenticator(provider)).thenReturn(authenticator);
+
+    OAuthToken refreshedToken =
+        newDto(OAuthToken.class).withToken("new-access-token").withRefreshToken("new-refresh");
+    when(authenticator.refreshToken("user123")).thenReturn(null).thenReturn(refreshedToken);
+
+    AuthorizationCodeFlow flow = mock(AuthorizationCodeFlow.class);
+    Field flowField = OAuthAuthenticator.class.getDeclaredField("flow");
+    flowField.setAccessible(true);
+    flowField.set(authenticator, flow);
+
+    PersonalAccessToken persistedToken =
+        new PersonalAccessToken(
+            "https://github.com",
+            provider,
+            "user123",
+            null,
+            null,
+            "oauth2-token",
+            "id-token",
+            "old-access-token",
+            "refresh-token-123",
+            3600);
+    // the secret of that user lives in the namespace the caller named, not in one resolved from
+    // the subject of the thread
+    when(personalAccessTokenManager.getStored(
+            any(Subject.class), eq(provider), eq(null), eq("named-namespace")))
+        .thenReturn(Optional.of(persistedToken));
+
+    // when
+    OAuthToken result =
+        embeddedOAuthAPI.refreshToken(
+            provider,
+            new SubjectImpl(null, Collections.emptyList(), "user123", null, false),
+            "named-namespace");
+
+    // then
+    assertEquals(result.getToken(), "new-access-token");
+    verify(flow).createAndStoreCredential(any(TokenResponse.class), eq("user123"));
+    verify(personalAccessTokenManager, never())
+        .getStored(any(Subject.class), any(), any(), eq(null));
   }
 
   @Test

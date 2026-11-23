@@ -1,0 +1,27 @@
+codecov:
+  require_ci_to_pass: false
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        informational: true
+    patch:
+      default:
+        target: 80%
+        informational: true
+
+# Carry forward coverage from previous successful uploads when a flag's
+# report is missing (e.g. a CI test suite failed and skipped uploading).
+# This prevents patch coverage from dropping drastically due to incomplete data.
+# IMPORTANT: carryforward only works when uploads use Codecov flags
+# (e.g. flags: unit-tests in codecov-action, or --flag unit-tests in codecov-cli).
+flag_management:
+  default_rules:
+    carryforward: true
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  require_changes: true

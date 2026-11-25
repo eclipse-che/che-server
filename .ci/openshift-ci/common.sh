@@ -435,36 +435,6 @@ testProjectIsCloned() {
   fi
 }
 
-# Dump the state and the logs of the test workspace pod — all containers,
-# including init containers such as project-clone — to stdout and the
-# artifacts directory. Called when a clone expectation fails so that the
-# actual error is visible (network / authentication / missing credentials
-# mount) instead of only the missing project file.
-dumpWorkspacePodDiagnostics() {
-  OCP_USER_NAMESPACE=$1
-
-  local WS_POD
-  WS_POD=$(oc get pods -n ${OCP_USER_NAMESPACE} -o name | grep workspace | head -1 | sed 's|^pod/||')
-  if [ -z "${WS_POD}" ]; then
-    echo "------- [WARN] No workspace pod found in namespace ${OCP_USER_NAMESPACE} -------"
-    return 0
-  fi
-
-  echo "------- [INFO] Workspace pod diagnostics (${WS_POD}) -------"
-  {
-    echo "=== Pod status ==="
-    oc get pod "${WS_POD}" -n ${OCP_USER_NAMESPACE} -o yaml
-    echo ""
-    echo "=== Container logs (init containers first) ==="
-    local CONTAINER
-    for CONTAINER in $(oc get pod "${WS_POD}" -n ${OCP_USER_NAMESPACE} -o jsonpath='{.spec.initContainers[*].name} {.spec.containers[*].name}'); do
-      echo "--- ${CONTAINER} ---"
-      oc logs "${WS_POD}" -c "${CONTAINER}" -n ${OCP_USER_NAMESPACE} --tail=200 2>&1 || true
-      echo ""
-    done
-  } | tee -a "${ARTIFACTS_DIR}/workspace-pod-diagnostics.txt"
-}
-
 testGitCredentialsData() {
   OCP_USER_NAMESPACE=$1
   GIT_PROVIDER_PAT=$2
@@ -638,8 +608,7 @@ testCloneGitRepoNoProjectExists() {
     runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
     echo "------- [INFO] Check the repository is NOT cloned with NO PAT/OAuth setup. -------"
     testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} && \
-    { dumpWorkspacePodDiagnostics ${OCP_USER_NAMESPACE}; \
-      echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} should NOT be present. #######
+    { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} should NOT be present. #######
 ####### Cause possible: PR code regress or service is changed. Need to investigate it. #######" && exit 1; }
     echo "======= [INFO] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} is NOT present. This is EXPECTED. ======="
 }
@@ -655,8 +624,7 @@ testCloneGitRepoProjectShouldExists() {
   runTestWorkspaceWithGitRepoUrl ${WS_NAME} ${PROJECT_NAME} ${GIT_REPO_URL} ${OCP_USER_NAMESPACE}
   echo "------- [INFO] Check the repository is cloned. -------"
   testProjectIsCloned ${PROJECT_NAME} ${OCP_USER_NAMESPACE} || \
-  { dumpWorkspacePodDiagnostics ${OCP_USER_NAMESPACE}; \
-    echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} should be present. #######
+  { echo "####### [ERROR] Project file /projects/${PROJECT_NAME}/${TEST_FILE_NAME} should be present. #######
 ###### Cause possible: PR code regress or service is changed. Need to investigate it. #######" && exit 1; }
 }
 

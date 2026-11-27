@@ -84,11 +84,13 @@ public class OAuthAuthenticationService extends Service {
     // The redirect URL comes from the OAuth `state`, which is chosen by whoever built the
     // authorization URL, so it is untrusted input and has to be authorized before it is used.
     final String redirectAfterLogin = getRedirectAfterLoginUrl(parameters, null);
-    redirectUrlValidator.authorize(redirectAfterLogin);
+    // Authorizing also percent encodes what UriBuilder would otherwise read as a URI template
+    // parameter, such as the braces of a '?params={"namespace":"ns"}' query.
+    final String authorized = redirectUrlValidator.authorize(redirectAfterLogin).toString();
 
     // Built from the URL rather than from the URI parsed out of it: UriBuilder.fromUri(URI) gives
     // a URL that has no path a path of '/', which the caller of the callback does not expect.
-    UriBuilder redirectUriBuilder = UriBuilder.fromUri(redirectAfterLogin);
+    UriBuilder redirectUriBuilder = UriBuilder.fromUri(authorized);
 
     try {
       getAuthenticator(providerName).callback(requestUrl);

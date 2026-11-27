@@ -120,6 +120,7 @@ public class OAuthAuthenticationServiceTest {
     assertEquals(response.header("Location"), REDIRECT_URI + "?error_code=invalid_request");
   }
 
+  /** A brace the provider handed back raw is encoded, rather than refused as unparseable. */
   @Test
   public void shouldEncodeRedirectUrl() throws Exception {
     // given
@@ -141,9 +142,10 @@ public class OAuthAuthenticationServiceTest {
     jakarta.ws.rs.core.Response callback = oAuthAuthenticationService.callback();
 
     // then
-    assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params%3D%7B%7D");
+    assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params=%7B%7D");
   }
 
+  /** An already encoded brace is handed on as it is, so the two ways in agree. */
   @Test
   public void shouldNotEncodeRedirectUrl() throws Exception {
     // given

@@ -12,10 +12,13 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -38,6 +41,13 @@ import org.slf4j.LoggerFactory;
  * addressing the same origin as {@code che.api}. The dashboard and the {@code /_app} OAuth loader,
  * which are what asks for a redirect, are both served from that host.
  *
+ * <p>The URL is taken as a browser would take it, not as {@link URI} would: characters a browser
+ * sends on but {@link URI} rejects, such as the braces and quotes of {@code
+ * /dashboard/w?params={"namespace":"ns"}}, are percent encoded before it is parsed rather than
+ * refused. The encoding only fills in what the caller left out, so an already encoded URL is
+ * unchanged, and it cannot make a URL pass the check that its raw form would not: it never
+ * introduces a character that delimits the scheme, the authority or the path.
+ *
  * <p>The check is turned off along with the other checks on user supplied URLs by the {@value
  * UrlTargetValidator#URL_DESTINATION_CHECK} environment variable, so that one switch restores the
  * behaviour a deployment had before these checks existed. The URL still has to be present and
@@ -46,6 +56,14 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class RedirectAfterLoginUrlValidator {
   private static final Logger LOG = LoggerFactory.getLogger(RedirectAfterLoginUrlValidator.class);
+
+  /**
+   * A run of the characters {@link URI} rejects: anything that is neither a letter, a digit, an
+   * unreserved mark nor one of the delimiters a URL is built of, plus a percent that starts no
+   * escape. Encoding only these can never add a scheme, an authority or a path segment.
+   */
+  private static final Pattern ILLEGAL =
+      Pattern.compile("(?:[^A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]|%(?![0-9A-Fa-f]{2}))+");
 
   /**
    * The origin of {@code che.api}, as {@code scheme://host:port}, or {@code null} if it names no
@@ -60,7 +78,8 @@ public class RedirectAfterLoginUrlValidator {
   }
 
   /**
-   * Parses the given redirect after login URL and fails unless it stays on the Che host.
+   * Parses the given redirect after login URL, percent encoding the characters {@link URI} does not
+   * accept, and fails unless it stays on the Che host.
    *
    * @param redirectAfterLogin the URL to redirect the browser to, as it will be redirected to
    * @return the parsed URL, to be handed to the redirect as is
@@ -68,18 +87,19 @@ public class RedirectAfterLoginUrlValidator {
    *     {@value UrlTargetValidator#URL_DESTINATION_CHECK} check is on
    */
   public URI authorize(String redirectAfterLogin) throws ForbiddenException {
-    if (isNullOrEmpty(redirectAfterLogin)) {
+    if (redirectAfterLogin == null || redirectAfterLogin.trim().isEmpty()) {
       throw refuse("the URL is missing", redirectAfterLogin);
     }
     // A backslash is a path separator to a browser, so both '/\example.com' and '\\example.com'
-    // leave the Che host. java.net.URI refuses them as an illegal character, which is what makes
-    // relying on it safe here; name the reason rather than reporting a parse failure.
+    // leave the Che host. It is refused rather than encoded, as it was before: the '%5C' it would
+    // encode to is a path character to a browser, so the redirect would go nowhere anyone asked
+    // for, and the reason reads better than a parse failure.
     if (redirectAfterLogin.indexOf('\\') >= 0) {
       throw refuse("the URL contains a backslash", redirectAfterLogin);
     }
     URI uri;
     try {
-      uri = new URI(redirectAfterLogin);
+      uri = new URI(encodeIllegalCharacters(redirectAfterLogin));
     } catch (URISyntaxException e) {
       throw refuse("the URL is not parseable: " + e.getMessage(), redirectAfterLogin);
     }
@@ -128,6 +148,18 @@ public class RedirectAfterLoginUrlValidator {
     LOG.warn("Blocked a redirect after login: {}. The Che host is {}", reason, apiOrigin);
     LOG.debug("Blocked a redirect after login to '{}'", redirectAfterLogin);
     return new ForbiddenException("The redirect after login URL is missing or not allowed");
+  }
+
+  /**
+   * Returns the URL with every character {@link URI} rejects, such as a brace, a quote or a space,
+   * replaced by the percent encoding of its UTF-8 bytes. A percent that already starts an encoded
+   * octet is left alone, so encoding an encoded URL returns it unchanged.
+   */
+  private static String encodeIllegalCharacters(String url) {
+    // URLEncoder is form encoding, which writes a space as '+'; in a URL it is '%20'.
+    return ILLEGAL
+        .matcher(url)
+        .replaceAll(illegal -> URLEncoder.encode(illegal.group(), UTF_8).replace("+", "%20"));
   }
 
   /** Returns the origin of {@code che.api}, or {@code null} if it names no host. */

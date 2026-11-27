@@ -12,7 +12,6 @@
 package org.eclipse.che.security.oauth;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static org.eclipse.che.api.factory.server.scm.PersonalAccessTokenFetcher.OAUTH_2_PREFIX;
 import static org.eclipse.che.commons.lang.UrlUtils.*;
@@ -32,7 +31,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -122,7 +120,7 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
       // belongs to and not of one some other user has in progress.
       String redirectAfterLogin = getParameter(params, "redirect_after_login");
       if (!isNullOrEmpty(redirectAfterLogin)) {
-        return redirect(encodeRedirectUrl(redirectAfterLogin + "&error_code=access_denied"));
+        return redirect(redirectAfterLogin + "&error_code=access_denied");
       }
     }
     final String providerName = getParameter(params, "oauth_provider");
@@ -172,12 +170,13 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
   }
 
   /**
-   * Returns the redirect after login URL from the query parameters. If the URL is encoded by the
-   * CSM provider, it will be decoded, to avoid unsupported characters in the URL.
+   * Returns the redirect after login URL from the query parameters.
    *
    * <p>The returned URL is taken from the OAuth {@code state} and is not authorized here: it has to
    * be passed through {@link RedirectAfterLoginUrlValidator} before the browser is redirected to
-   * it.
+   * it. That is also what percent encodes the characters a URL carrying JSON, such as {@code
+   * ?params={"namespace":"ns"}}, holds and {@link URI} does not accept, so the URL is returned as
+   * the provider handed it back.
    *
    * @param parameters the query parameters
    * @param errorCode the error code or {@code null}
@@ -190,31 +189,10 @@ public class EmbeddedOAuthAPI implements OAuthAPI {
     if (isNullOrEmpty(redirectAfterLogin)) {
       return null;
     }
-    try {
-      URI.create(redirectAfterLogin);
-    } catch (IllegalArgumentException e) {
-      // the redirectUrl was decoded by the CSM provider, so we need to encode it back.
-      redirectAfterLogin = encodeRedirectUrl(redirectAfterLogin);
-    }
     if (errorCode != null) {
       redirectAfterLogin += String.format("&%s=%s", ERROR_QUERY_NAME, errorCode);
     }
     return redirectAfterLogin;
-  }
-
-  /**
-   * Encode the redirect URL query parameters to avoid the error when the redirect URL contains
-   * JSON, as a query parameter. This prevents passing unsupported characters, like '{' and '}' to
-   * the {@link URI#create(String)} method.
-   */
-  private static String encodeRedirectUrl(String url) {
-    try {
-      String query = new URL(url).getQuery();
-      return url.substring(0, url.indexOf(query)) + URLEncoder.encode(query, UTF_8);
-    } catch (MalformedURLException e) {
-      LOG.error(e.getMessage(), e);
-      throw new RuntimeException(e);
-    }
   }
 
   @Override

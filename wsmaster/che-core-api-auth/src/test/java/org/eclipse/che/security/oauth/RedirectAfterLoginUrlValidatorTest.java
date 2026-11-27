@@ -88,7 +88,47 @@ public class RedirectAfterLoginUrlValidatorTest {
       {null},
       {""},
       {" "},
-      {"https://che.example.com/dash board"},
+      // a tab or a newline is encoded, which leaves a host the origin check does not accept
+      {"https://che.example.com\t@attacker.example.com/"},
+      {"https://che.example.com\n/dashboard"},
+      // encoding an illegal character must not turn a foreign host into the Che host
+      {"https://attacker.example.com/?params={}"},
+      {"https://che.example.com{.attacker.example.com/"},
+      {"https://che.example.com |attacker.example.com/"},
+    };
+  }
+
+  /**
+   * The characters a browser sends on but java.net.URI rejects are encoded rather than refused, so
+   * that a dashboard URL carrying JSON, which is what `/dashboard/w?params=` is, can be redirected
+   * to.
+   */
+  @Test(dataProvider = "encodedUrls")
+  public void shouldEncodeTheCharactersThatUriRejects(String url, String expected)
+      throws Exception {
+    assertEquals(validator.authorize(url).toString(), expected);
+  }
+
+  @DataProvider
+  public Object[][] encodedUrls() {
+    return new Object[][] {
+      {
+        "https://che.example.com/dashboard/w?params={\"namespace\":\"ns\",\"workspace\":\"wks\"}",
+        "https://che.example.com/dashboard/w?params=%7B%22namespace%22:%22ns%22,%22workspace%22:"
+            + "%22wks%22%7D"
+      },
+      // an already encoded URL is handed on unchanged, so encoding it twice cannot happen
+      {
+        "https://che.example.com/dashboard/w?params=%7B%22namespace%22:%22ns%22%7D",
+        "https://che.example.com/dashboard/w?params=%7B%22namespace%22:%22ns%22%7D"
+      },
+      // a percent that starts no escape is a percent
+      {"https://che.example.com/100%/", "https://che.example.com/100%25/"},
+      {"https://che.example.com/dash board", "https://che.example.com/dash%20board"},
+      {"/dashboard/w?params={}", "/dashboard/w?params=%7B%7D"},
+      // a code point outside the BMP encodes as the character it is, not as its surrogates
+      {"/dashboard?q=😀", "/dashboard?q=%F0%9F%98%80"},
+      {"/dashboard?q=café", "/dashboard?q=caf%C3%A9"},
     };
   }
 
@@ -148,7 +188,7 @@ public class RedirectAfterLoginUrlValidatorTest {
   public void shouldStillRefuseAnUnusableUrlWhenTheCheckIsTurnedOff() {
     UrlTargetValidator.setCheckEnabled(false);
 
-    for (String url : new String[] {null, "", "https://che.example.com/dash board"}) {
+    for (String url : new String[] {null, "", " ", "https://che.example.com/dash\\board"}) {
       try {
         validator.authorize(url);
         fail("Expected the redirect to '" + url + "' to be refused");

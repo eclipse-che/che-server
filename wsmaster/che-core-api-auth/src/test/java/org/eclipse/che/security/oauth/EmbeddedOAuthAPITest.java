@@ -324,7 +324,7 @@ public class EmbeddedOAuthAPITest {
     // then
     assertEquals(
         callback.getLocation().toString(),
-        "https://redirecturl.com?quary%3Dparam%26error_code%3Daccess_denied");
+        "https://redirecturl.com?quary=param&error_code=access_denied");
   }
 
   /**
@@ -359,7 +359,7 @@ public class EmbeddedOAuthAPITest {
     // then
     assertEquals(
         callback.getLocation().toString(),
-        "https://redirecturl.com/this-user?x%3D1%26error_code%3Daccess_denied");
+        "https://redirecturl.com/this-user?x=1&error_code=access_denied");
   }
 
   @Test
@@ -416,6 +416,7 @@ public class EmbeddedOAuthAPITest {
     assertEquals(token.getToken(), "token");
   }
 
+  /** A brace the provider handed back raw is encoded, rather than refused as unparseable. */
   @Test
   public void shouldEncodeRedirectUrl() throws Exception {
     // given
@@ -436,9 +437,10 @@ public class EmbeddedOAuthAPITest {
     Response callback = embeddedOAuthAPI.callback(uriInfo, emptyList());
 
     // then
-    assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params%3D%7B%7D");
+    assertEquals(callback.getLocation().toString(), "https://redirecturl.com?params=%7B%7D");
   }
 
+  /** An already encoded brace is handed on as it is, so the two ways in agree. */
   @Test
   public void shouldNotEncodeRedirectUrl() throws Exception {
     // given
